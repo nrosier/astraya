@@ -3872,6 +3872,11 @@ svg text.chart-symbol-text-unicode {
   opacity: 0.04;
 }
 
+/* Body isolation (#1063): the aspect lines that do not touch the selected body leave the wheel entirely. */
+.chart-wheel-interactive .chart-isolate-hidden {
+  display: none;
+}
+
 /*
  * Aspect colour carries the family and nothing else — hard aspects red and
  * heaviest, harmonious ones blue and a shade lighter, the quintile-family

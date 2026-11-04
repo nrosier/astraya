@@ -887,7 +887,9 @@ export function ChartDataView({
     select: selectIsolation,
     onClick: handleWheelClick,
     onKeyDown: handleWheelKeyDown,
-  } = useWheelIsolation(wheelMarkup);
+    linesIsolated,
+    setLinesIsolated,
+  } = useWheelIsolation(wheelMarkup, { isolateBodyLines: true });
 
   // The Positions and Aspects tables share the wheel's selection (#418): a button on a row selects it on the
   // wheel, and the row the wheel has selected is marked. Only where there is a wheel, and never in the PDF.
@@ -1015,6 +1017,7 @@ export function ChartDataView({
               exclude={interpretationExcluded}
               personId={personId}
               onClear={clearIsolation}
+              lineIsolation={{ isolated: linesIsolated, onChange: setLinesIsolated }}
               derivedChartNote={
                 isDerivedChartType(chartType)
                   ? t.derivedChartInterpretationNote(chartTypeT.typeLabels[chartType].toLocaleLowerCase(locale))
