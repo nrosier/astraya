@@ -1,6 +1,6 @@
 /**
- * The home route (#1058): `#/` renders in place. With a last-viewed person it is that person's timing timeline;
- * with nobody stored, or a stored id that is gone, it is a person picker; and Back and reload never loop.
+ * The home route (#1058): `#/` renders in place. With a last-viewed person it is that person's timing timeline
+ * and the full sidebar (#965); with nobody stored, or a stored id that is gone, it is a person picker; and Back and reload never loop.
  */
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -53,6 +53,24 @@ test('with people but none viewed, #/ shows the picker; choosing one shows their
     await page.getByLabel('Person', { exact: true }).selectOption({ label: EINSTEIN.name });
     await expect(page.getByRole('heading', { name: /timing timeline/i, level: 1 })).toContainText(EINSTEIN.name);
     await expect(page).toHaveURL(/#\/$/);
+  } finally {
+    await context.close();
+  }
+});
+
+test('on #/ with a last-viewed person, the person section links are in the sidebar (#965)', async ({ browser }) => {
+  test.setTimeout(120_000);
+  const context = await newSeededContext(browser, baseUrl);
+  const page = await context.newPage();
+  try {
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.waitForURL(/#\/people\/[^/]+\//);
+    await page.goto(`${baseUrl}/#/`);
+    await expect(page.getByRole('heading', { name: /timing timeline/i, level: 1 })).toContainText(EINSTEIN.name);
+    const nav = page.locator('nav#app-nav');
+    await expect(nav.getByRole('link', { name: 'Overview', exact: true })).toBeVisible();
+    await expect(nav.getByRole('link', { name: 'Tools', exact: true })).toBeVisible();
+    await expect(nav.getByRole('link', { name: 'PDF', exact: true })).toBeVisible();
   } finally {
     await context.close();
   }
