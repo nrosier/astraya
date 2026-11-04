@@ -6611,7 +6611,7 @@ button.primitive-button-compact {
   min-width: 0;
 }
 
-/* The basis line and its Edit action (#1059). The link keeps a 44px target on touch layouts. */
+/* The basis line and its Edit action (#1059). The link is a full target (--target-min: 24px, 44px on a coarse pointer). */
 .page-header-basis-row {
   display: flex;
   flex-wrap: wrap;
@@ -6623,6 +6623,9 @@ button.primitive-button-compact {
 .page-header-basis-edit {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  min-width: var(--target-min);
+  min-height: var(--target-min);
   font-size: var(--text-sm);
   color: var(--accent);
 }
@@ -6630,14 +6633,6 @@ button.primitive-button-compact {
 .page-header-basis-edit:focus-visible {
   outline: 2px solid color-mix(in oklab, var(--accent) 55%, transparent);
   outline-offset: 2px;
-}
-
-@media (pointer: coarse) {
-  .page-header-basis-edit {
-    min-width: 2.75rem;
-    min-height: 2.75rem;
-    justify-content: center;
-  }
 }
 
 /* The top-right action group (#976): the primary page action, the export menu and any page-level control a screen
