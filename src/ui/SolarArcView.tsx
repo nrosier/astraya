@@ -189,7 +189,9 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
   const [asOf, setAsOf] = useState(todayInputValue);
   const timingT = useMessages(timingBasisMessages);
   // Solar arc is calculated with the engine defaults and its one key, the Sun's progressed arc.
-  const baseBasis = useCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE);
+  const baseBasis = useCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE, undefined, {
+    rulers: false,
+  });
   const basisLine = withBasisItems(baseBasis, solarArcBasisItems(timingT));
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
@@ -289,6 +291,7 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
         title={person.displayName ? t.heading(person.displayName) : t.solarArcFallback}
         titleTerm="solarArc"
         basis={basisLine}
+        basisEditHref={null}
       />
       <p className="hint">
         <GlossaryText text={t.hint} />

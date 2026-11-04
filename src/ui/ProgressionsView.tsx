@@ -172,7 +172,9 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
   const [asOf, setAsOf] = useState(todayInputValue);
   const timingT = useMessages(timingBasisMessages);
   // Progressions are calculated with the engine defaults plus the technique and MC method chosen below.
-  const baseBasis = useCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE);
+  const baseBasis = useCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE, undefined, {
+    rulers: false,
+  });
   const basisLine = withBasisItems(baseBasis, progressionBasisItems(technique, mcMethod, timingT));
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
@@ -275,6 +277,7 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
         title={person.displayName ? t.heading(person.displayName) : t.progressionsFallback}
         titleTerm="progression"
         basis={basisLine}
+        basisEditHref={null}
       />
       <p className="hint">
         <GlossaryText text={t.hint} />

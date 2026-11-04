@@ -32,11 +32,11 @@ export function solarArcBasisItems(t: TimingBasisWords): readonly string[] {
   return [t.solarArc];
 }
 
-/** The primary-direction time key and the semi-arc method the view is set to. */
+/** The primary-direction time key, semi-arc method and the fixed ±1° window of arc the view is set to. */
 export function primaryDirectionsBasisItems(
   key: PrimaryDirectionKey,
   method: PrimaryDirectionMethod,
   t: TimingBasisWords,
 ): readonly string[] {
-  return [t.directionKeys[key], t.directionMethods[method]];
+  return [t.directionKeys[key], t.directionMethods[method], t.directionWindow];
 }

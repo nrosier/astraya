@@ -66,9 +66,7 @@ test('the Primary Directions time key can be changed to Ptolemy and the arc for 
   await expect(keyGroup.getByLabel('Naibod (0°59′08″ a year)', { exact: true })).toBeChecked();
   const naibodArc = await arcLine.textContent();
   const basis = page.locator('.page-header-basis');
-  await expect(basis).toContainText(
-    'Tropical · Placidus · Modern rulers · Standard orbs · Naibod key · Placidus semi-arcs, in zodiaco',
-  );
+  await expect(basis).toContainText('Tropical · Placidus · Naibod key · Placidus semi-arcs, in zodiaco · ±1° of arc');
 
   await keyGroup.getByLabel('Ptolemy (1° a year)', { exact: true }).check();
   await expect(keyGroup.getByLabel('Ptolemy (1° a year)', { exact: true })).toBeChecked();

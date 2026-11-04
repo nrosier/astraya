@@ -110,8 +110,11 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
   const [asOf, setAsOf] = useState(todayInputValue);
   const { provider } = useEphemerisProvider();
   const { rulership, setRulership } = usePersonCalculationSettings(personId);
-  // Profections use the engine's zodiac and houses with the person's rulers (`computeProfections` below).
-  const basisLine = useCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, rulership);
+  // Profections count whole-sign houses from the Ascendant's sign, use the engine zodiac and the person's rulers, and no orbs.
+  const basisLine = useCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, rulership, undefined, {
+    houses: 'whole-sign',
+    orbs: false,
+  });
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   // The reviewed text of each profected house (#427): the mechanical sentence until it arrives.
   const [corpus, setCorpus] = useState<readonly CorpusEntry[]>([]);

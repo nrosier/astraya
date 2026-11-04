@@ -53,7 +53,7 @@ test('a person with a known birth time gets a Progressions screen with technique
   await page.getByRole('link', { name: 'Progressions', exact: true }).click();
   await expect(page.getByRole('heading', { name: /progressions/i, level: 1 })).toBeVisible();
   await expect(page.locator('.page-header-basis')).toHaveText(
-    'Tropical · Placidus · Modern rulers · Standard orbs · Secondary progression · Naibod MC',
+    'Tropical · Placidus · Standard orbs · Secondary progression · Naibod MC',
   );
 
   await expect(page.getByLabel('Technique')).toBeVisible();

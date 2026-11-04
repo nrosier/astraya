@@ -229,10 +229,12 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
   const [mode, setMode] = useState<PrimaryDirectionMode>('direct');
   const [method, setMethod] = useState<PrimaryDirectionMethod>('zodiacal');
   const timingT = useMessages(timingBasisMessages);
-  // The locked settings the directions are computed with, plus the time key and semi-arc method chosen here.
+  // Directions take no rulers and no aspect orbs: the locked zodiac and Placidus base, then the time key, semi-arc method and ±1° window.
   const baseBasis = useCalculationBasisLine(
     PRIMARY_DIRECTIONS_EFFECTIVE_SNAPSHOT.settings,
     PRIMARY_DIRECTIONS_EFFECTIVE_SNAPSHOT.rulership,
+    undefined,
+    { rulers: false, orbs: false },
   );
   const basisLine = withBasisItems(baseBasis, primaryDirectionsBasisItems(key, method, timingT));
   const [significators, setSignificators] = useState<readonly string[]>(PRIMARY_DIRECTION_SIGNIFICATORS);
@@ -416,6 +418,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
         title={person.displayName ? t.heading(person.displayName) : t.primaryDirectionsFallback}
         titleTerm="primaryDirection"
         basis={basisLine}
+        basisEditHref={null}
       />
       <p className="hint">
         <GlossaryText text={t.hint} />

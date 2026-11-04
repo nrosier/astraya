@@ -11,6 +11,7 @@ const en = {
   mcMethod: (method: string) => `${method} MC`,
   mcMethods: { quotidian: 'Quotidian', naibod: 'Naibod', solarArc: 'Solar arc' },
   solarArc: 'Solar arc (the Sun’s progressed arc)',
+  directionWindow: '±1° of arc',
   directionKeys: { naibod: 'Naibod key', ptolemy: 'Ptolemy key' },
   directionMethods: { zodiacal: 'Placidus semi-arcs, in zodiaco', 'in-mundo': 'Placidus semi-arcs, in mundo' },
 };
@@ -20,6 +21,7 @@ const nl: typeof en = {
   mcMethod: (method: string) => `${method} MC`,
   mcMethods: { quotidian: 'Quotidiaans', naibod: 'Naibod', solarArc: 'Zonneboog' },
   solarArc: 'Zonneboog (de geprogresseerde boog van de Zon)',
+  directionWindow: '±1° boog',
   directionKeys: { naibod: 'Naibod-sleutel', ptolemy: 'Ptolemaeus-sleutel' },
   directionMethods: { zodiacal: 'Placidus-semiboog, in zodiaco', 'in-mundo': 'Placidus-semiboog, in mundo' },
 };

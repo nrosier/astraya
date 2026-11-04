@@ -53,7 +53,7 @@ test('a person with a known birth time gets a Solar Arc screen with directed pos
   await page.getByRole('link', { name: 'Solar Arc', exact: true }).click();
   await expect(page.getByRole('heading', { name: /solar arc/i, level: 1 })).toBeVisible();
   await expect(page.locator('.page-header-basis')).toHaveText(
-    'Tropical · Placidus · Modern rulers · Standard orbs · Solar arc (the Sun’s progressed arc)',
+    'Tropical · Placidus · Standard orbs · Solar arc (the Sun’s progressed arc)',
   );
 
   await expect(page.getByRole('table', { name: 'Directed positions' })).toBeVisible();

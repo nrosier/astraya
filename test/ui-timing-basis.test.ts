@@ -34,10 +34,12 @@ describe('timing basis items (#1059)', () => {
     expect(primaryDirectionsBasisItems('naibod', 'zodiacal', en)).toEqual([
       'Naibod key',
       'Placidus semi-arcs, in zodiaco',
+      '±1° of arc',
     ]);
     expect(primaryDirectionsBasisItems('ptolemy', 'in-mundo', nl)).toEqual([
       'Ptolemaeus-sleutel',
       'Placidus-semiboog, in mundo',
+      '±1° boog',
     ]);
   });
 });

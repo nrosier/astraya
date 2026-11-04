@@ -151,10 +151,11 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
     [extendedSettings, orbLibrary, orbSources],
   );
 
-  // What the transits are calculated with: the engine defaults and rulers, with the transit orbs (`snapshot` above).
+  // What the transits are calculated with: the engine defaults, the transit orbs (`snapshot` above) and the person's rulers,
+  // which pick the chart rulers the view highlights.
   const basisLine = useCalculationBasisLine(
     snapshot.settings,
-    snapshot.rulership,
+    rulership,
     orbSourceName(orbLibrary, orbSources, 'transit'),
   );
 
