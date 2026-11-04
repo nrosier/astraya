@@ -33,7 +33,9 @@ import { clampEphemerisYear, MAX_EPHEMERIS_YEAR, MIN_EPHEMERIS_YEAR } from './ye
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
-import { useDeviceCalculationBasisLine } from './calculation-basis.js';
+import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
+import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
+import { useCalculationBasisLine } from './calculation-basis.js';
 
 type Result =
   | { readonly kind: 'idle' }
@@ -52,7 +54,7 @@ type Result =
 
 export function EclipsesView(): React.JSX.Element {
   const t = useMessages(eclipsesViewMessages);
-  const basisLine = useDeviceCalculationBasisLine();
+  const basisLine = useCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE);
   const [locale] = useLocale();
   const state = useStoreState();
   const { provider } = useEphemerisProvider();
@@ -202,7 +204,7 @@ export function EclipsesView(): React.JSX.Element {
   return (
     <main className="shell">
       <BackLink fallback="#/people" />
-      <PageHeader title={t.heading} titleTerm="eclipse" basis={basisLine} />
+      <PageHeader title={t.heading} titleTerm="eclipse" basis={basisLine} basisEditHref={null} />
       <p className="hint">
         <GlossaryText text={t.hint} />
       </p>

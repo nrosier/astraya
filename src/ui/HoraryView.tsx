@@ -118,7 +118,7 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
   return (
     <main className="shell shell--wide">
       <BackLink fallback="#/people" />
-      <PageHeader title={t.heading} titleTerm="horary" basis={basisLine} />
+      <PageHeader title={t.heading} titleTerm="horary" basis={basisLine} basisEditHref={null} />
       <p className="hint">
         <GlossaryText text={t.hint} />
       </p>

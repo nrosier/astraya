@@ -34,7 +34,9 @@ import { useMessages } from './messages.js';
 import { eventSearchViewMessages } from './EventSearchView.messages.js';
 import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
-import { useDeviceCalculationBasisLine } from './calculation-basis.js';
+import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
+import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
+import { useCalculationBasisLine } from './calculation-basis.js';
 
 interface Parameters {
   readonly from: string;
@@ -84,7 +86,7 @@ function toggle(
 
 export function EventSearchView(): React.JSX.Element {
   const t = useMessages(eventSearchViewMessages);
-  const basisLine = useDeviceCalculationBasisLine();
+  const basisLine = useCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE);
   const columns = useMemo<readonly TableColumn<EventSearchResult>[]>(
     () => [
       {
@@ -199,7 +201,7 @@ export function EventSearchView(): React.JSX.Element {
   return (
     <main className="shell">
       <BackLink fallback="#/people" />
-      <PageHeader title={t.heading} basis={basisLine} />
+      <PageHeader title={t.heading} basis={basisLine} basisEditHref={null} />
       <div className="tool-layout">
         <section className="tool-card tool-form" aria-labelledby="event-search-heading">
           <h2 id="event-search-heading">{t.searchHeading}</h2>
