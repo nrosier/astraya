@@ -4133,6 +4133,7 @@ svg text.chart-symbol-text-unicode {
   flex-wrap: wrap;
   align-self: stretch;
   align-content: center;
+  justify-content: center;
   gap: var(--space-1);
   min-height: 2.75rem;
   padding: var(--space-1);
@@ -4146,6 +4147,16 @@ svg text.chart-symbol-text-unicode {
   width: 1.5rem;
   height: 1.5rem;
   shape-rendering: geometricPrecision;
+}
+
+/* The text symbol class (#900): HTML text at --text-base so the codes read at 390px; the cell's flex box centres it. */
+.emphasis-screen-symbol-text {
+  flex: none;
+  color: var(--fg);
+  font-size: var(--text-base);
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  line-height: 1;
 }
 
 .emphasis-screen-total {
