@@ -1,6 +1,6 @@
 # Goal-based onboarding proposal (#1060)
 
-Status: awaiting owner approval. Box 1 of #1060 (owner-approved proposal and mockup) is not met.
+Status: approved with changes by the owner on 2026-11-04 (recorded on #1060 and PR #1131). Box 1 of #1060 (owner-approved proposal and mockup) is still not met until the static mockups are signed off.
 
 This document is a text description for approval. It is not the static 390, 1280 and 3440 light and dark mockup that `ui/UI-UX_GUIDELINES.md` §17.2 requires the owner to approve before a build starts. Per §17.2 mockups are not committed to the repository, so the owner still has to see and approve that mockup separately; this text does not satisfy §17.2.
 
@@ -25,7 +25,7 @@ In scope:
 
 ### 1. People first-use empty state
 
-Shown by default: the heading, the tagline, one sentence saying what is needed (a date, a time and a place of birth) and that the data stays on this device, and the single primary action to add a person (the existing button, not duplicated).
+Shown by default: the heading, the tagline, one sentence saying what is needed (a date, a time and a place of birth) and that the data stays on this device, the primary action to add a person (the existing button, not duplicated, labelled Add your chart), and next to it a secondary import action (Import data) that reuses the existing file import in `PersonFileActions`, for users who already hold a person file.
 
 Behind a disclosure: an optional collapsed `Disclosure` titled What is a birth record? holds the existing explanation that a chart can be drawn once date, time and coordinates are in. Whether it is used or the sentence alone suffices is an owner choice.
 
@@ -37,7 +37,7 @@ Behind a disclosure: calendar and timezone overrides and timezone details, which
 
 ### 3. Overview goals
 
-Shown by default, only when the person has a complete birth moment: goal buttons that reuse the existing destinations, Open natal chart, Open interpretation, View transits. Optionally a fourth, Compare with another person (see open points).
+Shown by default, only when the person has a complete birth moment: goal buttons that reuse the existing destinations, Open natal chart, Open interpretation, View transits. A fourth goal, Compare with another person, appears only once two or more people exist; it is not a first-run goal.
 
 Hidden: when the record is partial, no goals are shown. Overview keeps the existing hint that the birth record must be completed, and the Edit birth record action.
 
@@ -47,13 +47,13 @@ No change. `AdvancedGroup` starts closed, which keeps advanced detail opt-in per
 
 ## Text mockup: screens and layout notes
 
-| Screen and state          | Default content                                          | 390                                               | 1280                                  | 3440                                                     |
-| ------------------------- | -------------------------------------------------------- | ------------------------------------------------- | ------------------------------------- | -------------------------------------------------------- |
-| People, first use         | Heading, tagline, empty-state message, add-person button | One column; button full width below the message   | Shell-width column; button below text | Same column within the shell width cap; no extra columns |
-| People, with people       | Existing list                                            | Unchanged                                         | Unchanged                             | Unchanged                                                |
-| Person form               | Identity, location and notes cards; overrides collapsed  | Cards stack                                       | Cards as today                        | Cards as today                                           |
-| Overview, record complete | Heading, goal buttons                                    | Goals stack, each a target of at least 44 px high | Goals in a row                        | Goals in a row within the shell width cap; no stretch    |
-| Overview, record partial  | Heading, completion hint, Edit birth record              | Stacked                                           | Stacked                               | Stacked                                                  |
+| Screen and state          | Default content                                                                   | 390                                               | 1280                                   | 3440                                                     |
+| ------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------- | -------------------------------------- | -------------------------------------------------------- |
+| People, first use         | Heading, tagline, empty-state message, add-person button, secondary import button | One column; buttons full width below the message  | Shell-width column; buttons below text | Same column within the shell width cap; no extra columns |
+| People, with people       | Existing list                                                                     | Unchanged                                         | Unchanged                              | Unchanged                                                |
+| Person form               | Identity, location and notes cards; overrides collapsed                           | Cards stack                                       | Cards as today                         | Cards as today                                           |
+| Overview, record complete | Heading, goal buttons                                                             | Goals stack, each a target of at least 44 px high | Goals in a row                         | Goals in a row within the shell width cap; no stretch    |
+| Overview, record partial  | Heading, completion hint, Edit birth record                                       | Stacked                                           | Stacked                                | Stacked                                                  |
 
 Light and dark both use existing tokens only; no new colours or spacing values are proposed.
 
@@ -83,11 +83,12 @@ New keys only; existing keys keep their current text. Every key has both en and 
 | Key                     | en                                                                                                                       | nl                                                                                                                                              |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | `emptyFirstUse`         | Start with one person. Add a date, a time and a place of birth, and the chart can be drawn. It all stays on this device. | Begin met één persoon. Voeg een datum, tijd en geboorteplaats toe, dan kan de horoscoop worden getekend. Alles blijft op dit apparaat.          |
-| `emptyFirstUseAction`   | Add the first person                                                                                                     | Eerste persoon toevoegen                                                                                                                        |
+| `emptyFirstUseAction`   | Add your chart                                                                                                           | Voeg je eerste persoon toe                                                                                                                      |
+| `emptyImportAction`     | Import data                                                                                                              | Gegevens importeren                                                                                                                             |
 | `emptyWhatIsRecord`     | What is a birth record?                                                                                                  | Wat zijn geboortegegevens?                                                                                                                      |
 | `emptyWhatIsRecordBody` | A birth record is the date, time and place of birth. A chart can be drawn once the date, time and coordinates are in.    | Geboortegegevens zijn de datum, tijd en plaats van geboorte. Een horoscoop kan worden getekend zodra de datum, tijd en coördinaten bekend zijn. |
 
-`emptyFirstUseAction` relabels the one add-person button in the empty state only; it is dropped if the owner prefers the existing `addPerson` label (open points).
+`emptyFirstUseAction` relabels the primary add-person button in the empty state only. `emptyImportAction` is the secondary action next to it and opens the existing file import. Both strings are the owner's wording from the 2026-11-04 decision.
 
 ### `src/ui/Overview.messages.ts`
 
@@ -100,7 +101,7 @@ New keys only; existing keys keep their current text. Every key has both en and 
 | `goalCompare`       | Compare with another person                       | Vergelijken met een andere persoon                              |
 | `goalCompareHint`   | Place two charts side by side.                    | Twee horoscopen naast elkaar leggen.                            |
 
-The existing `openChart`, `openInterpretation` and `viewTransits` remain the button labels.
+The existing `openChart`, `openInterpretation` and `viewTransits` remain the button labels. `goalCompare` and `goalCompareHint` are shown only once two or more people exist, never on first run.
 
 ### `src/ui/PersonForm.messages.ts`
 
@@ -108,11 +109,11 @@ The existing `openChart`, `openInterpretation` and `viewTransits` remain the but
 | --------------- | ----------------------------------------------------------------- | ---------------------------------------------------------------- |
 | `savedNextStep` | Saved. Open the person's overview to choose what to look at next. | Opgeslagen. Open het overzicht van de persoon om verder te gaan. |
 
-Dutch to review: all nl strings are drafted by matching the catalogue and need a Dutch speaker. Flagged in particular: `emptyFirstUse` (Voeg ... toe, dan kan ...), the hint strings that use infinitives as captions, and `geboorteplaats` against the catalogue's `Plaats van geboorte` wording.
+Dutch to review: the owner's nl strings `Voeg je eerste persoon toe` use `je`, while the existing catalogue avoids `je` and `u` (per the earlier review). This is not changed unilaterally and goes to the Dutch review. All nl strings are drafted by matching the catalogue and need a Dutch speaker. Flagged in particular: `emptyFirstUse` (Voeg ... toe, dan kan ...), the hint strings that use infinitives as captions, and `geboorteplaats` against the catalogue's `Plaats van geboorte` wording.
 
 ## Open points for the owner
 
-1. Section 17.2 conflict: the guideline requires an owner-approved static mockup (390, 1280 and 3440, light and dark) before any build, and also says mockups are not committed. This document is text only and does not meet §17.2. Decide how the mockup is shown and approved.
-2. Whether the Compare with another person goal is wanted on first run, when the user has only one person and it needs a second to be useful, or only once two people exist.
-3. Whether the empty state should also offer file import through `PersonFileActions`, for users who already hold a person file.
-4. Dutch review of every nl string above, and whether the empty-state button is renamed or keeps the existing `addPerson` label.
+1. Section 17.2: the guideline requires an owner-approved static mockup (390, 1280 and 3440, light and dark) before any build. This document is text only and does not meet §17.2. Next step: produce the static mockups for sign-off, then tick box 1 and build.
+2. Resolved 2026-11-04: Compare with another person is removed from first-run goals and appears only once two or more people exist.
+3. Resolved 2026-11-04: the People empty state gets a secondary import action (Import data / Gegevens importeren) next to the primary Add your chart action.
+4. Dutch review of every nl string above. In particular the nl strings use `je` (`Voeg je eerste persoon toe`) while the existing catalogue avoids `je` and `u`; the reviewer decides, and nothing is changed unilaterally.
