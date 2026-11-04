@@ -21,7 +21,7 @@
  * @module ui/wheel-interaction
  * @purpose Click-to-isolate interaction logic shared by every chart wheel (natal, bi-wheels, ring legends — #400/#412/#418/#448): determines what was clicked and dims everything else in the drawn SVG.
  * @conventions Reads only the wheel's own markup data-attributes (data-body, data-ring, data-sign, data-aspect-body-a/b, data-ring-legend) rather than the underlying chart data, so one implementation serves every wheel type; applies classes directly to injected DOM (not React state) since the wheel markup is a raw string, not React elements.
- * @exports aspectKeyFor, selectionKeyForTarget, applyIsolation, WheelIsolation, useWheelIsolation
+ * @exports aspectKeyFor, selectionKeyForTarget, applyIsolation, ISOLATED_LINE_CLASS, WheelIsolation, useWheelIsolation
  */
 import { selectionKey } from '../interpretation/selection-key.js';
 import { useEffect, useRef, useState } from 'react';
@@ -176,12 +176,19 @@ function whatStays(root: Element, selectionKey: string): Keep | undefined {
   return undefined;
 }
 
+/** Put on an aspect line that a body isolation (#1063) takes off the wheel; styled `display: none` in `app.css`. */
+export const ISOLATED_LINE_CLASS = 'chart-isolate-hidden';
+
 /**
  * Dims everything on the wheel except what `selectionKey` keeps, or clears every dimming when it is
- * `undefined`. Applied straight to the injected DOM — the wheel is a raw markup string, not React
+ * `undefined`. With `isolateBodyLines` (#1063) and a `body:` selection, the aspect lines that do not touch
+ * the selected body are also taken off the wheel rather than only faded, leaving that body, its contacts and
+ * the lines between them. Only the drawing changes: which aspects exist is whatever the markup already carried,
+ * so no aspect, orb or position is recomputed here. Applied straight to the injected DOM — the wheel is a raw markup string, not React
  * elements, so no amount of state can re-render its classes. `chart-dimmed` is styled in `app.css`.
  */
-export function applyIsolation(root: Element, selectionKey: string | undefined): void {
+export function applyIsolation(root: Element, selectionKey: string | undefined, isolateBodyLines = false): void {
+  const hideUnrelated = isolateBodyLines && selectionKey?.startsWith('body:') === true;
   const keep = selectionKey === undefined ? undefined : whatStays(root, selectionKey);
   for (const element of root.querySelectorAll('[data-body]')) {
     element.classList.toggle('chart-dimmed', keep !== undefined && !keep.bodies.has(idOfBodyElement(element)));
@@ -193,7 +200,9 @@ export function applyIsolation(root: Element, selectionKey: string | undefined):
     );
   }
   for (const element of root.querySelectorAll('[data-aspect-body-a]')) {
-    element.classList.toggle('chart-dimmed', keep !== undefined && !keep.links.has(element));
+    const unrelated = keep !== undefined && !keep.links.has(element);
+    element.classList.toggle('chart-dimmed', unrelated);
+    element.classList.toggle(ISOLATED_LINE_CLASS, unrelated && hideUnrelated);
   }
   // Only a `ring` selection says anything about which legend entry to dim (#455) — `keep.rings`
   // is `undefined` for every other kind, so this loop is a no-op then, same as a fresh wheel.
@@ -223,6 +232,9 @@ export interface WheelIsolation {
   readonly toggle: (key: string) => void;
   /** Selects `key` outright, even when it is already the selection (#815: a "Show" button must never un-show). */
   readonly select: (key: string) => void;
+  /** Whether a selected body takes the other aspect lines off the wheel (#1063). */
+  readonly linesIsolated: boolean;
+  readonly setLinesIsolated: (isolated: boolean) => void;
   /** Goes on the same element as `wheelRef`. */
   readonly onClick: (event: React.MouseEvent<HTMLDivElement>) => void;
   /** Lets a focused ring legend toggle isolation with Enter or Space. */
@@ -234,7 +246,11 @@ export interface WheelIsolation {
  * markup: a new one (a redraw, another person, changed settings) may no longer contain what was
  * selected, so the selection is cleared rather than left pointing at something that is gone.
  */
-export function useWheelIsolation(resetKey: unknown): WheelIsolation {
+export function useWheelIsolation(
+  resetKey: unknown,
+  options: { readonly isolateBodyLines?: boolean } = {},
+): WheelIsolation {
+  const [linesIsolated, setLinesIsolated] = useState(options.isolateBodyLines ?? false);
   const wheelRef = useRef<HTMLDivElement>(null);
   const [selectionKey, setSelectionKey] = useState<string | undefined>(undefined);
 
@@ -243,12 +259,14 @@ export function useWheelIsolation(resetKey: unknown): WheelIsolation {
   }, [resetKey]);
 
   useEffect(() => {
-    if (wheelRef.current !== null) applyIsolation(wheelRef.current, selectionKey);
-  }, [selectionKey, resetKey]);
+    if (wheelRef.current !== null) applyIsolation(wheelRef.current, selectionKey, linesIsolated);
+  }, [selectionKey, resetKey, linesIsolated]);
 
   return {
     wheelRef,
     selectionKey,
+    linesIsolated,
+    setLinesIsolated,
     clear: () => {
       setSelectionKey(undefined);
     },
