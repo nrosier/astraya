@@ -84,3 +84,4 @@ These cause build/CI failures if violated:
 - **Host:** macOS (BSD userland, NOT GNU/Linux).
 - **CLI Rules:** Avoid GNU flags (`cat -A`, `grep -P`, `date -d`, `readlink -f`).
 - **BSD Equivalents:** `od -c` (non-printables), `grep -E` (regex), `sed -i ''` (in-place edit), `stat -f` / `realpath` (dates/paths).
+- **rtk (Rust Token Killer):** the owner runs shell commands through rtk, which filters and compresses command output, so output can differ from what the tool normally prints (shortened, summarised, or with lines dropped). Do not rely on a summarised result: check the exit code, and re-run the raw command when output looks truncated or a check seems to pass or fail without detail. Run it unfiltered with `rtk bypass <cmd>`.
