@@ -1,8 +1,8 @@
 /**
- * The sub-view navigation of the four multi-view sections (#1050): Transits & forecast, Progressions & directions,
- * Relationship charts and Tools. Ordinary route links in the shared tab row, styled like the chart view links;
- * every link reachable by keyboard with a visible focus ring; the labelled Select at 40rem and below inside a
- * landmark (axe `region`); the Horary page placing its row exactly where the other Tools pages do; and the row
+ * The sub-view navigation of the multi-view sections (#1050): Transits & forecast, Progressions & directions and
+ * Relationship charts as ordinary links in the shared tab row, styled like the chart view links, every link
+ * reachable by keyboard with a visible focus ring, the labelled Select at 40rem and below inside a landmark (axe
+ * `region`); the Tools pages (#1139) as a "Tools" header with a Tabs bar and the Select fallback, and the frame
  * holding at 390x844, 1280x800 and 3440x1440 in both themes.
  */
 import { mkdtempSync, rmSync } from 'node:fs';
@@ -74,8 +74,6 @@ const SECTIONS: readonly Section[] = [
     label: 'Relationship Charts subtabs',
     hash: (id) => `#/people/${id}/relationships/synastry`,
   },
-  { name: 'Tools', label: 'Tools subtabs', hash: () => '#/explore/cycles' },
-  { name: 'Tools (Horary)', label: 'Tools subtabs', hash: () => '#/explore/horary' },
 ];
 
 async function openSection(section: Section): Promise<void> {
@@ -92,46 +90,6 @@ test('sub-view links are ordinary links with no tab role, in every group', async
     await expect(nav.locator('[role="tab"], [role="tablist"]')).toHaveCount(0);
     expect(await nav.getByRole('link').count(), `${section.name}: links`).toBeGreaterThan(1);
     await expect(nav.locator('a[aria-current="page"]')).toHaveCount(1);
-  }
-});
-
-test('sub-view links share the chart view links style: colour, weight, size, padding and the active rule', async () => {
-  test.setTimeout(120_000);
-  const read = async (selector: string): Promise<Record<string, string>> => {
-    const style = await page.evaluate<Record<string, string> | null>(`(() => {
-      const element = document.querySelector(${JSON.stringify(selector)});
-      if (element === null) return null;
-      const style = getComputedStyle(element);
-      const pick = (name) => style.getPropertyValue(name);
-      return {
-        color: pick('color'),
-        fontSize: pick('font-size'),
-        fontWeight: pick('font-weight'),
-        padding: pick('padding'),
-        borderBottomWidth: pick('border-bottom-width'),
-        borderBottomColor: pick('border-bottom-color'),
-        textDecorationLine: pick('text-decoration-line'),
-      };
-    })()`);
-    if (style === null) throw new Error(`no element for ${selector}`);
-    expect(style.fontSize, selector).toMatch(/px$/);
-    return style;
-  };
-
-  for (const theme of THEMES) {
-    await page.emulateMedia({ colorScheme: theme });
-    await page.goto(`${baseUrl}/#/people/${personId}/charts/natal/wheel`);
-    await expect(page.locator('nav.chart-view-nav a[aria-current="page"]')).toBeVisible({ timeout: 30_000 });
-    const chartActive = await read('nav.chart-view-nav a[aria-current="page"]');
-    const chartIdle = await read('nav.chart-view-nav a:not([aria-current])');
-
-    await page.goto(`${baseUrl}/#/explore/cycles`);
-    const nav = page.getByRole('navigation', { name: 'Tools subtabs' });
-    await expect(nav.locator('a[aria-current="page"]')).toBeVisible({ timeout: 30_000 });
-    expect(await read('nav[aria-label="Tools subtabs"] a[aria-current="page"]'), `active (${theme})`).toEqual(
-      chartActive,
-    );
-    expect(await read('nav[aria-label="Tools subtabs"] a:not([aria-current])'), `idle (${theme})`).toEqual(chartIdle);
   }
 });
 
@@ -182,48 +140,59 @@ for (const theme of THEMES) {
   });
 }
 
-test('the Horary page shows its sub-view row where the other Tools pages do', async () => {
+const TOOL_HASHES = ['cycles', 'event-search', 'eclipses', 'horary', 'electional', 'rectification'] as const;
+
+test('every Tools page has a Tools h1, a Tabs bar with the tool open, and its own name as a section heading (#1139)', async () => {
   test.setTimeout(120_000);
-  for (const viewport of VIEWPORTS) {
-    await page.setViewportSize(viewport);
-    const boxes: Record<string, { x: number; y: number; width: number }> = {};
-    for (const tool of ['cycles', 'eclipses', 'horary', 'electional']) {
-      await page.goto(`${baseUrl}/#/explore/${tool}`);
-      await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 30_000 });
-      const row = page.locator('.section-nav');
-      const box = await row.boundingBox();
-      if (box === null) throw new Error(`${tool}: no sub-view row`);
-      boxes[tool] = { x: box.x, y: box.y, width: box.width };
-      // The row is the first thing in the content column, above the page's own <main>.
-      const aboveMain = await page.evaluate<number>(
-        `(() => { const row = document.querySelector('.section-nav'); return row.compareDocumentPosition(document.querySelector('main')) & 4; })()`,
-      );
-      expect(aboveMain, `${tool}: row precedes main`).toBeGreaterThan(0);
-    }
-    const reference = boxes.cycles;
-    for (const [tool, box] of Object.entries(boxes)) {
-      expect(box, `${tool} at ${String(viewport.width)}`).toEqual(reference);
-    }
+  for (const tool of TOOL_HASHES) {
+    await page.goto(`${baseUrl}/#/explore/${tool}`);
+    await expect(page.getByRole('heading', { level: 1, name: 'Tools' })).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
+    const tabs = page.getByRole('tablist', { name: 'Tools subtabs' });
+    await expect(tabs.getByRole('tab')).toHaveCount(TOOL_HASHES.length);
+    await expect(tabs.locator('[role="tab"][aria-selected="true"]')).toHaveCount(1);
+    await expect(page.locator(`#tools-panel-${tool} h2`).first()).toBeVisible();
   }
 });
 
+test('Tools tabs: arrow, Home and End move between tools at their unchanged routes, with a visible focus ring (#1139)', async () => {
+  test.setTimeout(120_000);
+  await page.goto(`${baseUrl}/#/explore/cycles`);
+  const tabs = page.getByRole('tablist', { name: 'Tools subtabs' });
+  await expect(tabs).toBeVisible({ timeout: 30_000 });
+  await tabs.getByRole('tab', { selected: true }).focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(page).toHaveURL(/#\/explore\/event-search$/);
+  await expect(tabs.getByRole('tab', { selected: true })).toBeFocused();
+  const outline = await page.evaluate<{ width: string; style: string }>(
+    `(() => ({ width: getComputedStyle(document.activeElement).outlineWidth, style: getComputedStyle(document.activeElement).outlineStyle }))()`,
+  );
+  expect(outline.style).not.toBe('none');
+  expect(outline.width).not.toBe('0px');
+  await page.keyboard.press('End');
+  await expect(page).toHaveURL(/#\/explore\/rectification$/);
+  await page.keyboard.press('Home');
+  await expect(page).toHaveURL(/#\/explore\/cycles$/);
+});
+
 for (const theme of THEMES) {
-  test(`the sub-view row holds at 390x844, 1280x800 and 3440x1440 in the ${theme} theme`, async () => {
+  test(`the Tools frame holds at 390x844, 1280x800 and 3440x1440 in the ${theme} theme (#1139)`, async () => {
     test.setTimeout(240_000);
     await page.emulateMedia({ colorScheme: theme });
     for (const viewport of VIEWPORTS) {
       await page.setViewportSize(viewport);
-      for (const section of SECTIONS) {
-        await openSection(section);
-        const what = `${section.name} at ${String(viewport.width)}x${String(viewport.height)} (${theme})`;
+      for (const tool of TOOL_HASHES) {
+        await page.goto(`${baseUrl}/#/explore/${tool}`);
+        await expect(page.getByRole('heading', { level: 1, name: 'Tools' })).toBeVisible({ timeout: 30_000 });
+        const what = `${tool} at ${String(viewport.width)}x${String(viewport.height)} (${theme})`;
         const sideways = await page.evaluate<boolean>(
           'document.documentElement.scrollWidth > document.documentElement.clientWidth + 1',
         );
         expect(sideways, `${what}: scrolls sideways`).toBe(false);
         const narrow = viewport.width <= 640;
-        await expect(page.locator('.section-nav .tab-row__fallback')).toBeVisible({ visible: narrow });
-        await expect(page.locator('.section-nav .tab-row__tabs')).toBeVisible({ visible: !narrow });
-        const axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).include('.section-nav').analyze();
+        await expect(page.locator('.tools-select')).toBeVisible({ visible: narrow });
+        await expect(page.locator('.tools-tabs')).toBeVisible({ visible: !narrow });
+        const axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
         expect(
           axe.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`),
           `${what}: accessibility`,

@@ -579,8 +579,8 @@ describe('no top-of-view glossary lists (#901)', () => {
           root.render(node());
           await Promise.resolve();
         });
-        // The view must have mounted its page header, so an empty render cannot pass this check.
-        expect(container.querySelector('h1')).not.toBeNull();
+        // The view must have mounted its page header, so an empty render cannot pass this check (a Tools view's title is an h2, #1139).
+        expect(container.querySelector('.page-header h1, .page-header h2')).not.toBeNull();
         expect(container.querySelector('ul.glossary-terms')).toBeNull();
       } finally {
         act(() => {

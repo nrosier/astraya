@@ -2,7 +2,7 @@
 /**
  * Keyboard reachability of the sub-view tabs of every multi-view sidebar section (#882): Tab moves focus
  * onto the section's tab row, and the arrow keys move between its tabs and activate the one they land on.
- * Covers Transits & Forecast, Progressions & Directions, Relationship Charts and Tools.
+ * Covers Transits & Forecast, Progressions & Directions and Relationship Charts; Tools moved to ToolsLayout (#1139), see ui-tools-layout.test.tsx.
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -45,7 +45,6 @@ const SECTIONS: readonly { readonly name: string; readonly href: string }[] = [
   { name: 'Transits & Forecast', href: '#/people/p-abcdefghijklmnop/timing/transits' },
   { name: 'Progressions & Directions', href: '#/people/p-abcdefghijklmnop/timing/profections' },
   { name: 'Relationship Charts', href: '#/people/p-abcdefghijklmnop/relationships/synastry' },
-  { name: 'Tools', href: '#/explore/cycles' },
 ];
 
 describe('section sub-view tabs are keyboard reachable (#882)', () => {

@@ -34,7 +34,7 @@ test('the event search downloads its results as a valid .ics file', async ({ pag
   test.setTimeout(120_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await openTool(page, 'Ephemeris research');
-  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: 'Ephemeris research' })).toBeVisible();
 
   // March 2024: it holds the 25 March full Moon, and Mercury stationed retrograde on 1 April.
   await page.getByLabel('From', { exact: true }).fill('2024-03-01');

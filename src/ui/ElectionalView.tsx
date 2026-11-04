@@ -160,7 +160,7 @@ export function ElectionalView(): React.JSX.Element {
   return (
     <main className="shell shell--wide">
       <BackLink fallback="#/people" />
-      <PageHeader title={t.heading} titleTerm="electional" basis={basisLine} basisEditHref={null} />
+      <PageHeader title={t.heading} titleTerm="electional" basis={basisLine} basisEditHref={null} headingLevel={2} />
       <div className="tool-layout">
         <section className="tool-card tool-form" aria-labelledby="electional-search-heading">
           <h2 id="electional-search-heading">{t.searchHeading}</h2>

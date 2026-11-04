@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
- * The sub-view tabs of the sidebar sections (#882): Transits & Forecast, Progressions & Directions,
- * Relationship Charts and Tools each show their sub-views as a tab row on the page, and the first tab is
+ * The sub-view tabs of the sidebar sections (#882): Transits & Forecast, Progressions & Directions
+ * and Relationship Charts each show their sub-views as a tab row on the page, and the first tab is
  * the sub-view the section's single sidebar entry opens (`AppNav.tsx`).
  */
 import { act } from 'react';
@@ -11,7 +11,6 @@ import { setLocale } from '../src/ui/locale.js';
 import { PERSON_TAB_FAMILIES, PERSON_TABS } from '../src/ui/person-nav.js';
 import { parseRoute, type Route } from '../src/ui/route.js';
 import { SectionNav, sectionTabsFor } from '../src/ui/SectionNav.js';
-import { TOOLS } from '../src/ui/tools-nav.js';
 
 let mounted: { container: HTMLElement; root: Root } | undefined;
 
@@ -56,11 +55,8 @@ describe('sectionTabsFor', () => {
     }
   });
 
-  it('lists every tool for the Tools section, and nothing on other routes', () => {
-    const section = sectionTabsFor(parseRoute('#/explore/eclipses'));
-    expect(section?.section).toBe('tools');
-    expect(section?.tabs.map((tab) => tab.href)).toEqual(TOOLS.map((tool) => tool.href));
-    expect(section?.activeKey).toBe('eclipses');
+  it('draws nothing for the Tools routes (their Tabs bar is ToolsLayout, #1139) or other routes', () => {
+    expect(sectionTabsFor(parseRoute('#/explore/eclipses'))).toBeNull();
     expect(sectionTabsFor(parseRoute('#/people'))).toBeNull();
     expect(sectionTabsFor(parseRoute('#/people/p-abcdefghijklmnop/birth-record'))).toBeNull();
     expect(sectionTabsFor(parseRoute('#/people/p-abcdefghijklmnop/charts'))).toBeNull();
@@ -97,32 +93,11 @@ describe('SectionNav', () => {
     expect(labels(transits)).toEqual(['Transits', 'Forecast']);
   });
 
-  it('draws the six tools as the Tools tabs, in Dutch when the language is Dutch', async () => {
-    const box = await mount(parseRoute('#/explore/cycles'));
-    expect(box.querySelector('nav[aria-label="Tools subtabs"]')).not.toBeNull();
-    expect(labels(box)).toEqual([
-      'Planetary cycles',
-      'Ephemeris research',
-      'Eclipses',
-      'Horary chart',
-      'Electional search',
-      'Birth-time rectification',
-    ]);
-    act(() => {
-      mounted?.root.unmount();
-    });
-    mounted?.container.remove();
-    setLocale('nl');
-    const nl = await mount(parseRoute('#/explore/eclipses'));
-    expect(labels(nl)).toContain('Verduisteringen');
-  });
-
   it('keeps every section tab a focusable link in tab order', async () => {
     const routes = [
       '#/people/p-abcdefghijklmnop/relationships/synastry',
       '#/people/p-abcdefghijklmnop/timing/transits',
       '#/people/p-abcdefghijklmnop/timing/profections',
-      '#/explore/cycles',
     ];
     for (const href of routes) {
       const box = await mount(parseRoute(href));

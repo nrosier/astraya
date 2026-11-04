@@ -48,7 +48,9 @@ test('every screen titles its tab with its heading and the app name, and the tit
     const titles = new Set<string>();
     for (const route of routes) {
       await gotoAndSettle(page, `${baseUrl}/#/${route}`);
-      const heading = (await page.getByRole('heading', { level: 1 }).first().innerText()).trim();
+      // A Tools page's tab title names the tool, its h2 section heading (#1139); its h1 is the shared "Tools".
+      const level = route.startsWith('explore/') ? 2 : 1;
+      const heading = (await page.getByRole('heading', { level }).first().innerText()).trim();
       await expect(page, route.replace(personId, ':id')).toHaveTitle(`${heading} – Astraya`);
       titles.add(await page.title());
     }

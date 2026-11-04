@@ -27,6 +27,8 @@ import { SyncBadge } from './SyncBadge.js';
 import { useCalculationSettingsMigration } from './use-calculation-settings-migration.js';
 import { SymbolToggle } from './SymbolToggle.js';
 import { SectionNav } from './SectionNav.js';
+import { ToolsLayout } from './ToolsLayout.js';
+import { activeToolKey } from './feature-registry.js';
 import { WorkspaceShell } from './WorkspaceShell.js';
 import type { Route } from './route.js';
 import { BackLink } from './BackLink.js';
@@ -295,6 +297,7 @@ function AppShell(): React.JSX.Element {
 
   const parsed = parseRoute(route);
   const screen = renderScreen(parsed, seVersion);
+  const toolKey = activeToolKey(parsed);
 
   return (
     // Wraps the whole shell, not just `Stored`: which store is open follows who is signed
@@ -355,9 +358,15 @@ function AppShell(): React.JSX.Element {
             every lazy screen wants the same fallback, and keeping the boundary outside
             `Stored` means a chunk still in flight does not also restart the store. */}
               <div id="main-content" className="main-content" tabIndex={-1}>
-                {/* The sub-views of Transits & Forecast, Progressions & Directions, Relationship Charts and Tools (#882). */}
+                {/* The sub-views of Transits & Forecast, Progressions & Directions, and Relationship Charts (#882); Tools has its own Tabs frame (#1139). */}
                 <SectionNav route={parsed} />
-                <Suspense fallback={<LoadingScreen />}>{screen}</Suspense>
+                {toolKey === null ? (
+                  <Suspense fallback={<LoadingScreen />}>{screen}</Suspense>
+                ) : (
+                  <ToolsLayout active={toolKey}>
+                    <Suspense fallback={<LoadingScreen />}>{screen}</Suspense>
+                  </ToolsLayout>
+                )}
               </div>
             </WorkspaceShell>
             <PwaStatus />

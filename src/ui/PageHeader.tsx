@@ -18,7 +18,7 @@
  */
 /**
  * @module ui/PageHeader
- * @purpose Content-header primitive (#506/#509): page title, optional basis line with an Edit action (#1059), and the current screen's own registered exports, replacing the old global "This page" Export submenu.
+ * @purpose Content-header primitive (#506/#509): page title (an h1, or an h2 section heading under a page-level h1, #1139), optional basis line with an Edit action (#1059), and the current screen's own registered exports, replacing the old global "This page" Export submenu.
  * @conventions Reads `export-registry.tsx`'s existing context directly — a screen's useRegisterExports call needs no change. Uses its own `useExclusiveOpen` instance (not the header's) for the export dropdown's open/close/Escape/outside-click behavior.
  * @exports PageHeader, BASIS_EDIT_HREF
  */
@@ -49,6 +49,7 @@ export function PageHeader({
   basisEditHref = BASIS_EDIT_HREF,
   children,
   titleAside,
+  headingLevel = 1,
 }: {
   readonly title: string;
   /** A glossary term the title names: the title text itself opens that term's definition (#901). */
@@ -63,6 +64,8 @@ export function PageHeader({
   readonly children?: React.ReactNode;
   /** A small indicator read as part of the title, e.g. a save-status dot, placed directly after the title text (#896). */
   readonly titleAside?: React.ReactNode;
+  /** 2 when a page-level h1 already sits above this header (the Tools pages, #1139); the title is then a section heading. */
+  readonly headingLevel?: 1 | 2;
 }): React.JSX.Element {
   // The tab title follows the page heading (#1078).
   useDocumentTitle(title);
@@ -79,6 +82,8 @@ export function PageHeader({
     };
   }, []);
   const isOpen = dropdown.open === 'export';
+  const Heading = headingLevel === 2 ? 'h2' : 'h1';
+  const titleNode = titleTerm === undefined ? title : <GlossaryTerm id={titleTerm}>{title}</GlossaryTerm>;
 
   const run = (label: string, action: () => void | Promise<void>): void => {
     dropdown.close();
@@ -118,13 +123,13 @@ export function PageHeader({
   );
 
   return (
-    <div className="page-header">
+    <div className={headingLevel === 2 ? 'page-header page-header--section' : 'page-header'}>
       <div className="page-header-row">
         {titleAside === undefined ? (
-          <h1>{titleTerm === undefined ? title : <GlossaryTerm id={titleTerm}>{title}</GlossaryTerm>}</h1>
+          <Heading>{titleNode}</Heading>
         ) : (
           <div className="page-header-title">
-            <h1>{titleTerm === undefined ? title : <GlossaryTerm id={titleTerm}>{title}</GlossaryTerm>}</h1>
+            <Heading>{titleNode}</Heading>
             {titleAside}
           </div>
         )}

@@ -101,7 +101,8 @@ const { About } = await import('../src/ui/About.js');
 const { Changelog } = await import('../src/ui/Changelog.js');
 const { SetupForm } = await import('../src/ui/SetupForm.js');
 
-async function headingOf(node: ReactNode): Promise<HTMLHeadingElement> {
+/** The screen's page-header title: its h1, or for a Tools screen (#1139) its h2 under the shared Tools h1. */
+async function headingOf(node: ReactNode, tag: 'h1' | 'h2' = 'h1'): Promise<HTMLHeadingElement> {
   const container = document.createElement('div');
   document.body.append(container);
   const root = createRoot(container);
@@ -110,9 +111,9 @@ async function headingOf(node: ReactNode): Promise<HTMLHeadingElement> {
       root.render(node);
       await Promise.resolve();
     });
-    const h1 = container.querySelector('h1');
-    if (h1 === null) throw new Error('no h1 rendered');
-    expect(container.querySelectorAll('h1')).toHaveLength(1);
+    const h1 = container.querySelector(tag);
+    if (h1 === null) throw new Error(`no ${tag} rendered`);
+    expect(container.querySelectorAll('h1')).toHaveLength(tag === 'h1' ? 1 : 0);
     return h1;
   } finally {
     act(() => {
@@ -124,7 +125,7 @@ async function headingOf(node: ReactNode): Promise<HTMLHeadingElement> {
 
 function expectPageHeader(h1: HTMLHeadingElement): void {
   expect(h1.parentElement?.className).toBe('page-header-row');
-  expect(h1.parentElement?.parentElement?.className).toBe('page-header');
+  expect(h1.parentElement?.parentElement?.className).toMatch(/^page-header( page-header--section)?$/);
   expect(h1.textContent).not.toBe('');
 }
 
@@ -253,27 +254,27 @@ describe('one PageHeader pattern (#887)', () => {
 
   describe('global and tool screens', () => {
     it('Cycles', async () => {
-      expectPageHeader(await headingOf(<CyclesView />));
+      expectPageHeader(await headingOf(<CyclesView />, 'h2'));
     });
 
     it('Eclipses', async () => {
-      expectPageHeader(await headingOf(<EclipsesView />));
+      expectPageHeader(await headingOf(<EclipsesView />, 'h2'));
     });
 
     it('Event search', async () => {
-      expectPageHeader(await headingOf(<EventSearchView />));
+      expectPageHeader(await headingOf(<EventSearchView />, 'h2'));
     });
 
     it('Horary', async () => {
-      expectPageHeader(await headingOf(<HoraryView view="wheel" />));
+      expectPageHeader(await headingOf(<HoraryView view="wheel" />, 'h2'));
     });
 
     it('Electional', async () => {
-      expectPageHeader(await headingOf(<ElectionalView />));
+      expectPageHeader(await headingOf(<ElectionalView />, 'h2'));
     });
 
     it('Rectification', async () => {
-      expectPageHeader(await headingOf(<RectificationView />));
+      expectPageHeader(await headingOf(<RectificationView />, 'h2'));
     });
 
     it('About', async () => {

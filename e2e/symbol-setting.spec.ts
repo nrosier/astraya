@@ -47,7 +47,7 @@ test('the transit wheel and the cycles diagram follow the class too', async ({ p
   });
   await page.goto(`${baseUrl}/#/explore/cycles`);
   await reloadAndSettle(page);
-  await expect(page.getByRole('heading', { name: 'Planetary cycles', level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Planetary cycles', level: 2 })).toBeVisible();
   await expect(page.locator('.cycle-diagram text.chart-symbol-text-text').first()).toBeVisible({ timeout: 30_000 });
 });
 

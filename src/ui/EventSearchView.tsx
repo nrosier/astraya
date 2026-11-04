@@ -201,7 +201,7 @@ export function EventSearchView(): React.JSX.Element {
   return (
     <main className="shell">
       <BackLink fallback="#/people" />
-      <PageHeader title={t.heading} basis={basisLine} basisEditHref={null} />
+      <PageHeader title={t.heading} basis={basisLine} basisEditHref={null} headingLevel={2} />
       <div className="tool-layout">
         <section className="tool-card tool-form" aria-labelledby="event-search-heading">
           <h2 id="event-search-heading">{t.searchHeading}</h2>
