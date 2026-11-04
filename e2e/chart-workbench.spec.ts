@@ -208,6 +208,65 @@ test.describe('with the shared people (#799)', () => {
     expect(await fontSize(symbol)).toBe(await fontSize(angle));
   });
 
+  test('the aspect matrix scales glyph, orb and a/s flag to a compact tile with tabular numerals (#900)', async () => {
+    test.setTimeout(90_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await openNatalChart(page, 'Aspect matrix');
+    const grid = page.locator('.mgrid');
+    await expect(grid).toBeVisible();
+    await expect(grid).toHaveCSS('font-variant-numeric', 'tabular-nums');
+    const cell = grid.locator('.mgrid-aspect').first();
+    const cellBox = await cell.boundingBox();
+    const glyphBox = await cell.locator('.mgrid-glyph').boundingBox();
+    const orbBox = await cell.locator('.mgrid-orb').boundingBox();
+    expect(cellBox).not.toBeNull();
+    expect(glyphBox).not.toBeNull();
+    expect(orbBox).not.toBeNull();
+    if (cellBox === null || glyphBox === null || orbBox === null) return;
+    // A compact tile (about 2.75rem) holding the glyph, the orb and the flag inside its own border.
+    expect(cellBox.width).toBeLessThanOrEqual(48);
+    expect(cellBox.height).toBeLessThanOrEqual(48);
+    expect(glyphBox.width).toBeLessThanOrEqual(cellBox.width * 0.5);
+    expect(glyphBox.x).toBeGreaterThanOrEqual(cellBox.x);
+    expect(orbBox.x + orbBox.width).toBeLessThanOrEqual(cellBox.x + cellBox.width + 0.5);
+    expect(orbBox.y + orbBox.height).toBeLessThanOrEqual(cellBox.y + cellBox.height + 0.5);
+  });
+
+  test('the Elements top chart keeps its glyphs crisp and vertically mid-aligned in their cells (#900)', async () => {
+    test.setTimeout(90_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await openNatalChart(page, 'Elements & modalities');
+    const grid = page.locator('.emphasis-screen-grid');
+    await expect(grid).toBeVisible();
+    const glyphs = grid.locator('.emphasis-screen-glyph');
+    await expect(glyphs.first()).toBeVisible();
+    await expect(glyphs.first()).toHaveCSS('shape-rendering', 'geometricprecision');
+    const centreOffset = async (inner: Locator, outer: Locator): Promise<number> => {
+      const innerBox = await inner.boundingBox();
+      const outerBox = await outer.boundingBox();
+      if (innerBox === null || outerBox === null) throw new Error('no box to measure');
+      return Math.abs(innerBox.y + innerBox.height / 2 - (outerBox.y + outerBox.height / 2));
+    };
+    // Every filled cell: its glyph row sits on the cell's vertical centre (within a pixel).
+    const filled = grid.locator('.emphasis-screen-cell', { has: page.locator('.emphasis-screen-glyph') });
+    const count = await filled.count();
+    expect(count).toBeGreaterThan(0);
+    for (let index = 0; index < count; index += 1) {
+      const cell = filled.nth(index);
+      expect(
+        await centreOffset(cell.locator('.emphasis-screen-glyph').first(), cell),
+        `cell ${String(index)}`,
+      ).toBeLessThanOrEqual(1.5);
+    }
+    // The row heading and the row total share their row's vertical centre with the cells.
+    const row = grid.locator('.emphasis-screen-row').first();
+    const firstCell = row.locator('.emphasis-screen-cell').first();
+    expect(await centreOffset(row.locator('.emphasis-screen-row-heading'), firstCell)).toBeLessThanOrEqual(1.5);
+    expect(await centreOffset(row.locator('.emphasis-screen-row-total'), firstCell)).toBeLessThanOrEqual(1.5);
+  });
+
   test('the elements and modalities grid is a view of its own, with its table and a CSV download (#511)', async () => {
     test.setTimeout(90_000);
     await page.setViewportSize({ width: 1600, height: 1000 });
