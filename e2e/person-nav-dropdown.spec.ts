@@ -156,18 +156,24 @@ for (const section of KEYBOARD_SECTIONS) {
   });
 }
 
-test('Tools: every tool tab is reachable with Tab and Enter (#882)', async () => {
+test('Tools: every tool tab is reachable from the keyboard (#882, #1139)', async () => {
   test.setTimeout(60_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await tabUntilFocused(page, entry(page, 'Tools'), 'the Tools sidebar entry');
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/#\/explore\/cycles$/);
 
-  const eclipses = tabs(page, 'Tools').getByRole('link', { name: 'Eclipses', exact: true });
-  await tabUntilFocused(page, eclipses, 'the "Eclipses" tool tab');
-  await page.keyboard.press('Enter');
+  // The Tools bar is a WAI-ARIA tablist: Tab stops on the open tool's tab, and the arrow keys move to the others.
+  const toolTabs = page.getByRole('tablist', { name: 'Tools subtabs' });
+  const cycles = toolTabs.getByRole('tab', { name: 'Planetary cycles', exact: true });
+  await tabUntilFocused(page, cycles, 'the open "Planetary cycles" tool tab');
+  // Wait for each step's route and focus before the next key, as subview-nav.spec.ts does.
+  await page.keyboard.press('ArrowRight');
+  await expect(page).toHaveURL(/#\/explore\/event-search$/);
+  await expect(toolTabs.getByRole('tab', { selected: true })).toBeFocused();
+  await page.keyboard.press('ArrowRight');
   await expect(page).toHaveURL(/#\/explore\/eclipses$/);
-  await expect(eclipses).toHaveAttribute('aria-current', 'page');
+  await expect(toolTabs.getByRole('tab', { name: 'Eclipses', exact: true })).toHaveAttribute('aria-selected', 'true');
 });
 
 test('the section tab row has no automatically detectable accessibility violations', async () => {
