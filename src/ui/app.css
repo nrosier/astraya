@@ -3877,6 +3877,33 @@ svg text.chart-symbol-text-unicode {
   display: none;
 }
 
+/* Keyboard next/previous contact (#1063): the current contact's line and its partner body stand out on the wheel. */
+.chart-wheel-interactive .chart-aspect-link.chart-contact-current .chart-aspect {
+  stroke: var(--accent);
+  stroke-width: 3;
+  opacity: 1;
+}
+
+.chart-wheel-interactive .chart-contact-partner .chart-hit-area {
+  fill: color-mix(in oklab, var(--accent) 24%, transparent);
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+
+.selection-contacts {
+  margin: var(--space-2) 0 0;
+}
+
+.selection-contacts-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.selection-contacts-status {
+  margin: var(--space-2) 0 0;
+}
+
 /*
  * Aspect colour carries the family and nothing else — hard aspects red and
  * heaviest, harmonious ones blue and a shade lighter, the quintile-family

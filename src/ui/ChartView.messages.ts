@@ -325,6 +325,15 @@ const en = {
   isolationClear: 'Clear',
   isolationOnlyThis: 'Show only this body’s aspects',
   isolationShowAll: 'Show all aspects',
+  contactsLabel: 'Step through this body’s aspect contacts',
+  contactsKeyHint:
+    'Focus this control and use Right or Down for the next contact, Left or Up for the previous one. Contacts run in zodiac order from this body.',
+  contactPrevious: 'Previous contact',
+  contactNext: 'Next contact',
+  contactsNone: 'No aspect lines are drawn for this body.',
+  contactsIdle: (count: number) => `${String(count)} ${count === 1 ? 'contact' : 'contacts'}. None chosen yet.`,
+  contactCurrent: (position: number, count: number, aspect: string, partner: string) =>
+    `Contact ${String(position)} of ${String(count)}: ${aspect} ${partner}`,
   inspectorHeading: 'Selection',
   inspectorEmpty: 'Select a planet, sign, house cusp, or aspect to explore it',
   selectionInterpretationHeading: 'What it means',
@@ -663,6 +672,15 @@ const nl: typeof en = {
   isolationClear: 'Wissen',
   isolationOnlyThis: 'Alleen aspecten van dit lichaam tonen',
   isolationShowAll: 'Alle aspecten tonen',
+  contactsLabel: 'Door de aspectcontacten van dit lichaam stappen',
+  contactsKeyHint:
+    'Zet de focus op dit onderdeel en gebruik Rechts of Omlaag voor het volgende contact, Links of Omhoog voor het vorige. De contacten volgen de volgorde van de dierenriem vanaf dit lichaam.',
+  contactPrevious: 'Vorig contact',
+  contactNext: 'Volgend contact',
+  contactsNone: 'Voor dit lichaam zijn geen aspectlijnen getekend.',
+  contactsIdle: (count: number) => `${String(count)} ${count === 1 ? 'contact' : 'contacten'}. Nog geen gekozen.`,
+  contactCurrent: (position: number, count: number, aspect: string, partner: string) =>
+    `Contact ${String(position)} van ${String(count)}: ${aspect} ${partner}`,
   inspectorHeading: 'Selectie',
   inspectorEmpty: 'Selecteer een planeet, teken, huispunt of aspect om het te verkennen',
   selectionInterpretationHeading: 'Wat het betekent',

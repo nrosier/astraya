@@ -171,6 +171,86 @@ test.describe('with the shared people (#799)', () => {
     await expect.poll(visibleLines).toBe(before);
   });
 
+  test('with a body selected, the arrow keys step through its aspect contacts in zodiac order, announced and marked on the wheel (#1063)', async () => {
+    test.setTimeout(90_000);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    const lines = page.locator('svg.chart-dial g.chart-aspect-link');
+    await expect.poll(async () => lines.count()).toBeGreaterThan(3);
+
+    await page.locator('.chart-point[data-body="sun"]').first().click({ force: true });
+    const inspector = page.locator('.selection-inspector');
+    const group = inspector.getByRole('group', { name: 'Step through this body’s aspect contacts', exact: true });
+    await expect(group).toBeVisible();
+    const status = group.getByRole('status');
+    await expect(status).toHaveAttribute('aria-live', 'polite');
+    await expect(status).toHaveText(/^\d+ contacts?\. None chosen yet\.$/);
+    const count = Number(((await status.textContent()) ?? '').split(' ')[0]);
+    // The Sun's drawn lines, read straight from the dial: the stepper offers exactly those.
+    const sunLines = page.locator(
+      'svg.chart-dial g.chart-aspect-link[data-aspect-body-a="sun"][data-ring-a="0"], svg.chart-dial g.chart-aspect-link[data-aspect-body-b="sun"][data-ring-b="0"]',
+    );
+    expect(count).toBe(await sunLines.count());
+    expect(count).toBeGreaterThan(1);
+
+    const current = page.locator('svg.chart-dial .chart-contact-current');
+    // A body is drawn as several elements (glyph, tick, degree stack); its glyph is the `.chart-point`.
+    const partner = page.locator('svg.chart-dial .chart-point.chart-contact-partner');
+    // Keyboard only: focus the Next button and use the arrow keys.
+    const next = group.getByRole('button', { name: 'Next contact', exact: true });
+    await next.focus();
+    await expect(next).toBeFocused();
+    await page.keyboard.press('ArrowRight');
+    await expect(status).toHaveText(new RegExp(`^Contact 1 of ${String(count)}: `));
+    // A visible focus state on the control while stepping by keyboard.
+    await expect(next).toBeFocused();
+    await expect(next).toHaveCSS('outline-style', 'solid');
+    await expect(current).toHaveCount(1);
+    await expect(partner).toHaveCount(1);
+    const first = (await status.textContent()) ?? '';
+
+    // Zodiac order forward from the Sun: each step's partner is at least as far ahead as the one before.
+    const forward = async (): Promise<number> =>
+      Number(
+        await page.evaluate(`(() => {
+          const sun = Number(document.querySelector('svg.chart-dial [data-body="sun"][data-ring="0"]').getAttribute('data-body-longitude'));
+          const other = Number(document.querySelector('svg.chart-dial .chart-point.chart-contact-partner').getAttribute('data-body-longitude'));
+          return (((other - sun) % 360) + 360) % 360;
+        })()`),
+      );
+    let previous = await forward();
+    for (let step = 2; step <= count; step += 1) {
+      await page.keyboard.press('ArrowDown');
+      await expect(status).toHaveText(new RegExp(`^Contact ${String(step)} of ${String(count)}: `));
+      const now = await forward();
+      expect(now).toBeGreaterThanOrEqual(previous);
+      previous = now;
+    }
+    // Next from the last contact wraps to the first; Left and Up go back.
+    await page.keyboard.press('ArrowRight');
+    await expect(status).toHaveText(first);
+    await page.keyboard.press('ArrowLeft');
+    await expect(status).toHaveText(new RegExp(`^Contact ${String(count)} of ${String(count)}: `));
+    await page.keyboard.press('ArrowUp');
+    await expect(status).toHaveText(new RegExp(`^Contact ${String(count - 1)} of ${String(count)}: `));
+
+    // The same contacts with isolation off: the stepper is unchanged and the mark stays on a drawn, visible line.
+    await inspector.getByRole('button', { name: 'Show all aspects', exact: true }).click();
+    await expect(group).toBeVisible();
+    await next.focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(status).toHaveText(new RegExp(`^Contact \\d+ of ${String(count)}: `));
+    await expect(current).toHaveCount(1);
+    await expect(current).toBeVisible();
+
+    // Clear removes the control, its marks and the selection.
+    await inspector.getByRole('button', { name: 'Clear', exact: true }).click();
+    await expect(group).toHaveCount(0);
+    await expect(current).toHaveCount(0);
+    await expect(page.locator('svg.chart-dial .chart-contact-partner')).toHaveCount(0);
+  });
+
   test('Show on an Aspects row opens the Wheel with that aspect highlighted (#815)', async () => {
     test.setTimeout(90_000);
     await page.setViewportSize({ width: 1600, height: 1000 });
