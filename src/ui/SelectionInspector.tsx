@@ -8,7 +8,7 @@
 /**
  * @module SelectionInspector
  * @purpose Shared inspector for the selected chart item: heading, facts, deterministic corpus meaning, related aspects, Clear, then any optional AI interpretation.
- * @conventions Facts and corpus text come first; the optional AI block (`FocusInterpretation`) is only ever appended after them. Always rendered (an empty prompt when nothing is selected) so its space is reserved; a polite live region so a selection made from a table row button is announced.
+ * @conventions Facts and corpus text come first; the optional AI block (`FocusInterpretation`) is only ever appended after them. Always rendered (an empty prompt when nothing is selected) so its space is reserved; a polite live region so a selection made from a table row button is announced. A selected body also gets the keyboard next/previous contact control (#1063, order in `wheel-contacts.ts`).
  * @exports SelectionInspector, WheelIsolationFacts
  */
 import { formatOrb } from './format.js';
@@ -24,6 +24,8 @@ import { Badge } from './primitives/Badge.js';
 import { Button } from './primitives/Button.js';
 import { WheelSelectionText } from './WheelSelectionText.js';
 import type { InterpretationExclusions } from '../interpretation/rules.js';
+import { useId } from 'react';
+import { contactDirectionForKey, type ContactStepper } from './wheel-contacts.js';
 
 /**
  * Click-to-isolate (#400, #412): what's currently selected, from the chart's own tables. A mouse/touch
@@ -42,6 +44,76 @@ export interface WheelIsolationFacts {
     | undefined;
   /** For a selected house cusp: the bodies standing in that house. */
   readonly bodiesInHouse?: readonly PositionRow[] | undefined;
+}
+
+/**
+ * Keyboard next/previous contact for a selected body (#1063). The dial has no tab stops, so the control lives
+ * here: two buttons, and the arrow keys anywhere in the group (Right/Down next, Left/Up previous; the order is
+ * documented in `wheel-contacts.ts` and in the hint below). The current contact is said in a polite live region
+ * and marked on the wheel.
+ */
+function ContactStepperControl({
+  stepper,
+  locale,
+}: {
+  readonly stepper: ContactStepper;
+  readonly locale: Locale;
+}): React.JSX.Element {
+  const t = useMessages(chartViewMessages);
+  const hintId = useId();
+  const { contacts, index, step } = stepper;
+  if (contacts.length === 0) return <p className="hint selection-contacts">{t.contactsNone}</p>;
+  const current = index === undefined ? undefined : contacts[index];
+  const status =
+    current === undefined || index === undefined
+      ? t.contactsIdle(contacts.length)
+      : t.contactCurrent(
+          index + 1,
+          contacts.length,
+          aspectDisplayName(current.aspectKey, locale),
+          bodyDisplayName(current.partnerKey, locale),
+        );
+  return (
+    <div
+      className="selection-contacts"
+      role="group"
+      aria-label={t.contactsLabel}
+      aria-describedby={hintId}
+      onKeyDown={(event) => {
+        const direction = contactDirectionForKey(event.key);
+        if (direction === undefined) return;
+        event.preventDefault();
+        step(direction);
+      }}
+    >
+      <div className="selection-contacts-controls">
+        <Button
+          variant="quiet"
+          size="compact"
+          onClick={() => {
+            step('previous');
+          }}
+        >
+          {t.contactPrevious}
+        </Button>
+        <Button
+          variant="quiet"
+          size="compact"
+          onClick={() => {
+            step('next');
+          }}
+        >
+          {t.contactNext}
+        </Button>
+      </div>
+      <p className="selection-contacts-status" role="status" aria-live="polite" aria-atomic="true">
+        {status}
+      </p>
+      <p id={hintId} className="hint">
+        {t.contactsKeyHint}
+      </p>
+    </div>
+  );
 }
 
 /** The bodies in a sign or house with their degrees, or the empty-state sentence. */
@@ -76,6 +148,7 @@ export function SelectionInspector({
   exclude,
   onClear,
   lineIsolation,
+  contactStepper,
   derivedChartNote,
   personId,
 }: {
@@ -89,6 +162,8 @@ export function SelectionInspector({
   readonly onClear: () => void;
   /** The "only this body's aspects" switch (#1063), shown for a selected body only. */
   readonly lineIsolation?: { readonly isolated: boolean; readonly onChange: (isolated: boolean) => void } | undefined;
+  /** Keyboard next/previous contact (#1063), shown for a selected body only. */
+  readonly contactStepper?: ContactStepper | undefined;
   /** Said when the chart is not a natal chart, since the prose below is written for natal placements (#725). */
   readonly derivedChartNote?: string | undefined;
   /** The person the chart belongs to (#768): the AI reading lists and saves under them. */
@@ -132,6 +207,9 @@ export function SelectionInspector({
               >
                 {lineIsolation.isolated ? t.isolationShowAll : t.isolationOnlyThis}
               </Button>
+            )}
+            {contactStepper !== undefined && selectionKey.startsWith('body:') && (
+              <ContactStepperControl stepper={contactStepper} locale={locale} />
             )}
             {placement !== undefined && (
               <p className="selection-inspector-badges">

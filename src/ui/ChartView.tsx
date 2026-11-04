@@ -94,6 +94,7 @@ import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { useWheelIsolation } from './wheel-interaction.js';
+import { useContactStepper } from './wheel-contacts.js';
 import type { SymbolClass } from '../chart/symbol-class.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
@@ -890,6 +891,8 @@ export function ChartDataView({
     linesIsolated,
     setLinesIsolated,
   } = useWheelIsolation(wheelMarkup, { isolateBodyLines: true });
+  // Keyboard next/previous contact for a selected body (#1063): read from the drawn lines, reset by a new selection or Clear.
+  const contactStepper = useContactStepper(wheelRef, isolatedKey, wheelMarkup);
 
   // The Positions and Aspects tables share the wheel's selection (#418): a button on a row selects it on the
   // wheel, and the row the wheel has selected is marked. Only where there is a wheel, and never in the PDF.
@@ -1018,6 +1021,7 @@ export function ChartDataView({
               personId={personId}
               onClear={clearIsolation}
               lineIsolation={{ isolated: linesIsolated, onChange: setLinesIsolated }}
+              contactStepper={contactStepper}
               derivedChartNote={
                 isDerivedChartType(chartType)
                   ? t.derivedChartInterpretationNote(chartTypeT.typeLabels[chartType].toLocaleLowerCase(locale))
