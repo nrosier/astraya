@@ -67,6 +67,22 @@ machines. It is called out here rather than silently folded into the "all
 permissive" summary, since `CLAUDE.md`'s rule is written without a scope
 qualifier.
 
+## Renovate and the Docker base image
+
+`renovate.json` is the only automated dependency tooling. Two rules concern Docker (#122):
+
+- **Shipped base image.** Every stage of `Dockerfile` is `FROM cgr.dev/chainguard/node:latest-dev` or
+  `:latest` (Chainguard/Wolfi, glibc). Chainguard's free tier publishes only those floating tags, so
+  Renovate's Docker manager has no version to bump. A package rule for `cgr.dev/chainguard/node` sets
+  `pinDigests`, so Renovate rewrites each `FROM` to `tag@sha256:...` and opens a PR when the digest moves.
+  The rule labels the PR `docker-base`, never automerges it, and tells the reviewer to run
+  `npm run docker:smoke` and to confirm the runtime is still glibc and that the `@node-rs/argon2` and
+  `sweph-wasm` prebuilt binaries still load. A green `check` job is not enough: CI does not exercise the
+  built image before merge, and the Harbor scan runs only after a release.
+- **`Dockerfile.alpine`.** A reference-only musl build that CI never builds. It is listed in `ignorePaths`
+  so Renovate opens no PRs for it. Keep the file; do not switch the shipped image to Alpine without
+  re-checking the `@node-rs/argon2` binaries (#272).
+
 ## Keeping this current
 
 Update this file in the same change that adds, removes, or re-scopes
