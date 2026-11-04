@@ -75,6 +75,7 @@ export function SelectionInspector({
   locale,
   exclude,
   onClear,
+  lineIsolation,
   derivedChartNote,
   personId,
 }: {
@@ -86,6 +87,8 @@ export function SelectionInspector({
   /** Objects left out of the written reading (#721): the "What it means" text leaves them out too. */
   readonly exclude?: InterpretationExclusions;
   readonly onClear: () => void;
+  /** The "only this body's aspects" switch (#1063), shown for a selected body only. */
+  readonly lineIsolation?: { readonly isolated: boolean; readonly onChange: (isolated: boolean) => void } | undefined;
   /** Said when the chart is not a natal chart, since the prose below is written for natal placements (#725). */
   readonly derivedChartNote?: string | undefined;
   /** The person the chart belongs to (#768): the AI reading lists and saves under them. */
@@ -118,6 +121,18 @@ export function SelectionInspector({
                 {t.isolationClear}
               </Button>
             </div>
+            {lineIsolation !== undefined && selectionKey.startsWith('body:') && (
+              <Button
+                variant="quiet"
+                size="compact"
+                aria-pressed={lineIsolation.isolated}
+                onClick={() => {
+                  lineIsolation.onChange(!lineIsolation.isolated);
+                }}
+              >
+                {lineIsolation.isolated ? t.isolationShowAll : t.isolationOnlyThis}
+              </Button>
+            )}
             {placement !== undefined && (
               <p className="selection-inspector-badges">
                 <Badge>{placement.place}</Badge>

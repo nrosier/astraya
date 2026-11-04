@@ -133,6 +133,41 @@ test.describe('with the shared people (#799)', () => {
     await expect(page.getByRole('link', { name: 'Wheel', exact: true })).toHaveAttribute('aria-current', 'page');
   });
 
+  test('selecting a body keeps only its aspect lines on the wheel, and one control returns all of them (#1063)', async () => {
+    test.setTimeout(90_000);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    const shown = page.locator('svg.chart-dial g.chart-aspect-link:not(.chart-isolate-hidden)');
+    const visibleLines = async (): Promise<number> => shown.count();
+    const before = await visibleLines();
+    expect(before).toBeGreaterThan(3);
+
+    await page.locator('.chart-point[data-body="sun"]').first().click({ force: true });
+    await expect.poll(visibleLines).toBeLessThan(before);
+    const after = await visibleLines();
+    expect(after).toBeGreaterThan(0);
+    // Every line left on the wheel touches the Sun.
+    await expect(
+      page.locator(
+        'svg.chart-dial g.chart-aspect-link:not(.chart-isolate-hidden):not([data-aspect-body-a="sun"]):not([data-aspect-body-b="sun"])',
+      ),
+    ).toHaveCount(0);
+
+    // The control is keyboard-operable and returns every line while the Sun stays selected.
+    const toggle = page.getByRole('button', { name: 'Show all aspects', exact: true });
+    await toggle.focus();
+    await page.keyboard.press('Enter');
+    await expect.poll(visibleLines).toBe(before);
+    await expect(page.getByRole('button', { name: 'Show only this body’s aspects', exact: true })).toBeVisible();
+
+    // Clearing the selection also restores the full wheel.
+    await page.getByRole('button', { name: 'Show only this body’s aspects', exact: true }).click();
+    await expect.poll(visibleLines).toBe(after);
+    await page.getByRole('button', { name: 'Clear', exact: true }).first().click();
+    await expect.poll(visibleLines).toBe(before);
+  });
+
   test('Show on an Aspects row opens the Wheel with that aspect highlighted (#815)', async () => {
     test.setTimeout(90_000);
     await page.setViewportSize({ width: 1600, height: 1000 });
