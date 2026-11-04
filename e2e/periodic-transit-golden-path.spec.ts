@@ -53,6 +53,7 @@ test('a person with a known birth time gets a Forecast screen with all four tier
   await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).click();
   await page.getByRole('link', { name: 'Forecast', exact: true }).click();
   await expect(page.getByRole('heading', { name: /forecast/i, level: 1 })).toBeVisible();
+  await expect(page.locator('.page-header-basis')).toHaveText('Tropical · Placidus · Modern rulers · Standard orbs');
 
   await expect(page.getByRole('heading', { name: 'Daily', level: 2 })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Weekly', level: 2 })).toBeVisible();

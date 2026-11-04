@@ -47,6 +47,11 @@ import { StatusMessage } from './primitives/StatusMessage.js';
 import { useStableMoment } from './use-stable-moment.js';
 import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
+import { useCalculationBasisLine, withBasisItems } from './calculation-basis.js';
+import { solarArcBasisItems } from './timing-basis.js';
+import { timingBasisMessages } from './timing-basis.messages.js';
+import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
+import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -182,6 +187,12 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
   const t = useMessages(solarArcViewMessages);
   const [locale] = useLocale();
   const [asOf, setAsOf] = useState(todayInputValue);
+  const timingT = useMessages(timingBasisMessages);
+  // Solar arc is calculated with the engine defaults and its one key, the Sun's progressed arc.
+  const baseBasis = useCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE, undefined, {
+    rulers: false,
+  });
+  const basisLine = withBasisItems(baseBasis, ...solarArcBasisItems(timingT));
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
 
@@ -279,6 +290,8 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
       <PageHeader
         title={person.displayName ? t.heading(person.displayName) : t.solarArcFallback}
         titleTerm="solarArc"
+        basis={basisLine}
+        basisEditHref={null}
       />
       <p className="hint">
         <GlossaryText text={t.hint} />
