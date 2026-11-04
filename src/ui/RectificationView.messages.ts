@@ -10,6 +10,8 @@ const en = {
   hint: 'For a birth date and place with an uncertain time: test candidate times against dated life events. For each candidate the Ascendant and Midheaven are worked out, and the events are checked for solar-arc and slow-planet transit contacts to them.',
   caveat:
     'This narrows the choice; it does not prove a time. The score adds up coincidences, some of which are chance, so look at how much better the top times score than the average (the “lift”) — a time that explains the events no better than average has explained nothing. Give it several well-dated events that mattered.',
+  searchHeading: 'Birth details',
+  panelHeading: 'Time window and events',
   personLabel: 'Fill in from a person',
   personNone: 'None — enter the details below',
   birthDateLabel: 'Birth date',
@@ -70,6 +72,8 @@ const nl: typeof en = {
   hint: 'Voor een geboortedatum en -plaats met een onzekere tijd: toets kandidaat-tijden aan gedateerde levensgebeurtenissen. Voor elke kandidaat worden de Ascendant en Midheaven berekend en worden de gebeurtenissen gecontroleerd op solar-arc- en transitcontacten van trage planeten ermee.',
   caveat:
     'Dit beperkt de keuze; het bewijst geen tijd. De score telt toevalligheden op, waarvan sommige puur toeval zijn, dus kijk hoeveel beter de beste tijden scoren dan het gemiddelde (de “lift”) — een tijd die de gebeurtenissen niet beter verklaart dan gemiddeld, verklaart niets. Geef meerdere goed gedateerde gebeurtenissen die ertoe deden.',
+  searchHeading: 'Geboortegegevens',
+  panelHeading: 'Tijdvenster en gebeurtenissen',
   personLabel: 'Vul in vanuit een persoon',
   personNone: 'Geen — vul de gegevens hieronder in',
   birthDateLabel: 'Geboortedatum',
