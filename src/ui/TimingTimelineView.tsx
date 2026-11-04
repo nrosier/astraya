@@ -45,6 +45,9 @@ import { timelineSubjectLabel } from './timing-timeline-labels.js';
 import { useLocale } from './locale.js';
 import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
+import { useCalculationBasisLine } from './calculation-basis.js';
+import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
+import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -120,6 +123,8 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
   const { provider } = useEphemerisProvider();
   const t = useMessages(timingTimelineViewMessages);
   const [locale] = useLocale();
+  // Every technique on the timeline is calculated with the engine defaults, so the line states those.
+  const basisLine = useCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE);
   const [asOf, setAsOf] = useState(todayInputValue);
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   const target = useMemo(() => {
@@ -196,7 +201,7 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
   return (
     <main className="shell shell--wide">
       <BackLink fallback={personHref(personId)} />
-      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.fallback} />
+      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.fallback} basis={basisLine} />
       <p className="hint">{t.hint}</p>
       <p className="hint">{t.source}</p>
       <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />

@@ -77,6 +77,7 @@ import { StatusMessage } from './primitives/StatusMessage.js';
 import { useStableMoment } from './use-stable-moment.js';
 import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
+import { orbSourceName, useCalculationBasisLine } from './calculation-basis.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -148,6 +149,13 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
         DEFAULT_RULERSHIP_CHOICE,
       ),
     [extendedSettings, orbLibrary, orbSources],
+  );
+
+  // What the transits are calculated with: the engine defaults and rulers, with the transit orbs (`snapshot` above).
+  const basisLine = useCalculationBasisLine(
+    snapshot.settings,
+    snapshot.rulership,
+    orbSourceName(orbLibrary, orbSources, 'transit'),
   );
 
   const targetDate = useMemo(() => {
@@ -329,7 +337,11 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
         generatedAt={formatTimestamp(new Date())}
       />
       <BackLink fallback={personHref(personId)} />
-      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.transitsFallback} titleTerm="transit" />
+      <PageHeader
+        title={person.displayName ? t.heading(person.displayName) : t.transitsFallback}
+        titleTerm="transit"
+        basis={basisLine}
+      />
       <p className="hint">
         <GlossaryText text={t.hint(person.displayName || t.thisPerson)} />
       </p>

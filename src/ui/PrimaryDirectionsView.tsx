@@ -79,6 +79,9 @@ import type { PrimaryDirectionMethod, PrimaryDirectionMode } from '../astrology/
 import { useStableBy, useStableMoment } from './use-stable-moment.js';
 import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
+import { useCalculationBasisLine } from './calculation-basis.js';
+import { primaryDirectionsBasisItems, withBasisItems } from './timing-basis.js';
+import { timingBasisMessages } from './timing-basis.messages.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -225,6 +228,13 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
   const [key, setKey] = useState<PrimaryDirectionKey>(PrimaryDirectionKey.NAIBOD);
   const [mode, setMode] = useState<PrimaryDirectionMode>('direct');
   const [method, setMethod] = useState<PrimaryDirectionMethod>('zodiacal');
+  const timingT = useMessages(timingBasisMessages);
+  // The locked settings the directions are computed with, plus the time key and semi-arc method chosen here.
+  const baseBasis = useCalculationBasisLine(
+    PRIMARY_DIRECTIONS_EFFECTIVE_SNAPSHOT.settings,
+    PRIMARY_DIRECTIONS_EFFECTIVE_SNAPSHOT.rulership,
+  );
+  const basisLine = withBasisItems(baseBasis, primaryDirectionsBasisItems(key, method, timingT));
   const [significators, setSignificators] = useState<readonly string[]>(PRIMARY_DIRECTION_SIGNIFICATORS);
   const [promissors, setPromissors] = useState<readonly string[]>(PRIMARY_DIRECTION_PROMISSORS);
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
@@ -405,6 +415,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
       <PageHeader
         title={person.displayName ? t.heading(person.displayName) : t.primaryDirectionsFallback}
         titleTerm="primaryDirection"
+        basis={basisLine}
       />
       <p className="hint">
         <GlossaryText text={t.hint} />
