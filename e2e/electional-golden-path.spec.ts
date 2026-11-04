@@ -45,7 +45,7 @@ test('searching for just the void-Moon rule reproduces the 8 March 2024 void win
 
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await openTool(page, 'Electional search');
-  await expect(page.getByRole('heading', { name: 'Electional search', level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Electional search', level: 2 })).toBeVisible();
 
   await fillLondonWindow(page);
   // Leave only one rule ticked, so each window is simply "void" or "not void".
