@@ -1,42 +1,22 @@
 /**
- * The calculation basis a chart page states (#509, #510): which profile the chart is cast with and where it came
- * from, so a reader can tell, at a glance, whether the numbers use Astraya's defaults, their own saved default, or
- * a change made for this one chart.
+ * The calculation basis a chart page states (#509, #510): which profile the chart is cast with, so a reader can tell,
+ * at a glance, what the numbers are calculated with.
  */
 /**
  * @module ui/calculation-basis
  * @purpose Builds the full calculation-basis line a calculated page states under its title (#1059): "Tropical · Placidus · Modern rulers · Standard orbs".
- * @conventions `buildCalculationBasisLine` and `calculationSource` are pure (settings, rulers and an explicit vocabulary in; text out); the two hooks only gather the translated vocabulary. `useCalculationBasisLine` takes a person's own settings; `useDeviceCalculationBasisLine` takes the saved device default, only for views that calculate with it. Orbs are named by the device orb profile when one applies, else the built-in profile the scale matches, else "Custom".
- * @exports BasisParts, CalculationSource, calculationSource, orbSourceName, BasisWords, buildCalculationBasisLine, withBasisItems, useCalculationBasisLine, useDeviceCalculationBasisLine, useEngineBasisLine
+ * @conventions `buildCalculationBasisLine` is pure (settings, rulers and an explicit vocabulary in; text out); the hooks only gather the translated vocabulary. `useCalculationBasisLine` takes a person's own settings; `useEngineBasisLine` takes the engine defaults plus a chart type's own orbs and rulers. Orbs are named by the device orb profile when one applies, else the built-in profile the scale matches, else "Custom".
+ * @exports BasisParts, orbSourceName, BasisWords, buildCalculationBasisLine, withBasisItems, useCalculationBasisLine, useEngineBasisLine
  */
 import { HOUSE_SYSTEMS } from '../astrology/houses.js';
 import { CARD_SOURCE, sourceForContext, type OrbContextSource, type OrbLibrary } from '../astrology/orb-library.js';
-import { DEFAULT_RULERSHIP_CHOICE, type RulershipChoice } from '../astrology/rulership.js';
+import type { RulershipChoice } from '../astrology/rulership.js';
 import { CITED_ORB_PRESETS, isCitedOrbPresetId, matchOrbProfile } from '../astrology/orb-profiles.js';
 import { DEFAULT_EXTENDED_SETTINGS, withOrbsOf, type ExtendedSettings } from '../chart/extended-settings.js';
-import { useDefaultCalculationProfile, type DefaultCalculationProfile } from './default-calculation-profile.js';
-import { sameSettings } from './extended-settings-summary.js';
 import { extendedSettingsPanelMessages } from './ExtendedSettingsPanel.messages.js';
 import { rulershipSettingMessages } from './RulershipSetting.messages.js';
 import { useMessages } from './messages.js';
 import { calculationBasisMessages } from './calculation-basis.messages.js';
-
-export type CalculationSource = 'astraya-default' | 'my-default' | 'this-chart';
-
-/** Where `settings` and `rulership` come from: the shipped default, the user's saved one, or neither (changed for this chart). */
-export function calculationSource(
-  settings: ExtendedSettings,
-  rulership: RulershipChoice,
-  saved: DefaultCalculationProfile | undefined,
-): CalculationSource {
-  if (sameSettings(settings, DEFAULT_EXTENDED_SETTINGS) && rulership === DEFAULT_RULERSHIP_CHOICE) {
-    return 'astraya-default';
-  }
-  if (saved !== undefined && sameSettings(settings, saved.settings) && rulership === saved.rulership) {
-    return 'my-default';
-  }
-  return 'this-chart';
-}
 
 /**
  * The name of the orb profile `context` calculates with (#590), or undefined when the card's own orbs apply or the
@@ -121,20 +101,6 @@ export function useCalculationBasisLine(
   parts?: BasisParts,
 ): string {
   return buildCalculationBasisLine(settings, rulership, useBasisWords(), natalOrbSourceName, parts);
-}
-
-/**
- * The basis line for a view that calculates with the device's saved default profile (else Astraya's shipped default).
- * Not for views that ignore the saved profile: they pass the defaults they use to `useCalculationBasisLine`.
- */
-export function useDeviceCalculationBasisLine(deviceOrbProfile?: string): string {
-  const [saved] = useDefaultCalculationProfile();
-  return buildCalculationBasisLine(
-    saved?.settings ?? DEFAULT_EXTENDED_SETTINGS,
-    saved?.rulership ?? DEFAULT_RULERSHIP_CHOICE,
-    useBasisWords(),
-    deviceOrbProfile,
-  );
 }
 
 /** `line` followed by the facts only this page adds (a harmonic number, a relocation place), joined like the line itself. */

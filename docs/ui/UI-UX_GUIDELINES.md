@@ -83,7 +83,7 @@ The content header contains the page title, compact calculation basis, primary p
 
 Keep page exports with their page. Put Build PDF under Documents. Put full-data/CSV backup under Preferences → Data & privacy. Do not rebuild the current mixed Export menu in another component.
 
-On calculated views, show the effective basis in a compact line such as **Tropical · Placidus · Modern rulers · Standard orbs**, with an **Edit** action. Carry that basis into reports, shared charts, and exports.
+On calculated views, show the effective basis in a compact line such as **Tropical · Placidus · Modern rulers · Standard orbs**, with an **Edit** action. Carry that basis into reports, shared charts, and exports. Views that calculate with fixed shipped defaults or with a sender's settings (Horary, Electional, Rectification, Cycles, Event search, Eclipses, shared charts) show the basis line without an Edit action, because Preferences cannot change what they use; they pass `basisEditHref={null}` to `PageHeader`. The Edit action appears only where Preferences controls the calculation.
 
 Overview is a task launchpad, not a generic dashboard. Show record readiness, essential natal context, current calculation basis, and a small set of real next actions. Do not add decorative metrics, charts without a decision purpose, or a feed of arbitrary recommendations.
 

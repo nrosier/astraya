@@ -1,7 +1,7 @@
 /**
  * @module ui/calculation-basis.messages
  * @purpose English/Dutch wording for the calculation-basis line on calculated pages.
- * @conventions Ruler and orb-profile names come from the rulership and Extended settings messages, not repeated here. `sources` words the saved-default comparison of `calculationSource`.
+ * @conventions Ruler and orb-profile names come from the rulership and Extended settings messages, not repeated here.
  * @exports calculationBasisMessages
  */
 import type { Locale } from '../interpretation/schema.js';
@@ -16,11 +16,6 @@ const en = {
   draconic: 'Draconic',
   relocatedTo: (place: string) => `Relocated to ${place}`,
   midpointMethod: 'Midpoint method',
-  sources: {
-    'astraya-default': 'Astraya default',
-    'my-default': 'your saved default',
-    'this-chart': 'changed for this chart',
-  },
 };
 
 const nl: typeof en = {
@@ -33,11 +28,6 @@ const nl: typeof en = {
   draconic: 'Draconisch',
   relocatedTo: (place: string) => `Verplaatst naar ${place}`,
   midpointMethod: 'Middelpuntmethode',
-  sources: {
-    'astraya-default': 'Astraya-standaard',
-    'my-default': 'jouw opgeslagen standaard',
-    'this-chart': 'aangepast voor deze horoscoop',
-  },
 };
 
 export const calculationBasisMessages: Record<Locale, typeof en> = { en, nl };
