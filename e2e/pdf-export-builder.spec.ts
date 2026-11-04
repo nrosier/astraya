@@ -190,7 +190,8 @@ test('the Documents page keeps its starting point and Build PDF in the header, w
 }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await gotoAndSettle(page, `${baseUrl}/#/documents`);
-  const header = page.locator('.page-header');
+  // The starting point and Build PDF sit in the primary bar under the title and context line (#1075).
+  const header = page.locator('.pdf-primary-bar');
   await expect(header.getByLabel('Starting point', { exact: true })).toBeVisible();
   await expect(header.getByRole('button', { name: 'Build PDF', exact: true })).toBeVisible();
   // Desktop: the summary column sits to the right of the selection, and no Build bar is pinned.

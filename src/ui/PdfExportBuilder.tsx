@@ -484,7 +484,9 @@ export function PdfExportBuilder({
         title={t.heading}
         subtitle={t.subtitle}
         basis={person === undefined || person.displayName === '' ? undefined : person.displayName}
-      >
+      />
+      {/* Issue 1075: the starting point and Build PDF sit below the title and context line (guidelines §5), not in the title row. */}
+      <div className="pdf-primary-bar">
         <div className="pdf-header-preset">
           <Select
             label={t.presetLabel}
@@ -511,7 +513,7 @@ export function PdfExportBuilder({
             {statusText}
           </p>
         </div>
-      </PageHeader>
+      </div>
       {status.kind === 'error' && <StatusMessage kind="error">{status.message}</StatusMessage>}
 
       <div className="pdf-builder-layout">
@@ -594,7 +596,6 @@ export function PdfExportBuilder({
                 <p className="hint">{t.consultationNotesUnavailable}</p>
               </fieldset>
             </section>
-
             <section className="pdf-builder-card">
               <h2 className="pdf-builder-heading">{t.chartSectionsHeading}</h2>
               <div className="pdf-builder-disclosures">
