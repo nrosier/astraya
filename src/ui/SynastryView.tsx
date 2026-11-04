@@ -29,6 +29,7 @@ import { houseSystemLabel, rulershipLabel, zodiacLabel } from './ChartView.js';
 import { PrintProvenance } from './PrintProvenance.js';
 import { DEFAULT_EXTENDED_SETTINGS, settingsForContext, withOrbsOf } from '../chart/extended-settings.js';
 import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
+import { orbSourceName, useEngineBasisLine } from './calculation-basis.js';
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
 import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
 import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
@@ -158,6 +159,17 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
   const { settings: extendedSettings, unreadable: settingsUnreadable } = usePersonCalculationSettings(personId);
   const orbLibrary = useOrbLibrary();
   const orbSources = useOrbContextSource();
+  // Synastry calculates with the engine defaults, the device's synastry orbs and the default rulers (see the footer).
+  const synastryOrbs = useMemo(
+    () => settingsForContext(extendedSettings, 'synastry', orbLibrary, orbSources),
+    [extendedSettings, orbLibrary, orbSources],
+  );
+  const basisLine = useEngineBasisLine(
+    DEFAULT_RULERSHIP_CHOICE,
+    synastryOrbs,
+    undefined,
+    orbSourceName(orbLibrary, orbSources, 'synastry'),
+  );
   const snapshot = useMemo(
     () =>
       buildCalculationSnapshot(
@@ -351,6 +363,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
       <PageHeader
         title={person.displayName ? t.heading(person.displayName) : t.synastryFallback}
         titleTerm="synastry"
+        basis={basisLine}
       />
       <p className="hint">
         <GlossaryText text={t.hint} />

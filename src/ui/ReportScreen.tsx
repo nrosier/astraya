@@ -21,6 +21,7 @@ import { reportScreenMessages } from './ReportScreen.messages.js';
 import { ReportView } from './ReportView.js';
 import { useMessages } from './messages.js';
 import { useStoreState } from './store-context.js';
+import { orbSourceName, useCalculationBasisLine } from './calculation-basis.js';
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
 import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
 import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
@@ -59,6 +60,8 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
     () => settingsForContext(cardSettings, 'natal', orbLibrary, orbSources),
     [cardSettings, orbLibrary, orbSources],
   );
+  // The reading is cast with the chart's natal context (#732): its zodiac, houses, rulers and the natal orbs.
+  const basisLine = useCalculationBasisLine(cardSettings, rulership, orbSourceName(orbLibrary, orbSources, 'natal'));
   // What the written reading leaves out (#721) — display-only hiding never lands here.
   const exclusions = useMemo(() => interpretationExclusions(settings.objectPolicies), [settings]);
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
@@ -101,7 +104,7 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.reportFallback} />
+        <PageHeader title={t.reportFallback} basis={basisLine} />
         <p>
           {t.notCompleteReport(person.displayName || t.thisPerson)}{' '}
           <a href={personHref(personId)}>{t.personPageLink}</a>.
@@ -117,7 +120,7 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.reportFallback} />
+        <PageHeader title={t.reportFallback} basis={basisLine} />
         <p>{t.needsKnownTime(person.displayName || t.thisPerson)}</p>
       </main>
     );
@@ -126,7 +129,7 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
   return (
     <main className="shell">
       <BackLink fallback={personHref(personId)} />
-      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.reportFallback} />
+      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.reportFallback} basis={basisLine} />
 
       {/* The result region: busy while the report (re)calculates, as the Astrocartography map is. */}
       <div aria-busy={load.kind === 'loading'}>

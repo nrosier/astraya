@@ -51,6 +51,9 @@ test('two people with known birth times get a Composite screen with a wheel and 
   await page.getByRole('link', { name: 'Relationship Charts', exact: true }).click();
   await page.getByRole('link', { name: 'Composite', exact: true }).click();
   await expect(page.getByRole('heading', { name: /composite/i, level: 1 })).toBeVisible();
+  // #1059: the basis line names the midpoint method and offers the Edit link.
+  await expect(page.locator('.page-header-basis')).toContainText('Midpoint method');
+  await expect(page.locator('.page-header-basis-edit')).toBeVisible();
 
   await page.getByLabel('Compose with').selectOption({ label: 'Max Born' });
 

@@ -22,6 +22,8 @@ const en = {
   /** Printed under a natal chart's heading (#582): the same fingerprint the chart screen's print line shows. */
   calculationFingerprint: (identity: string) => `Calculation fingerprint: ${identity}`,
   heading: 'Build a PDF',
+  /** Added to the basis line when a selected section is cast with its own page's basis, not the person's (#1059). */
+  ownBasisNote: 'Some sections use their own basis',
   subtitle: 'Assemble custom sections, interpretations, and chart calculations into a printable document.',
   chartSectionsHeading: 'Chart sections',
   documentSections: 'Document sections',
@@ -174,6 +176,7 @@ const en = {
 const nl: typeof en = {
   calculationFingerprint: (identity: string) => `Vingerafdruk van de berekening: ${identity}`,
   heading: 'PDF samenstellen',
+  ownBasisNote: 'Sommige onderdelen gebruiken hun eigen basis',
   subtitle: 'Stel eigen onderdelen, interpretaties en berekeningen van grafieken samen tot een printbaar document.',
   chartSectionsHeading: 'Horoscoononderdelen',
   documentSections: 'Documentonderdelen',

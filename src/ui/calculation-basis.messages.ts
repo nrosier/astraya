@@ -12,6 +12,9 @@ const en = {
   sidereal: 'Sidereal',
   rulers: (title: string) => `${title} rulers`,
   orbs: (title: string) => `${title} orbs`,
+  draconic: 'Draconic',
+  relocatedTo: (place: string) => `Relocated to ${place}`,
+  midpointMethod: 'Midpoint method',
   sources: {
     'astraya-default': 'Astraya default',
     'my-default': 'your saved default',
@@ -25,6 +28,9 @@ const nl: typeof en = {
   sidereal: 'Siderisch',
   rulers: (title: string) => `${title} heersers`,
   orbs: (title: string) => `${title} orbs`,
+  draconic: 'Draconisch',
+  relocatedTo: (place: string) => `Verplaatst naar ${place}`,
+  midpointMethod: 'Middelpuntmethode',
   sources: {
     'astraya-default': 'Astraya-standaard',
     'my-default': 'jouw opgeslagen standaard',

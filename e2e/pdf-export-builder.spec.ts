@@ -81,6 +81,9 @@ test('the header’s PDF-builder link opens the PDF builder, and a preset downlo
   // One page, one h1 (#916): the Documents page is the builder itself, with the shared PageHeader and no back link.
   await expect(page.getByRole('heading', { name: 'Build a PDF', level: 1 })).toBeVisible();
   await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
+  // #1059: the document states the basis it is cast with, with an Edit link.
+  await expect(page.locator('.page-header-basis')).toContainText(/^Tropical · .+ rulers · .+ orbs/);
+  await expect(page.locator('.page-header-basis-edit')).toBeVisible();
   await expect(page.locator('main')).toHaveCount(1);
   await expect(page.getByRole('link', { name: '← Back' })).toHaveCount(0);
 

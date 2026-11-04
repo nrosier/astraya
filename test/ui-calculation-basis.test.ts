@@ -7,6 +7,7 @@ import {
   buildCalculationBasisLine,
   calculationSource,
   orbSourceName,
+  withBasisItems,
   type BasisWords,
 } from '../src/ui/calculation-basis.js';
 import { calculationBasisMessages } from '../src/ui/calculation-basis.messages.js';
@@ -99,6 +100,23 @@ describe('buildCalculationBasisLine (#1059)', () => {
     const custom = { ...DEFAULT_EXTENDED_SETTINGS, orbRules: { bodyOrbs: { venus: 4 } } };
     expect(buildCalculationBasisLine(custom, 'modern', WORDS.en)).toContain('Custom orbs');
     expect(buildCalculationBasisLine(custom, 'modern', WORDS.en, 'My house style')).toContain('My house style orbs');
+  });
+});
+
+describe('withBasisItems (#1059)', () => {
+  it('appends the facts only one page adds, joined like the line itself', () => {
+    const line = buildCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, 'modern', WORDS.en);
+    expect(withBasisItems(line, 'Harmonic 5')).toBe(`${line} · Harmonic 5`);
+    expect(withBasisItems(line)).toBe(line);
+  });
+
+  it('has the page-specific words in both languages', () => {
+    for (const locale of ['en', 'nl'] as const) {
+      const t = calculationBasisMessages[locale];
+      expect(t.draconic).not.toBe('');
+      expect(t.midpointMethod).not.toBe('');
+      expect(t.relocatedTo('Lisbon')).toContain('Lisbon');
+    }
   });
 });
 

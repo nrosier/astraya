@@ -40,6 +40,7 @@ import { SortableTable, csvExportTable, useCsvExports } from './SortableTable.js
 import type { TableColumn } from './table-sort.js';
 import { formatFixed } from './format.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
+import { useEngineBasisLine, withBasisItems } from './calculation-basis.js';
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
 import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
 import { orbsOf } from '../chart/extended-settings.js';
@@ -114,6 +115,9 @@ export function HarmonicView({
     rulership,
   } = usePersonCalculationSettings(personId);
   const orbs = useStableBy(orbsOf(extendedSettings), (config) => JSON.stringify(config));
+  // The harmonic chart calculates with the engine defaults, the person's orbs and rulers, at the harmonic on screen.
+  const baseBasis = useEngineBasisLine(rulership, extendedSettings);
+  const basisLine = nValid ? withBasisItems(baseBasis, label) : baseBasis;
 
   useEffect(() => {
     if (personMoment === undefined || provider === undefined || settingsUnreadable || !nValid) {
@@ -191,7 +195,11 @@ export function HarmonicView({
   return (
     <main className="shell shell--wide">
       <BackLink fallback={personHref(personId)} />
-      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.headingFallback} titleTerm="harmonic">
+      <PageHeader
+        title={person.displayName ? t.heading(person.displayName) : t.headingFallback}
+        titleTerm="harmonic"
+        basis={basisLine}
+      >
         <PdfCreatorLink href={creatorHref} />
       </PageHeader>
       <ChartTypeSelector personId={personId} type="harmonic" view={view} />

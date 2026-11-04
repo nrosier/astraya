@@ -7,13 +7,13 @@
  * @module ui/calculation-basis
  * @purpose Builds the full calculation-basis line a calculated page states under its title (#1059): "Tropical · Placidus · Modern rulers · Standard orbs".
  * @conventions `buildCalculationBasisLine` and `calculationSource` are pure (settings, rulers and an explicit vocabulary in; text out); the two hooks only gather the translated vocabulary. `useCalculationBasisLine` takes a person's own settings; `useDeviceCalculationBasisLine` takes the saved device default, only for views that calculate with it. Orbs are named by the device orb profile when one applies, else the built-in profile the scale matches, else "Custom".
- * @exports CalculationSource, calculationSource, orbSourceName, BasisWords, buildCalculationBasisLine, useCalculationBasisLine, useDeviceCalculationBasisLine
+ * @exports CalculationSource, calculationSource, orbSourceName, BasisWords, buildCalculationBasisLine, withBasisItems, useCalculationBasisLine, useDeviceCalculationBasisLine, useEngineBasisLine
  */
 import { HOUSE_SYSTEMS } from '../astrology/houses.js';
 import { CARD_SOURCE, sourceForContext, type OrbContextSource, type OrbLibrary } from '../astrology/orb-library.js';
 import { DEFAULT_RULERSHIP_CHOICE, type RulershipChoice } from '../astrology/rulership.js';
 import { CITED_ORB_PRESETS, isCitedOrbPresetId, matchOrbProfile } from '../astrology/orb-profiles.js';
-import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from '../chart/extended-settings.js';
+import { DEFAULT_EXTENDED_SETTINGS, withOrbsOf, type ExtendedSettings } from '../chart/extended-settings.js';
 import { useDefaultCalculationProfile, type DefaultCalculationProfile } from './default-calculation-profile.js';
 import { sameSettings } from './extended-settings-summary.js';
 import { extendedSettingsPanelMessages } from './ExtendedSettingsPanel.messages.js';
@@ -117,5 +117,31 @@ export function useDeviceCalculationBasisLine(deviceOrbProfile?: string): string
     saved?.rulership ?? DEFAULT_RULERSHIP_CHOICE,
     useBasisWords(),
     deviceOrbProfile,
+  );
+}
+
+/** `line` followed by the facts only this page adds (a harmonic number, a relocation place), joined like the line itself. */
+export function withBasisItems(line: string, ...items: readonly string[]): string {
+  return [line, ...items].join(' · ');
+}
+
+/**
+ * The basis line for a chart type that calculates with the engine defaults (tropical, the default house system) plus
+ * only the orbs `orbsFrom` carries and the given rulers: draconic, harmonic, relocated, synastry and composite take
+ * no zodiac or house-system option, so naming the person's own would state a basis the chart does not use.
+ * `zodiacLabel` replaces "Tropical" for a chart in another zodiac (the draconic one).
+ */
+export function useEngineBasisLine(
+  rulership: RulershipChoice,
+  orbsFrom?: ExtendedSettings,
+  zodiacLabel?: string,
+  orbProfileName?: string,
+): string {
+  const words = useBasisWords();
+  return buildCalculationBasisLine(
+    orbsFrom === undefined ? DEFAULT_EXTENDED_SETTINGS : withOrbsOf(DEFAULT_EXTENDED_SETTINGS, orbsFrom),
+    rulership,
+    zodiacLabel === undefined ? words : { ...words, t: { ...words.t, tropical: zodiacLabel } },
+    orbProfileName,
   );
 }
