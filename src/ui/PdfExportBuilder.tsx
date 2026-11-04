@@ -214,8 +214,8 @@ export function PdfExportBuilder({
   const currentPreset = matchPdfPreset(fullSelection);
   const empty = pdfSelectionIsEmpty(fullSelection);
   // The basis the document is cast with (#1059): the person's own natal context, which the natal, return and
-  // interpretation sections use. Draconic, harmonic, synastry, composite and transit sections calculate with the
-  // engine defaults plus orbs (see `pdf-export-plan.ts`), so when one is selected the line says so rather than
+  // interpretation sections use. Draconic, harmonic, relocated, synastry, composite, transit, forecast, progression, solar arc, profection and
+  // eclipse sections calculate with the engine defaults plus orbs or rulers only (see `pdf-export-plan.ts`), so when one is selected the line says so rather than
   // stating a zodiac and house system that section does not use.
   const personBasis = useCalculationBasisLine(
     extendedSettings,
@@ -226,7 +226,14 @@ export function PdfExportBuilder({
     fullSelection.synastry !== undefined ||
     fullSelection.composite !== undefined ||
     fullSelection.transits !== undefined ||
-    fullSelection.charts.some((chart) => chart.type === 'draconic' || chart.type === 'harmonic');
+    fullSelection.forecast !== undefined ||
+    fullSelection.progressions !== undefined ||
+    fullSelection.solarArc !== undefined ||
+    fullSelection.profections !== undefined ||
+    fullSelection.eclipses !== undefined ||
+    fullSelection.charts.some(
+      (chart) => chart.type === 'draconic' || chart.type === 'harmonic' || chart.type === 'relocated',
+    );
   const basisLine =
     person === undefined || settingsUnreadable
       ? undefined
