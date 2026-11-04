@@ -42,15 +42,12 @@ test('opened fresh, Documents has no back link and its one heading is the builde
   await context.close();
 });
 
-test('Back from the people list never lands on the bare #/ redirect', async ({ page }) => {
+test('the bare #/ stays on #/ and Back never loops (#1058)', async ({ page }) => {
   await gotoAndSettle(page, `${baseUrl}/#/`);
-  await expect(page).toHaveURL(/#\/people$/);
+  await expect(page).toHaveURL(/#\/$/);
   await page.goto(`${baseUrl}/#/about`);
   await page.goBack();
-  await expect(page).toHaveURL(/#\/people$/);
-  await page.goBack();
-  // Before #652 this was #/, which bounced forward to #/people again.
-  expect(page.url()).not.toMatch(/#\/$/);
+  await expect(page).toHaveURL(/#\/$/);
 });
 
 test.describe('with the shared people (#799)', () => {

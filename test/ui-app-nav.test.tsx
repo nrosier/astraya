@@ -293,7 +293,7 @@ describe('the full sidebar on app-scoped screens (#965)', () => {
 const ROUTE_PERSON = 'p-abcdefghijklmnop';
 const PERSON_HASH = `#/people/${ROUTE_PERSON}`;
 const ROUTE_HASHES: Record<Route['kind'], string> = {
-  home: '#/no-such-screen',
+  home: '#/',
   about: '#/about',
   changelog: '#/changelog',
   people: '#/people',

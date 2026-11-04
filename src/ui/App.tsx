@@ -2,7 +2,7 @@
  * @module App
  * @purpose Top-level application shell: hash-based routing between every screen, the header (account/sync/language/theme controls) laid out by WorkspaceShell as a collapsible rail, and the lazy-loading boundary for non-landing screens.
  * @conventions Hash routing via `parseRoute()`/`route.js` rather than a router library; every screen not needed by the landing route (the ten person-scoped screens, AdminPanel/export-builder/corpus admin screens, and About/Changelog/SetPasswordForm/SetupForm) is behind `lazy(() => import(...))` per the bundle-size budget (#338, #494); `Stored` gates routes needing the local IndexedDB store.
- * @exports App, HomeRedirect
+ * @exports App
  */
 import { DocumentTitle } from './document-title.js';
 import { lazy, Suspense, useEffect, useEffectEvent, useRef, useState } from 'react';
@@ -63,6 +63,7 @@ const SolarArcView = lazy(async () => ({ default: (await personScreens()).SolarA
 const PrimaryDirectionsView = lazy(async () => ({ default: (await personScreens()).PrimaryDirectionsView }));
 const SynastryView = lazy(async () => ({ default: (await personScreens()).SynastryView }));
 const TransitView = lazy(async () => ({ default: (await personScreens()).TransitView }));
+const Home = lazy(async () => ({ default: (await personScreens()).Home }));
 const TimingTimelineView = lazy(async () => ({ default: (await personScreens()).TimingTimelineView }));
 const RectificationView = lazy(async () => ({ default: (await import('./RectificationView.js')).RectificationView }));
 const ElectionalView = lazy(async () => ({ default: (await import('./ElectionalView.js')).ElectionalView }));
@@ -367,20 +368,6 @@ function AppShell(): React.JSX.Element {
   );
 }
 
-/** `#/` (and any unmatched hash) always lands here; it redirects straight to the people list (#234) — no auto-created person, no "last active" state, just the one obvious next step. Rendering the same loading line `Stored` uses while opening, rather than nothing, means the redirect never shows as a blank main content area (#263) — however briefly — while the `hashchange` it fires works its way back around. */
-export function HomeRedirect(): React.JSX.Element {
-  const t = useMessages(appMessages);
-  useEffect(() => {
-    // Replaced, not pushed: `#/` is not a page, so Back from the people list must not return to it and bounce forward again.
-    window.location.replace('#/people');
-  }, []);
-  return (
-    <main className="shell">
-      <StatusMessage kind="loading">{t.openingLocalData}</StatusMessage>
-    </main>
-  );
-}
-
 function renderScreen(parsed: Route, seVersion: string | undefined): React.JSX.Element {
   if (parsed.kind === 'about') return <About seVersion={seVersion} />;
   if (parsed.kind === 'changelog') return <Changelog />;
@@ -480,7 +467,12 @@ function renderScreen(parsed: Route, seVersion: string | undefined): React.JSX.E
     return <Stored>{renderPersonView(parsed)}</Stored>;
   }
 
-  return <HomeRedirect />;
+  // `#/` and any unmatched hash: the last-viewed person's timing timeline, or a person picker (#1058). Rendered in place, never redirected (supersedes the #234 redirect to the people list).
+  return (
+    <Stored>
+      <Home />
+    </Stored>
+  );
 }
 
 type PersonRoute = Extract<

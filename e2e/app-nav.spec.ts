@@ -364,10 +364,10 @@ test.describe('with the shared people (#799)', () => {
     const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
     expect(results.violations).toEqual([]);
 
-    // The old links to the draconic and harmonic screens are gone: they fall back to People, not to a guess.
+    // The old links to the draconic and harmonic screens are gone: they fall back to the home screen (#1058), not to a guess.
     const personId = /#\/people\/([^/]+)\/charts/.exec(page.url())?.[1];
     await page.goto(`${baseUrl}/#/draconic/${personId ?? ''}`);
-    await expect(page.getByRole('heading', { name: 'People', level: 1 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /timing timeline/i, level: 1 })).toBeVisible();
     await page.goto(`${baseUrl}/#/people/${personId ?? ''}/charts/draconic/wheel`);
     await expect(page.getByRole('heading', { name: /draconic/i, level: 1 })).toBeVisible();
   });
