@@ -1,4 +1,4 @@
-# 4. Research workspace storage: saved queries, pins and annotations
+# 5. Research workspace storage: saved queries, pins and annotations
 
 - **Status:** proposed (seven owner decisions open, see "Open owner decisions"; `db-integrity` verdict: approve with changes, applied)
 - **Date:** 2026-11-04
@@ -478,4 +478,4 @@ recommended option is already the only reading of an existing rule, and that is 
   B. Last write wins on the whole text.
 
 Not asked, but worth the owner knowing: the repository has no `docs/design/` directory, and `docs/MAP.md` sends a
-one-time decision with lasting rationale to `docs/adr/`, so this note is ADR 0004 with status "proposed".
+one-time decision with lasting rationale to `docs/adr/`, so this note is ADR 0005 with status "proposed".
