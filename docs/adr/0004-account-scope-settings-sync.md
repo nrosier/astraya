@@ -133,13 +133,26 @@ path, because `locale.ts` must set `<html lang>` at import time, before IndexedD
 
 - **Read path (db-integrity blocking finding B1):** every synchronous read goes through the bound store's in-memory value
   (the `account-preferences` store). `localStorage` is read once, at import, for first paint only, and is never a source of
-  truth. The call sites that read the three settings from `localStorage` directly today must move to the bound value:
-  - `src/ui/default-calculation-profile.ts`: `readDefaultCalculationProfile` and `snapshot` (around lines 47 and 79).
-  - `src/ui/rulership-setting.ts`: the rulership read and its fallback (around lines 21-50).
-  - `src/ui/use-calculation-settings-migration.ts`: the seed inputs (around lines 45 and 50).
-  - `src/ui/PersonFileActions.tsx`: the default profile read for export (around line 76), via `readDefaultCalculationProfile`.
-  - `src/ui/PreferencesView.tsx`: the default profile read for export (around line 170), via `readDefaultCalculationProfile`.
-- **Cache layout (replaces the single cache tag):** one JSON key per database, `astraya:accountSettingsCache:<dbName>`,
+  truth. On the first launch of the new build, before any `bind`, the import-time read falls back to the legacy keys
+  while the migration guard is unset (section 5), so an `nl` user sees `nl` on first paint. The fix point is the two
+  modules that read `localStorage` directly today:
+  - `src/ui/default-calculation-profile.ts`: `readDefaultCalculationProfile` and `snapshot` (lines 47 and 79).
+  - `src/ui/rulership-setting.ts`: the rulership read and its fallback (lines 23 and 45).
+
+  Once these read the bound value, the helper-using call sites follow without edits of their own. They are consumers that
+  must go through the bound store, not through `localStorage`:
+  - `src/ui/use-calculation-settings-migration.ts`: calls `readDefaultCalculationProfile` (line 45) and `readRulershipChoice` (line 50) for the seed inputs.
+  - `src/ui/PersonFileActions.tsx`: calls `readDefaultCalculationProfile` for export (line 76).
+  - `src/ui/PreferencesView.tsx`: calls `readDefaultCalculationProfile` for export (line 170).
+
+  The change point is the hooks, not only these call sites. `useDefaultCalculationProfile` (`default-calculation-profile.ts`
+  line 101), `useRulershipChoice` (`rulership-setting.ts` line 62) and `useCalculationSettingsMigration`
+  (`use-calculation-settings-migration.ts` line 85) move to the bound value. Their consumers (`People.tsx`,
+  `person-calculation-settings.ts`, `ExtendedSettingsPanel.tsx`, `PreferencesView.tsx`, `CompositeView.tsx`,
+  `HoraryView.tsx`, `ReportView.tsx`) are covered transitively. A build check for remaining `localStorage` reads of these
+  three keys must therefore run against the hooks and both fix-point modules, not stop at the call sites.
+
+- **Cache layout (replaces the single shared cache, db-integrity finding 2):** one JSON key per database, `astraya:accountSettingsCache:<dbName>`,
   holding only the register fields that are set. First paint reads the entry for the `dbName` that `astraya:lastUserId`
   resolves to, as today. A value and its owner are one write, so there is no ordering race between a tag and its values.
   A `storage` event is applied only for the key of the tab's own bound `dbName`; every other key is ignored. A tab
@@ -160,7 +173,10 @@ path, because `locale.ts` must set `<html lang>` at import time, before IndexedD
 
 ### 2.5 Registry changes (`src/ui/settings-registry.ts`)
 
-- The three account entries become `persistence: 'indexeddb-oplog'`, `synced: true`; `key` stays the legacy cache key.
+- The three account entries become `persistence: 'indexeddb-oplog'`, `synced: true`. The registry key keeps the legacy
+  name for the stored value (`astraya:reportLocale`, `astraya:rulershipChoice`, `astraya:defaultCalculationProfile`).
+  The cache key is per database (section 2.4) and is not the registry key. The legacy names survive as the one-time
+  capture source (section 5) and as the registry identifiers.
 - `validateSettings` gains two invariants: `synced: true` requires `persistence: 'indexeddb-oplog'`, and
   `scope: 'account'` requires `synced: true`. Request-scope settings (Tier 2 consent) must remain unpersistable and can
   never be a field of the `account` entity.
@@ -278,7 +294,11 @@ The prompt is a UI primitive with i18n parity (`*.messages.ts` en and nl); the s
   `NOT_WRITABLE` message and rolls back; the writer tab's register changes reach it through the `storage` event.
 - Offline boot uses the cached account's store (`LAST_USER_KEY`); its register applies; no engine until `online`.
 - Demo mode (no server) uses the anonymous store only.
-- `removeAccountData` deletes the account database including its register; the next sign-in re-syncs it from the relay.
+- `removeAccountData` deletes the account database including its register, and deletes that account's per-database cache
+  entry (`astraya:accountSettingsCache:<dbName>`); the next sign-in re-syncs the register from the relay.
+- On sign-out (`signOut`, and `handleUnauthorized` when the session ends), the signed-in account's per-database cache
+  entry (`astraya:accountSettingsCache:<dbName>`) is deleted, so a shared device keeps no account's preferences in
+  browser storage after sign-out. The account's register stays in its IndexedDB store and re-syncs on the next sign-in.
 - Durable-write failure (quota, IndexedDB error): setter rolls back and reports; no partial state.
 
 ## 4. Boundary and security rules
@@ -309,17 +329,23 @@ The prompt is a UI primitive with i18n parity (`*.messages.ts` en and nl); the s
   migrated for it). Guarded by one global key `astraya:accountSettingsMigrated` (set only after the write or reconcile
   succeeds), because `localStorage` itself is global to the browser.
   - Capture first (db-integrity finding 1). Once the cache becomes bind-driven, `bind` would erase the legacy keys before
-    the migration reads them. So at module import of the new build, before any `bind`, and only while the guard is unset
+    the migration reads them. On the first launch of the new build, the import-time read falls back to the legacy keys
+    while the guard is unset (section 2.4), so first paint is correct before the capture and bind run. So at module import of the new build, before any `bind`, and only while the guard is unset
     and the capture key is absent, copy the explicitly present legacy values into `astraya:legacyAccountSettings` (JSON).
     The migration reads **only** this capture key, never the live cache keys. It is deleted only in the same step that
     sets the guard. A tab closed before the first sync therefore loses nothing, and a sign-out mid-migration cannot feed
     one account's cached values into the anonymous store.
   - Anonymous at first launch of the new build: write the explicit values into the anonymous store's register with
     `store.mutate`. They later reach an account through section 3.6.
-  - Signed in at first launch (owner decision, 2026-11-04, [#1066 comment](https://github.com/nrosier/astraya/issues/1066#issuecomment-6643499602)):
-    on first sign-in, the device's existing language, rulership and calculation-profile values are offered once in the
-    one prompt and written to the account if accepted. They are candidates (age unknown) for that account through
-    `reconcile`, after its first sync.
+  - Signed in at first launch (owner decision, 2026-11-04, [#1066 comment](https://github.com/nrosier/astraya/issues/1066#issuecomment-6643499602),
+    "move them into the account once"): on first sign-in, the device's existing language, rulership and calculation-profile
+    values are offered once in the one prompt and written to the account if accepted. They are candidates (age unknown)
+    for that account through `reconcile`, after its first sync.
+  - Ownership of the shared legacy capture: the capture belongs to the account that completes the one-time prompt. If the
+    user switches accounts before the first sync, or signs out and in as a different account before answering, the prompt
+    is shown again for the account that signs in, and the capture is not written to any other account. Nothing from the
+    capture reaches an account that did not answer the prompt. Consequence of the owner's decision above; the guard stays
+    global until a prompt is answered.
   - Shared device: legacy keys were device-wide, so values set by another person on this browser can appear in the
     signed-in account's prompt. This is the device scope those keys always had, not a new bleed path, and the prompt
     makes it explicit rather than silent (db-integrity finding 9).
@@ -373,9 +399,9 @@ Required test scenarios:
 9. i18n parity for the prompt and notice strings; MAP.md entries for new files; `docs/ops/DEPENDENCIES.md` unchanged
    (no new dependency).
 
-## 7. Open questions for the owner
+## 7. Decided questions
 
-Not decided by this document. Each is asked through the dialogue box; the answer is recorded on #1066 before the build.
+All four questions are decided. Each answer is recorded on #1066 (linked under each question) and is not re-opened here.
 
 - **Q1. Scope of the Advanced open or closed state (#856).** Options: (A) device preference, recommended; (B) account
   register fields `advancedOpen.<tab>`; (C) not remembered. Why A first: guidelines 3.3 reserves device scope for choices
@@ -405,24 +431,26 @@ Not decided by this document. Each is asked through the dialogue box; the answer
 
 ## 8. db-integrity review
 
-Reviewer: the `db-integrity` agent (2026-11-04), run against the first draft of this document. It verified the claims
+Review history: `db-integrity` review 1 (2026-11-04) ran against the first draft and returned APPROVE WITH CONDITIONS. Its
+conditions were incorporated, and the re-review (APPROVE on the revised text, [#1066 comment 6643980712](https://github.com/nrosier/astraya/issues/1066#issuecomment-6643980712))
+found no blocking conditions. The findings below are the review 1 record. Review 1 verified the claims
 against `src/store/{oplog,ops,fold,hlc,store,notes}.ts`, `server/ops/{routes,purge,deletion-impact}.ts`, `server/db.ts`,
 `src/sync/engine.ts` and `src/ui/session-context.tsx`, and ran no tests.
 
 **Verdict: APPROVE WITH CONDITIONS.** The wire contract, the relay's per-user scoping and the purge deny-list are safe
 for `account`/`preferences`. The conditions were three blocking findings. All nine findings are incorporated above:
 
-| #   | Severity     | Finding                                                                                           | Where addressed                   |
-| --- | ------------ | ------------------------------------------------------------------------------------------------- | --------------------------------- |
-| 1   | Blocking     | Bind-driven cache erases the legacy values before the migration reads them                        | Section 5 (capture key), test 8   |
-| 2   | Blocking     | One global cache shared by tabs bound to different stores                                         | Section 2.4 (cache tag), test 6   |
-| 3   | Blocking     | `purged`/`deleted` refused only in `purge()`; `mutate`/`seed`/`remove`/`restore` still write them | Section 2.3 (write guard), test 3 |
-| 4   | Non-blocking | Receive-side purge fan-out must skip `account` in two places                                      | Section 2.3, test 3               |
-| 5   | Non-blocking | Reconcile rule 2 treated a `null` reset as unset                                                  | Section 3.6 rule 2                |
-| 6   | Non-blocking | No recovery path for a deny-listed `account`                                                      | Section 4 runbook                 |
-| 7   | Non-blocking | Setter behaviour while no store is bound was undefined                                            | Section 2.4                       |
-| 8   | Non-blocking | Older clients keep but do not forward `account` ops                                               | Section 3.4                       |
-| 9   | Non-blocking | Legacy shared-device values; Q2(B) conflicts with bleed controls                                  | Section 5, Q2                     |
+| #   | Severity     | Finding                                                                                           | Where addressed                              |
+| --- | ------------ | ------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| 1   | Blocking     | Bind-driven cache erases the legacy values before the migration reads them                        | Section 5 (capture key), test 8              |
+| 2   | Blocking     | One global cache shared by tabs bound to different stores                                         | Section 2.4 (per-database cache key), test 6 |
+| 3   | Blocking     | `purged`/`deleted` refused only in `purge()`; `mutate`/`seed`/`remove`/`restore` still write them | Section 2.3 (write guard), test 3            |
+| 4   | Non-blocking | Receive-side purge fan-out must skip `account` in two places                                      | Section 2.3, test 3                          |
+| 5   | Non-blocking | Reconcile rule 2 treated a `null` reset as unset                                                  | Section 3.6 rule 2                           |
+| 6   | Non-blocking | No recovery path for a deny-listed `account`                                                      | Section 4 runbook                            |
+| 7   | Non-blocking | Setter behaviour while no store is bound was undefined                                            | Section 2.4                                  |
+| 8   | Non-blocking | Older clients keep but do not forward `account` ops                                               | Section 3.4                                  |
+| 9   | Non-blocking | Legacy shared-device values; Q2(B) conflicts with bleed controls                                  | Section 5, Q2                                |
 
 Its answer to the owner's precondition: purge, the `purged_entities` deny-list, `deletion-impact` and per-user scoping all
 handle a non-person entity. Every `ops` query filters by `user_id`. `purged_entities` is keyed
@@ -433,5 +461,4 @@ findings 3 and 4 close that.
 The reviewer could not verify some claims from the files it read: the registry contents, guidelines section 3.2, which
 fields the profile readers use, and key rotation. The author checked the first three against `src/ui/settings-registry.ts`,
 `docs/ui/UI-UX_GUIDELINES.md` and the three reader call sites. Key rotation (`server/ops/rotate-key.ts`) is covered by
-test 4 rather than by reading. The revised sections were not re-reviewed; a re-review before the build starts is
-recommended to confirm the conditions are met.
+test 4 rather than by reading. The re-review confirmed the conditions as met on the revised text.
