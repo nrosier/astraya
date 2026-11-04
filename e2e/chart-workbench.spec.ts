@@ -140,6 +140,9 @@ test.describe('with the shared people (#799)', () => {
     await openNatalChart(page);
     const shown = page.locator('svg.chart-dial g.chart-aspect-link:not(.chart-isolate-hidden)');
     const visibleLines = async (): Promise<number> => shown.count();
+    // The dial is drawn only once the chart has computed (an async load after the chart type is chosen), so wait for
+    // its aspect lines before taking the baseline; a bare count() reads 0 on a slow runner.
+    await expect.poll(visibleLines).toBeGreaterThan(3);
     const before = await visibleLines();
     expect(before).toBeGreaterThan(3);
 
