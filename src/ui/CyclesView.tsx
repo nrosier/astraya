@@ -47,6 +47,7 @@ import type { TableColumn } from './table-sort.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
+import { useDeviceCalculationBasisLine } from './calculation-basis.js';
 
 interface Params {
   readonly bodyA: string;
@@ -126,6 +127,7 @@ function MotionFilterGroup({
 
 export function CyclesView(): React.JSX.Element {
   const t = useMessages(cyclesViewMessages);
+  const basisLine = useDeviceCalculationBasisLine();
   const [symbolClass] = useSymbolClass();
   // The wheel's markup is cached on these, so a change of symbol form redraws it.
   const [variants] = useGlyphVariants();
@@ -340,7 +342,7 @@ export function CyclesView(): React.JSX.Element {
   return (
     <main className="shell">
       <BackLink fallback="#/people" />
-      <PageHeader title={t.heading} titleTerm="cycle" />
+      <PageHeader title={t.heading} titleTerm="cycle" basis={basisLine} />
       <p className="hint">
         <GlossaryText text={t.hint} />
       </p>

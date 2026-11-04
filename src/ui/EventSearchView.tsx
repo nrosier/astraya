@@ -34,6 +34,7 @@ import { useMessages } from './messages.js';
 import { eventSearchViewMessages } from './EventSearchView.messages.js';
 import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
+import { useDeviceCalculationBasisLine } from './calculation-basis.js';
 
 interface Parameters {
   readonly from: string;
@@ -83,6 +84,7 @@ function toggle(
 
 export function EventSearchView(): React.JSX.Element {
   const t = useMessages(eventSearchViewMessages);
+  const basisLine = useDeviceCalculationBasisLine();
   const columns = useMemo<readonly TableColumn<EventSearchResult>[]>(
     () => [
       {
@@ -197,7 +199,7 @@ export function EventSearchView(): React.JSX.Element {
   return (
     <main className="shell">
       <BackLink fallback="#/people" />
-      <PageHeader title={t.heading} />
+      <PageHeader title={t.heading} basis={basisLine} />
       <div className="tool-layout">
         <section className="tool-card tool-form" aria-labelledby="event-search-heading">
           <h2 id="event-search-heading">{t.searchHeading}</h2>
