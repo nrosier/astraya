@@ -51,6 +51,9 @@ test('a person with a known birth time gets a Harmonic screen with a wheel and d
   await openSharedPerson(page, baseUrl, EINSTEIN);
   await openChart(page, 'Harmonic');
   await expect(page.getByRole('heading', { name: /harmonic/i, level: 1 })).toBeVisible();
+  // #1059: the basis line names the harmonic on screen and offers the Edit link.
+  await expect(page.locator('.page-header-basis')).toContainText(/ · D1 — Rashi \(natal\)$/);
+  await expect(page.locator('.page-header-basis-edit')).toBeVisible();
 
   // The default preset already renders a chart, with no picking needed.
   await expect(page.locator('div.chart-wheel')).toBeVisible();

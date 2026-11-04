@@ -29,6 +29,8 @@ import { ChartDataView } from './ChartView.js';
 import { ReportView } from './ReportView.js';
 import { compositeViewMessages } from './CompositeView.messages.js';
 import { useMessages } from './messages.js';
+import { useEngineBasisLine, withBasisItems } from './calculation-basis.js';
+import { calculationBasisMessages } from './calculation-basis.messages.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import { ordered } from './people-list.js';
 import { PersonNotFound } from './PersonNotFound.js';
@@ -64,6 +66,8 @@ export function CompositeView({
   const t = useMessages(compositeViewMessages);
   // A composite belongs to no single person, so it follows the device default rulership (#806).
   const [rulership] = useRulershipChoice();
+  // `computeComposite` takes no options: the engine defaults, with the near-arc midpoint of every body and cusp.
+  const basisLine = withBasisItems(useEngineBasisLine(rulership), useMessages(calculationBasisMessages).midpointMethod);
 
   const candidates = useMemo(
     () =>
@@ -131,6 +135,7 @@ export function CompositeView({
       <PageHeader
         title={person.displayName ? t.heading(person.displayName) : t.compositeFallback}
         titleTerm="composite"
+        basis={basisLine}
       />
       <p className="hint">
         <GlossaryText text={t.hint} />

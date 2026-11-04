@@ -79,8 +79,8 @@ import type { PrimaryDirectionMethod, PrimaryDirectionMode } from '../astrology/
 import { useStableBy, useStableMoment } from './use-stable-moment.js';
 import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
-import { useCalculationBasisLine } from './calculation-basis.js';
-import { primaryDirectionsBasisItems, withBasisItems } from './timing-basis.js';
+import { useCalculationBasisLine, withBasisItems } from './calculation-basis.js';
+import { primaryDirectionsBasisItems } from './timing-basis.js';
 import { timingBasisMessages } from './timing-basis.messages.js';
 
 type Load =
@@ -236,7 +236,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
     undefined,
     { rulers: false, orbs: false },
   );
-  const basisLine = withBasisItems(baseBasis, primaryDirectionsBasisItems(key, method, timingT));
+  const basisLine = withBasisItems(baseBasis, ...primaryDirectionsBasisItems(key, method, timingT));
   const [significators, setSignificators] = useState<readonly string[]>(PRIMARY_DIRECTION_SIGNIFICATORS);
   const [promissors, setPromissors] = useState<readonly string[]>(PRIMARY_DIRECTION_PROMISSORS);
   const [load, setLoad] = useState<Load>({ kind: 'loading' });

@@ -41,6 +41,8 @@ import { PersonNotFound } from './PersonNotFound.js';
 import { useStore, useStoreState } from './store-context.js';
 import type { RelocatedComparisonRow } from '../domain/relocated-chart.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import { useEngineBasisLine, withBasisItems } from './calculation-basis.js';
+import { calculationBasisMessages } from './calculation-basis.messages.js';
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
 import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
 import { orbsOf } from '../chart/extended-settings.js';
@@ -190,6 +192,21 @@ export function RelocatedChartView({
     setRulership,
   } = usePersonCalculationSettings(personId);
   const orbs = useStableBy(orbsOf(extendedSettings), (config) => JSON.stringify(config));
+  // The relocated chart calculates with the engine defaults, the person's orbs and rulers, at the relocation place.
+  const basisT = useMessages(calculationBasisMessages);
+  const baseBasis = useEngineBasisLine(rulership, extendedSettings);
+  // A saved place's name only while the coordinates still are its own; edited coordinates read as coordinates.
+  const selectedPlace = person?.relocationPlaces?.find(
+    (candidate) =>
+      candidate.id === selectedLocationId &&
+      candidate.latitude === relocationPlace?.latitude &&
+      candidate.longitude === relocationPlace.longitude,
+  );
+  const placeText =
+    relocationPlace === undefined
+      ? undefined
+      : (selectedPlace?.label ?? `${String(relocationPlace.latitude)}, ${String(relocationPlace.longitude)}`);
+  const basisLine = placeText === undefined ? baseBasis : withBasisItems(baseBasis, basisT.relocatedTo(placeText));
 
   useEffect(() => {
     if (personMoment === undefined || provider === undefined || settingsUnreadable || relocationPlace === undefined) {
@@ -271,7 +288,7 @@ export function RelocatedChartView({
   return (
     <main className="shell shell--wide">
       <BackLink fallback={personHref(personId)} />
-      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.headingFallback} />
+      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.headingFallback} basis={basisLine} />
       <ChartTypeSelector personId={personId} type="relocated" view={view} />
       <p className="hint">
         <GlossaryText text={t.hint} />

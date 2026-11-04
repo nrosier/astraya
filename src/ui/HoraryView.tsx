@@ -22,6 +22,7 @@ import { TextField } from './primitives/TextField.js';
 import { TimeField } from './primitives/TimeField.js';
 import { useEffect, useState } from 'react';
 import { isRadical } from '../astrology/horary.js';
+import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
 import { chartSheetMetaLines } from '../domain/chart-tables.js';
 import { computeHoraryChart, HORARY_DEFAULT_HOUSE_SYSTEM, type HoraryChart } from '../domain/horary.js';
 import { BirthPlaceSearch } from './BirthPlaceSearch.js';
@@ -43,6 +44,7 @@ import { judgeHoraryWithMotion, type HoraryJudgment } from '../domain/horary-jud
 import { BackLink } from './BackLink.js';
 import { replaceRoute } from './nav-history.js';
 import { PageHeader } from './PageHeader.js';
+import { useCalculationBasisLine } from './calculation-basis.js';
 
 type Result =
   | { readonly kind: 'idle' }
@@ -64,6 +66,7 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
   const { provider } = useEphemerisProvider();
   const [fields, setFields] = useState(() => ({ ...nowFields(), latitude: '', longitude: '' }));
   const [houseSystem, setHouseSystem] = useState(HORARY_DEFAULT_HOUSE_SYSTEM);
+  const basisLine = useCalculationBasisLine({ ...DEFAULT_EXTENDED_SETTINGS, houseSystem }, rulership);
   const [quesitedHouse, setQuesitedHouse] = useState('7');
   const [coordsFromSearch, setCoordsFromSearch] = useState(false);
   const [fieldError, setFieldError] = useState<HoraryFieldError>();
@@ -115,7 +118,7 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
   return (
     <main className="shell shell--wide">
       <BackLink fallback="#/people" />
-      <PageHeader title={t.heading} titleTerm="horary" />
+      <PageHeader title={t.heading} titleTerm="horary" basis={basisLine} basisEditHref={null} />
       <p className="hint">
         <GlossaryText text={t.hint} />
       </p>

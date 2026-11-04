@@ -26,6 +26,9 @@ import {
   type CalculationSnapshot,
 } from '../domain/calculation-snapshot.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
+import { useCalculationBasisLine } from './calculation-basis.js';
+import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
+import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { sharedChartViewMessages } from './SharedChartView.messages.js';
@@ -81,6 +84,13 @@ export function SharedChartView(): React.JSX.Element {
   // snapshot (full app defaults for an old pre-#541 link whose `settings` bag is empty).
   const { snapshot } = initial;
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
+  // The sender's basis, never the viewer's (#1059). The link carries the zodiac, house system, rulers and the orb scale
+  // or rules, but not the name of an orb profile on the sender's device, so the orbs read as the built-in profile
+  // the scale matches, else "Custom". Shown only once the link decoded.
+  const basisLine = useCalculationBasisLine(
+    snapshot?.settings ?? DEFAULT_EXTENDED_SETTINGS,
+    snapshot?.rulership ?? DEFAULT_RULERSHIP_CHOICE,
+  );
   const { provider } = useEphemerisProvider();
   // More volatile than the share-token data above, so this reads the hash itself on every
   // navigation, not once at mount (#511).
@@ -127,7 +137,8 @@ export function SharedChartView(): React.JSX.Element {
   return (
     <main className="shell shell--wide">
       <BackLink fallback="#/people" />
-      <PageHeader title={t.sharedChart} />
+      {/* No Edit link: Preferences edits this viewer's own settings, not the sender's. */}
+      <PageHeader title={t.sharedChart} basis={snapshot === undefined ? undefined : basisLine} basisEditHref={null} />
       <p className="hint">{t.hint}</p>
 
       {initial.tooManyFixedStars === true && (

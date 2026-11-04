@@ -45,8 +45,8 @@ import { StatusMessage } from './primitives/StatusMessage.js';
 import { useStableMoment } from './use-stable-moment.js';
 import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
-import { useCalculationBasisLine } from './calculation-basis.js';
-import { progressionBasisItems, withBasisItems } from './timing-basis.js';
+import { useCalculationBasisLine, withBasisItems } from './calculation-basis.js';
+import { progressionBasisItems } from './timing-basis.js';
 import { timingBasisMessages } from './timing-basis.messages.js';
 import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
 import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
@@ -175,7 +175,7 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
   const baseBasis = useCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE, undefined, {
     rulers: false,
   });
-  const basisLine = withBasisItems(baseBasis, progressionBasisItems(technique, mcMethod, timingT));
+  const basisLine = withBasisItems(baseBasis, ...progressionBasisItems(technique, mcMethod, timingT));
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
 

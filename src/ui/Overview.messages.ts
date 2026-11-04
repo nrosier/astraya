@@ -11,10 +11,6 @@
 const en = {
   heading: (name: string) => `Overview · ${name}`,
   personFallback: 'Overview',
-  basisHeading: 'Calculation basis',
-  basisLine: (zodiac: string, rulership: string) => `${zodiac} · ${rulership} rulers`,
-  tropical: 'Tropical',
-  sidereal: 'Sidereal',
   nextActionsHeading: 'Next',
   editBirthRecord: 'Edit birth record',
   openChart: 'Open natal chart',
@@ -26,10 +22,6 @@ const en = {
 const nl: typeof en = {
   heading: (name: string) => `Overzicht · ${name}`,
   personFallback: 'Overzicht',
-  basisHeading: 'Berekeningsbasis',
-  basisLine: (zodiac: string, rulership: string) => `${zodiac} · ${rulership} heersers`,
-  tropical: 'Tropisch',
-  sidereal: 'Siderisch',
   nextActionsHeading: 'Vervolgens',
   editBirthRecord: 'Geboortegegevens bewerken',
   openChart: 'Horoscoop openen',

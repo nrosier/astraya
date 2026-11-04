@@ -27,6 +27,8 @@ import { PersonNotFound } from './PersonNotFound.js';
 import { useStoreState } from './store-context.js';
 import type { ChartData } from '../domain/chart-compute.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import { useEngineBasisLine } from './calculation-basis.js';
+import { calculationBasisMessages } from './calculation-basis.messages.js';
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
 import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
 import { orbsOf } from '../chart/extended-settings.js';
@@ -72,6 +74,8 @@ export function DraconicView({
     rulership,
   } = usePersonCalculationSettings(personId);
   const orbs = useStableBy(orbsOf(extendedSettings), (config) => JSON.stringify(config));
+  // The draconic chart calculates with the engine defaults, the person's orbs and rulers, and the draconic zodiac.
+  const basisLine = useEngineBasisLine(rulership, extendedSettings, useMessages(calculationBasisMessages).draconic);
 
   useEffect(() => {
     if (personMoment === undefined || provider === undefined || settingsUnreadable) return undefined;
@@ -127,7 +131,11 @@ export function DraconicView({
   return (
     <main className="shell shell--wide">
       <BackLink fallback={personHref(personId)} />
-      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.headingFallback} titleTerm="draconic">
+      <PageHeader
+        title={person.displayName ? t.heading(person.displayName) : t.headingFallback}
+        titleTerm="draconic"
+        basis={basisLine}
+      >
         <PdfCreatorLink href={creatorHref} />
       </PageHeader>
       <ChartTypeSelector personId={personId} type="draconic" view={view} />
