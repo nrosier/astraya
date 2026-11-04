@@ -4,6 +4,7 @@ Project documentation. Pick the right bucket below for a new doc rather than dro
 
 Topic folders:
 
+- `ui/proposals/onboarding-goals.md` — Text proposal for goal-based onboarding (#1060), awaiting owner approval; not the §17.2 mockup. Deps: `ui/UI-UX_GUIDELINES.md`.
 - `ui/UI-UX_RELEASE_CHECKS.md` — Per-release record of the manual UI/UX checks and section 16 tasks that no automated test performs (#615). Deps: `ui/UI-UX_GUIDELINES.md`, `ops/RELEASING.md`.
 - `ui/UI-UX_BASELINE.md` — The behaviour the end-to-end suite pins (routes, inputs, outputs, selection, exports, persistence), generated from the test titles. Deps: `scripts/generate-ui-baseline.mjs`.
 - `ui/UI-UX_GUIDELINES.md` — Normative UI/UX implementation and behavior rules for future features. Deps: `src/ui`, `archive/UI-UX_REVIEW.md`.
