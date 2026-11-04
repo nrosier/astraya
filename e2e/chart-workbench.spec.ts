@@ -267,6 +267,61 @@ test.describe('with the shared people (#799)', () => {
     expect(await centreOffset(row.locator('.emphasis-screen-row-total'), firstCell)).toBeLessThanOrEqual(1.5);
   });
 
+  for (const mode of ['drawn', 'text'] as const) {
+    test(`the Elements and Modalities markers are horizontally centred in their cells, ${mode} symbols (#900)`, async () => {
+      test.setTimeout(90_000);
+      if (mode === 'text') {
+        await page.addInitScript(() => {
+          localStorage.setItem('astraya:symbolClass', 'text');
+        });
+      }
+      await openSharedPerson(page, baseUrl, EINSTEIN);
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await openNatalChart(page, 'Elements & modalities');
+      for (const width of [1280, 390]) {
+        await page.setViewportSize({ width, height: 800 });
+        const grid = page.locator('.emphasis-screen-grid');
+        await expect(grid).toBeVisible();
+        // A marker is a drawn glyph or, in text mode, the HTML text symbol; either must sit on the cell's centre.
+        const markerClass = '.emphasis-screen-glyph, .emphasis-screen-symbol-text';
+        const filled = grid.locator('.emphasis-screen-cell', { has: page.locator(markerClass) });
+        const count = await filled.count();
+        expect(count).toBeGreaterThan(0);
+        for (let index = 0; index < count; index += 1) {
+          const cell = filled.nth(index);
+          const label = `${mode} ${String(width)}px cell ${String(index)}`;
+          // The markers' outer left and right edges, and the cell's, in viewport pixels.
+          const cellBox = await cell.boundingBox();
+          if (cellBox === null) throw new Error('no cell box');
+          const markers = cell.locator(markerClass);
+          const markerCount = await markers.count();
+          let left = Number.POSITIVE_INFINITY;
+          let right = Number.NEGATIVE_INFINITY;
+          for (let m = 0; m < markerCount; m += 1) {
+            const box = await markers.nth(m).boundingBox();
+            if (box === null) throw new Error('no marker box');
+            left = Math.min(left, box.x);
+            right = Math.max(right, box.x + box.width);
+          }
+          const cellLeft = cellBox.x;
+          const cellRight = cellBox.x + cellBox.width;
+          expect(Math.abs((left + right) / 2 - (cellLeft + cellRight) / 2), label).toBeLessThanOrEqual(1.5);
+          expect(left, `${label} inside the cell`).toBeGreaterThanOrEqual(cellLeft - 0.5);
+          expect(right, `${label} inside the cell`).toBeLessThanOrEqual(cellRight + 0.5);
+        }
+        if (mode === 'text') {
+          // --text-base (1rem of the 87.5% root = 14px), up from the --text-xs (about 11px) the symbols were too small at.
+          const symbols = grid.locator('.emphasis-screen-symbol-text');
+          const symbolCount = await symbols.count();
+          expect(symbolCount).toBeGreaterThan(0);
+          for (let n = 0; n < symbolCount; n += 1) {
+            await expect(symbols.nth(n)).toHaveCSS('font-size', '14px');
+          }
+        }
+      }
+    });
+  }
+
   test('the elements and modalities grid is a view of its own, with its table and a CSV download (#511)', async () => {
     test.setTimeout(90_000);
     await page.setViewportSize({ width: 1600, height: 1000 });
