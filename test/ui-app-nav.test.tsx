@@ -330,7 +330,7 @@ const ROUTE_HASHES: Record<Route['kind'], string> = {
   rectification: '#/explore/rectification',
 };
 
-const EXPLICIT_NO_PERSON_SIDEBAR_KINDS = ['people', 'home', 'shared', 'set-password', 'setup'] as const;
+const EXPLICIT_NO_PERSON_SIDEBAR_KINDS = ['people', 'shared', 'set-password', 'setup'] as const;
 const EXPECTED_NO_PERSON_SIDEBAR = [
   ['Tools', '#/explore/cycles'],
   ['PDF', '#/documents'],
@@ -358,7 +358,15 @@ describe('the sidebar on every route (#965)', () => {
   });
 
   it('keeps the exceptions to the person sidebar as exactly the #914 list', () => {
-    expect([...EXPLICIT_NO_PERSON_SIDEBAR_KINDS]).toEqual(['people', 'home', 'shared', 'set-password', 'setup']);
+    expect([...EXPLICIT_NO_PERSON_SIDEBAR_KINDS]).toEqual(['people', 'shared', 'set-password', 'setup']);
+  });
+
+  it('shows the last-viewed person sections on the home screen (#/) (#965, reverses #1058)', async () => {
+    openStoreWithLastPerson();
+    await mount(parseRoute('#/'));
+    expect(sidebarPairs()).toContainEqual(['Overview', `${PERSON_HASH}/overview`]);
+    expect(sidebarPairs()).toContainEqual(['Tools', '#/explore/cycles']);
+    expect(sidebarPairs()).toContainEqual(['PDF', '#/documents']);
   });
 
   it('shows the person-page sidebar as the baseline', async () => {
