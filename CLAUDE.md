@@ -74,6 +74,7 @@ These cause build/CI failures if violated:
   - Labels: `partially-fixed` when work starts; `fixed` when merged; add `waiting-for-release` to a `fixed` issue until the release containing it is tagged.
   - Labels must match the issue state. Once every box is ticked and the fix is merged, `fixed` replaces `partially-fixed`. Once the release containing the fix is tagged, `waiting-for-release` is removed.
   - Before closing, count unticked `- [ ]` lines in the body; do not close if any remain. Use the `astraya-issue-close` skill for this sequence.
+  - **Dependencies:** when creating or triaging an issue, link every hard dependency on a still-open issue with a native GitHub "blocked by" link (`gh api -X POST repos/nrosier/astraya/issues/<blocked>/dependencies/blocked_by -F issue_id=<blocker database id>`; the id comes from `gh api repos/nrosier/astraya/issues/<n> --jq .id`, not the issue number). Link only stated or code-justified dependencies, check for cycles first, and keep soft relations ("coordinate with") as prose. Keep a "Blocked by #N" line in the body too.
 - **PR bodies:** write "Part of #N" or "Refs #N", never "Fixes", "Closes" or "Resolves" (GitHub auto-closes on merge). Commit scope for several issues is `fix(#580/#581)`, not with a comma.
 - **Stacked PRs:** do not use `gh pr merge --delete-branch` on a base PR that has stacked PRs; GitHub closes them.
 - **Releases:** Touch `package.json`, `package-lock.json`, `CHANGELOG.md`, `README.md` badge. Semantic versioning.
