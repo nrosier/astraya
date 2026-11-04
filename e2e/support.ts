@@ -145,7 +145,7 @@ export async function openAdminPanel(page: Page): Promise<void> {
 /** Opens a tool (#882): the sidebar's one Tools entry opens the first tool, and the others are tabs on the page. */
 export async function openTool(page: Page, name: string): Promise<void> {
   await page.getByRole('banner').getByRole('link', { name: 'Tools', exact: true }).click();
-  await page.getByRole('navigation', { name: 'Tools subtabs' }).getByRole('link', { name, exact: true }).click();
+  await page.getByRole('tablist', { name: 'Tools subtabs' }).getByRole('tab', { name, exact: true }).click();
 }
 
 /** Opens one kind of chart (`Natal`, `Draconic`, `Harmonic`, `Solar return` or `Lunar return`): the header's Charts link, then the page's Chart type select (#511). */

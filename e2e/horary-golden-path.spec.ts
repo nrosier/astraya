@@ -46,7 +46,7 @@ test('casting a horary chart shows the considerations before judgment and the ch
 
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await openTool(page, 'Horary chart');
-  await expect(page.getByRole('heading', { name: 'Horary chart', level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Horary chart', level: 2 })).toBeVisible();
 
   await castLondonChart(page);
 
