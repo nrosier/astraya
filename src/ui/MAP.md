@@ -103,7 +103,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `ProfectionsView.tsx` + `ProfectionsView.messages.ts` — Annual/monthly profections screen. Deps: `domain/profections`, `./person-calculation-settings`, `./wheel-corpus`; header states the basis line (#1059).
 - `ProgressionsView.tsx` + `ProgressionsView.messages.ts` — Secondary/tertiary/minor progressions screen. Deps: `domain/secondary-progression`, `domain/minor-progression`; header states the basis line plus technique and MC method (#1059).
 - `PwaStatus.tsx` + `PwaStatus.messages.ts` — PWA update + offline-cache warming banner. Deps: `pwa/register`, `pwa/warm-status`.
-- `RectificationView.tsx` + `RectificationView.messages.ts` — Birth-time rectification screen (event-matching). States its calculation basis in the header (#1059). Deps: `domain/rectification`, `astrology/signs`.
+- `RectificationView.tsx` + `RectificationView.messages.ts` — Birth-time rectification screen (event-matching). States its calculation basis in the header (#1059). Tool-page layout (#1065). Deps: `domain/rectification`, `astrology/signs`.
 - `RelationshipSummary.tsx` + `RelationshipSummary.messages.ts` — Grouped relationship-themes summary (contacts/overlays/Tier 2 AI). Deps: `domain/relationship-themes`, `domain/house-overlays`, `interpretation/tier2-client`.
 - `RelocatedChartView.tsx` + `RelocatedChartView.messages.ts` — Relocated-chart screen: saved or manual locations, relocated wheel, natal-vs-relocated comparison table (#559). Deps: `domain/relocated-chart`, store, `./map-settings`, `./ChartView`.
 - `ReportScreen.tsx` + `ReportScreen.messages.ts` — Standalone written-report route. Deps: `domain/chart-compute`, `ReportView`.
