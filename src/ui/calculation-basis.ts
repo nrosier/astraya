@@ -7,7 +7,7 @@
  * @module ui/calculation-basis
  * @purpose Builds the full calculation-basis line a calculated page states under its title (#1059): "Tropical · Placidus · Modern rulers · Standard orbs".
  * @conventions `buildCalculationBasisLine` and `calculationSource` are pure (settings, rulers and an explicit vocabulary in; text out); the two hooks only gather the translated vocabulary. `useCalculationBasisLine` takes a person's own settings; `useDeviceCalculationBasisLine` takes the saved device default, only for views that calculate with it. Orbs are named by the device orb profile when one applies, else the built-in profile the scale matches, else "Custom".
- * @exports CalculationSource, calculationSource, orbSourceName, BasisWords, buildCalculationBasisLine, withBasisItems, useCalculationBasisLine, useDeviceCalculationBasisLine, useEngineBasisLine
+ * @exports BasisParts, CalculationSource, calculationSource, orbSourceName, BasisWords, buildCalculationBasisLine, withBasisItems, useCalculationBasisLine, useDeviceCalculationBasisLine, useEngineBasisLine
  */
 import { HOUSE_SYSTEMS } from '../astrology/houses.js';
 import { CARD_SOURCE, sourceForContext, type OrbContextSource, type OrbLibrary } from '../astrology/orb-library.js';
@@ -60,6 +60,17 @@ export interface BasisWords {
   readonly orbProfileTitles: Readonly<Record<'custom' | 'standard-v1' | 'tight-v1' | 'wide-v1', string>>;
 }
 
+/**
+ * Which items of the line a view states, for views whose calculation does not use all four (#1059). Default: all
+ * four, houses from the settings. `houses: 'whole-sign'` is for profections, which count whole-sign houses whatever
+ * the house system.
+ */
+export interface BasisParts {
+  readonly houses?: 'settings' | 'whole-sign';
+  readonly rulers?: boolean;
+  readonly orbs?: boolean;
+}
+
 function houseSystemName(code: string): string {
   const key = HOUSE_SYSTEMS.find((system) => system.code === code)?.key ?? code;
   return key.charAt(0).toUpperCase() + key.slice(1);
@@ -75,15 +86,20 @@ export function buildCalculationBasisLine(
   rulership: RulershipChoice,
   words: BasisWords,
   deviceOrbProfile?: string,
+  parts: BasisParts = {},
 ): string {
   const { t } = words;
   const builtIn = settings.orbRules === undefined ? matchOrbProfile(settings.orbScalePercent) : undefined;
-  return t.line(
-    settings.zodiac.kind === 'sidereal' ? t.sidereal : t.tropical,
-    houseSystemName(settings.houseSystem),
-    t.rulers(words.rulerTitles[rulership]),
-    t.orbs(deviceOrbProfile ?? words.orbProfileTitles[builtIn ?? 'custom']),
-  );
+  const zodiac = settings.zodiac.kind === 'sidereal' ? t.sidereal : t.tropical;
+  const houses = parts.houses === 'whole-sign' ? t.wholeSign : houseSystemName(settings.houseSystem);
+  const rulers = t.rulers(words.rulerTitles[rulership]);
+  const orbs = t.orbs(deviceOrbProfile ?? words.orbProfileTitles[builtIn ?? 'custom']);
+  if (parts.houses === undefined && parts.rulers !== false && parts.orbs !== false) {
+    return t.line(zodiac, houses, rulers, orbs);
+  }
+  return [zodiac, houses, parts.rulers === false ? '' : rulers, parts.orbs === false ? '' : orbs]
+    .filter((item) => item !== '')
+    .join(' · ');
 }
 
 function useBasisWords(): BasisWords {
@@ -102,8 +118,9 @@ export function useCalculationBasisLine(
   settings: ExtendedSettings,
   rulership: RulershipChoice,
   natalOrbSourceName?: string,
+  parts?: BasisParts,
 ): string {
-  return buildCalculationBasisLine(settings, rulership, useBasisWords(), natalOrbSourceName);
+  return buildCalculationBasisLine(settings, rulership, useBasisWords(), natalOrbSourceName, parts);
 }
 
 /**

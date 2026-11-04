@@ -45,6 +45,8 @@ import { StatusMessage } from './primitives/StatusMessage.js';
 import { useStableMoment } from './use-stable-moment.js';
 import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
+import { useCalculationBasisLine } from './calculation-basis.js';
+import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -108,6 +110,11 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
   const [asOf, setAsOf] = useState(todayInputValue);
   const { provider } = useEphemerisProvider();
   const { rulership, setRulership } = usePersonCalculationSettings(personId);
+  // Profections count whole-sign houses from the Ascendant's sign, use the engine zodiac and the person's rulers, and no orbs.
+  const basisLine = useCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, rulership, undefined, {
+    houses: 'whole-sign',
+    orbs: false,
+  });
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   // The reviewed text of each profected house (#427): the mechanical sentence until it arrives.
   const [corpus, setCorpus] = useState<readonly CorpusEntry[]>([]);
@@ -206,6 +213,7 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
       <PageHeader
         title={person.displayName ? t.heading(person.displayName) : t.profectionsFallback}
         titleTerm="profection"
+        basis={basisLine}
       />
       <p className="hint">
         <GlossaryText text={t.hint} />

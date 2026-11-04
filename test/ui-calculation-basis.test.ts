@@ -96,6 +96,36 @@ describe('buildCalculationBasisLine (#1059)', () => {
     expect(line).not.toContain('Placidus');
   });
 
+  it('leaves out the parts a view does not calculate with, and names whole-sign houses for profections', () => {
+    expect(
+      buildCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, 'traditional', WORDS.en, undefined, {
+        houses: 'whole-sign',
+        orbs: false,
+      }),
+    ).toBe('Tropical · Whole-sign houses · Traditional rulers');
+    expect(
+      buildCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, 'traditional', WORDS.nl, undefined, {
+        houses: 'whole-sign',
+        orbs: false,
+      }),
+    ).toBe('Tropisch · Hele-tekenhuizen · Traditioneel heersers');
+    expect(buildCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, 'modern', WORDS.en, undefined, { rulers: false })).toBe(
+      'Tropical · Placidus · Standard orbs',
+    );
+    expect(
+      buildCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, 'modern', WORDS.en, undefined, {
+        rulers: false,
+        orbs: false,
+      }),
+    ).toBe('Tropical · Placidus');
+  });
+
+  it("states the person's Traditional rulers with the transit orbs for the Transits view", () => {
+    const line = buildCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, 'traditional', WORDS.en, 'My house style');
+    expect(line).toBe('Tropical · Placidus · Traditional rulers · My house style orbs');
+    expect(line).not.toContain('Modern');
+  });
+
   it('says Custom when the orbs are edited per aspect, and names a device orb profile when one applies', () => {
     const custom = { ...DEFAULT_EXTENDED_SETTINGS, orbRules: { bodyOrbs: { venus: 4 } } };
     expect(buildCalculationBasisLine(custom, 'modern', WORDS.en)).toContain('Custom orbs');

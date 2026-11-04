@@ -53,6 +53,14 @@ test('a person with a known birth time gets a Profections screen with a Year/Mon
   await page.getByRole('link', { name: 'Progressions & Directions', exact: true }).click();
   await page.getByRole('link', { name: 'Profections', exact: true }).click();
   await expect(page.getByRole('heading', { name: /profections/i, level: 1 })).toBeVisible();
+  await expect(page.locator('.page-header-basis')).toHaveText('Tropical · Whole-sign houses · Modern rulers');
+  await expect(page.locator('.page-header-basis')).not.toContainText(/Placidus|orbs/);
+  // The person's rulers follow into the line.
+  await page
+    .getByRole('radiogroup', { name: 'Planetary rulers', exact: true })
+    .getByRole('radio', { name: /^Traditional/ })
+    .click();
+  await expect(page.locator('.page-header-basis')).toHaveText('Tropical · Whole-sign houses · Traditional rulers');
   await expect(page.getByRole('cell', { name: 'Year' })).toBeVisible();
   await expect(page.getByRole('cell', { name: 'Month' })).toBeVisible();
 
@@ -69,6 +77,13 @@ test('a person with a known birth time gets a Profections screen with a Year/Mon
   const meaning = page.locator('.profection-meanings p').first();
   await expect(meaning).not.toContainText('is the profected house for this period');
   expect((await meaning.textContent())?.length ?? 0).toBeGreaterThan(40);
+
+  // The person's Traditional rulers follow to the Transits line too (its chart rulers use them), not Modern.
+  await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).click();
+  await page.getByRole('link', { name: 'Transits', exact: true }).click();
+  await expect(page.locator('.page-header-basis')).toHaveText(
+    'Tropical · Placidus · Traditional rulers · Standard orbs',
+  );
 });
 
 test('a person with an unknown birth time is told profections need one', async () => {

@@ -70,6 +70,8 @@ import { StatusMessage } from './primitives/StatusMessage.js';
 import { useStableMoment } from './use-stable-moment.js';
 import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
+import { useCalculationBasisLine } from './calculation-basis.js';
+import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -249,6 +251,8 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   const { rulership } = usePersonCalculationSettings(personId);
+  // The forecast is calculated with the engine defaults; the person's rulers only pick the chart rulers it flags.
+  const basisLine = useCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, rulership);
   const natal = load.kind === 'ready' ? load.data.natal : undefined;
   const rules = useMemo<TransitRuleContext>(
     () => ({
@@ -520,7 +524,7 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
   return (
     <main className="shell">
       <BackLink fallback={personHref(personId)} />
-      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.forecastFallback} />
+      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.forecastFallback} basis={basisLine} />
       <p className="hint">
         <GlossaryText text={t.hint(person.displayName || t.thisFallback)} />
       </p>
