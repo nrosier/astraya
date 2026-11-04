@@ -104,7 +104,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `ProfectionsView.tsx` + `ProfectionsView.messages.ts` — Annual/monthly profections screen. Deps: `domain/profections`, `./person-calculation-settings`, `./wheel-corpus`; header states the basis line (#1059).
 - `ProgressionsView.tsx` + `ProgressionsView.messages.ts` — Secondary/tertiary/minor progressions screen. Deps: `domain/secondary-progression`, `domain/minor-progression`; header states the basis line plus technique and MC method (#1059).
 - `PwaStatus.tsx` + `PwaStatus.messages.ts` — PWA update + offline-cache warming banner. Deps: `pwa/register`, `pwa/warm-status`.
-- `RectificationView.tsx` + `RectificationView.messages.ts` — Birth-time rectification screen (event-matching). States its calculation basis in the header (#1059). Deps: `domain/rectification`, `astrology/signs`.
+- `RectificationView.tsx` + `RectificationView.messages.ts` — Birth-time rectification screen (event-matching). States its calculation basis in the header (#1059). Tool-page layout (#1065). Deps: `domain/rectification`, `astrology/signs`.
 - `RelationshipSummary.tsx` + `RelationshipSummary.messages.ts` — Grouped relationship-themes summary (contacts/overlays/Tier 2 AI). Deps: `domain/relationship-themes`, `domain/house-overlays`, `interpretation/tier2-client`.
 - `RelocatedChartView.tsx` + `RelocatedChartView.messages.ts` — Relocated-chart screen: saved or manual locations, relocated wheel, natal-vs-relocated comparison table (#559). Deps: `domain/relocated-chart`, store, `./map-settings`, `./ChartView`.
 - `ReportScreen.tsx` + `ReportScreen.messages.ts` — Standalone written-report route. Deps: `domain/chart-compute`, `ReportView`.
@@ -169,7 +169,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `people-list.messages.ts` — en/nl for incomplete person-record descriptions. Deps: none.
 - `people-list.ts` — Sorts people + flags caveated resolutions + composes summaries. Deps: `time/resolve`, `domain/person`.
 - `person-nav.ts` — Per-person tab bar + grouped subtab families. Deps: `route`.
-- `Home.tsx` + `Home.messages.ts` — Home screen at `#/` (#1058): last-viewed person's timing timeline, or a person picker with a first-use empty state; no redirect. Deps: `last-person`, `TimingTimelineView`, `people-list`, `store-context`, `primitives/Select`, `primitives/EmptyState`.
+- `Home.tsx` + `Home.messages.ts` — Home screen at `#/` (#1058): last-viewed person's timing timeline, or a person picker with a first-use empty state; no redirect. Sidebar is full when a person is last-viewed (#965). Deps: `last-person`, `TimingTimelineView`, `people-list`, `store-context`, `primitives/Select`, `primitives/EmptyState`.
 - `person-screens.ts` — Barrel re-export for lazy-loading every person-scoped screen. Deps: all person-scoped screens.
 - `place-fields.ts` — Shared coordinate parsing (lat/lon validation). Deps: none.
 - `placement-label.ts` — Corpus key → human-readable placement name (admin UI). Deps: `astrology/aspects`, `astrology/bodies`, `astrology/signs`, `interpretation/schema`.

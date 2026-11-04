@@ -449,33 +449,40 @@ recommended option is already the only reading of an existing rule, and that is 
 - **D1. Where do saved queries live?**
   A. Account: stored in the operation log and synced when signed in (recommended: guidelines section 3, ADR 0002).
   B. This device only: `localStorage` keyed per account database, never synced (the 2026-10-17 suggestion on #616).
+  **Decided: A.** Saved queries live in the user's account ([#1061 comment](https://github.com/nrosier/astraya/issues/1061#issuecomment-6632854707)).
 - **D2. What does a saved date range mean?**
   A. The exact `from` and `to` dates as entered (recommended: reproducible, matches the parameters the CSV export
   already writes into its header).
   B. A relative window such as "the next 12 months", re-based each time the query is opened.
   C. Both, chosen when saving.
+  **Decided: A.** A saved date range means the exact dates as entered ([#1061 comment](https://github.com/nrosier/astraya/issues/1061#issuecomment-6632854707)).
 - **D3. How are saved queries removed?**
   A. Delete with Undo, plus a separate permanent Erase, because the name is free text that may hold personal data
   (recommended: erasure machinery is generic and already propagates to peers and the relay).
   B. Delete with Undo only in slice 1.
+  **Decided: A.** Delete with Undo, plus a separate permanent Erase ([#1061 comment](https://github.com/nrosier/astraya/issues/1061#issuecomment-6632854707)).
 - **D4. How long may a saved query's name be?**
   A. 500 code points, reusing the existing cap on a user-written custom AI instruction
   (`MAX_CUSTOM_PROMPT_LENGTH` in `src/interpretation/prompt-guardrail.ts`) (recommended: reuses an existing
   constant rather than inventing one; note it was set for a different field).
   B. 50,000 code points, the note limit (`NOTE_MAX_CHARACTERS`).
   C. A different number the owner names.
+  **Decided: A.** The name is limited to 500 characters, the value of `MAX_CUSTOM_PROMPT_LENGTH` ([#1061 comment](https://github.com/nrosier/astraya/issues/1061#issuecomment-6632898318)).
 - **D5. Are saved queries included in the full export and restore?**
   A. Yes, as an additive optional field, which `docs/domain/EXPORT_SCHEMA.md` says needs no version bump
   (recommended: for a reader who never signs in, the export is the only backup).
   B. Not in slice 1; track as a follow-up.
+  **Decided: A.** Saved queries are included in the full export and restore as an optional addition ([#1061 comment](https://github.com/nrosier/astraya/issues/1061#issuecomment-6632898318)).
 - **D6. Which results can be pinned in the follow-up slices?**
   A. Sky events first (person-independent, account scope); results derived from a person's chart later, under person
   scope with the person-id convention in 2.4 (recommended).
   B. Both from the start.
   C. Sky events only.
+  **Decided: B.** Both sky-event and person-chart results can be pinned from the start; person-chart results are stored under the person's id ([#1061 comment](https://github.com/nrosier/astraya/issues/1061#issuecomment-6632898318)).
 - **D7. How do two concurrent edits to one annotation resolve?**
   A. Immutable revisions with forks, as notes do (#919), so no text is ever lost (recommended).
   B. Last write wins on the whole text.
+  **Decided: A.** Immutable revisions with forks, as notes do (#919), so no text is lost ([#1061 comment](https://github.com/nrosier/astraya/issues/1061#issuecomment-6632898318)).
 
 Not asked, but worth the owner knowing: the repository has no `docs/design/` directory, and `docs/MAP.md` sends a
 one-time decision with lasting rationale to `docs/adr/`, so this note is ADR 0005 with status "proposed".
