@@ -6,7 +6,7 @@
 /**
  * @module ui/calculation-basis
  * @purpose Builds the full calculation-basis line a calculated page states under its title (#1059): "Tropical · Placidus · Modern rulers · Standard orbs".
- * @conventions `buildCalculationBasisLine` and `calculationSource` are pure (settings, rulers and an explicit vocabulary in; text out); the two hooks only gather the translated vocabulary. `useCalculationBasisLine` takes a person's own settings; `useDeviceCalculationBasisLine` takes the device defaults, for views with no person. Orbs are named by the device orb profile when one applies, else the built-in profile the scale matches, else "Custom".
+ * @conventions `buildCalculationBasisLine` and `calculationSource` are pure (settings, rulers and an explicit vocabulary in; text out); the two hooks only gather the translated vocabulary. `useCalculationBasisLine` takes a person's own settings; `useDeviceCalculationBasisLine` takes the saved device default, only for views that calculate with it. Orbs are named by the device orb profile when one applies, else the built-in profile the scale matches, else "Custom".
  * @exports CalculationSource, calculationSource, orbSourceName, BasisWords, buildCalculationBasisLine, withBasisItems, useCalculationBasisLine, useDeviceCalculationBasisLine, useEngineBasisLine
  */
 import { HOUSE_SYSTEMS } from '../astrology/houses.js';
@@ -107,8 +107,8 @@ export function useCalculationBasisLine(
 }
 
 /**
- * The basis line for a view with no person (Cycles, Event search, Eclipses, Electional, Rectification, Horary): the
- * device's saved default profile, else Astraya's shipped default, which is what such a view calculates with.
+ * The basis line for a view that calculates with the device's saved default profile (else Astraya's shipped default).
+ * Not for views that ignore the saved profile: they pass the defaults they use to `useCalculationBasisLine`.
  */
 export function useDeviceCalculationBasisLine(deviceOrbProfile?: string): string {
   const [saved] = useDefaultCalculationProfile();
