@@ -15,7 +15,7 @@ Hash: the hash the test maps to the kind (`test/ui-app-nav.test.tsx:295-331`). C
 
 | Route kind         | Hash in test                              | Sidebar shown           | Asserted at                        |
 | ------------------ | ----------------------------------------- | ----------------------- | ---------------------------------- |
-| home               | `#/no-such-screen`                        | Tools and PDF only      | `test/ui-app-nav.test.tsx:392-396` |
+| home               | `#/`, `#/no-such-screen`                  | Tools and PDF only      | `test/ui-app-nav.test.tsx:392-396` |
 | about              | `#/about`                                 | Full sidebar            | `test/ui-app-nav.test.tsx:375-390` |
 | changelog          | `#/changelog`                             | Full sidebar            | `test/ui-app-nav.test.tsx:375-390` |
 | people             | `#/people`                                | Tools and PDF only      | `test/ui-app-nav.test.tsx:392-396` |
@@ -50,6 +50,10 @@ Hash: the hash the test maps to the kind (`test/ui-app-nav.test.tsx:295-331`). C
 | horary             | `#/explore/horary`                        | Full sidebar            | `test/ui-app-nav.test.tsx:375-390` |
 | electional         | `#/explore/electional`                    | Full sidebar            | `test/ui-app-nav.test.tsx:375-390` |
 | rectification      | `#/explore/rectification`                 | Full sidebar            | `test/ui-app-nav.test.tsx:375-390` |
+
+## Home (#1058)
+
+`home` (`#/` and any unmatched hash) no longer redirects to `#/people` (this reverses the #234 rule). `src/ui/Home.tsx` renders in place: the last-viewed person's timing timeline (`TimingTimelineView`, id from `src/ui/last-person.ts`), or, when no person is stored or the stored id is no longer in the store, a person picker with a first-use empty state. Sidebar rule, decided by the owner on #1058: `home` stays a no-person kind, so it shows Tools and PDF only, unchanged. Tests: `test/ui-home.test.tsx`, `e2e/home-route.spec.ts`.
 
 ## Summary
 

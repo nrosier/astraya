@@ -53,14 +53,12 @@ test.afterAll(async () => {
   delete process.env.ASTRAYA_BOOTSTRAP_TOKEN;
 });
 
-test('the bare landing page redirects to the people list with no automatically detectable accessibility violations', async ({
+test('the bare landing page (the empty home) has no automatically detectable accessibility violations', async ({
   page,
 }) => {
-  // #/ no longer has a screen of its own (#234): it redirects to #/people as soon as the app
-  // mounts. Scanning immediately after `goto` would catch the page mid-redirect, so wait for
-  // it to land first — the same thing the "empty People list" test below waits for.
+  // #/ renders the home screen in place (#1058); with nobody stored it is the first-use empty state.
   await gotoAndSettle(page, `${baseUrl}/`);
-  await expect(page.getByRole('heading', { name: 'People' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Home' })).toBeVisible();
 
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
   expect(results.violations).toEqual([]);

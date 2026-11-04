@@ -162,7 +162,7 @@ function PersonMenu({
 
 // App-scoped screens that keep the last-viewed person's sections in the sidebar (#965), so the
 // sidebar is the same on every screen. The People list (the person picker; a stale person's tabs
-// must not linger there, #914), the landing redirect, shared charts and the sign-in/setup forms
+// must not linger there, #914), the home screen (#1058, decided: keeps the Tools and PDF only sidebar), shared charts and the sign-in/setup forms
 // are deliberately not in this set.
 const KEEP_PERSON_SECTIONS_KINDS: ReadonlySet<Route['kind']> = new Set([
   'documents',
