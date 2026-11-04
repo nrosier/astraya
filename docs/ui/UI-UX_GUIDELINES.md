@@ -50,7 +50,7 @@ Organize primary navigation around user goals:
 | Timing & forecasts | **Transits & Forecast** (Transits, Forecast) and **Progressions & Directions** (Timeline, Profections, Progressions, Solar Arc, Primary Directions); each is one rail entry whose sub-views are route links on the page (#882) |
 | Relationships      | Synastry, Composite                                                                                                                                                                                                            |
 | Location           | Astrocartography; Local Space is configured inside Map settings rather than exposed as another destination                                                                                                                     |
-| Tools              | One **Tools** section: one rail entry that opens the first tool; Planetary cycles, Ephemeris search, Eclipses, Horary, Electional and Rectification are route links on the page (#882). No Tools subgroups                     |
+| Tools              | One **Tools** section: one rail entry that opens the first tool; Planetary cycles, Ephemeris research, Eclipses, Horary, Electional and Rectification are route links on the page (#882). No Tools subgroups                   |
 | Page exports       | Place exports beside the page title; use overflow only when necessary                                                                                                                                                          |
 | Documents          | Build custom PDF                                                                                                                                                                                                               |
 | Data & backup      | Preferences → Data & privacy                                                                                                                                                                                                   |
@@ -273,7 +273,7 @@ Use these surface rules:
 
 ### Astrocartography map settings
 
-Astrocartography uses one **Map settings** right slide-over drawer (`StagedDialog` with `placement="right"`, `MapSettingsDialog.tsx:112`, #978), not a centred modal, for every control that changes the map. The page must not render separate inline fieldsets for Line types, Bodies, Local Space, and Relocation, and it must not add an **Extended** disclosure or a second dialog.
+Astrocartography uses one **Map settings** right slide-over drawer (`StagedDialog` with `placement="right"`, `MapSettingsDialog.tsx:111`, #978), not a centred modal, for every control that changes the map. The page must not render separate inline fieldsets for Line types, Bodies, Local Space, and Relocation, and it must not add an **Extended** disclosure or a second dialog.
 
 The page-level trigger sits near the map heading and includes a compact summary of the applied state, such as **4 line types · 10 bodies · Local Space off**. The dialog contains these visible groups in this order:
 
@@ -470,7 +470,7 @@ A tool page (a screen that takes inputs and returns results, such as Planetary c
 ## 11. Use the design system rather than local styling
 
 - Use the spacing, type, semantic-color, radius, elevation, and motion tokens in `app.css`.
-- Keep layout spacing on the `--space-*` token scale unless visualization geometry requires a specialized value. The root font size is 14px (`app.css:330`, `font-size: 87.5%`), so the tokens resolve to 3.5, 7, 10.5, 14, 21, 28 and 42px (`--space-1` to `--space-12`, `app.css:98-104`). That scale is the grid; it is a 3.5px grid, not a 4px one.
+- Keep layout spacing on the `--space-*` token scale unless visualization geometry requires a specialized value. The root font size is 14px (`app.css:339`, `font-size: 87.5%`), so the tokens resolve to 3.5, 7, 10.5, 14, 21, 28 and 42px (`--space-1` to `--space-12`, `app.css:98-104`). That scale is the grid; it is a 3.5px grid, not a 4px one.
 - Use semantic state tokens for danger, warning, success, info, and focus. Astrology colors do not double as UI state colors.
 - Use shared Button, Notice, Field, TextField, DateField, NumberField, Select, Checkbox, Radio, ChoiceGroup, OptionCards, FilterSummary, Disclosure, SelectionInspector, StatusMessage, EmptyState, DataTable, and settings-dialog primitives as they become available.
 - Do not add hard-coded colors, shadows, arbitrary inline style objects, or one-off disabled/loading behavior in a feature component.
