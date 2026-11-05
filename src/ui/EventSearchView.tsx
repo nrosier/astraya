@@ -38,6 +38,8 @@ import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
 import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
 import { useCalculationBasisLine } from './calculation-basis.js';
 import { SavedQueries } from './SavedQueries.js';
+import { PinButton, PinnedEvents } from './EventPins.js';
+import { eventPinsMessages } from './EventPins.messages.js';
 import { parseSearchDate, type EventSearchQueryParameters } from '../store/saved-queries.js';
 
 type Parameters = EventSearchQueryParameters;
@@ -69,6 +71,7 @@ function toggle(
 
 export function EventSearchView(): React.JSX.Element {
   const t = useMessages(eventSearchViewMessages);
+  const pinMessages = useMessages(eventPinsMessages);
   const basisLine = useCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE);
   const columns = useMemo<readonly TableColumn<EventSearchResult>[]>(
     () => [
@@ -80,8 +83,16 @@ export function EventSearchView(): React.JSX.Element {
       },
       { key: 'kind', label: t.kind, valueOf: (row) => t.kindLabels[row.kind] },
       { key: 'event', label: t.event, valueOf: (row) => row.label },
+      {
+        key: 'pin',
+        label: pinMessages.pinColumn,
+        valueOf: () => '',
+        renderCell: (row) => <PinButton result={row} />,
+        sortable: false,
+        screenOnly: true,
+      },
     ],
-    [t],
+    [t, pinMessages],
   );
   const { provider } = useEphemerisProvider();
   const [parameters, setParameters] = useState<Parameters>({
@@ -280,6 +291,7 @@ export function EventSearchView(): React.JSX.Element {
               setResult({ kind: 'idle' });
             }}
           />
+          <PinnedEvents />
         </section>
 
         <aside className="tool-card tool-panel" aria-labelledby="event-search-panel-heading">

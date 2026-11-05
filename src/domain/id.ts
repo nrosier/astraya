@@ -17,13 +17,13 @@
 /**
  * @module id
  * @purpose Generates and validates record identifiers for people, charts and note revisions in the local-first op-log.
- * @conventions Ids are generated on-device (never server-assigned) using 80 bits of CSPRNG randomness, base32-encoded over 5-bit groups into a 16-character string prefixed by entity type (`p-`/`c-`/`r-` for a note revision/`q-` for a saved query); ids are not secrets/capabilities — the server authorises by user, not by id.
- * @exports newId, isId, isPersonId, isChartId, IdPrefix
+ * @conventions Ids are generated on-device (never server-assigned) using 80 bits of CSPRNG randomness, base32-encoded over 5-bit groups into a 16-character string prefixed by entity type (`p-`/`c-`/`r-` for a note revision/`q-` for a saved query/`k-` for a pin); ids are not secrets/capabilities — the server authorises by user, not by id.
+ * @exports newId, derivedPinId, isId, isPersonId, isChartId, IdPrefix
  */
 const ALPHABET = 'abcdefghijklmnopqrstuvwxyz234567';
 
 /** A prefix, so an id is legible in a log line and a mistyped reference is obvious. */
-export type IdPrefix = 'p' | 'c' | 'r' | 'q';
+export type IdPrefix = 'p' | 'c' | 'r' | 'q' | 'k';
 
 export function newId(prefix: IdPrefix): string {
   const bytes = new Uint8Array(10);
@@ -45,7 +45,7 @@ export function newId(prefix: IdPrefix): string {
   return `${prefix}-${out}`;
 }
 
-const ID_PATTERN = /^[pcrq]-[a-z2-7]{16}$/;
+const ID_PATTERN = /^[pcrqk]-[a-z2-7]{16}$/;
 
 /**
  * Is this one of our ids?
@@ -68,6 +68,27 @@ export function isId(value: unknown): value is string {
  */
 export function isPersonId(value: unknown): value is string {
   return isId(value) && value.startsWith('p-');
+}
+
+/**
+ * A pin id derived from a canonical identity string, so two devices pinning the same result write to one entity
+ * (#1061, ADR 0005 addendum). The first 80 bits of a SHA-256 digest, the same width as a random id, so a collision
+ * needs about 10^12 distinct pins. Unlike `newId` it is deterministic and therefore asynchronous.
+ */
+export async function derivedPinId(identity: string): Promise<string> {
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(identity)));
+  let bits = 0;
+  let value = 0;
+  let out = '';
+  for (const byte of digest.subarray(0, 10)) {
+    value = (value << 8) | byte;
+    bits += 8;
+    while (bits >= 5) {
+      bits -= 5;
+      out += ALPHABET[(value >>> bits) & 31] ?? '';
+    }
+  }
+  return `k-${out}`;
 }
 
 export function isChartId(value: unknown): value is string {

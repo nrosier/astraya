@@ -47,6 +47,7 @@ import {
   type Note,
 } from './notes.js';
 import { decode, type JsonValue, type OpRecord } from './ops.js';
+import { foldPin, PIN_ENTITY, type Pin } from './pins.js';
 import { foldSavedQuery, SAVED_QUERY_ENTITY, type SavedQuery } from './saved-queries.js';
 
 /** The field that hides a record. A register like any other, so undo needs no new machinery. */
@@ -101,6 +102,7 @@ const KNOWN_ENTITIES: readonly string[] = [
   BIRTH_NOTE_ENTITY,
   CONSULTATION_NOTE_ENTITY,
   SAVED_QUERY_ENTITY,
+  PIN_ENTITY,
   ACCOUNT_ENTITY,
 ];
 
@@ -194,6 +196,8 @@ export interface State {
     readonly charts: ReadonlyMap<string, Chart>;
     /** Saved queries hidden by a tombstone, so the list can offer Undo and Erase (#1061). */
     readonly savedQueries: ReadonlyMap<string, SavedQuery>;
+    /** Pins hidden by a tombstone, so the list can offer Undo (#1061). */
+    readonly pins: ReadonlyMap<string, Pin>;
   };
   /** Charts naming a person this device does not hold. Retained, not lost — usually a partial sync. */
   readonly orphanCharts: readonly string[];
@@ -209,6 +213,8 @@ export interface State {
    * because hiding them would be silent loss. Map order is not part of the contract: sort before showing.
    */
   readonly savedQueries: ReadonlyMap<string, SavedQuery>;
+  /** Live pinned event-search results, by derived id (#1061). Unreadable ones are included, with their reason. */
+  readonly pins: ReadonlyMap<string, Pin>;
   /**
    * The account preferences registers (#1066, ADR 0004): only the `preferences` entity id, only the allowlisted
    * fields. `deleted` and `purged` never apply to this entity, so they are not consulted.
@@ -272,14 +278,26 @@ export function materialise(registers: Registers): State {
     else savedQueries.set(id, query);
   }
 
+  const pins = new Map<string, Pin>();
+  const deletedPins = new Map<string, Pin>();
+  for (const [id, fields] of Object.entries(registers[PIN_ENTITY] ?? {})) {
+    // Purged first, as for saved queries: a purge leaves only its marker.
+    if (isPurged(fields)) continue;
+    const pin = foldPin(id, fields);
+    if (pin === undefined) continue;
+    if (isDeleted(fields)) deletedPins.set(id, pin);
+    else pins.set(id, pin);
+  }
+
   return {
     people,
     charts,
-    deleted: { people: deletedPeople, charts: deletedCharts, savedQueries: deletedSavedQueries },
+    deleted: { people: deletedPeople, charts: deletedCharts, savedQueries: deletedSavedQueries, pins: deletedPins },
     orphanCharts,
     birthNotes,
     consultationNotes,
     savedQueries,
+    pins,
     // Any other entity id under `account` is ignored: every device writes the one constant id.
     account: foldAccount(registers[ACCOUNT_ENTITY]?.[ACCOUNT_ENTITY_ID]),
   };

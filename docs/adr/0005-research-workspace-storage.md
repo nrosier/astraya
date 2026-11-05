@@ -404,6 +404,38 @@ then by id (code-unit comparison, see 2.3), and tests compare sorted output.
       (`npm run test:e2e`, UI change).
 - [ ] `src/store/MAP.md` lists `saved-queries.ts`; the new module carries its `@module` header.
 
+### Addendum for slice 2: pins on sky events (decided 2026-11-05, #1061)
+
+Owner decisions P1-P3 on the issue:
+
+- **P1. Identity.** The pin id is derived from the full canonical identity (tool, kind, bodies, aspect, instant to the
+  second): `k-` plus the first 80 bits of its SHA-256 digest. Two offline devices pinning one result converge to one
+  pin, and pinning twice is idempotent. The 32-bit iCalendar hash is not used.
+- **P2. Person purge.** A pin about a person's chart uses the notes convention (`entityId` = person id, pin id in
+  `field`; the four consequences in 2.4 apply). Slice 2 pins only person-independent sky events, whose `entityId` is
+  the pin id, so no fan-out is needed yet. Person-chart pins arrive with the first result list that can offer them.
+- **P3. Interface.** A Pin toggle on each event-search result and a Pinned events list beside Saved queries.
+
+Entity `pin`, register `target` (one atomic value with its own `version`, holding the identity and the label as
+displayed) and the `deleted` tombstone. Unpin is a delete with Undo; there is no per-pin erase, because a sky event
+holds no personal data. No change to the envelope, `OP_VERSION`, `ops.ts`, `oplog.ts`, `hlc.ts`, the sync engine or the
+relay; the change is the id prefix `k`, the fold, one guard call in `Store.write()` and `src/store/pins.ts`.
+
+Two rules from the `db-integrity` review of PR #1192:
+
+- **Pinning writes `deleted: false` with the target**, in one batch, so a pin made on one device wins over an unpin
+  made on another device that has not synced (last write wins on `deleted`).
+- **`Store.purge` refuses `pin`.** The id is derived from the event, so a purge marker would block pinning that event
+  for good, locally and on the relay's deny-list. A pin is only ever unpinned. A peer's marker still hides a pin.
+
+Acceptance for slice 2:
+
+- [x] Pin, reload, unpin and Undo work on Event search results (`e2e/pins.spec.ts`).
+- [x] The same result pinned twice, or on two devices, is one pin; a later pin beats an earlier unpin
+      (`test/store-pins.test.ts`).
+- [x] An older build ignores the kind; its snapshot is rebuilt on upgrade (`test/store-pins.test.ts`).
+- [x] No change to the frozen files.
+
 Pins (slice 2) and annotations (slice 3) each need their own addendum and acceptance list before starting, covering at
 least: the pin identity choice (2.4), person purge fan-out if person-attached, and the annotation revision model.
 

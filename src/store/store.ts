@@ -45,6 +45,7 @@ import {
   type AccountReconcileState,
 } from './account.js';
 import { assertNoteMutation, entitiesPurgedWith } from './notes.js';
+import { PIN_ENTITY, PinRefusedError, assertPinMutation } from './pins.js';
 import { assertSavedQueryMutation } from './saved-queries.js';
 import { append, appendAt, emptyLog, latest, purgeEntity, receiveRecords, since } from './oplog.js';
 import { MAX_COUNTER, createClock, encodeHlc, isNodeId, randomNodeId, receive } from './hlc.js';
@@ -367,6 +368,7 @@ export async function openStore(options: StoreOptions = {}): Promise<Store> {
       for (const mutation of mutations) {
         assertNoteMutation(mutation);
         assertSavedQueryMutation(mutation);
+        assertPinMutation(mutation);
         assertAccountMutation(mutation);
       }
       let next = log;
@@ -506,6 +508,9 @@ export async function openStore(options: StoreOptions = {}): Promise<Store> {
     purge: (entity, entityId) =>
       serialise(async () => {
         if (entity === ACCOUNT_ENTITY) throw new AccountRefusedError('reserved-field');
+        // A pin id is derived from the event, so a purge would block pinning that event for good, locally and on the
+        // relay's deny-list. Pins are only ever unpinned (a tombstone).
+        if (entity === PIN_ENTITY) throw new PinRefusedError('invalid');
         if (!tabLock.writable) throw new Error(NOT_WRITABLE_MESSAGE);
         // One marker per entity the purge covers (a person's notes go with it, #919), all in
         // one commit, so no note can survive a person purge that was interrupted part-way.
