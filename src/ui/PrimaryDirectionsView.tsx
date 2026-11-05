@@ -592,6 +592,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
             {activeRows !== undefined && activeRows.length > 0 && (
               <SortableTable
                 caption={t.activeCaption(String(data.orb))}
+                headingLevel={2}
                 columns={columns}
                 rows={activeRows}
                 getRowKey={(row) => row.id}
@@ -607,6 +608,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
             {allRows !== undefined && allRows.length > 0 && (
               <SortableTable
                 caption={t.allCaption}
+                headingLevel={2}
                 columns={columns}
                 rows={allRows}
                 getRowKey={(row) => row.id}

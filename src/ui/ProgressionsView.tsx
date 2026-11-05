@@ -331,6 +331,7 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
             {positions !== undefined && (
               <SortableTable
                 caption={t.positionsCaption}
+                headingLevel={2}
                 columns={positionColumns(t, locale)}
                 rows={positions}
                 getRowKey={(row) => row.bodyKey}
@@ -341,6 +342,7 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
             {contacts !== undefined && contacts.length > 0 && (
               <SortableTable
                 caption={t.contactsCaption}
+                headingLevel={2}
                 columns={contactColumns(t, locale)}
                 rows={contacts}
                 getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}

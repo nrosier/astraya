@@ -432,6 +432,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
 
             <SortableTable
               caption={t.aspectsCaption}
+              headingLevel={2}
               captionTerm="aspect"
               columns={aspectColumns(t, locale, interpretationOf, importanceOf)}
               rows={rankedRows}

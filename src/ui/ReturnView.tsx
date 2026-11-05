@@ -362,6 +362,7 @@ export function ReturnView({
             </p>
             <SortableTable
               caption={t.contactsCaption}
+              headingLevel={2}
               columns={contactColumns(t, locale)}
               rows={contacts}
               getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
