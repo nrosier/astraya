@@ -36,6 +36,14 @@ import { useExclusiveOpen } from './use-exclusive-open.js';
 /** Where the basis line's Edit action goes by default: the Preferences astrology section (#1059). */
 export const BASIS_EDIT_HREF = routeHref({ kind: 'preferences', section: 'astrology' });
 
+/** The wrapper's classes: a section heading (#1139) or a return-chart header (#1140) adds its own modifier. */
+function pageHeaderClass(headingLevel: 1 | 2, variant: 'return' | undefined): string {
+  const classes = ['page-header'];
+  if (headingLevel === 2) classes.push('page-header--section');
+  if (variant === 'return') classes.push('page-header--return');
+  return classes.join(' ');
+}
+
 interface ExportStatus {
   readonly kind: 'busy' | 'done' | 'error';
   readonly text: string;
@@ -50,6 +58,7 @@ export function PageHeader({
   children,
   titleAside,
   headingLevel = 1,
+  variant,
 }: {
   readonly title: string;
   /** A glossary term the title names: the title text itself opens that term's definition (#901). */
@@ -66,6 +75,8 @@ export function PageHeader({
   readonly titleAside?: React.ReactNode;
   /** 2 when a page-level h1 already sits above this header (the Tools pages, #1139); the title is then a section heading. */
   readonly headingLevel?: 1 | 2;
+  /** `'return'` (#1140) marks a solar or lunar return chart header, whose title is set one token step smaller so it fits beside the action group. */
+  readonly variant?: 'return' | undefined;
 }): React.JSX.Element {
   // The tab title follows the page heading (#1078).
   useDocumentTitle(title);
@@ -123,7 +134,7 @@ export function PageHeader({
   );
 
   return (
-    <div className={headingLevel === 2 ? 'page-header page-header--section' : 'page-header'}>
+    <div className={pageHeaderClass(headingLevel, variant)}>
       <div className="page-header-row">
         {titleAside === undefined ? (
           <Heading>{titleNode}</Heading>

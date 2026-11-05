@@ -6665,6 +6665,12 @@ button.primitive-button-compact {
   min-width: 0;
 }
 
+/* Solar and lunar return headers (#1140): one token step smaller, so the longest one ("Name's Lunar Return") plus the
+   page action group fits on one row at 1280px. Scoped to this modifier; no other page header is affected. */
+.page-header--return .page-header-row h1 {
+  font-size: var(--text-display);
+}
+
 .page-header-basis {
   margin: 0;
   min-width: 0;
