@@ -6,7 +6,7 @@
  * @exports electionalViewMessages
  */
 const en = {
-  heading: 'Electional search',
+  heading: 'Electional Search',
   hint: 'Find the best times in a span of days to begin something. Choose which traditional rules matter for your purpose; the search walks the span and ranks the stretches of time by how many of your rules hold. No moment satisfies every rule at once, so this narrows the choice rather than naming one time.',
   fromDateLabel: 'From (UTC date)',
   toDateLabel: 'To (UTC date, inclusive)',

@@ -5,8 +5,8 @@
  * @exports timingTimelineViewMessages
  */
 const en = {
-  fallback: 'Timing timeline',
-  heading: (name: string) => `${name}'s timing timeline`,
+  fallback: 'Timing Timeline',
+  heading: (name: string) => `${name}'s Timing Timeline`,
   hint: 'One shared date axis for zodiacal releasing, firdaria, profections, progressions, directions, transits, and forecast events. Period bars are active across their shown range; contacts mark an exact or selected date.',
   source:
     'Sources: Vettius Valens, Anthology IV (zodiacal releasing); al-Qabisi, Introduction to Traditional Astrology, VII.3 (firdaria periods).',

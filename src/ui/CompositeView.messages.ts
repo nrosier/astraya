@@ -15,7 +15,7 @@ const en = {
     `A composite chart needs midpoint houses from both people, so it needs a complete birth record with a known time. ${name}’s does not have one yet. Fill in or correct it on the`,
   personPageLink: 'person page',
 
-  heading: (name: string) => `${name}’s composite`,
+  heading: (name: string) => `${name}’s Composite`,
   hint: 'A synthetic midpoint chart between two natal charts — every position and house cusp is the near-arc midpoint of the two. Only people with a complete, known-time birth record can be combined.',
   overlayContext:
     'A composite is one synthetic midpoint chart, not a base chart with independent source rings, so Overlay settings are unavailable here. Use Synastry to compare two individual rings.',

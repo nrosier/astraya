@@ -8,7 +8,7 @@
  * @exports sharedChartViewMessages
  */
 const en = {
-  sharedChart: 'Shared chart',
+  sharedChart: 'Shared Chart',
   hint: 'This chart is calculated entirely in your browser from the link itself — nothing was sent to us to open it, and nothing you do here is either.',
   linkCouldNotBeRead: (message: string) => `That link could not be read. ${message}`,
   tooManyFixedStars: (max: string) =>

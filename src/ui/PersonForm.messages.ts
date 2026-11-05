@@ -13,7 +13,7 @@ const en = {
   accuracyApproximate: 'Approximate — “around teatime”',
   accuracyUnknown: 'Unknown — no time on record',
 
-  newPerson: 'New person',
+  newPerson: 'New Person',
   tagline:
     'A one-hour error moves the Ascendant about 15°, so the resolved offset and how it was decided are shown below the fields that produced them.',
   saveFailed: (message: string) => `That did not save, so nothing was changed. ${message}`,

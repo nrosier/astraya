@@ -8,10 +8,10 @@
  * @exports setPasswordFormMessages
  */
 const en = {
-  heading: 'Set your password',
+  heading: 'Set Your Password',
   missingToken: 'This link is missing its token, so it cannot be used. Ask whoever sent it for a fresh one.',
 
-  passwordSetHeading: 'Password set',
+  passwordSetHeading: 'Password Set',
   passwordSetBody: 'Your password is set. You can sign in now from the home screen.',
   goToSignIn: 'Go to sign-in',
 

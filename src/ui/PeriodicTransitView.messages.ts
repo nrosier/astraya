@@ -18,7 +18,7 @@ const en = {
   needsKnownTime: (name: string) =>
     `A transit forecast casts against the natal houses, so it needs a known birth time. ${name}’s birth time is unknown — the same reason their chart has no houses.`,
 
-  heading: (name: string) => `${name}’s forecast`,
+  heading: (name: string) => `${name}’s Forecast`,
   hint: (name: string) =>
     `What’s happening in the sky against ${name}’s natal chart: the transiting Moon and anything exact today, aspects going exact this week and this month, and this year’s solar return. All times are UT.`,
   asOfLabel: 'As of',

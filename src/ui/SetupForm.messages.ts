@@ -8,7 +8,7 @@
  * @exports setupFormMessages
  */
 const en = {
-  heading: 'Create the admin account',
+  heading: 'Create the Admin Account',
   missingToken:
     'This link is missing its token, so it cannot be used. Check the server log for the current one — it expires 15 minutes after the server starts.',
 

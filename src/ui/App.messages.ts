@@ -9,7 +9,7 @@
  */
 const en = {
   openingLocalData: 'Opening your local data…',
-  noLocalStorage: 'No local storage',
+  noLocalStorage: 'No Local Storage',
   noLocalStorageWarning: (message: string) =>
     `Your data is stored in this browser, and this browser will not let us open it. ${message}`,
   noLocalStorageHint:

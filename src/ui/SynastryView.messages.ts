@@ -17,7 +17,7 @@ const en = {
     `A synastry bi-wheel needs houses on both rings, so it needs a complete birth record with a known time. ${name}’s does not have one yet. Fill in or correct it on the`,
   personPageLink: 'person page',
 
-  heading: (name: string) => `${name}’s synastry`,
+  heading: (name: string) => `${name}’s Synastry`,
   hint: 'A bi-wheel comparing two natal charts, plus the aspects between them. Only people with a complete, known-time birth record can be compared.',
   overlayContext:
     'This relationship wheel already compares two people, so it does not add the single-chart Overlay settings. Select a legend entry to isolate that person; its arrow identifies the matching ring.',

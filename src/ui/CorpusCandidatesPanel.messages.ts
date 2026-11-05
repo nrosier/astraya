@@ -8,7 +8,7 @@
  * @exports corpusCandidatesPanelMessages
  */
 const en = {
-  heading: 'Corpus candidate review',
+  heading: 'Corpus Candidate Review',
   intro:
     'Bulk-generated candidate text awaiting review, sorted worst triage score first. Accepting turns a candidate into a live correction (see Corpus corrections); rejecting discards it. Neither can be undone from here.',
 
