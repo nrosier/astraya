@@ -9,6 +9,8 @@ import type { AdminTabKey } from './admin-nav.js';
 
 const en = {
   adminSectionsAriaLabel: 'Admin sections',
+  // Guideline §4: application-wide controls live in Admin and say so.
+  scope: 'Application-wide. Changes here affect every user of this server.',
   tabLabels: {
     users: 'Users',
     usage: 'AI usage',
@@ -19,6 +21,7 @@ const en = {
 
 const nl: typeof en = {
   adminSectionsAriaLabel: 'Beheeronderdelen',
+  scope: 'Applicatiebreed. Wijzigingen hier gelden voor alle gebruikers van deze server.',
   tabLabels: {
     users: 'Gebruikers',
     usage: 'AI-gebruik',

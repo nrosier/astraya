@@ -57,6 +57,22 @@ describe('AdminNav', () => {
     return container;
   }
 
+  it('shows the application-wide scope label on every admin route, in both locales (#1164)', async () => {
+    for (const tab of ADMIN_TABS) {
+      for (const locale of ['en', 'nl'] as const) {
+        const container = await mount(parseRoute(tab.href), locale);
+        expect(container.querySelector('.preferences-scope')?.textContent).toBe(adminNavMessages[locale].scope);
+        act(() => {
+          mounted?.root.unmount();
+        });
+        container.remove();
+        mounted = undefined;
+      }
+    }
+    expect(adminNavMessages.en.scope).toMatch(/^Application-wide\./);
+    expect(adminNavMessages.nl.scope).toMatch(/^Applicatiebreed\./);
+  });
+
   it('renders one link per admin screen inside a labelled nav', async () => {
     const container = await mount({ kind: 'admin' });
     const nav = container.querySelector('nav');
