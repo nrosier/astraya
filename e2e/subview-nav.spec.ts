@@ -9,7 +9,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AxeBuilder } from '@axe-core/playwright';
-import { expect, test, type BrowserContext, type Page } from '@playwright/test';
+import { expect, test, type BrowserContext, type Locator, type Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
@@ -119,6 +119,87 @@ test('keyboard: Tab reaches the sub-view links, and every focus ring is visible'
     await links.first().focus();
     await page.keyboard.press('Tab');
     await expect(links.nth(1)).toBeFocused();
+  }
+});
+
+interface LinkStyle {
+  readonly color: string;
+  readonly backgroundColor: string;
+  readonly borderBottomColor: string;
+  readonly fontWeight: string;
+}
+
+/** The colours and weight that decide how a tab-row link reads; read from computed style, never from source. */
+async function linkStyle(link: Locator): Promise<LinkStyle> {
+  const href = await link.getAttribute('href');
+  if (href === null) throw new Error('the link has no href');
+  return page.evaluate<LinkStyle>(
+    `(() => {
+      const element = Array.from(document.querySelectorAll('.tab-row__tabs > a')).find((a) => a.getAttribute('href') === ${JSON.stringify(href)});
+      const style = getComputedStyle(element);
+      return {
+        color: style.color,
+        backgroundColor: style.backgroundColor,
+        borderBottomColor: style.borderBottomColor,
+        fontWeight: style.fontWeight,
+      };
+    })()`,
+  );
+}
+
+/** The chart screen's ChartViewNav links (`.chart-view-nav`), on the natal wheel. */
+async function openChartPage(): Promise<Locator> {
+  await page.goto(`${baseUrl}/#/people/${personId}/charts/natal/wheel`);
+  const nav = page.locator('nav.chart-view-nav');
+  await expect(nav).toBeVisible({ timeout: 30_000 });
+  return nav.getByRole('link');
+}
+
+test('hover: a sub-view link and a chart view link show the same hover colour and background (#1050)', async () => {
+  test.setTimeout(120_000);
+  for (const theme of THEMES) {
+    await page.emulateMedia({ colorScheme: theme });
+    await page.setViewportSize({ width: 1280, height: 800 });
+
+    const chartLinks = await openChartPage();
+    const chartTarget = chartLinks.locator(':scope:not([aria-current="page"])').nth(0);
+    const chartIdle = await linkStyle(chartTarget);
+    await chartTarget.hover();
+    const chartHover = await linkStyle(chartTarget);
+    // A rest-to-hover change proves the hover rule applies at all, so the comparison below is not vacuous.
+    expect(chartHover, `chart view hover changes the link (${theme})`).not.toEqual(chartIdle);
+
+    for (const section of SECTIONS) {
+      await openSection(section);
+      const subLinks = page.getByRole('navigation', { name: section.label }).getByRole('link');
+      const subTarget = subLinks.locator(':scope:not([aria-current="page"])').nth(0);
+      const subIdle = await linkStyle(subTarget);
+      await subTarget.hover();
+      const subHover = await linkStyle(subTarget);
+      expect(subHover, `${section.name} hover (${theme})`).not.toEqual(subIdle);
+      expect(
+        { color: subHover.color, backgroundColor: subHover.backgroundColor },
+        `${section.name} hover matches chart view hover (${theme})`,
+      ).toEqual({ color: chartHover.color, backgroundColor: chartHover.backgroundColor });
+    }
+  }
+});
+
+test('active: the open sub-view link and the open chart view link share the active style (#1050)', async () => {
+  test.setTimeout(120_000);
+  for (const theme of THEMES) {
+    await page.emulateMedia({ colorScheme: theme });
+    await page.setViewportSize({ width: 1280, height: 800 });
+
+    await openChartPage();
+    const chartActive = await linkStyle(page.locator('nav.chart-view-nav a[aria-current="page"]'));
+    for (const section of SECTIONS) {
+      await openSection(section);
+      const subActive = await linkStyle(
+        page.getByRole('navigation', { name: section.label }).locator('a[aria-current="page"]'),
+      );
+      expect(subActive, `${section.name} active style (${theme})`).toEqual(chartActive);
+    }
   }
 });
 
