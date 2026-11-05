@@ -45,6 +45,7 @@ import {
   type AccountReconcileState,
 } from './account.js';
 import { assertNoteMutation, entitiesPurgedWith } from './notes.js';
+import { assertAnnotationMutation } from './annotations.js';
 import { PIN_ENTITY, PinRefusedError, assertPinMutation } from './pins.js';
 import { assertSavedQueryMutation } from './saved-queries.js';
 import { append, appendAt, emptyLog, latest, purgeEntity, receiveRecords, since } from './oplog.js';
@@ -369,6 +370,7 @@ export async function openStore(options: StoreOptions = {}): Promise<Store> {
         assertNoteMutation(mutation);
         assertSavedQueryMutation(mutation);
         assertPinMutation(mutation);
+        assertAnnotationMutation(mutation);
         assertAccountMutation(mutation);
       }
       let next = log;

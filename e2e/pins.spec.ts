@@ -55,7 +55,27 @@ test('pin a result, keep it across a reload, unpin with Undo (#1061)', async ({ 
   await reloadAndSettle(page);
   await expect(page.locator('.saved-query-list .name', { hasText: label })).toBeVisible();
 
-  // Unpin from the list, then Undo.
+  // Annotate: the text box is empty and Save is off until something is typed; a saved note survives a reload.
+  const noteBox = page.getByLabel(`Note on ${label}`, { exact: true });
+  const saveNote = page.getByRole('button', { name: 'Save note', exact: true });
+  await expect(noteBox).toHaveValue('');
+  await expect(saveNote).toBeDisabled();
+  await noteBox.fill('Watch this one against the natal chart.');
+  await expect(saveNote).toBeEnabled();
+  await saveNote.click();
+  await expect(page.getByText('Note saved.')).toBeVisible();
+  await expect(saveNote).toBeDisabled();
+  await reloadAndSettle(page);
+  await expect(page.getByLabel(`Note on ${label}`, { exact: true })).toHaveValue(
+    'Watch this one against the natal chart.',
+  );
+
+  // Edit the note: a second version is saved on top of the first.
+  await page.getByLabel(`Note on ${label}`, { exact: true }).fill('Edited note.');
+  await page.getByRole('button', { name: 'Save note', exact: true }).click();
+  await expect(page.getByText('Note saved.')).toBeVisible();
+
+  // Unpin from the list, then Undo: the note comes back with the pin.
   await page
     .locator('.saved-query-list')
     .getByRole('button', { name: `Unpin ${label}`, exact: true })
@@ -64,4 +84,5 @@ test('pin a result, keep it across a reload, unpin with Undo (#1061)', async ({ 
   await expect(page.getByText('No pinned events yet.', { exact: false })).toBeVisible();
   await page.getByRole('button', { name: 'Undo', exact: true }).click();
   await expect(page.locator('.saved-query-list .name', { hasText: label })).toBeVisible();
+  await expect(page.getByLabel(`Note on ${label}`, { exact: true })).toHaveValue('Edited note.');
 });

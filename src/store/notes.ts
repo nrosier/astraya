@@ -30,7 +30,7 @@
  * @module store/notes
  * @purpose Folds Birth Record and Consultation note revisions into heads, forks and grow-only deletes, and builds and refuses the note mutations written to the op-log.
  * @conventions Each save is an immutable revision keyed by a fresh id, so concurrent edits fork instead of overwriting; the head is the greatest-HLC leaf and every other leaf is a fork; a consultation note's delete is grow-only and cannot be undone; a legacy `person.notes` register is read as a root revision whose id embeds its HLC, so no op is written during migration; refusals carry a code rather than prose, so the UI owns the wording; a saved revision is capped at 50,000 characters.
- * @exports NOTE_MAX_CHARACTERS, isNoteTooLong, LEGACY_REVISION_PREFIX, isLegacyRevisionId, isOversizedLegacyNoteRecord, countHeldBackNotes, BIRTH_NOTE_ENTITY, CONSULTATION_NOTE_ENTITY, NOTE_ENTITIES, LEGACY_NOTE_FIELD, NoteFieldRegister, NoteFields, NoteRevisionView, NoteVersion, Note, FoldedNotes, foldBirthNote, foldConsultationNotes, birthNoteRevision, consultationNoteRevision, consultationNoteDelete, NoteRefusal, NoteRefusedError, assertNoteMutation, entitiesPurgedWith, revisionParents
+ * @exports readBody, NOTE_MAX_CHARACTERS, isNoteTooLong, LEGACY_REVISION_PREFIX, isLegacyRevisionId, isOversizedLegacyNoteRecord, countHeldBackNotes, BIRTH_NOTE_ENTITY, CONSULTATION_NOTE_ENTITY, NOTE_ENTITIES, LEGACY_NOTE_FIELD, NoteFieldRegister, NoteFields, NoteRevisionView, NoteVersion, Note, FoldedNotes, foldBirthNote, foldConsultationNotes, birthNoteRevision, consultationNoteRevision, consultationNoteDelete, NoteRefusal, NoteRefusedError, assertNoteMutation, entitiesPurgedWith, revisionParents
  */
 import { compareHlc, decodeHlc, isHlc, type Hlc } from './hlc.js';
 import type { Mutation } from './oplog.js';
@@ -113,7 +113,7 @@ export interface NoteFieldRegister {
 export type NoteFields = Readonly<Record<string, NoteFieldRegister>>;
 
 /** The body a revision carries: its text and the revisions it was written on top of. */
-interface NoteBody {
+export interface NoteBody {
   readonly text: string;
   readonly parents: readonly string[];
 }
@@ -208,7 +208,7 @@ function isStringList(value: unknown): value is readonly string[] {
 }
 
 /** Read a revision body, or undefined when the value is not one. Malformed revisions are ignored, deterministically. */
-function readBody(value: unknown): NoteBody | undefined {
+export function readBody(value: unknown): NoteBody | undefined {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return undefined;
   const { text, parents } = value as { readonly text?: unknown; readonly parents?: unknown };
   if (typeof text !== 'string' || !isStringList(parents)) return undefined;

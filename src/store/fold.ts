@@ -47,6 +47,7 @@ import {
   type Note,
 } from './notes.js';
 import { decode, type JsonValue, type OpRecord } from './ops.js';
+import { foldAnnotation, ANNOTATION_ENTITY } from './annotations.js';
 import { foldPin, PIN_ENTITY, type Pin } from './pins.js';
 import { foldSavedQuery, SAVED_QUERY_ENTITY, type SavedQuery } from './saved-queries.js';
 
@@ -103,6 +104,7 @@ const KNOWN_ENTITIES: readonly string[] = [
   CONSULTATION_NOTE_ENTITY,
   SAVED_QUERY_ENTITY,
   PIN_ENTITY,
+  ANNOTATION_ENTITY,
   ACCOUNT_ENTITY,
 ];
 
@@ -216,6 +218,11 @@ export interface State {
   /** Live pinned event-search results, by derived id (#1061). Unreadable ones are included, with their reason. */
   readonly pins: ReadonlyMap<string, Pin>;
   /**
+   * The annotation of each pin that has one, by pin id (#1061). Present whether or not the pin is currently unpinned,
+   * so pinning again brings the text back; the UI shows it for live pins only. Forks are here and nowhere else.
+   */
+  readonly annotations: ReadonlyMap<string, Note>;
+  /**
    * The account preferences registers (#1066, ADR 0004): only the `preferences` entity id, only the allowlisted
    * fields. `deleted` and `purged` never apply to this entity, so they are not consulted.
    */
@@ -289,6 +296,13 @@ export function materialise(registers: Registers): State {
     else pins.set(id, pin);
   }
 
+  const annotations = new Map<string, Note>();
+  for (const [pinId, fields] of Object.entries(registers[ANNOTATION_ENTITY] ?? {})) {
+    if (isPurged(fields)) continue;
+    const annotation = foldAnnotation(pinId, fields);
+    if (annotation !== undefined) annotations.set(pinId, annotation);
+  }
+
   return {
     people,
     charts,
@@ -298,6 +312,7 @@ export function materialise(registers: Registers): State {
     consultationNotes,
     savedQueries,
     pins,
+    annotations,
     // Any other entity id under `account` is ignored: every device writes the one constant id.
     account: foldAccount(registers[ACCOUNT_ENTITY]?.[ACCOUNT_ENTITY_ID]),
   };
