@@ -84,6 +84,7 @@ jobs:
             org.opencontainers.image.title=Astraya
             org.opencontainers.image.description=Astrological calculation and charting, computed locally
             org.opencontainers.image.licenses=AGPL-3.0-or-later
+            org.opencontainers.image.revision=${{ github.sha }}
 
       # `latest` is set here rather than by metadata-action's `auto` behaviour,
       # which would also move it for a prerelease tag. This is the only thing that
