@@ -78,7 +78,7 @@
 
   /* The page's own content column width — shared by `.shell` and `.person-shelf` so they
      never drift out of sync whenever this gets tuned. */
-  --shell-max-width: 64rem;
+  --shell-max-width: 80rem;
   /* Chart workbenches (#511): the 68rem two-column state needs more than the general-content shell. */
   --shell-max-width-wide: 80rem;
   /* The Extended settings drawer's widest width on a wide screen (#824, D-824c); full width on a phone. */
