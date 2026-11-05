@@ -5,7 +5,10 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import type { EventSearchResult } from '../src/domain/event-search.js';
 import { derivedPinId, isId } from '../src/domain/id.js';
-import { fold } from '../src/store/fold.js';
+import { EMPTY_REGISTERS, applyRecords, fold, materialise, resume, snapshotOf } from '../src/store/fold.js';
+import { createClock } from '../src/store/hlc.js';
+import { append, emptyLog, type Mutation } from '../src/store/oplog.js';
+import type { OpRecord } from '../src/store/ops.js';
 import type { NoteFieldRegister } from '../src/store/notes.js';
 import {
   PIN_ENTITY,
@@ -134,9 +137,11 @@ describe('assertPinMutation', () => {
   });
 
   it('accepts a target and a tombstone', () => {
-    expect(() => {
-      assertPinMutation(pinCreate(id, TARGET));
-    }).not.toThrow();
+    for (const mutation of pinCreate(id, TARGET)) {
+      expect(() => {
+        assertPinMutation(mutation);
+      }).not.toThrow();
+    }
     expect(() => {
       assertPinMutation({ entity: PIN_ENTITY, entityId: id, field: 'deleted', value: true });
     }).not.toThrow();
@@ -206,7 +211,7 @@ describe('the pin store round trip', () => {
     const name = freshName();
     const id = await derivedPinId(pinIdentity(TARGET));
     const first = await reopen(name);
-    await first.mutate([pinCreate(id, TARGET)]);
+    await first.mutate(pinCreate(id, TARGET));
     expect(first.state.pins.get(id)).toEqual({ status: 'ready', id, target: TARGET });
     first.close();
     open = open.filter((store) => store !== first);
@@ -218,15 +223,15 @@ describe('the pin store round trip', () => {
   it('pinning the same result twice is one pin', async () => {
     const store = await reopen(freshName());
     const id = await derivedPinId(pinIdentity(TARGET));
-    await store.mutate([pinCreate(id, TARGET)]);
-    await store.mutate([pinCreate(id, { ...TARGET, label: 'reworded' })]);
+    await store.mutate(pinCreate(id, TARGET));
+    await store.mutate(pinCreate(id, { ...TARGET, label: 'reworded' }));
     expect(store.state.pins.size).toBe(1);
   });
 
   it('unpins with a tombstone and Undo brings it back', async () => {
     const store = await reopen(freshName());
     const id = await derivedPinId(pinIdentity(TARGET));
-    await store.mutate([pinCreate(id, TARGET)]);
+    await store.mutate(pinCreate(id, TARGET));
 
     await store.remove(PIN_ENTITY, id);
     expect(store.state.pins.has(id)).toBe(false);
@@ -249,17 +254,42 @@ describe('the pin store round trip', () => {
     const first = await reopen(freshName());
     const second = await reopen(freshName());
     const id = await derivedPinId(pinIdentity(TARGET));
-    await first.mutate([pinCreate(id, TARGET)]);
+    await first.mutate(pinCreate(id, TARGET));
     expect(second.state.pins.size).toBe(0);
   });
 
-  it('a purge marker hides a pin everywhere', async () => {
+  it('refuses to purge a pin, since a derived id would block pinning that event for good', async () => {
     const store = await reopen(freshName());
     const id = await derivedPinId(pinIdentity(TARGET));
-    await store.mutate([pinCreate(id, TARGET)]);
-    await store.purge(PIN_ENTITY, id);
+    await store.mutate(pinCreate(id, TARGET));
+    await expect(store.purge(PIN_ENTITY, id)).rejects.toBeInstanceOf(PinRefusedError);
+    expect(store.state.pins.has(id)).toBe(true);
+  });
+
+  it('a purge marker from a peer hides the pin from both lists', async () => {
+    const store = await reopen(freshName());
+    const id = await derivedPinId(pinIdentity(TARGET));
+    await store.mutate(pinCreate(id, TARGET));
+    const marker: Mutation = { entity: PIN_ENTITY, entityId: id, field: 'purged', value: true };
+    await store.receive(append(emptyLog(createClock('b0000000000000ff')), marker, T0 + 60_000).log.records);
     expect(store.state.pins.has(id)).toBe(false);
     expect(store.state.deleted.pins.has(id)).toBe(false);
+  });
+
+  it('a pin made on one device wins over an unpin made on another that had not synced', async () => {
+    const id = await derivedPinId(pinIdentity(TARGET));
+    // Device A pins then unpins; device B never saw either and pins the same result later.
+    let a = emptyLog(createClock('a000000000000001'));
+    for (const mutation of pinCreate(id, TARGET)) a = append(a, mutation, T0).log;
+    a = append(a, { entity: PIN_ENTITY, entityId: id, field: 'deleted', value: true }, T0 + 1000).log;
+    let b = emptyLog(createClock('b000000000000002'));
+    for (const mutation of pinCreate(id, TARGET)) b = append(b, mutation, T0 + 2000).log;
+
+    const ab = fold([...a.records, ...b.records]);
+    const ba = fold([...b.records, ...a.records]);
+    expect(ab.pins.has(id)).toBe(true);
+    expect(ba.pins.has(id)).toBe(true);
+    expect(ab.deleted.pins.has(id)).toBe(false);
   });
 });
 
@@ -268,5 +298,36 @@ describe('folding pins from records', () => {
     const state = fold([]);
     expect(state.pins.size).toBe(0);
     expect(state.deleted.pins.size).toBe(0);
+  });
+});
+
+describe('an older build and an upgrade (ADR 0005)', () => {
+  const OLD_BUILD_KINDS: readonly string[] = ['person', 'chart', 'birthNote', 'consultationNote', 'savedQuery'];
+  const id = 'k-abcdefghijklmnop';
+
+  function records(): readonly OpRecord[] {
+    let log = emptyLog(createClock('a1b2c3d4e5f60718'));
+    for (const mutation of pinCreate(id, TARGET)) log = append(log, mutation, T0).log;
+    return log.records;
+  }
+
+  it('an older build counts the pin records as unknownEntity and folds none of them', () => {
+    const applied = applyRecords(EMPTY_REGISTERS, records(), OLD_BUILD_KINDS);
+    expect(applied.skips.unknownEntity).toBe(2);
+    expect(applied.registers[PIN_ENTITY]).toBeUndefined();
+  });
+
+  it('a snapshot from the older build is rebuilt, so the pin appears after the upgrade', () => {
+    const all = records();
+    const oldSnapshot = snapshotOf(applyRecords(EMPTY_REGISTERS, all, OLD_BUILD_KINDS).registers, all, OLD_BUILD_KINDS);
+    const resumed = resume(oldSnapshot, all);
+    expect(resumed.rebuilt).toBe(true);
+    expect(materialise(resumed.registers).pins.get(id)).toMatchObject({ status: 'ready' });
+  });
+
+  it('a snapshot written by this build is resumed, not rebuilt', () => {
+    const all = records();
+    const registers = applyRecords(EMPTY_REGISTERS, all).registers;
+    expect(resume(snapshotOf(registers, all), all).rebuilt).toBe(false);
   });
 });

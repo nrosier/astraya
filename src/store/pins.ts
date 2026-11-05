@@ -172,9 +172,17 @@ export function foldPin(id: string, fields: Readonly<Record<string, NoteFieldReg
   return { status: 'ready', id, target: verdict.target };
 }
 
-/** The write for a new pin. The caller derives `id` from `pinIdentity(target)`. */
-export function pinCreate(id: string, target: PinTarget): Mutation {
-  return { entity: PIN_ENTITY, entityId: id, field: PIN_TARGET_FIELD, value: { ...target } };
+/**
+ * The writes for pinning a result, to be committed in one `Store.mutate` batch. The caller derives `id` from
+ * `pinIdentity(target)`. It writes `deleted: false` as well as the target, so a pin made on one device wins over an
+ * unpin made on another device that has not synced yet (last write wins on `deleted`); with the target alone, the
+ * older tombstone would survive and silently undo the pin.
+ */
+export function pinCreate(id: string, target: PinTarget): readonly Mutation[] {
+  return [
+    { entity: PIN_ENTITY, entityId: id, field: PIN_TARGET_FIELD, value: { ...target } },
+    { entity: PIN_ENTITY, entityId: id, field: TOMBSTONE_FIELD, value: false },
+  ];
 }
 
 /**

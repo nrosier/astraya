@@ -421,6 +421,21 @@ displayed) and the `deleted` tombstone. Unpin is a delete with Undo; there is no
 holds no personal data. No change to the envelope, `OP_VERSION`, `ops.ts`, `oplog.ts`, `hlc.ts`, the sync engine or the
 relay; the change is the id prefix `k`, the fold, one guard call in `Store.write()` and `src/store/pins.ts`.
 
+Two rules from the `db-integrity` review of PR #1192:
+
+- **Pinning writes `deleted: false` with the target**, in one batch, so a pin made on one device wins over an unpin
+  made on another device that has not synced (last write wins on `deleted`).
+- **`Store.purge` refuses `pin`.** The id is derived from the event, so a purge marker would block pinning that event
+  for good, locally and on the relay's deny-list. A pin is only ever unpinned. A peer's marker still hides a pin.
+
+Acceptance for slice 2:
+
+- [x] Pin, reload, unpin and Undo work on Event search results (`e2e/pins.spec.ts`).
+- [x] The same result pinned twice, or on two devices, is one pin; a later pin beats an earlier unpin
+      (`test/store-pins.test.ts`).
+- [x] An older build ignores the kind; its snapshot is rebuilt on upgrade (`test/store-pins.test.ts`).
+- [x] No change to the frozen files.
+
 Pins (slice 2) and annotations (slice 3) each need their own addendum and acceptance list before starting, covering at
 least: the pin identity choice (2.4), person purge fan-out if person-attached, and the annotation revision model.
 

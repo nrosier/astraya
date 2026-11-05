@@ -65,11 +65,7 @@ function Toggle({ store, result }: { readonly store: Store; readonly result: Eve
   const toggle = (): void => {
     if (id === undefined) return;
     setError(undefined);
-    const done = state.deleted.pins.has(id)
-      ? store.restore(PIN_ENTITY, id)
-      : pinned
-        ? store.remove(PIN_ENTITY, id)
-        : store.mutate([pinCreate(id, target)]);
+    const done = pinned ? store.remove(PIN_ENTITY, id) : store.mutate(pinCreate(id, target));
     done.catch((cause: unknown) => {
       setError(failureText(cause));
     });
