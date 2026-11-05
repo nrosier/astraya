@@ -327,18 +327,18 @@ export function CorpusOverridesPanel(): React.JSX.Element {
         {pendingReset !== undefined && (
           <StatusMessage kind="error">
             {t.resetWarning(`${labelForKey(pendingReset.key, uiLocale)} (${pendingReset.key})`)}{' '}
-            <button type="button" className="danger" onClick={confirmReset}>
+            <Button type="button" variant="danger" onClick={confirmReset}>
               {t.resetPermanentlyButton}
-            </button>{' '}
-            <button
+            </Button>{' '}
+            <Button
               type="button"
-              className="quiet"
+              variant="quiet"
               onClick={() => {
                 setPendingReset(undefined);
               }}
             >
               {t.cancelButton}
-            </button>
+            </Button>
           </StatusMessage>
         )}
 
@@ -380,13 +380,13 @@ export function CorpusOverridesPanel(): React.JSX.Element {
               <button type="submit" disabled={busyKey === editing.key}>
                 {busyKey === editing.key ? t.savingLabel : t.saveButton}
               </button>
-              <button type="button" className="quiet" onClick={cancelEdit}>
+              <Button type="button" variant="quiet" onClick={cancelEdit}>
                 {t.cancelButton}
-              </button>
+              </Button>
               {overrideMap.has(editing.key) && (
-                <button type="button" className="danger" disabled={busyKey === editing.key} onClick={requestReset}>
+                <Button type="button" variant="danger" disabled={busyKey === editing.key} onClick={requestReset}>
                   {t.resetButton}
-                </button>
+                </Button>
               )}
             </p>
           </form>

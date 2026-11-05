@@ -25,6 +25,7 @@ import { caveated, ordered, summary } from './people-list.js';
 import { peopleMessages } from './People.messages.js';
 import { useStore, useStoreState } from './store-context.js';
 import { trace } from '../trace.js';
+import { Button } from './primitives/Button.js';
 import { EmptyState } from './primitives/EmptyState.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useRulershipChoice } from './rulership-setting.js';
@@ -146,24 +147,24 @@ export function People(): React.JSX.Element {
                   <span className="name">{person.displayName === '' ? t.unnamed : person.displayName}</span>
                   <span className="summary">{summary(person, locale)}</span>
                 </span>
-                <button
+                <Button
                   type="button"
-                  className="quiet"
+                  variant="quiet"
                   onClick={() => {
                     restore(person.id);
                   }}
                 >
                   {t.restore}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
-                  className="danger"
+                  variant="danger"
                   onClick={() => {
                     purge(person.id, person.displayName === '' ? t.unnamedPersonPlaceholder : person.displayName);
                   }}
                 >
                   {t.deletePermanently}
-                </button>
+                </Button>
               </li>
             ))}
           </ul>

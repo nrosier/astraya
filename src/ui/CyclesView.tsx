@@ -257,9 +257,9 @@ export function CyclesView(): React.JSX.Element {
         renderCell: (row) => {
           const step = stepOf.get(String(row.jd)) ?? 0;
           return (
-            <button
+            <Button
               type="button"
-              className="quiet"
+              variant="quiet"
               aria-pressed={selectedId === String(row.jd)}
               aria-label={t.showStep(step)}
               onClick={() => {
@@ -267,7 +267,7 @@ export function CyclesView(): React.JSX.Element {
               }}
             >
               {step}
-            </button>
+            </Button>
           );
         },
       },
