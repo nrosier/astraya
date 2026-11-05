@@ -2426,6 +2426,14 @@ label.stacked textarea:focus-visible {
   margin-top: 1em;
 }
 
+/* The Admin sections label and select (#1188) sit flush against the shelf border at phone width; give them the same
+   inline inset as the scope label above (`.person-shelf .hint`). Only the narrow Select fallback is affected. */
+@media (max-width: 40rem) {
+  .person-shelf .person-nav .tab-row__fallback {
+    padding-inline: var(--space-4);
+  }
+}
+
 /* Overrides the standalone `.shell` (used everywhere else at full padding) down to the box's
    own internal gutter: the outer spacing that `.shell` normally supplies on its own is already
    supplied by `.person-shelf` once a tab strip precedes it. */
