@@ -540,7 +540,7 @@ export function ReportView({
   if (loadError !== undefined) {
     return (
       <div className="report">
-        <p role="alert">{t.couldNotLoad(loadError)}</p>
+        <StatusMessage kind="error">{t.couldNotLoad(loadError)}</StatusMessage>
       </div>
     );
   }

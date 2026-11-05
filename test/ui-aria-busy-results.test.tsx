@@ -136,6 +136,24 @@ function expectSettledReady(container: HTMLElement): void {
 }
 
 /**
+ * ReportScreen settles ready but shows its own load error: the corpus fetch fails in jsdom (no base URL, so
+ * "Failed to parse URL from /corpus/en.json"), and ReportView renders that as a `data-kind="error"` StatusMessage
+ * (#1162). That is the screen's real ready state here, so the expectation is that exact error, not its absence.
+ * The old hand-rolled `<p role="alert">` carried no data-kind, which is why this assertion used to pass.
+ */
+function expectReportScreenReadyWithLoadError(container: HTMLElement): void {
+  const regions = Array.from(container.querySelectorAll('div[aria-busy]'));
+  expect(regions.length).toBeGreaterThan(0);
+  for (const region of regions) {
+    expect(region.getAttribute('aria-busy')).toBe('false');
+    const error = region.querySelector('[data-kind="error"]');
+    expect(error?.getAttribute('role')).toBe('alert');
+    expect(error?.textContent).toContain('Failed to parse URL from /corpus/en.json');
+    expect(region.childElementCount).toBeGreaterThan(0);
+  }
+}
+
+/**
  * Chooses `value` in the select that offers every value in `needs`, the way a user would, and fires the change
  * event React listens for. Call inside `act` so the resulting recalculation starts before the test looks.
  */
@@ -189,7 +207,8 @@ describe('the calculation result regions (#888)', () => {
       expect(busyRegions(container)).toContain('true');
 
       await untilSettled(container);
-      expectSettledReady(container);
+      if (name === 'ReportScreen') expectReportScreenReadyWithLoadError(container);
+      else expectSettledReady(container);
     }, 60_000);
   }
 
