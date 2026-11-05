@@ -97,6 +97,21 @@ describe('Home (#1058)', () => {
     expect(container.querySelector('select')).not.toBeNull();
   });
 
+  it('switches to a person written after #/ is already mounted, not the id stored before (#1058 ordering)', () => {
+    // The seeded storage holds an earlier person (Born in e2e). AppNav writes the id just opened after the page
+    // commits, while Home may already be mounted. Home must follow that write, not keep the seeded id.
+    const BORN = 'p-zhpdvyqjk3rotbjl';
+    fakeStore.people.set(ADA, { id: ADA, displayName: 'Ada' });
+    fakeStore.people.set(BORN, { id: BORN, displayName: 'Max Born' });
+    writeLastPersonId(BORN);
+    const container = mount();
+    expect(container.querySelector('[data-testid="timeline-stub"]')?.textContent).toBe(BORN);
+    act(() => {
+      writeLastPersonId(ADA);
+    });
+    expect(container.querySelector('[data-testid="timeline-stub"]')?.textContent).toBe(ADA);
+  });
+
   it('has en and nl catalogues with identical keys', () => {
     expect(Object.keys(homeMessages.nl)).toEqual(Object.keys(homeMessages.en));
   });
