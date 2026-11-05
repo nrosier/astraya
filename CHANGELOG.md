@@ -6,6 +6,53 @@ see [docs/ops/RELEASING.md](docs/ops/RELEASING.md).
 
 ## [Unreleased]
 
+## [0.47.0] — 2026-11-05
+
+**Every tool now has the same page layout, with a Tools tab bar, calculation-basis lines on the timing views, and 44px touch targets. Home opens on the last person's timeline, event searches can be saved, and the published image records the commit it was built from.**
+
+### Added
+
+- **Tools share one layout and a Tools tab bar (#1139, #1051, #1052, #1053, #1054, #1065).** Planetary cycles, Ephemeris research, Electional, Eclipses and Rectification each put the search form beside its rules or diagram, with results below. Arrow, Home and End move between tools.
+- **Sub-view navigation matches the chart view links (#1050).** The sub-view select sits in a landmark, and keyboard, axe and viewport coverage was added.
+- **Each timing view states what it calculated with (#1059).** A basis line, with an Edit action, now appears on the timing views, chart types, relationships, overview, report, export and the tool views. Views that ignore the saved profile say so.
+- **Home at #/ shows the last-viewed person's timing timeline (#1058).**
+- **Event-search queries can be saved and reopened (#1061).**
+- **Isolate a body on the wheel, and step through its contacts from the keyboard (#1063).**
+- **44px touch targets, and a 24px floor on every pointer (#1073).** Controls use one height per size, with spacing from tokens (#1074).
+- **Consultation header sits on one baseline (#1072, #1048).** Settings and the timestamp live in a context card, and the header actions use the PageHeader button pattern.
+- **The popover theme control offers System and follows OS changes live (#1047).**
+
+### Changed
+
+- **The published Docker image records its commit (#1157, PR #1158).** org.opencontainers.image.revision is set to the tagged commit, so docker inspect shows which source the image was built from.
+- **Overlay settings is a modal on phones (#1080).** Focus stays inside it and returns when it closes.
+- **The PDF builder header follows the guidelines (#1075).** The summary balances the form, and the hint sits left of the Build PDF button.
+- **Charts are titled person-first and capitalised (#1140).** Return charts use a smaller heading so the wheel stays above the fold.
+- **Table headers use the muted small text token (#826), and popover shadows use --shadow-popover (#1166).**
+- **Dependencies updated.** Fastify, @fastify/static, @fastify/rate-limit and the Vitest and Playwright test tooling moved to their latest compatible releases, with a lockfile refresh.
+
+### Fixed
+
+- **The home screen shows the full sidebar (#965), and the last-person write finishes before navigating to #/ (#1058).**
+- **Horary cards no longer overflow a 390px phone in Dutch, and the date and location cards end on the same edge (#895).**
+- **The astrocartography map fills its card width (#1049).**
+- **The transits table on phones has a labelled scroll region and a scroll cue (#1076).**
+- **Every screen titles its tab with its heading and the app name (#1078), and <html lang> follows the interface language (#1079).**
+- **The sync popover closes on Escape, an outside click and focus leaving (#1081).**
+- **Table headers carry one help trigger, not the column word twice (#1077).**
+- **Orb profile and transit-filter scope match the guidelines (#1149).** The Elements and Modalities markers are centred and the text version is larger (#900).
+- **The saved-queries panel stays inside the form card (#1061), hover state matches the chart view links (#1050), and the export status timer is cancelled on unmount (#1100).**
+- **Several Overview, interpretation and Sabian links meet the target size (#1073).** The chart header keeps one row (#1074).
+- **Settings registered as device settings: lastPersonId and workspaceRailCollapsed (#1165).**
+
+### Documentation and tooling
+
+- **Route-by-route UI conformance audit and review tooling (#1064).** The Horary and PDF builder layouts are recorded as owner-decided exceptions (#1065, #1075).
+- **Design notes and ADRs (#1060, #1061, #1066, #1137, #864).** Onboarding proposal, research workspace, account-scoped settings sync, and the references layout.
+- **The minimatch advisory is documented as unreachable in the shipped image (#990), and the BlueOak-1.0.0 licence is allowed (#122).**
+- **CI is faster (#1093, #1095).** End-to-end tests are sharded four ways, and docs-only changes skip the e2e shards and the pull-request image build. Release tags always build.
+- **Journey specs cover the Phase 7 acceptance journeys (#514).**
+
 ## [0.46.0] — 2026-11-02
 
 **Consultation and birth-record notes autosave and sync across your devices, and the birth record leaves the header Export menu. This release completes milestone M13 (UI: records and consultation).**
