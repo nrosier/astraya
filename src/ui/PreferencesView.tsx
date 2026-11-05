@@ -38,7 +38,7 @@ import {
   peopleCsvFilename,
   peopleToCsv,
 } from '../domain/full-export.js';
-import { buildResearchExport } from '../domain/research-export.js';
+import { buildResearchExport, findMismatchedPin } from '../domain/research-export.js';
 import {
   stageFullExportRestore,
   validateFullExport,
@@ -228,7 +228,7 @@ export function PreferencesView({
     setStatus({ kind: 'busy', text: t.restorePreparing });
     void file
       .text()
-      .then((text) => {
+      .then(async (text) => {
         // An AAF file (#591) is staged through the same reviewed restore as a full export.
         if (isAafText(text)) {
           const { people, errors } = aafToExportedPeople(text);
@@ -259,6 +259,14 @@ export function PreferencesView({
         }
         const result = validateFullExport(parsed);
         if (!result.ok) throw new Error(t.restoreInvalid(result.error));
+        // A pin id must be the one its own target derives to; this is asynchronous, so it is checked here, once.
+        const mismatch =
+          result.value.research === undefined ? undefined : await findMismatchedPin(result.value.research);
+        if (mismatch !== undefined) {
+          throw new Error(
+            t.restoreInvalid({ kind: 'malformed', path: mismatch, reason: 'is not the id its own event derives to' }),
+          );
+        }
         const staged = stageFullExportRestore(
           result.value,
           store.state.people,

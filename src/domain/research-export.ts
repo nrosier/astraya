@@ -15,16 +15,18 @@
  * deleted on this device is skipped and counted, never brought back. Every write is a `mutate` the store's own guards
  * check, so a malformed or over-limit entry fails the whole restore before the log is touched.
  *
- * A pin id is not re-derived from its target here, because the derivation is asynchronous (Web Crypto) and staging is
- * synchronous. A file whose pin id does not match its target only costs a duplicate pin on a device that pinned the same
- * event; it cannot overwrite anything.
+ * A pin id must be the one its target derives to. The derivation is asynchronous (Web Crypto) and staging is
+ * synchronous, so `findMismatchedPin` checks it once when the file is read. A restored pin writes its target only, never a
+ * fresh `deleted: false`, so a backup cannot undo an unpin made on another device; and an id erased on this device is
+ * never written back. The one thing a restore can change is which annotation text is shown as the head, as for notes.
  *
  * @module domain/research-export
  * @purpose Builds, validates and stages the optional `research` block of the full export: live saved queries, pins and their annotations, and the mutations that restore what a device is missing.
  * @conventions Pure and synchronous. Live items only on export; unreadable items are counted, not rewritten. Restore never overwrites, never un-deletes, and writes annotation revisions oldest first through the store's own mutation builders so the store guards apply. Validation is strict and fail-closed, reusing the stores' guards rather than a second parallel validator.
- * @exports ExportedSavedQuery, ExportedPin, ExportedResearch, ExistingResearch, ResearchPreview, buildResearchExport, validateResearch, stageResearchRestore
+ * @exports ExportedSavedQuery, ExportedPin, ExportedResearch, ExistingResearch, ResearchPreview, buildResearchExport, validateResearch, findMismatchedPin, stageResearchRestore
  */
 import { AnnotationRefusedError, annotationRevision, assertAnnotationMutation } from '../store/annotations.js';
+import { derivedPinId } from './id.js';
 import { compareHlc, isHlc } from '../store/hlc.js';
 import type { Note } from '../store/notes.js';
 import {
@@ -32,7 +34,8 @@ import {
   PIN_TARGET_FIELD,
   PinRefusedError,
   assertPinMutation,
-  pinCreate,
+  pinIdentity,
+  pinRestore,
   readPinTarget,
   type Pin,
   type PinTarget,
@@ -43,6 +46,7 @@ import {
   SAVED_QUERY_NAME_FIELD,
   SavedQueryRefusedError,
   assertSavedQueryMutation,
+  readSavedQueryDefinition,
   savedQueryCreate,
   type SavedQuery,
   type SavedQueryDefinition,
@@ -78,6 +82,12 @@ export interface ExistingResearch {
   readonly deleted: {
     readonly savedQueries: ReadonlyMap<string, SavedQuery>;
     readonly pins: ReadonlyMap<string, Pin>;
+  };
+  /** Ids erased by a purge marker on this device. A restore never writes them back (finding 3, #1196). */
+  readonly erased: {
+    readonly savedQueries: ReadonlySet<string>;
+    readonly pins: ReadonlySet<string>;
+    readonly annotations: ReadonlySet<string>;
   };
 }
 
@@ -184,8 +194,8 @@ export function validateResearch(raw: unknown, path: string): Verdict<ExportedRe
   if (!Array.isArray(raw.savedQueries)) return fail(`${path}.savedQueries`, 'not an array');
   if (!Array.isArray(raw.pins)) return fail(`${path}.pins`, 'not an array');
   const omitted = raw.omittedUnreadable;
-  if (omitted !== undefined && (typeof omitted !== 'number' || !Number.isInteger(omitted) || omitted < 0)) {
-    return fail(`${path}.omittedUnreadable`, 'not a whole number');
+  if (omitted !== undefined && (typeof omitted !== 'number' || !Number.isInteger(omitted) || omitted < 1)) {
+    return fail(`${path}.omittedUnreadable`, 'not a whole number of at least 1');
   }
 
   const savedQueries: ExportedSavedQuery[] = [];
@@ -212,7 +222,10 @@ export function validateResearch(raw: unknown, path: string): Verdict<ExportedRe
       const verdict = guarded(at, mutation, assertSavedQueryMutation);
       if (!verdict.ok) return verdict;
     }
-    savedQueries.push({ id, name, definition: definition as SavedQueryDefinition });
+    // Rebuilt from only the keys this build reads, so an unknown key in a file never reaches the log.
+    const read = readSavedQueryDefinition(definition);
+    if (read === undefined) return fail(`${at}.definition`, 'not a definition this version can read');
+    savedQueries.push({ id, name, definition: read });
   }
 
   const pins: ExportedPin[] = [];
@@ -263,6 +276,21 @@ export function validateResearch(raw: unknown, path: string): Verdict<ExportedRe
   };
 }
 
+/**
+ * The path of the first pin whose id is not the one its own target derives to, or undefined when every id is right.
+ * Asynchronous (Web Crypto), so it runs once when the file is read, before staging. A mismatched id could attach a
+ * note to the wrong event, or be overwritten later when the reader pins the event that id really belongs to.
+ */
+export async function findMismatchedPin(research: ExportedResearch): Promise<string | undefined> {
+  for (let index = 0; index < research.pins.length; index += 1) {
+    const pin = research.pins[index];
+    if (pin !== undefined && pin.id !== (await derivedPinId(pinIdentity(pin.target)))) {
+      return `research.pins[${String(index)}].id`;
+    }
+  }
+  return undefined;
+}
+
 /** What a research restore would write, and what it leaves alone, for the preview. */
 export interface ResearchPreview {
   readonly mutations: readonly Mutation[];
@@ -293,7 +321,7 @@ export function stageResearchRestore(research: ExportedResearch, existing: Exist
   let deletedHere = 0;
 
   for (const query of research.savedQueries) {
-    if (existing.deleted.savedQueries.has(query.id)) {
+    if (existing.deleted.savedQueries.has(query.id) || existing.erased.savedQueries.has(query.id)) {
       deletedHere += 1;
     } else if (existing.savedQueries.has(query.id)) {
       alreadyHere += 1;
@@ -304,16 +332,22 @@ export function stageResearchRestore(research: ExportedResearch, existing: Exist
   }
 
   for (const pin of research.pins) {
-    if (existing.deleted.pins.has(pin.id)) {
+    if (existing.deleted.pins.has(pin.id) || existing.erased.pins.has(pin.id)) {
       // The pin is hidden here by the reader's choice, so its annotation is left alone too.
       deletedHere += 1;
       continue;
     }
-    if (existing.pins.has(pin.id)) alreadyHere += 1;
-    else {
-      mutations.push(...pinCreate(pin.id, pin.target));
+    const here = existing.pins.get(pin.id);
+    if (here !== undefined) {
+      alreadyHere += 1;
+      // The same id must be the same event. Ids are checked against their targets when the file is read, so this only
+      // guards a local pin that does not match its own id; its annotation is not touched.
+      if (here.status === 'ready' && pinIdentity(here.target) !== pinIdentity(pin.target)) continue;
+    } else {
+      mutations.push(pinRestore(pin.id, pin.target));
       newPins += 1;
     }
+    if (existing.erased.annotations.has(pin.id)) continue;
     const held = new Set((existing.annotations.get(pin.id)?.revisions ?? []).map((revision) => revision.id));
     for (const revision of oldestFirst(pin.annotation?.revisions ?? [])) {
       if (held.has(revision.id)) continue;

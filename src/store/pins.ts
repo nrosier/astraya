@@ -22,7 +22,7 @@
  * @module store/pins
  * @purpose Folds pinned event-search results (one atomic target register) into readable or unreadable entries, derives pin ids, and builds and refuses the mutations written to the op-log.
  * @conventions The target is one last-write-wins register carrying its own schema `version`; the id is derived from the identity so pinning is idempotent across devices; an unreadable pin is listed and kept, never defaulted or hidden; fold functions never throw; refusals carry a code rather than prose; the list sorts by instant then by a plain code-unit id comparison so the order is the same on every device.
- * @exports PIN_ENTITY, PIN_TARGET_FIELD, readPinTarget, PinTarget, PinUnreadable, Pin, PinRefusal, PinRefusedError, pinIdentity, pinTargetOf, foldPin, pinCreate, assertPinMutation, sortedPins
+ * @exports PIN_ENTITY, PIN_TARGET_FIELD, readPinTarget, pinRestore, PinTarget, PinUnreadable, Pin, PinRefusal, PinRefusedError, pinIdentity, pinTargetOf, foldPin, pinCreate, assertPinMutation, sortedPins
  */
 import { ASPECTS } from '../astrology/aspects.js';
 import { BODIES } from '../astrology/bodies.js';
@@ -189,6 +189,15 @@ export function pinCreate(id: string, target: PinTarget): readonly Mutation[] {
     { entity: PIN_ENTITY, entityId: id, field: PIN_TARGET_FIELD, value: { ...target } },
     { entity: PIN_ENTITY, entityId: id, field: TOMBSTONE_FIELD, value: false },
   ];
+}
+
+/**
+ * The write for restoring a pin from a file (#1194): the target alone, with no `deleted` write. A restore is not a
+ * deliberate pin click, so it must not carry a fresh `deleted: false` that would outrank an unpin made on another
+ * device. With no tombstone on this device the pin is live anyway, and a tombstone that arrives later still wins.
+ */
+export function pinRestore(id: string, target: PinTarget): Mutation {
+  return { entity: PIN_ENTITY, entityId: id, field: PIN_TARGET_FIELD, value: { ...target } };
 }
 
 /**

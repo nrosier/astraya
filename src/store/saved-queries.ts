@@ -23,7 +23,7 @@
  * @module store/saved-queries
  * @purpose Folds saved event-search queries (name and one atomic definition register) into readable, unreadable or incomplete entries, and builds and refuses the mutations written to the op-log.
  * @conventions The definition is one last-write-wins register carrying its own schema `version`, never merged field by field; an unreadable or incomplete query is listed and kept, never defaulted or hidden; fold functions never throw; refusals carry a code rather than prose, so the UI owns the wording; the name is capped at `MAX_CUSTOM_PROMPT_LENGTH` code points (owner decision D4); the list sorts by name then by a plain code-unit id comparison so the order is the same on every device.
- * @exports SAVED_QUERY_ENTITY, SAVED_QUERY_NAME_FIELD, SAVED_QUERY_DEFINITION_FIELD, SAVED_QUERY_NAME_MAX_CHARACTERS, SAVED_QUERY_BODY_KEYS, EVENT_SEARCH_KINDS, parseSearchDate, isSavedQueryNameTooLong, EventSearchQueryParameters, SavedQueryDefinition, SavedQueryUnreadable, SavedQuery, SavedQueryRefusal, SavedQueryRefusedError, foldSavedQuery, savedQueryCreate, savedQueryRename, assertSavedQueryMutation, sortedSavedQueries
+ * @exports readSavedQueryDefinition, SAVED_QUERY_ENTITY, SAVED_QUERY_NAME_FIELD, SAVED_QUERY_DEFINITION_FIELD, SAVED_QUERY_NAME_MAX_CHARACTERS, SAVED_QUERY_BODY_KEYS, EVENT_SEARCH_KINDS, parseSearchDate, isSavedQueryNameTooLong, EventSearchQueryParameters, SavedQueryDefinition, SavedQueryUnreadable, SavedQuery, SavedQueryRefusal, SavedQueryRefusedError, foldSavedQuery, savedQueryCreate, savedQueryRename, assertSavedQueryMutation, sortedSavedQueries
  */
 import { ASPECTS } from '../astrology/aspects.js';
 import { BODIES } from '../astrology/bodies.js';
@@ -167,6 +167,12 @@ function readDefinition(value: unknown): DefinitionVerdict {
   const read = readParameters(parameters);
   if (read === undefined) return { ok: false, reason: 'invalid' };
   return { ok: true, definition: { tool: EVENT_SEARCH_TOOL, version: DEFINITION_VERSION, parameters: read } };
+}
+
+/** A stored definition as this build reads it, rebuilt from only the keys it knows, or undefined when unreadable. */
+export function readSavedQueryDefinition(value: unknown): SavedQueryDefinition | undefined {
+  const verdict = readDefinition(value);
+  return verdict.ok ? verdict.definition : undefined;
 }
 
 /**

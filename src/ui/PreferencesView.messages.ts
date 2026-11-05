@@ -176,7 +176,7 @@ const en = {
   restoreResearchAlso: (research: ResearchPreview): string =>
     `It also adds ${String(research.newSavedQueries)} saved ${research.newSavedQueries === 1 ? 'query' : 'queries'}, ${String(research.newPins)} ${research.newPins === 1 ? 'pin' : 'pins'} and ${String(research.newAnnotationRevisions)} note ${research.newAnnotationRevisions === 1 ? 'version' : 'versions'}.`,
   restoreResearchConfirm: (research: ResearchPreview): string =>
-    `This will add ${String(research.newSavedQueries)} saved ${research.newSavedQueries === 1 ? 'query' : 'queries'}, ${String(research.newPins)} ${research.newPins === 1 ? 'pin' : 'pins'} and ${String(research.newAnnotationRevisions)} note ${research.newAnnotationRevisions === 1 ? 'version' : 'versions'}. Nothing you already have is changed. Continue?`,
+    `This will add ${String(research.newSavedQueries)} saved ${research.newSavedQueries === 1 ? 'query' : 'queries'}, ${String(research.newPins)} ${research.newPins === 1 ? 'pin' : 'pins'} and ${String(research.newAnnotationRevisions)} note ${research.newAnnotationRevisions === 1 ? 'version' : 'versions'}. No saved query or pin you already have is changed; note versions are added beside yours. Continue?`,
   restoreResearchApplied: (research: ResearchPreview): string =>
     `Added ${String(research.newSavedQueries)} saved ${research.newSavedQueries === 1 ? 'query' : 'queries'}, ${String(research.newPins)} ${research.newPins === 1 ? 'pin' : 'pins'} and ${String(research.newAnnotationRevisions)} note ${research.newAnnotationRevisions === 1 ? 'version' : 'versions'}.`,
   restoreNothingToApply: 'Nothing in this file differs from what is already here.',
@@ -311,7 +311,7 @@ const nl: typeof en = {
   restoreResearchAlso: (research: ResearchPreview): string =>
     `Het voegt ook ${String(research.newSavedQueries)} ${research.newSavedQueries === 1 ? 'opgeslagen zoekopdracht' : 'opgeslagen zoekopdrachten'}, ${String(research.newPins)} ${research.newPins === 1 ? 'pin' : 'pins'} en ${String(research.newAnnotationRevisions)} ${research.newAnnotationRevisions === 1 ? 'notitieversie' : 'notitieversies'} toe.`,
   restoreResearchConfirm: (research: ResearchPreview): string =>
-    `Dit voegt ${String(research.newSavedQueries)} ${research.newSavedQueries === 1 ? 'opgeslagen zoekopdracht' : 'opgeslagen zoekopdrachten'}, ${String(research.newPins)} ${research.newPins === 1 ? 'pin' : 'pins'} en ${String(research.newAnnotationRevisions)} ${research.newAnnotationRevisions === 1 ? 'notitieversie' : 'notitieversies'} toe. Wat je al hebt, wordt niet gewijzigd. Doorgaan?`,
+    `Dit voegt ${String(research.newSavedQueries)} ${research.newSavedQueries === 1 ? 'opgeslagen zoekopdracht' : 'opgeslagen zoekopdrachten'}, ${String(research.newPins)} ${research.newPins === 1 ? 'pin' : 'pins'} en ${String(research.newAnnotationRevisions)} ${research.newAnnotationRevisions === 1 ? 'notitieversie' : 'notitieversies'} toe. Geen opgeslagen zoekopdracht of pin die je al hebt wordt gewijzigd; notitieversies komen naast de jouwe. Doorgaan?`,
   restoreResearchApplied: (research: ResearchPreview): string =>
     `Toegevoegd: ${String(research.newSavedQueries)} ${research.newSavedQueries === 1 ? 'opgeslagen zoekopdracht' : 'opgeslagen zoekopdrachten'}, ${String(research.newPins)} ${research.newPins === 1 ? 'pin' : 'pins'} en ${String(research.newAnnotationRevisions)} ${research.newAnnotationRevisions === 1 ? 'notitieversie' : 'notitieversies'}.`,
   restoreNothingToApply: 'Niets in dit bestand verschilt van wat hier al staat.',

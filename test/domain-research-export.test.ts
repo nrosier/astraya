@@ -7,6 +7,7 @@ import { validateFullExport } from '../src/domain/full-export-importer.js';
 import { FULL_EXPORT_FORMAT, FULL_EXPORT_VERSION } from '../src/domain/full-export.js';
 import {
   buildResearchExport,
+  findMismatchedPin,
   stageResearchRestore,
   validateResearch,
   type ExistingResearch,
@@ -18,7 +19,8 @@ import { annotationRevision } from '../src/store/annotations.js';
 import { createClock } from '../src/store/hlc.js';
 import { NOTE_MAX_CHARACTERS } from '../src/store/notes.js';
 import { append, emptyLog, type Mutation } from '../src/store/oplog.js';
-import { pinCreate, pinTargetOf } from '../src/store/pins.js';
+import { derivedPinId } from '../src/domain/id.js';
+import { pinCreate, pinIdentity, pinTargetOf } from '../src/store/pins.js';
 import { savedQueryCreate, type SavedQueryDefinition } from '../src/store/saved-queries.js';
 
 const T0 = 1_780_963_200_000;
@@ -126,6 +128,11 @@ describe('validateResearch', () => {
     ['savedQueries not an array', { savedQueries: 1, pins: [] }, 'research.savedQueries'],
     ['pins not an array', { savedQueries: [], pins: 1 }, 'research.pins'],
     ['a bad omittedUnreadable', { savedQueries: [], pins: [], omittedUnreadable: -1 }, 'research.omittedUnreadable'],
+    [
+      'an omittedUnreadable of zero',
+      { savedQueries: [], pins: [], omittedUnreadable: 0 },
+      'research.omittedUnreadable',
+    ],
   ])('refuses %s', (_name, value, path) => {
     const result = validateResearch(value, 'research');
     expect(result.ok).toBe(false);
@@ -196,6 +203,34 @@ describe('validateResearch', () => {
   });
 });
 
+describe('validateResearch keeps only what this build reads', () => {
+  it('drops an unknown key from a saved query definition, so it never reaches the log', () => {
+    const definition = { ...DEFINITION, parameters: { ...DEFINITION.parameters, extra: 'x'.repeat(1000) }, junk: 1 };
+    const result = validateResearch({ savedQueries: [{ id: Q1, name: 'x', definition }], pins: [] }, 'research');
+    expect(result.ok && result.value.savedQueries[0]?.definition).toEqual(DEFINITION);
+  });
+});
+
+describe('findMismatchedPin', () => {
+  it('accepts a pin whose id is the one its target derives to', async () => {
+    const id = await derivedPinId(pinIdentity(TARGET));
+    expect(await findMismatchedPin({ savedQueries: [], pins: [{ id, target: TARGET }] })).toBeUndefined();
+  });
+
+  it('names the first pin whose id does not match its target', async () => {
+    const id = await derivedPinId(pinIdentity(TARGET));
+    const other = pinTargetOf({ kind: 'lunation', jd: 2461500, label: 'Full Moon' });
+    const research = {
+      savedQueries: [],
+      pins: [
+        { id, target: TARGET },
+        { id, target: other },
+      ],
+    };
+    expect(await findMismatchedPin(research)).toBe('research.pins[1].id');
+  });
+});
+
 describe('stageResearchRestore (R2, R3)', () => {
   const research = (): ExportedResearch => mustExport(fullState());
 
@@ -221,6 +256,41 @@ describe('stageResearchRestore (R2, R3)', () => {
     const preview = stageResearchRestore(research(), partial);
     expect(preview).toMatchObject({ newSavedQueries: 0, newPins: 0, newAnnotationRevisions: 1, alreadyHere: 2 });
     expect(preview.mutations).toEqual([annotationRevision(K1, R2, 'second', [R1])]);
+  });
+
+  it('writes a restored pin as its target alone, never a fresh deleted:false that could undo an unpin elsewhere', () => {
+    const preview = stageResearchRestore(research(), EMPTY);
+    const pinWrites = preview.mutations.filter((m) => m.entity === 'pin');
+    expect(pinWrites.map((m) => m.field)).toEqual(['target']);
+  });
+
+  it('never writes back an id erased on this device, and leaves its annotation alone', () => {
+    const local = stateOf([
+      ...at(savedQueryCreate(Q1, 'Purged', DEFINITION), T0),
+      [{ entity: 'savedQuery', entityId: Q1, field: 'purged', value: true }, T0 + 5000],
+      ...at(pinCreate(K1, TARGET), T0 + 10_000),
+      [{ entity: 'pin', entityId: K1, field: 'purged', value: true }, T0 + 12_000],
+    ]);
+    const preview = stageResearchRestore(research(), local);
+    expect(preview.mutations).toEqual([]);
+    expect(preview.deletedHere).toBe(2);
+  });
+
+  it('writes no annotation revisions onto a pin whose annotation was erased here', () => {
+    const local = stateOf([
+      ...at(pinCreate(K1, TARGET), T0),
+      [annotationRevision(K1, R3, 'gone', []), T0 + 1000],
+      [{ entity: 'annotation', entityId: K1, field: 'purged', value: true }, T0 + 2000],
+    ]);
+    const preview = stageResearchRestore(research(), local);
+    expect(preview.mutations.some((m) => m.entity === 'annotation')).toBe(false);
+  });
+
+  it('does not attach a note to a local pin that holds a different event under the same id', () => {
+    const otherTarget = pinTargetOf({ kind: 'lunation', jd: 2461500, label: 'Full Moon' });
+    const local = stateOf(at(pinCreate(K1, otherTarget), T0));
+    const preview = stageResearchRestore(research(), local);
+    expect(preview.mutations.some((m) => m.entity === 'annotation')).toBe(false);
   });
 
   it('never overwrites: an existing query keeps its local name', () => {
