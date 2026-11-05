@@ -62,6 +62,11 @@ describe('validateSettings', () => {
     expect(scopeOf('astraya:showDegreeSymbol')).toBe('device');
   });
 
+  it('registers the default transit-filter profile as account scope (guidelines §3.2, #1149)', () => {
+    const scopeOf = (key: string) => SETTINGS.find((setting) => setting.key === key)?.scope;
+    expect(scopeOf('astraya:transitFilter:<context>')).toBe('account');
+  });
+
   it('accepts a well-formed setting of every other scope', () => {
     for (const scope of ['application', 'account', 'device', 'chart', 'page'] as const) {
       expect(validateSettings([{ ...BASE, scope, synced: false }])).toEqual([]);
