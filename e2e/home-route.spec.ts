@@ -23,7 +23,8 @@ async function waitForLastPersonWritten(page: Page): Promise<void> {
   const match = /#\/people\/([^/]+)\//.exec(page.url());
   if (match?.[1] === undefined) throw new Error(`not on a person page: ${page.url()}`);
   const personId = match[1];
-  await page.waitForFunction(`localStorage.getItem('astraya:lastPersonId') === '${personId}'`);
+  // A function plus argument, not a string: the app's CSP blocks string evaluation.
+  await page.waitForFunction((id) => localStorage.getItem('astraya:lastPersonId') === id, personId);
 }
 
 test.beforeAll(async () => {
