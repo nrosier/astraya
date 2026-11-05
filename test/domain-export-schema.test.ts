@@ -88,4 +88,32 @@ describe('docs/schema/astraya-export.schema.json (#561)', () => {
       assertKeysKnown(chartSchema, chart as unknown as Record<string, unknown>, 'ExportedChart');
     }
   });
+
+  it('knows every key of the research block (#1194)', async () => {
+    const schema = loadSchema();
+    const research = {
+      savedQueries: [{ id: 'q-aaaaaaaaaaaaaaaa', name: 'x', definition: {} }],
+      pins: [
+        {
+          id: 'k-aaaaaaaaaaaaaaaa',
+          target: {},
+          annotation: { revisions: [{ id: 'r-aaaaaaaaaaaaaaaa', text: 'a', parents: [], hlc: 'h' }] },
+        },
+      ],
+      omittedUnreadable: 1,
+    };
+    const archive = await buildFullExport({
+      people: [],
+      provider: engine,
+      appVersion: '9.9.9',
+      settings: DEFAULT_EXTENDED_SETTINGS,
+      rulership: 'modern',
+      symbolClass: 'drawn',
+      now: new Date('2026-10-13T00:00:00.000Z'),
+      research: research as never,
+    });
+    assertKeysKnown(schema, archive as unknown as Record<string, unknown>, 'FullExport');
+    const defs = (schema as unknown as { $defs: { exportedResearch: JsonSchemaLike } }).$defs;
+    assertKeysKnown(defs.exportedResearch, archive.research as unknown as Record<string, unknown>, 'ExportedResearch');
+  });
 });

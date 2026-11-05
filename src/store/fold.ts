@@ -223,6 +223,15 @@ export interface State {
    */
   readonly annotations: ReadonlyMap<string, Note>;
   /**
+   * Ids a purge marker has erased (#1194). They are in no list, but a restore must know them: writing their data back
+   * would put erased text on disk again, where nothing strips it.
+   */
+  readonly erased: {
+    readonly savedQueries: ReadonlySet<string>;
+    readonly pins: ReadonlySet<string>;
+    readonly annotations: ReadonlySet<string>;
+  };
+  /**
    * The account preferences registers (#1066, ADR 0004): only the `preferences` entity id, only the allowlisted
    * fields. `deleted` and `purged` never apply to this entity, so they are not consulted.
    */
@@ -275,10 +284,16 @@ export function materialise(registers: Registers): State {
 
   const savedQueries = new Map<string, SavedQuery>();
   const deletedSavedQueries = new Map<string, SavedQuery>();
+  const erasedQueries = new Set<string>();
+  const erasedPins = new Set<string>();
+  const erasedAnnotations = new Set<string>();
   for (const [id, fields] of Object.entries(registers[SAVED_QUERY_ENTITY] ?? {})) {
     // Purged first, before incomplete, deleted or unreadable: a purge leaves only its marker, which would
     // otherwise fold as an incomplete query and appear in a list (ADR 0005 rule 10).
-    if (isPurged(fields)) continue;
+    if (isPurged(fields)) {
+      erasedQueries.add(id);
+      continue;
+    }
     const query = foldSavedQuery(id, fields);
     if (query === undefined) continue;
     if (isDeleted(fields)) deletedSavedQueries.set(id, query);
@@ -289,7 +304,10 @@ export function materialise(registers: Registers): State {
   const deletedPins = new Map<string, Pin>();
   for (const [id, fields] of Object.entries(registers[PIN_ENTITY] ?? {})) {
     // Purged first, as for saved queries: a purge leaves only its marker.
-    if (isPurged(fields)) continue;
+    if (isPurged(fields)) {
+      erasedPins.add(id);
+      continue;
+    }
     const pin = foldPin(id, fields);
     if (pin === undefined) continue;
     if (isDeleted(fields)) deletedPins.set(id, pin);
@@ -298,7 +316,10 @@ export function materialise(registers: Registers): State {
 
   const annotations = new Map<string, Note>();
   for (const [pinId, fields] of Object.entries(registers[ANNOTATION_ENTITY] ?? {})) {
-    if (isPurged(fields)) continue;
+    if (isPurged(fields)) {
+      erasedAnnotations.add(pinId);
+      continue;
+    }
     const annotation = foldAnnotation(pinId, fields);
     if (annotation !== undefined) annotations.set(pinId, annotation);
   }
@@ -313,6 +334,7 @@ export function materialise(registers: Registers): State {
     savedQueries,
     pins,
     annotations,
+    erased: { savedQueries: erasedQueries, pins: erasedPins, annotations: erasedAnnotations },
     // Any other entity id under `account` is ignored: every device writes the one constant id.
     account: foldAccount(registers[ACCOUNT_ENTITY]?.[ACCOUNT_ENTITY_ID]),
   };

@@ -27,6 +27,14 @@ interface FullExport {
   };
   note: string; // human-readable summary of which settings were in force
   people: ExportedPerson[];
+  research?: ExportedResearch; // #1194 — saved queries, pins and annotations; absent when there are none
+}
+
+// #1194 — live items only, so deleted queries and unpinned pins are not carried.
+interface ExportedResearch {
+  savedQueries: { id: string; name: string; definition: SavedQueryDefinition }[]; // src/store/saved-queries.ts
+  pins: { id: string; target: PinTarget; annotation?: { revisions: ExportedNoteRevision[] } }[]; // src/store/pins.ts; the annotation carries every revision, forks included
+  omittedUnreadable?: number; // live items this build could not read exactly and left out; present only above zero
 }
 
 interface ExportedPerson {
@@ -180,6 +188,18 @@ JSON Schema file does enumerate them structurally.
   (each note's revisions, keyed by note id); both additive, so the version stays v4. An older reader ignores them and still
   sees the head text in `notes`. A restore writes only the revisions the store does not already hold, through the note
   mutation path, and never writes the legacy `person.notes` register.
+
+#1194 added the optional top-level `research` block (saved event-search queries, pins and
+their annotations); additive, so the version stays v4. An older reader ignores it. Only live items are exported: a
+deleted query, an unpinned pin and the annotation of one are left out, and so is an item this build cannot read
+exactly (counted in `omittedUnreadable`). A restore adds only what the device lacks and never overwrites: a query or pin
+whose id is already here is skipped, only the missing annotation revisions are written (oldest first, so forks survive),
+and an item the reader deleted on the device is skipped and never brought back. Every write goes through the store's
+own guards, so a malformed or over-limit entry refuses the whole file with a path. A pin id must be the one its target derives to (`k-` plus 80 bits of the SHA-256 of the pin identity); a file with a
+mismatched id is refused with the path. A restored pin writes its target only, never a fresh tombstone write, so a backup
+cannot undo an unpin made on another device, and an id erased on the device is never written back. Unknown keys in a
+saved query definition are dropped. As for notes, restoring an annotation revision can change which text is shown as
+the head, since a revision is stamped with its write time; every version stays visible.
 
 ## Calculation artifact
 

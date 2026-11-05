@@ -30,7 +30,8 @@
       }
     },
     "note": { "type": "string" },
-    "people": { "type": "array", "items": { "$ref": "#/$defs/exportedPerson" } }
+    "people": { "type": "array", "items": { "$ref": "#/$defs/exportedPerson" } },
+    "research": { "$ref": "#/$defs/exportedResearch" }
   },
   "$defs": {
     "degreeParts": {
@@ -41,6 +42,57 @@
         "degree": { "type": "integer" },
         "minute": { "type": "integer" },
         "second": { "type": "integer" }
+      }
+    },
+    "exportedResearch": {
+      "type": "object",
+      "description": "Saved event-search queries, pins and their annotations (#1194, additive: the version stays 4). Live items only; absent when there are none",
+      "required": ["savedQueries", "pins"],
+      "additionalProperties": false,
+      "properties": {
+        "savedQueries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "name", "definition"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "pattern": "^q-[a-z2-7]{16}$" },
+              "name": { "type": "string" },
+              "definition": {
+                "type": "object",
+                "description": "SavedQueryDefinition: tool, version and the Event search parameters, see src/store/saved-queries.ts"
+              }
+            }
+          }
+        },
+        "pins": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "target"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "pattern": "^k-[a-z2-7]{16}$" },
+              "target": {
+                "type": "object",
+                "description": "PinTarget: the pinned sky event (tool, version, kind, instant in whole seconds, bodies, aspect, label), see src/store/pins.ts"
+              },
+              "annotation": {
+                "type": "object",
+                "description": "The pin's annotation, every revision (head and forks)",
+                "required": ["revisions"],
+                "additionalProperties": false,
+                "properties": { "revisions": { "type": "array", "items": { "$ref": "#/$defs/exportedNoteRevision" } } }
+              }
+            }
+          }
+        },
+        "omittedUnreadable": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Live items this build could not read exactly, left out of the file"
+        }
       }
     },
     "exportedNoteRevision": {
