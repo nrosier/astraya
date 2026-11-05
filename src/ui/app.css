@@ -4909,7 +4909,7 @@ svg text.chart-symbol-text-unicode {
   margin: 0 0 var(--space-2);
   font-size: var(--text-base);
 }
-.relationship-summary h4 {
+.relationship-summary h3 {
   margin: var(--space-4) 0 var(--space-1);
   color: var(--accent);
   font-size: 0.9rem;
