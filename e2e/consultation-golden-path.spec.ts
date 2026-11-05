@@ -117,9 +117,11 @@ test('the Consultation header opens the chart wheel on the day shown, and the ca
 
   await openSharedPerson(page, baseUrl, EINSTEIN);
   await page.getByRole('link', { name: 'Consultation', exact: true }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Consultation', exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Albert Einstein’s Consultation', exact: true }),
+  ).toBeVisible();
 
-  // The title is the feature; the person sits in the muted basis line.
+  // The title names the feature and the person (#1064); the muted basis line keeps the calculation basis.
   await expect(page.locator('.page-header-basis')).toContainText('Tropical · Placidus');
   await expect(page.getByRole('link', { name: 'Edit calculation basis in Preferences' })).toHaveAttribute(
     'href',

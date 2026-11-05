@@ -66,6 +66,7 @@ Apply these rules:
 - The current person's name is a searchable selector, not a static label. Switching people should preserve the current feature when its prerequisites are met.
 - Route links use anchors. Buttons perform actions. A navigation action that is styled as a button stays an anchor: give it the shared button classes (for example `a.quiet`, `app.css`, #1048) or a `ButtonLink`, never a `<button>` with a click handler that changes the route. Same-page tabs use the tab pattern only when small panels are genuinely mutually exclusive. Chart views use ordinary route links; related sections inside one view use headings and in-page anchors. Route links do not use `role="tab"`.
 - Every page title must identify both the feature and its subject, for example **Natal chart · Ada Lovelace** or **Transits · Ada Lovelace**.
+  - **Exception (#1064, 2026-11-05):** the **Home** title stays a plain "Home". Home is not about one person, so it has no subject. The Consultation title follows this rule and names the person as `Name's Consultation` (`Consultatie van Name` in Dutch), as the chart titles do.
 
 When adding a feature, add typed metadata for its `scope`, `group`, `order`, `href`, prerequisites, settings mode, and export capabilities. Update route parsing, lazy loading, English and Dutch labels, active navigation, and relevant export registration together. An exhaustiveness test should fail when a user-facing route has no feature metadata.
 
@@ -359,6 +360,7 @@ Use these mappings in the current product and in new work:
 - **Which transits to show:** visible compact preset choices for Important, Outer, Personal, and All; a summary such as **Important · 12 of 48 shown**; and one **Change filters** action. When advanced values differ from every preset, show **Custom · 12 of 48 shown**. Do not add a separate Show all button beside an All preset.
 - **Advanced transit filters:** segmented Tight/Balanced/Wide orb choice, clearly grouped checkboxes for aspects and bodies, group-level All/Clear actions, and a sticky modal footer. Do not place the global Planetary rulers preference inside this staged dialog.
 - **Astrocartography:** one Map settings right slide-over drawer (`StagedDialog`, #978) containing Line types, Primary and Additional bodies, Local Space, and Relocation. Show only the applied summary on the page and recalculate once after Apply.
+- **Year and coordinate entry (#1064, 2026-11-05, documented exception):** year and decimal coordinate fields (Cycles, Eclipses, Horary, Electional, Rectification) stay text fields, not `NumberField`. Decimal and free-form entry needs a text field.
 
 ### Shared control anatomy
 
@@ -476,6 +478,7 @@ A tool page (a screen that takes inputs and returns results, such as Planetary c
 - Use semantic state tokens for danger, warning, success, info, and focus. Astrology colors do not double as UI state colors.
 - Use shared Button, Notice, Field, TextField, DateField, NumberField, Select, Checkbox, Radio, ChoiceGroup, OptionCards, FilterSummary, Disclosure, SelectionInspector, StatusMessage, EmptyState, DataTable, and settings-dialog primitives as they become available.
 - Do not add hard-coded colors, shadows, arbitrary inline style objects, or one-off disabled/loading behavior in a feature component.
+- **Chart and map geometry is exempt from the token rule (#1064, 2026-11-05).** Astrocartography map line colours and sign washes (`app.css` astrocartography rules) are chart and map geometry, not UI state or surface colour. They may keep their literal values. Astrology colours still do not double as UI state colours.
 - Keep motion short and functional. Define hover, active, focus, disabled, busy, selected, and error states for every interactive component.
 - Keep both light and dark themes complete. A new token or component state is unfinished until both are legible.
 - No utility CSS framework (no Tailwind CSS) and no third-party icon library (no Lucide). Icons are inline SVG.

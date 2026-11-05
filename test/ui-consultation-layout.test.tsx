@@ -159,10 +159,13 @@ describe('consultation right column (#800)', () => {
 });
 
 describe('consultation round 2 (#800, approved 2026-10-30)', () => {
-  it('titles the page Consultation and names the person only in the basis line', () => {
+  it('titles the page with the feature and the person (#1064), keeping the no-name fallback and the basis line', () => {
     expect(consultationViewMessages.en.heading).toBe('Consultation');
     expect(consultationViewMessages.nl.heading).toBe('Consultatie');
-    expect(view).toContain('title={t.heading}');
+    expect(consultationViewMessages.en.titleWithName('Albert Einstein')).toBe('Albert Einstein’s Consultation');
+    expect(consultationViewMessages.nl.titleWithName('Albert Einstein')).toBe('Consultatie van Albert Einstein');
+    expect(view).toContain('const title = person.displayName ? t.titleWithName(person.displayName) : t.heading;');
+    expect(view).toContain('title={title}');
     expect(view).toContain('basis={basisLine}');
     expect(view).toContain('t.basisSubject(');
   });

@@ -291,13 +291,14 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
     return <UnreadableSettingsNotice personId={personId} name={person.displayName || ''} />;
   }
 
-  // The title is the feature; the person is the subject, named in the muted basis line (#800 decision, 2026-10-30).
+  // The title names the feature and the person (#1064 decision, 2026-11-05); the basis line keeps the subject.
   const subject = person.displayName || t.fallback;
+  const title = person.displayName ? t.titleWithName(person.displayName) : t.heading;
   if (person.moment === undefined) {
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.heading} />
+        <PageHeader title={title} />
         <p>
           {t.notComplete(subject)} <a href={personHref(personId)}>{t.personPageLink}</a>.
         </p>
@@ -470,7 +471,7 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
   return (
     <main className="shell consultation">
       <BackLink fallback={personHref(personId)} />
-      <PageHeader title={t.heading} basis={basisLine}>
+      <PageHeader title={title} basis={basisLine}>
         <a className="primitive-button-primary" href={chartHref(personId, 'wheel', 'natal', undefined, selectedDay)}>
           {t.viewWheel}
         </a>
