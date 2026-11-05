@@ -2418,6 +2418,12 @@ label.stacked textarea:focus-visible {
   padding: 0 var(--space-4) var(--space-3);
 }
 
+/* The Admin scope label (#1164) keeps the 1em top margin the Preferences one gets from the browser default, which
+   `.person-shelf .hint` above zeroes; without it the label sits flush against the shelf's top edge. */
+.person-shelf .person-nav > .preferences-scope {
+  margin-top: 1em;
+}
+
 /* Overrides the standalone `.shell` (used everywhere else at full padding) down to the box's
    own internal gutter: the outer spacing that `.shell` normally supplies on its own is already
    supplied by `.person-shelf` once a tab strip precedes it. */

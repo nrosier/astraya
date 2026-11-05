@@ -25,6 +25,7 @@ export function AdminNav({ route }: { route: Route }): React.JSX.Element {
   const active = activeAdminTabKey(route);
   return (
     <div className="person-nav">
+      <p className="hint preferences-scope">{t.scope}</p>
       <ScrollingTabRow
         label={t.adminSectionsAriaLabel}
         activeKey={active ?? undefined}
