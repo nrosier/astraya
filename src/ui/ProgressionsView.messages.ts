@@ -17,7 +17,7 @@ const en = {
   needsKnownTime: (name: string) =>
     `Progressed houses need a known birth time. ${name}’s birth time is unknown — the same reason their chart has no houses.`,
 
-  heading: (name: string) => `${name}’s progressions`,
+  heading: (name: string) => `${name}’s Progressions`,
   hint: 'A progressed chart substitutes elapsed time since birth for a symbolic unit of time, then recomputes positions and houses as if that substituted moment were the real one. The three techniques below differ only in which substitution they use.',
   techniqueLabel: 'Technique',
   secondaryTechnique: 'Secondary (a day for a year)',

@@ -19,7 +19,7 @@ const d10CaveatNl =
 const en = {
   personFallback: 'Person',
   thisPerson: 'This person',
-  harmonicChartsFallback: 'Harmonic & Varga charts',
+  harmonicChartsFallback: 'Harmonic & Varga Charts',
   needsCompleteRecord: (name: string) =>
     `A harmonic chart needs a real Ascendant to build its own houses from, so it needs a complete birth record with a known time. ${name}’s does not have one yet. Fill in or correct it on the`,
   personPageLink: 'person page',

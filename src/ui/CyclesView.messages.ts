@@ -6,7 +6,7 @@
  * @exports cyclesViewMessages
  */
 const en = {
-  heading: 'Planetary cycles',
+  heading: 'Planetary Cycles',
   hint: 'When two moving bodies make an exact aspect, found from the ephemeris alone — no birth chart involved. Each exact aspect is plotted on the zodiac in the diagram and joined to the next, so a cycle shows as a pattern: Venus’s inferior conjunctions with the Sun close into a five-pointed star over eight years.',
   presetLabel: 'Cycle',
   presetCustom: 'Custom',

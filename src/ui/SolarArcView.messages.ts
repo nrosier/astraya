@@ -17,7 +17,7 @@ const en = {
   needsKnownTime: (name: string) =>
     `Solar arc directions need a known birth time. ${name}’s birth time is unknown — the same reason their chart has no houses.`,
 
-  heading: (name: string) => `${name}’s solar arc directions`,
+  heading: (name: string) => `${name}’s Solar Arc Directions`,
   hint: 'Every natal body and angle is shifted by the same arc — the distance the Sun itself has moved since birth, in symbolic (a-day-for-a-year) time. Unlike a progressed chart, nothing here depends on a progressed Moon or planetary speed.',
   asOfLabel: 'As of',
   calculating: 'Calculating…',

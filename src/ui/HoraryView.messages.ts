@@ -6,7 +6,7 @@
  * @exports horaryViewMessages
  */
 const en = {
-  heading: 'Horary chart',
+  heading: 'Horary Chart',
   hint: 'Cast a chart for the moment and place a question was asked, and check the traditional considerations before judgment. This tells you whether the chart is fit to be judged; it does not answer the question.',
   judgmentSource:
     'Judgment method: William Lilly, Christian Astrology, Book II, pp. 162–64 (the merchant’s-ship judgment).',

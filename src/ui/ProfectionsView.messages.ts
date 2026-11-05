@@ -17,7 +17,7 @@ const en = {
   needsKnownTime: (name: string) =>
     `Profections rotate the natal Ascendant, so they need a known birth time. ${name}'s birth time is unknown — the same reason their chart has no houses.`,
 
-  heading: (name: string) => `${name}'s profections`,
+  heading: (name: string) => `${name}'s Profections`,
   hint: 'Annual and monthly profections: a house-per-year rotation of the natal Ascendant. The "Lord of the Year/Month" is the ruler of the profected sign, by the planetary rulers you choose below; the technique is Hellenistic and predates the outer planets, so Traditional is the historically faithful choice.',
   asOfLabel: 'As of',
   calculating: 'Calculating…',

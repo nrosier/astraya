@@ -56,7 +56,7 @@ const en = {
   unconfiguredSyncSuffix: (rows: string) =>
     `${rows} (sync is not configured on this server, so an exact count of people/charts is not available)`,
 
-  usageHeading: 'AI-customized interpretation usage',
+  usageHeading: 'AI-Customized Interpretation Usage',
   loadingUsage: 'Loading usage…',
   usageEmpty: 'No AI-customized interpretation requests yet.',
   usageTableHeading: 'Usage per user',

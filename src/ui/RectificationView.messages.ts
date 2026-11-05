@@ -6,7 +6,7 @@
  * @exports rectificationViewMessages
  */
 const en = {
-  heading: 'Birth-time rectification',
+  heading: 'Birth-Time Rectification',
   hint: 'For a birth date and place with an uncertain time: test candidate times against dated life events. For each candidate the Ascendant and Midheaven are worked out, and the events are checked for solar-arc and slow-planet transit contacts to them.',
   caveat:
     'This narrows the choice; it does not prove a time. The score adds up coincidences, some of which are chance, so look at how much better the top times score than the average (the “lift”) — a time that explains the events no better than average has explained nothing. Give it several well-dated events that mattered.',

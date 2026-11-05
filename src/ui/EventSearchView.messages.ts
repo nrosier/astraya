@@ -8,7 +8,7 @@
  * @exports eventSearchViewMessages
  */
 const en = {
-  heading: 'Ephemeris research',
+  heading: 'Ephemeris Research',
   intro:
     'Search a UTC date range for exact sky events and download the parameters with the results as reproducible CSV.',
   rangeLegend: 'UTC date range',

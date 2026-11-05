@@ -8,7 +8,7 @@
  * @exports corpusOverridesPanelMessages
  */
 const en = {
-  heading: 'Corpus corrections',
+  heading: 'Corpus Corrections',
   intro:
     'Browse the interpretation corpus and correct individual entries. A correction replaces the committed text everywhere it would otherwise be shown, until it is reset.',
 

@@ -17,7 +17,7 @@ const en = {
   needsKnownTime: (name: string) =>
     `A transit wheel needs houses on both rings, so it needs a known birth time. ${name}’s birth time is unknown — the same reason their chart has no houses.`,
 
-  heading: (name: string) => `${name}’s transits`,
+  heading: (name: string) => `${name}’s Transits`,
   hint: (name: string) =>
     `A bi-wheel: ${name}’s natal chart on the inner ring, transiting positions for the chosen date on the outer ring, cast for their natal place.`,
   asOfLabel: 'As of',

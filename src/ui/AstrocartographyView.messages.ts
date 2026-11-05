@@ -17,7 +17,7 @@ const en = {
   needsKnownTime: (name: string) =>
     `Astrocartography lines shift about 15° of longitude per hour of birth-time error, so this needs a known birth time. ${name}’s birth time is unknown — the same reason their chart has no houses.`,
 
-  heading: (name: string) => `${name}’s astrocartography`,
+  heading: (name: string) => `${name}’s Astrocartography`,
   subtitle:
     'A world map of the lines where each body was rising, setting, culminating or at the lowest point at birth.',
   buildPdf: 'Build PDF →',

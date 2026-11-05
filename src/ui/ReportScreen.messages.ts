@@ -19,7 +19,7 @@ const en = {
   housesUndefined: (name: string) =>
     `The interpretation leans on houses and angles, but the chosen house system has no valid solution for ${name}’s birth place at this exact time — try a different house system in Extended settings on the chart page, or a location further from the poles.`,
 
-  heading: (name: string) => `${name}’s interpretation`,
+  heading: (name: string) => `${name}’s Interpretation`,
   calculating: 'Calculating…',
   error: (message: string) => `The interpretation could not be calculated. ${message}`,
 };

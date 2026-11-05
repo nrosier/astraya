@@ -17,7 +17,7 @@ const en = {
   needsKnownTime: (name: string) =>
     `Primary directions need a known birth time. ${name}’s birth time is unknown — the same reason their chart has no houses.`,
 
-  heading: (name: string) => `${name}’s primary directions`,
+  heading: (name: string) => `${name}’s Primary Directions`,
   hint: 'Primary directions turn the whole birth sky by its daily rotation: every degree of right ascension it turns after birth stands for about a year of life. Choose direct or converse motion and zodiacal or in-mundo latitude under the Placidus semi-arc method. The outer ring is available for direct directions only, because converse directions carry the selected significator rather than one whole sky.',
   source: 'Method: Bob Makransky, Primary Directions: A Primer of Calculation (1988), ch. VII (Placidian semi-arcs).',
   lockedNotice:
