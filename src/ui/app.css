@@ -2319,6 +2319,8 @@ label.stacked textarea:focus-visible {
   top: 0;
   z-index: 1;
   background: var(--bg);
+  /* border-collapse drops a sticky cell's own border while it scrolls, so the bottom rule is a shadow (#1065). */
+  box-shadow: 0 1px 0 var(--line);
 }
 
 /* A pointer that can aim at a small target gets the tighter rows; touch keeps the roomy ones (#513). The 0.35rem is a
