@@ -34,6 +34,11 @@ const en = {
   annotationSaved: 'Note saved.',
   annotationTooLong: (max: string) => `The note is longer than ${max} characters.`,
   annotationInvalid: 'This note cannot be saved.',
+  annotationErase: 'Erase note',
+  annotationEraseLabel: (event: string) => `Erase the note on ${event}`,
+  annotationEraseConfirm: (event: string) =>
+    `Erase the note on “${event}” for good? Every saved version is deleted from this device and from your synced account. This cannot be undone.`,
+  annotationErased: 'Note erased.',
 };
 
 const nl: typeof en = {
@@ -65,6 +70,11 @@ const nl: typeof en = {
   annotationSaved: 'Notitie opgeslagen.',
   annotationTooLong: (max: string) => `De notitie is langer dan ${max} tekens.`,
   annotationInvalid: 'Deze notitie kan niet worden opgeslagen.',
+  annotationErase: 'Notitie wissen',
+  annotationEraseLabel: (event: string) => `De notitie bij ${event} wissen`,
+  annotationEraseConfirm: (event: string) =>
+    `De notitie bij “${event}” definitief wissen? Elke opgeslagen versie wordt verwijderd van dit apparaat en uit je gesynchroniseerde account. Dit kan niet ongedaan worden gemaakt.`,
+  annotationErased: 'Notitie gewist.',
 };
 
 export const eventPinsMessages = { en, nl };

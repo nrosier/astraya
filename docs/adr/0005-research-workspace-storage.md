@@ -453,9 +453,16 @@ No change to the envelope, `OP_VERSION`, `ops.ts`, `oplog.ts`, `hlc.ts`, the syn
 kind in `KNOWN_ENTITIES` (every device rebuilds its snapshot once), `materialise`, one guard call in `Store.write()` and
 `src/store/annotations.ts`. The write guard allows only `rev/<r- id>` on a `k-` id; `deleted` and `purged` are refused.
 
-**Known limit:** there is no erase of an annotation. Every saved version is kept by design, so text a reader wants gone
-stays in the log. A per-pin erase would write a purge marker, which also blocks annotating that pin again on the relay;
-that trade-off needs an owner decision and is not built here.
+**Erase (#1195, decisions X1-X3, 2026-11-06).** A reader can erase an annotation for good. A purge marker on the pin's
+own id would block annotating that pin again, so the first annotation of a pin lives at the pin's id and an erase moves
+the pin on: `Store.eraseAnnotation(pinId)` commits, in one batch, a purge marker on the annotation's current entity
+(erasing it on this device, on the relay and on every peer) and a write of a fresh random `n-` id into the pin's
+`annotation` register. From then on the pin is annotated at that id, and an erase repeats the same way. The first
+annotation still uses the pin's id, so two devices writing it still fork; only after an erase does last pointer win when
+two devices write the pointer at once, and the losing note stays in the log but is not shown. `Store.purge` still
+refuses `annotation`, so a bare marker cannot be written. Restore writes revisions where the pin's annotation lives now
+and never onto an erased id. Confirmed by a dialog that says it cannot be undone. **Known gap:** a peer's pin purge
+marker (only a non-conforming client can send one) erases the annotation at the pin's id but not one at an `n-` id.
 
 Rules from the `db-integrity` review of PR #1193:
 

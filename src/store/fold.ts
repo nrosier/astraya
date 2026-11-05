@@ -47,7 +47,7 @@ import {
   type Note,
 } from './notes.js';
 import { decode, type JsonValue, type OpRecord } from './ops.js';
-import { foldAnnotation, ANNOTATION_ENTITY } from './annotations.js';
+import { ANNOTATION_ENTITY, ANNOTATION_POINTER_FIELD, foldAnnotation, readAnnotationPointer } from './annotations.js';
 import { foldPin, PIN_ENTITY, type Pin } from './pins.js';
 import { foldSavedQuery, SAVED_QUERY_ENTITY, type SavedQuery } from './saved-queries.js';
 
@@ -223,6 +223,11 @@ export interface State {
    */
   readonly annotations: ReadonlyMap<string, Note>;
   /**
+   * The annotation entity id of each pin that an erase has pointed at a fresh id (#1195), by pin id. A pin missing here
+   * is annotated at its own id. A write to a pin's annotation must use `annotationEntities.get(pinId) ?? pinId`.
+   */
+  readonly annotationEntities: ReadonlyMap<string, string>;
+  /**
    * Ids a purge marker has erased (#1194). They are in no list, but a restore must know them: writing their data back
    * would put erased text on disk again, where nothing strips it.
    */
@@ -314,12 +319,27 @@ export function materialise(registers: Registers): State {
     else pins.set(id, pin);
   }
 
+  // A pin's annotation lives at its own id until an erase points it at a fresh `n-` id (#1195). The view is keyed by
+  // pin id either way. Legacy `k-` annotations whose pin op has not arrived yet are still shown once it does.
+  const annotationFields = registers[ANNOTATION_ENTITY] ?? {};
+  for (const [entityId, fields] of Object.entries(annotationFields)) {
+    if (isPurged(fields)) erasedAnnotations.add(entityId);
+  }
+  const pinRegisters = registers[PIN_ENTITY] ?? {};
+  const annotatedPinIds = new Set([
+    ...Object.keys(pinRegisters),
+    ...Object.keys(annotationFields).filter((entityId) => entityId.startsWith('k-')),
+  ]);
   const annotations = new Map<string, Note>();
-  for (const [pinId, fields] of Object.entries(registers[ANNOTATION_ENTITY] ?? {})) {
-    if (isPurged(fields)) {
-      erasedAnnotations.add(pinId);
-      continue;
-    }
+  const annotationEntities = new Map<string, string>();
+  for (const pinId of annotatedPinIds) {
+    const pinFields = pinRegisters[pinId];
+    if (pinFields !== undefined && isPurged(pinFields)) continue;
+    const pointer = readAnnotationPointer(pinFields?.[ANNOTATION_POINTER_FIELD]?.value);
+    if (pointer !== undefined) annotationEntities.set(pinId, pointer);
+    const entityId = pointer ?? pinId;
+    const fields = annotationFields[entityId];
+    if (fields === undefined || erasedAnnotations.has(entityId)) continue;
     const annotation = foldAnnotation(pinId, fields);
     if (annotation !== undefined) annotations.set(pinId, annotation);
   }
@@ -334,6 +354,7 @@ export function materialise(registers: Registers): State {
     savedQueries,
     pins,
     annotations,
+    annotationEntities,
     erased: { savedQueries: erasedQueries, pins: erasedPins, annotations: erasedAnnotations },
     // Any other entity id under `account` is ignored: every device writes the one constant id.
     account: foldAccount(registers[ACCOUNT_ENTITY]?.[ACCOUNT_ENTITY_ID]),

@@ -79,6 +79,8 @@ export interface ExistingResearch {
   readonly savedQueries: ReadonlyMap<string, SavedQuery>;
   readonly pins: ReadonlyMap<string, Pin>;
   readonly annotations: ReadonlyMap<string, Note>;
+  /** The annotation entity id of each pin an erase has pointed at a fresh id (#1195); a pin not here uses its own id. */
+  readonly annotationEntities: ReadonlyMap<string, string>;
   readonly deleted: {
     readonly savedQueries: ReadonlyMap<string, SavedQuery>;
     readonly pins: ReadonlyMap<string, Pin>;
@@ -347,11 +349,13 @@ export function stageResearchRestore(research: ExportedResearch, existing: Exist
       mutations.push(pinRestore(pin.id, pin.target));
       newPins += 1;
     }
-    if (existing.erased.annotations.has(pin.id)) continue;
+    // Revisions go where the pin's annotation lives now: its own id, or the fresh id an erase pointed it at (#1195).
+    const entityId = existing.annotationEntities.get(pin.id) ?? pin.id;
+    if (existing.erased.annotations.has(entityId)) continue;
     const held = new Set((existing.annotations.get(pin.id)?.revisions ?? []).map((revision) => revision.id));
     for (const revision of oldestFirst(pin.annotation?.revisions ?? [])) {
       if (held.has(revision.id)) continue;
-      mutations.push(annotationRevision(pin.id, revision.id, revision.text, revision.parents));
+      mutations.push(annotationRevision(entityId, revision.id, revision.text, revision.parents));
       newAnnotationRevisions += 1;
     }
   }

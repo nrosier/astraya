@@ -44,9 +44,10 @@ import {
   readAccountReconcileState,
   type AccountReconcileState,
 } from './account.js';
+import { newId } from '../domain/id.js';
 import { assertNoteMutation, entitiesPurgedWith } from './notes.js';
 import { ANNOTATION_ENTITY, AnnotationRefusedError, assertAnnotationMutation } from './annotations.js';
-import { PIN_ENTITY, PinRefusedError, assertPinMutation } from './pins.js';
+import { PIN_ENTITY, PinRefusedError, assertPinMutation, pinAnnotationPointer } from './pins.js';
 import { assertSavedQueryMutation } from './saved-queries.js';
 import { append, appendAt, emptyLog, latest, purgeEntity, receiveRecords, since } from './oplog.js';
 import { MAX_COUNTER, createClock, encodeHlc, isNodeId, randomNodeId, receive } from './hlc.js';
@@ -177,6 +178,13 @@ export interface Store {
    * puller keeps learning that this entity is gone.
    */
   purge(entity: string, entityId: string): Promise<void>;
+  /**
+   * Permanently erase a pin's annotation: every saved version, on this device and (through the purge marker) on the
+   * relay and every peer (#1195). The marker and a pointer to a fresh annotation id are committed together, so the pin
+   * can be annotated again and a crash cannot leave it erased and unwritable. There is no undo. Refuses a pin this
+   * store does not hold.
+   */
+  eraseAnnotation(pinId: string): Promise<void>;
   /** Records a peer has not seen — what `src/sync/engine.ts` pushes. */
   outgoing(cursor?: Hlc): readonly OpRecord[];
   /**
@@ -513,7 +521,8 @@ export async function openStore(options: StoreOptions = {}): Promise<Store> {
         // A pin id is derived from the event, so a purge would block pinning that event for good, locally and on the
         // relay's deny-list. Pins are only ever unpinned (a tombstone).
         if (entity === PIN_ENTITY) throw new PinRefusedError('invalid');
-        // The same holds for an annotation, whose id is its pin's derived id. Erasing one needs an owner decision (ADR 0005).
+        // An annotation is erased through `eraseAnnotation`, which also points the pin at a fresh id; a bare marker on its
+        // id would block annotating that pin again (#1195).
         if (entity === ANNOTATION_ENTITY) throw new AnnotationRefusedError('invalid');
         if (!tabLock.writable) throw new Error(NOT_WRITABLE_MESSAGE);
         // One marker per entity the purge covers (a person's notes go with it, #919), all in
@@ -532,6 +541,22 @@ export async function openStore(options: StoreOptions = {}): Promise<Store> {
         }
         await commitRecords(next, written);
         for (const kind of covered) await stripEntity(kind, entityId);
+      }),
+    eraseAnnotation: (pinId) =>
+      serialise(async () => {
+        if (!tabLock.writable) throw new Error(NOT_WRITABLE_MESSAGE);
+        if (!state.pins.has(pinId) && !state.deleted.pins.has(pinId)) throw new PinRefusedError('invalid');
+        const entityId = state.annotationEntities.get(pinId) ?? pinId;
+        const pointer = pinAnnotationPointer(pinId, newId('n'));
+        assertPinMutation(pointer);
+        const first = append(log, pointer, now());
+        const second = append(
+          first.log,
+          { entity: ANNOTATION_ENTITY, entityId, field: PURGED_FIELD, value: true },
+          now(),
+        );
+        await commitRecords(second.log, [first.record, second.record]);
+        await stripEntity(ANNOTATION_ENTITY, entityId);
       }),
     outgoing: (cursor) => since(log, cursor),
     receive: receiveIncoming,
