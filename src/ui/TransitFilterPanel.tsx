@@ -240,7 +240,9 @@ export function TransitFilterPanel({
 
   return (
     <section className="transit-filter" aria-labelledby={`${id}-heading`}>
-      <h2 id={`${id}-heading`} className="transit-filter-heading">{t.heading}</h2>
+      <h2 id={`${id}-heading`} className="transit-filter-heading">
+        {t.heading}
+      </h2>
       <ChoiceGroup
         label={t.presetLabel}
         value={current ?? 'custom'}
