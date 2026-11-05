@@ -8,6 +8,7 @@
  * @exports preferencesViewMessages
  */
 import type { ImportError } from '../domain/full-export-importer.js';
+import type { ResearchPreview } from '../domain/research-export.js';
 import type { CalculationCheckOutcome } from '../domain/full-export-check.js';
 import type { ProvenanceDifference } from '../domain/calculation-artifact.js';
 
@@ -160,14 +161,24 @@ const en = {
     deletedLocally: 'deleted on this device',
   },
   restoreApply: 'Apply restore',
-  restoreConfirm: (newCount: number, updatedCount: number, deletedLocallyCount: number): string => {
+  restoreConfirm: (newCount: number, updatedCount: number, deletedLocallyCount: number, extra = ''): string => {
     const affected = updatedCount + deletedLocallyCount;
     const note =
       deletedLocallyCount > 0
         ? ` ${String(deletedLocallyCount)} of those ${deletedLocallyCount === 1 ? 'is' : 'are'} deleted on this device and will stay hidden under Deleted.`
         : '';
-    return `This will add ${String(newCount)} new ${newCount === 1 ? 'person' : 'people'} and overwrite fields on ${String(affected)} existing ${affected === 1 ? 'person' : 'people'}.${note} Continue?`;
+    return `This will add ${String(newCount)} new ${newCount === 1 ? 'person' : 'people'} and overwrite fields on ${String(affected)} existing ${affected === 1 ? 'person' : 'people'}.${note}${extra === '' ? '' : ` ${extra}`} Continue?`;
   },
+  restoreResearchStaged: (research: ResearchPreview): string =>
+    `Research: ${String(research.newSavedQueries)} new saved ${research.newSavedQueries === 1 ? 'query' : 'queries'}, ${String(research.newPins)} new ${research.newPins === 1 ? 'pin' : 'pins'}, ${String(research.newAnnotationRevisions)} new note ${research.newAnnotationRevisions === 1 ? 'version' : 'versions'}; ${String(research.alreadyHere)} already here (not changed)` +
+    (research.deletedHere > 0 ? `, ${String(research.deletedHere)} deleted on this device (not brought back)` : '') +
+    '.',
+  restoreResearchAlso: (research: ResearchPreview): string =>
+    `It also adds ${String(research.newSavedQueries)} saved ${research.newSavedQueries === 1 ? 'query' : 'queries'}, ${String(research.newPins)} ${research.newPins === 1 ? 'pin' : 'pins'} and ${String(research.newAnnotationRevisions)} note ${research.newAnnotationRevisions === 1 ? 'version' : 'versions'}.`,
+  restoreResearchConfirm: (research: ResearchPreview): string =>
+    `This will add ${String(research.newSavedQueries)} saved ${research.newSavedQueries === 1 ? 'query' : 'queries'}, ${String(research.newPins)} ${research.newPins === 1 ? 'pin' : 'pins'} and ${String(research.newAnnotationRevisions)} note ${research.newAnnotationRevisions === 1 ? 'version' : 'versions'}. Nothing you already have is changed. Continue?`,
+  restoreResearchApplied: (research: ResearchPreview): string =>
+    `Added ${String(research.newSavedQueries)} saved ${research.newSavedQueries === 1 ? 'query' : 'queries'}, ${String(research.newPins)} ${research.newPins === 1 ? 'pin' : 'pins'} and ${String(research.newAnnotationRevisions)} note ${research.newAnnotationRevisions === 1 ? 'version' : 'versions'}.`,
   restoreNothingToApply: 'Nothing in this file differs from what is already here.',
   restoreApplying: 'Applying the restore…',
   restoreApplied: (newCount: number, updatedCount: number, deletedLocallyCount: number): string =>
@@ -283,14 +294,26 @@ const nl: typeof en = {
     deletedLocally: 'verwijderd op dit apparaat',
   },
   restoreApply: 'Herstel toepassen',
-  restoreConfirm: (newCount: number, updatedCount: number, deletedLocallyCount: number): string => {
+  restoreConfirm: (newCount: number, updatedCount: number, deletedLocallyCount: number, extra?: string): string => {
     const affected = updatedCount + deletedLocallyCount;
     const note =
       deletedLocallyCount > 0
         ? ` Daarvan ${deletedLocallyCount === 1 ? 'is er 1' : `zijn er ${String(deletedLocallyCount)}`} verwijderd op dit apparaat en blijven verborgen onder Verwijderd.`
         : '';
-    return `Dit voegt ${String(newCount)} nieuwe ${newCount === 1 ? 'persoon' : 'personen'} toe en overschrijft velden van ${String(affected)} bestaande ${affected === 1 ? 'persoon' : 'personen'}.${note} Doorgaan?`;
+    return `Dit voegt ${String(newCount)} nieuwe ${newCount === 1 ? 'persoon' : 'personen'} toe en overschrijft velden van ${String(affected)} bestaande ${affected === 1 ? 'persoon' : 'personen'}.${note}${extra === undefined || extra === '' ? '' : ` ${extra}`} Doorgaan?`;
   },
+  restoreResearchStaged: (research: ResearchPreview): string =>
+    `Onderzoek: ${String(research.newSavedQueries)} ${research.newSavedQueries === 1 ? 'nieuwe opgeslagen zoekopdracht' : 'nieuwe opgeslagen zoekopdrachten'}, ${String(research.newPins)} ${research.newPins === 1 ? 'nieuwe pin' : 'nieuwe pins'}, ${String(research.newAnnotationRevisions)} ${research.newAnnotationRevisions === 1 ? 'nieuwe notitieversie' : 'nieuwe notitieversies'}; ${String(research.alreadyHere)} al aanwezig (niet gewijzigd)` +
+    (research.deletedHere > 0
+      ? `, ${String(research.deletedHere)} verwijderd op dit apparaat (niet teruggebracht)`
+      : '') +
+    '.',
+  restoreResearchAlso: (research: ResearchPreview): string =>
+    `Het voegt ook ${String(research.newSavedQueries)} ${research.newSavedQueries === 1 ? 'opgeslagen zoekopdracht' : 'opgeslagen zoekopdrachten'}, ${String(research.newPins)} ${research.newPins === 1 ? 'pin' : 'pins'} en ${String(research.newAnnotationRevisions)} ${research.newAnnotationRevisions === 1 ? 'notitieversie' : 'notitieversies'} toe.`,
+  restoreResearchConfirm: (research: ResearchPreview): string =>
+    `Dit voegt ${String(research.newSavedQueries)} ${research.newSavedQueries === 1 ? 'opgeslagen zoekopdracht' : 'opgeslagen zoekopdrachten'}, ${String(research.newPins)} ${research.newPins === 1 ? 'pin' : 'pins'} en ${String(research.newAnnotationRevisions)} ${research.newAnnotationRevisions === 1 ? 'notitieversie' : 'notitieversies'} toe. Wat je al hebt, wordt niet gewijzigd. Doorgaan?`,
+  restoreResearchApplied: (research: ResearchPreview): string =>
+    `Toegevoegd: ${String(research.newSavedQueries)} ${research.newSavedQueries === 1 ? 'opgeslagen zoekopdracht' : 'opgeslagen zoekopdrachten'}, ${String(research.newPins)} ${research.newPins === 1 ? 'pin' : 'pins'} en ${String(research.newAnnotationRevisions)} ${research.newAnnotationRevisions === 1 ? 'notitieversie' : 'notitieversies'}.`,
   restoreNothingToApply: 'Niets in dit bestand verschilt van wat hier al staat.',
   restoreApplying: 'Herstel wordt toegepast…',
   restoreApplied: (newCount: number, updatedCount: number, deletedLocallyCount: number): string =>

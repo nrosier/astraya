@@ -22,7 +22,7 @@
  * @module store/pins
  * @purpose Folds pinned event-search results (one atomic target register) into readable or unreadable entries, derives pin ids, and builds and refuses the mutations written to the op-log.
  * @conventions The target is one last-write-wins register carrying its own schema `version`; the id is derived from the identity so pinning is idempotent across devices; an unreadable pin is listed and kept, never defaulted or hidden; fold functions never throw; refusals carry a code rather than prose; the list sorts by instant then by a plain code-unit id comparison so the order is the same on every device.
- * @exports PIN_ENTITY, PIN_TARGET_FIELD, PinTarget, PinUnreadable, Pin, PinRefusal, PinRefusedError, pinIdentity, pinTargetOf, foldPin, pinCreate, assertPinMutation, sortedPins
+ * @exports PIN_ENTITY, PIN_TARGET_FIELD, readPinTarget, PinTarget, PinUnreadable, Pin, PinRefusal, PinRefusedError, pinIdentity, pinTargetOf, foldPin, pinCreate, assertPinMutation, sortedPins
  */
 import { ASPECTS } from '../astrology/aspects.js';
 import { BODIES } from '../astrology/bodies.js';
@@ -127,6 +127,12 @@ function readTarget(
       label,
     },
   };
+}
+
+/** A stored target value as this build reads it, or undefined when it is not one it can read exactly. */
+export function readPinTarget(value: unknown): PinTarget | undefined {
+  const verdict = readTarget(value);
+  return verdict.ok ? verdict.target : undefined;
 }
 
 /** The target for a search result. The instant is rounded to the second, the precision the iCalendar UID also uses. */

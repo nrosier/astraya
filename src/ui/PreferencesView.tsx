@@ -38,6 +38,7 @@ import {
   peopleCsvFilename,
   peopleToCsv,
 } from '../domain/full-export.js';
+import { buildResearchExport } from '../domain/research-export.js';
 import {
   stageFullExportRestore,
   validateFullExport,
@@ -178,6 +179,7 @@ export function PreferencesView({
         symbolClass,
         now,
         notes: store.state,
+        research: buildResearchExport(store.state),
       });
       downloadText(fullExportFilename(now), `${JSON.stringify(archive, null, 2)}\n`, 'application/json');
     });
@@ -236,6 +238,7 @@ export function PreferencesView({
             store.state.deleted.people,
             newPersonDefaults,
             store.state,
+            store.state,
           );
           setPreview(staged);
           const firstError = errors[0];
@@ -262,6 +265,7 @@ export function PreferencesView({
           store.state.deleted.people,
           newPersonDefaults,
           store.state,
+          store.state,
         );
         setPreview(staged);
         // The counts themselves are shown once, inside the preview panel below (`restoreStaged`)
@@ -275,13 +279,24 @@ export function PreferencesView({
 
   const confirmRestore = (): void => {
     if (preview === undefined || store === undefined) return;
-    const mutations = preview.items.flatMap((item) => item.mutations);
+    const mutations = [...preview.items.flatMap((item) => item.mutations), ...(preview.research?.mutations ?? [])];
     if (mutations.length === 0) {
       setPreview(undefined);
       setStatus({ kind: 'done', text: t.restoreNothingToApply });
       return;
     }
-    if (!window.confirm(t.restoreConfirm(preview.newCount, preview.updatedCount, preview.deletedLocallyCount))) return;
+    const peopleMutations = preview.items.some((item) => item.mutations.length > 0);
+    const research = preview.research;
+    const confirmText =
+      research !== undefined && !peopleMutations
+        ? t.restoreResearchConfirm(research)
+        : t.restoreConfirm(
+            preview.newCount,
+            preview.updatedCount,
+            preview.deletedLocallyCount,
+            research === undefined || research.mutations.length === 0 ? '' : t.restoreResearchAlso(research),
+          );
+    if (!window.confirm(confirmText)) return;
     setRestoring(true);
     setStatus({ kind: 'busy', text: t.restoreApplying });
     void store
@@ -290,7 +305,7 @@ export function PreferencesView({
         setPreview(undefined);
         setStatus({
           kind: 'done',
-          text: t.restoreApplied(preview.newCount, preview.updatedCount, preview.deletedLocallyCount),
+          text: `${t.restoreApplied(preview.newCount, preview.updatedCount, preview.deletedLocallyCount)}${preview.research === undefined || preview.research.mutations.length === 0 ? '' : ` ${t.restoreResearchApplied(preview.research)}`}`,
         });
       })
       .catch((error: unknown) => {
@@ -544,6 +559,7 @@ export function PreferencesView({
                       preview.deletedLocallyCount,
                     )}
                   </p>
+                  {preview.research !== undefined && <p>{t.restoreResearchStaged(preview.research)}</p>}
                   <SortableTable
                     wrap
                     caption={t.restorePreviewHeading}

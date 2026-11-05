@@ -81,6 +81,7 @@ import {
 } from './chart-tables.js';
 import type { ChosenFixedStar, CustomPointDefinition, Person, RelocationPlace } from './person.js';
 import type { FoldedNotes, NoteRevisionView } from '../store/notes.js';
+import type { ExportedResearch } from './research-export.js';
 import type { EphemerisProvider } from '../ephemeris/types.js';
 
 export const FULL_EXPORT_FORMAT = 'astraya-export';
@@ -202,6 +203,11 @@ export interface FullExport {
   };
   readonly note: string;
   readonly people: readonly ExportedPerson[];
+  /**
+   * Saved event-search queries, pins and their annotations (#1194, additive: the version stays 4). Absent when there
+   * are none, so a file without them reads exactly as it always did.
+   */
+  readonly research?: ExportedResearch;
 }
 
 /**
@@ -337,6 +343,8 @@ export async function buildFullExport(params: {
   readonly now: Date;
   /** The store's folded notes (#919). Omitted, the export carries no notes; every app caller passes `store.state`. */
   readonly notes?: FoldedNotes;
+  /** The store's research block (#1194), from `buildResearchExport(store.state)`. Omitted, the export carries none. */
+  readonly research?: ExportedResearch | undefined;
 }): Promise<FullExport> {
   const people: ExportedPerson[] = [];
   for (const person of params.people) {
@@ -419,6 +427,7 @@ export async function buildFullExport(params: {
     preferences: { settings: params.settings, rulership: params.rulership, symbolClass: params.symbolClass },
     note: noteFor(params.settings, params.rulership),
     people,
+    ...(params.research === undefined ? {} : { research: params.research }),
   };
 }
 

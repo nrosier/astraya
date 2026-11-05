@@ -63,6 +63,13 @@ import {
 } from './person.js';
 import type { ExtendedSettings } from '../chart/extended-settings.js';
 import type { BirthMomentInput, Calendar } from '../time/types.js';
+import {
+  stageResearchRestore,
+  validateResearch,
+  type ExistingResearch,
+  type ExportedResearch,
+  type ResearchPreview,
+} from './research-export.js';
 import { isLegacyRevisionId, isNoteTooLong, LEGACY_REVISION_PREFIX, NOTE_MAX_CHARACTERS } from '../store/notes.js';
 import type { Mutation } from '../store/oplog.js';
 import { RESERVED_NAMES, type JsonValue } from '../store/ops.js';
@@ -371,6 +378,14 @@ export function validateFullExport(value: unknown): Result<FullExport, ImportErr
     fileSettings = read.settings;
   }
 
+  // The optional research block (#1194). Absent in every earlier file; present, it is validated strictly.
+  let research: ExportedResearch | undefined;
+  if (value.research !== undefined) {
+    const read = validateResearch(value.research, 'research');
+    if (!read.ok) return malformed(read.path, read.reason);
+    research = read.value;
+  }
+
   const people: ExportedPerson[] = [];
   const seenIds = new Set<string>();
   for (let index = 0; index < value.people.length; index += 1) {
@@ -415,6 +430,7 @@ export function validateFullExport(value: unknown): Result<FullExport, ImportErr
       preferences: preferences.value,
       note: readText(value.note) ?? '',
       people,
+      ...(research === undefined ? {} : { research }),
     },
   };
 }
@@ -449,6 +465,8 @@ export type ExistingNotes = FoldedNotes;
 const NO_NOTES: ExistingNotes = { birthNotes: new Map(), consultationNotes: new Map() };
 
 export interface RestorePreview {
+  /** What the file's saved queries, pins and annotations would add (#1194); absent when the file has none. */
+  readonly research?: ResearchPreview;
   readonly items: readonly RestoreItem[];
   readonly newCount: number;
   readonly updatedCount: number;
@@ -619,11 +637,12 @@ function restoreMutations(
  */
 export function stageFullExportRestore(
   // Only the people are staged, so only they are required: an AAF import (#591) has people and nothing else.
-  archive: Pick<FullExport, 'people'>,
+  archive: Pick<FullExport, 'people'> & Partial<Pick<FullExport, 'research'>>,
   existingPeople: ReadonlyMap<string, Person>,
   deletedPeople: ReadonlyMap<string, Person> = new Map(),
   newPersonDefaults?: NewPersonDefaults,
   existingNotes: ExistingNotes = NO_NOTES,
+  existingResearch?: ExistingResearch,
 ): RestorePreview {
   let newCount = 0;
   let updatedCount = 0;
@@ -658,5 +677,16 @@ export function stageFullExportRestore(
     else unchangedCount += 1;
     return { id: exported.id, displayName: exported.displayName, status, mutations };
   });
-  return { items, newCount, updatedCount, unchangedCount, deletedLocallyCount };
+  const research =
+    archive.research === undefined || existingResearch === undefined
+      ? undefined
+      : stageResearchRestore(archive.research, existingResearch);
+  return {
+    ...(research === undefined ? {} : { research }),
+    items,
+    newCount,
+    updatedCount,
+    unchangedCount,
+    deletedLocallyCount,
+  };
 }
