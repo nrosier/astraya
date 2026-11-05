@@ -17,13 +17,13 @@
 /**
  * @module id
  * @purpose Generates and validates record identifiers for people, charts and note revisions in the local-first op-log.
- * @conventions Ids are generated on-device (never server-assigned) using 80 bits of CSPRNG randomness, base32-encoded over 5-bit groups into a 16-character string prefixed by entity type (`p-`/`c-`/`r-` for a note revision); ids are not secrets/capabilities — the server authorises by user, not by id.
+ * @conventions Ids are generated on-device (never server-assigned) using 80 bits of CSPRNG randomness, base32-encoded over 5-bit groups into a 16-character string prefixed by entity type (`p-`/`c-`/`r-` for a note revision/`q-` for a saved query); ids are not secrets/capabilities — the server authorises by user, not by id.
  * @exports newId, isId, isPersonId, isChartId, IdPrefix
  */
 const ALPHABET = 'abcdefghijklmnopqrstuvwxyz234567';
 
 /** A prefix, so an id is legible in a log line and a mistyped reference is obvious. */
-export type IdPrefix = 'p' | 'c' | 'r';
+export type IdPrefix = 'p' | 'c' | 'r' | 'q';
 
 export function newId(prefix: IdPrefix): string {
   const bytes = new Uint8Array(10);
@@ -45,7 +45,7 @@ export function newId(prefix: IdPrefix): string {
   return `${prefix}-${out}`;
 }
 
-const ID_PATTERN = /^[pcr]-[a-z2-7]{16}$/;
+const ID_PATTERN = /^[pcrq]-[a-z2-7]{16}$/;
 
 /**
  * Is this one of our ids?

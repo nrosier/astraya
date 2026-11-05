@@ -151,9 +151,9 @@ export const SETTINGS: readonly SettingDefinition[] = [
   },
   {
     key: 'astraya:transitFilter:<context>',
-    scope: 'page',
+    scope: 'account',
     owner:
-      "The Transits/Forecast screens' remembered filter per context (daily/yearly) — a page default a reader builds up, not an account-wide calculation choice",
+      "The Transits/Forecast screens' remembered default filter per context (daily/yearly), the user's default transit-filter profile (docs/ui/UI-UX_GUIDELINES.md §3.2)",
     describeDefault: "the 'important' preset for that context",
     persistence: 'local-storage',
     synced: false,

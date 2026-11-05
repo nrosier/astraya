@@ -38,6 +38,7 @@ import {
 } from './db.js';
 import { EMPTY_REGISTERS, DELETED_FIELD, PURGED_FIELD, applyRecords, materialise, resume, snapshotOf } from './fold.js';
 import { assertNoteMutation, entitiesPurgedWith } from './notes.js';
+import { assertSavedQueryMutation } from './saved-queries.js';
 import { append, appendAt, emptyLog, latest, purgeEntity, receiveRecords, since } from './oplog.js';
 import { MAX_COUNTER, createClock, encodeHlc, isNodeId, randomNodeId, receive } from './hlc.js';
 import { decode } from './ops.js';
@@ -350,7 +351,10 @@ export async function openStore(options: StoreOptions = {}): Promise<Store> {
       if (!tabLock.writable) throw new Error(NOT_WRITABLE_MESSAGE);
       // Checked for the whole batch before anything is appended, so a refused note leaves the
       // log untouched rather than half-written (#919).
-      for (const mutation of mutations) assertNoteMutation(mutation);
+      for (const mutation of mutations) {
+        assertNoteMutation(mutation);
+        assertSavedQueryMutation(mutation);
+      }
       let next = log;
       const written: OpRecord[] = [];
       for (const mutation of mutations) {
