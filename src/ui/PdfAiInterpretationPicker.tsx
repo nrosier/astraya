@@ -11,6 +11,7 @@ import { useMessages } from './messages.js';
 import { pdfExportMessages } from './pdf-export.messages.js';
 import { Checkbox } from './primitives/Checkbox.js';
 import { StagedDialog } from './primitives/StagedDialog.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 import { savedTypeLabel } from './result-basis-label.js';
 import { formatSavedTime } from './saved-time.js';
 
@@ -151,8 +152,8 @@ export function PdfAiInterpretationPicker({
           </button>
         }
       >
-        {state.status === 'loading' && <p className="hint">{t.interpretationSavedLoading}</p>}
-        {state.status === 'error' && <p role="alert">{t.interpretationSavedError}</p>}
+        {state.status === 'loading' && <StatusMessage kind="loading">{t.interpretationSavedLoading}</StatusMessage>}
+        {state.status === 'error' && <StatusMessage kind="error">{t.interpretationSavedError}</StatusMessage>}
         {state.status === 'ready' && offered.length === 0 && <p className="hint">{t.interpretationSavedEmpty}</p>}
         {offered.map((entry) => {
           const description = entry.description?.trim() ?? '';

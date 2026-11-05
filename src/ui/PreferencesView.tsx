@@ -61,6 +61,7 @@ import { Button } from './primitives/Button.js';
 import { ChoiceGroup } from './primitives/ChoiceGroup.js';
 import { FileInput } from './primitives/FileInput.js';
 import { Select } from './primitives/Select.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 import { downloadText } from './download.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { CORPUS_LOCALES } from '../interpretation/schema.js';
@@ -579,12 +580,12 @@ export function PreferencesView({
             </section>
 
             {status !== undefined && (
-              <p
-                className={`status preferences-export-status ${status.kind}`}
-                role={status.kind === 'error' ? 'alert' : 'status'}
+              <StatusMessage
+                kind={status.kind === 'busy' ? 'loading' : status.kind === 'done' ? 'success' : 'error'}
+                className="preferences-export-status"
               >
                 {status.text}
-              </p>
+              </StatusMessage>
             )}
           </>
         )}

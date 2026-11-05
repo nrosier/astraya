@@ -169,7 +169,19 @@ describe('derived charts without the general written reading (#980)', () => {
   it('the standalone interpretation screen still renders ReportView', async () => {
     const container = mount(<ReportScreen personId="p1" />);
     await untilSettled(container);
-    expectChartReady(container);
+    // ReportScreen settles ready with its own load error (#1162): the corpus fetch fails in jsdom (no base URL), and
+    // ReportView renders that as a `data-kind="error"` StatusMessage. The test checks that exact error is present
+    // and that ReportView mounted, not that no error is shown. The old hand-rolled `<p role="alert">` had no
+    // data-kind, so this assertion used to pass without the error being visible to it.
+    const regions = Array.from(container.querySelectorAll('div[aria-busy]'));
+    expect(regions.length).toBeGreaterThan(0);
+    for (const region of regions) {
+      expect(region.getAttribute('aria-busy')).toBe('false');
+      const error = region.querySelector('[data-kind="error"]');
+      expect(error?.getAttribute('role')).toBe('alert');
+      expect(error?.textContent).toContain('Failed to parse URL from /corpus/en.json');
+      expect(region.childElementCount).toBeGreaterThan(0);
+    }
     expect(container.querySelector('.report')).not.toBeNull();
   }, 60_000);
 });
