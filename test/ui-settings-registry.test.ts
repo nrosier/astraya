@@ -67,6 +67,35 @@ describe('validateSettings', () => {
     expect(scopeOf('astraya:transitFilter:<context>')).toBe('account');
   });
 
+  it('registers lastPersonId and workspaceRailCollapsed as device-local settings (#1165)', () => {
+    const find = (key: string) => SETTINGS.find((setting) => setting.key === key);
+    for (const key of ['astraya:lastPersonId', 'astraya:workspaceRailCollapsed']) {
+      const setting = find(key);
+      expect(setting, key).toBeDefined();
+      // Scope and lifetime: device-local localStorage, never synced, no commit staging.
+      expect(setting?.scope, key).toBe('device');
+      expect(setting?.persistence, key).toBe('local-storage');
+      expect(setting?.synced, key).toBe(false);
+      expect(setting?.commitMode, key).toBe('immediate');
+      expect(setting?.sensitive, key).toBe(false);
+      expect(setting?.resetTarget, key).toMatch(/^This device default/);
+    }
+  });
+
+  it('records the default of lastPersonId (unset) and workspaceRailCollapsed (expanded) (#1165)', () => {
+    const find = (key: string) => SETTINGS.find((setting) => setting.key === key);
+    expect(find('astraya:lastPersonId')?.describeDefault).toBe('unset (no person remembered yet)');
+    expect(find('astraya:workspaceRailCollapsed')?.describeDefault).toBe("'false' (rail expanded)");
+  });
+
+  it('accepts the shipped lastPersonId and workspaceRailCollapsed entries (#1165)', () => {
+    const picked = SETTINGS.filter((setting) =>
+      ['astraya:lastPersonId', 'astraya:workspaceRailCollapsed'].includes(setting.key),
+    );
+    expect(picked).toHaveLength(2);
+    expect(validateSettings(picked)).toEqual([]);
+  });
+
   it('accepts a well-formed setting of every other scope', () => {
     for (const scope of ['application', 'account', 'device', 'chart', 'page'] as const) {
       expect(validateSettings([{ ...BASE, scope, synced: false }])).toEqual([]);
