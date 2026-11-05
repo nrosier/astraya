@@ -403,6 +403,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
 
             <SortableTable
               caption={t.contactsCaption}
+              headingLevel={2}
               columns={contactColumns(t, locale)}
               rows={crossAspectRows(shownContacts)}
               getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
