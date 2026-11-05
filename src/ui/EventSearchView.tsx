@@ -5,7 +5,7 @@
 /**
  * @module EventSearchView
  * @purpose Renders the person-independent ephemeris research screen and CSV download workflow.
- * @conventions Inputs are civil UTC dates so the range written to the CSV exactly matches the Julian-day search; all calculations use the shared EphemerisProvider and the domain event-search module.
+ * @conventions Saved queries (#1061) keep the form's parameters only; reopening one fills the form and never runs it. Inputs are civil UTC dates so the range written to the CSV exactly matches the Julian-day search; all calculations use the shared EphemerisProvider and the domain event-search module.
  * @exports EventSearchView
  */
 import { ASPECTS } from '../astrology/aspects.js';
@@ -37,17 +37,10 @@ import { PageHeader } from './PageHeader.js';
 import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
 import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
 import { useCalculationBasisLine } from './calculation-basis.js';
+import { SavedQueries } from './SavedQueries.js';
+import { parseSearchDate, type EventSearchQueryParameters } from '../store/saved-queries.js';
 
-interface Parameters {
-  readonly from: string;
-  readonly to: string;
-  readonly kinds: readonly EventSearchKind[];
-  readonly stationBody: string;
-  readonly ingressBody: string;
-  readonly aspectBodyA: string;
-  readonly aspectBodyB: string;
-  readonly aspectKey: string;
-}
+type Parameters = EventSearchQueryParameters;
 
 type Result =
   | { readonly kind: 'idle' }
@@ -65,16 +58,6 @@ const BODY_OPTIONS = BODIES.filter((body) => body.category !== 'node' && body.ca
   value: body.key,
   label: body.name,
 }));
-
-function parseDate(value: string): readonly [number, number, number] | undefined {
-  const match = /^(\d{4,6})-(\d{2})-(\d{2})$/.exec(value);
-  if (match === null) return undefined;
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-  if (!Number.isInteger(year) || month < 1 || month > 12 || day < 1 || day > 31) return undefined;
-  return [year, month, day];
-}
 
 function toggle(
   kinds: readonly EventSearchKind[],
@@ -118,8 +101,8 @@ export function EventSearchView(): React.JSX.Element {
   };
 
   const run = (): void => {
-    const from = parseDate(parameters.from);
-    const to = parseDate(parameters.to);
+    const from = parseSearchDate(parameters.from);
+    const to = parseSearchDate(parameters.to);
     const stationBody = bodyByKey(parameters.stationBody);
     const ingressBody = bodyByKey(parameters.ingressBody);
     const aspectBodyA = bodyByKey(parameters.aspectBodyA);
@@ -290,6 +273,15 @@ export function EventSearchView(): React.JSX.Element {
             </Button>
           </div>
         </section>
+
+        <SavedQueries
+          parameters={parameters}
+          kindLabels={t.kindLabels}
+          onOpen={(opened) => {
+            setParameters(opened);
+            setResult({ kind: 'idle' });
+          }}
+        />
 
         <aside className="tool-card tool-panel" aria-labelledby="event-search-panel-heading">
           <h2 id="event-search-panel-heading">{t.panelHeading}</h2>
