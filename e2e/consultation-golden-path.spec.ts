@@ -210,7 +210,7 @@ for (const { width, height } of [
     );
     expect(tableFamily).toContain(PINNED_TABLE_FONT);
 
-    // Tiles replace the At a glance list: 2 columns on a phone, 4 at 1280 (the shell is 64rem wide here).
+    // Tiles replace the At a glance list: 2 columns on a phone, 4 at 1280 (the shell is capped at 80rem here).
     const tiles = page.locator('dl.consultation-tiles');
     await expect(tiles.locator('dt')).toHaveText([
       'Sun',
