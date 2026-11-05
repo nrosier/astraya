@@ -22,7 +22,7 @@
 /**
  * @module store/store
  * @purpose Assembles the IndexedDB layer, the op-log, the fold and the HLC clock into the single `Store` object the UI talks to — the one place in the stack where impurity (database I/O, device id generation, change notification) is concentrated.
- * @conventions State is always a fold of records, never edited in place; mutations are serialised through a tail-promise queue because the in-memory `Log` is an immutable value read at the start of a mutation and written at the end, so overlapping mutations would race; a record is written durably before the UI is ever told it happened; snapshots are rewritten only every `SNAPSHOT_EVERY` records and best-effort on failure, since a snapshot is only a cache and `resume` can always rebuild; a purge (#308) commits its `PURGED_FIELD` marker through the ordinary fold path first, then physically strips the entity's other records from the log and database.
+ * @conventions State is always a fold of records, never edited in place; mutations are serialised through a tail-promise queue because the in-memory `Log` is an immutable value read at the start of a mutation and written at the end, so overlapping mutations would race; a record is written durably before the UI is ever told it happened; snapshots are rewritten only every `SNAPSHOT_EVERY` records and best-effort on failure, since a snapshot is only a cache and `resume` can always rebuild; a purge (#308) commits its `PURGED_FIELD` marker through the ordinary fold path first, then physically strips the entity's other records from the log and database; the `account` entity (#1066) is never removed, restored or purged, its `deleted`/`purged` writes are refused in `mutate` and `seed`, and a peer's purge marker for it is ignored on receive.
  * @exports SyncCursor, ReceivedSummary, Store, StoreOptions, openStore
  */
 import {
@@ -37,6 +37,13 @@ import {
   putSnapshot,
 } from './db.js';
 import { EMPTY_REGISTERS, DELETED_FIELD, PURGED_FIELD, applyRecords, materialise, resume, snapshotOf } from './fold.js';
+import {
+  ACCOUNT_ENTITY,
+  AccountRefusedError,
+  assertAccountMutation,
+  readAccountReconcileState,
+  type AccountReconcileState,
+} from './account.js';
 import { assertNoteMutation, entitiesPurgedWith } from './notes.js';
 import { assertSavedQueryMutation } from './saved-queries.js';
 import { append, appendAt, emptyLog, latest, purgeEntity, receiveRecords, since } from './oplog.js';
@@ -78,6 +85,9 @@ const NOT_WRITABLE_MESSAGE =
  * already set and never be offered data that isn't theirs.
  */
 const ADOPTION_DECISION_KEY = 'adoptionDecision';
+
+/** The meta key holding this store's account-preference sign-in reconciliation state (#1066, ADR 0004 section 3.6). */
+const ACCOUNT_RECONCILE_KEY = 'accountReconcile';
 
 /** How far a sync engine has gotten with a peer. Persisted so a reload resumes rather than re-sending everything. */
 export interface SyncCursor {
@@ -181,6 +191,9 @@ export interface Store {
   /** The cross-account-bleed guard (#109). `undefined` until a sign-in has decided one way or the other. */
   getAdoptionDecision(): Promise<string | undefined>;
   setAdoptionDecision(decision: string): Promise<void>;
+  /** The account preferences' sign-in reconciliation state (#1066): candidates still to offer, and the marker. */
+  getAccountReconcile(): Promise<AccountReconcileState>;
+  setAccountReconcile(state: AccountReconcileState): Promise<void>;
   subscribe(listener: () => void): () => void;
   close(): void;
 }
@@ -354,6 +367,7 @@ export async function openStore(options: StoreOptions = {}): Promise<Store> {
       for (const mutation of mutations) {
         assertNoteMutation(mutation);
         assertSavedQueryMutation(mutation);
+        assertAccountMutation(mutation);
       }
       let next = log;
       const written: OpRecord[] = [];
@@ -370,6 +384,8 @@ export async function openStore(options: StoreOptions = {}): Promise<Store> {
     return serialise(async () => {
       if (mutations.length === 0) return [];
       if (!tabLock.writable) throw new Error(NOT_WRITABLE_MESSAGE);
+      // The same whole-batch guard as `write`: a seed must not be a way round it (#1066, db-integrity finding 3).
+      for (const mutation of mutations) assertAccountMutation(mutation);
       const stored = await getMeta(db, SEED_COUNTER_KEY);
       const base = typeof stored === 'number' && Number.isInteger(stored) && stored >= 0 ? stored : 0;
       if (base + mutations.length > MAX_COUNTER) throw new Error('Seed counter exhausted.');
@@ -427,7 +443,14 @@ export async function openStore(options: StoreOptions = {}): Promise<Store> {
         const purgedEntities = new Map<string, { readonly entity: string; readonly entityId: string }>();
         for (const record of result.added) {
           const decoded = decode(record);
-          if (decoded.kind === 'known' && decoded.body.field === PURGED_FIELD && decoded.body.value === true) {
+          // An account purge marker is ignored (#1066, ADR 0004 section 3.4): stripping would erase the preferences
+          // locally, and the fan-out below would append and push this device's own account marker.
+          if (
+            decoded.kind === 'known' &&
+            decoded.body.entity !== ACCOUNT_ENTITY &&
+            decoded.body.field === PURGED_FIELD &&
+            decoded.body.value === true
+          ) {
             purgedEntities.set(`${decoded.body.entity}\u0000${decoded.body.entityId}`, decoded.body);
           }
         }
@@ -472,10 +495,17 @@ export async function openStore(options: StoreOptions = {}): Promise<Store> {
     resumedFromSnapshot,
     mutate: write,
     seed: seedRecords,
-    remove: (entity, entityId) => write([{ entity, entityId, field: DELETED_FIELD, value: true }]),
-    restore: (entity, entityId) => write([{ entity, entityId, field: DELETED_FIELD, value: false }]),
+    remove: (entity, entityId) =>
+      entity === ACCOUNT_ENTITY
+        ? Promise.reject(new AccountRefusedError('reserved-field'))
+        : write([{ entity, entityId, field: DELETED_FIELD, value: true }]),
+    restore: (entity, entityId) =>
+      entity === ACCOUNT_ENTITY
+        ? Promise.reject(new AccountRefusedError('reserved-field'))
+        : write([{ entity, entityId, field: DELETED_FIELD, value: false }]),
     purge: (entity, entityId) =>
       serialise(async () => {
+        if (entity === ACCOUNT_ENTITY) throw new AccountRefusedError('reserved-field');
         if (!tabLock.writable) throw new Error(NOT_WRITABLE_MESSAGE);
         // One marker per entity the purge covers (a person's notes go with it, #919), all in
         // one commit, so no note can survive a person purge that was interrupted part-way.
@@ -507,6 +537,8 @@ export async function openStore(options: StoreOptions = {}): Promise<Store> {
       return typeof stored === 'string' ? stored : undefined;
     },
     setAdoptionDecision: (decision) => putMeta(db, ADOPTION_DECISION_KEY, decision),
+    getAccountReconcile: async () => readAccountReconcileState(await getMeta(db, ACCOUNT_RECONCILE_KEY)),
+    setAccountReconcile: (reconcile) => putMeta(db, ACCOUNT_RECONCILE_KEY, reconcile),
     subscribe(listener) {
       listeners.add(listener);
       return (): void => {

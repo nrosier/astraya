@@ -22,6 +22,7 @@ import { PwaStatus } from './PwaStatus.js';
 import { SidebarFooter } from './SidebarFooter.js';
 import { parseRoute } from './route.js';
 import { SessionProvider, useStoreStatus } from './session-context.js';
+import { AccountPreferencesNotices } from './AccountPreferencesNotices.js';
 import { StoreProvider } from './store-context.js';
 import { SyncBadge } from './SyncBadge.js';
 import { useCalculationSettingsMigration } from './use-calculation-settings-migration.js';
@@ -358,6 +359,8 @@ function AppShell(): React.JSX.Element {
             every lazy screen wants the same fallback, and keeping the boundary outside
             `Stored` means a chunk still in flight does not also restart the store. */}
               <div id="main-content" className="main-content" tabIndex={-1}>
+                {/* The account preferences' sign-in prompt, failed save and unreadable notice (#1066), on every route. */}
+                <AccountPreferencesNotices />
                 {/* The sub-views of Transits & Forecast, Progressions & Directions, and Relationship Charts (#882); Tools has its own Tabs frame (#1139). */}
                 <SectionNav route={parsed} />
                 {toolKey === null ? (

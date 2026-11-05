@@ -1,73 +1,49 @@
 /**
- * Which planets rule which signs by default on this device (#426): Modern (the default), Traditional, or Both
- * (co-rulers). Since #806 each person has their own rulership register; this device preference is the default a
- * person without one starts from, what a new person is given at creation, and what the screens that belong to no
- * single person (Horary, Composite) show. Never synced, never sent anywhere. A change reaches the other mounted
- * components in the same tab through an event, and other tabs through the browser's `storage` event.
+ * The reader's default rulership (#426): Modern (the default), Traditional, or Both (co-rulers). Since #806 each person
+ * has their own rulership register; this default is what a person without one starts from, what a new person is given
+ * at creation, and what the screens that belong to no single person (Horary, Composite) show.
+ *
+ * Since #1066 it is an account preference: it lives in the op log of the open store and follows a signed-in reader
+ * across devices. `account-preferences.ts` owns reading and saving it; this module is its rulership-shaped view. The
+ * pre-#1066 `astraya:rulershipChoice` key is read only once, as the one-time migration source.
  */
 /**
  * @module ui/rulership-setting
- * @purpose Device default rulership (#426, #806): the Modern/Traditional/Both choice a person without their own starts from, a new person is given, and Horary/Composite show.
- * @conventions Device preference stored in localStorage, never synced; changes propagate to other mounted components via a custom event in-tab and the browser's `storage` event across tabs; falls back to an in-memory value when storage writes are refused.
+ * @purpose Default rulership (#426, #806, #1066): the Modern/Traditional/Both choice a person without their own starts from, a new person is given, and Horary/Composite show.
+ * @conventions A thin view over `account-preferences.ts`: reads come from its in-memory snapshot of the bound store, never from localStorage; a change is saved local-first, then as one op-log write; every mounted reader updates through the shared subscription.
  * @exports RULERSHIP_KEY, readRulershipChoice, writeRulershipChoice, useRulershipChoice, resetRulershipMemory
  */
-import { useCallback, useSyncExternalStore } from 'react';
-import { DEFAULT_RULERSHIP_CHOICE, isRulershipChoice, type RulershipChoice } from '../astrology/rulership.js';
+import { useSyncExternalStore } from 'react';
+import { DEFAULT_RULERSHIP_CHOICE, type RulershipChoice } from '../astrology/rulership.js';
+import { ACCOUNT_RULERSHIP_FIELD } from '../store/account.js';
+import {
+  LEGACY_RULERSHIP_KEY,
+  forgetAccountPreferenceField,
+  getAccountPreferences,
+  setAccountPreferences,
+  subscribeAccountPreferences,
+} from './account-preferences.js';
 
-export const RULERSHIP_KEY = 'astraya:rulershipChoice';
-const CHANGED_EVENT = 'astraya:rulership-changed';
+/** The pre-#1066 device key, kept as the registry's identifier and the one-time migration source. */
+export const RULERSHIP_KEY = LEGACY_RULERSHIP_KEY;
 
-/** The saved choice, or the default when none is saved, it is not one of the three, or storage is unavailable. */
+/** The current default rulership. */
 export function readRulershipChoice(): RulershipChoice {
-  try {
-    const stored = localStorage.getItem(RULERSHIP_KEY);
-    return isRulershipChoice(stored) ? stored : DEFAULT_RULERSHIP_CHOICE;
-  } catch {
-    return DEFAULT_RULERSHIP_CHOICE;
-  }
+  return getAccountPreferences().defaultRulership;
 }
 
 export function writeRulershipChoice(choice: RulershipChoice): void {
-  try {
-    localStorage.setItem(RULERSHIP_KEY, choice);
-  } catch {
-    // Not remembered, but this tab still uses it until it is reloaded.
-    memory = choice;
-  }
-  window.dispatchEvent(new Event(CHANGED_EVENT));
-}
-
-/** Used only when storage refuses a write, so a choice still takes effect for this page's lifetime. */
-let memory: RulershipChoice | undefined;
-
-function snapshot(): RulershipChoice {
-  try {
-    if (localStorage.getItem(RULERSHIP_KEY) === null && memory !== undefined) return memory;
-  } catch {
-    if (memory !== undefined) return memory;
-  }
-  return readRulershipChoice();
-}
-
-function subscribe(onChange: () => void): () => void {
-  window.addEventListener(CHANGED_EVENT, onChange);
-  window.addEventListener('storage', onChange);
-  return () => {
-    window.removeEventListener(CHANGED_EVENT, onChange);
-    window.removeEventListener('storage', onChange);
-  };
+  // A failed save rolls back and is reported by `account-preferences.ts`.
+  setAccountPreferences({ defaultRulership: choice }).catch(() => undefined);
 }
 
 /** The current choice, and a setter that saves it and updates every screen using it. */
 export function useRulershipChoice(): readonly [RulershipChoice, (choice: RulershipChoice) => void] {
-  const choice = useSyncExternalStore(subscribe, snapshot, () => DEFAULT_RULERSHIP_CHOICE);
-  const set = useCallback((next: RulershipChoice) => {
-    writeRulershipChoice(next);
-  }, []);
-  return [choice, set];
+  const choice = useSyncExternalStore(subscribeAccountPreferences, readRulershipChoice, () => DEFAULT_RULERSHIP_CHOICE);
+  return [choice, writeRulershipChoice];
 }
 
-/** For tests: forgets the in-memory fallback. */
+/** For tests: forgets a choice made with no store open. */
 export function resetRulershipMemory(): void {
-  memory = undefined;
+  forgetAccountPreferenceField(ACCOUNT_RULERSHIP_FIELD);
 }

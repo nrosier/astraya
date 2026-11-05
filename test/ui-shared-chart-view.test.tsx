@@ -34,7 +34,7 @@ const { buildCalculationSnapshot, calculationSnapshotToJson, MAX_SNAPSHOT_FIXED_
   await import('../src/domain/calculation-snapshot.js');
 const { buildChartArtifact } = await import('../src/ui/chart-artifact.js');
 const { DEFAULT_EXTENDED_SETTINGS } = await import('../src/chart/extended-settings.js');
-const { writeRulershipChoice } = await import('../src/ui/rulership-setting.js');
+const { readRulershipChoice, writeRulershipChoice } = await import('../src/ui/rulership-setting.js');
 const { computeChartData } = await import('../src/domain/chart-compute.js');
 type ChartData = Awaited<ReturnType<typeof computeChartData>>;
 
@@ -91,7 +91,7 @@ describe('a shared chart recomputes under the sender’s own settings, not the v
       expect(options?.houseSystem).toBe('W');
       expect(options?.orbConfig?.scalePercent).toBe(-40);
       // The ambient device setting itself was never touched by any of this.
-      expect(localStorage.getItem('astraya:rulershipChoice')).toBe('modern');
+      expect(readRulershipChoice()).toBe('modern');
     } finally {
       act(() => {
         root.unmount();

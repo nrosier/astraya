@@ -407,3 +407,65 @@ describe('purge propagation and server-side erasure (#308)', () => {
     expect(skipped).toEqual([]);
   });
 });
+
+describe('the account preferences entity on the relay (#1066, ADR 0004 test 4)', () => {
+  const pulledHlcs = async (sessionId: string): Promise<string[]> =>
+    (await pullOps(app, sessionId)).json<{ ops: { hlc: string }[] }>().ops.map((op) => op.hlc);
+
+  it('stores and returns account ops like any other, with no server change', async () => {
+    const sessionId = await setupAdmin(app);
+    const locale = makeFieldOp('account', 'preferences', 'locale', 'nl');
+    const response = await appendOps(app, sessionId, [locale]);
+    expect(response.statusCode).toBe(200);
+    expect(response.json<{ skipped: string[] }>().skipped).toEqual([]);
+    const pulled = (await pullOps(app, sessionId)).json<{ ops: { hlc: string; payload: string }[] }>().ops;
+    expect(pulled.map((op) => op.hlc)).toEqual([locale.hlc]);
+    expect(pulled[0]?.payload).toBe(locale.payload);
+  });
+
+  it('never shows one user the other’s preferences, though both use the same entity id', async () => {
+    const aliceSession = await setupAdmin(app, 'alice', 'correct-horse-battery');
+    const bobSession = await createAndLoginUser(app, 'bob', 'another-horse-battery');
+    const alice = makeFieldOp('account', 'preferences', 'locale', 'nl');
+    const bob = makeFieldOp('account', 'preferences', 'locale', 'en', 1);
+    await appendOps(app, aliceSession, [alice]);
+    await appendOps(app, bobSession, [bob]);
+    expect(await pulledHlcs(aliceSession)).toEqual([alice.hlc]);
+    expect(await pulledHlcs(bobSession)).toEqual([bob.hlc]);
+  });
+
+  it('keeps a user’s account rows when one of their people is purged', async () => {
+    const sessionId = await setupAdmin(app);
+    const prefs = makeFieldOp('account', 'preferences', 'locale', 'nl');
+    const person = makeFieldOp('person', 'p-1', 'displayName', 'Ada', 1);
+    await appendOps(app, sessionId, [prefs, person]);
+    const marker = makeFieldOp('person', 'p-1', 'purged', true, 2);
+    await appendOps(app, sessionId, [marker]);
+    expect(await pulledHlcs(sessionId)).toEqual([prefs.hlc, marker.hlc]);
+  });
+
+  it('confines a deny-listed account entity to its own user, and recovers as the runbook says', async () => {
+    const aliceSession = await setupAdmin(app, 'alice', 'correct-horse-battery');
+    const bobSession = await createAndLoginUser(app, 'bob', 'another-horse-battery');
+    // A modified client sends an account purge marker for Alice (the app itself refuses to write one).
+    await appendOps(app, aliceSession, [makeFieldOp('account', 'preferences', 'purged', true)]);
+
+    const refused = makeFieldOp('account', 'preferences', 'locale', 'nl', 1);
+    expect((await appendOps(app, aliceSession, [refused])).json<{ skipped: string[] }>().skipped).toEqual([
+      refused.hlc,
+    ]);
+    const bobWrite = makeFieldOp('account', 'preferences', 'locale', 'en', 2);
+    expect((await appendOps(app, bobSession, [bobWrite])).json<{ skipped: string[] }>().skipped).toEqual([]);
+
+    // docs/ops/ACCOUNT-PREFERENCES-RECOVERY.md: delete the deny-list row, then a new write is stored again.
+    const raw = new DatabaseSync(dbPath);
+    raw
+      .prepare(
+        "DELETE FROM purged_entities WHERE user_id = (SELECT id FROM users WHERE username = 'alice') AND entity = 'account' AND entity_id = 'preferences'",
+      )
+      .run();
+    raw.close();
+    const again = makeFieldOp('account', 'preferences', 'locale', 'nl', 3);
+    expect((await appendOps(app, aliceSession, [again])).json<{ skipped: string[] }>().skipped).toEqual([]);
+  });
+});

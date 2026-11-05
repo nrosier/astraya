@@ -1,17 +1,23 @@
 // @vitest-environment jsdom
 /**
- * The planetary-rulers preference and its control (#426): modern by default, kept on this device, shared
- * by every component that reads it in the same tab, and safe when storage is unusable.
+ * The planetary-rulers preference and its control (#426): modern by default, shared by every component that reads
+ * it in the same tab, and safe when storage is unusable. Since #1066 it is an account preference kept in the bound
+ * store's op log, so another tab's change arrives through that store's own first-paint cache key only.
  */
 import { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RulershipChoice } from '../src/astrology/rulership.js';
+import { openStore } from '../src/store/store.js';
+import {
+  accountCacheKey,
+  bindAccountPreferences,
+  resetAccountPreferencesForTests,
+} from '../src/ui/account-preferences.js';
 import { setLocale } from '../src/ui/locale.js';
 import {
   RULERSHIP_KEY,
   readRulershipChoice,
-  resetRulershipMemory,
   useRulershipChoice,
   writeRulershipChoice,
 } from '../src/ui/rulership-setting.js';
@@ -21,7 +27,7 @@ let mounted: { container: HTMLElement; root: Root } | undefined;
 
 beforeEach(() => {
   localStorage.clear();
-  resetRulershipMemory();
+  resetAccountPreferencesForTests();
   setLocale('en');
 });
 
@@ -65,16 +71,25 @@ describe('the saved choice (#426)', () => {
   it('is what was saved, and survives a read', () => {
     for (const choice of ['traditional', 'both', 'modern'] as const) {
       writeRulershipChoice(choice);
-      expect(localStorage.getItem(RULERSHIP_KEY)).toBe(choice);
       expect(readRulershipChoice()).toBe(choice);
+      // The pre-#1066 device key is never written again (#1066).
+      expect(localStorage.getItem(RULERSHIP_KEY)).toBeNull();
     }
   });
 
-  it('ignores a damaged saved value', () => {
+  it('ignores a damaged pre-#1066 saved value', () => {
     for (const value of ['', 'Modern', 'vedic', '{"a":1}', 'null']) {
+      localStorage.clear();
       localStorage.setItem(RULERSHIP_KEY, value);
+      resetAccountPreferencesForTests();
       expect(readRulershipChoice()).toBe('modern');
     }
+  });
+
+  it('shows a valid pre-#1066 saved value until it has been moved into the op log', () => {
+    localStorage.setItem(RULERSHIP_KEY, 'traditional');
+    resetAccountPreferencesForTests();
+    expect(readRulershipChoice()).toBe('traditional');
   });
 
   it('falls back to modern, and to the page’s own memory, when storage cannot be used', () => {
@@ -111,15 +126,29 @@ describe('the hook (#426)', () => {
     expect(container.querySelector('[data-testid="b"]')?.textContent).toBe('both');
   });
 
-  it('follows a change made in another tab (the storage event)', async () => {
-    const container = await mount(<Reader label="a" />);
-    expect(container.querySelector('[data-testid="a"]')?.textContent).toBe('modern');
-    await act(async () => {
-      localStorage.setItem(RULERSHIP_KEY, 'traditional');
-      window.dispatchEvent(new StorageEvent('storage', { key: RULERSHIP_KEY }));
-      await Promise.resolve();
-    });
-    expect(container.querySelector('[data-testid="a"]')?.textContent).toBe('traditional');
+  it('follows a change another tab made to the same store, and ignores another store’s (#1066)', async () => {
+    const store = await openStore({ name: 'astraya-rulership-storage-event' });
+    try {
+      bindAccountPreferences(store);
+      const container = await mount(<Reader label="a" />);
+      expect(container.querySelector('[data-testid="a"]')?.textContent).toBe('modern');
+      await act(async () => {
+        const foreign = accountCacheKey('astraya-user-someone-else');
+        localStorage.setItem(foreign, JSON.stringify({ defaultRulership: 'both' }));
+        window.dispatchEvent(new StorageEvent('storage', { key: foreign }));
+        await Promise.resolve();
+      });
+      expect(container.querySelector('[data-testid="a"]')?.textContent).toBe('modern');
+      await act(async () => {
+        const own = accountCacheKey(store.dbName);
+        localStorage.setItem(own, JSON.stringify({ defaultRulership: 'traditional' }));
+        window.dispatchEvent(new StorageEvent('storage', { key: own }));
+        await Promise.resolve();
+      });
+      expect(container.querySelector('[data-testid="a"]')?.textContent).toBe('traditional');
+    } finally {
+      store.close();
+    }
   });
 });
 

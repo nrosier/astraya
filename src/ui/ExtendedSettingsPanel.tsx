@@ -97,7 +97,6 @@ import { TextField } from './primitives/TextField.js';
 import { SortableTable } from './SortableTable.js';
 import type { TableColumn } from './table-sort.js';
 import { RulershipSetting } from './RulershipSetting.js';
-import { writeRulershipChoice } from './rulership-setting.js';
 import { SymbolSetting } from './SymbolSetting.js';
 import { useGlyphVariants, type GlyphLook } from './glyph-variant-setting.js';
 import { useSymbolClass } from './symbol-setting.js';
@@ -526,7 +525,7 @@ export function ExtendedSettingsPanel({
 
   /** "Save as my default" (#510): remembers the draft and rulers as this device's default for new people (#806) — never redraws the chart currently open and writes nothing on the person, which stay Apply's job alone. */
   const saveAsDefault = (): void => {
-    writeRulershipChoice(rulers);
+    // One batch: the profile and the rulers are written in one durable commit (#1066).
     setDefaultCalculationProfile(effective, rulers);
     closeCard(true);
   };
