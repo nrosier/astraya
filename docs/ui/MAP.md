@@ -1,7 +1,8 @@
 # docs/ui MAP
 
 - `UI-UX_BASELINE.md` — UI behaviour pinned by the end-to-end suite, generated from test titles; the record any redesign must keep or change on purpose. Deps: `e2e`, `scripts/generate-ui-baseline.mjs`.
-- `UI-UX_CONFORMANCE_AUDIT_2026-10-29.md` — Current-source conformance audit of the UI, with a corrections section. Deps: `src/ui`, `test`, `e2e`.
+- `UI-UX_CONFORMANCE_AUDIT_2026-10-29.md` — Superseded by the 2026-11-05 route audit; kept as history. Deps: `src/ui`, `test`, `e2e`.
+- `UI-UX_CONFORMANCE_AUDIT_2026-11-05.md` — Route-by-route conformance audit of all 35 route kinds against the guideline sections, with the failures filed as issues (#1161-#1166) and owner decisions. Deps: `src/ui`, `src/ui/route.ts`, `docs/ui/ROUTE-AUDIT-964.md`.
 - `UI-UX_GUIDELINES.md` — Normative UI/UX implementation guide for new UI work by agents and contributors. Deps: `src/ui`, `archive/UI-UX_REVIEW.md`.
 - `UI-UX_IMPLEMENTATION_PLAN.md` — Migration plan for reaching the target UI/UX experience. Deps: `ui/UI-UX_GUIDELINES.md`, `archive/UI-UX_REVIEW.md`.
 - `proposals/onboarding-goals.md` — Text proposal for goal-based onboarding (#1060), awaiting owner approval; not the §17.2 mockup. Deps: `ui/UI-UX_GUIDELINES.md`, `src/ui/People.tsx`.

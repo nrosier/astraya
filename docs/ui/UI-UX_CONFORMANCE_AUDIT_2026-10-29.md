@@ -1,5 +1,7 @@
 # UI/UX conformance audit — 2026-10-29
 
+> **Superseded** by `docs/ui/UI-UX_CONFORMANCE_AUDIT_2026-11-05.md` (issue #1064). This copy is kept as history; use the 2026-11-05 audit for current verdicts.
+
 Corrections made 2026-10-29 after a source check (see the Corrections section at the end).
 
 **Status:** Current-source audit; no product behavior changed  
