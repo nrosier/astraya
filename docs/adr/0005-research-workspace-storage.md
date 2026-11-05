@@ -457,6 +457,17 @@ kind in `KNOWN_ENTITIES` (every device rebuilds its snapshot once), `materialise
 stays in the log. A per-pin erase would write a purge marker, which also blocks annotating that pin again on the relay;
 that trade-off needs an owner decision and is not built here.
 
+Rules from the `db-integrity` review of PR #1193:
+
+- **`Store.purge` refuses `annotation`**, as it refuses `pin`: the id is derived from the event, so a marker would
+  block annotating that event for good, locally and on the relay's deny-list.
+- **A peer's pin purge marker also erases the annotation.** `entitiesPurgedWith('pin')` names both kinds, so the
+  repair on receipt writes the annotation marker too and its free text does not outlive its pin on the relay.
+- **A save names the leaves the box showed when typing began**, not the head at save time, so a version that syncs in
+  during a long edit stays a visible fork. Save is off while a save is pending.
+- **Known gap:** if a peer purges an annotation (only a non-conforming client can), a local save still shows as saved
+  but is hidden by the fold and skipped by the relay. Pins share this shape; no UI offers a purge today.
+
 Acceptance for slice 3:
 
 - [x] Write, edit, reload and see an annotation on a pin (`e2e/pins.spec.ts`, `test/store-annotations.test.ts`).

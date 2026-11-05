@@ -212,26 +212,32 @@ function PinAnnotation({
   readonly note: Note | undefined;
 }): React.JSX.Element {
   const t = useMessages(eventPinsMessages);
-  const [draft, setDraft] = useState<string>();
+  // The draft remembers the leaves the box showed when typing began, so a version that syncs in meanwhile stays a
+  // visible fork instead of being closed off by this save.
+  const [draft, setDraft] = useState<{ readonly text: string; readonly parents: readonly string[] }>();
+  const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ readonly kind: 'error' | 'success'; readonly text: string }>();
   const max = String(ANNOTATION_MAX_CHARACTERS);
   const saved = note?.content ?? '';
   // An unedited box follows the folded head, so a note synced from another device appears without a reload.
-  const value = draft ?? saved;
+  const value = draft?.text ?? saved;
   const tooLong = isNoteTooLong(value);
-  const dirty = draft !== undefined && draft !== saved;
+  const dirty = draft !== undefined && draft.text !== saved;
 
   const save = (): void => {
     setStatus(undefined);
-    // Naming every current leaf as a parent resolves the forks this save has seen.
-    const parents = note === undefined ? [] : revisionParents(note);
+    if (draft === undefined || saving) return;
+    setSaving(true);
+    // Naming the leaves the box showed when typing began resolves the forks this save has seen.
     store
-      .mutate([annotationRevision(pinId, newId('r'), value, parents)])
+      .mutate([annotationRevision(pinId, newId('r'), value, draft.parents)])
       .then(() => {
+        setSaving(false);
         setDraft(undefined);
         setStatus({ kind: 'success', text: t.annotationSaved });
       })
       .catch((cause: unknown) => {
+        setSaving(false);
         const text =
           cause instanceof AnnotationRefusedError
             ? cause.refusal === 'too-long'
@@ -248,7 +254,7 @@ function PinAnnotation({
         label={t.annotationLabel(label)}
         value={value}
         onChange={(next) => {
-          setDraft(next);
+          setDraft({ text: next, parents: draft?.parents ?? (note === undefined ? [] : revisionParents(note)) });
           setStatus(undefined);
         }}
         help={t.annotationHelp(max)}
@@ -258,7 +264,12 @@ function PinAnnotation({
       />
       {note !== undefined && <NoteForks forks={note.forks} />}
       <div className="tool-actions">
-        <Button variant="primary" size="compact" disabled={!store.writable || !dirty || tooLong} onClick={save}>
+        <Button
+          variant="primary"
+          size="compact"
+          disabled={!store.writable || !dirty || tooLong || saving}
+          onClick={save}
+        >
           {t.annotationSave}
         </Button>
       </div>

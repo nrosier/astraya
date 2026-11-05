@@ -196,6 +196,25 @@ describe('the annotation store round trip', () => {
     expect(store.state.annotations.get(id)?.content).toBe('remember this');
   });
 
+  it('refuses to purge an annotation, since its derived id would block annotating that pin for good', async () => {
+    const store = await reopen(freshName());
+    const id = await derivedPinId(pinIdentity(target));
+    await store.mutate([annotationRevision(id, newId('r'), 'keep', [])]);
+    await expect(store.purge(ANNOTATION_ENTITY, id)).rejects.toBeInstanceOf(AnnotationRefusedError);
+    expect(store.state.annotations.has(id)).toBe(true);
+  });
+
+  it('a pin purge marker from a peer also erases the annotation on this device', async () => {
+    const store = await reopen(freshName());
+    const id = await derivedPinId(pinIdentity(target));
+    await store.mutate(pinCreate(id, target));
+    await store.mutate([annotationRevision(id, newId('r'), 'private words', [])]);
+    const marker: Mutation = { entity: PIN_ENTITY, entityId: id, field: 'purged', value: true };
+    await store.receive(logOf('b0000000000000ff', [[marker, T0 + 60_000]]));
+    expect(store.state.pins.has(id)).toBe(false);
+    expect(store.state.annotations.has(id)).toBe(false);
+  });
+
   it('refuses an over-long note before the log is touched', async () => {
     const store = await reopen(freshName());
     const id = await derivedPinId(pinIdentity(target));
@@ -216,7 +235,15 @@ describe('the annotation store round trip', () => {
 });
 
 describe('an older build and an upgrade (ADR 0005)', () => {
-  const OLD_BUILD_KINDS: readonly string[] = ['person', 'chart', 'birthNote', 'consultationNote', 'savedQuery', 'pin'];
+  const OLD_BUILD_KINDS: readonly string[] = [
+    'person',
+    'chart',
+    'birthNote',
+    'consultationNote',
+    'savedQuery',
+    'pin',
+    'account',
+  ];
 
   function records(): readonly OpRecord[] {
     return logOf('a1b2c3d4e5f60718', [[annotationRevision(PIN_ID, R1, 'seen by newer', []), T0]]);

@@ -395,7 +395,12 @@ export function assertNoteMutation(mutation: Mutation): void {
  *
  * A purged person takes its Birth Record and Consultation notes with it. Otherwise a note would
  * survive the erasure of the person it belongs to.
+ *
+ * A purged pin takes its annotation with it (#1061). This runs only when a peer's pin marker arrives and is repaired,
+ * because `Store.purge` refuses a pin: otherwise the annotation's free text would stay on the relay with its pin hidden
+ * for good. The kind names are literals because `annotations.ts` imports this module.
  */
 export function entitiesPurgedWith(entity: string): readonly string[] {
-  return entity === PERSON_ENTITY ? [entity, ...NOTE_ENTITIES] : [entity];
+  if (entity === PERSON_ENTITY) return [entity, ...NOTE_ENTITIES];
+  return entity === 'pin' ? [entity, 'annotation'] : [entity];
 }

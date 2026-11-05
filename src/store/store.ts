@@ -45,7 +45,7 @@ import {
   type AccountReconcileState,
 } from './account.js';
 import { assertNoteMutation, entitiesPurgedWith } from './notes.js';
-import { assertAnnotationMutation } from './annotations.js';
+import { ANNOTATION_ENTITY, AnnotationRefusedError, assertAnnotationMutation } from './annotations.js';
 import { PIN_ENTITY, PinRefusedError, assertPinMutation } from './pins.js';
 import { assertSavedQueryMutation } from './saved-queries.js';
 import { append, appendAt, emptyLog, latest, purgeEntity, receiveRecords, since } from './oplog.js';
@@ -513,6 +513,8 @@ export async function openStore(options: StoreOptions = {}): Promise<Store> {
         // A pin id is derived from the event, so a purge would block pinning that event for good, locally and on the
         // relay's deny-list. Pins are only ever unpinned (a tombstone).
         if (entity === PIN_ENTITY) throw new PinRefusedError('invalid');
+        // The same holds for an annotation, whose id is its pin's derived id. Erasing one needs an owner decision (ADR 0005).
+        if (entity === ANNOTATION_ENTITY) throw new AnnotationRefusedError('invalid');
         if (!tabLock.writable) throw new Error(NOT_WRITABLE_MESSAGE);
         // One marker per entity the purge covers (a person's notes go with it, #919), all in
         // one commit, so no note can survive a person purge that was interrupted part-way.
