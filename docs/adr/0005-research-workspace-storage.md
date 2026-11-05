@@ -436,6 +436,47 @@ Acceptance for slice 2:
 - [x] An older build ignores the kind; its snapshot is rebuilt on upgrade (`test/store-pins.test.ts`).
 - [x] No change to the frozen files.
 
+### Addendum for slice 3: annotations on pins (decided 2026-11-05, #1061)
+
+Owner decisions A1 and A2 on the issue:
+
+- **A1. Entity id.** An annotation's `entityId` is the pin's `k-` id: one annotation per pin, fields `rev/<revisionId>`
+  (`r-` ids), each value `{ text, parents }`, the same shape and fold as the Birth Record note (`foldBirthNote`). The head
+  is the newest leaf and every other leaf is a fork; all are kept (D7). Pins are person-independent sky events, so the
+  four person-purge consequences in 2.4 do not apply. The text outlives an unpin and returns when the same event is
+  pinned again, because the pin id is derived from the event.
+- **A2. Interface.** A text box per pin in the Pinned events list with an explicit Save. A save writes one revision that
+  names every current leaf as a parent, so it resolves the forks it saw. Clearing saves an empty revision. The limit is
+  the note limit, 50,000 code points, enforced by the write guard.
+
+No change to the envelope, `OP_VERSION`, `ops.ts`, `oplog.ts`, `hlc.ts`, the sync engine or the relay; the change is the
+kind in `KNOWN_ENTITIES` (every device rebuilds its snapshot once), `materialise`, one guard call in `Store.write()` and
+`src/store/annotations.ts`. The write guard allows only `rev/<r- id>` on a `k-` id; `deleted` and `purged` are refused.
+
+**Known limit:** there is no erase of an annotation. Every saved version is kept by design, so text a reader wants gone
+stays in the log. A per-pin erase would write a purge marker, which also blocks annotating that pin again on the relay;
+that trade-off needs an owner decision and is not built here.
+
+Rules from the `db-integrity` review of PR #1193:
+
+- **`Store.purge` refuses `annotation`**, as it refuses `pin`: the id is derived from the event, so a marker would
+  block annotating that event for good, locally and on the relay's deny-list.
+- **A peer's pin purge marker also erases the annotation.** `entitiesPurgedWith('pin')` names both kinds, so the
+  repair on receipt writes the annotation marker too and its free text does not outlive its pin on the relay.
+- **A save names the leaves the box showed when typing began**, not the head at save time, so a version that syncs in
+  during a long edit stays a visible fork. Save is off while a save is pending.
+- **Known gap:** if a peer purges an annotation (only a non-conforming client can), a local save still shows as saved
+  but is hidden by the fold and skipped by the relay. Pins share this shape; no UI offers a purge today.
+
+Acceptance for slice 3:
+
+- [x] Write, edit, reload and see an annotation on a pin (`e2e/pins.spec.ts`, `test/store-annotations.test.ts`).
+- [x] Two concurrent edits are both kept, as head and fork, in either arrival order, and a save naming every leaf
+      resolves the fork (`test/store-annotations.test.ts`).
+- [x] The note limit is enforced before the log is touched.
+- [x] An older build ignores the kind; its snapshot is rebuilt on upgrade.
+- [x] No change to the frozen files.
+
 Pins (slice 2) and annotations (slice 3) each need their own addendum and acceptance list before starting, covering at
 least: the pin identity choice (2.4), person purge fan-out if person-attached, and the annotation revision model.
 

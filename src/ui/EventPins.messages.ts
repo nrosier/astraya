@@ -27,6 +27,13 @@ const en = {
     invalid: 'The pinned details are not valid here, so it cannot be shown. It is kept.',
   },
   unreadablePin: 'Unreadable pin',
+  annotationLabel: (event: string) => `Note on ${event}`,
+  annotationHelp: (max: string) =>
+    `Your own note on this event, up to ${max} characters. Every saved version is kept. It can hold personal data, so keep it generic.`,
+  annotationSave: 'Save note',
+  annotationSaved: 'Note saved.',
+  annotationTooLong: (max: string) => `The note is longer than ${max} characters.`,
+  annotationInvalid: 'This note cannot be saved.',
 };
 
 const nl: typeof en = {
@@ -51,6 +58,13 @@ const nl: typeof en = {
     invalid: 'De vastgezette gegevens zijn hier niet geldig, dus ze kunnen niet worden getoond. Ze blijven bewaard.',
   },
   unreadablePin: 'Onleesbare pin',
+  annotationLabel: (event: string) => `Notitie bij ${event}`,
+  annotationHelp: (max: string) =>
+    `Je eigen notitie bij deze gebeurtenis, maximaal ${max} tekens. Elke opgeslagen versie blijft bewaard. Ze kan persoonlijke gegevens bevatten, dus houd haar algemeen.`,
+  annotationSave: 'Notitie opslaan',
+  annotationSaved: 'Notitie opgeslagen.',
+  annotationTooLong: (max: string) => `De notitie is langer dan ${max} tekens.`,
+  annotationInvalid: 'Deze notitie kan niet worden opgeslagen.',
 };
 
 export const eventPinsMessages = { en, nl };
