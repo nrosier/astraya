@@ -7004,6 +7004,14 @@ button.primitive-disclosure-trigger:hover:not(:disabled) {
   margin-bottom: var(--space-4);
 }
 
+/* The transit filter heading is an h2 for document structure (#1163); this keeps the
+   h3 size, weight and spacing it had before the level change. */
+.transit-filter-heading {
+  margin: 1em 0;
+  font-size: 1.17em;
+  font-weight: bold;
+}
+
 .transit-filter-group-actions {
   display: flex;
   gap: var(--space-2);

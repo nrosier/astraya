@@ -107,7 +107,11 @@ describe('the chart workspace (#801)', () => {
       expect(chartViewMessages[locale]).not.toHaveProperty(key);
     }
     expect(text).not.toMatch(/share link|deellink/i);
-    expect(container.querySelector('#chart-view-wheel h2')).toBeNull();
+    // The Selection inspector is an h2 by decision (#1163); only a "Chart wheel" heading is forbidden.
+    const chartWheelHeadings = [...container.querySelectorAll('#chart-view-wheel h2')].filter((h) =>
+      /chart wheel/i.test(h.textContent ?? ''),
+    );
+    expect(chartWheelHeadings).toHaveLength(0);
     expect(readFileSync('src/ui/ChartView.tsx', 'utf-8')).not.toMatch(/ShareLink|encodeChartShareLink/);
   });
 
