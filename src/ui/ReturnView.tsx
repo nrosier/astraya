@@ -241,7 +241,7 @@ export function ReturnView({
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={fallback} titleTerm="solarReturn" />
+        <PageHeader title={fallback} titleTerm="solarReturn" variant="return" />
         <p>
           {t.needsCompleteRecord(person.displayName || t.thisPerson)}{' '}
           <a href={personHref(personId)}>{t.personPageLink}</a>.
@@ -259,7 +259,7 @@ export function ReturnView({
   return (
     <main className="shell shell--wide">
       <BackLink fallback={personHref(personId)} />
-      <PageHeader title={heading} titleTerm="solarReturn" basis={basisLine}>
+      <PageHeader title={heading} titleTerm="solarReturn" basis={basisLine} variant="return">
         <PdfCreatorLink href={creatorHref} />
       </PageHeader>
       <ChartTypeSelector personId={personId} type={kind} view={view} />

@@ -125,7 +125,9 @@ async function headingOf(node: ReactNode, tag: 'h1' | 'h2' = 'h1'): Promise<HTML
 
 function expectPageHeader(h1: HTMLHeadingElement): void {
   expect(h1.parentElement?.className).toBe('page-header-row');
-  expect(h1.parentElement?.parentElement?.className).toMatch(/^page-header( page-header--section)?$/);
+  expect(h1.parentElement?.parentElement?.className).toMatch(
+    /^page-header( page-header--section| page-header--return)?$/,
+  );
   expect(h1.textContent).not.toBe('');
 }
 
