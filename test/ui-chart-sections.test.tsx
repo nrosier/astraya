@@ -124,8 +124,12 @@ describe('the chart views (#511)', () => {
   it('every open table panel starts with an h2 naming it, and only the open view is in the page', async () => {
     const container = await mount();
     const t = chartViewMessages.en;
-    // The wheel view no longer opens on a "Chart wheel" heading (#801): the view links name it.
-    expect(container.querySelector('#chart-view-wheel h2')).toBeNull();
+    // The wheel view no longer opens on a heading naming it (#801): the view links name it.
+    // The Selection inspector is an h2 by decision (#1163), so scope the check to the view's name.
+    const wheelNamedHeadings = [...container.querySelectorAll('#chart-view-wheel h2')].filter(
+      (h) => h.textContent === t.wheelViewLabel,
+    );
+    expect(wheelNamedHeadings).toHaveLength(0);
     expect(container.querySelector('#chart-view-aspects')).toBeNull();
     await open(container, t.aspectsViewLabel);
     expect(container.querySelector('#chart-view-aspects h2')?.textContent).toBe(t.aspectsViewLabel);

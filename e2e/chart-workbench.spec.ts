@@ -171,6 +171,48 @@ test.describe('with the shared people (#799)', () => {
     await expect.poll(visibleLines).toBe(before);
   });
 
+  test('the aspect-family filter keeps only the chosen family on the wheel and the matrix, and All aspects restores them (#1063)', async () => {
+    test.setTimeout(90_000);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    const shown = page.locator('svg.chart-dial g.chart-aspect-link:not(.chart-aspect-filtered)');
+    await expect.poll(async () => shown.count()).toBeGreaterThan(3);
+    const before = await shown.count();
+
+    const filter = page.getByLabel('Aspects shown');
+    await filter.selectOption({ label: 'Hard minor: semisquare, sesquiquadrate, quincunx, semisextile' });
+    await expect.poll(async () => shown.count()).toBeLessThan(before);
+    await expect(
+      page.locator(
+        'svg.chart-dial g.chart-aspect-link:not(.chart-aspect-filtered):not([data-aspect-key="semisquare"]):not([data-aspect-key="sesquiquadrate"]):not([data-aspect-key="quincunx"]):not([data-aspect-key="semisextile"])',
+      ),
+    ).toHaveCount(0);
+
+    await filter.selectOption({ label: 'All aspects' });
+    await expect.poll(async () => shown.count()).toBe(before);
+  });
+
+  test('a consultation preset is applied only when chosen, and No preset returns the default view (#1063)', async () => {
+    test.setTimeout(90_000);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    const shown = page.locator('svg.chart-dial g.chart-aspect-link:not(.chart-aspect-filtered)');
+    await expect.poll(async () => shown.count()).toBeGreaterThan(3);
+    const before = await shown.count();
+    const preset = page.getByLabel('Consultation preset');
+    await expect(preset).toHaveValue('none');
+
+    await preset.selectOption({ label: 'Predictive and timing: major and hard minor' });
+    await expect(page.getByLabel('Aspects shown')).toContainText('Chosen families');
+    await expect.poll(async () => shown.count()).toBeLessThanOrEqual(before);
+
+    await preset.selectOption({ label: 'No preset (default view)' });
+    await expect(page.getByLabel('Aspects shown')).toHaveValue('all');
+    await expect.poll(async () => shown.count()).toBe(before);
+  });
+
   test('with a body selected, the arrow keys step through its aspect contacts in zodiac order, announced and marked on the wheel (#1063)', async () => {
     test.setTimeout(90_000);
     await page.setViewportSize({ width: 1280, height: 800 });

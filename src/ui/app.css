@@ -2284,6 +2284,11 @@ label.stacked textarea:focus-visible {
   background: transparent;
 }
 
+/* An aspect line the aspect-family filter has hidden (#1063); the markup keeps it so clearing the filter restores it. */
+.chart-wheel .chart-aspect-link.chart-aspect-filtered {
+  display: none;
+}
+
 /* The Aspects view's family Select sits on its own row above the tables (#815). */
 .aspect-family-filter {
   max-width: 20rem;
@@ -4871,7 +4876,7 @@ svg text.chart-symbol-text-unicode {
   border-radius: var(--radius-sm);
   background: var(--surface);
 }
-.focus-interpretation h4 {
+.focus-interpretation h3 {
   margin: 0 0 var(--space-2);
   color: var(--accent);
   font-size: 0.95rem;
@@ -4882,7 +4887,7 @@ svg text.chart-symbol-text-unicode {
   color: var(--muted);
   font-size: 0.85rem;
 }
-.focus-interpretation h5 {
+.focus-interpretation h4 {
   margin: var(--space-3) 0 var(--space-1);
   font-size: 0.9rem;
 }
@@ -4900,11 +4905,11 @@ svg text.chart-symbol-text-unicode {
   border-radius: var(--radius-sm);
   background: var(--surface);
 }
-.relationship-summary h3 {
+.relationship-summary h2 {
   margin: 0 0 var(--space-2);
   font-size: var(--text-base);
 }
-.relationship-summary h4 {
+.relationship-summary h3 {
   margin: var(--space-4) 0 var(--space-1);
   color: var(--accent);
   font-size: 0.9rem;
@@ -6997,6 +7002,14 @@ button.primitive-disclosure-trigger:hover:not(:disabled) {
 
 .settings-card-block {
   margin-bottom: var(--space-4);
+}
+
+/* The transit filter heading is an h2 for document structure (#1163); this keeps the
+   h3 size, weight and spacing it had before the level change. */
+.transit-filter-heading {
+  margin: 1em 0;
+  font-size: 1.17em;
+  font-weight: bold;
 }
 
 .transit-filter-group-actions {

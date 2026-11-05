@@ -181,9 +181,9 @@ export function SelectionInspector({
         };
   return (
     <section className="selection-inspector" aria-labelledby="selection-inspector-heading" aria-live="polite">
-      <h3 id="selection-inspector-heading" className="selection-inspector-title">
+      <h2 id="selection-inspector-heading" className="selection-inspector-title">
         {t.inspectorHeading}
-      </h3>
+      </h2>
       {derivedChartNote !== undefined && <p className="hint selection-inspector-derived-note">{derivedChartNote}</p>}
       {facts === undefined || selectionKey === undefined ? (
         <p className="hint">{t.inspectorEmpty}</p>

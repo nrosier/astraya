@@ -194,7 +194,7 @@ export function RelationshipSummary({
 
   return (
     <section className="relationship-summary" aria-label={t.heading}>
-      <h3>{t.heading}</h3>
+      <h2>{t.heading}</h2>
       <p className="hint">{t.hint}</p>
       <p>{t.balanceSentence(harmonious, challenging)}</p>
 
@@ -203,7 +203,7 @@ export function RelationshipSummary({
         if (contacts.length === 0) return null;
         return (
           <div key={theme}>
-            <h4>{t.themeLabels[theme]}</h4>
+            <h3>{t.themeLabels[theme]}</h3>
             <ul>
               {contacts.map((contact) => (
                 <ContactLine
@@ -221,7 +221,7 @@ export function RelationshipSummary({
 
       {angleContacts.length > 0 && (
         <div>
-          <h4>{t.themeLabels.angles}</h4>
+          <h3>{t.themeLabels.angles}</h3>
           <ul>
             {angleContacts.map((contact) => {
               const [owner, other] = contact.side === 'a' ? [nameA, nameB] : [nameB, nameA];
@@ -243,7 +243,7 @@ export function RelationshipSummary({
 
       {housesUsable && overlays.length > 0 && (
         <div>
-          <h4>{t.overlaysHeading}</h4>
+          <h3>{t.overlaysHeading}</h3>
           <ul>
             {overlays.map((overlay, index) => (
               <HouseOverlayLine
@@ -258,7 +258,7 @@ export function RelationshipSummary({
         </div>
       )}
 
-      <h4>{t.tier2Heading}</h4>
+      <h3>{t.tier2Heading}</h3>
       {user !== undefined && (
         <Checkbox
           label={t.tier2Consent}

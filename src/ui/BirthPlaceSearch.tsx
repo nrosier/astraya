@@ -19,6 +19,7 @@
  * @exports BirthPlaceSearch
  */
 import { useEffect, useId, useRef, useState } from 'react';
+import { Button } from './primitives/Button.js';
 import { TextField } from './primitives/TextField.js';
 import { useOnline } from './online-status.js';
 import { sharedMessages } from './shared.messages.js';
@@ -231,13 +232,13 @@ export function BirthPlaceSearch({
               </div>
             )}
           </div>
-          <button
+          <Button
             type="submit"
-            className="quiet"
+            variant="quiet"
             disabled={searchStatus === 'searching' || searchQuery.trim() === '' || !online}
           >
             {searchStatus === 'searching' ? t.searching : t.search}
-          </button>
+          </Button>
         </div>
         <p className="hint">{t.searchDisclosure(geocodeHost)}</p>
       </form>

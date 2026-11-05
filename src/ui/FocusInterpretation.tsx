@@ -128,7 +128,7 @@ export function FocusInterpretation({
 
   return (
     <section className="focus-interpretation" aria-label={t.heading}>
-      <h4>{t.heading}</h4>
+      <h3>{t.heading}</h3>
       {user !== undefined && (
         <Checkbox
           label={t.consent}
@@ -158,7 +158,7 @@ export function FocusInterpretation({
         <div className="tier2-result" aria-live="polite">
           {sections.map((section) => (
             <article key={section.heading}>
-              <h5>{section.heading}</h5>
+              <h4>{section.heading}</h4>
               <p>{section.body}</p>
             </article>
           ))}
@@ -166,7 +166,7 @@ export function FocusInterpretation({
       )}
       {history.length > 0 && (
         <div className="tier2-saved-results">
-          <h5>{t.savedHeading}</h5>
+          <h4>{t.savedHeading}</h4>
           <ul>
             {history.map((entry) => (
               <li key={entry.id}>

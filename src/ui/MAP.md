@@ -203,6 +203,9 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `wheel-corpus.ts` — Supplies + caches interpretation corpus to wheel-selection panel. Deps: `interpretation/corpus-client`.
 - `wheel-interaction.ts` — Pointer/keyboard wheel isolation (a selected body can also drop every aspect line not touching it, #1063), ring legend activation, and leader-arrow state, plus selecting a key outright for table Show buttons. Deps: `chart/body-id`.
 - `wheel-contacts.ts` — Keyboard next/previous contact for a selected body (#1063): orders its drawn aspect lines in zodiac order from the body and marks the current one on the wheel. Deps: `chart/body-id`.
+- `aspect-family-filter.ts` — Aspect-family filters and on-demand consultation presets for the wheel and matrix (#1063); pure. Deps: `astrology/aspects`.
+- `AspectFamilyControls.tsx` — The aspect-family and consultation-preset Selects above the wheel and matrix (#1063). Deps: `./aspect-family-filter`, `./AspectFamilyControls.messages`, `./primitives/Select`.
+- `AspectFamilyControls.messages.ts` — en/nl strings for the aspect-family and preset Selects (#1063). Deps: none.
 - `wheel-selection.ts` — Composes wheel-selection heading text. Deps: `astrology/signs`, `interpretation/schema`, `./astro-names.messages`.
 - `workspace-rail-setting.ts` — Device preference for whether the desktop workspace rail is collapsed (#506/#509). Deps: none.
 - `year-range.ts` — Ephemeris data's valid year range (clamping). Deps: none.

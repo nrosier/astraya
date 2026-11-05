@@ -242,7 +242,7 @@ describe('FocusInterpretation (#424)', () => {
     await vi.waitFor(() => {
       expect(box().querySelector('.tier2-result')?.textContent).toContain('Security meets power.');
     });
-    expect(box().querySelector('.tier2-result h5')?.textContent).toBe('Core tension');
+    expect(box().querySelector('.tier2-result h4')?.textContent).toBe('Core tension');
   });
 
   it('spends the consent when the request is sent: a second request needs a fresh tick', async () => {
