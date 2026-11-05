@@ -177,6 +177,7 @@ function List({ store }: { readonly store: Store }): React.JSX.Element {
                     store={store}
                     pinId={pin.id}
                     entityId={state.annotationEntities.get(pin.id) ?? pin.id}
+                    entityErased={state.erased.annotations.has(state.annotationEntities.get(pin.id) ?? pin.id)}
                     label={pin.target.label}
                     note={state.annotations.get(pin.id)}
                   />
@@ -205,6 +206,7 @@ function PinAnnotation({
   store,
   pinId,
   entityId,
+  entityErased,
   label,
   note,
 }: {
@@ -212,6 +214,8 @@ function PinAnnotation({
   readonly pinId: string;
   /** Where this pin's annotation is written: the pin's own id, or the fresh id an erase pointed it at (#1195). */
   readonly entityId: string;
+  /** True when this pin points at an annotation id that was erased (a peer's pointer can do that), so Erase stays available to move it on. */
+  readonly entityErased: boolean;
   readonly label: string;
   readonly note: Note | undefined;
 }): React.JSX.Element {
@@ -252,7 +256,9 @@ function PinAnnotation({
           cause instanceof AnnotationRefusedError
             ? cause.refusal === 'too-long'
               ? t.annotationTooLong(max)
-              : t.annotationInvalid
+              : cause.refusal === 'erased'
+                ? t.annotationErasedElsewhere
+                : t.annotationInvalid
             : `${t.pinFailed} ${cause instanceof Error ? cause.message : String(cause)}`;
         setStatus({ kind: 'error', text });
       });
@@ -300,7 +306,7 @@ function PinAnnotation({
         >
           {t.annotationSave}
         </Button>
-        {note !== undefined && (
+        {(note !== undefined || entityErased) && (
           <Button
             variant="danger"
             size="compact"

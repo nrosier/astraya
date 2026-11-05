@@ -22,10 +22,12 @@ import {
   assertPinMutation,
   pinAnnotationPointer,
   pinCreate,
+  pinErasedRevision,
   pinIdentity,
   pinTargetOf,
 } from '../src/store/pins.js';
 import { stageResearchRestore, buildResearchExport } from '../src/domain/research-export.js';
+import { allRecords, openDatabase, putRecords } from '../src/store/db.js';
 import { openStore, type Store } from '../src/store/store.js';
 
 const T0 = 1_780_963_200_000;
@@ -237,6 +239,162 @@ describe('Store.eraseAnnotation', () => {
     await store.eraseAnnotation(id);
     expect(JSON.stringify(store.outgoing())).not.toContain('edit');
     expect(JSON.stringify(store.outgoing())).not.toContain('base');
+  });
+});
+
+describe('an erase that is cut short, a stale save and a peer’s pin purge (#1195 review)', () => {
+  const PIN = 'k-abcdefghijklmnop';
+  let open: Store[] = [];
+  let counter = 0;
+
+  afterEach(() => {
+    for (const store of open) store.close();
+    open = [];
+  });
+
+  async function reopen(name: string): Promise<Store> {
+    let millis = T0 + 1_000_000;
+    const store = await openStore({
+      name,
+      now: () => {
+        millis += 1000;
+        return millis;
+      },
+    });
+    open.push(store);
+    return store;
+  }
+
+  function freshName(): string {
+    counter += 1;
+    return `astraya-annotation-erase-review-${String(counter)}`;
+  }
+
+  it('refuses a save onto an annotation id that was erased, naming the reason', async () => {
+    const store = await reopen(freshName());
+    const id = await derivedPinId(pinIdentity(TARGET));
+    await store.mutate(pinCreate(id, TARGET));
+    await store.mutate([annotationRevision(id, newId('r'), 'before', [])]);
+    await store.eraseAnnotation(id);
+    // The write a stale Save click or an older build would make at the pin's own, now erased, id.
+    await expect(store.mutate([annotationRevision(id, newId('r'), 'after', [])])).rejects.toMatchObject({
+      refusal: 'erased',
+    });
+    expect(JSON.stringify(store.outgoing())).not.toContain('after');
+  });
+
+  it('strips erased records left on disk by a cut-short erase when the store is opened again', async () => {
+    const name = freshName();
+    // The state a tab leaves if it dies after committing the marker and before stripping: both are on disk.
+    const records = logOf('a1b2c3d4e5f60718', [
+      [annotationRevision(PIN, 'r-aaaaaaaaaaaaaaaa', 'private words', []), T0],
+      [{ entity: ANNOTATION_ENTITY, entityId: PIN, field: 'purged', value: true }, T0 + 1000],
+    ]);
+    const db = await openDatabase(name);
+    await putRecords(db, records);
+    db.close();
+
+    const store = await reopen(name);
+    expect(JSON.stringify(store.outgoing())).not.toContain('private words');
+    expect(store.state.erased.annotations.has(PIN)).toBe(true);
+    store.close();
+    open = [];
+    const check = await openDatabase(name);
+    const left = await allRecords(check);
+    check.close();
+    expect(JSON.stringify(left)).not.toContain('private words');
+    expect(left.length).toBe(1);
+  });
+
+  it('a peer’s pin purge marker also erases the annotation the pin points at', async () => {
+    const store = await reopen(freshName());
+    const peerPinMarker: Mutation = { entity: PIN_ENTITY, entityId: PIN, field: 'purged', value: true };
+    const earlier = logOf('b000000000000002', [
+      ...pinCreate(PIN, TARGET).map((m, i) => [m, T0 + i * 100] as const),
+      [pinAnnotationPointer(PIN, N1), T0 + 500],
+      [annotationRevision(N1, 'r-bbbbbbbbbbbbbbbb', 'pointed note', []), T0 + 600],
+    ]);
+    await store.receive(earlier);
+    expect(store.state.annotations.get(PIN)?.content).toBe('pointed note');
+
+    await store.receive(logOf('b000000000000003', [[peerPinMarker, T0 + 900_000]]));
+
+    expect(store.state.pins.has(PIN)).toBe(false);
+    expect(store.state.erased.annotations.has(N1)).toBe(true);
+    expect(JSON.stringify(store.outgoing())).not.toContain('pointed note');
+  });
+});
+
+describe('remembering erased versions (#1195, X4)', () => {
+  const PIN = 'k-abcdefghijklmnop';
+  const GONE = 'r-aaaaaaaaaaaaaaaa';
+  const KEPT = 'r-bbbbbbbbbbbbbbbb';
+
+  it('the pin guard accepts erased/<r- id> with true and refuses other shapes', () => {
+    expect(() => {
+      assertPinMutation(pinErasedRevision(PIN, GONE));
+    }).not.toThrow();
+    for (const bad of [
+      { entity: PIN_ENTITY, entityId: PIN, field: `erased/${GONE}`, value: false },
+      { entity: PIN_ENTITY, entityId: PIN, field: 'erased/oops', value: true },
+      { entity: PIN_ENTITY, entityId: PIN, field: `erased/${N1}`, value: true },
+    ]) {
+      expect(() => {
+        assertPinMutation(bad);
+      }).toThrow(PinRefusedError);
+    }
+  });
+
+  it('folds the erased ids of every pin into State.erasedRevisions', () => {
+    const state = fold(logOf('a1b2c3d4e5f60718', [[pinErasedRevision(PIN, GONE), T0]]));
+    expect(state.erasedRevisions.has(GONE)).toBe(true);
+    expect(state.erasedRevisions.has(KEPT)).toBe(false);
+  });
+
+  it('an erase records the id of every version, forks included, and never the text', async () => {
+    let millis = T0;
+    const store = await openStore({
+      name: 'astraya-erased-ids-test',
+      now: () => {
+        millis += 1000;
+        return millis;
+      },
+    });
+    try {
+      const id = await derivedPinId(pinIdentity(TARGET));
+      await store.mutate(pinCreate(id, TARGET));
+      await store.mutate([annotationRevision(id, GONE, 'secret one', [])]);
+      await store.mutate([annotationRevision(id, KEPT, 'secret two', [GONE])]);
+      await store.eraseAnnotation(id);
+      expect(store.state.erasedRevisions.has(GONE)).toBe(true);
+      expect(store.state.erasedRevisions.has(KEPT)).toBe(true);
+      expect(JSON.stringify(store.outgoing())).not.toContain('secret');
+    } finally {
+      store.close();
+    }
+  });
+
+  it('a restore skips an erased version, counts it, and still adds the others', () => {
+    const state = fold(
+      logOf('a1b2c3d4e5f60718', [
+        ...pinCreate(PIN, TARGET).map((m, i) => [m, T0 + i * 100] as const),
+        [pinAnnotationPointer(PIN, N1), T0 + 2000],
+        [pinErasedRevision(PIN, GONE), T0 + 2100],
+      ]),
+    );
+    const fileState = fold(
+      logOf('b000000000000002', [
+        ...pinCreate(PIN, TARGET).map((m, i) => [m, T0 + i * 100] as const),
+        [annotationRevision(PIN, GONE, 'erased on purpose', []), T0 + 1000],
+        [annotationRevision(PIN, KEPT, 'never erased', [GONE]), T0 + 1100],
+      ]),
+    );
+    const research = buildResearchExport(fileState);
+    if (research === undefined) throw new Error('expected a research block');
+    const preview = stageResearchRestore(research, state);
+    expect(preview.erasedVersionsSkipped).toBe(1);
+    expect(preview.newAnnotationRevisions).toBe(1);
+    expect(preview.mutations).toEqual([annotationRevision(N1, KEPT, 'never erased', [GONE])]);
   });
 });
 

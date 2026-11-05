@@ -451,7 +451,7 @@ Owner decisions A1 and A2 on the issue:
 
 No change to the envelope, `OP_VERSION`, `ops.ts`, `oplog.ts`, `hlc.ts`, the sync engine or the relay; the change is the
 kind in `KNOWN_ENTITIES` (every device rebuilds its snapshot once), `materialise`, one guard call in `Store.write()` and
-`src/store/annotations.ts`. The write guard allows only `rev/<r- id>` on a `k-` id; `deleted` and `purged` are refused.
+`src/store/annotations.ts`. The write guard allows only `rev/<r- id>` on a `k-` id (the pin's own) or an `n-` id (after an erase, #1195); `deleted` and `purged` are refused.
 
 **Erase (#1195, decisions X1-X3, 2026-11-06).** A reader can erase an annotation for good. A purge marker on the pin's
 own id would block annotating that pin again, so the first annotation of a pin lives at the pin's id and an erase moves
@@ -461,8 +461,27 @@ the pin on: `Store.eraseAnnotation(pinId)` commits, in one batch, a purge marker
 annotation still uses the pin's id, so two devices writing it still fork; only after an erase does last pointer win when
 two devices write the pointer at once, and the losing note stays in the log but is not shown. `Store.purge` still
 refuses `annotation`, so a bare marker cannot be written. Restore writes revisions where the pin's annotation lives now
-and never onto an erased id. Confirmed by a dialog that says it cannot be undone. **Known gap:** a peer's pin purge
-marker (only a non-conforming client can send one) erases the annotation at the pin's id but not one at an `n-` id.
+and never onto an erased id. Confirmed by a dialog that says it cannot be undone.
+
+Rules from the `db-integrity` review of PR #1197:
+
+- **A write onto an erased annotation id is refused** (`Store.write` checks `State.erased.annotations`), because the log
+  would accept it, the fold would hide it and the relay would skip it, leaving the text on the device with no marker
+  left to strip it. The UI says the note was erased on another device.
+- **Erased versions are remembered by id (X4).** An erase writes `erased/<revisionId>` on the pin for every version it
+  removes (ids only, never text), in the same commit as the pointer and the marker. A restore skips those ids and counts
+  them in the preview, so an older file cannot bring back what the reader erased on purpose.
+- **A cut-short erase is finished at open.** Any entity holding a purge marker and anything else is stripped when the
+  store opens, so a tab that died between the commit and the strip leaves no erased text on disk. The same sweep cleans
+  a record that reached the log after its entity was purged.
+- **A peer's pin purge marker also erases the annotation the pin points at**, including one at an `n-` id: the receive
+  repair reads the pin's pointer before the strip and adds the pointed annotation to the markers it writes and strips.
+- **Limits.** An older build writes annotations at the pin's own id; after an erase that id is purged and deny-listed
+  on the relay, so such a build can no longer annotate that pin: its notes are skipped by the relay and stay on that
+  device. If two devices erase the same pin before they sync, the later pointer wins and a note written at the other
+  device's fresh id stays in the log, hidden, not exported and not erasable from the UI. A peer's pointer to an erased id
+  keeps the Erase button available so the reader can move the pin on. The erase dialog says it deletes the versions
+  this device holds.
 
 Rules from the `db-integrity` review of PR #1193:
 

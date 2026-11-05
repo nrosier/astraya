@@ -22,13 +22,18 @@
  * @module store/pins
  * @purpose Folds pinned event-search results (one atomic target register) into readable or unreadable entries, derives pin ids, and builds and refuses the mutations written to the op-log.
  * @conventions The target is one last-write-wins register carrying its own schema `version`; the id is derived from the identity so pinning is idempotent across devices; an unreadable pin is listed and kept, never defaulted or hidden; fold functions never throw; refusals carry a code rather than prose; the list sorts by instant then by a plain code-unit id comparison so the order is the same on every device.
- * @exports PIN_ENTITY, PIN_TARGET_FIELD, readPinTarget, pinRestore, pinAnnotationPointer, PinTarget, PinUnreadable, Pin, PinRefusal, PinRefusedError, pinIdentity, pinTargetOf, foldPin, pinCreate, assertPinMutation, sortedPins
+ * @exports PIN_ENTITY, PIN_TARGET_FIELD, readPinTarget, pinRestore, pinAnnotationPointer, pinErasedRevision, PinTarget, PinUnreadable, Pin, PinRefusal, PinRefusedError, pinIdentity, pinTargetOf, foldPin, pinCreate, assertPinMutation, sortedPins
  */
 import { ASPECTS } from '../astrology/aspects.js';
 import { BODIES } from '../astrology/bodies.js';
 import type { EventSearchResult } from '../domain/event-search.js';
 import { isId } from '../domain/id.js';
-import { ANNOTATION_POINTER_FIELD, readAnnotationPointer } from './annotations.js';
+import {
+  ANNOTATION_POINTER_FIELD,
+  ERASED_REVISION_PREFIX,
+  readAnnotationPointer,
+  readErasedRevisionField,
+} from './annotations.js';
 import type { NoteFieldRegister } from './notes.js';
 import type { Mutation } from './oplog.js';
 import { EVENT_SEARCH_KINDS } from './saved-queries.js';
@@ -197,6 +202,11 @@ export function pinAnnotationPointer(pinId: string, annotationId: string): Mutat
   return { entity: PIN_ENTITY, entityId: pinId, field: ANNOTATION_POINTER_FIELD, value: annotationId };
 }
 
+/** Remembers that a revision of the pin's annotation was erased on purpose (#1195): its id only, never the text. */
+export function pinErasedRevision(pinId: string, revisionId: string): Mutation {
+  return { entity: PIN_ENTITY, entityId: pinId, field: `${ERASED_REVISION_PREFIX}${revisionId}`, value: true };
+}
+
 /**
  * The write for restoring a pin from a file (#1194): the target alone, with no `deleted` write. A restore is not a
  * deliberate pin click, so it must not carry a fresh `deleted: false` that would outrank an unpin made on another
@@ -209,7 +219,7 @@ export function pinRestore(id: string, target: PinTarget): Mutation {
 /**
  * Refuse a pin mutation the store must not write. Other entities pass through untouched.
  *
- * Allows only `target` (a readable shape), `deleted` (a boolean) and `annotation` (an `n-` annotation id, #1195). Every other field, `purged` included, is
+ * Allows only `target` (a readable shape), `deleted` (a boolean) and `annotation` (an `n-` annotation id) and `erased/<r- id>` (true), the last two from #1195. Every other field, `purged` included, is
  * refused: a purge goes through `Store.purge`, which appends directly. Covers `mutate`, `remove` and `restore` only.
  */
 export function assertPinMutation(mutation: Mutation): void {
@@ -226,6 +236,7 @@ export function assertPinMutation(mutation: Mutation): void {
       if (readAnnotationPointer(mutation.value) === undefined) throw new PinRefusedError('invalid');
       return;
     default:
+      if (readErasedRevisionField(mutation.field) !== undefined && mutation.value === true) return;
       throw new PinRefusedError('invalid');
   }
 }

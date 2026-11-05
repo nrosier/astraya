@@ -47,7 +47,13 @@ import {
   type Note,
 } from './notes.js';
 import { decode, type JsonValue, type OpRecord } from './ops.js';
-import { ANNOTATION_ENTITY, ANNOTATION_POINTER_FIELD, foldAnnotation, readAnnotationPointer } from './annotations.js';
+import {
+  ANNOTATION_ENTITY,
+  ANNOTATION_POINTER_FIELD,
+  foldAnnotation,
+  readAnnotationPointer,
+  readErasedRevisionField,
+} from './annotations.js';
 import { foldPin, PIN_ENTITY, type Pin } from './pins.js';
 import { foldSavedQuery, SAVED_QUERY_ENTITY, type SavedQuery } from './saved-queries.js';
 
@@ -228,6 +234,11 @@ export interface State {
    */
   readonly annotationEntities: ReadonlyMap<string, string>;
   /**
+   * Ids of annotation revisions the reader erased on purpose (#1195), ids only. A restore skips them so an older file
+   * cannot bring an erased version back.
+   */
+  readonly erasedRevisions: ReadonlySet<string>;
+  /**
    * Ids a purge marker has erased (#1194). They are in no list, but a restore must know them: writing their data back
    * would put erased text on disk again, where nothing strips it.
    */
@@ -332,9 +343,14 @@ export function materialise(registers: Registers): State {
   ]);
   const annotations = new Map<string, Note>();
   const annotationEntities = new Map<string, string>();
+  const erasedRevisions = new Set<string>();
   for (const pinId of annotatedPinIds) {
     const pinFields = pinRegisters[pinId];
     if (pinFields !== undefined && isPurged(pinFields)) continue;
+    for (const [field, register] of Object.entries(pinFields ?? {})) {
+      const revisionId = readErasedRevisionField(field);
+      if (revisionId !== undefined && register.value === true) erasedRevisions.add(revisionId);
+    }
     const pointer = readAnnotationPointer(pinFields?.[ANNOTATION_POINTER_FIELD]?.value);
     if (pointer !== undefined) annotationEntities.set(pinId, pointer);
     const entityId = pointer ?? pinId;
@@ -355,6 +371,7 @@ export function materialise(registers: Registers): State {
     pins,
     annotations,
     annotationEntities,
+    erasedRevisions,
     erased: { savedQueries: erasedQueries, pins: erasedPins, annotations: erasedAnnotations },
     // Any other entity id under `account` is ignored: every device writes the one constant id.
     account: foldAccount(registers[ACCOUNT_ENTITY]?.[ACCOUNT_ENTITY_ID]),

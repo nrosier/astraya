@@ -29,7 +29,7 @@
  * @module store/annotations
  * @purpose Folds annotations on pinned events (immutable text revisions keyed by pin id) into a head with forks, and builds and refuses the mutations written to the op-log.
  * @conventions The entity id is the pin's `k-` id and the only fields are `rev/<revisionId>`; every version is kept and a fork is resolved by naming all leaves as parents; clearing writes an empty revision; fold functions never throw; refusals carry a code rather than prose; the text shares the 50,000 code-point note limit.
- * @exports ANNOTATION_ENTITY, ANNOTATION_POINTER_FIELD, readAnnotationPointer, ANNOTATION_MAX_CHARACTERS, AnnotationRefusal, AnnotationRefusedError, foldAnnotation, annotationRevision, assertAnnotationMutation
+ * @exports ERASED_REVISION_PREFIX, readErasedRevisionField, assertAnnotationNotErased, ANNOTATION_ENTITY, ANNOTATION_POINTER_FIELD, readAnnotationPointer, ANNOTATION_MAX_CHARACTERS, AnnotationRefusal, AnnotationRefusedError, foldAnnotation, annotationRevision, assertAnnotationMutation
  */
 import { isId } from '../domain/id.js';
 import { NOTE_MAX_CHARACTERS, foldBirthNote, isNoteTooLong, readBody, type Note, type NoteFields } from './notes.js';
@@ -44,13 +44,27 @@ export const ANNOTATION_ENTITY = 'annotation';
 /** The pin register that points at the pin's current annotation id after an erase. Absent means the pin's own id. */
 export const ANNOTATION_POINTER_FIELD = 'annotation';
 
+/**
+ * The pin fields that remember an erased revision, `erased/<revisionId>` (#1195, decision X4). Only the id is kept,
+ * never the text, so a restore of an older file can skip a version the reader erased on purpose. One field per id
+ * makes the set grow-only: two devices erasing at once both survive.
+ */
+export const ERASED_REVISION_PREFIX = 'erased/';
+
+/** The revision id an `erased/<id>` pin field names, or undefined when the field is something else. */
+export function readErasedRevisionField(field: string): string | undefined {
+  if (!field.startsWith(ERASED_REVISION_PREFIX)) return undefined;
+  const id = field.slice(ERASED_REVISION_PREFIX.length);
+  return isId(id) && id.startsWith('r-') ? id : undefined;
+}
+
 /** A pointer value as this build reads it: an `n-` annotation id, or undefined for anything else. */
 export function readAnnotationPointer(value: unknown): string | undefined {
   return isId(value) && value.startsWith('n-') ? value : undefined;
 }
 
 /** Why an annotation mutation was refused. A code, not prose, so the UI owns the wording. */
-export type AnnotationRefusal = 'invalid' | 'too-long';
+export type AnnotationRefusal = 'invalid' | 'too-long' | 'erased';
 
 export class AnnotationRefusedError extends Error {
   readonly refusal: AnnotationRefusal;
@@ -83,6 +97,17 @@ export function annotationRevision(
     field: `rev/${revisionId}`,
     value: { text, parents: [...parents] },
   };
+}
+
+/**
+ * Refuse a revision written onto an annotation id that a purge marker has erased (#1195). The write would be accepted by
+ * the log, hidden by the fold and skipped by the relay, leaving the text on this device with no marker left to strip
+ * it. `erased` is `State.erased.annotations`. Other entities and other fields pass through.
+ */
+export function assertAnnotationNotErased(mutation: Mutation, erased: ReadonlySet<string>): void {
+  if (mutation.entity === ANNOTATION_ENTITY && erased.has(mutation.entityId)) {
+    throw new AnnotationRefusedError('erased');
+  }
 }
 
 /**

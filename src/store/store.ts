@@ -46,8 +46,15 @@ import {
 } from './account.js';
 import { newId } from '../domain/id.js';
 import { assertNoteMutation, entitiesPurgedWith } from './notes.js';
-import { ANNOTATION_ENTITY, AnnotationRefusedError, assertAnnotationMutation } from './annotations.js';
-import { PIN_ENTITY, PinRefusedError, assertPinMutation, pinAnnotationPointer } from './pins.js';
+import {
+  ANNOTATION_ENTITY,
+  ANNOTATION_POINTER_FIELD,
+  AnnotationRefusedError,
+  assertAnnotationMutation,
+  assertAnnotationNotErased,
+  readAnnotationPointer,
+} from './annotations.js';
+import { PIN_ENTITY, PinRefusedError, assertPinMutation, pinAnnotationPointer, pinErasedRevision } from './pins.js';
 import { assertSavedQueryMutation } from './saved-queries.js';
 import { append, appendAt, emptyLog, latest, purgeEntity, receiveRecords, since } from './oplog.js';
 import { MAX_COUNTER, createClock, encodeHlc, isNodeId, randomNodeId, receive } from './hlc.js';
@@ -379,6 +386,7 @@ export async function openStore(options: StoreOptions = {}): Promise<Store> {
         assertSavedQueryMutation(mutation);
         assertPinMutation(mutation);
         assertAnnotationMutation(mutation);
+        assertAnnotationNotErased(mutation, state.erased.annotations);
         assertAccountMutation(mutation);
       }
       let next = log;
@@ -472,24 +480,50 @@ export async function openStore(options: StoreOptions = {}): Promise<Store> {
         // the note rows and its deny-list would stay empty for them. Append the missing ones here, the
         // same fan-out `purge` writes locally, so they sync and the server erases those rows.
         for (const { entity, entityId } of purgedEntities.values()) {
-          const missing = entitiesPurgedWith(entity).filter((kind) => !hasPurgeMarker(log, kind, entityId));
+          const targets = entitiesPurgedWith(entity).map((kind) => ({ kind, id: entityId }));
+          // A purged pin takes the annotation its pointer names with it, even one at a fresh `n-` id (#1195). The
+          // pointer is read before the strip below removes it.
+          if (entity === PIN_ENTITY) {
+            const pointed = readAnnotationPointer(registers[PIN_ENTITY]?.[entityId]?.[ANNOTATION_POINTER_FIELD]?.value);
+            if (pointed !== undefined) targets.push({ kind: ANNOTATION_ENTITY, id: pointed });
+          }
+          const missing = targets.filter((target) => !hasPurgeMarker(log, target.kind, target.id));
           if (missing.length > 0) {
             const written: OpRecord[] = [];
             let next = log;
-            for (const kind of missing) {
-              const appended = append(next, { entity: kind, entityId, field: PURGED_FIELD, value: true }, now());
+            for (const target of missing) {
+              const appended = append(
+                next,
+                { entity: target.kind, entityId: target.id, field: PURGED_FIELD, value: true },
+                now(),
+              );
               next = appended.log;
               written.push(appended.record);
             }
             await commitRecords(next, written);
           }
-          for (const kind of entitiesPurgedWith(entity)) await stripEntity(kind, entityId);
+          for (const target of targets) await stripEntity(target.kind, target.id);
         }
       } else {
         log = result.log;
       }
       return { added: result.added, duplicates: result.duplicates, rejected: result.rejected, drift: result.drift };
     });
+  }
+
+  // A strip that did not finish (the tab died after a purge marker was committed, #1195) leaves the entity's other records
+  // on disk, hidden by the fold, and nothing would ever strip them again. So at open, any entity that holds a purge marker
+  // and anything else is stripped now. A record that reached the log after its entity was purged is cleaned the same way.
+  if (tabLock.writable) {
+    const unstripped: { readonly entity: string; readonly entityId: string }[] = [];
+    for (const [entity, byId] of Object.entries(registers)) {
+      if (entity === ACCOUNT_ENTITY) continue;
+      for (const [entityId, fields] of Object.entries(byId)) {
+        if (fields[PURGED_FIELD]?.value === true && Object.keys(fields).length > 1)
+          unstripped.push({ entity, entityId });
+      }
+    }
+    for (const { entity, entityId } of unstripped) await stripEntity(entity, entityId);
   }
 
   return {
@@ -549,13 +583,22 @@ export async function openStore(options: StoreOptions = {}): Promise<Store> {
         const entityId = state.annotationEntities.get(pinId) ?? pinId;
         const pointer = pinAnnotationPointer(pinId, newId('n'));
         assertPinMutation(pointer);
-        const first = append(log, pointer, now());
-        const second = append(
-          first.log,
+        // The erased revisions' ids are remembered (ids only, never text) so a restore of an older file cannot bring a
+        // version back; they go in the same commit as the pointer and the marker.
+        const written: OpRecord[] = [];
+        let next = log;
+        const steps: readonly Mutation[] = [
+          pointer,
+          ...(state.annotations.get(pinId)?.revisions ?? []).map((revision) => pinErasedRevision(pinId, revision.id)),
           { entity: ANNOTATION_ENTITY, entityId, field: PURGED_FIELD, value: true },
-          now(),
-        );
-        await commitRecords(second.log, [first.record, second.record]);
+        ];
+        for (const step of steps) {
+          if (step.entity === PIN_ENTITY) assertPinMutation(step);
+          const appended = append(next, step, now());
+          next = appended.log;
+          written.push(appended.record);
+        }
+        await commitRecords(next, written);
         await stripEntity(ANNOTATION_ENTITY, entityId);
       }),
     outgoing: (cursor) => since(log, cursor),
