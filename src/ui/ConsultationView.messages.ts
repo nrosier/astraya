@@ -9,8 +9,10 @@
  * @exports consultationViewMessages
  */
 const en = {
-  // The title is the feature (#800 decision, 2026-10-30); the person sits in the muted basis line.
+  // Person-first title (#1064 decision, 2026-11-05, supersedes #800): the feature and the subject, as chartTitle does.
+  // `heading` is the title when there is no name.
   heading: 'Consultation',
+  titleWithName: (name: string) => `${name}’s Consultation`,
   fallback: 'Consultation',
   viewWheel: 'View Chart Wheel',
   groupCount: (count: number) => `${String(count)} active`,
@@ -109,6 +111,7 @@ const en = {
 
 const nl: typeof en = {
   heading: 'Consultatie',
+  titleWithName: (name: string) => `Consultatie van ${name}`,
   fallback: 'Consultatie',
   viewWheel: 'Horoscoopwiel bekijken',
   groupCount: (count: number) => `${String(count)} actief`,
