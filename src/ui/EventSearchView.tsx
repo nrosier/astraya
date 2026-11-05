@@ -272,16 +272,15 @@ export function EventSearchView(): React.JSX.Element {
               {t.searchButton}
             </Button>
           </div>
+          <SavedQueries
+            parameters={parameters}
+            kindLabels={t.kindLabels}
+            onOpen={(opened) => {
+              setParameters(opened);
+              setResult({ kind: 'idle' });
+            }}
+          />
         </section>
-
-        <SavedQueries
-          parameters={parameters}
-          kindLabels={t.kindLabels}
-          onOpen={(opened) => {
-            setParameters(opened);
-            setResult({ kind: 'idle' });
-          }}
-        />
 
         <aside className="tool-card tool-panel" aria-labelledby="event-search-panel-heading">
           <h2 id="event-search-panel-heading">{t.panelHeading}</h2>
