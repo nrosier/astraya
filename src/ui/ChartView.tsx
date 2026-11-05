@@ -1057,12 +1057,6 @@ export function ChartDataView({
         <div className="chart-workbench-shell">
           <div className="chart-workbench">
             <div className="chart-workbench-dial">
-              <AspectFamilyControls
-                families={aspectFamilies}
-                onChange={changeFamilies}
-                presetKey={presetKey}
-                onPreset={choosePreset}
-              />
               <p className="hint chart-wheel-hint">{t.wheelClickHint}</p>
               <div
                 ref={wheelRef}
@@ -1073,6 +1067,12 @@ export function ChartDataView({
                 dangerouslySetInnerHTML={{ __html: wheelMarkup }}
                 onClick={handleWheelClick}
                 onKeyDown={handleWheelKeyDown}
+              />
+              <AspectFamilyControls
+                families={aspectFamilies}
+                onChange={changeFamilies}
+                presetKey={presetKey}
+                onPreset={choosePreset}
               />
             </div>
             <SelectionInspector
