@@ -4876,7 +4876,7 @@ svg text.chart-symbol-text-unicode {
   border-radius: var(--radius-sm);
   background: var(--surface);
 }
-.focus-interpretation h4 {
+.focus-interpretation h3 {
   margin: 0 0 var(--space-2);
   color: var(--accent);
   font-size: 0.95rem;
@@ -4887,7 +4887,7 @@ svg text.chart-symbol-text-unicode {
   color: var(--muted);
   font-size: 0.85rem;
 }
-.focus-interpretation h5 {
+.focus-interpretation h4 {
   margin: var(--space-3) 0 var(--space-1);
   font-size: 0.9rem;
 }
