@@ -38,7 +38,7 @@ describe('StatusMessage (#513)', () => {
   });
 
   // #1162: these screens must not hand-roll a live-region paragraph; a `<p>` carrying `role=` is the hand-rolled form.
-  const HAND_ROLLED_ROLE_PARAGRAPH = /<p\b(?:[^>]|\n)*?\brole=/;
+  const HAND_ROLLED_ROLE_PARAGRAPH = /<p\b[^>]*\brole=/;
 
   it('detects a hand-rolled role paragraph (self-check of the pattern)', () => {
     expect(HAND_ROLLED_ROLE_PARAGRAPH.test('<p role="alert">x</p>')).toBe(true);
