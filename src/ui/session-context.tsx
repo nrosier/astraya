@@ -5,13 +5,22 @@
  */
 /**
  * @module ui/session-context
- * @purpose Owns which per-account IndexedDB store is open (anonymous vs. a signed-in account's own), the sync engine's lifecycle, OIDC/password sign-in and sign-out, and the one-time "adopt this device's anonymous data" prompt (#109).
- * @conventions React context + provider (SessionProvider); handles offline-boot (can't tell signed-in from signed-out, falls back to the last-used store), server-side session invalidation (handleUnauthorized closes the store rather than leaving it open across accounts, per ADR 0002's cross-account data-bleed concern), and OIDC PKCE completion via oidc-pkce.js.
+ * @purpose Owns which per-account IndexedDB store is open (anonymous vs. a signed-in account's own), the sync engine's lifecycle, OIDC/password sign-in and sign-out, the one-time "adopt this device's anonymous data" prompt (#109), and which store the account preferences follow (#1066).
+ * @conventions React context + provider (SessionProvider); handles offline-boot (can't tell signed-in from signed-out, falls back to the last-used store), server-side session invalidation (handleUnauthorized closes the store rather than leaving it open across accounts, per ADR 0002's cross-account data-bleed concern), and OIDC PKCE completion via oidc-pkce.js; every store that becomes active goes through `ready`, which binds the account preferences to it (#1066); adoption never carries `account` records, which reach an account only through the sign-in reconciliation.
  * @exports removeAccountData, SessionProvider, useStoreStatus, useSyncEngine, useSession, useSessionUserOrUndefined, StoreStatus, AdoptionPrompt
  */
 import { clearNoteJournalsForDb } from './use-note-autosave.js';
 import { createContext, useContext, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { openStore } from '../store/store.js';
+import { DB_NAME } from '../store/db.js';
+import { withoutAccountRecords, type AccountRegisters } from '../store/account.js';
+import {
+  bindAccountPreferences,
+  captureSignInCandidates,
+  forgetAccountPreferencesCache,
+  persistSignInCandidates,
+  unbindAccountPreferences,
+} from './account-preferences.js';
 import { exchangeOidcCode, login, logout, me, setup as apiSetup } from '../sync/auth-client.js';
 import { createSyncEngine, pushRecords } from '../sync/engine.js';
 import { consumeOidcCallback } from './oidc-pkce.js';
@@ -66,6 +75,8 @@ export function removeAccountData(userId: string): Promise<void> {
     request.onsuccess = () => {
       // Pending note text is keyed by this database name, so it goes with the database (#919).
       if (typeof localStorage !== 'undefined') clearNoteJournalsForDb(localStorage, accountDbName(userId));
+      // So does the account preferences' first-paint cache (#1066).
+      forgetAccountPreferencesCache(accountDbName(userId));
       resolve();
     };
     request.onerror = () => {
@@ -97,11 +108,22 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
   // store/engine synchronously, including inside async flows a re-render doesn't wait for.
   const storeRef = useRef<Store | undefined>(undefined);
   const engineRef = useRef<SyncEngine | undefined>(undefined);
-  const pendingAdoptionRef = useRef<{ anonymousStore: Store; user: AuthUser } | undefined>(undefined);
+  const pendingAdoptionRef = useRef<
+    { anonymousStore: Store; user: AuthUser; candidates: AccountRegisters } | undefined
+  >(undefined);
   // Which account's store is left open, unattended, after `handleUnauthorized` below — read by
   // `signIn` so re-authenticating as that same account resumes it instead of misreading an
   // authenticated account's own store as the anonymous one adoption expects.
   const orphanedUserIdRef = useRef<string | undefined>(undefined);
+
+  /**
+   * Every store that becomes the active one goes through here (#1066, db-integrity N3): the account preferences are
+   * bound to it before any screen renders it, so no branch can show one store while reading another's preferences.
+   */
+  function ready(store: Store): void {
+    bindAccountPreferences(store);
+    setStatus({ kind: 'ready', store });
+  }
 
   /**
    * The server no longer honours this device's session (#106) — forget the account locally.
@@ -121,6 +143,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
     orphanedUserIdRef.current = userId;
     engineRef.current?.close();
     engineRef.current = undefined;
+    // The account preferences stop following this store, and its first-paint cache leaves the browser (#1066).
+    unbindAccountPreferences();
+    forgetAccountPreferencesCache(accountDbName(userId));
     storeRef.current?.close();
     storeRef.current = undefined;
     setEngine(undefined);
@@ -155,7 +180,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
           return;
         }
         storeRef.current = anonymous;
-        setStatus({ kind: 'ready', store: anonymous });
+        ready(anonymous);
         return;
       }
 
@@ -181,7 +206,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
             return;
           }
           storeRef.current = anonymous;
-          setStatus({ kind: 'ready', store: anonymous });
+          ready(anonymous);
           await finishOidcSignIn(oidcUser);
           return;
         }
@@ -207,7 +232,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
             return;
           }
           storeRef.current = anonymous;
-          setStatus({ kind: 'ready', store: anonymous });
+          ready(anonymous);
         } else if (!offline && authUser !== undefined) {
           localStorage.setItem(LAST_USER_KEY, authUser.id);
           const opened = await openAccountStore(authUser, true, () => {
@@ -220,7 +245,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
           }
           storeRef.current = opened.store;
           engineRef.current = opened.engine;
-          setStatus({ kind: 'ready', store: opened.store });
+          ready(opened.store);
           setUser(authUser);
           setEngine(opened.engine);
         } else {
@@ -234,7 +259,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
             return;
           }
           storeRef.current = store;
-          setStatus({ kind: 'ready', store });
+          ready(store);
         }
       } catch (error) {
         if (!isCancelled()) {
@@ -280,7 +305,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
     };
   }, [user]);
 
-  async function switchTo(authUser: AuthUser, createEngine: boolean, adopted: readonly OpRecord[]): Promise<void> {
+  async function switchTo(
+    authUser: AuthUser,
+    createEngine: boolean,
+    adopted: readonly OpRecord[],
+    candidates: AccountRegisters = {},
+  ): Promise<void> {
     // The engine is created only after `receive` resolves (#321), not folded into a single
     // `openAccountStore(..., true, ...)` call: created any earlier, it could start its own
     // first push/pull tick against a store that hasn't yet folded in the adopted anonymous
@@ -292,6 +322,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
     });
     trace('session', 'switchTo: account store opened', { userId: authUser.id, people: opened.store.state.people.size });
     if (adopted.length > 0) await opened.store.receive(adopted);
+    // The signed-out store's preferences are kept in the account store before the signed-out store closes, so they are
+    // offered once after the first sync even if the page reloads first (#1066, ADR 0004 section 3.6).
+    await persistSignInCandidates(opened.store, candidates);
     const engine = createEngine
       ? await createSyncEngine({
           store: opened.store,
@@ -308,7 +341,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
     storeRef.current?.close();
     storeRef.current = opened.store;
     engineRef.current = engine;
-    setStatus({ kind: 'ready', store: opened.store });
+    ready(opened.store);
     setUser(authUser);
     setEngine(engine);
     trace('session', 'switchTo: status flipped to ready', { userId: authUser.id });
@@ -340,7 +373,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
         });
         storeRef.current = store;
         engineRef.current = syncEngine;
-        setStatus({ kind: 'ready', store });
+        ready(store);
         setEngine(syncEngine);
         setUser(authUser);
         return;
@@ -356,16 +389,20 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
     const anonymousStore = storeRef.current;
     if (anonymousStore === undefined) throw new Error('signIn was called before any store was open');
 
+    // Preferences reach the account only through the explicit reconciliation, never through adoption, where they
+    // would be pushed raw and last-write-wins would overwrite the account's choice silently (#1066). Only the
+    // signed-out database has candidates: an offline boot can leave a cached account's store open here.
+    const candidates = anonymousStore.dbName === DB_NAME ? captureSignInCandidates(anonymousStore) : {};
     const alreadyDecided = await anonymousStore.getAdoptionDecision();
-    const outgoing = alreadyDecided === undefined ? anonymousStore.outgoing() : [];
+    const outgoing = alreadyDecided === undefined ? withoutAccountRecords(anonymousStore.outgoing()) : [];
 
     if (outgoing.length === 0) {
       if (alreadyDecided === undefined) await anonymousStore.setAdoptionDecision('declined');
-      await switchTo(authUser, true, []);
+      await switchTo(authUser, true, [], candidates);
       return;
     }
 
-    pendingAdoptionRef.current = { anonymousStore, user: authUser };
+    pendingAdoptionRef.current = { anonymousStore, user: authUser, candidates };
     setAdoption({ recordCount: outgoing.length });
   }
 
@@ -383,7 +420,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
     const pending = pendingAdoptionRef.current;
     if (pending === undefined) return;
 
-    const outgoing = pending.anonymousStore.outgoing();
+    const outgoing = withoutAccountRecords(pending.anonymousStore.outgoing());
     if (accept) {
       // The prompt is only cleared once the push actually lands (#321): clearing it first
       // and then having `pushRecords` throw (a network failure mid-adoption) would leave
@@ -395,12 +432,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
       await pending.anonymousStore.setAdoptionDecision(`user:${pending.user.id}`);
       pendingAdoptionRef.current = undefined;
       setAdoption(undefined);
-      await switchTo(pending.user, true, outgoing);
+      await switchTo(pending.user, true, outgoing, pending.candidates);
     } else {
       pendingAdoptionRef.current = undefined;
       setAdoption(undefined);
       await pending.anonymousStore.setAdoptionDecision('declined');
-      await switchTo(pending.user, true, []);
+      await switchTo(pending.user, true, [], pending.candidates);
     }
   }
 
@@ -419,10 +456,15 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
     localStorage.removeItem(LAST_USER_KEY);
     const anonymous = await openStore();
     engineRef.current?.close();
+    // A shared device keeps no account's preferences in browser storage after sign-out (#1066, ADR 0004 section
+    // 3.7); the register stays in the account's database and is bound again on the next sign-in. Nothing is copied
+    // into the signed-out store: it shows its own values, or the defaults (decision Q2).
+    const closing = storeRef.current;
+    if (closing !== undefined && closing.dbName !== DB_NAME) forgetAccountPreferencesCache(closing.dbName);
     storeRef.current?.close();
     storeRef.current = anonymous;
     engineRef.current = undefined;
-    setStatus({ kind: 'ready', store: anonymous });
+    ready(anonymous);
     setUser(undefined);
     setEngine(undefined);
     // Only an OIDC-derived session gets one back (#77) — a real top-level

@@ -7753,6 +7753,15 @@ a.quiet,
   }
 }
 
+/* The account preferences' failed-save message and its Dismiss button, side by side (#1066). */
+.account-preferences-failure {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-block-end: var(--space-3);
+}
+
 /* Comparison view (#886): two charts side by side, one column at the shared 40rem phone breakpoint. */
 .comparison-layout {
   display: grid;

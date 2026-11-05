@@ -5,7 +5,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 **Subdirectory:** `primitives/` — shared UI primitives for the #506 UI/UX overhaul (Button, Field/TextField/NumberField/DateField/Select, Checkbox/Radio/ChoiceGroup/OptionCards, Tooltip). See its own `MAP.md`.
 
 - `About.tsx` + `About.messages.ts` — About/privacy/licence screen, version metadata. Deps: none (static content).
-- `default-calculation-profile.ts` — The saved default calculation profile (device preference, #510) that Preferences edits; a new person receives a copy of it (#806). Deps: `chart/calculation-profiles`.
+- `default-calculation-profile.ts` — The default calculation profile (account preference, #510, #1066) that Preferences edits; a new person receives a copy of it (#806); a view over `account-preferences`. Deps: `./account-preferences`, `store/account`.
 - `online-status.ts` — Hook following the browser's online/offline state, so network-only actions can show the offline result state. Deps: none.
 - `note-autosave.ts` — Pure note autosave state machine (#919): idle, pending, saving, saved, savedLocal, error; 750 ms debounce constant. Deps: none.
 - `use-note-autosave.ts` — Hook over the note state machine (#919): debounced store `mutate`, localStorage journal keyed by database name, flush on pagehide/unmount/reconnect. Deps: `note-autosave`, `store/db`, `store/notes`, `store/store`.
@@ -20,6 +20,9 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `GlossaryText.tsx` — Opt-in prose wrapper (#902): the first mention of each glossary term in one paragraph becomes an inline `GlossaryTerm`; used for report paragraphs and wheel-selection text only. Deps: `GlossaryTerm`, `glossary-match`, `locale`.
 - `glossary-match.ts` — Pure per-locale term matcher (#902): longest phrase first, Unicode word edges, once per paragraph, compiled once per locale. Deps: `astro-glossary.messages`.
 - `GlossaryTerm.messages.ts` — en/nl label of the terms list. Deps: none.
+- `account-preferences.ts` — Account preferences runtime (#1066, ADR 0004): in-memory reads of the bound store's registers, local-first setters with rollback, per-database first-paint cache, one-time legacy capture, sign-in candidates. Deps: `domain/account-preferences`, `store/account`, `store/db`, `domain/calculation-snapshot`.
+- `account-preferences-reconcile.ts` — Hook running the one-time reconciliation of this device's preferences into the open store (after an account's first sync) and exposing the prompt. Deps: `./account-preferences`, `domain/account-preferences`, `session-context`.
+- `AccountPreferencesNotices.tsx` + `AccountPreferencesNotices.messages.ts` — The reconcile prompt (one choice per differing setting), failed-save message and unreadable-setting notice, mounted above every screen (#1066). Deps: `./account-preferences-reconcile`, `./account-preferences`, `primitives/StagedDialog`, `primitives/ChoiceGroup`, `chart/calculation-profiles`.
 - `AccountPanel.tsx` + `AccountPanel.messages.ts` — Staged sign-in dialog (OpenID / local, #781; #651) opened from the profile tile, account adoption, local-data removal; mounts `ProfileTile` (#964). Deps: `session-context`, `sync/auth-client`, `oidc-pkce`, `primitives/StagedDialog`, `ProfileTile`.
 - `AdminNav.tsx` + `AdminNav.messages.ts` — Admin tab strip (users/usage/corpus/candidates) in the shared `ScrollingTabRow` (#818). Deps: `./admin-nav`, `./ScrollingTabRow`, `./primitives/Select`.
 - `AdminPanel.tsx` + `AdminPanel.messages.ts` — User CRUD + AI-usage reporting, as Users and AI usage views. Deps: `sync/admin-client`, `session-context`, `admin-status`.
@@ -114,7 +117,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `ReportView.tsx` + `ReportView.messages.ts` — Report rendering + provenance toggle + section cards, placement badges and a Sabian block (#527, #802) + Tier 2 AI panel + Past interpretations tab (#761). Deps: `interpretation/report`, `interpretation/corpus-client`, `interpretation/tier2-client`, `./degree-symbol-setting`, `./DegreeSymbolSetting`, `./RulershipSetting`, `./primitives/Disclosure`, `./GlossaryTerm`, `./report-placement-badges`, `./primitives/Badge`.
 - `ReturnView.tsx` + `ReturnView.messages.ts` — Solar/lunar return charts (pick year/place/rendering). Deps: `domain/return-chart`.
 - `RulershipSetting.tsx` + `RulershipSetting.messages.ts` — Controlled planetary-rulers control (modern/traditional/both; `value`/`onChange`, #806) for a person, a settings draft or the device default. Deps: `astrology/rulership`, `./primitives/OptionCards`.
-- `settings-registry.ts` — #506/#509 typed registry of every persisted setting's scope/owner/persistence/sync/commit-model, pure metadata (existing modules keep owning values). Deps: none.
+- `settings-registry.ts` — #506/#509 typed registry of every persisted setting's scope/owner/persistence/sync/commit-model, pure metadata (existing modules keep owning values); scope, persistence and sync must agree (#1066). Deps: none.
 - `SetPasswordForm.tsx` + `SetPasswordForm.messages.ts` — One-time-link password set/reset form. Deps: `sync/auth-client`.
 - `SetupForm.tsx` + `SetupForm.messages.ts` — First-boot admin account bootstrap. Deps: `session-context`.
 - `SharedChartView.tsx` + `SharedChartView.messages.ts` — No-account link-only shared-chart screen; its header basis is the sender's, with no Edit link (#1059). Deps: `domain/chart-share`, `domain/chart-compute`, `./calculation-basis`.
@@ -156,7 +159,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `glyph-variant-setting.ts` — Device preference for Uranus/Pluto glyph variants. Deps: `chart/glyph-variants`, `chart/glyph-weight`.
 - `horary.ts` — Horary screen (form parsing + house-system defaults). Deps: `time/types`, `./place-fields`.
 - `last-person.ts` — Remembers most-recently viewed person across app. Deps: localStorage only.
-- `locale.ts` — App-wide UI locale store (en/nl, persisted). Deps: `interpretation/schema`.
+- `locale.ts` — App-wide UI locale (en/nl, an account preference since #1066) and `<html lang>`; a view over `account-preferences`. Deps: `./account-preferences`, `interpretation/schema`.
 - `markdown.tsx` — Dependency-free Markdown subset renderer (headings/lists/links/code). Deps: none.
 - `messages.ts` — Generic `useMessages()` hook for co-located `*.messages.ts`. Deps: `locale`.
 - `moment-labels.ts` — Wording for resolved birth-moment provenance + warnings. Deps: `time/types`.
@@ -179,9 +182,9 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `report-provenance.ts` — Formats report paragraph provenance ("why this text?"). Deps: `astrology/bodies`, `astrology/aspects`, `astrology/signs`, `interpretation/report`.
 - `result-basis-label.ts` — Composes saved-interpretation basis phrase (kind + placement) and the short type label for the Past tab. Deps: `interpretation/result-basis`, `./placement-label`.
 - `route.ts` — Single source of truth for all hash routes (`export-builder` carries `person`, `section`, `view`). Deps: `domain/id`, `./chart-sections`.
-- `rulership-setting.ts` — Device default rulership (modern/traditional/both): what new people start from and person-less screens (Horary, Composite) show (#806). Deps: `astrology/rulership`.
+- `rulership-setting.ts` — Default rulership (modern/traditional/both, an account preference since #1066): what new people start from and person-less screens (Horary, Composite) show (#806). Deps: `./account-preferences`, `astrology/rulership`.
 - `saved-time.ts` — Formats stored interpretation UTC instant as local written-out time. Deps: `interpretation/schema` (Locale type).
-- `session-context.tsx` — Owns account + store lifecycle + auth + sync-engine + anonymous-adoption prompt. Deps: `store/store`, `sync/auth-client`, `sync/engine`, `./oidc-pkce`.
+- `session-context.tsx` — Owns account + store lifecycle + auth + sync-engine + anonymous-adoption prompt; binds the account preferences to every active store and keeps them out of adoption (#1066). Deps: `store/store`, `store/account`, `sync/auth-client`, `sync/engine`, `./oidc-pkce`, `./account-preferences`.
 - `shared.messages.ts` — Common i18n strings reused across many components. Deps: none.
 - `status.messages.ts` — en/nl for sync-status indicator. Deps: none.
 - `status.ts` — Decides sync-status label/tone/detail from sync/persistence/pending state, plus the held-back-notes line (#919). Deps: `store/persist`.

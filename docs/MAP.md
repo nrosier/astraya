@@ -21,6 +21,7 @@ Topic folders:
 - `domain/EXPORT_SCHEMA.md` — Astraya full-export JSON schema reference: shape, compatibility policy, version history (#561). Deps: `src/domain/full-export.ts`, `src/domain/chart-tables.ts`; paired with `schema/astraya-export.schema.json`.
 - `domain/FIXED_STAR_REGISTRY.md` — Fixed-star registry reference: sourcing, epoch, and lineage of the entries in `src/astrology/fixed-star-registry.ts`. Deps: `src/astrology/fixed-star-registry.ts`.
 - `ASTROLOGICAL_DATA_SOURCES.md` — Public astronomical datasets, historical source texts, current Astraya coverage, and adoption/licensing recommendations. Deps: `src/ephemeris/`, `src/astrology/`, upstream catalogues.
+- `ops/ACCOUNT-PREFERENCES-RECOVERY.md` — Operator runbook for a user whose `account`/`preferences` entity the relay deny-listed: signals, the one SQL fix, what not to do (#1066). Deps: `adr/0004-account-scope-settings-sync.md`, `server/ops/purge.ts`.
 - `ops/CI.md` — What the GitHub Actions CI runs and when: jobs, e2e shards, cancelling superseded runs, timings (#1095). Deps: `.github/workflows/ci.yml`.
 - `ops/DEPENDENCIES.md` — Hand-maintained dependency/licence inventory root `CLAUDE.md`'s onboarding checklist points to. Deps: `node_modules/*/package.json` licence fields.
 - `ops/RELEASING.md` — Release policy and tagging scheme (every milestone ends in a release).

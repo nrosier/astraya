@@ -2,16 +2,23 @@
 /**
  * The device's default calculation profile (#510): saved via "Save as my default", read by
  * every screen that seeds a chart's starting Extended settings, and safe when storage is
- * unusable.
+ * unusable. Since #1066 it is an account preference in the bound store's op log; the pre-#1066
+ * device key is read once, at import, with the old lenient repair.
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from '../src/chart/extended-settings.js';
+import { openStore } from '../src/store/store.js';
+import {
+  accountCacheKey,
+  bindAccountPreferences,
+  resetAccountPreferencesForTests,
+} from '../src/ui/account-preferences.js';
+import { serializeCalculationSettings } from '../src/domain/person.js';
 import {
   DEFAULT_CALCULATION_PROFILE_KEY,
   readDefaultCalculationProfile,
-  resetDefaultCalculationProfileMemory,
   useDefaultCalculationProfile,
   writeDefaultCalculationProfile,
 } from '../src/ui/default-calculation-profile.js';
@@ -20,7 +27,7 @@ let mounted: { container: HTMLElement; root: Root } | undefined;
 
 beforeEach(() => {
   localStorage.clear();
-  resetDefaultCalculationProfileMemory();
+  resetAccountPreferencesForTests();
 });
 
 afterEach(() => {
@@ -71,7 +78,9 @@ describe('the saved default (#510)', () => {
 
   it('treats unparseable JSON as unset', () => {
     for (const value of ['', 'not json']) {
+      localStorage.clear();
       localStorage.setItem(DEFAULT_CALCULATION_PROFILE_KEY, value);
+      resetAccountPreferencesForTests();
       expect(readDefaultCalculationProfile()).toBeUndefined();
     }
   });
@@ -81,7 +90,9 @@ describe('the saved default (#510)', () => {
     // "reject the whole thing" to "fill in whatever is missing or wrong-typed", the same
     // contract parseCalculationSnapshot documents for every untrusted-JSON entry point.
     for (const value of ['{"settings":{}}', '{"rulership":"modern"}', 'null', '"string"']) {
+      localStorage.clear();
       localStorage.setItem(DEFAULT_CALCULATION_PROFILE_KEY, value);
+      resetAccountPreferencesForTests();
       const read = readDefaultCalculationProfile();
       expect(read?.settings).toEqual(DEFAULT_EXTENDED_SETTINGS);
       expect(read?.rulership).toBe('modern');
@@ -113,13 +124,27 @@ describe('the hook (#510)', () => {
     expect(container.querySelector('[data-testid="reader"]')?.textContent).toBe('traditional');
   });
 
-  it('follows a change made in another tab (the storage event)', async () => {
-    const container = await mount(<Reader />);
-    await act(async () => {
-      localStorage.setItem(DEFAULT_CALCULATION_PROFILE_KEY, JSON.stringify({ settings: SIDEREAL, rulership: 'both' }));
-      window.dispatchEvent(new StorageEvent('storage', { key: DEFAULT_CALCULATION_PROFILE_KEY }));
-      await Promise.resolve();
-    });
-    expect(container.querySelector('[data-testid="reader"]')?.textContent).toBe('both');
+  it('follows a change another tab made to the same store (its cache key, #1066)', async () => {
+    const store = await openStore({ name: 'astraya-profile-storage-event' });
+    try {
+      bindAccountPreferences(store);
+      const container = await mount(<Reader />);
+      expect(container.querySelector('[data-testid="reader"]')?.textContent).toBe('unset');
+      await act(async () => {
+        const own = accountCacheKey(store.dbName);
+        localStorage.setItem(
+          own,
+          JSON.stringify({
+            defaultCalculationProfile: serializeCalculationSettings(SIDEREAL),
+            defaultRulership: 'both',
+          }),
+        );
+        window.dispatchEvent(new StorageEvent('storage', { key: own }));
+        await Promise.resolve();
+      });
+      expect(container.querySelector('[data-testid="reader"]')?.textContent).toBe('both');
+    } finally {
+      store.close();
+    }
   });
 });

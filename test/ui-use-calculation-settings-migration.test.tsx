@@ -14,6 +14,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { openStore } from '../src/store/store.js';
+import { resetAccountPreferencesForTests } from '../src/ui/account-preferences.js';
 import type { Store } from '../src/store/store.js';
 import type { SyncState } from '../src/ui/status.js';
 import { serializeCalculationSettings } from '../src/domain/person.js';
@@ -131,6 +132,7 @@ const rulershipOf = (id: string): unknown => store.state.people.get(id)?.rulersh
 beforeEach(async () => {
   counter += 1;
   localStorage.clear();
+  resetAccountPreferencesForTests();
   pushed.length = 0;
   pushAttempts = 0;
   pushFails = false;
@@ -313,7 +315,9 @@ describe('useCalculationSettingsMigration (#806)', () => {
     };
 
     it('stamps the live device ruler choice on every person lacking one, under its own key', async () => {
+      // A pre-#1066 device value, present when this build first loads (#1066 captures it at import).
       localStorage.setItem('astraya:rulershipChoice', 'traditional');
+      resetAccountPreferencesForTests();
       await addPeople('p1', 'p2');
       mount();
       await settled('anonymous');
@@ -324,6 +328,7 @@ describe('useCalculationSettingsMigration (#806)', () => {
     it('still runs on a device that already ran the settings move, and leaves their settings alone', async () => {
       localStorage.setItem(keyFor('anonymous'), '1');
       localStorage.setItem('astraya:rulershipChoice', 'both');
+      resetAccountPreferencesForTests();
       await addPeople('p1');
       mount();
       await vi.waitFor(

@@ -25,6 +25,12 @@ import { hashPassword } from '../server/auth/passwords.ts';
 import { openStore } from '../src/store/store.ts';
 import { SessionProvider, useSession, useStoreStatus, useSyncEngine } from '../src/ui/session-context.js';
 import { OIDC_CALLBACK_PATH } from '../src/ui/oidc-pkce.js';
+import {
+  accountCacheKey,
+  getAccountPreferences,
+  resetAccountPreferencesForTests,
+  setAccountPreferences,
+} from '../src/ui/account-preferences.js';
 import { startFakeAuthentik, type FakeAuthentik } from './fake-authentik.ts';
 import type { AdoptionPrompt, StoreStatus } from '../src/ui/session-context.js';
 import type { AuthUser } from '../src/sync/auth-client.js';
@@ -149,6 +155,7 @@ beforeEach(async () => {
   });
   installFetch();
   localStorage.clear();
+  resetAccountPreferencesForTests();
 });
 
 afterEach(async () => {
@@ -610,6 +617,113 @@ describe('the OIDC callback path (#75)', () => {
       }, WAIT);
       expect(window.location.pathname).toBe('/');
       expect(window.location.hash).toBe('#/people');
+    } finally {
+      unmount(root, container);
+    }
+  });
+});
+
+describe('the account preferences across sign-in and sign-out (#1066)', () => {
+  const ready = async (): Promise<void> => {
+    await vi.waitFor(() => {
+      expect(latest?.status.kind).toBe('ready');
+    }, WAIT);
+  };
+  const openStoreNow = () => (latest?.status.kind === 'ready' ? latest.status.store : undefined);
+
+  it('keeps preferences out of adoption, and offers them to the account through the reconcile state', async () => {
+    const { container, root } = mount();
+    try {
+      await ready();
+      await act(async () => {
+        await setAccountPreferences({ locale: 'nl' });
+      });
+      expect(openStoreNow()?.state.account.locale?.value).toBe('nl');
+
+      await act(async () => {
+        await latest?.signIn('alice', 'correct-horse-battery');
+      });
+      // The only local record is a preference, so there is nothing to adopt.
+      expect(latest?.adoption).toBeUndefined();
+      await vi.waitFor(() => {
+        expect(latest?.user?.username).toBe('alice');
+      }, WAIT);
+      const account = openStoreNow();
+      expect(account?.dbName).toMatch(/^astraya-user-/);
+      // Not copied into the account's log; held as a candidate until the account's first sync.
+      expect(account?.state.account.locale).toBeUndefined();
+      expect((await account?.getAccountReconcile())?.pending?.locale?.value).toBe('nl');
+      // The screens follow the account store's own (empty) register, not the signed-out one.
+      expect(getAccountPreferences().locale).toBe('en');
+    } finally {
+      unmount(root, container);
+    }
+  });
+
+  it('on sign-out forgets the account’s cache and shows the signed-out store’s own values (decision Q2)', async () => {
+    const { container, root } = mount();
+    try {
+      await ready();
+      await act(async () => {
+        await latest?.signIn('alice', 'correct-horse-battery');
+      });
+      await vi.waitFor(() => {
+        expect(latest?.user?.username).toBe('alice');
+      }, WAIT);
+      const accountDb = openStoreNow()?.dbName ?? '';
+      await act(async () => {
+        await setAccountPreferences({ locale: 'nl', defaultRulership: 'traditional' });
+      });
+      expect(localStorage.getItem(accountCacheKey(accountDb))).not.toBeNull();
+
+      await act(async () => {
+        await latest?.signOut();
+      });
+      await vi.waitFor(() => {
+        expect(openStoreNow()?.dbName).toBe('astraya');
+      }, WAIT);
+      expect(localStorage.getItem(accountCacheKey(accountDb))).toBeNull();
+      expect(getAccountPreferences().locale).toBe('en');
+      expect(getAccountPreferences().defaultRulership).toBe('modern');
+      expect(openStoreNow()?.state.account).toEqual({});
+    } finally {
+      unmount(root, container);
+    }
+  });
+
+  it('never lets one account’s preferences reach the next account on the same browser (test 6)', async () => {
+    await insertUser('bob', 'correct-horse-battery-2');
+    const { container, root } = mount();
+    try {
+      await ready();
+      await act(async () => {
+        await latest?.signIn('alice', 'correct-horse-battery');
+      });
+      await vi.waitFor(() => {
+        expect(latest?.user?.username).toBe('alice');
+      }, WAIT);
+      await act(async () => {
+        await setAccountPreferences({ locale: 'nl', defaultRulership: 'both' });
+      });
+      await act(async () => {
+        await latest?.signOut();
+      });
+      await vi.waitFor(() => {
+        expect(openStoreNow()?.dbName).toBe('astraya');
+      }, WAIT);
+
+      await act(async () => {
+        await latest?.signIn('bob', 'correct-horse-battery-2');
+      });
+      await vi.waitFor(() => {
+        expect(latest?.user?.username).toBe('bob');
+      }, WAIT);
+      const bob = openStoreNow();
+      expect(bob?.state.account).toEqual({});
+      expect(await bob?.getAccountReconcile()).toEqual({});
+      expect(localStorage.getItem(accountCacheKey(bob?.dbName ?? ''))).toBeNull();
+      expect(getAccountPreferences().locale).toBe('en');
+      expect(getAccountPreferences().defaultRulership).toBe('modern');
     } finally {
       unmount(root, container);
     }

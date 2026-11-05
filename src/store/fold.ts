@@ -30,11 +30,12 @@
 
 /**
  * @module store/fold
- * @purpose Folds the append-only operation log into materialised people and charts — the pure, deterministic function every rendered screen's state depends on.
+ * @purpose Folds the append-only operation log into materialised people, charts, notes, saved queries and account preferences — the pure, deterministic function every rendered screen's state depends on.
  * @conventions Last-write-wins per field by HLC timestamp, deliberately not a full CRDT, since one person typically creates a record once and rarely edits it concurrently; deleting sets a `deleted` field rather than removing the record, so undo is just another write; a `purged` field (once set, never unset) hides an entity entirely regardless of any other field's timestamp; registers are serialisable so they can be persisted as a snapshot and `resume`d from, with a full rebuild as the correctness fallback whenever a snapshot cannot be trusted.
  * @exports DELETED_FIELD, PURGED_FIELD, Register, Registers, EMPTY_REGISTERS, FoldSkips, Applied, applyRecords, State, materialise, fold, Snapshot, snapshotOf, Resumed, resume
  */
 import { buildChart, type Chart } from '../domain/chart.js';
+import { ACCOUNT_ENTITY, ACCOUNT_ENTITY_ID, foldAccount, type AccountRegisters } from './account.js';
 import { buildPerson, type Person } from '../domain/person.js';
 import { compareHlc, type Hlc } from './hlc.js';
 import {
@@ -100,6 +101,7 @@ const KNOWN_ENTITIES: readonly string[] = [
   BIRTH_NOTE_ENTITY,
   CONSULTATION_NOTE_ENTITY,
   SAVED_QUERY_ENTITY,
+  ACCOUNT_ENTITY,
 ];
 
 /**
@@ -207,6 +209,11 @@ export interface State {
    * because hiding them would be silent loss. Map order is not part of the contract: sort before showing.
    */
   readonly savedQueries: ReadonlyMap<string, SavedQuery>;
+  /**
+   * The account preferences registers (#1066, ADR 0004): only the `preferences` entity id, only the allowlisted
+   * fields. `deleted` and `purged` never apply to this entity, so they are not consulted.
+   */
+  readonly account: AccountRegisters;
 }
 
 /**
@@ -273,6 +280,8 @@ export function materialise(registers: Registers): State {
     birthNotes,
     consultationNotes,
     savedQueries,
+    // Any other entity id under `account` is ignored: every device writes the one constant id.
+    account: foldAccount(registers[ACCOUNT_ENTITY]?.[ACCOUNT_ENTITY_ID]),
   };
 }
 

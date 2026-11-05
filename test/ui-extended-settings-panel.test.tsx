@@ -17,7 +17,8 @@ import { readDefaultCalculationProfile } from '../src/ui/default-calculation-pro
 import { ExtendedSettingsPanel } from '../src/ui/ExtendedSettingsPanel.js';
 import { extendedSettingsPanelMessages } from '../src/ui/ExtendedSettingsPanel.messages.js';
 import type { RulershipChoice } from '../src/astrology/rulership.js';
-import { writeRulershipChoice } from '../src/ui/rulership-setting.js';
+import { readRulershipChoice } from '../src/ui/rulership-setting.js';
+import { resetAccountPreferencesForTests } from '../src/ui/account-preferences.js';
 
 function notImplemented(): never {
   throw new Error('not used by this test');
@@ -59,7 +60,8 @@ function checkboxLabeled(container: HTMLElement, text: string): HTMLInputElement
 
 afterEach(() => {
   localStorage.clear();
-  writeRulershipChoice('modern');
+  // The default rulership and profile are account preferences held in memory (#1066); start each test afresh.
+  resetAccountPreferencesForTests();
 });
 
 async function mount(
@@ -467,7 +469,7 @@ describe('the trigger and the starting points (#442)', () => {
     expect(applied?.objectPolicies.chiron.visible).toBe(false);
     // The rulers go to the caller (who saves them on the person), never to the device preference (#806).
     expect(onRedraw.mock.calls[0]?.[1]).toBe('traditional');
-    expect(localStorage.getItem('astraya:rulershipChoice')).toBe('modern');
+    expect(readRulershipChoice()).toBe('modern');
 
     unmount(container, root);
   });
@@ -481,7 +483,7 @@ describe('the trigger and the starting points (#442)', () => {
     act(() => {
       buttonNamed(container, 'Cancel')?.click();
     });
-    expect(localStorage.getItem('astraya:rulershipChoice')).not.toBe('traditional');
+    expect(readRulershipChoice()).not.toBe('traditional');
     unmount(container, root);
   });
 
@@ -492,7 +494,7 @@ describe('the trigger and the starting points (#442)', () => {
     expect(buttonNamed(container, 'Apply and redraw')?.disabled).toBe(true);
     chooseRulers(container, 1);
     // Only a draft: nothing is written to the device and the caller has not heard of it yet.
-    expect(localStorage.getItem('astraya:rulershipChoice')).toBe('modern');
+    expect(readRulershipChoice()).toBe('modern');
     expect(onRedraw).not.toHaveBeenCalled();
     expect(buttonNamed(container, 'Apply and redraw')?.disabled).toBe(false);
     const symbolsBefore = selectLabeled(container, 'Symbols').value;
@@ -504,7 +506,7 @@ describe('the trigger and the starting points (#442)', () => {
       buttonNamed(container, 'Cancel')?.click();
     });
     expect(onRedraw).not.toHaveBeenCalled();
-    expect(localStorage.getItem('astraya:rulershipChoice')).toBe('modern');
+    expect(readRulershipChoice()).toBe('modern');
     openCard(container);
     // Cancel dropped the rulers draft and put the symbols back.
     expect(rulersRadios(container).map((radio) => radio.checked)).toEqual([true, false, false]);
@@ -523,7 +525,7 @@ describe('the trigger and the starting points (#442)', () => {
     expect(onRedraw).toHaveBeenCalledTimes(1);
     expect(onRedraw.mock.calls[0]?.[0]).toEqual(DEFAULT_EXTENDED_SETTINGS);
     expect(onRedraw.mock.calls[0]?.[1]).toBe('traditional');
-    expect(localStorage.getItem('astraya:rulershipChoice')).toBe('modern');
+    expect(readRulershipChoice()).toBe('modern');
     unmount(container, root);
   });
 
@@ -544,7 +546,7 @@ describe('the trigger and the starting points (#442)', () => {
     });
     expect(onRedraw).not.toHaveBeenCalled();
     expect(readDefaultCalculationProfile()?.rulership).toBe('traditional');
-    expect(localStorage.getItem('astraya:rulershipChoice')).toBe('traditional');
+    expect(readRulershipChoice()).toBe('traditional');
     unmount(container, root);
   });
 
@@ -571,7 +573,7 @@ describe('the trigger and the starting points (#442)', () => {
     });
     expect(checkboxLabeled(container, 'Rainbow Color Zodiac').checked).toBe(true);
     // With the default saved, the reset goes back to it; cleared, it goes back to the Astraya defaults.
-    localStorage.clear();
+    resetAccountPreferencesForTests();
     act(() => {
       checkboxLabeled(container, 'Rainbow Color Zodiac').click();
     });

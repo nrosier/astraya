@@ -167,7 +167,7 @@ describe('ReportView corpus loading (locale comes from the shared locale.ts stor
       await Promise.resolve();
     });
 
-    expect(localStorage.getItem('astraya:reportLocale')).toBe('nl');
+    expect(getLocale()).toBe('nl');
     expect(fetchMock).toHaveBeenCalledWith('/corpus/nl.json');
 
     act(() => {

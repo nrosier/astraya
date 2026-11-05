@@ -3,20 +3,18 @@
  * commit model (#506/#509), per `docs/ui/UI-UX_IMPLEMENTATION_PLAN.md` §5.2. Pure metadata — this
  * is NOT a second storage system; each setting's actual value stays owned by its existing
  * module (`locale.ts`, `theme-dom.ts`, `symbol-setting.ts`, `glyph-variant-setting.ts`,
- * `rulership-setting.ts`) until it is deliberately migrated. The one exception is the person-scope
- * `person.calculationSettings` entry (#806), whose value lives in the op log on the person.
+ * `rulership-setting.ts`, `default-calculation-profile.ts`).
  *
- * Scope here means *intended* scope per `docs/ui/UI-UX_GUIDELINES.md` §3, not necessarily today's
- * persistence: language and rulership are documented as `'account'`-scoped (should sync across
- * a signed-in user's devices) even though every setting below is, today, still device-local
- * `localStorage` with no sync path — formalizing that sync is explicitly Phase 3's job (#510),
- * not something this registry pretends already works.
+ * Scope is the setting's place per `docs/ui/UI-UX_GUIDELINES.md` §3, and persistence and `synced` say where its value
+ * really lives. The account preferences (language, default rulership, default calculation profile) live in the op log
+ * of the open store and sync per account (#1066, ADR 0004); their `key` is the pre-#1066 device key, kept as the
+ * registry identifier and the one-time migration source. Person-scope settings live on the person (#806).
  */
 /**
  * @module ui/settings-registry
  * @purpose Typed metadata registry (scope/owner/default/persistence/sync/editing-surface/commit-mode/sensitivity) for every persisted UI setting (#506/#509), pure data only — existing modules keep owning actual values.
- * @conventions Scope documents intent (docs/ui/UI-UX_GUIDELINES.md §3), not necessarily today's implementation — several settings are documented 'account'-scoped while still persisted device-locally, a gap Phase 3 (#510) is responsible for closing, not this registry. validateSettings() enforces the plan's required invariants (§5.2) and is exercised by test/ui-settings-registry.test.ts.
- * @exports SettingScope, CommitMode, SettingDefinition, SETTINGS, validateSettings
+ * @conventions Scope, persistence and `synced` must agree (#1066): validateSettings() rejects a synced setting outside the op log and an account-scope setting that does not sync, except one whose sync is tracked in its own named issue (`ACCOUNT_SYNC_TRACKED_ELSEWHERE`); it enforces the plan's other invariants (§5.2) too and is exercised by test/ui-settings-registry.test.ts.
+ * @exports SettingScope, CommitMode, SettingDefinition, SETTINGS, ACCOUNT_SYNC_TRACKED_ELSEWHERE, validateSettings
  */
 export type SettingScope = 'application' | 'account' | 'device' | 'person' | 'chart' | 'page' | 'request';
 export type CommitMode = 'immediate' | 'staged';
@@ -44,8 +42,8 @@ export const SETTINGS: readonly SettingDefinition[] = [
     scope: 'account',
     owner: 'UI language and the interpretation report language',
     describeDefault: "'en'",
-    persistence: 'local-storage',
-    synced: false,
+    persistence: 'indexeddb-oplog',
+    synced: true,
     editingSurface: 'LanguageToggle.tsx; PreferencesView.tsx (Appearance & accessibility)',
     commitMode: 'immediate',
     sensitive: false,
@@ -57,8 +55,8 @@ export const SETTINGS: readonly SettingDefinition[] = [
     owner:
       'The default rulership model (Modern/Traditional/Both): what a person without a choice of their own starts from, and what a screen that belongs to no single person (Horary, Composite) shows (#806)',
     describeDefault: "'modern'",
-    persistence: 'local-storage',
-    synced: false,
+    persistence: 'indexeddb-oplog',
+    synced: true,
     editingSurface: 'RulershipSetting.tsx in PreferencesView.tsx (Astrology defaults)',
     commitMode: 'immediate',
     sensitive: false,
@@ -219,10 +217,10 @@ export const SETTINGS: readonly SettingDefinition[] = [
     key: 'astraya:defaultCalculationProfile',
     scope: 'account',
     owner:
-      'The calculation profile (zodiac/houses/rulers/orbs/points/aspects) a person without settings of their own starts from on this device (#806)',
+      'The calculation profile (zodiac/houses/orbs/points/aspects) a new person starts from, and a person without settings of their own follows (#806); the rulers are the default rulership entry',
     describeDefault: 'unset (falls back to the Modern Western built-in profile)',
-    persistence: 'local-storage',
-    synced: false,
+    persistence: 'indexeddb-oplog',
+    synced: true,
     editingSurface: 'ExtendedSettingsPanel.tsx ("Save as my default")',
     commitMode: 'staged',
     sensitive: false,
@@ -243,6 +241,15 @@ export const SETTINGS: readonly SettingDefinition[] = [
 ];
 
 /**
+ * Account-scope settings whose cross-device sync is owned by another open issue, so the "account scope syncs" rule
+ * names them rather than hiding them. Each entry must say which issue. Remove an entry when its sync lands.
+ */
+export const ACCOUNT_SYNC_TRACKED_ELSEWHERE: Readonly<Record<string, string>> = {
+  // Moved to account scope by #1149 (guidelines §3.2); its sync is not part of #1066 (ADR 0004 decision Q4).
+  'astraya:transitFilter:<context>': '#1149',
+};
+
+/**
  * The plan's required invariants (§5.2): reject a request-scope setting with persistence, a
  * device-scope setting claiming cross-device sync, and a staged setting also claiming
  * immediate-persisted behavior would contradict (a staged commit model implies the value is
@@ -257,6 +264,13 @@ export function validateSettings(settings: readonly SettingDefinition[] = SETTIN
     }
     if (setting.scope === 'request' && setting.commitMode !== 'immediate') {
       violations.push(`"${setting.key}": request-scope setting must use immediate commit, not a standing draft`);
+    }
+    // Synced means the op log: nothing else carries a value between a signed-in reader's devices (#1066).
+    if (setting.synced && setting.persistence !== 'indexeddb-oplog') {
+      violations.push(`"${setting.key}": a synced setting must be stored in the op log (got "${setting.persistence}")`);
+    }
+    if (setting.scope === 'account' && !setting.synced && ACCOUNT_SYNC_TRACKED_ELSEWHERE[setting.key] === undefined) {
+      violations.push(`"${setting.key}": account-scope setting must sync across the account's devices`);
     }
     if (setting.scope === 'device' && setting.synced) {
       violations.push(`"${setting.key}": device-scope setting must never claim cross-device sync`);

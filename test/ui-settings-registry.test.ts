@@ -3,10 +3,16 @@
  * `docs/ui/UI-UX_IMPLEMENTATION_PLAN.md` §5.2/§9: the shipped registry itself has no invariant
  * violations, and `validateSettings` actually rejects each forbidden combination the plan
  * names — request-scope persistence, device-scope sync, a staged setting with immediate
- * commit, and a person-scope entry that is not stored on the person (#806).
+ * commit, a person-scope entry that is not stored on the person (#806), and an account-scope setting whose
+ * scope, persistence and sync disagree (#1066).
  */
 import { describe, expect, it } from 'vitest';
-import { SETTINGS, validateSettings, type SettingDefinition } from '../src/ui/settings-registry.js';
+import {
+  ACCOUNT_SYNC_TRACKED_ELSEWHERE,
+  SETTINGS,
+  validateSettings,
+  type SettingDefinition,
+} from '../src/ui/settings-registry.js';
 
 const BASE: SettingDefinition = {
   key: 'test:key',
@@ -97,8 +103,42 @@ describe('validateSettings', () => {
   });
 
   it('accepts a well-formed setting of every other scope', () => {
-    for (const scope of ['application', 'account', 'device', 'chart', 'page'] as const) {
+    for (const scope of ['application', 'device', 'chart', 'page'] as const) {
       expect(validateSettings([{ ...BASE, scope, synced: false }])).toEqual([]);
     }
+    expect(validateSettings([{ ...BASE, scope: 'account', persistence: 'indexeddb-oplog', synced: true }])).toEqual([]);
+  });
+});
+
+describe('scope, persistence and sync agree (#1066)', () => {
+  it('rejects a synced setting that is not stored in the op log', () => {
+    const violations = validateSettings([{ ...BASE, scope: 'account', persistence: 'local-storage', synced: true }]);
+    expect(violations.some((violation) => violation.includes('op log'))).toBe(true);
+  });
+
+  it('rejects an account-scope setting that does not sync', () => {
+    const violations = validateSettings([{ ...BASE, scope: 'account', synced: false }]);
+    expect(violations.some((violation) => violation.includes('must sync'))).toBe(true);
+  });
+
+  it('names its one exception, owned by #1149, and that exception is a real account-scope entry', () => {
+    expect(ACCOUNT_SYNC_TRACKED_ELSEWHERE).toEqual({ 'astraya:transitFilter:<context>': '#1149' });
+    const entry = SETTINGS.find((setting) => setting.key === 'astraya:transitFilter:<context>');
+    expect(entry?.scope).toBe('account');
+    expect(entry?.synced).toBe(false);
+  });
+
+  it('stores the three account preferences in the op log, synced', () => {
+    for (const key of ['astraya:reportLocale', 'astraya:rulershipChoice', 'astraya:defaultCalculationProfile']) {
+      const entry = SETTINGS.find((setting) => setting.key === key);
+      expect(entry?.scope, key).toBe('account');
+      expect(entry?.persistence, key).toBe('indexeddb-oplog');
+      expect(entry?.synced, key).toBe(true);
+    }
+  });
+
+  it('no longer points at #510 for the sync', async () => {
+    const { readFileSync } = await import('node:fs');
+    expect(readFileSync('src/ui/settings-registry.ts', 'utf8')).not.toContain('#510');
   });
 });

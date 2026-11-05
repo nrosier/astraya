@@ -1,6 +1,6 @@
 # 4. Account-scope settings sync through an op-log `account` register
 
-- **Status:** proposed (design only; no code is changed by this document)
+- **Status:** accepted (built in #1066; the operator runbook of section 4 is [`docs/ops/ACCOUNT-PREFERENCES-RECOVERY.md`](../ops/ACCOUNT-PREFERENCES-RECOVERY.md))
 - **Date:** 2026-11-04
 - **Issue:** #1066 (blocks #856)
 - **Extends:** [ADR 0002](0002-local-first-with-optional-sync.md) (local-first storage, opaque relay, purge amendment #308)
@@ -462,3 +462,14 @@ The reviewer could not verify some claims from the files it read: the registry c
 fields the profile readers use, and key rotation. The author checked the first three against `src/ui/settings-registry.ts`,
 `docs/ui/UI-UX_GUIDELINES.md` and the three reader call sites. Key rotation (`server/ops/rotate-key.ts`) is covered by
 test 4 rather than by reading. The re-review confirmed the conditions as met on the revised text.
+
+## 9. Build notes (#1066)
+
+Choices the build made where the text above leaves room. None changes the wire contract, the relay, or a decided question.
+
+- **Legacy values after bind.** Until the global guard is set, a field the bound store has never written shows the captured legacy value, not only on first paint. Without this, binding the store on the first launch would show the Astraya default until the one-time move finishes (for an account, until its first sync). It is the device scope those values always had (section 5, finding 9). A field the store has written, including a `null` reset, always shows the store's value.
+- **Read-only tabs.** A tab whose store is read-only never writes the first-paint cache. It reads the writer tab's changes from the cache through the `storage` event.
+- **Prompt default.** Each differing setting in the reconcile prompt starts on this device's value, which is the newer one or the one of unknown age. Dismissing still means "Use my account's".
+- **Offline account store.** An account store reconciles only once its sync engine reports `synced`. A store opened offline at boot, with no engine yet, waits.
+- **Registry exception.** `validateSettings` now requires `synced: true` to mean `persistence: 'indexeddb-oplog'`, and `scope: 'account'` to mean `synced: true`. The one account-scope entry whose sync is not part of this build, the default transit filter, is named in `ACCOUNT_SYNC_TRACKED_ELSEWHERE` with its issue (#1149), so the gap is visible and not silent.
+- **Test 4.** The relay tests cover the round trip, per-user isolation, a person purge leaving `account` rows, and a deny-listed `account` entity confined to its user, with the recovery step. The deletion-impact preview and key rotation are generic over the payload and have no `account`-specific test.

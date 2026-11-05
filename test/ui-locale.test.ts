@@ -122,7 +122,7 @@ describe('locale storage denial (#493)', () => {
     expect(getLocale()).toBe('nl');
   });
 
-  it('a working localStorage still persists and reads back the chosen locale', async () => {
+  it('a working localStorage keeps the chosen locale in the bound store and its cache (#1066)', async () => {
     const store = new Map<string, string>();
     Object.defineProperty(globalThis, 'localStorage', {
       configurable: true,
@@ -142,9 +142,23 @@ describe('locale storage denial (#493)', () => {
         length: 0,
       },
     });
+    // Since #1066 the language is an account preference: saved in the bound store's op log and its own
+    // first-paint cache, never in the pre-#1066 device key.
     const { getLocale, setLocale } = await import('../src/ui/locale.ts');
-    setLocale('nl');
-    expect(getLocale()).toBe('nl');
-    expect(store.get('astraya:reportLocale')).toBe('nl');
+    const { bindAccountPreferences, accountCacheKey } = await import('../src/ui/account-preferences.ts');
+    const { openStore } = await import('../src/store/store.ts');
+    const opened = await openStore({ name: 'astraya-locale-test' });
+    try {
+      bindAccountPreferences(opened);
+      setLocale('nl');
+      expect(getLocale()).toBe('nl');
+      await vi.waitFor(() => {
+        expect(opened.state.account.locale?.value).toBe('nl');
+      });
+      expect(JSON.parse(store.get(accountCacheKey('astraya-locale-test')) ?? '{}')).toEqual({ locale: 'nl' });
+      expect(store.get('astraya:reportLocale')).toBeUndefined();
+    } finally {
+      opened.close();
+    }
   });
 });
