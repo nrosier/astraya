@@ -46,6 +46,7 @@ import {
   type Note,
 } from './notes.js';
 import { decode, type JsonValue, type OpRecord } from './ops.js';
+import { foldSavedQuery, SAVED_QUERY_ENTITY, type SavedQuery } from './saved-queries.js';
 
 /** The field that hides a record. A register like any other, so undo needs no new machinery. */
 export const DELETED_FIELD = 'deleted';
@@ -93,7 +94,13 @@ export interface Applied {
 }
 
 /** Entity kinds this build can materialise. Others are kept in the log and counted here. */
-const KNOWN_ENTITIES: readonly string[] = ['person', 'chart', BIRTH_NOTE_ENTITY, CONSULTATION_NOTE_ENTITY];
+const KNOWN_ENTITIES: readonly string[] = [
+  'person',
+  'chart',
+  BIRTH_NOTE_ENTITY,
+  CONSULTATION_NOTE_ENTITY,
+  SAVED_QUERY_ENTITY,
+];
 
 /**
  * Apply records to a register map.
@@ -183,6 +190,8 @@ export interface State {
   readonly deleted: {
     readonly people: ReadonlyMap<string, Person>;
     readonly charts: ReadonlyMap<string, Chart>;
+    /** Saved queries hidden by a tombstone, so the list can offer Undo and Erase (#1061). */
+    readonly savedQueries: ReadonlyMap<string, SavedQuery>;
   };
   /** Charts naming a person this device does not hold. Retained, not lost — usually a partial sync. */
   readonly orphanCharts: readonly string[];
@@ -193,6 +202,11 @@ export interface State {
   readonly birthNotes: ReadonlyMap<string, Note>;
   /** Live Consultation notes of each person, by person id, oldest first. Deleted notes are absent. */
   readonly consultationNotes: ReadonlyMap<string, readonly Note[]>;
+  /**
+   * Live saved event-search queries, by id (#1061). Unreadable and incomplete ones are included, with their reason,
+   * because hiding them would be silent loss. Map order is not part of the contract: sort before showing.
+   */
+  readonly savedQueries: ReadonlyMap<string, SavedQuery>;
 }
 
 /**
@@ -239,13 +253,26 @@ export function materialise(registers: Registers): State {
     else orphanCharts.push(id);
   }
 
+  const savedQueries = new Map<string, SavedQuery>();
+  const deletedSavedQueries = new Map<string, SavedQuery>();
+  for (const [id, fields] of Object.entries(registers[SAVED_QUERY_ENTITY] ?? {})) {
+    // Purged first, before incomplete, deleted or unreadable: a purge leaves only its marker, which would
+    // otherwise fold as an incomplete query and appear in a list (ADR 0005 rule 10).
+    if (isPurged(fields)) continue;
+    const query = foldSavedQuery(id, fields);
+    if (query === undefined) continue;
+    if (isDeleted(fields)) deletedSavedQueries.set(id, query);
+    else savedQueries.set(id, query);
+  }
+
   return {
     people,
     charts,
-    deleted: { people: deletedPeople, charts: deletedCharts },
+    deleted: { people: deletedPeople, charts: deletedCharts, savedQueries: deletedSavedQueries },
     orphanCharts,
     birthNotes,
     consultationNotes,
+    savedQueries,
   };
 }
 
