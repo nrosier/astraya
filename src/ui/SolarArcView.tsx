@@ -319,6 +319,7 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
             {positions !== undefined && (
               <SortableTable
                 caption={t.positionsCaption}
+                headingLevel={2}
                 columns={positionColumns(t, locale)}
                 rows={positions}
                 getRowKey={(row) => row.bodyKey}
@@ -329,6 +330,7 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
             {contacts !== undefined && contacts.length > 0 && (
               <SortableTable
                 caption={t.contactsCaption}
+                headingLevel={2}
                 columns={contactColumns(t, locale)}
                 rows={contacts}
                 getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
