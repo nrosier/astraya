@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import {
   ASPECT_FAMILIES,
   CATALOGUE_KEYS,
+  CONSULTATION_PRESETS,
   FILTERABLE_FAMILIES,
   isContactShown,
   orbCapFor,
@@ -68,5 +69,25 @@ describe('toggleFamily', () => {
     expect(on.has('major')).toBe(true);
     expect(none.size).toBe(0);
     expect(toggleFamily(on, 'major', false).size).toBe(0);
+  });
+});
+
+describe('consultation presets', () => {
+  it('are the four recorded, with the recorded families and orbs', () => {
+    const byKey = new Map(CONSULTATION_PRESETS.map((p) => [p.key, p]));
+    expect(byKey.get('standardOverview')).toMatchObject({
+      families: ['major', 'nodalAngular'],
+      orbs: { luminary: 8, planet: 6 },
+    });
+    expect(byKey.get('natalCore')).toMatchObject({
+      families: ['major', 'parallels'],
+      orbs: { luminary: 7, planet: 5 },
+    });
+    expect(byKey.get('predictiveTiming')?.families).toEqual(['major', 'hardMinor']);
+    expect(byKey.get('dynamicSynastry')).toMatchObject({
+      families: ['major', 'nodalAngular'],
+      orbs: { luminary: 6, planet: 6 },
+    });
+    expect(CONSULTATION_PRESETS).toHaveLength(4);
   });
 });

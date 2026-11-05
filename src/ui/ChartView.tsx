@@ -39,7 +39,7 @@ import type { Zodiac } from '../ephemeris/types.js';
 import { ASPECTS, aspectHarmonicFamily, DEFAULT_ORB_CONFIG, type Aspect } from '../astrology/aspects.js';
 import { Select } from './primitives/Select.js';
 import { AspectFamilyControls } from './AspectFamilyControls.js';
-import { isContactShown, type AspectFamilyKey, type OrbCaps } from './aspect-family-filter.js';
+import { isContactShown, type AspectFamilyKey, type ConsultationPreset, type OrbCaps } from './aspect-family-filter.js';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
@@ -662,6 +662,8 @@ export function ChartDataView({
   // The wheel and matrix aspect-family filter (#1063): empty is the default view and shows every aspect.
   const [aspectFamilies, setAspectFamilies] = useState<ReadonlySet<AspectFamilyKey>>(new Set());
   const [orbCaps, setOrbCaps] = useState<OrbCaps | undefined>();
+  // A consultation preset (#1063) is applied only when the reader chooses one; none is chosen by default.
+  const [presetKey, setPresetKey] = useState<ConsultationPreset['key'] | undefined>();
   // The matrix view's formula link opens the drawer on Bodies and orbs (#815); the drawer counts the requests.
   const [ownFormulaRequests, setOwnFormulaRequests] = useState(0);
   const openFormulaDrawer = (): void => {
@@ -896,6 +898,12 @@ export function ChartDataView({
   const changeFamilies = useCallback((next: ReadonlySet<AspectFamilyKey>): void => {
     setAspectFamilies(next);
     setOrbCaps(undefined);
+    setPresetKey(undefined);
+  }, []);
+  const choosePreset = useCallback((preset: ConsultationPreset | undefined): void => {
+    setAspectFamilies(new Set(preset?.families ?? []));
+    setOrbCaps(preset?.orbs);
+    setPresetKey(preset?.key);
   }, []);
   const wheelMarkup = overlayLoad.kind === 'ready' ? overlayLoad.markup : dial?.markup;
   const overlayRingData = overlayLoad.kind === 'ready' ? overlayLoad.ringData : undefined;
@@ -1049,7 +1057,12 @@ export function ChartDataView({
         <div className="chart-workbench-shell">
           <div className="chart-workbench">
             <div className="chart-workbench-dial">
-              <AspectFamilyControls families={aspectFamilies} onChange={changeFamilies} />
+              <AspectFamilyControls
+                families={aspectFamilies}
+                onChange={changeFamilies}
+                presetKey={presetKey}
+                onPreset={choosePreset}
+              />
               <p className="hint chart-wheel-hint">{t.wheelClickHint}</p>
               <div
                 ref={wheelRef}

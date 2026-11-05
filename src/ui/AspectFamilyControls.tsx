@@ -1,23 +1,34 @@
 /**
  * @module ui/AspectFamilyControls
- * @purpose The aspect-family filter shown above the wheel and the matrix (#1063): one labelled Select.
+ * @purpose The aspect-family filter shown above the wheel and the matrix (#1063), and the on-demand consultation preset Select.
  * @conventions Thin: the family logic is `aspect-family-filter.ts`. "All aspects" is the default and clears the filter. A set of several families (from a preset) reads as "Chosen families".
  * @exports AspectFamilyControls
  */
-import { FILTERABLE_FAMILIES, type AspectFamilyKey } from './aspect-family-filter.js';
+import {
+  CONSULTATION_PRESETS,
+  FILTERABLE_FAMILIES,
+  type AspectFamilyKey,
+  type ConsultationPreset,
+} from './aspect-family-filter.js';
 import { aspectFamilyControlsMessages } from './AspectFamilyControls.messages.js';
 import { useMessages } from './messages.js';
 import { Select } from './primitives/Select.js';
 
 const ALL = 'all';
 const CUSTOM = 'custom';
+const NO_PRESET = 'none';
 
 export function AspectFamilyControls({
   families,
   onChange,
+  presetKey,
+  onPreset,
 }: {
   readonly families: ReadonlySet<AspectFamilyKey>;
   readonly onChange: (families: ReadonlySet<AspectFamilyKey>) => void;
+  /** The preset the reader chose, if any; presets are offered only where `onPreset` is given (#1063). */
+  readonly presetKey?: ConsultationPreset['key'] | undefined;
+  readonly onPreset?: ((preset: ConsultationPreset | undefined) => void) | undefined;
 }): React.JSX.Element {
   const t = useMessages(aspectFamilyControlsMessages);
   const only = families.size === 1 ? [...families][0] : undefined;
@@ -39,6 +50,19 @@ export function AspectFamilyControls({
           onChange(next === ALL || next === CUSTOM ? new Set() : new Set([next as AspectFamilyKey]));
         }}
       />
+      {onPreset !== undefined && (
+        <Select
+          label={t.presetLabel}
+          value={presetKey ?? NO_PRESET}
+          options={[
+            { value: NO_PRESET, label: t.noPreset },
+            ...CONSULTATION_PRESETS.map((preset) => ({ value: preset.key, label: t.presets[preset.key] })),
+          ]}
+          onChange={(next) => {
+            onPreset(CONSULTATION_PRESETS.find((preset) => preset.key === next));
+          }}
+        />
+      )}
     </div>
   );
 }

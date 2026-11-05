@@ -1,8 +1,8 @@
 /**
  * @module ui/aspect-family-filter
- * @purpose Aspect-family filters for the wheel and the matrix (#1063).
+ * @purpose Aspect-family filters for the wheel and the matrix, and the on-demand consultation presets built on them (#1063).
  * @conventions Pure, no React. Aspect keys are the existing `ASPECTS` keys (`astrology/aspects`); a family lists only keys that catalogue holds, so Decile, Septile and Novile (no catalogue entry) are not offered. No selection means no filter, which is the default view; Orb caps hide a contact whose orb is wider than the cap and never widen one.
- * @exports AspectFamilyKey, AspectFamily, ASPECT_FAMILIES, FILTERABLE_FAMILIES, CATALOGUE_KEYS, OrbCaps, isContactShown, orbCapFor, toggleFamily
+ * @exports ConsultationPreset, CONSULTATION_PRESETS, AspectFamilyKey, AspectFamily, ASPECT_FAMILIES, FILTERABLE_FAMILIES, CATALOGUE_KEYS, OrbCaps, isContactShown, orbCapFor, toggleFamily
  */
 import { ASPECTS } from '../astrology/aspects.js';
 
@@ -89,6 +89,21 @@ export function toggleFamily(
   else next.delete(key);
   return next;
 }
+
+export interface ConsultationPreset {
+  readonly key: 'standardOverview' | 'natalCore' | 'predictiveTiming' | 'dynamicSynastry';
+  readonly families: readonly AspectFamilyKey[];
+  /** Orb limits for natal contacts; absent when the spec gives none that apply to the wheel and matrix (transit and solar arc orbs). */
+  readonly orbs?: OrbCaps;
+}
+
+/** Contents as recorded on #1063 (2026-11-05); owner sign-off of these contents is still to come. */
+export const CONSULTATION_PRESETS: readonly ConsultationPreset[] = [
+  { key: 'standardOverview', families: ['major', 'nodalAngular'], orbs: { luminary: 8, planet: 6 } },
+  { key: 'natalCore', families: ['major', 'parallels'], orbs: { luminary: 7, planet: 5 } },
+  { key: 'predictiveTiming', families: ['major', 'hardMinor'] },
+  { key: 'dynamicSynastry', families: ['major', 'nodalAngular'], orbs: { luminary: 6, planet: 6 } },
+];
 
 /** Every key in `ASPECTS`, so a test can check each family only names catalogue entries. */
 export const CATALOGUE_KEYS: readonly string[] = ASPECTS.map((aspect) => aspect.key);
