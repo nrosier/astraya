@@ -350,18 +350,18 @@ export function AdminPanel(): React.JSX.Element {
         {canManage && pendingDelete !== undefined && (
           <StatusMessage kind="error">
             {t.deleteWarning(pendingDelete.user.username, describeImpact(pendingDelete.impact, t))}{' '}
-            <button type="button" className="danger" onClick={confirmDelete}>
+            <Button type="button" variant="danger" onClick={confirmDelete}>
               {t.deletePermanentlyButton}
-            </button>{' '}
-            <button
+            </Button>{' '}
+            <Button
               type="button"
-              className="quiet"
+              variant="quiet"
               onClick={() => {
                 setPendingDelete(undefined);
               }}
             >
               {t.cancelButton}
-            </button>
+            </Button>
           </StatusMessage>
         )}
 

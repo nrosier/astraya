@@ -338,28 +338,28 @@ export function RectificationView(): React.JSX.Element {
                     }}
                   />
                   {events.length > 1 && (
-                    <button
+                    <Button
                       type="button"
-                      className="quiet"
+                      variant="quiet"
                       onClick={() => {
                         setEvents((current) => current.filter((_, i) => i !== index));
                       }}
                     >
                       {t.removeEvent(index + 1)}
-                    </button>
+                    </Button>
                   )}
                 </li>
               ))}
             </ul>
-            <button
+            <Button
               type="button"
-              className="quiet"
+              variant="quiet"
               onClick={() => {
                 setEvents((current) => [...current, { date: '', label: '' }]);
               }}
             >
               {t.addEvent}
-            </button>
+            </Button>
           </fieldset>
         </section>
       </div>

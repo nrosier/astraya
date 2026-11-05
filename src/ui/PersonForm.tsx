@@ -469,9 +469,9 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
             <h3 id="birth-card-danger">{t.deleteHeading}</h3>
             <p className="hint">{t.deleteHint}</p>
             <p>
-              <button type="button" className="danger" onClick={remove}>
+              <Button type="button" variant="danger" onClick={remove}>
                 {t.deleteButton(current.displayName.trim() === '' ? t.thisPerson : current.displayName)}
-              </button>
+              </Button>
             </p>
           </section>
         </div>

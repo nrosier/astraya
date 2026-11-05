@@ -115,3 +115,41 @@ describe('data table header tokens (#826)', () => {
     expect(rule).toMatch(/(?:^|;)\s*color:\s*var\(--muted\)\s*;/);
   });
 });
+
+/**
+ * Route screens that must draw their action buttons through the `Button` primitive (#1161, guidelines §6 and §11).
+ * The primitive always adds a variant class, so a bare `<button>` (no class) would pick up a different look; those are
+ * the only raw buttons allowed, and each screen's count is pinned so a new raw button fails here. The shell toggles
+ * (language, theme, symbol, sidebar) are outside this list by owner decision.
+ */
+const BUTTON_SCREENS: Readonly<Record<string, { readonly rawButtons: number; readonly reason: string }>> = {
+  'src/ui/SetPasswordForm.tsx': { rawButtons: 1, reason: 'unclassed submit; primitive would change its look' },
+  'src/ui/SetupForm.tsx': { rawButtons: 1, reason: 'unclassed submit; primitive would change its look' },
+  'src/ui/AdminPanel.tsx': { rawButtons: 1, reason: 'unclassed submit; primitive would change its look' },
+  'src/ui/CorpusOverridesPanel.tsx': { rawButtons: 1, reason: 'unclassed submit; primitive would change its look' },
+  'src/ui/People.tsx': { rawButtons: 1, reason: 'unclassed add button; primitive would change its look' },
+  'src/ui/PersonForm.tsx': { rawButtons: 0, reason: 'all classed buttons use Button' },
+  'src/ui/PreferencesView.tsx': { rawButtons: 3, reason: 'unclassed export buttons; primitive would change its look' },
+  'src/ui/EventSearchView.tsx': {
+    rawButtons: 2,
+    reason: 'unclassed download buttons; primitive would change its look',
+  },
+  'src/ui/CyclesView.tsx': { rawButtons: 0, reason: 'all classed buttons use Button' },
+  'src/ui/RectificationView.tsx': { rawButtons: 0, reason: 'all classed buttons use Button' },
+};
+
+describe('route screens use the Button primitive (#1161)', () => {
+  it('writes no raw <button> beyond the pinned, reasoned count per screen', () => {
+    const counts: Record<string, number> = {};
+    for (const [file, entry] of Object.entries(BUTTON_SCREENS)) {
+      const source = readFileSync(file, 'utf-8')
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/^\s*\/\/.*$/gm, '');
+      counts[file] = [...source.matchAll(/<button\b/g)].length;
+      expect(entry.reason).not.toBe('');
+    }
+    const expected: Record<string, number> = {};
+    for (const [file, entry] of Object.entries(BUTTON_SCREENS)) expected[file] = entry.rawButtons;
+    expect(counts).toEqual(expected);
+  });
+});
