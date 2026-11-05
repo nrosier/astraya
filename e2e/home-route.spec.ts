@@ -5,7 +5,7 @@
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
@@ -14,6 +14,17 @@ import { gotoAndSettle } from './support.ts';
 let dir: string;
 let app: FastifyInstance;
 let baseUrl: string;
+
+/**
+ * Waits until the person page's id is stored as the last-viewed person. AppNav writes it in an effect after
+ * the page commits, so the URL changing is not enough: navigating away earlier lets `#/` read the seeded id.
+ */
+async function waitForLastPersonWritten(page: Page): Promise<void> {
+  const match = /#\/people\/([^/]+)\//.exec(page.url());
+  if (match?.[1] === undefined) throw new Error(`not on a person page: ${page.url()}`);
+  const personId = match[1];
+  await page.waitForFunction(`localStorage.getItem('astraya:lastPersonId') === '${personId}'`);
+}
 
 test.beforeAll(async () => {
   dir = mkdtempSync(join(tmpdir(), 'astraya-e2e-'));
@@ -65,6 +76,7 @@ test('on #/ with a last-viewed person, the person section links are in the sideb
   try {
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await page.waitForURL(/#\/people\/[^/]+\//);
+    await waitForLastPersonWritten(page);
     await page.goto(`${baseUrl}/#/`);
     await expect(page.getByRole('heading', { name: /timing timeline/i, level: 1 })).toContainText(EINSTEIN.name);
     const nav = page.locator('nav#app-nav');
@@ -99,6 +111,7 @@ test('after viewing a person, #/ shows their timeline, survives reload, and Back
   try {
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await page.waitForURL(/#\/people\/[^/]+\//);
+    await waitForLastPersonWritten(page);
     await page.goto(`${baseUrl}/#/`);
     const heading = page.getByRole('heading', { name: /timing timeline/i, level: 1 });
     await expect(heading).toContainText(EINSTEIN.name);
