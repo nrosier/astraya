@@ -1,5 +1,7 @@
 # sources.json record format
 
+Layout (2026-11-05, #864): the real layout is `docs/references/sources/` (original PDFs in `pdf/`, `apa/`, `ocr/`), `text/` (extracted text), `new/` (documents awaiting processing) and `processed/`. There is no `docs/references/originals/` directory.
+
 `docs/references/sources.json` (local, gitignored) is a JSON array with one record per source. Fields:
 
 - `id` — Stable slug for the source, also the base name of its processed files.
@@ -10,7 +12,7 @@
 - `licence` — Licence or public-domain status of the work.
 - `access_route` — Where the original was obtained or can be re-fetched.
 - `original_name` — File name of the original as received.
-- `processed_path` — Repo-root-relative path of the original under `docs/references/originals/` when kept, or null when missing.
+- `processed_path` — Repo-root-relative path of the original under `docs/references/sources/` (`pdf/`, `apa/` or `ocr/`) when kept, or null when missing.
 - `sha256` — Hash of the original file.
 - `text_path` — Repo-root-relative path of the extracted text under `docs/references/text/`.
 - `pages_path` — Path of per-page text, or null when none exists.
