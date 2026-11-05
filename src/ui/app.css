@@ -2284,6 +2284,11 @@ label.stacked textarea:focus-visible {
   background: transparent;
 }
 
+/* An aspect line the aspect-family filter has hidden (#1063); the markup keeps it so clearing the filter restores it. */
+.chart-wheel .chart-aspect-link.chart-aspect-filtered {
+  display: none;
+}
+
 /* The Aspects view's family Select sits on its own row above the tables (#815). */
 .aspect-family-filter {
   max-width: 20rem;
@@ -4900,7 +4905,7 @@ svg text.chart-symbol-text-unicode {
   border-radius: var(--radius-sm);
   background: var(--surface);
 }
-.relationship-summary h3 {
+.relationship-summary h2 {
   margin: 0 0 var(--space-2);
   font-size: var(--text-base);
 }

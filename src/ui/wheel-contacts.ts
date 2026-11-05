@@ -69,6 +69,8 @@ export function contactsOfBody(root: Element, selectedId: string): readonly Whee
   const own = longitudeOf(root, selectedId);
   const contacts: WheelContact[] = [];
   for (const link of root.querySelectorAll('[data-aspect-body-a]')) {
+    // A line the aspect-family filter has hidden (#1063) is not a contact the reader can see.
+    if (link.classList.contains('chart-aspect-filtered')) continue;
     const a = bodyId(link.getAttribute('data-aspect-body-a') ?? '', link.getAttribute('data-ring-a') ?? '0');
     const b = bodyId(link.getAttribute('data-aspect-body-b') ?? '', link.getAttribute('data-ring-b') ?? '0');
     let partnerId: string;
