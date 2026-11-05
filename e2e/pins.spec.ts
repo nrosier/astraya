@@ -41,7 +41,8 @@ test('pin a result, keep it across a reload, unpin with Undo (#1061)', async ({ 
   await page.getByLabel('From', { exact: true }).fill('2027-03-01');
   await page.getByLabel('To', { exact: true }).fill('2027-04-30');
   await page.getByRole('button', { name: 'Search events', exact: true }).click();
-  await expect(page.getByText(/events found/)).toBeVisible();
+  // The search runs the real ephemeris, which is slower on a CI runner than the default expect timeout.
+  await expect(page.getByText(/events found/)).toBeVisible({ timeout: 90_000 });
 
   const pinButtons = page.getByRole('button', { name: /^Pin /, pressed: false });
   const label = (await pinButtons.first().getAttribute('aria-label'))?.replace(/^Pin /, '') ?? '';
