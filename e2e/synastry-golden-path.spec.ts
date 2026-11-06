@@ -51,7 +51,7 @@ test.describe('with the shared people (#799)', () => {
 
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await page.getByRole('link', { name: 'Relationship Charts', exact: true }).click();
-    await page.getByRole('link', { name: 'Synastry', exact: true }).click();
+    await page.getByRole('tab', { name: 'Synastry', exact: true }).click();
     await expect(page.getByRole('heading', { name: /synastry/i })).toBeVisible();
 
     await page.getByLabel('Compare with').selectOption({ label: 'Max Born' });
@@ -99,7 +99,7 @@ test.describe('with the shared people (#799)', () => {
 
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await page.getByRole('link', { name: 'Relationship Charts', exact: true }).click();
-    await page.getByRole('link', { name: 'Synastry', exact: true }).click();
+    await page.getByRole('tab', { name: 'Synastry', exact: true }).click();
     await page.getByLabel('Compare with').selectOption({ label: 'Max Born' });
 
     const panel = page.getByRole('region', { name: 'Relationship summary' });
@@ -122,7 +122,7 @@ test.describe('with the shared people (#799)', () => {
     await openSharedPerson(page, baseUrl, MARIC);
 
     await page.getByRole('link', { name: 'Relationship Charts', exact: true }).click();
-    await page.getByRole('link', { name: 'Synastry', exact: true }).click();
+    await page.getByRole('tab', { name: 'Synastry', exact: true }).click();
     await expect(page.getByText(/needs a complete birth record with a known time/)).toBeVisible();
   });
 
@@ -131,7 +131,7 @@ test.describe('with the shared people (#799)', () => {
 
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await page.getByRole('link', { name: 'Relationship Charts', exact: true }).click();
-    await page.getByRole('link', { name: 'Synastry', exact: true }).click();
+    await page.getByRole('tab', { name: 'Synastry', exact: true }).click();
     await page.getByLabel('Compare with').selectOption({ label: 'Max Born' });
 
     await expect(page.locator('div.chart-wheel')).toBeVisible();

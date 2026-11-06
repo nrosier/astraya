@@ -6,14 +6,13 @@
  */
 /**
  * @module ToolsLayout
- * @purpose Frames the Tools screens (Planetary cycles, Ephemeris research, Eclipses, Horary, Electional, Rectification) with a "Tools" h1 and a Tabs bar, replacing the SectionNav link row for this section (#1139).
- * @conventions Mounted by App.tsx around the open Tools screen. Each tab still navigates to its tool's unchanged route href (a hash change), so deep links work. The Tabs primitive has no narrow case, so at 40rem and below a labelled Select replaces the strip, inside a navigation landmark (axe `region`); the two are switched by CSS (`.tools-tabs`, `.tools-select`). The header section (a labelled region) takes the same width as the open screen. Labels come from AppNav.messages.ts.
+ * @purpose Frames the Tools screens (Planetary cycles, Ephemeris research, Eclipses, Horary, Electional, Rectification) with a "Tools" h1 and a Tabs bar, replacing the SectionNav link row for this section (#1139); the frame itself is `SectionLayout` (#1175).
+ * @conventions Mounted by App.tsx around the open Tools screen; a thin wrapper that gives `SectionLayout` the tools, their hrefs and their translated labels. Tab and panel ids keep the `tools` prefix.
  * @exports ToolsLayout
  */
 import { appNavMessages } from './AppNav.messages.js';
 import { useMessages } from './messages.js';
-import { Select } from './primitives/Select.js';
-import { Tabs, tabPanelProps } from './primitives/Tabs.js';
+import { SectionLayout } from './SectionLayout.js';
 import { TOOLS, type ToolKey } from './tools-nav.js';
 
 /** The tools whose screens use the wide data shell, so the header lines up with them. */
@@ -27,38 +26,15 @@ export function ToolsLayout({
   readonly children: React.ReactNode;
 }): React.JSX.Element {
   const t = useMessages(appNavMessages);
-  const label = t.subtabsAriaLabel(t.toolsLabel);
-  // The panel holds whole screens with their own main landmark, so it only carries the id the tabs control: a tabpanel role around a main fails axe region.
-  const { id } = tabPanelProps('tools', active);
-  const items = TOOLS.map((tool) => ({ key: tool.key, label: t.toolLabels[tool.key] }));
-  const open = (key: string): void => {
-    const target = TOOLS.find((tool) => tool.key === key);
-    if (target !== undefined) window.location.hash = target.href;
-  };
   return (
-    <>
-      <section
-        className={WIDE_TOOLS.includes(active) ? 'tools-header shell shell--wide' : 'tools-header shell'}
-        aria-labelledby="tools-heading"
-      >
-        <h1 id="tools-heading">{t.toolsLabel}</h1>
-        <div className="tools-tabs">
-          <Tabs idBase="tools" label={label} items={items} active={active} onSelect={open} />
-        </div>
-        <nav className="tools-select" aria-label={label}>
-          <div className="chart-view-select">
-            <Select
-              label={label}
-              value={active}
-              options={items.map((item) => ({ value: item.key, label: item.label }))}
-              onChange={open}
-            />
-          </div>
-        </nav>
-      </section>
-      <div id={id} className="tools-panel">
-        {children}
-      </div>
-    </>
+    <SectionLayout
+      idBase="tools"
+      heading={t.toolsLabel}
+      items={TOOLS.map((tool) => ({ key: tool.key, label: t.toolLabels[tool.key], href: tool.href }))}
+      active={active}
+      wide={WIDE_TOOLS.includes(active)}
+    >
+      {children}
+    </SectionLayout>
   );
 }

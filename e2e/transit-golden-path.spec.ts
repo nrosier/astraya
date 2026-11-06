@@ -54,8 +54,8 @@ test.describe('with the shared people (#799)', () => {
     await openSharedPerson(page, baseUrl, EINSTEIN);
 
     await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).click();
-    await page.getByRole('link', { name: 'Transits', exact: true }).click();
-    await expect(page.getByRole('heading', { level: 1, name: /transits/i })).toBeVisible();
+    await page.getByRole('tab', { name: 'Transits', exact: true }).click();
+    await expect(page.getByRole('heading', { level: 2, name: /transits/i })).toBeVisible();
     await expect(page.locator('.page-header-basis')).toHaveText('Tropical · Placidus · Modern rulers · Standard orbs');
     await expect(page.locator('div.chart-wheel')).toBeVisible();
     await expect(page.locator('div.chart-wheel svg')).toHaveCount(1);
@@ -112,7 +112,7 @@ test.describe('with the shared people (#799)', () => {
     await openSharedPerson(page, baseUrl, MARIC);
 
     await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).click();
-    await page.getByRole('link', { name: 'Transits', exact: true }).click();
+    await page.getByRole('tab', { name: 'Transits', exact: true }).click();
     await expect(page.getByText(/needs a known birth time/)).toBeVisible();
   });
 });

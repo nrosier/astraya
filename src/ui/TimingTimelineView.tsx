@@ -189,7 +189,7 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.fallback} />
+        <PageHeader headingLevel={2} title={t.fallback} />
         <p>
           {t.notComplete(person.displayName || t.fallback)} <a href={personHref(personId)}>{t.personPageLink}</a>.
         </p>
@@ -205,6 +205,7 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
     <main className="shell shell--wide">
       <BackLink fallback={personHref(personId)} />
       <PageHeader
+        headingLevel={2}
         title={person.displayName ? t.heading(person.displayName) : t.fallback}
         basis={basisLine}
         basisEditHref={null}

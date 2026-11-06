@@ -109,7 +109,7 @@ test('a person with a known birth time gets a Consultation screen with transits,
 
   // The link actually opens the full canonical screen (one home per feature).
   await page.getByRole('link', { name: 'Open transits', exact: true }).first().click();
-  await expect(page.getByRole('heading', { level: 1, name: /transits/i })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: /transits/i }).first()).toBeVisible();
 });
 
 test('the Consultation header opens the chart wheel on the day shown, and the cards link to their full views (#800 round 2)', async () => {

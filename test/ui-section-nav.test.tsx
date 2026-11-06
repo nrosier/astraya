@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 /**
- * The sub-view tabs of the sidebar sections (#882): Transits & Forecast, Progressions & Directions
- * and Relationship Charts each show their sub-views as a tab row on the page, and the first tab is
- * the sub-view the section's single sidebar entry opens (`AppNav.tsx`).
+ * The sub-view tabs of the sidebar sections (#882, #1175): Transits & Forecast, Progressions & Directions and
+ * Relationship Charts each show their sub-views as a Tabs bar under a section h1, and the first tab is the sub-view the
+ * section's single sidebar entry opens (`AppNav.tsx`).
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -10,7 +10,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { setLocale } from '../src/ui/locale.js';
 import { PERSON_TAB_FAMILIES, PERSON_TABS } from '../src/ui/person-nav.js';
 import { parseRoute, type Route } from '../src/ui/route.js';
-import { SectionNav, sectionTabsFor } from '../src/ui/SectionNav.js';
+import { PersonSectionLayout } from '../src/ui/SectionLayout.js';
+import { sectionTabsFor } from '../src/ui/SectionNav.js';
 
 let mounted: { container: HTMLElement; root: Root } | undefined;
 
@@ -31,14 +32,20 @@ async function mount(route: Route): Promise<HTMLElement> {
   const root = createRoot(container);
   mounted = { container, root };
   await act(async () => {
-    root.render(<SectionNav route={route} />);
+    root.render(
+      <PersonSectionLayout route={route}>
+        <main>
+          <h2>The open screen</h2>
+        </main>
+      </PersonSectionLayout>,
+    );
     await Promise.resolve();
   });
   return container;
 }
 
 const labels = (box: HTMLElement): (string | null)[] =>
-  Array.from(box.querySelectorAll('nav a')).map((a) => a.textContent);
+  Array.from(box.querySelectorAll('[role="tab"]')).map((tab) => tab.textContent);
 
 describe('sectionTabsFor', () => {
   it('lists each person section in order, first sub-view first, on unchanged routes', () => {
@@ -64,20 +71,19 @@ describe('sectionTabsFor', () => {
   });
 });
 
-describe('SectionNav', () => {
-  it('draws the Relationship Charts tabs with the open one current', async () => {
+describe('PersonSectionLayout (#1175)', () => {
+  it('draws the Relationship Charts frame with the open tab selected and the screen in the panel', async () => {
     const box = await mount(parseRoute('#/people/p-abcdefghijklmnop/relationships/composite'));
+    expect(box.querySelector('h1')?.textContent).toBe('Relationship Charts');
     expect(box.querySelector('nav[aria-label="Relationship Charts subtabs"]')).not.toBeNull();
     expect(labels(box)).toEqual(['Synastry', 'Composite']);
-    expect(box.querySelector('a[aria-current="page"]')?.textContent).toBe('Composite');
-    expect(Array.from(box.querySelectorAll('a')).map((a) => a.getAttribute('href'))).toEqual([
-      '#/people/p-abcdefghijklmnop/relationships/synastry',
-      '#/people/p-abcdefghijklmnop/relationships/composite',
-    ]);
+    expect(box.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toBe('Composite');
+    expect(box.querySelector('#relationship-charts-panel-composite h2')?.textContent).toBe('The open screen');
   });
 
   it('draws the Progressions & Directions and Transits & Forecast tabs', async () => {
     const box = await mount(parseRoute('#/people/p-abcdefghijklmnop/timing/profections'));
+    expect(box.querySelector('h1')?.textContent).toBe('Progressions & Directions');
     expect(labels(box)).toEqual([
       'Timing timeline',
       'Profections',
@@ -90,34 +96,20 @@ describe('SectionNav', () => {
     });
     mounted?.container.remove();
     const transits = await mount(parseRoute('#/people/p-abcdefghijklmnop/timing/transits'));
+    expect(transits.querySelector('h1')?.textContent).toBe('Transits & Forecast');
     expect(labels(transits)).toEqual(['Transits', 'Forecast']);
   });
 
-  it('keeps every section tab a focusable link in tab order', async () => {
-    const routes = [
-      '#/people/p-abcdefghijklmnop/relationships/synastry',
-      '#/people/p-abcdefghijklmnop/timing/transits',
-      '#/people/p-abcdefghijklmnop/timing/profections',
-    ];
-    for (const href of routes) {
-      const box = await mount(parseRoute(href));
-      const tabs = Array.from(box.querySelectorAll<HTMLAnchorElement>('nav a'));
-      expect(tabs.length).toBeGreaterThan(1);
-      for (const tab of tabs) {
-        expect(tab.getAttribute('href')).toMatch(/^#\//);
-        expect(tab.tabIndex).toBeGreaterThanOrEqual(0);
-        expect(tab.closest('[hidden], [inert], [aria-hidden="true"]')).toBeNull();
-      }
-      act(() => {
-        mounted?.root.unmount();
-      });
-      mounted?.container.remove();
-      mounted = undefined;
-    }
+  it('keeps exactly one tab in the tab order, as the Tools bar does', async () => {
+    const box = await mount(parseRoute('#/people/p-abcdefghijklmnop/timing/transits'));
+    const tabs = Array.from(box.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+    expect(tabs.map((tab) => tab.tabIndex)).toEqual([0, -1]);
   });
 
-  it('draws nothing outside the four sections', async () => {
+  it('draws only the screen outside the three sections', async () => {
     const box = await mount(parseRoute('#/people'));
-    expect(box.innerHTML).toBe('');
+    expect(box.querySelector('h1')).toBeNull();
+    expect(box.querySelector('[role="tablist"]')).toBeNull();
+    expect(box.querySelector('h2')?.textContent).toBe('The open screen');
   });
 });

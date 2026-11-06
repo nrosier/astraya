@@ -302,7 +302,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.transitsFallback} titleTerm="transit" />
+        <PageHeader headingLevel={2} title={t.transitsFallback} titleTerm="transit" />
         <p>
           <GlossaryText text={t.notCompleteTransits(person.displayName || t.thisPerson)} />{' '}
           <a href={personHref(personId)}>{t.personPageLink}</a>.
@@ -315,7 +315,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.transitsFallback} titleTerm="transit" />
+        <PageHeader headingLevel={2} title={t.transitsFallback} titleTerm="transit" />
         <p>
           <GlossaryText text={t.needsKnownTime(person.displayName || t.thisPerson)} />
         </p>
@@ -339,6 +339,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
       />
       <BackLink fallback={personHref(personId)} />
       <PageHeader
+        headingLevel={2}
         title={person.displayName ? t.heading(person.displayName) : t.transitsFallback}
         titleTerm="transit"
         basis={basisLine}

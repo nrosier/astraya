@@ -1,15 +1,15 @@
 /**
- * The sub-view navigation of the multi-view sections (#1050): Transits & forecast, Progressions & directions and
- * Relationship charts as ordinary links in the shared tab row, styled like the chart view links, every link
- * reachable by keyboard with a visible focus ring, the labelled Select at 40rem and below inside a landmark (axe
- * `region`); the Tools pages (#1139) as a "Tools" header with a Tabs bar and the Select fallback, and the frame
- * holding at 390x844, 1280x800 and 3440x1440 in both themes.
+ * The sub-view navigation of the multi-view sections: the three person sections (#1175: Transits & Forecast,
+ * Progressions & Directions, Relationship Charts) and Tools (#1139) share one frame, a section h1 over a Tabs bar, with
+ * the open sub-view in the tab panel under its own h2. Arrow, Home and End move between tabs at their unchanged routes
+ * with a visible focus ring, the labelled Select at 40rem and below sits inside a landmark (axe `region`), and the
+ * frame holds at 390x844, 1280x800 and 3440x1440 in both themes.
  */
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AxeBuilder } from '@axe-core/playwright';
-import { expect, test, type BrowserContext, type Locator, type Page } from '@playwright/test';
+import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
@@ -58,21 +58,48 @@ test.afterEach(async () => {
 
 interface Section {
   readonly name: string;
+  /** The section's h1. */
+  readonly h1: string;
   readonly label: string;
+  /** Prefix of the tab and panel ids. */
+  readonly idBase: string;
+  /** The key of the sub-view `hash` opens. */
+  readonly openKey: string;
   readonly hash: (id: string) => string;
+  readonly firstUrl: (id: string) => RegExp;
+  readonly lastUrl: (id: string) => RegExp;
 }
 
 const SECTIONS: readonly Section[] = [
-  { name: 'Transits & forecast', label: 'Transits & Forecast subtabs', hash: (id) => `#/people/${id}/timing/transits` },
+  {
+    name: 'Transits & forecast',
+    h1: 'Transits & Forecast',
+    label: 'Transits & Forecast subtabs',
+    idBase: 'transits-forecast',
+    openKey: 'transit',
+    hash: (id) => `#/people/${id}/timing/transits`,
+    firstUrl: (id) => new RegExp(`#/people/${id}/timing/transits$`),
+    lastUrl: (id) => new RegExp(`#/people/${id}/timing/forecast$`),
+  },
   {
     name: 'Progressions & directions',
+    h1: 'Progressions & Directions',
     label: 'Progressions & Directions subtabs',
+    idBase: 'progressions-directions',
+    openKey: 'profections',
     hash: (id) => `#/people/${id}/timing/profections`,
+    firstUrl: (id) => new RegExp(`#/people/${id}/timing/timeline$`),
+    lastUrl: (id) => new RegExp(`#/people/${id}/timing/primary-directions$`),
   },
   {
     name: 'Relationship charts',
+    h1: 'Relationship Charts',
     label: 'Relationship Charts subtabs',
+    idBase: 'relationship-charts',
+    openKey: 'synastry',
     hash: (id) => `#/people/${id}/relationships/synastry`,
+    firstUrl: (id) => new RegExp(`#/people/${id}/relationships/synastry$`),
+    lastUrl: (id) => new RegExp(`#/people/${id}/relationships/composite$`),
   },
 ];
 
@@ -81,125 +108,37 @@ async function openSection(section: Section): Promise<void> {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 30_000 });
 }
 
-test('sub-view links are ordinary links with no tab role, in every group', async () => {
+test('every person section has its h1, a Tabs bar with the open sub-view selected, and an h2 for the screen (#1175)', async () => {
   test.setTimeout(120_000);
   for (const section of SECTIONS) {
     await openSection(section);
-    const nav = page.getByRole('navigation', { name: section.label });
-    await expect(nav).toBeVisible();
-    await expect(nav.locator('[role="tab"], [role="tablist"]')).toHaveCount(0);
-    expect(await nav.getByRole('link').count(), `${section.name}: links`).toBeGreaterThan(1);
-    await expect(nav.locator('a[aria-current="page"]')).toHaveCount(1);
+    await expect(page.getByRole('heading', { level: 1, name: section.h1 })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
+    const tabs = page.getByRole('tablist', { name: section.label });
+    expect(await tabs.getByRole('tab').count(), `${section.name}: tabs`).toBeGreaterThan(1);
+    await expect(tabs.locator('[role="tab"][aria-selected="true"]')).toHaveCount(1);
+    await expect(page.locator(`#${section.idBase}-panel-${section.openKey} h2`).first()).toBeVisible();
   }
 });
 
-test('keyboard: Tab reaches the sub-view links, and every focus ring is visible', async () => {
+test('person section tabs: arrow, Home and End move between sub-views at their unchanged routes, with a visible focus ring (#1175)', async () => {
   test.setTimeout(120_000);
   for (const section of SECTIONS) {
     await openSection(section);
-    const nav = page.getByRole('navigation', { name: section.label });
-    const links = nav.getByRole('link');
-    const count = await links.count();
-
-    // Real Tab presses walk every link in order, and each one shows a focus indicator (:focus-visible).
-    await links.first().focus();
-    await page.keyboard.press('Shift+Tab');
-    for (let index = 0; index < count; index += 1) {
-      await page.keyboard.press('Tab');
-      const link = links.nth(index);
-      await expect(link).toBeFocused();
-      const outline = await page.evaluate<{ width: string; style: string }>(
-        `(() => ({ width: getComputedStyle(document.activeElement).outlineWidth, style: getComputedStyle(document.activeElement).outlineStyle }))()`,
-      );
-      expect(outline.style, `${section.name} link ${String(index)} focus ring`).not.toBe('none');
-      expect(outline.width, `${section.name} link ${String(index)} focus ring width`).not.toBe('0px');
-    }
-
-    // Tab order: from the first link, Tab moves to the next link.
-    await links.first().focus();
-    await page.keyboard.press('Tab');
-    await expect(links.nth(1)).toBeFocused();
-  }
-});
-
-interface LinkStyle {
-  readonly color: string;
-  readonly backgroundColor: string;
-  readonly borderBottomColor: string;
-  readonly fontWeight: string;
-}
-
-/** The colours and weight that decide how a tab-row link reads; read from computed style, never from source. */
-async function linkStyle(link: Locator): Promise<LinkStyle> {
-  const href = await link.getAttribute('href');
-  if (href === null) throw new Error('the link has no href');
-  return page.evaluate<LinkStyle>(
-    `(() => {
-      const element = Array.from(document.querySelectorAll('.tab-row__tabs > a')).find((a) => a.getAttribute('href') === ${JSON.stringify(href)});
-      const style = getComputedStyle(element);
-      return {
-        color: style.color,
-        backgroundColor: style.backgroundColor,
-        borderBottomColor: style.borderBottomColor,
-        fontWeight: style.fontWeight,
-      };
-    })()`,
-  );
-}
-
-/** The chart screen's ChartViewNav links (`.chart-view-nav`), on the natal wheel. */
-async function openChartPage(): Promise<Locator> {
-  await page.goto(`${baseUrl}/#/people/${personId}/charts/natal/wheel`);
-  const nav = page.locator('nav.chart-view-nav');
-  await expect(nav).toBeVisible({ timeout: 30_000 });
-  return nav.getByRole('link');
-}
-
-test('hover: a sub-view link and a chart view link show the same hover colour and background (#1050)', async () => {
-  test.setTimeout(120_000);
-  for (const theme of THEMES) {
-    await page.emulateMedia({ colorScheme: theme });
-    await page.setViewportSize({ width: 1280, height: 800 });
-
-    const chartLinks = await openChartPage();
-    const chartTarget = chartLinks.locator(':scope:not([aria-current="page"])').nth(0);
-    const chartIdle = await linkStyle(chartTarget);
-    await chartTarget.hover();
-    const chartHover = await linkStyle(chartTarget);
-    // A rest-to-hover change proves the hover rule applies at all, so the comparison below is not vacuous.
-    expect(chartHover, `chart view hover changes the link (${theme})`).not.toEqual(chartIdle);
-
-    for (const section of SECTIONS) {
-      await openSection(section);
-      const subLinks = page.getByRole('navigation', { name: section.label }).getByRole('link');
-      const subTarget = subLinks.locator(':scope:not([aria-current="page"])').nth(0);
-      const subIdle = await linkStyle(subTarget);
-      await subTarget.hover();
-      const subHover = await linkStyle(subTarget);
-      expect(subHover, `${section.name} hover (${theme})`).not.toEqual(subIdle);
-      expect(
-        { color: subHover.color, backgroundColor: subHover.backgroundColor },
-        `${section.name} hover matches chart view hover (${theme})`,
-      ).toEqual({ color: chartHover.color, backgroundColor: chartHover.backgroundColor });
-    }
-  }
-});
-
-test('active: the open sub-view link and the open chart view link share the active style (#1050)', async () => {
-  test.setTimeout(120_000);
-  for (const theme of THEMES) {
-    await page.emulateMedia({ colorScheme: theme });
-    await page.setViewportSize({ width: 1280, height: 800 });
-
-    await openChartPage();
-    const chartActive = await linkStyle(page.locator('nav.chart-view-nav a[aria-current="page"]'));
-    for (const section of SECTIONS) {
-      await openSection(section);
-      const subActive = await linkStyle(
-        page.getByRole('navigation', { name: section.label }).locator('a[aria-current="page"]'),
-      );
-      expect(subActive, `${section.name} active style (${theme})`).toEqual(chartActive);
-    }
+    const tabs = page.getByRole('tablist', { name: section.label });
+    const count = await tabs.getByRole('tab').count();
+    await tabs.getByRole('tab', { selected: true }).focus();
+    await page.keyboard.press('End');
+    await expect(page).toHaveURL(section.lastUrl(personId));
+    await expect(tabs.getByRole('tab', { selected: true })).toBeFocused();
+    const outline = await page.evaluate<{ width: string; style: string }>(
+      `(() => ({ width: getComputedStyle(document.activeElement).outlineWidth, style: getComputedStyle(document.activeElement).outlineStyle }))()`,
+    );
+    expect(outline.style, `${section.name} focus ring`).not.toBe('none');
+    expect(outline.width, `${section.name} focus ring width`).not.toBe('0px');
+    await page.keyboard.press('Home');
+    await expect(page).toHaveURL(section.firstUrl(personId));
+    expect(count).toBeGreaterThan(1);
   }
 });
 
@@ -210,8 +149,8 @@ for (const theme of THEMES) {
     await page.setViewportSize({ width: 390, height: 844 });
     for (const section of SECTIONS) {
       await openSection(section);
-      await expect(page.locator('.tab-row__fallback')).toBeVisible();
-      await expect(page.locator('.tab-row__tabs')).toBeHidden();
+      await expect(page.locator('.section-select')).toBeVisible();
+      await expect(page.locator('.section-tabs')).toBeHidden();
       const results = await new AxeBuilder({ page }).withRules(['region']).analyze();
       expect(
         results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`),
@@ -257,6 +196,30 @@ test('Tools tabs: arrow, Home and End move between tools at their unchanged rout
 });
 
 for (const theme of THEMES) {
+  test(`the person section frame holds at 390x844, 1280x800 and 3440x1440 in the ${theme} theme (#1175)`, async () => {
+    test.setTimeout(240_000);
+    await page.emulateMedia({ colorScheme: theme });
+    for (const viewport of VIEWPORTS) {
+      await page.setViewportSize(viewport);
+      for (const section of SECTIONS) {
+        await openSection(section);
+        const what = `${section.name} at ${String(viewport.width)}x${String(viewport.height)} (${theme})`;
+        const sideways = await page.evaluate<boolean>(
+          'document.documentElement.scrollWidth > document.documentElement.clientWidth + 1',
+        );
+        expect(sideways, `${what}: scrolls sideways`).toBe(false);
+        const narrow = viewport.width <= 640;
+        await expect(page.locator('.section-select')).toBeVisible({ visible: narrow });
+        await expect(page.locator('.section-tabs')).toBeVisible({ visible: !narrow });
+        const axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+        expect(
+          axe.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`),
+          `${what}: accessibility`,
+        ).toEqual([]);
+      }
+    }
+  });
+
   test(`the Tools frame holds at 390x844, 1280x800 and 3440x1440 in the ${theme} theme (#1139)`, async () => {
     test.setTimeout(240_000);
     await page.emulateMedia({ colorScheme: theme });
@@ -271,8 +234,8 @@ for (const theme of THEMES) {
         );
         expect(sideways, `${what}: scrolls sideways`).toBe(false);
         const narrow = viewport.width <= 640;
-        await expect(page.locator('.tools-select')).toBeVisible({ visible: narrow });
-        await expect(page.locator('.tools-tabs')).toBeVisible({ visible: !narrow });
+        await expect(page.locator('.section-select')).toBeVisible({ visible: narrow });
+        await expect(page.locator('.section-tabs')).toBeVisible({ visible: !narrow });
         const axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
         expect(
           axe.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`),

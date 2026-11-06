@@ -186,7 +186,7 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.profectionsFallback} titleTerm="profection" />
+        <PageHeader headingLevel={2} title={t.profectionsFallback} titleTerm="profection" />
         <p>
           <GlossaryText text={t.notCompleteProfections(person.displayName || t.thisPerson)} />{' '}
           <a href={personHref(personId)}>{t.personPageLink}</a>.
@@ -199,7 +199,7 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.profectionsFallback} titleTerm="profection" />
+        <PageHeader headingLevel={2} title={t.profectionsFallback} titleTerm="profection" />
         <p>
           <GlossaryText text={t.needsKnownTime(person.displayName || t.thisPerson)} />
         </p>
@@ -211,6 +211,7 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
     <main className="shell">
       <BackLink fallback={personHref(personId)} />
       <PageHeader
+        headingLevel={2}
         title={person.displayName ? t.heading(person.displayName) : t.profectionsFallback}
         titleTerm="profection"
         basis={basisLine}

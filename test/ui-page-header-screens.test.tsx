@@ -101,7 +101,7 @@ const { About } = await import('../src/ui/About.js');
 const { Changelog } = await import('../src/ui/Changelog.js');
 const { SetupForm } = await import('../src/ui/SetupForm.js');
 
-/** The screen's page-header title: its h1, or for a Tools screen (#1139) its h2 under the shared Tools h1. */
+/** The screen's page-header title: its h1, or for a Tools or person-section screen (#1139, #1175) its h2 under the section h1. */
 async function headingOf(node: ReactNode, tag: 'h1' | 'h2' = 'h1'): Promise<HTMLHeadingElement> {
   const container = document.createElement('div');
   document.body.append(container);
@@ -176,7 +176,7 @@ describe('one PageHeader pattern (#887)', () => {
     });
 
     it('Transit', async () => {
-      expectPageHeader(await headingOf(<TransitView personId="p1" />));
+      expectPageHeader(await headingOf(<TransitView personId="p1" />, 'h2'));
     });
 
     it('Consultation', async () => {
@@ -220,37 +220,37 @@ describe('one PageHeader pattern (#887)', () => {
     });
 
     it('Composite', async () => {
-      expectPageHeader(await headingOf(<CompositeView personId="p1" view="wheel" />));
+      expectPageHeader(await headingOf(<CompositeView personId="p1" view="wheel" />, 'h2'));
     });
 
     it('Synastry', async () => {
-      expectPageHeader(await headingOf(<SynastryView personId="p1" />));
+      expectPageHeader(await headingOf(<SynastryView personId="p1" />, 'h2'));
     });
   });
 
   describe('person timing views', () => {
     it('Profections', async () => {
-      expectPageHeader(await headingOf(<ProfectionsView personId="p1" />));
+      expectPageHeader(await headingOf(<ProfectionsView personId="p1" />, 'h2'));
     });
 
     it('Progressions', async () => {
-      expectPageHeader(await headingOf(<ProgressionsView personId="p1" />));
+      expectPageHeader(await headingOf(<ProgressionsView personId="p1" />, 'h2'));
     });
 
     it('Solar arc', async () => {
-      expectPageHeader(await headingOf(<SolarArcView personId="p1" />));
+      expectPageHeader(await headingOf(<SolarArcView personId="p1" />, 'h2'));
     });
 
     it('Primary directions', async () => {
-      expectPageHeader(await headingOf(<PrimaryDirectionsView personId="p1" />));
+      expectPageHeader(await headingOf(<PrimaryDirectionsView personId="p1" />, 'h2'));
     });
 
     it('Periodic transit', async () => {
-      expectPageHeader(await headingOf(<PeriodicTransitView personId="p1" />));
+      expectPageHeader(await headingOf(<PeriodicTransitView personId="p1" />, 'h2'));
     });
 
     it('Timing timeline', async () => {
-      expectPageHeader(await headingOf(<TimingTimelineView personId="p1" />));
+      expectPageHeader(await headingOf(<TimingTimelineView personId="p1" />, 'h2'));
     });
   });
 

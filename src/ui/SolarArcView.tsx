@@ -263,7 +263,7 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.solarArcFallback} titleTerm="solarArc" />
+        <PageHeader headingLevel={2} title={t.solarArcFallback} titleTerm="solarArc" />
         <p>
           <GlossaryText text={t.notCompleteSolarArc(person.displayName || t.thisPerson)} />{' '}
           <a href={personHref(personId)}>{t.personPageLink}</a>.
@@ -276,7 +276,7 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.solarArcFallback} titleTerm="solarArc" />
+        <PageHeader headingLevel={2} title={t.solarArcFallback} titleTerm="solarArc" />
         <p>
           <GlossaryText text={t.needsKnownTime(person.displayName || t.thisPerson)} />
         </p>
@@ -288,6 +288,7 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
     <main className="shell">
       <BackLink fallback={personHref(personId)} />
       <PageHeader
+        headingLevel={2}
         title={person.displayName ? t.heading(person.displayName) : t.solarArcFallback}
         titleTerm="solarArc"
         basis={basisLine}

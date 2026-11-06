@@ -337,7 +337,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
     return (
       <main className="shell shell--wide">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.synastryFallback} titleTerm="synastry" />
+        <PageHeader headingLevel={2} title={t.synastryFallback} titleTerm="synastry" />
         <p>
           <GlossaryText text={t.needsCompleteRecord(person.displayName || t.thisPerson)} />{' '}
           <a href={personHref(personId)}>{t.personPageLink}</a>.
@@ -361,6 +361,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
       />
       <BackLink fallback={personHref(personId)} />
       <PageHeader
+        headingLevel={2}
         title={person.displayName ? t.heading(person.displayName) : t.synastryFallback}
         titleTerm="synastry"
         basis={basisLine}

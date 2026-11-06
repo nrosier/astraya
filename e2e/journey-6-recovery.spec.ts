@@ -74,7 +74,7 @@ test('a filter that matches no transits shows the empty state, and Clear filters
 
   await openSharedPerson(page, baseUrl, EINSTEIN);
   await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).click();
-  await page.getByRole('link', { name: 'Transits', exact: true }).click();
+  await page.getByRole('tab', { name: 'Transits', exact: true }).click();
   await expect(page.getByRole('table', { name: 'Contacts' })).toBeVisible();
   const [, total] = await transitCount(page);
 
@@ -91,7 +91,7 @@ test('a filter that matches no transits shows the empty state, and Clear filters
     page.getByText('No transits match the Custom filter. Widen it, or clear the filters to see all of them.'),
   ).toBeVisible();
   // The page still works: the screen heading is there and the count reads zero of the full set.
-  await expect(page.getByRole('heading', { level: 1, name: /transits/i })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: /transits/i }).first()).toBeVisible();
   const [zeroShown] = await transitCount(page);
   expect(zeroShown).toBe(0);
 
@@ -185,7 +185,7 @@ test('calculation failure: Primary Directions at a birthplace beyond the polar c
 
   // 1. The calculation cannot be made: the shipped message says so, and no arc is invented.
   await page.getByRole('link', { name: 'Progressions & Directions', exact: true }).click();
-  await page.getByRole('link', { name: 'Primary Directions (Placidus)', exact: true }).click();
+  await page.getByRole('tab', { name: 'Primary Directions (Placidus)', exact: true }).click();
   await expect(
     page.getByText(
       /Primary directions by Placidus semi-arcs cannot be calculated for this birthplace: at or beyond the polar circles/,
@@ -200,7 +200,7 @@ test('calculation failure: Primary Directions at a birthplace beyond the polar c
   await page.getByRole('button', { name: 'Save changes', exact: true }).click();
   await expect(page.getByLabel('Status: Saved on this device', { exact: true })).toBeVisible();
   await page.getByRole('link', { name: 'Progressions & Directions', exact: true }).click();
-  await page.getByRole('link', { name: 'Primary Directions (Placidus)', exact: true }).click();
+  await page.getByRole('tab', { name: 'Primary Directions (Placidus)', exact: true }).click();
   await expect(page.getByText(/Arc for this age: /)).toBeVisible();
   await expect(page.getByText(/cannot be calculated for this birthplace/)).toHaveCount(0);
 });

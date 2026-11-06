@@ -49,8 +49,8 @@ test('two people with known birth times get a Composite screen with a wheel and 
 
   await openSharedPerson(page, baseUrl, EINSTEIN);
   await page.getByRole('link', { name: 'Relationship Charts', exact: true }).click();
-  await page.getByRole('link', { name: 'Composite', exact: true }).click();
-  await expect(page.getByRole('heading', { name: /composite/i, level: 1 })).toBeVisible();
+  await page.getByRole('tab', { name: 'Composite', exact: true }).click();
+  await expect(page.getByRole('heading', { name: /composite/i, level: 2 })).toBeVisible();
   // #1059: the basis line names the midpoint method and offers the Edit link.
   await expect(page.locator('.page-header-basis')).toContainText('Midpoint method');
   await expect(page.locator('.page-header-basis-edit')).toBeVisible();
@@ -70,6 +70,6 @@ test('a person with an unknown birth time is told a composite needs one', async 
   await openSharedPerson(page, baseUrl, MARIC);
 
   await page.getByRole('link', { name: 'Relationship Charts', exact: true }).click();
-  await page.getByRole('link', { name: 'Composite', exact: true }).click();
+  await page.getByRole('tab', { name: 'Composite', exact: true }).click();
   await expect(page.getByText(/needs midpoint houses from both people/)).toBeVisible();
 });

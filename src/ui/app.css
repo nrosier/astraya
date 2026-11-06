@@ -8091,39 +8091,39 @@ a.quiet,
 }
 
 /*
- * The Tools frame (`ToolsLayout.tsx`, issue 1139): a "Tools" h1 and the Tabs strip above the open tool, which keeps its
+ * The section frame (`SectionLayout.tsx`, issues 1139 and 1175; Tools and the person sections): a section h1 and the Tabs strip above the open tool, which keeps its
  * own name as an h2 section heading. Above 40rem the Tabs strip shows; at 40rem and below the labelled Select in a
  * navigation landmark replaces it (the Tabs primitive has no narrow case). Same 40rem rule as the other tab rows.
  */
-.tools-header.shell {
+.section-header.shell {
   padding-top: 3.5rem;
   padding-bottom: 0;
 }
 
-.tools-header > h1 {
+.section-header > h1 {
   margin: 0;
 }
 
-.tools-select {
+.section-select {
   display: none;
 }
 
 @media (max-width: 40rem) {
-  .tools-tabs {
+  .section-tabs {
     display: none;
   }
 
-  .tools-select {
+  .section-select {
     display: block;
     margin-top: var(--space-4);
   }
 
-  .tools-select .chart-view-select {
+  .section-select .chart-view-select {
     max-width: none;
   }
 }
 
-.tools-panel > main.shell {
+.section-panel > main.shell {
   padding-top: var(--space-4);
 }
 
@@ -8144,7 +8144,7 @@ a.quiet,
 }
 
 @media print {
-  .tools-header {
+  .section-header {
     display: none;
   }
 }
