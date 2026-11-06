@@ -29,6 +29,7 @@ import { Badge } from './primitives/Badge.js';
 import { Checkbox } from './primitives/Checkbox.js';
 import { NumberField } from './primitives/NumberField.js';
 import { StagedDialog } from './primitives/StagedDialog.js';
+import { Button } from './primitives/Button.js';
 
 /** The map's applied basis as a read-only badge (#978): what is drawn, never a control. Placed on the map surface. */
 export function MapBasisBadge({ settings }: { readonly settings: MapSettings }): React.JSX.Element {
@@ -113,18 +114,14 @@ export function MapSettingsDialog({
         returnFocusTo={triggerRef}
         footer={
           <>
-            <button
-              type="button"
-              className="quiet"
+            <Button
               disabled={!dirty || invalid}
               aria-label={dirty && !invalid ? t.apply : t.applyNothing}
               onClick={apply}
             >
               {t.apply}
-            </button>
-            <button type="button" className="quiet" onClick={discard}>
-              {t.cancel}
-            </button>
+            </Button>
+            <Button onClick={discard}>{t.cancel}</Button>
           </>
         }
       >

@@ -690,58 +690,50 @@ export function ExtendedSettingsPanel({
   const footer = (
     <>
       <div className="settings-card-footer-group">
-        <button
-          type="button"
-          className="quiet"
+        <Button
           disabled={!dirty || !rulesValid}
           aria-label={dirty ? t.saveAsDefaultButton : `${t.saveAsDefaultButton} — ${t.nothingChanged}`}
           title={t.saveAsDefaultHint}
           onClick={saveAsDefault}
         >
           {t.saveAsDefaultButton}
-        </button>
+        </Button>
         {savedDefault !== undefined ? (
-          <button
-            type="button"
-            className="quiet"
+          <Button
             onClick={() => {
               resetTo(savedDefault.settings, savedDefault.rulership);
             }}
           >
             {t.resetToMyDefaultButton}
-          </button>
+          </Button>
         ) : (
-          <button
-            type="button"
-            className="quiet"
+          <Button
             title={t.resetNoDefaultHint}
             onClick={() => {
               resetTo(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE);
             }}
           >
             {t.resetToMyDefaultButton}
-          </button>
+          </Button>
         )}
       </div>
       <div className="settings-card-footer-group">
-        <button
-          type="button"
-          className="quiet"
+        <Button
           onClick={() => {
             closeCard();
           }}
         >
           {t.cancelButton}
-        </button>
-        <button
-          type="button"
-          className="primitive-button-primary"
+        </Button>
+        <Button
+          variant="primary"
+
           disabled={!dirty || !rulesValid}
           aria-label={dirty ? t.applyButton : `${t.applyButton} — ${t.nothingChanged}`}
           onClick={apply}
         >
           {t.applyButton}
-        </button>
+        </Button>
       </div>
     </>
   );

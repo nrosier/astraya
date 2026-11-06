@@ -136,6 +136,39 @@ const BUTTON_SCREENS: Readonly<Record<string, { readonly rawButtons: number; rea
   },
   'src/ui/CyclesView.tsx': { rawButtons: 0, reason: 'all classed buttons use Button' },
   'src/ui/RectificationView.tsx': { rawButtons: 0, reason: 'all classed buttons use Button' },
+  'src/ui/ReportView.tsx': { rawButtons: 1, reason: 'unclassed generate button; primitive would change its look' },
+  'src/ui/ChartView.tsx': { rawButtons: 0, reason: 'all classed buttons use Button' },
+  'src/ui/RelocatedChartView.tsx': { rawButtons: 0, reason: 'all classed buttons use Button' },
+  'src/ui/FocusInterpretation.tsx': { rawButtons: 0, reason: 'all classed buttons use Button' },
+  'src/ui/SavedInterpretationsPanel.tsx': {
+    rawButtons: 3,
+    reason: 'two unclassed delete buttons, and the cancel button carries a ref the primitive does not forward',
+  },
+  'src/ui/BirthPlaceSearch.tsx': { rawButtons: 0, reason: 'popup rows use Button' },
+  'src/ui/AspectMatrixGrid.tsx': {
+    rawButtons: 1,
+    reason: 'a matrix cell toggle with its own mgrid-pair look, not an action button',
+  },
+  'src/ui/BiWheelSelectionPanel.tsx': { rawButtons: 0, reason: 'all classed buttons use Button' },
+  'src/ui/TransitFilterPanel.tsx': { rawButtons: 0, reason: 'all classed buttons use Button' },
+  'src/ui/ChartOverlaySettingsPanel.tsx': {
+    rawButtons: 1,
+    reason: 'the drawer trigger has its own class and a ref the primitive does not forward',
+  },
+  'src/ui/MapSettingsDialog.tsx': {
+    rawButtons: 1,
+    reason: 'the dialog trigger carries a ref the primitive does not forward',
+  },
+  'src/ui/OrbLibraryEditor.tsx': { rawButtons: 0, reason: 'all classed buttons use Button' },
+  'src/ui/AccountPanel.tsx': { rawButtons: 1, reason: 'unclassed adopt button; primitive would change its look' },
+  'src/ui/ExtendedSettingsPanel.tsx': {
+    rawButtons: 1,
+    reason: 'the drawer trigger has its own class and a ref the primitive does not forward',
+  },
+  'src/ui/ProfileTile.tsx': {
+    rawButtons: 5,
+    reason: 'the account tile and its menu are shell controls with their own looks and refs, like the shell toggles',
+  },
 };
 
 describe('route screens use the Button primitive (#1161)', () => {

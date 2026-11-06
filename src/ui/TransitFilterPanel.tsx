@@ -266,15 +266,13 @@ export function TransitFilterPanel({
       {shown === 0 && total > 0 && (
         <StatusMessage kind="zero">
           {t.empty(t.presets[current ?? 'custom'])}{' '}
-          <button
-            type="button"
-            className="quiet"
+          <Button
             onClick={() => {
               onChange(transitPreset('all', rules));
             }}
           >
             {t.clearFilters}
-          </button>
+          </Button>
         </StatusMessage>
       )}
 
