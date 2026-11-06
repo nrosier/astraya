@@ -1,7 +1,7 @@
 /**
  * Account preferences in the operation log (#1066, ADR 0004).
  *
- * A signed-in reader's language, default rulership and default calculation profile follow them across devices. They
+ * A signed-in reader's language, default rulership, default calculation profile, orb library and saved transit filters follow them across devices. They
  * are ordinary operations on one new entity, `account`, with the constant id `preferences`: no change to the
  * envelope, the spine, `OP_VERSION` or the relay. The account boundary is the per-account database and the relay's
  * per-user scoping, so the id carries no user identifier.
@@ -19,7 +19,7 @@
  * @module store/account
  * @purpose Folds the `account`/`preferences` entity into per-field registers, refuses account writes that could deny-list or erase it, and holds the sign-in reconciliation state shape.
  * @conventions Entity id is the frozen constant `preferences`; only `ACCOUNT_FIELDS` are materialised; `deleted`/`purged` are refused on write and ignored on fold; refusals carry a code so the UI owns the wording; fold and readers never throw.
- * @exports ACCOUNT_ENTITY, ACCOUNT_ENTITY_ID, ACCOUNT_LOCALE_FIELD, ACCOUNT_RULERSHIP_FIELD, ACCOUNT_PROFILE_FIELD, ACCOUNT_FIELDS, AccountField, isAccountField, AccountRegister, AccountRegisters, foldAccount, AccountRefusedError, assertAccountMutation, isAccountRecord, withoutAccountRecords, AccountReconcileState, readAccountReconcileState, newerHlc, AccountRefusal
+ * @exports ACCOUNT_ENTITY, ACCOUNT_ENTITY_ID, ACCOUNT_LOCALE_FIELD, ACCOUNT_RULERSHIP_FIELD, ACCOUNT_PROFILE_FIELD, ACCOUNT_ORB_LIBRARY_FIELD, ACCOUNT_ORB_SOURCE_FIELD, ACCOUNT_TRANSIT_FILTER_DAILY_FIELD, ACCOUNT_TRANSIT_FILTER_YEARLY_FIELD, ACCOUNT_FIELDS, AccountField, isAccountField, AccountRegister, AccountRegisters, foldAccount, AccountRefusedError, assertAccountMutation, isAccountRecord, withoutAccountRecords, AccountReconcileState, readAccountReconcileState, newerHlc, AccountRefusal
  */
 import { compareHlc, isHlc, type Hlc } from './hlc.js';
 import { isJsonValue, type JsonValue } from './ops.js';
@@ -34,9 +34,22 @@ export const ACCOUNT_ENTITY_ID = 'preferences';
 export const ACCOUNT_LOCALE_FIELD = 'locale';
 export const ACCOUNT_RULERSHIP_FIELD = 'defaultRulership';
 export const ACCOUNT_PROFILE_FIELD = 'defaultCalculationProfile';
+/** Added by #1220 (ADR 0004 section 2.2): the orb library, its per-context source, and the saved transit filters. */
+export const ACCOUNT_ORB_LIBRARY_FIELD = 'orbLibrary';
+export const ACCOUNT_ORB_SOURCE_FIELD = 'orbContextSource';
+export const ACCOUNT_TRANSIT_FILTER_DAILY_FIELD = 'transitFilterDaily';
+export const ACCOUNT_TRANSIT_FILTER_YEARLY_FIELD = 'transitFilterYearly';
 
 /** The closed allowlist of fields this build materialises (ADR 0004 section 2.2). */
-export const ACCOUNT_FIELDS = [ACCOUNT_LOCALE_FIELD, ACCOUNT_RULERSHIP_FIELD, ACCOUNT_PROFILE_FIELD] as const;
+export const ACCOUNT_FIELDS = [
+  ACCOUNT_LOCALE_FIELD,
+  ACCOUNT_RULERSHIP_FIELD,
+  ACCOUNT_PROFILE_FIELD,
+  ACCOUNT_ORB_LIBRARY_FIELD,
+  ACCOUNT_ORB_SOURCE_FIELD,
+  ACCOUNT_TRANSIT_FILTER_DAILY_FIELD,
+  ACCOUNT_TRANSIT_FILTER_YEARLY_FIELD,
+] as const;
 export type AccountField = (typeof ACCOUNT_FIELDS)[number];
 
 export function isAccountField(value: unknown): value is AccountField {

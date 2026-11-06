@@ -10,6 +10,7 @@ import { describe, expect, it } from 'vitest';
 import {
   ACCOUNT_ENTITY,
   ACCOUNT_ENTITY_ID,
+  ACCOUNT_FIELDS,
   AccountRefusedError,
   assertAccountMutation,
   foldAccount,
@@ -242,5 +243,28 @@ describe('the store and the account entity (#1066, test 3)', () => {
       await store.setAccountReconcile({ marker: hlc, pending: { locale: { value: 'nl', hlc } } });
       expect(await store.getAccountReconcile()).toEqual({ marker: hlc, pending: { locale: { value: 'nl', hlc } } });
     });
+  });
+});
+
+describe('the allowlist grew by four fields (#1220)', () => {
+  it('materialises the orb library, its source and the two saved transit filters, and still ignores any other field', () => {
+    expect([...ACCOUNT_FIELDS]).toEqual([
+      'locale',
+      'defaultRulership',
+      'defaultCalculationProfile',
+      'orbLibrary',
+      'orbContextSource',
+      'transitFilterDaily',
+      'transitFilterYearly',
+    ]);
+    const hlc = '0000000000001-0000-a1b2c3d4e5f60718';
+    const register = { value: { preset: 'outer' }, hlc };
+    const registers = {
+      transitFilterDaily: register,
+      orbLibrary: { value: { profiles: [] }, hlc },
+      notAField: register,
+    };
+    const folded = foldAccount(registers);
+    expect(Object.keys(folded).sort()).toEqual(['orbLibrary', 'transitFilterDaily']);
   });
 });

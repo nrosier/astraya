@@ -2,7 +2,7 @@
  * The controls that decide which transit contacts a screen shows (#416): a preset, an orb scale,
  * aspect groups, an applying-only switch, finer per-body checkboxes, and a count bar so it is plain
  * that something is hidden. State lives in the screen (`useTransitFilter`), so one filter drives the
- * table and the wheel, and is remembered on this device — as a preset name, so an "Important" filter
+ * table and the wheel, and is remembered with the account (#1220) — as a preset name, so an "Important" filter
  * is rebuilt for the chart being read (its chart ruler), or in full when the user customised it.
  *
  * The visible preset choice (Important / Outer / Personal / All) and its summary line stay a direct,
@@ -16,7 +16,7 @@
 /**
  * @module TransitFilterPanel
  * @purpose Controls (preset, orb scale, aspect groups, applying-only, per-body checkboxes) deciding which transit contacts a screen shows, plus the useTransitFilter hook that persists the choice per context.
- * @conventions State is remembered per context in localStorage as a preset name or full custom filter. "Change filters" (#489, #513) is the shared StagedDialog with a draft/dirty/Apply pattern; the global planetary-rulers preference deliberately lives in Preferences, not in it, with a fourth button (Apply as Default) splitting "apply to this view" from "apply and remember" — useTransitFilter exposes both a persisting setter and a session-only one for that split. Uses TransitFilterPanel.messages.ts for en/nl text via useMessages().
+ * @conventions State is remembered per context as an account preference (op log, #1220), as a preset name or full custom filter. "Change filters" (#489, #513) is the shared StagedDialog with a draft/dirty/Apply pattern; the global planetary-rulers preference deliberately lives in Preferences, not in it, with a fourth button (Apply as Default) splitting "apply to this view" from "apply and remember" — useTransitFilter exposes both a persisting setter and a session-only one for that split. Uses TransitFilterPanel.messages.ts for en/nl text via useMessages().
  * @exports TransitFilterPanel, useTransitFilter, EVERY_BODY_KEY
  */
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
@@ -24,18 +24,21 @@ import {
   HARD_ASPECT_KEYS,
   MINOR_ASPECT_KEYS,
   SOFT_ASPECT_KEYS,
+  TRANSIT_PRESETS,
   presetOf,
   sameFilter,
   transitPreset,
 } from '../astrology/transit-importance.js';
 import type {
   OrbSensitivity,
+  SavedTransitFilter,
   TransitFilter,
   TransitPreset,
   TransitRuleContext,
 } from '../astrology/transit-importance.js';
 import { BODIES } from '../astrology/bodies.js';
 import type { Locale } from '../interpretation/schema.js';
+import { setAccountPreferences, useAccountPreferences } from './account-preferences.js';
 import { bodyDisplayName } from './astro-names.messages.js';
 import { useMessages } from './messages.js';
 import { Checkbox } from './primitives/Checkbox.js';
@@ -48,54 +51,13 @@ import { routeHref } from './route.js';
 import { transitFilterPanelMessages } from './TransitFilterPanel.messages.js';
 
 export const EVERY_BODY_KEY: readonly string[] = BODIES.map((body) => body.key);
-const PRESETS: readonly TransitPreset[] = ['important', 'outer', 'personal', 'all'];
+const PRESETS: readonly TransitPreset[] = TRANSIT_PRESETS;
 const SENSITIVITIES: readonly OrbSensitivity[] = ['tight', 'balanced', 'wide'];
-
-type Saved = { readonly preset: TransitPreset } | { readonly custom: TransitFilter };
-
-const storageKey = (context: string): string => `astraya:transitFilter:${context}`;
-
-function isStringList(value: unknown): value is readonly string[] {
-  return Array.isArray(value) && value.every((item) => typeof item === 'string');
-}
-
-function isFilter(value: unknown): value is TransitFilter {
-  if (typeof value !== 'object' || value === null) return false;
-  const candidate = value as Record<string, unknown>;
-  const overrides = candidate.orbOverrides;
-  return (
-    isStringList(candidate.transiting) &&
-    isStringList(candidate.natal) &&
-    isStringList(candidate.aspects) &&
-    typeof candidate.maxOrb === 'number' &&
-    typeof overrides === 'object' &&
-    overrides !== null &&
-    Object.values(overrides).every((limit) => typeof limit === 'number') &&
-    SENSITIVITIES.includes(candidate.orbSensitivity as OrbSensitivity) &&
-    typeof candidate.applyingOnly === 'boolean'
-  );
-}
-
-function readSaved(context: string): Saved {
-  try {
-    const raw = localStorage.getItem(storageKey(context));
-    const parsed: unknown = raw === null ? undefined : JSON.parse(raw);
-    if (typeof parsed === 'object' && parsed !== null) {
-      const { preset, custom } = parsed as { preset?: unknown; custom?: unknown };
-      const known = PRESETS.find((candidate) => candidate === preset);
-      if (known !== undefined) return { preset: known };
-      if (isFilter(custom)) return { custom };
-    }
-  } catch {
-    // Storage blocked or the saved value is garbage: fall back to the default below.
-  }
-  return { preset: 'important' };
-}
 
 /**
  * The active filter, a persisting setter, and a session-only setter (#489). The default is the
- * important transits for `rules.context`; `setFilter`'s choice is remembered per context on this
- * device (used by the preset select/"Show all", and by the Adjust card's "Apply as Default");
+ * important transits for `rules.context`; `setFilter`'s choice is remembered per context with the
+ * account (used by the preset select/"Show all", and by the Adjust card's "Apply as Default");
  * `setFilterForThisViewOnly` updates only the live value, for the Adjust card's "Apply" — the one
  * commit path that was missing before #489, when every control wrote through `setFilter` on
  * every keystroke.
@@ -103,25 +65,31 @@ function readSaved(context: string): Saved {
 export function useTransitFilter(
   rules: TransitRuleContext,
 ): readonly [TransitFilter, (filter: TransitFilter) => void, (filter: TransitFilter) => void] {
-  const [saved, setSaved] = useState<Saved>(() => readSaved(rules.context));
-  const filter = useMemo(() => ('preset' in saved ? transitPreset(saved.preset, rules) : saved.custom), [saved, rules]);
+  const preferences = useAccountPreferences();
+  const remembered = rules.context === 'daily' ? preferences.transitFilterDaily : preferences.transitFilterYearly;
+  // What "Apply" chose for this view only, shown over the remembered default until a default is chosen again.
+  const [thisViewOnly, setThisViewOnly] = useState<SavedTransitFilter | undefined>(undefined);
+  const filter = useMemo(() => {
+    const saved: SavedTransitFilter = thisViewOnly ?? remembered ?? { preset: 'important' };
+    return 'preset' in saved ? transitPreset(saved.preset, rules) : saved.custom;
+  }, [thisViewOnly, remembered, rules]);
   const setFilter = useCallback(
     (next: TransitFilter) => {
       const preset = presetOf(next, rules);
-      const value: Saved = preset === undefined ? { custom: next } : { preset };
-      setSaved(value);
-      try {
-        localStorage.setItem(storageKey(rules.context), JSON.stringify(value));
-      } catch {
-        // Not remembered, but the filter still applies to this screen.
-      }
+      const value: SavedTransitFilter = preset === undefined ? { custom: next } : { preset };
+      setThisViewOnly(undefined);
+      // The default is an account preference (#1220): applied at once, saved to the open store in the background. A
+      // failed save is shown by the account-preferences notice.
+      void setAccountPreferences(
+        rules.context === 'daily' ? { transitFilterDaily: value } : { transitFilterYearly: value },
+      ).catch(() => undefined);
     },
     [rules],
   );
   const setFilterForThisViewOnly = useCallback(
     (next: TransitFilter) => {
       const preset = presetOf(next, rules);
-      setSaved(preset === undefined ? { custom: next } : { preset });
+      setThisViewOnly(preset === undefined ? { custom: next } : { preset });
     },
     [rules],
   );

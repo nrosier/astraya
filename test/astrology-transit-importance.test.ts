@@ -11,9 +11,11 @@ import {
   chartRulerKeysOf,
   fastTriggers,
   filterTransits,
+  isTransitFilter,
   orbLimitFor,
   presetOf,
   rankTransits,
+  readSavedTransitFilter,
   sameFilter,
   transitImportance,
   transitPreset,
@@ -340,5 +342,33 @@ describe('fastTriggers (#672)', () => {
       context.chartRulerKeys,
     ).slice(0, 3);
     expect(fast).toEqual(expected);
+  });
+});
+
+describe('the saved default filter codec (#1220)', () => {
+  const custom = {
+    transiting: ['saturn'],
+    natal: ['sun'],
+    aspects: ['square'],
+    maxOrb: 2,
+    orbOverrides: { saturn: 1 },
+    orbSensitivity: 'balanced',
+    applyingOnly: false,
+  };
+
+  it('reads a named preset and a whole custom filter', () => {
+    expect(readSavedTransitFilter({ preset: 'outer' })).toEqual({ preset: 'outer' });
+    expect(readSavedTransitFilter({ custom })).toEqual({ custom });
+  });
+
+  it('refuses everything else rather than repairing it into a default', () => {
+    expect(readSavedTransitFilter({ preset: 'nope' })).toBeUndefined();
+    expect(readSavedTransitFilter({ custom: { ...custom, transiting: 'saturn' } })).toBeUndefined();
+    expect(readSavedTransitFilter({ custom: { ...custom, orbSensitivity: 'huge' } })).toBeUndefined();
+    expect(readSavedTransitFilter({})).toBeUndefined();
+    expect(readSavedTransitFilter('important')).toBeUndefined();
+    expect(readSavedTransitFilter(null)).toBeUndefined();
+    expect(isTransitFilter(custom)).toBe(true);
+    expect(isTransitFilter({ ...custom, applyingOnly: 'yes' })).toBe(false);
   });
 });

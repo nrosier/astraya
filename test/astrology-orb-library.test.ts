@@ -7,6 +7,8 @@ import {
   CARD_SOURCE,
   nextRevision,
   orbSettingsFor,
+  readOrbContextSourceStrict,
+  readOrbLibraryStrict,
   sourceForContext,
   validateOrbLibrary,
   validateOrbProfileRecord,
@@ -106,5 +108,28 @@ describe('cited presets as a source (#590)', () => {
 
   it('a profile cannot take a cited preset’s id', () => {
     expect(validateOrbProfileRecord({ ...good, id: 'lilly-1647-first-v1' })).toBeUndefined();
+  });
+});
+
+describe('the strict readers of a synced value (#1220)', () => {
+  it('reads a whole library as it is, and refuses one that would lose a profile instead of dropping it', () => {
+    expect(readOrbLibraryStrict({ profiles: [good] })?.profiles).toEqual([good]);
+    expect(readOrbLibraryStrict({ profiles: [] })).toEqual({ profiles: [] });
+    expect(readOrbLibraryStrict({ profiles: [good, { ...good, id: 'bad', revision: 0 }] })).toBeUndefined();
+    expect(readOrbLibraryStrict({ profiles: [good, good] })).toBeUndefined();
+    expect(readOrbLibraryStrict({ profiles: 'nope' })).toBeUndefined();
+    expect(readOrbLibraryStrict(null)).toBeUndefined();
+    expect(readOrbLibraryStrict({ profiles: Array.from({ length: 51 }, () => good) })).toBeUndefined();
+  });
+
+  it('reads a source, ignoring a context this build does not know and refusing a wrong type for one it does', () => {
+    expect(readOrbContextSourceStrict({ transit: 'house-style', natal: CARD_SOURCE })).toEqual({
+      transit: 'house-style',
+      natal: CARD_SOURCE,
+    });
+    expect(readOrbContextSourceStrict({})).toEqual({});
+    expect(readOrbContextSourceStrict({ transit: 'house-style', horary: 'x' })).toEqual({ transit: 'house-style' });
+    expect(readOrbContextSourceStrict({ transit: 5 })).toBeUndefined();
+    expect(readOrbContextSourceStrict([])).toBeUndefined();
   });
 });

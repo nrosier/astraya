@@ -15,7 +15,9 @@ import { openStore, type Store } from '../src/store/store.js';
 import type { SyncState } from '../src/ui/status.js';
 import {
   ACCOUNT_SETTINGS_MIGRATED_KEY,
+  ACCOUNT_SETTINGS_MIGRATED_V2_KEY,
   LEGACY_ACCOUNT_SETTINGS_KEY,
+  LEGACY_ACCOUNT_SETTINGS_V2_KEY,
   captureSignInCandidates,
   persistSignInCandidates,
   resetAccountPreferencesForTests,
@@ -286,5 +288,78 @@ describe('an account store (#1066)', () => {
       expect(second.state.account.locale?.value).toBe('nl');
     });
     expect(first.state.account.locale?.value).toBe('en');
+  });
+});
+
+describe('the orb library and the saved transit filters (#1220)', () => {
+  const profile = {
+    id: 'house-style',
+    name: 'House style',
+    revision: 1,
+    scalePercent: -10,
+    aspectOrbs: { trine: { base: 6, luminaryBonus: 1 } },
+    bodyOrbs: {},
+  };
+  const library = (name: string) => ({ profiles: [{ ...profile, name }] });
+  /** What the op log holds: the same library under its version. */
+  const stored = (name: string) => ({ version: 1, ...library(name) });
+  /** A device that already finished the first move, with only the second generation of device keys left. */
+  function legacySecondGeneration(values: Readonly<Record<string, string>>): void {
+    localStorage.setItem(ACCOUNT_SETTINGS_MIGRATED_KEY, '1');
+    legacy(values);
+  }
+
+  it('moves the second generation of device keys into the signed-out store, then retires them', async () => {
+    legacySecondGeneration({
+      'astraya:orbLibrary': JSON.stringify(library('House style')),
+      'astraya:transitFilter:daily': JSON.stringify({ preset: 'all' }),
+    });
+    const store = await open(false);
+    session.store = store;
+    mount();
+    await vi.waitFor(() => {
+      expect(localStorage.getItem(ACCOUNT_SETTINGS_MIGRATED_V2_KEY)).toBe('1');
+    });
+    expect(store.state.account.orbLibrary?.value).toEqual(stored('House style'));
+    expect(store.state.account.transitFilterDaily?.value).toEqual({ version: 1, preset: 'all' });
+    expect(localStorage.getItem(LEGACY_ACCOUNT_SETTINGS_V2_KEY)).toBeNull();
+    expect(latest).toBeUndefined();
+  });
+
+  it('asks about a differing orb library on an account and writes the reader’s choice', async () => {
+    const store = await open(true);
+    await store.mutate([
+      { entity: 'account', entityId: 'preferences', field: 'orbLibrary', value: stored('From the account') },
+    ]);
+    legacySecondGeneration({ 'astraya:orbLibrary': JSON.stringify(library('From this device')) });
+    session.store = store;
+    session.engine = makeEngine({ kind: 'synced', at: Date.now() }).engine;
+    mount();
+    await vi.waitFor(() => {
+      expect(latest?.proposals.map((proposal) => proposal.field)).toEqual(['orbLibrary']);
+    });
+    await act(async () => {
+      await latest?.resolve([{ field: 'orbLibrary', use: 'device' }]);
+    });
+    expect(store.state.account.orbLibrary?.value).toEqual(stored('From this device'));
+    expect(localStorage.getItem(ACCOUNT_SETTINGS_MIGRATED_V2_KEY)).toBe('1');
+  });
+
+  it('keeps the account’s library when the reader keeps the account’s', async () => {
+    const store = await open(true);
+    await store.mutate([
+      { entity: 'account', entityId: 'preferences', field: 'orbLibrary', value: stored('From the account') },
+    ]);
+    legacySecondGeneration({ 'astraya:orbLibrary': JSON.stringify(library('From this device')) });
+    session.store = store;
+    session.engine = makeEngine({ kind: 'synced', at: Date.now() }).engine;
+    mount();
+    await vi.waitFor(() => {
+      expect(latest).toBeDefined();
+    });
+    await act(async () => {
+      await latest?.resolve([{ field: 'orbLibrary', use: 'account' }]);
+    });
+    expect(store.state.account.orbLibrary?.value).toEqual(stored('From the account'));
   });
 });

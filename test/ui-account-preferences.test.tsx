@@ -17,7 +17,9 @@ import { append, emptyLog } from '../src/store/oplog.js';
 import { openStore, type Store } from '../src/store/store.js';
 import {
   ACCOUNT_SETTINGS_MIGRATED_KEY,
+  ACCOUNT_SETTINGS_MIGRATED_V2_KEY,
   LEGACY_ACCOUNT_SETTINGS_KEY,
+  LEGACY_ACCOUNT_SETTINGS_V2_KEY,
   accountCacheKey,
   bindAccountPreferences,
   completeLegacyMigration,
@@ -264,5 +266,129 @@ describe('the legacy device values (#1066, section 5, test 8)', () => {
     localStorage.setItem(accountCacheKey('astraya'), JSON.stringify({ locale: 'en' }));
     resetAccountPreferencesForTests();
     expect(getLocale()).toBe('nl');
+  });
+});
+
+describe('the orb library and the saved transit filters (#1220)', () => {
+  const profile = {
+    id: 'house-style',
+    name: 'House style',
+    revision: 1,
+    scalePercent: -10,
+    aspectOrbs: { trine: { base: 6, luminaryBonus: 1 } },
+    bodyOrbs: {},
+  };
+
+  it('saves them through the bound store, one op per changed field, reads them back, and caches them per database', async () => {
+    const store = await open();
+    bindAccountPreferences(store);
+    await setAccountPreferences({
+      orbLibrary: { profiles: [profile] },
+      orbContextSource: { transit: 'house-style' },
+      transitFilterYearly: { preset: 'outer' },
+    });
+    expect(store.outgoing().map((record) => record.field)).toEqual([
+      'orbLibrary',
+      'orbContextSource',
+      'transitFilterYearly',
+    ]);
+    const now = getAccountPreferences();
+    expect(now.orbLibrary.profiles).toEqual([profile]);
+    expect(now.orbContextSource).toEqual({ transit: 'house-style' });
+    expect(now.transitFilterYearly).toEqual({ preset: 'outer' });
+    expect(now.transitFilterDaily).toBeUndefined();
+    expect(cacheOf(store.dbName)).toEqual({
+      orbLibrary: { version: 1, profiles: [profile] },
+      orbContextSource: { version: 1, transit: 'house-style' },
+      transitFilterYearly: { version: 1, preset: 'outer' },
+    });
+    // An unchanged value is not written again.
+    await setAccountPreferences({ orbContextSource: { transit: 'house-style' } });
+    expect(store.outgoing()).toHaveLength(3);
+  });
+
+  it('follows the account across a store switch: another account does not see this one’s library', async () => {
+    const first = await open();
+    bindAccountPreferences(first);
+    await setAccountPreferences({ orbLibrary: { profiles: [profile] } });
+    const second = await open();
+    bindAccountPreferences(second);
+    expect(getAccountPreferences().orbLibrary).toEqual({ profiles: [] });
+    bindAccountPreferences(first);
+    expect(getAccountPreferences().orbLibrary.profiles).toEqual([profile]);
+  });
+
+  it('flags an unreadable library from another device and keeps it out of the screens', async () => {
+    const store = await open();
+    await store.mutate([
+      {
+        entity: 'account',
+        entityId: 'preferences',
+        field: 'orbLibrary',
+        value: { profiles: [{ ...profile, revision: 0 }] },
+      },
+    ]);
+    bindAccountPreferences(store);
+    expect(getAccountPreferences().orbLibrary).toEqual({ profiles: [] });
+    expect(getAccountPreferences().unreadable).toEqual(['orbLibrary']);
+  });
+
+  describe('the legacy device keys, a second generation', () => {
+    function legacy(values: Readonly<Record<string, string>>): void {
+      localStorage.clear();
+      // A device that already finished the first move, as every device that opened the #1066 build did.
+      localStorage.setItem(ACCOUNT_SETTINGS_MIGRATED_KEY, '1');
+      for (const [key, value] of Object.entries(values)) localStorage.setItem(key, value);
+      resetAccountPreferencesForTests();
+    }
+
+    it('captures them in their own key even after the first guard is set, and shows them on first paint', () => {
+      legacy({
+        'astraya:orbLibrary': JSON.stringify({ profiles: [profile] }),
+        'astraya:orbContextSource': JSON.stringify({ natal: 'house-style' }),
+        'astraya:transitFilter:daily': JSON.stringify({ preset: 'all' }),
+      });
+      expect(Object.keys(JSON.parse(localStorage.getItem(LEGACY_ACCOUNT_SETTINGS_V2_KEY) ?? '{}') as object)).toEqual([
+        'orbLibrary',
+        'orbContextSource',
+        'transitFilterDaily',
+      ]);
+      expect(localStorage.getItem(LEGACY_ACCOUNT_SETTINGS_KEY)).toBeNull();
+      expect(getAccountPreferences().orbLibrary.profiles).toEqual([profile]);
+      expect(getAccountPreferences().orbContextSource).toEqual({ natal: 'house-style' });
+      expect(getAccountPreferences().transitFilterDaily).toEqual({ preset: 'all' });
+      expect(Object.keys(legacyCandidates())).toEqual(['orbLibrary', 'orbContextSource', 'transitFilterDaily']);
+    });
+
+    it('repairs a lenient value as the old store did, and offers nothing for an empty or damaged one', () => {
+      legacy({
+        'astraya:orbLibrary': JSON.stringify({ profiles: [profile, { ...profile, id: 'bad', revision: 0 }] }),
+        'astraya:orbContextSource': JSON.stringify({ transit: 5, synastry: 'house-style' }),
+        'astraya:transitFilter:daily': '{"custom":{"transiting":"nope"}}',
+        'astraya:transitFilter:yearly': 'not json',
+      });
+      expect(legacyCandidates()).toEqual({
+        orbLibrary: { value: { version: 1, profiles: [profile] } },
+        orbContextSource: { value: { version: 1, synastry: 'house-style' } },
+      });
+      legacy({ 'astraya:orbLibrary': JSON.stringify({ profiles: [] }), 'astraya:orbContextSource': '{}' });
+      expect(legacyCandidates()).toEqual({});
+    });
+
+    it('captures nothing when none was set, and is retired with the first generation', () => {
+      legacy({});
+      expect(localStorage.getItem(LEGACY_ACCOUNT_SETTINGS_V2_KEY)).toBeNull();
+      localStorage.setItem('astraya:orbLibrary', JSON.stringify({ profiles: [profile] }));
+      resetAccountPreferencesForTests();
+      expect(getAccountPreferences().orbLibrary.profiles).toEqual([profile]);
+      completeLegacyMigration();
+      expect(localStorage.getItem(ACCOUNT_SETTINGS_MIGRATED_V2_KEY)).toBe('1');
+      expect(localStorage.getItem(LEGACY_ACCOUNT_SETTINGS_V2_KEY)).toBeNull();
+      expect(getAccountPreferences().orbLibrary).toEqual({ profiles: [] });
+      expect(legacyCandidates()).toEqual({});
+      // A later launch does not capture again, even if an older build wrote the key since.
+      resetAccountPreferencesForTests();
+      expect(localStorage.getItem(LEGACY_ACCOUNT_SETTINGS_V2_KEY)).toBeNull();
+    });
   });
 });

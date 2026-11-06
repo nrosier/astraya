@@ -1,12 +1,13 @@
 /**
  * @module OrbLibraryEditor
- * @purpose Manages the device's named orb profiles (#590) and chooses which orbs transit, synastry and natal charts use: the card's, or a named profile's.
- * @conventions Saving an edit increments the profile's revision and keeps its id, so charts already drawn keep the revision they recorded. Choices are a device preference, saved at once. Text comes from OrbLibraryEditor.messages.ts via useMessages().
+ * @purpose Manages the user's named orb profiles (#590) and chooses which orbs transit, synastry and natal charts use: the card's, or a named profile's.
+ * @conventions Saving an edit increments the profile's revision and keeps its id, so charts already drawn keep the revision they recorded. The library and the choices are account preferences (#1220), saved at once. The editor refuses a 51st profile, and is read-only while the account's value is one this version cannot read, so a save never replaces what the reader cannot see. Text comes from OrbLibraryEditor.messages.ts via useMessages().
  * @exports OrbLibraryEditor
  */
 import { useState } from 'react';
 import {
   CARD_SOURCE,
+  MAX_ORB_PROFILES,
   nextRevision,
   validateOrbProfileRecord,
   type OrbContextSource,
@@ -18,7 +19,8 @@ import { OrbRulesFields } from './OrbRulesFields.js';
 import { PreferencesRow } from './PreferencesRow.js';
 import { orbLibraryEditorMessages } from './OrbLibraryEditor.messages.js';
 import { useMessages } from './messages.js';
-import { writeOrbContextSource, writeOrbLibrary } from './orb-library-store.js';
+import { writeOrbContextSource, writeOrbLibrary, writeOrbLibraryAndSource } from './orb-library-store.js';
+import { useAccountPreferences } from './account-preferences.js';
 import { Button } from './primitives/Button.js';
 import { EmptyState } from './primitives/EmptyState.js';
 import { Select } from './primitives/Select.js';
@@ -62,6 +64,10 @@ export function OrbLibraryEditor({
   const [draft, setDraft] = useState<Draft | undefined>(undefined);
   const [error, setError] = useState<string | undefined>(undefined);
   const [status, setStatus] = useState<string | undefined>(undefined);
+  // An unreadable value (a newer version's) is shown as empty, so editing it would silently replace it (ADR 0004).
+  const { unreadable } = useAccountPreferences();
+  const libraryLocked = unreadable.includes('orbLibrary');
+  const sourceLocked = unreadable.includes('orbContextSource');
 
   const existing = draft?.id === undefined ? undefined : profiles.find((profile) => profile.id === draft.id);
 
@@ -82,6 +88,12 @@ export function OrbLibraryEditor({
       return;
     }
     const others = profiles.filter((profile) => profile.id !== next.id);
+    // A 51st profile would make the whole library unreadable on every device, so it is refused here.
+    if (others.length >= MAX_ORB_PROFILES) {
+      setError(t.tooMany(MAX_ORB_PROFILES));
+      setStatus(undefined);
+      return;
+    }
     writeOrbLibrary({ profiles: [...others, next] });
     setDraft(undefined);
     setError(undefined);
@@ -89,12 +101,15 @@ export function OrbLibraryEditor({
   };
 
   const remove = (id: string): void => {
-    writeOrbLibrary({ profiles: profiles.filter((profile) => profile.id !== id) });
     // A choice that named the removed profile falls back to the card, so no context is left pointing nowhere.
     const cleared = Object.fromEntries(
       Object.entries(sources).map(([key, value]) => [key, value === id ? CARD_SOURCE : value]),
     ) as OrbContextSource;
-    writeOrbContextSource(cleared);
+    // One durable commit for both, so a device never sees the library without the matching choices.
+    const remaining = { profiles: profiles.filter((profile) => profile.id !== id) };
+    // An unreadable source is left exactly as it is, rather than replaced by the empty one this screen shows.
+    if (sourceLocked) writeOrbLibrary(remaining);
+    else writeOrbLibraryAndSource(remaining, cleared);
     setDraft(undefined);
     setStatus(t.removed);
   };
@@ -120,11 +135,13 @@ export function OrbLibraryEditor({
         {t.heading}
       </h3>
       <p className="hint">{t.hint}</p>
+      {(libraryLocked || sourceLocked) && <StatusMessage kind="partial">{t.locked}</StatusMessage>}
 
       {profiles.length === 0 ? (
         <EmptyState message={t.none}>
           <Button
             size="compact"
+            disabled={libraryLocked}
             onClick={() => {
               setDraft(EMPTY_DRAFT);
               setError(undefined);
@@ -139,6 +156,7 @@ export function OrbLibraryEditor({
             <li key={profile.id}>
               <strong>{profile.name}</strong> — {t.revisionLabel(profile.revision)}{' '}
               <Button
+                disabled={libraryLocked}
                 onClick={() => {
                   setDraft(draftOf(profile));
                   setError(undefined);
@@ -147,6 +165,7 @@ export function OrbLibraryEditor({
                 {t.edit(profile.name)}
               </Button>{' '}
               <Button
+                disabled={libraryLocked}
                 onClick={() => {
                   remove(profile.id);
                 }}
@@ -162,6 +181,7 @@ export function OrbLibraryEditor({
         <p>
           <Button
             size="compact"
+            disabled={libraryLocked}
             onClick={() => {
               setDraft(EMPTY_DRAFT);
               setError(undefined);
@@ -224,6 +244,7 @@ export function OrbLibraryEditor({
             label={t.contextLabel[context]}
             hideLabel
             value={sources[context] ?? CARD_SOURCE}
+            disabled={sourceLocked}
             options={sourceOptions}
             onChange={(value) => {
               choose(context, value);

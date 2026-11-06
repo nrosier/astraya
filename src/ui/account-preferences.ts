@@ -1,5 +1,6 @@
 /**
- * The account preferences at runtime (#1066, ADR 0004): language, default rulership and default calculation profile.
+ * The account preferences at runtime (#1066, ADR 0004): language, default rulership, default calculation profile, and
+ * (#1220) the orb library, its per-context source and the saved transit filters.
  *
  * The values live in the op log, on the `account` entity of whichever store is open (the signed-out store, or a
  * signed-in account's own). This module is the synchronous read path the screens need, because `locale.ts` must set
@@ -23,10 +24,12 @@
  * @module ui/account-preferences
  * @purpose Synchronous, store-bound read path and local-first setters for the account-scope preferences, with the per-database first-paint cache and the one-time legacy capture.
  * @conventions Module-level `useSyncExternalStore` store (stable snapshot replaced only on change); reads never touch `localStorage`; the cache is written only by a writable bound store and replaced wholesale at bind; storage access is best-effort and never throws; a setter never writes an unchanged value.
- * @exports AccountPreferencesSnapshot, getAccountPreferences, subscribeAccountPreferences, useAccountPreferences, setAccountPreferences, bindAccountPreferences, unbindAccountPreferences, boundAccountStore, accountCacheKey, forgetAccountPreferencesCache, LEGACY_ACCOUNT_SETTINGS_KEY, ACCOUNT_SETTINGS_MIGRATED_KEY, LEGACY_LOCALE_KEY, LEGACY_RULERSHIP_KEY, LEGACY_PROFILE_KEY, isAccountMigrationDone, legacyCandidates, completeLegacyMigration, captureSignInCandidates, persistSignInCandidates, clearAccountPreferenceFailure, forgetAccountPreferenceField, resetAccountPreferencesForTests
+ * @exports AccountPreferencesSnapshot, LEGACY_ORB_LIBRARY_KEY, LEGACY_ORB_SOURCE_KEY, LEGACY_TRANSIT_FILTER_DAILY_KEY, LEGACY_TRANSIT_FILTER_YEARLY_KEY, LEGACY_ACCOUNT_SETTINGS_V2_KEY, ACCOUNT_SETTINGS_MIGRATED_V2_KEY, getAccountPreferences, subscribeAccountPreferences, useAccountPreferences, setAccountPreferences, bindAccountPreferences, unbindAccountPreferences, boundAccountStore, accountCacheKey, forgetAccountPreferencesCache, LEGACY_ACCOUNT_SETTINGS_KEY, ACCOUNT_SETTINGS_MIGRATED_KEY, LEGACY_LOCALE_KEY, LEGACY_RULERSHIP_KEY, LEGACY_PROFILE_KEY, isAccountMigrationDone, legacyCandidates, completeLegacyMigration, captureSignInCandidates, persistSignInCandidates, clearAccountPreferenceFailure, forgetAccountPreferenceField, resetAccountPreferencesForTests
  */
 import { useSyncExternalStore } from 'react';
+import { validateOrbLibrary, type OrbContextSource, type OrbLibrary } from '../astrology/orb-library.js';
 import { DEFAULT_RULERSHIP_CHOICE, isRulershipChoice, type RulershipChoice } from '../astrology/rulership.js';
+import { readSavedTransitFilter, type SavedTransitFilter } from '../astrology/transit-importance.js';
 import type { ExtendedSettings } from '../chart/extended-settings.js';
 import {
   canonicalJson,
@@ -42,8 +45,12 @@ import {
   ACCOUNT_ENTITY_ID,
   ACCOUNT_FIELDS,
   ACCOUNT_LOCALE_FIELD,
+  ACCOUNT_ORB_LIBRARY_FIELD,
+  ACCOUNT_ORB_SOURCE_FIELD,
   ACCOUNT_PROFILE_FIELD,
   ACCOUNT_RULERSHIP_FIELD,
+  ACCOUNT_TRANSIT_FILTER_DAILY_FIELD,
+  ACCOUNT_TRANSIT_FILTER_YEARLY_FIELD,
   type AccountField,
   type AccountRegister,
   type AccountRegisters,
@@ -58,10 +65,22 @@ export const LEGACY_LOCALE_KEY = 'astraya:reportLocale';
 export const LEGACY_RULERSHIP_KEY = 'astraya:rulershipChoice';
 export const LEGACY_PROFILE_KEY = 'astraya:defaultCalculationProfile';
 
+/**
+ * The device keys of the settings #1220 moved into the op log. Same names the registry has always used; read once as
+ * a second, separate capture because most devices already passed the first guard.
+ */
+export const LEGACY_ORB_LIBRARY_KEY = 'astraya:orbLibrary';
+export const LEGACY_ORB_SOURCE_KEY = 'astraya:orbContextSource';
+export const LEGACY_TRANSIT_FILTER_DAILY_KEY = 'astraya:transitFilter:daily';
+export const LEGACY_TRANSIT_FILTER_YEARLY_KEY = 'astraya:transitFilter:yearly';
+
 /** The captured legacy values, kept until the one-time move succeeds. */
 export const LEGACY_ACCOUNT_SETTINGS_KEY = 'astraya:legacyAccountSettings';
 /** Global guard: set once the legacy values have been moved into an op log (or there were none). */
 export const ACCOUNT_SETTINGS_MIGRATED_KEY = 'astraya:accountSettingsMigrated';
+/** The same pair for the second generation of settings (#1220): the orb library, its source and the transit filters. */
+export const LEGACY_ACCOUNT_SETTINGS_V2_KEY = 'astraya:legacyAccountSettingsV2';
+export const ACCOUNT_SETTINGS_MIGRATED_V2_KEY = 'astraya:accountSettingsMigratedV2';
 
 /** Same key `session-context.tsx` keeps, read here only to pick the first-paint cache. */
 const LAST_USER_KEY = 'astraya:lastUserId';
@@ -77,11 +96,21 @@ export interface AccountPreferencesSnapshot {
   readonly locale: Locale;
   readonly defaultRulership: RulershipChoice;
   readonly defaultCalculationProfile: ExtendedSettings | undefined;
+  /** The named orb profiles (#590); empty when none were saved. */
+  readonly orbLibrary: OrbLibrary;
+  /** Which orb profile each chart type uses; empty means the card's orbs for all. */
+  readonly orbContextSource: OrbContextSource;
+  /** The saved default transit filter per context (#489); `undefined` means the Important preset. */
+  readonly transitFilterDaily: SavedTransitFilter | undefined;
+  readonly transitFilterYearly: SavedTransitFilter | undefined;
   /** Fields whose winning value this build cannot read. Shown as a notice; never replaced automatically. */
   readonly unreadable: readonly AccountField[];
   /** The last failed save, until it is dismissed or a later save succeeds. */
   readonly failure: string | undefined;
 }
+
+const EMPTY_ORB_LIBRARY: OrbLibrary = { profiles: [] };
+const EMPTY_ORB_SOURCE: OrbContextSource = {};
 
 /** One field as memory holds it: a raw register value (`null` is an explicit reset). Absent means never written. */
 type FieldValues = Partial<Record<AccountField, JsonValue>>;
@@ -131,24 +160,57 @@ function isLocale(value: unknown): value is Locale {
 
 // --- legacy capture ------------------------------------------------------------------------------
 
+function isGenerationDone(guardKey: string): boolean {
+  return storageGet(guardKey) !== null;
+}
+
+/** Whether every generation of legacy values has been moved into an op log (or there were none). */
 export function isAccountMigrationDone(): boolean {
-  return storageGet(ACCOUNT_SETTINGS_MIGRATED_KEY) !== null;
+  return isGenerationDone(ACCOUNT_SETTINGS_MIGRATED_KEY) && isGenerationDone(ACCOUNT_SETTINGS_MIGRATED_V2_KEY);
+}
+
+/** Copy the explicitly present device keys of one generation into its capture key, unless already done or captured. */
+function captureGeneration(
+  guardKey: string,
+  captureKey: string,
+  keys: readonly (readonly [AccountField, string])[],
+): void {
+  if (isGenerationDone(guardKey) || storageGet(captureKey) !== null) return;
+  const captured: Record<string, string> = {};
+  for (const [field, legacyKey] of keys) {
+    const raw = storageGet(legacyKey);
+    if (raw !== null) captured[field] = raw;
+  }
+  if (Object.keys(captured).length > 0) storageSet(captureKey, JSON.stringify(captured));
 }
 
 /**
- * Copy the explicitly present legacy keys into the capture key, once, before any bind (db-integrity finding 1). An
+ * Copy the explicitly present legacy keys into the capture keys, once, before any bind (db-integrity finding 1). An
  * absent key means the reader never chose, so nothing is captured for it.
  */
 function captureLegacy(): void {
-  if (isAccountMigrationDone() || storageGet(LEGACY_ACCOUNT_SETTINGS_KEY) !== null) return;
-  const captured: Record<string, string> = {};
-  const locale = storageGet(LEGACY_LOCALE_KEY);
-  const rulership = storageGet(LEGACY_RULERSHIP_KEY);
-  const profile = storageGet(LEGACY_PROFILE_KEY);
-  if (locale !== null) captured[ACCOUNT_LOCALE_FIELD] = locale;
-  if (rulership !== null) captured[ACCOUNT_RULERSHIP_FIELD] = rulership;
-  if (profile !== null) captured[ACCOUNT_PROFILE_FIELD] = profile;
-  if (Object.keys(captured).length > 0) storageSet(LEGACY_ACCOUNT_SETTINGS_KEY, JSON.stringify(captured));
+  captureGeneration(ACCOUNT_SETTINGS_MIGRATED_KEY, LEGACY_ACCOUNT_SETTINGS_KEY, [
+    [ACCOUNT_LOCALE_FIELD, LEGACY_LOCALE_KEY],
+    [ACCOUNT_RULERSHIP_FIELD, LEGACY_RULERSHIP_KEY],
+    [ACCOUNT_PROFILE_FIELD, LEGACY_PROFILE_KEY],
+  ]);
+  captureGeneration(ACCOUNT_SETTINGS_MIGRATED_V2_KEY, LEGACY_ACCOUNT_SETTINGS_V2_KEY, [
+    [ACCOUNT_ORB_LIBRARY_FIELD, LEGACY_ORB_LIBRARY_KEY],
+    [ACCOUNT_ORB_SOURCE_FIELD, LEGACY_ORB_SOURCE_KEY],
+    [ACCOUNT_TRANSIT_FILTER_DAILY_FIELD, LEGACY_TRANSIT_FILTER_DAILY_KEY],
+    [ACCOUNT_TRANSIT_FILTER_YEARLY_FIELD, LEGACY_TRANSIT_FILTER_YEARLY_KEY],
+  ]);
+}
+
+/** The orb source a legacy device value names, read leniently as the old store did. */
+function legacyOrbSource(value: unknown): OrbContextSource | undefined {
+  if (!isRecord(value)) return undefined;
+  const source: { transit?: string; synastry?: string; natal?: string } = {};
+  for (const context of ['transit', 'synastry', 'natal'] as const) {
+    const choice = value[context];
+    if (typeof choice === 'string') source[context] = choice;
+  }
+  return Object.keys(source).length > 0 ? source : undefined;
 }
 
 /**
@@ -156,30 +218,56 @@ function captureLegacy(): void {
  * in the new strict shape. Empty once the move is done.
  */
 export function legacyCandidates(): ReconcileCandidates {
-  if (isAccountMigrationDone()) return {};
-  const raw = parseJson(storageGet(LEGACY_ACCOUNT_SETTINGS_KEY));
-  if (!isRecord(raw)) return {};
   const out: Partial<Record<AccountField, { readonly value: JsonValue }>> = {};
-  const locale = raw[ACCOUNT_LOCALE_FIELD];
-  if (isLocale(locale)) out[ACCOUNT_LOCALE_FIELD] = { value: locale };
-  const rulership = raw[ACCOUNT_RULERSHIP_FIELD];
-  if (isRulershipChoice(rulership)) out[ACCOUNT_RULERSHIP_FIELD] = { value: rulership };
-  const profile = raw[ACCOUNT_PROFILE_FIELD];
-  if (typeof profile === 'string') {
-    const parsed = parseJson(profile);
-    if (parsed !== undefined) {
-      out[ACCOUNT_PROFILE_FIELD] = {
-        value: serializeAccountValue(ACCOUNT_PROFILE_FIELD, parseCalculationSnapshot(parsed).settings),
+  if (!isGenerationDone(ACCOUNT_SETTINGS_MIGRATED_KEY)) {
+    const raw = parseJson(storageGet(LEGACY_ACCOUNT_SETTINGS_KEY));
+    if (isRecord(raw)) {
+      const locale = raw[ACCOUNT_LOCALE_FIELD];
+      if (isLocale(locale)) out[ACCOUNT_LOCALE_FIELD] = { value: locale };
+      const rulership = raw[ACCOUNT_RULERSHIP_FIELD];
+      if (isRulershipChoice(rulership)) out[ACCOUNT_RULERSHIP_FIELD] = { value: rulership };
+      const profile = raw[ACCOUNT_PROFILE_FIELD];
+      if (typeof profile === 'string') {
+        const parsed = parseJson(profile);
+        if (parsed !== undefined) {
+          out[ACCOUNT_PROFILE_FIELD] = {
+            value: serializeAccountValue(ACCOUNT_PROFILE_FIELD, parseCalculationSnapshot(parsed).settings),
+          };
+        }
+      }
+    }
+  }
+  if (!isGenerationDone(ACCOUNT_SETTINGS_MIGRATED_V2_KEY)) {
+    const raw = parseJson(storageGet(LEGACY_ACCOUNT_SETTINGS_V2_KEY));
+    if (isRecord(raw)) {
+      const fromText = (field: AccountField): unknown => {
+        const text = raw[field];
+        return typeof text === 'string' ? parseJson(text) : undefined;
       };
+      // An empty library or an empty source is the absence of a choice, not one worth offering.
+      const library = validateOrbLibrary(fromText(ACCOUNT_ORB_LIBRARY_FIELD));
+      if (library.profiles.length > 0) {
+        out[ACCOUNT_ORB_LIBRARY_FIELD] = { value: serializeAccountValue(ACCOUNT_ORB_LIBRARY_FIELD, library) };
+      }
+      const source = legacyOrbSource(fromText(ACCOUNT_ORB_SOURCE_FIELD));
+      if (source !== undefined) {
+        out[ACCOUNT_ORB_SOURCE_FIELD] = { value: serializeAccountValue(ACCOUNT_ORB_SOURCE_FIELD, source) };
+      }
+      for (const field of [ACCOUNT_TRANSIT_FILTER_DAILY_FIELD, ACCOUNT_TRANSIT_FILTER_YEARLY_FIELD] as const) {
+        const saved = readSavedTransitFilter(fromText(field));
+        if (saved !== undefined) out[field] = { value: serializeAccountValue(field, saved) };
+      }
     }
   }
   return out;
 }
 
-/** Finish the one-time move: the guard first, then the capture (a leftover capture with the guard set is harmless). */
+/** Finish the one-time move: the guards first, then the captures (a leftover capture with its guard set is harmless). */
 export function completeLegacyMigration(): void {
   storageSet(ACCOUNT_SETTINGS_MIGRATED_KEY, '1');
+  storageSet(ACCOUNT_SETTINGS_MIGRATED_V2_KEY, '1');
   storageRemove(LEGACY_ACCOUNT_SETTINGS_KEY);
+  storageRemove(LEGACY_ACCOUNT_SETTINGS_V2_KEY);
   recompute();
 }
 
@@ -217,12 +305,18 @@ function readCache(dbName: string): FieldValues {
   return out;
 }
 
+/** What was last written to each database's cache, so an unchanged value is not rewritten on every store notification. */
+const lastCacheText = new Map<string, string>();
+
 function writeCache(store: Store, values: FieldValues): void {
   // A read-only tab's store is never newer than the writer tab's, so it leaves the cache to the writer.
   if (!store.writable) return;
   const key = accountCacheKey(store.dbName);
-  if (Object.keys(values).length === 0) storageRemove(key);
-  else storageSet(key, JSON.stringify(values));
+  const text = Object.keys(values).length === 0 ? '' : JSON.stringify(values);
+  if (lastCacheText.get(key) === text) return;
+  lastCacheText.set(key, text);
+  if (text === '') storageRemove(key);
+  else storageSet(key, text);
 }
 
 function legacyFields(): FieldValues {
@@ -251,9 +345,24 @@ function build(): AccountPreferencesSnapshot {
     locale: typed(ACCOUNT_LOCALE_FIELD) ?? 'en',
     defaultRulership: typed(ACCOUNT_RULERSHIP_FIELD) ?? DEFAULT_RULERSHIP_CHOICE,
     defaultCalculationProfile: typed(ACCOUNT_PROFILE_FIELD),
+    orbLibrary: typed(ACCOUNT_ORB_LIBRARY_FIELD) ?? EMPTY_ORB_LIBRARY,
+    orbContextSource: typed(ACCOUNT_ORB_SOURCE_FIELD) ?? EMPTY_ORB_SOURCE,
+    transitFilterDaily: typed(ACCOUNT_TRANSIT_FILTER_DAILY_FIELD),
+    transitFilterYearly: typed(ACCOUNT_TRANSIT_FILTER_YEARLY_FIELD),
     unreadable,
     failure,
   };
+}
+
+/** Two values of one structured field are the same when they serialize to the same canonical JSON. */
+function sameStructured<F extends AccountField>(
+  field: F,
+  a: AccountPreferenceValues[F] | undefined,
+  b: AccountPreferenceValues[F] | undefined,
+): boolean {
+  if (a === b) return true;
+  if (a === undefined || b === undefined) return false;
+  return canonicalJson(serializeAccountValue(field, a)) === canonicalJson(serializeAccountValue(field, b));
 }
 
 function same(a: AccountPreferencesSnapshot, b: AccountPreferencesSnapshot): boolean {
@@ -262,11 +371,11 @@ function same(a: AccountPreferencesSnapshot, b: AccountPreferencesSnapshot): boo
     a.defaultRulership === b.defaultRulership &&
     a.failure === b.failure &&
     a.unreadable.join() === b.unreadable.join() &&
-    (a.defaultCalculationProfile === b.defaultCalculationProfile ||
-      (a.defaultCalculationProfile !== undefined &&
-        b.defaultCalculationProfile !== undefined &&
-        canonicalJson(serializeAccountValue(ACCOUNT_PROFILE_FIELD, a.defaultCalculationProfile)) ===
-          canonicalJson(serializeAccountValue(ACCOUNT_PROFILE_FIELD, b.defaultCalculationProfile))))
+    sameStructured(ACCOUNT_PROFILE_FIELD, a.defaultCalculationProfile, b.defaultCalculationProfile) &&
+    sameStructured(ACCOUNT_ORB_LIBRARY_FIELD, a.orbLibrary, b.orbLibrary) &&
+    sameStructured(ACCOUNT_ORB_SOURCE_FIELD, a.orbContextSource, b.orbContextSource) &&
+    sameStructured(ACCOUNT_TRANSIT_FILTER_DAILY_FIELD, a.transitFilterDaily, b.transitFilterDaily) &&
+    sameStructured(ACCOUNT_TRANSIT_FILTER_YEARLY_FIELD, a.transitFilterYearly, b.transitFilterYearly)
   );
 }
 
@@ -296,6 +405,7 @@ function refreshFromStore(): void {
 
 function init(): void {
   captureLegacy();
+  lastCacheText.clear();
   bound = undefined;
   inflight.clear();
   failure = undefined;
@@ -360,6 +470,7 @@ export function unbindAccountPreferences(): void {
 
 /** Remove one database's first-paint cache, so a shared device keeps no account's preferences after sign-out. */
 export function forgetAccountPreferencesCache(dbName: string): void {
+  lastCacheText.delete(accountCacheKey(dbName));
   storageRemove(accountCacheKey(dbName));
 }
 

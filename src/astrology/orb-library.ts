@@ -8,7 +8,7 @@
  * @module astrology/orb-library
  * @purpose Pure model of the device's named orb profiles (#590): validation, revisions, the per-context source choice, and resolving a context to the orbs it uses.
  * @conventions Plain objects only, validated as a whole. A profile id is stable across revisions; each edit increments `revision`. A context's source is `'card'` (the Extended settings' orbs) or a profile id; an unknown id falls back to the card rather than failing. Synastry's tightening is applied by `computeSynastry`, not here.
- * @exports OrbProfileRecord, OrbLibrary, OrbContextSource, OrbSourceChoice, CARD_SOURCE, validateOrbProfileRecord, validateOrbLibrary, nextRevision, sourceForContext, orbSettingsFor
+ * @exports MAX_ORB_PROFILES, OrbProfileRecord, OrbLibrary, OrbContextSource, OrbSourceChoice, CARD_SOURCE, validateOrbProfileRecord, validateOrbLibrary, readOrbLibraryStrict, readOrbContextSourceStrict, nextRevision, sourceForContext, orbSettingsFor
  */
 import { citedPresetSettings, isCitedOrbPresetId, validateOrbRules, type OrbRulesValue } from './orb-profiles.js';
 
@@ -40,7 +40,8 @@ export interface OrbContextSource {
 }
 
 const MAX_NAME_LENGTH = 80;
-const MAX_PROFILES = 50;
+/** The most profiles a library holds. The editor refuses a 51st, so a saved library is always one that reads back. */
+export const MAX_ORB_PROFILES = 50;
 const ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/;
 const SCALE_RANGE = { min: -90, max: 90 } as const;
 
@@ -67,13 +68,40 @@ export function validateOrbLibrary(value: unknown): OrbLibrary {
   if (!isRecord(value) || !Array.isArray(value.profiles)) return { profiles: [] };
   const seen = new Set<string>();
   const profiles: OrbProfileRecord[] = [];
-  for (const item of value.profiles.slice(0, MAX_PROFILES)) {
+  for (const item of value.profiles.slice(0, MAX_ORB_PROFILES)) {
     const profile = validateOrbProfileRecord(item);
     if (profile === undefined || seen.has(profile.id)) continue;
     seen.add(profile.id);
     profiles.push(profile);
   }
   return { profiles };
+}
+
+/**
+ * The library a value holds, or `undefined` when any part of it is unreadable (a dropped profile, a duplicate id, too
+ * many profiles). `validateOrbLibrary` repairs by dropping; this is for a synced value (#1220), where a silent repair
+ * would change a reader's choice on one device but not another.
+ */
+export function readOrbLibraryStrict(value: unknown): OrbLibrary | undefined {
+  if (!isRecord(value) || !Array.isArray(value.profiles) || value.profiles.length > MAX_ORB_PROFILES) return undefined;
+  const library = validateOrbLibrary(value);
+  return library.profiles.length === value.profiles.length ? library : undefined;
+}
+
+/**
+ * The per-context source a value holds, or `undefined` when a context it names is not a string. A context this build
+ * does not know (a newer build's) is ignored, not an error.
+ */
+export function readOrbContextSourceStrict(value: unknown): OrbContextSource | undefined {
+  if (!isRecord(value)) return undefined;
+  const source: { transit?: string; synastry?: string; natal?: string } = {};
+  for (const context of ['transit', 'synastry', 'natal'] as const) {
+    const choice = value[context];
+    if (choice === undefined) continue;
+    if (typeof choice !== 'string') return undefined;
+    source[context] = choice;
+  }
+  return source;
 }
 
 /** The revision a saved edit of `profile` gets: one more than it had, or 1 for a new profile. */

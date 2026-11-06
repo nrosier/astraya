@@ -115,9 +115,11 @@ describe('the reconciliation plan (#1066, test 7)', () => {
     ]);
   });
 
-  it('offers a readable device value against an unreadable account value, shown as the default', () => {
+  it('offers a readable device value against an unreadable account value, flagged as unreadable rather than shown as a choice', () => {
     const plan = planReconcile({ locale: { value: 'nl' } }, { locale: { value: 'fr', hlc: OLD } });
-    expect(plan.proposals).toEqual([{ field: 'locale', deviceValue: 'nl', accountValue: null }]);
+    expect(plan.proposals).toEqual([
+      { field: 'locale', deviceValue: 'nl', accountValue: null, accountUnreadable: true },
+    ]);
   });
 
   it('writes only the settings where the reader chose this device', () => {
@@ -133,5 +135,108 @@ describe('the reconciliation plan (#1066, test 7)', () => {
     ).toEqual([write('locale', 'nl')]);
     // Dismissing answers "Use my account's" for every setting.
     expect(resolutionWrites(proposals, [])).toEqual([]);
+  });
+});
+
+describe('the orb library and the saved transit filters (#1220)', () => {
+  const profile = {
+    id: 'house-style',
+    name: 'House style',
+    revision: 1,
+    scalePercent: -10,
+    aspectOrbs: { trine: { base: 6, luminaryBonus: 1 } },
+    bodyOrbs: {},
+  };
+  const library = { version: 1, profiles: [profile] };
+
+  it('reads each new field as a value, an explicit reset or an unreadable value', () => {
+    const read = readAccountPreferences({
+      orbLibrary: { value: library, hlc: OLD },
+      orbContextSource: { value: null, hlc: OLD },
+      transitFilterDaily: { value: { version: 1, preset: 'outer' }, hlc: NEW },
+      transitFilterYearly: { value: { version: 1, preset: 'nope' }, hlc: NEW },
+    });
+    expect(read.orbLibrary).toEqual({ kind: 'value', value: { profiles: [profile] }, hlc: OLD });
+    expect(read.orbContextSource).toEqual({ kind: 'default', hlc: OLD });
+    expect(read.transitFilterDaily).toEqual({ kind: 'value', value: { preset: 'outer' }, hlc: NEW });
+    expect(read.transitFilterYearly).toEqual({ kind: 'unreadable', hlc: NEW });
+  });
+
+  it('does not read a library with a bad profile: it stays unreadable, never repaired', () => {
+    const read = readAccountPreferences({
+      orbLibrary: { value: { version: 1, profiles: [profile, { ...profile, id: 'bad', revision: 0 }] }, hlc: NEW },
+    });
+    expect(read.orbLibrary).toEqual({ kind: 'unreadable', hlc: NEW });
+  });
+
+  it('reads a value of a version it does not know, or of none, as unreadable, so it is never rewritten without the parts it cannot see', () => {
+    const unknown = {
+      orbLibrary: { value: { version: 2, profiles: [profile], colour: 'red' }, hlc: NEW },
+      orbContextSource: { value: { version: 2, transit: 'house-style', progressed: 'x' }, hlc: NEW },
+      transitFilterDaily: { value: { version: 2, preset: 'outer' }, hlc: NEW },
+      transitFilterYearly: { value: { preset: 'outer' }, hlc: NEW },
+    };
+    const read = readAccountPreferences(unknown);
+    for (const field of ['orbLibrary', 'orbContextSource', 'transitFilterDaily', 'transitFilterYearly'] as const) {
+      expect(read[field], field).toEqual({ kind: 'unreadable', hlc: NEW });
+    }
+  });
+
+  it('writes each value under its version, as plain JSON that reads back the same', () => {
+    expect(serializeAccountValue('orbLibrary', { profiles: [profile] })).toEqual(library);
+    expect(serializeAccountValue('orbContextSource', { transit: 'house-style' })).toEqual({
+      version: 1,
+      transit: 'house-style',
+    });
+    expect(serializeAccountValue('transitFilterDaily', { preset: 'all' })).toEqual({ version: 1, preset: 'all' });
+    const read = readAccountPreferences({
+      orbLibrary: { value: serializeAccountValue('orbLibrary', { profiles: [profile] }), hlc: OLD },
+    });
+    expect(read.orbLibrary).toEqual({ kind: 'value', value: { profiles: [profile] }, hlc: OLD });
+  });
+
+  it('refuses to write a value that is not JSON, instead of letting a NaN become a null', () => {
+    const bad = { profiles: [{ ...profile, scalePercent: Number.NaN }] };
+    expect(() => serializeAccountValue('orbLibrary', bad)).toThrow(/not a JSON value/);
+  });
+
+  it('offers a differing library for the reader to choose, and writes one the account never had', () => {
+    expect(planReconcile({ orbLibrary: { value: library } }, {}).writes).toEqual([write('orbLibrary', library)]);
+    const other = { version: 1, profiles: [{ ...profile, name: 'Another' }] };
+    const plan = planReconcile({ orbLibrary: { value: library } }, { orbLibrary: { value: other, hlc: OLD } });
+    expect(plan.proposals).toEqual([{ field: 'orbLibrary', deviceValue: library, accountValue: other }]);
+    // Equal values, whatever the key order, offer nothing.
+    const same = {
+      profiles: [
+        {
+          bodyOrbs: profile.bodyOrbs,
+          aspectOrbs: profile.aspectOrbs,
+          scalePercent: profile.scalePercent,
+          revision: profile.revision,
+          name: profile.name,
+          id: profile.id,
+        },
+      ],
+      version: 1,
+    };
+    expect(
+      planReconcile({ orbLibrary: { value: same } }, { orbLibrary: { value: library, hlc: OLD } }).proposals,
+    ).toEqual([]);
+  });
+
+  it('says when the account holds a value this build cannot read, instead of showing it as the default', () => {
+    const newer = { version: 2, profiles: [] };
+    const plan = planReconcile({ orbLibrary: { value: library } }, { orbLibrary: { value: newer, hlc: NEW } });
+    expect(plan.proposals).toEqual([
+      { field: 'orbLibrary', deviceValue: library, accountValue: null, accountUnreadable: true },
+    ]);
+    // An explicit reset is a reset, not an unreadable value.
+    const reset = planReconcile({ orbLibrary: { value: library } }, { orbLibrary: { value: null, hlc: NEW } });
+    expect(reset.proposals).toEqual([{ field: 'orbLibrary', deviceValue: library, accountValue: null }]);
+  });
+
+  it('does not offer an unreadable candidate for a new field', () => {
+    const plan = planReconcile({ transitFilterDaily: { value: { version: 1, preset: 'nope' } } }, {});
+    expect(plan).toEqual({ writes: [], proposals: [] });
   });
 });

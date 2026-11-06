@@ -124,17 +124,8 @@ describe('scope, persistence and sync agree (#1066)', () => {
     expect(violations.some((violation) => violation.includes('must sync'))).toBe(true);
   });
 
-  it('names the account-scope settings whose sync is owned by #1220, and each is a real unsynced account-scope entry', () => {
-    expect(ACCOUNT_SYNC_TRACKED_ELSEWHERE).toEqual({
-      'astraya:orbLibrary': '#1220',
-      'astraya:orbContextSource': '#1220',
-      'astraya:transitFilter:<context>': '#1220',
-    });
-    for (const key of Object.keys(ACCOUNT_SYNC_TRACKED_ELSEWHERE)) {
-      const entry = SETTINGS.find((setting) => setting.key === key);
-      expect(entry?.scope, key).toBe('account');
-      expect(entry?.synced, key).toBe(false);
-    }
+  it('has no account-scope setting waiting on another issue for its sync: #1220 moved the last three into the op log', () => {
+    expect(ACCOUNT_SYNC_TRACKED_ELSEWHERE).toEqual({});
   });
 
   it('keys the orb library entries to the keys the orb library store actually uses (#1149)', () => {
@@ -142,13 +133,27 @@ describe('scope, persistence and sync agree (#1066)', () => {
     expect(ORB_CONTEXT_SOURCE_KEY).toBe('astraya:orbContextSource');
   });
 
-  it('stores the three account preferences in the op log, synced', () => {
-    for (const key of ['astraya:reportLocale', 'astraya:rulershipChoice', 'astraya:defaultCalculationProfile']) {
+  it('stores every account preference in the op log, synced: the three of #1066 and the three of #1220', () => {
+    const keys = [
+      'astraya:reportLocale',
+      'astraya:rulershipChoice',
+      'astraya:defaultCalculationProfile',
+      'astraya:orbLibrary',
+      'astraya:orbContextSource',
+      'astraya:transitFilter:<context>',
+    ];
+    for (const key of keys) {
       const entry = SETTINGS.find((setting) => setting.key === key);
       expect(entry?.scope, key).toBe('account');
       expect(entry?.persistence, key).toBe('indexeddb-oplog');
       expect(entry?.synced, key).toBe(true);
     }
+    // No account-scope entry is missing from that list.
+    expect(
+      SETTINGS.filter((setting) => setting.scope === 'account')
+        .map((setting) => setting.key)
+        .sort(),
+    ).toEqual([...keys].sort());
   });
 
   it('no longer points at #510 for the sync', async () => {

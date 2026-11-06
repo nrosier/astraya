@@ -309,3 +309,32 @@ test.describe('multi-device offline sync (#107)', () => {
     }
   });
 });
+
+test.describe('account preferences on two devices (#1220)', () => {
+  test('an orb profile saved on one device appears on the account’s other device', async ({ browser }) => {
+    test.setTimeout(90_000);
+    const a = await newDevice(browser);
+    const b = await newDevice(browser);
+    try {
+      await gotoAndSettle(a.page, `${baseUrl}/#/people`);
+      await signIn(a.page, USERNAME, PASSWORD);
+      await waitSynced(a.page);
+      await gotoAndSettle(a.page, `${baseUrl}/#/preferences/astrology`);
+      await a.page.getByRole('button', { name: 'Add orb profile', exact: true }).click();
+      await a.page.getByRole('textbox', { name: 'Profile name', exact: true }).fill('Synced profile');
+      await a.page.getByRole('button', { name: 'Save orb profile', exact: true }).click();
+      await expect(a.page.getByText('Saved Synced profile, revision 1.')).toBeVisible();
+
+      await gotoAndSettle(b.page, `${baseUrl}/#/people`);
+      await signIn(b.page, USERNAME, PASSWORD);
+      await waitSynced(b.page);
+      await gotoAndSettle(b.page, `${baseUrl}/#/preferences/astrology`);
+      // Pulled from the account, not written on this device. A reload proves it survives a fresh start too.
+      await expect(b.page.getByText('Synced profile').first()).toBeVisible({ timeout: SYNCED_TIMEOUT });
+      await reloadAndWaitSynced(b.page);
+      await expect(b.page.getByText('Synced profile').first()).toBeVisible();
+    } finally {
+      await closeDevices(a, b);
+    }
+  });
+});

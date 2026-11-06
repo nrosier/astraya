@@ -87,7 +87,8 @@ const en = {
   // so "This device" is the true scope for all of them (the guidelines' account scope waits for profile sync).
   scope: {
     appearance: 'This device. Saved in this browser, and not synced to your account.',
-    astrology: 'This device. Saved in this browser, and not synced to your account.',
+    astrology:
+      'Saved with your account and synced to your other devices when you are signed in; saved in this browser when you are not.',
     data: 'This device. Nothing here is sent anywhere; a file you export or restore stays between you and this browser.',
   },
   languageLabel: 'Interface and interpretation-report language.',
@@ -221,7 +222,8 @@ const nl: typeof en = {
   },
   scope: {
     appearance: 'Dit apparaat. Opgeslagen in deze browser en niet gesynchroniseerd met je account.',
-    astrology: 'Dit apparaat. Opgeslagen in deze browser en niet gesynchroniseerd met je account.',
+    astrology:
+      'Bewaard bij je account en gesynchroniseerd naar je andere apparaten als je bent ingelogd; bewaard in deze browser als je dat niet bent.',
     data: 'Dit apparaat. Niets hier wordt ergens naartoe gestuurd; een bestand dat je exporteert of terugzet blijft tussen jou en deze browser.',
   },
   languageLabel: 'Taal van de interface en het interpretatierapport.',

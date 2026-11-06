@@ -16,7 +16,15 @@ import {
   matchCalculationProfile,
 } from '../chart/calculation-profiles.js';
 import { readAccountFieldValue, type ReconcileProposal } from '../domain/account-preferences.js';
-import { ACCOUNT_LOCALE_FIELD, ACCOUNT_PROFILE_FIELD, type AccountField } from '../store/account.js';
+import {
+  ACCOUNT_LOCALE_FIELD,
+  ACCOUNT_ORB_LIBRARY_FIELD,
+  ACCOUNT_ORB_SOURCE_FIELD,
+  ACCOUNT_PROFILE_FIELD,
+  ACCOUNT_TRANSIT_FILTER_DAILY_FIELD,
+  ACCOUNT_TRANSIT_FILTER_YEARLY_FIELD,
+  type AccountField,
+} from '../store/account.js';
 import type { JsonValue } from '../store/ops.js';
 import { clearAccountPreferenceFailure, useAccountPreferences } from './account-preferences.js';
 import { useAccountPreferencesReconcile, type AccountReconcilePrompt } from './account-preferences-reconcile.js';
@@ -46,6 +54,29 @@ function describe(field: AccountField, value: JsonValue | null, t: Messages): st
       (candidate) => matchCalculationProfile(settings, CALCULATION_PROFILES[candidate].rulership) === candidate,
     );
     return t.profileNames[id ?? 'custom'];
+  }
+  if (field === ACCOUNT_ORB_LIBRARY_FIELD) {
+    const library = readAccountFieldValue(ACCOUNT_ORB_LIBRARY_FIELD, value);
+    if (library === undefined || library.profiles.length === 0) return t.defaultValue;
+    const names = library.profiles.map((profile) => profile.name);
+    const shown = names.length > 3 ? `${names.slice(0, 3).join(', ')}…` : names.join(', ');
+    return t.orbProfileCount(library.profiles.length, shown);
+  }
+  if (field === ACCOUNT_ORB_SOURCE_FIELD) {
+    const source = readAccountFieldValue(ACCOUNT_ORB_SOURCE_FIELD, value);
+    if (source === undefined) return t.defaultValue;
+    const parts = (['transit', 'synastry', 'natal'] as const).flatMap((context) => {
+      const choice = source[context];
+      return choice === undefined
+        ? []
+        : [`${t.orbContextNames[context]}: ${choice === 'card' ? t.orbCardSource : choice}`];
+    });
+    return parts.length === 0 ? t.defaultValue : parts.join('; ');
+  }
+  if (field === ACCOUNT_TRANSIT_FILTER_DAILY_FIELD || field === ACCOUNT_TRANSIT_FILTER_YEARLY_FIELD) {
+    const saved = readAccountFieldValue(field, value);
+    if (saved === undefined) return t.defaultValue;
+    return 'preset' in saved ? t.transitPresetNames[saved.preset] : t.transitCustom;
   }
   return isRulershipChoice(value) ? t.rulershipNames[value] : t.defaultValue;
 }
@@ -98,7 +129,8 @@ function ReconcileDialog({ prompt }: { readonly prompt: AccountReconcilePrompt }
       <p>{prompt.account ? t.reconcileIntroAccount : t.reconcileIntroDevice}</p>
       {prompt.proposals.map((proposal) => {
         const device = describe(proposal.field, proposal.deviceValue, t);
-        const account = describe(proposal.field, proposal.accountValue, t);
+        const account =
+          proposal.accountUnreadable === true ? t.unreadableValue : describe(proposal.field, proposal.accountValue, t);
         return (
           <ChoiceGroup
             key={proposal.field}
