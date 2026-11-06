@@ -165,3 +165,19 @@ jobs:
           echo 'Image never became healthy. Logs:' >&2
           docker logs astraya-smoke >&2
           exit 1
+
+      # The image must say which commit it was built from (#1198). Reads the label
+      # back from the image just smoke-tested (pulled on a tag, loaded on a PR) and
+      # compares it with the commit this run built.
+      - name: Check the image revision label
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+          EXPECTED: ${{ github.sha }}
+        run: |
+          tag="$(printf '%s' "$TAGS" | head -n1)"
+          actual="$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' "$tag")"
+          if [ "$actual" != "$EXPECTED" ]; then
+            echo "Image revision label is '$actual', expected '$EXPECTED'." >&2
+            exit 1
+          fi
+          echo "Image $tag carries revision $actual."
