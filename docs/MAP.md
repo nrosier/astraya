@@ -24,6 +24,7 @@ Topic folders:
 - `ops/ACCOUNT-PREFERENCES-RECOVERY.md` — Operator runbook for a user whose `account`/`preferences` entity the relay deny-listed: signals, the one SQL fix, what not to do (#1066). Deps: `adr/0004-account-scope-settings-sync.md`, `server/ops/purge.ts`.
 - `ops/CI.md` — What the GitHub Actions CI runs and when: jobs, e2e shards, cancelling superseded runs, timings (#1095). Deps: `.github/workflows/ci.yml`.
 - `ops/DEPENDENCIES.md` — Hand-maintained dependency/licence inventory root `CLAUDE.md`'s onboarding checklist points to. Deps: `node_modules/*/package.json` licence fields.
+- `ops/IMAGE-VERIFICATION.md` — How a consumer verifies the keyless Cosign signature on a published Docker image (#1209). Deps: `.github/workflows/docker.yml`.
 - `ops/RELEASING.md` — Release policy and tagging scheme (every milestone ends in a release).
 
 Subdirectories:
