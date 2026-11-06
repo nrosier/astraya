@@ -43,7 +43,6 @@ import { useMessages } from './messages.js';
 import { timingTimelineViewMessages } from './TimingTimelineView.messages.js';
 import { timelineSubjectLabel } from './timing-timeline-labels.js';
 import { useLocale } from './locale.js';
-import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
 import { useCalculationBasisLine } from './calculation-basis.js';
 import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
@@ -188,7 +187,6 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
   if (person.moment === undefined) {
     return (
       <main className="shell">
-        <BackLink fallback={personHref(personId)} />
         <PageHeader headingLevel={2} title={t.fallback} />
         <p>
           {t.notComplete(person.displayName || t.fallback)} <a href={personHref(personId)}>{t.personPageLink}</a>.
@@ -203,7 +201,6 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
 
   return (
     <main className="shell shell--wide">
-      <BackLink fallback={personHref(personId)} />
       <PageHeader
         headingLevel={2}
         title={person.displayName ? t.heading(person.displayName) : t.fallback}

@@ -42,6 +42,15 @@ test('opened fresh, Documents has no back link and its one heading is the builde
   await context.close();
 });
 
+test('opened directly, a screen has no back link at all (#1225)', async ({ browser }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await gotoAndSettle(page, `${baseUrl}/#/about`);
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expect(page.locator('p.back')).toHaveCount(0);
+  await context.close();
+});
+
 test('the bare #/ stays on #/ and Back never loops (#1058)', async ({ page }) => {
   await gotoAndSettle(page, `${baseUrl}/#/`);
   await expect(page).toHaveURL(/#\/$/);
@@ -71,5 +80,21 @@ test.describe('with the shared people (#799)', () => {
     await page.getByRole('banner').getByRole('link', { name: 'PDF', exact: true }).click();
     await expect(page).toHaveURL(/#\/documents$/);
     await expect(page.getByRole('heading', { name: 'Build a PDF', level: 1 })).toBeVisible();
+  });
+
+  test('Back names the page the reader came from and sits above the heading, and a tab switch is not a back step (#1225)', async () => {
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    const chartTitle = await page.title();
+    await page.getByRole('link', { name: 'About & Licence' }).click();
+
+    const back = page.locator('p.back a');
+    await expect(back).toHaveText(`← ${chartTitle.replace(/ – Astraya$/, '')}`);
+    const backBox = await back.boundingBox();
+    const headingBox = await page.getByRole('heading', { level: 1 }).boundingBox();
+    expect(backBox?.y ?? 0).toBeLessThan(headingBox?.y ?? 0);
+
+    await back.click();
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
   });
 });

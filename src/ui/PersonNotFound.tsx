@@ -10,14 +10,12 @@
  */
 import { useMessages } from './messages.js';
 import { sharedMessages } from './shared.messages.js';
-import { BackLink } from './BackLink.js';
 import { DocumentTitle } from './document-title.js';
 
 export function PersonNotFound(): React.JSX.Element {
   const shared = useMessages(sharedMessages);
   return (
     <main className="shell">
-      <BackLink fallback="#/people" label={shared.people} />
       <DocumentTitle heading={shared.notFoundHeading} />
       <h1>{shared.notFoundHeading}</h1>
       <p>

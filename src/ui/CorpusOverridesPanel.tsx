@@ -47,7 +47,6 @@ import { Button } from './primitives/Button.js';
 import { FilterSummary } from './primitives/FilterSummary.js';
 import { EmptyState } from './primitives/EmptyState.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
-import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
 import { useRegisterExports } from './export-registry.js';
 
@@ -266,7 +265,6 @@ export function CorpusOverridesPanel(): React.JSX.Element {
   return (
     <main className="shell admin-view">
       <div className="admin-view-head">
-        <BackLink fallback="#/admin" />
         <PageHeader title={t.heading} />
         <p>{t.intro}</p>
       </div>

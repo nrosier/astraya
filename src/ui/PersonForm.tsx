@@ -39,13 +39,11 @@ import { PersonNotFound } from './PersonNotFound.js';
 import { useStore, useStoreState } from './store-context.js';
 import type { Calendar } from '../time/types.js';
 import type { TimeAccuracy } from '../domain/person.js';
-import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
 import { orbSourceName, useCalculationBasisLine } from './calculation-basis.js';
 import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
 import { PersonFileActions } from './PersonFileActions.js';
-import { sharedMessages } from './shared.messages.js';
 import { checkFeatureFlag, initProfileOverlay, loadOverlayConfig } from './profile-overlay.js';
 
 function accuracyOptions(t: typeof personFormMessages.en): Record<TimeAccuracy, string> {
@@ -90,7 +88,6 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
   const person = state.people.get(personId);
   const birthNote = state.birthNotes.get(personId);
   const t = useMessages(personFormMessages);
-  const shared = useMessages(sharedMessages);
   const unknownTimeHintId = useId();
   const validationT = useMessages(personFormValidationMessages);
   // The person's own calculation profile (#1059): what every chart of theirs is cast with.
@@ -194,7 +191,6 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
 
   return (
     <main className="shell">
-      <BackLink fallback="#/people" label={shared.people} />
       {/* Save sits in the page header's top-right slot, and the save status dot beside the name (#896 owner spec 2026-11-01). */}
       <PageHeader
         title={current.displayName.trim() === '' ? t.newPerson : current.displayName}

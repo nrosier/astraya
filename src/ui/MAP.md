@@ -153,7 +153,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `electional.ts` — Electional screen (form parsing + result formatting). Deps: `astrology/electional`, `time/julian`, `./place-fields`.
 - `export-registry.tsx` — Per-screen export registration contexts. Deps: none (React only).
 - `person-calculation-settings.ts` — Hook for one person's calculation settings and rulership (own registers, else device default profile / default rulership) and async setters (reject on write failure); flags an unreadable register (#806). Deps: `store-context`, `default-calculation-profile`, `rulership-setting`, `domain/person`.
-- `UnreadableSettingsNotice.tsx` + `.messages.ts` — Notice shown instead of a chart when a person's saved settings are unreadable (#806). Deps: `primitives/StatusMessage`, `BackLink`.
+- `UnreadableSettingsNotice.tsx` + `.messages.ts` — Notice shown instead of a chart when a person's saved settings are unreadable (#806). Deps: `primitives/StatusMessage`.
 - `use-calculation-settings-migration.ts` — Once-per-account moves of device chart settings and ruler choice onto existing people, after first sync when signed in (#806). Deps: `session-context`, `sync/engine`, `domain/calculation-settings-migration`, `default-calculation-profile`, `rulership-setting`.
 - `extended-settings-summary.ts` — Diffs extended settings to summarize changes. Deps: `chart/extended-settings`.
 - `format.ts` — Locale-aware formatting (dates/coords). Deps: `interpretation/schema` (Locale type only).
@@ -198,8 +198,8 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `theme-dom.ts` — DOM/storage half of light/dark theme override. Deps: `./theme`.
 - `theme.ts` — Pure theme-selection logic (cycle order/labels). Deps: `ThemeToggle.messages`.
 - `tools-nav.ts` — Tools menu backing (tool list/groups/active-tool); grouped as Sky & cycles/Questions & planning/Birth data (#506/#509). Deps: `route`.
-- `BackLink.tsx` — Every screen's Back link (#652): history when the tab came from inside the app, else a fixed fallback. Deps: `./nav-history`, `shared.messages`.
-- `nav-history.ts` — Stamps each history entry with its in-app position, so Back can tell whether the previous page is inside the app; `replaceRoute` for in-place view changes. Deps: none.
+- `BackLink.tsx` — The one shared Back link (#1225), rendered by `App`: `← <previous page name>`, hidden when there is no previous page. Deps: `./nav-history`, `shared.messages`.
+- `nav-history.ts` — Stamps each history entry with its in-app position and records the page (href and name) behind it, so the shared Back link can name it; `replaceRoute` for in-place view and tab changes. Deps: none.
 - `use-stable-moment.ts` — Hooks that keep a birth moment (or any value) the same object while its content is unchanged, so chart effects can list it as a dependency. Deps: `../time/encode`.
 - `use-exclusive-open.ts` — Shared open/close hook for dropdown-button rows. Deps: none (React only).
 - `void-of-course-text.ts` — Composes void-of-course Moon sentence (transit screen). Deps: `astrology/bodies`, `astrology/signs`, `astrology/void-of-course`, `time/julian`.

@@ -19,8 +19,8 @@ function pageHeaderBlock(source: string): string {
 describe('Consultation header actions (#1048)', () => {
   const header = pageHeaderBlock(view);
 
-  it('keeps the header actions inside PageHeader children, with BackLink above it (#1072: timestamp in the context card below)', () => {
-    expect(view.indexOf('<BackLink')).toBeLessThan(view.indexOf('<PageHeader'));
+  it('keeps the header actions inside PageHeader children, with no BackLink of its own, the shell renders it (#1225; #1072: timestamp in the context card below)', () => {
+    expect(view).not.toContain('<BackLink');
     expect(header).not.toContain('consultation-date-field');
     const card = view.slice(view.indexOf('className="consultation-context"'));
     expect(card.indexOf('<span className="consultation-date-field">')).toBeGreaterThan(-1);

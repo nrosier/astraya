@@ -20,7 +20,6 @@ import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
 import { useStoreState } from './store-context.js';
 import { summary } from './people-list.js';
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
-import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
 import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
 
@@ -44,7 +43,7 @@ export function Overview({ personId }: { readonly personId: string }): React.JSX
   }
 
   if (settingsUnreadable) {
-    return <UnreadableSettingsNotice personId={personId} name={person.displayName || ''} />;
+    return <UnreadableSettingsNotice name={person.displayName || ''} />;
   }
 
   const hasBirthMoment = person.moment !== undefined;
@@ -66,7 +65,6 @@ export function Overview({ personId }: { readonly personId: string }): React.JSX
 
   return (
     <main className="shell">
-      <BackLink fallback="#/people" />
       <PageHeader title={t.heading(person.displayName || t.personFallback)} basis={basisLine} />
       <p>{summary(person, locale)}</p>
 

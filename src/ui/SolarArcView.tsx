@@ -45,7 +45,6 @@ import type { HousePositions, JulianDayUT } from '../ephemeris/types.js';
 import type { Locale } from '../interpretation/schema.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useStableMoment } from './use-stable-moment.js';
-import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
 import { useCalculationBasisLine, withBasisItems } from './calculation-basis.js';
 import { solarArcBasisItems } from './timing-basis.js';
@@ -262,7 +261,6 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
   if (person.moment === undefined) {
     return (
       <main className="shell">
-        <BackLink fallback={personHref(personId)} />
         <PageHeader headingLevel={2} title={t.solarArcFallback} titleTerm="solarArc" />
         <p>
           <GlossaryText text={t.notCompleteSolarArc(person.displayName || t.thisPerson)} />{' '}
@@ -275,7 +273,6 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
   if (person.timeAccuracy === 'unknown') {
     return (
       <main className="shell">
-        <BackLink fallback={personHref(personId)} />
         <PageHeader headingLevel={2} title={t.solarArcFallback} titleTerm="solarArc" />
         <p>
           <GlossaryText text={t.needsKnownTime(person.displayName || t.thisPerson)} />
@@ -286,7 +283,6 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
 
   return (
     <main className="shell">
-      <BackLink fallback={personHref(personId)} />
       <PageHeader
         headingLevel={2}
         title={person.displayName ? t.heading(person.displayName) : t.solarArcFallback}

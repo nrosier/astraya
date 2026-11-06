@@ -35,7 +35,6 @@ import { useMessages } from './messages.js';
 import { SortableTable, csvExportTable, useCsvExports } from './SortableTable.js';
 import type { TableColumn } from './table-sort.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
-import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
 import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
 import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
@@ -159,7 +158,6 @@ export function ElectionalView(): React.JSX.Element {
 
   return (
     <main className="shell shell--wide">
-      <BackLink fallback="#/people" />
       <PageHeader title={t.heading} titleTerm="electional" basis={basisLine} basisEditHref={null} headingLevel={2} />
       <div className="tool-layout">
         <section className="tool-card tool-form" aria-labelledby="electional-search-heading">

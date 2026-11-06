@@ -49,7 +49,6 @@ import type { AdminUser, DeletionImpact, InterpretationUsageReport } from '../sy
 import type { OidcConfig, Role } from '../sync/auth-client.js';
 import { useSessionUserOrUndefined } from './session-context.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
-import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
 
 const ROLE_ORDER: readonly Role[] = ['user', 'admin', 'super_admin'];
@@ -337,7 +336,6 @@ export function AdminPanel(): React.JSX.Element {
   return (
     <main className="shell admin-view">
       <div className="admin-view-head">
-        <BackLink fallback="#/people" />
         <PageHeader title={t.heading} />
       </div>
       <div className="admin-stack">
@@ -453,7 +451,6 @@ export function AdminUsagePanel(): React.JSX.Element {
   return (
     <main className="shell admin-view">
       <div className="admin-view-head">
-        <BackLink fallback="#/people" />
         <PageHeader title={t.usageHeading} />
       </div>
       <div className="admin-stack">

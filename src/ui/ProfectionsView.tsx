@@ -43,7 +43,6 @@ import { ordinal } from './placement-label.js';
 import { wheelCorpus } from './wheel-corpus.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useStableMoment } from './use-stable-moment.js';
-import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
 import { useCalculationBasisLine } from './calculation-basis.js';
 import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
@@ -185,7 +184,6 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
   if (person.moment === undefined) {
     return (
       <main className="shell">
-        <BackLink fallback={personHref(personId)} />
         <PageHeader headingLevel={2} title={t.profectionsFallback} titleTerm="profection" />
         <p>
           <GlossaryText text={t.notCompleteProfections(person.displayName || t.thisPerson)} />{' '}
@@ -198,7 +196,6 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
   if (person.timeAccuracy === 'unknown') {
     return (
       <main className="shell">
-        <BackLink fallback={personHref(personId)} />
         <PageHeader headingLevel={2} title={t.profectionsFallback} titleTerm="profection" />
         <p>
           <GlossaryText text={t.needsKnownTime(person.displayName || t.thisPerson)} />
@@ -209,7 +206,6 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
 
   return (
     <main className="shell">
-      <BackLink fallback={personHref(personId)} />
       <PageHeader
         headingLevel={2}
         title={person.displayName ? t.heading(person.displayName) : t.profectionsFallback}

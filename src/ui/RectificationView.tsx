@@ -45,7 +45,6 @@ import type { TableColumn } from './table-sort.js';
 import type { Locale } from '../interpretation/schema.js';
 import { Notice } from './primitives/Notice.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
-import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
 import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
 import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
@@ -213,7 +212,6 @@ export function RectificationView(): React.JSX.Element {
 
   return (
     <main className="shell">
-      <BackLink fallback="#/people" />
       <PageHeader title={t.heading} titleTerm="rectification" basis={basisLine} basisEditHref={null} headingLevel={2} />
       <p className="hint">
         <GlossaryText text={t.hint} />

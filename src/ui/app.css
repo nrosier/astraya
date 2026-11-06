@@ -672,6 +672,22 @@ h1 {
   text-transform: uppercase;
 }
 
+/* The shared Back link (#1225): one bar above every section heading, lined up with the screen's own column. The screen's
+   top padding then shrinks so the link and the heading read as one block. */
+.back-bar {
+  max-width: var(--shell-max-width-wide);
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-6) 0;
+}
+
+.back-bar:has(.back) + .shell {
+  padding-top: var(--space-4);
+}
+
+.back-bar .back {
+  margin: 0;
+}
+
 .back {
   margin: 0 0 var(--space-8);
   font-size: 0.8rem;

@@ -31,7 +31,6 @@ import { interpretationExclusions } from '../chart/object-policy.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { Tooltip } from './primitives/Tooltip.js';
 import { useStableBy, useStableMoment } from './use-stable-moment.js';
-import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
 
 type Load =
@@ -106,13 +105,12 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
   }
 
   if (settingsUnreadable) {
-    return <UnreadableSettingsNotice personId={personId} name={person.displayName || ''} />;
+    return <UnreadableSettingsNotice name={person.displayName || ''} />;
   }
 
   if (person.moment === undefined) {
     return (
       <main className="shell">
-        <BackLink fallback={personHref(personId)} />
         <PageHeader title={t.reportFallback} titleAside={disclaimer} basis={basisLine} />
         <p>
           {t.notCompleteReport(person.displayName || t.thisPerson)}{' '}
@@ -128,7 +126,6 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
   if (person.timeAccuracy === 'unknown') {
     return (
       <main className="shell">
-        <BackLink fallback={personHref(personId)} />
         <PageHeader title={t.reportFallback} titleAside={disclaimer} basis={basisLine} />
         <p>{t.needsKnownTime(person.displayName || t.thisPerson)}</p>
       </main>
@@ -137,7 +134,6 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
 
   return (
     <main className="shell">
-      <BackLink fallback={personHref(personId)} />
       <PageHeader
         title={person.displayName ? t.heading(person.displayName) : t.reportFallback}
         titleAside={disclaimer}
