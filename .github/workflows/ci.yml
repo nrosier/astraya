@@ -122,6 +122,12 @@ jobs:
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
+    # Playwright's own image carries the browsers and their system libraries, so the job installs nothing with apt:
+    # `playwright install --with-deps` stalled for over 8 minutes on one shard of PR #1245. The tag must match the
+    # @playwright/test version in package-lock.json (Playwright says so, and fails, when the browser is missing).
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.0-noble
+      options: --ipc=host
     strategy:
       fail-fast: false
       matrix:
@@ -135,16 +141,6 @@ jobs:
       - run: npm ci
       - run: npm run ephe:sync
       - run: npm run corpus:split
-      # `--with-deps` runs apt, whose mirror sometimes stalls: on PR #1245 one shard sat in this step for over 8 minutes
-      # while the others took 16 s to 2 min. A step that hangs is killed after 3 minutes and tried again.
-      - name: Install Playwright's browser
-        timeout-minutes: 10
-        run: |
-          for attempt in 1 2 3; do
-            if timeout 180 npx playwright install --with-deps chromium; then exit 0; fi
-            echo "Playwright browser install attempt $attempt failed or timed out" >&2
-          done
-          exit 1
       # test:e2e is `npm run build && playwright test`; the shard runs the same two steps so it can pass --shard.
       - run: npm run build
       - run: npx playwright test --shard=${{ matrix.shard }}/8
