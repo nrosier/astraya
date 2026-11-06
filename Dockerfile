@@ -63,6 +63,8 @@ RUN npm ci --omit=dev && npm cache clean --force
 
 # ---- runtime ----------------------------------------------------------------
 FROM cgr.dev/chainguard/node:latest AS runtime
+ARG GIT_REVISION=unknown
+LABEL org.opencontainers.image.revision=$GIT_REVISION
 WORKDIR /app
 
 ENV NODE_ENV=production \
