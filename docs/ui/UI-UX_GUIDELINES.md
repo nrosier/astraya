@@ -225,6 +225,7 @@ Use device scope for choices that reasonably differ by screen, operating system,
 - Reduced motion and interface density.
 - Drawn, Unicode, or text symbols.
 - Glyph weight and Uranus/Pluto variants.
+- Which Advanced groups of the Extended settings drawer are open.
 
 Store these locally and identify them as **This device**. A header toggle may provide fast access, but the same value must also have one canonical location under Preferences.
 
@@ -332,6 +333,8 @@ Do not solve every long page with another tab row, and do not force every relate
 | **Pagination/virtualization**   | Repeated data volume, rather than information architecture, makes a list or table long.                                                             |
 
 Split a page when it contains more than one dominant visualization with different selection contexts, when the result a control changes is no longer visible near that control, or when a secondary task routinely begins several screenfuls below the primary task. Keep each visualization's legend, selection feedback, and interpretation in the same view. Preserve context in the URL when moving between route-level local views.
+
+A table that is wider than its frame scrolls sideways inside the shared `.data-table-scroll` frame, which draws a fade only on an edge that hides columns (#1076, #1229; owner decision 2026-11-06). A table that fits shows no fade, and a scrolled table shows the fade on one edge at its start and on the other at its end, never on both when it is at either end. Phones follow the same rule. Decide this once in that shared style; a page must not draw its own scroll cue.
 
 ## 6. Implement forms and controls semantically
 
