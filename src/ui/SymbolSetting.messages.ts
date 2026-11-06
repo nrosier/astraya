@@ -31,6 +31,8 @@ const en = {
     'Bold lines: thick, prominent strokes. Good for large printed charts or low-vision accessibility.',
   variantsLegend: 'Forms of a symbol',
   variantLabels: { uranus: 'Uranus', pluto: 'Pluto' },
+  variantRowLabels: { uranus: 'Uranus variant', pluto: 'Pluto variant' },
+  infoLabel: (title: string) => `About ${title}`,
   variantOptions: {
     uranus: { h: 'H with a ball (♅)', astronomical: 'Circle, dot and arrow (⛢)' },
     pluto: { orb: 'Orb over crescent and cross', monogram: 'PL monogram (♇)' },
@@ -65,6 +67,8 @@ const nl: typeof en = {
     'Vette lijnen: dikke, opvallende lijnen. Goed voor grote afgedrukte grafieken of toegankelijkheid voor slechtzienden.',
   variantsLegend: 'Vormen van een symbool',
   variantLabels: { uranus: 'Uranus', pluto: 'Pluto' },
+  variantRowLabels: { uranus: 'Uranus-vorm', pluto: 'Pluto-vorm' },
+  infoLabel: (title: string) => `Over ${title}`,
   variantOptions: {
     uranus: { h: 'H met een bal (♅)', astronomical: 'Cirkel, stip en pijl (⛢)' },
     pluto: { orb: 'Bol boven maansikkel en kruis', monogram: 'PL-monogram (♇)' },

@@ -11,6 +11,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it } from 'vitest';
 import { OrbLibraryEditor } from '../src/ui/OrbLibraryEditor.js';
 import { FileInput } from '../src/ui/primitives/FileInput.js';
+import { PreferencesRow } from '../src/ui/PreferencesRow.js';
 import { SymbolSetting } from '../src/ui/SymbolSetting.js';
 import { preferencesViewMessages } from '../src/ui/PreferencesView.messages.js';
 
@@ -130,5 +131,58 @@ describe('#966 Preferences tab labels', () => {
       astrology: 'Astrology Defaults',
       data: 'Data & Privacy',
     });
+  });
+});
+
+describe('#1185 compact Appearance layout', () => {
+  it('puts the symbol notes in info tooltips, with no callout paragraphs, in the Preferences rows', () => {
+    const container = render(<SymbolSetting rows />);
+    expect(container.querySelector('.symbol-setting-description, .symbol-setting-note, .hint')).toBeNull();
+    // One keyboard-reachable info icon on each of the four rows (symbols, line weight, Uranus, Pluto).
+    const triggers = container.querySelectorAll('.preferences-row .primitive-tooltip-icon button');
+    expect(triggers).toHaveLength(4);
+    expect(Array.from(triggers).map((trigger) => trigger.getAttribute('aria-label'))).toEqual([
+      'About Symbols',
+      'About Line weight',
+      'About Uranus variant',
+      'About Pluto variant',
+    ]);
+  });
+
+  it('keeps the explanatory callouts in the stacked chart-drawer form', () => {
+    const container = render(<SymbolSetting />);
+    expect(container.querySelector('.symbol-setting-description')).not.toBeNull();
+    expect(container.querySelector('.preferences-row')).toBeNull();
+  });
+
+  it('shows a row description only when no info icon replaces it', () => {
+    const container = render(
+      <>
+        <PreferencesRow title="One" description="Words under it">
+          <span />
+        </PreferencesRow>
+        <PreferencesRow title="Two" info="Words in a tooltip" infoLabel="About Two">
+          <span />
+        </PreferencesRow>
+      </>,
+    );
+    const rows = container.querySelectorAll('.preferences-row');
+    expect(rows[0]?.querySelector('.preferences-row-description')?.textContent).toBe('Words under it');
+    expect(rows[0]?.querySelector('.primitive-tooltip-icon')).toBeNull();
+    expect(rows[1]?.querySelector('.preferences-row-description')).toBeNull();
+    expect(rows[1]?.querySelector('.primitive-tooltip-icon button')?.getAttribute('aria-label')).toBe('About Two');
+  });
+
+  it('lays the Appearance groups out in a grid that is two columns from 1024px and one below', () => {
+    expect(preferencesSource).toContain('className="preferences-grid"');
+    expect(ruleBlock('.preferences-grid')).toContain('grid-template-columns: minmax(0, 1fr)');
+    expect(appCss).toMatch(
+      /@media \(min-width: 1024px\) \{\s*\.preferences-grid \{\s*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/,
+    );
+  });
+
+  it('has an en and nl label for every info icon', () => {
+    expect(preferencesViewMessages.en.infoLabel('Language')).toBe('About Language');
+    expect(preferencesViewMessages.nl.infoLabel('Taal')).toBe('Over Taal');
   });
 });

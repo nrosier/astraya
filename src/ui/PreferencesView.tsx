@@ -401,62 +401,56 @@ export function PreferencesView({
 
         {active === 'appearance' && (
           <>
-            <section className="preferences-card" aria-labelledby="preferences-card-interface">
-              <h2 id="preferences-card-interface" className="preferences-card-title">
-                {t.cardInterface}
-              </h2>
-              <PreferencesRow title={t.languageTitle} description={t.languageLabel}>
-                <ChoiceGroup
-                  label={t.languageTitle}
-                  value={locale}
-                  segmented
-                  options={CORPUS_LOCALES.map((code) => ({ value: code, label: code.toUpperCase() }))}
-                  onChange={(value) => {
-                    if (isLocale(value)) setLocale(value);
-                  }}
-                />
-              </PreferencesRow>
-              <PreferencesRow title={t.themeTitle} description={t.themeLabel}>
-                <ThemeToggle />
-              </PreferencesRow>
-            </section>
+            <div className="preferences-grid">
+              <section className="preferences-card" aria-labelledby="preferences-card-interface">
+                <h2 id="preferences-card-interface" className="preferences-card-title">
+                  {t.cardInterface}
+                </h2>
+                <PreferencesRow title={t.languageTitle} info={t.languageLabel} infoLabel={t.infoLabel(t.languageTitle)}>
+                  <ChoiceGroup
+                    label={t.languageTitle}
+                    value={locale}
+                    segmented
+                    options={CORPUS_LOCALES.map((code) => ({ value: code, label: code.toUpperCase() }))}
+                    onChange={(value) => {
+                      if (isLocale(value)) setLocale(value);
+                    }}
+                  />
+                </PreferencesRow>
+                <PreferencesRow title={t.themeTitle} info={t.themeLabel} infoLabel={t.infoLabel(t.themeTitle)}>
+                  <ThemeToggle />
+                </PreferencesRow>
+                <PreferencesRow title={t.motionLabel} info={t.motionHint} infoLabel={t.infoLabel(t.motionLabel)}>
+                  <Select
+                    label={t.motionLabel}
+                    hideLabel
+                    value={motion}
+                    options={MOTION_CHOICES.map((choice) => ({ value: choice, label: t.motionOptions[choice] }))}
+                    onChange={(value) => {
+                      if (isMotionChoice(value)) setMotion(value);
+                    }}
+                  />
+                </PreferencesRow>
+                <PreferencesRow title={t.densityLabel} info={t.densityHint} infoLabel={t.infoLabel(t.densityLabel)}>
+                  <Select
+                    label={t.densityLabel}
+                    hideLabel
+                    value={density}
+                    options={DENSITY_CHOICES.map((choice) => ({ value: choice, label: t.densityOptions[choice] }))}
+                    onChange={(value) => {
+                      if (isDensityChoice(value)) setDensity(value);
+                    }}
+                  />
+                </PreferencesRow>
+              </section>
 
-            <section className="preferences-card" aria-labelledby="preferences-card-symbols">
-              <h2 id="preferences-card-symbols" className="preferences-card-title">
-                {t.cardSymbols}
-              </h2>
-              <SymbolSetting rows />
-            </section>
-
-            <section className="preferences-card" aria-labelledby="preferences-card-motion">
-              <h2 id="preferences-card-motion" className="preferences-card-title">
-                {t.cardMotion}
-              </h2>
-              <PreferencesRow title={t.motionLabel}>
-                <Select
-                  label={t.motionLabel}
-                  hideLabel
-                  value={motion}
-                  help={t.motionHint}
-                  options={MOTION_CHOICES.map((choice) => ({ value: choice, label: t.motionOptions[choice] }))}
-                  onChange={(value) => {
-                    if (isMotionChoice(value)) setMotion(value);
-                  }}
-                />
-              </PreferencesRow>
-              <PreferencesRow title={t.densityLabel}>
-                <Select
-                  label={t.densityLabel}
-                  hideLabel
-                  value={density}
-                  help={t.densityHint}
-                  options={DENSITY_CHOICES.map((choice) => ({ value: choice, label: t.densityOptions[choice] }))}
-                  onChange={(value) => {
-                    if (isDensityChoice(value)) setDensity(value);
-                  }}
-                />
-              </PreferencesRow>
-            </section>
+              <section className="preferences-card" aria-labelledby="preferences-card-symbols">
+                <h2 id="preferences-card-symbols" className="preferences-card-title">
+                  {t.cardSymbols}
+                </h2>
+                <SymbolSetting rows />
+              </section>
+            </div>
           </>
         )}
 

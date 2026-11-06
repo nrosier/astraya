@@ -5,7 +5,7 @@
 /**
  * @module SymbolSetting
  * @purpose Device-preference controls for symbol class (drawn/Unicode/text), glyph line weight, and Uranus/Pluto glyph variants.
- * @conventions Writes shared device preferences via symbol-setting.ts and glyph-variant-setting.ts; uses SymbolSetting.messages.ts for en/nl text via useMessages(). Built on the shared `Select` primitive (#506/#508) so label/control/help anatomy matches every other field in the app. `rows` lays each control out as a 60/40 Preferences row (#966) and shows the helper notes as muted callouts; the chart drawer keeps the stacked form.
+ * @conventions Writes shared device preferences via symbol-setting.ts and glyph-variant-setting.ts; uses SymbolSetting.messages.ts for en/nl text via useMessages(). Built on the shared `Select` primitive (#506/#508) so label/control/help anatomy matches every other field in the app. `rows` lays each control out as a 60/40 Preferences row (#966) and puts the helper notes in info-icon tooltips, with no callout boxes (#1185); the chart drawer keeps the stacked form.
  * @exports SymbolSetting
  */
 import { isSymbolClass, SYMBOL_CLASSES } from '../chart/symbol-class.js';
@@ -23,7 +23,7 @@ export function SymbolSetting({
   rows = false,
 }: {
   readonly onChanged?: () => void;
-  /** Lay each control out as a 60/40 Preferences row, with its helper notes as muted callouts (#966). */
+  /** Lay each control out as a 60/40 Preferences row, with its helper notes in info-icon tooltips (#966, #1185). */
   readonly rows?: boolean;
 } = {}): React.JSX.Element {
   const t = useMessages(symbolSettingMessages);
@@ -49,12 +49,23 @@ export function SymbolSetting({
     }
   };
   const symbolDescription = getSymbolDescription();
+  const weightDescription =
+    variants.weight === 'fine'
+      ? t.fineWeightDescription
+      : variants.weight === 'bold'
+        ? t.boldWeightDescription
+        : t.regularWeightDescription;
 
   // A Preferences row puts the title and helper text on the left and the control on the right; the stacked form
   // keeps its own label and help inside the Select, as the chart drawer expects.
-  const wrap = (title: string, control: React.ReactNode, key?: string): React.ReactNode =>
+  const wrap = (title: string, control: React.ReactNode, key?: string, info?: string): React.ReactNode =>
     rows ? (
-      <PreferencesRow key={key} title={title}>
+      <PreferencesRow
+        key={key}
+        title={title}
+        info={info}
+        infoLabel={info === undefined ? undefined : t.infoLabel(title)}
+      >
         {control}
       </PreferencesRow>
     ) : (
@@ -79,9 +90,10 @@ export function SymbolSetting({
             }
           }}
         />,
+        undefined,
+        [t.hint, symbolDescription].filter((text) => text !== undefined).join(' '),
       )}
-      {rows && <p className="symbol-setting-note">{t.hint}</p>}
-      {symbolDescription !== undefined && <p className="symbol-setting-description">{symbolDescription}</p>}
+      {!rows && symbolDescription !== undefined && <p className="symbol-setting-description">{symbolDescription}</p>}
 
       {wrap(
         t.weightLabel,
@@ -90,7 +102,7 @@ export function SymbolSetting({
           hideLabel={rows}
           value={variants.weight}
           disabled={choice !== 'drawn'}
-          help={choice === 'drawn' ? t.weightHint : t.weightAvailableWhen}
+          help={rows ? undefined : choice === 'drawn' ? t.weightHint : t.weightAvailableWhen}
           options={GLYPH_WEIGHTS.map((option) => ({ value: option, label: t.weightOptions[option] }))}
           onChange={(value) => {
             if (isGlyphWeight(value)) {
@@ -100,8 +112,10 @@ export function SymbolSetting({
             }
           }}
         />,
+        undefined,
+        choice === 'drawn' ? `${t.weightHint} ${weightDescription}` : `${t.weightHint} ${t.weightAvailableWhen}`,
       )}
-      {choice === 'drawn' && (
+      {!rows && choice === 'drawn' && (
         <p className="symbol-setting-description">
           {variants.weight === 'fine' && t.fineWeightDescription}
           {variants.weight === 'regular' && t.regularWeightDescription}
@@ -110,11 +124,11 @@ export function SymbolSetting({
       )}
 
       <fieldset className="field-group">
-        <legend>{t.variantsLegend}</legend>
-        <p className="hint">{t.variantsHint}</p>
+        <legend className={rows ? 'sr-only' : undefined}>{t.variantsLegend}</legend>
+        {!rows && <p className="hint">{t.variantsHint}</p>}
         {VARIANT_BODIES.map((body) =>
           wrap(
-            t.variantLabels[body],
+            rows ? t.variantRowLabels[body] : t.variantLabels[body],
             <Select
               label={t.variantLabels[body]}
               hideLabel={rows}
@@ -134,6 +148,7 @@ export function SymbolSetting({
               }}
             />,
             body,
+            t.variantsHint,
           ),
         )}
       </fieldset>

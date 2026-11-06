@@ -227,3 +227,52 @@ test('exporting everything and the people CSV both produce real downloads', asyn
   expect(await read(csv)).toContain('Albert Einstein,1879-03-14,11:30:00,recorded');
   await context.close();
 });
+
+test('Appearance is a compact two-column page: every setting above the fold at 1280x800, tooltips by keyboard, stacked below 1024px (#1185)', async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await gotoAndSettle(page, `${baseUrl}/#/preferences`);
+  const panel = page.getByRole('tabpanel', { name: 'Appearance & Accessibility' });
+  await expect(panel).toBeVisible();
+
+  // No permanent explanation under the listed settings, and no inset callout boxes.
+  await expect(
+    panel.locator('.preferences-row-description, .symbol-setting-description, .symbol-setting-note'),
+  ).toHaveCount(0);
+
+  // Language, Theme, Motion, Density on the left; Symbols, Line weight, Uranus and Pluto variants on the right.
+  const left = panel.getByRole('region', { name: 'Interface & display' });
+  const right = panel.getByRole('region', { name: 'Symbol rendering' });
+  await expect(left.locator('.preferences-row-title')).toHaveCount(4);
+  await expect(right.locator('.preferences-row-title')).toHaveCount(4);
+  const leftBox = await left.boundingBox();
+  const rightBox = await right.boundingBox();
+  if (leftBox === null || rightBox === null) throw new Error('not laid out');
+  expect(rightBox.x).toBeGreaterThan(leftBox.x + leftBox.width - 1);
+  expect(Math.abs(rightBox.y - leftBox.y)).toBeLessThan(2);
+
+  // Every setting is visible without scrolling.
+  const viewport = page.viewportSize();
+  if (viewport === null) throw new Error('no viewport');
+  for (const card of [left, right]) {
+    const box = await card.boundingBox();
+    if (box === null) throw new Error('not laid out');
+    expect(box.y + box.height, 'the card ends above the fold').toBeLessThanOrEqual(viewport.height);
+  }
+
+  // Each info icon is a button the keyboard reaches, and focus reveals its text.
+  const language = left.getByRole('button', { name: 'About Language' });
+  await language.focus();
+  await expect(language).toBeFocused();
+  await expect(left.getByRole('tooltip').or(left.locator('.primitive-tooltip-popup')).first()).toBeVisible();
+  await page.keyboard.press('Escape');
+
+  // Below 1024px the groups stack.
+  await page.setViewportSize({ width: 1000, height: 800 });
+  const stackedLeft = await left.boundingBox();
+  const stackedRight = await right.boundingBox();
+  if (stackedLeft === null || stackedRight === null) throw new Error('not laid out');
+  expect(stackedRight.y).toBeGreaterThanOrEqual(stackedLeft.y + stackedLeft.height - 1);
+});
