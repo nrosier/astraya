@@ -79,6 +79,10 @@ export interface ExistingResearch {
   readonly savedQueries: ReadonlyMap<string, SavedQuery>;
   readonly pins: ReadonlyMap<string, Pin>;
   readonly annotations: ReadonlyMap<string, Note>;
+  /** The annotation entity id of each pin an erase has pointed at a fresh id (#1195); a pin not here uses its own id. */
+  readonly annotationEntities: ReadonlyMap<string, string>;
+  /** Revision ids the reader erased on purpose (#1195); a restore never writes them back. */
+  readonly erasedRevisions: ReadonlySet<string>;
   readonly deleted: {
     readonly savedQueries: ReadonlyMap<string, SavedQuery>;
     readonly pins: ReadonlyMap<string, Pin>;
@@ -301,6 +305,8 @@ export interface ResearchPreview {
   readonly alreadyHere: number;
   /** Items the reader deleted on this device; a restore never brings them back. */
   readonly deletedHere: number;
+  /** Annotation versions the reader erased on this device; a restore never brings them back (#1195). */
+  readonly erasedVersionsSkipped: number;
 }
 
 /** Revisions oldest first by timestamp, so a revision is written after the ones it names as parents. */
@@ -319,6 +325,7 @@ export function stageResearchRestore(research: ExportedResearch, existing: Exist
   let newAnnotationRevisions = 0;
   let alreadyHere = 0;
   let deletedHere = 0;
+  let erasedVersionsSkipped = 0;
 
   for (const query of research.savedQueries) {
     if (existing.deleted.savedQueries.has(query.id) || existing.erased.savedQueries.has(query.id)) {
@@ -347,14 +354,28 @@ export function stageResearchRestore(research: ExportedResearch, existing: Exist
       mutations.push(pinRestore(pin.id, pin.target));
       newPins += 1;
     }
-    if (existing.erased.annotations.has(pin.id)) continue;
+    // Revisions go where the pin's annotation lives now: its own id, or the fresh id an erase pointed it at (#1195).
+    const entityId = existing.annotationEntities.get(pin.id) ?? pin.id;
+    if (existing.erased.annotations.has(entityId)) continue;
     const held = new Set((existing.annotations.get(pin.id)?.revisions ?? []).map((revision) => revision.id));
     for (const revision of oldestFirst(pin.annotation?.revisions ?? [])) {
       if (held.has(revision.id)) continue;
-      mutations.push(annotationRevision(pin.id, revision.id, revision.text, revision.parents));
+      if (existing.erasedRevisions.has(revision.id)) {
+        erasedVersionsSkipped += 1;
+        continue;
+      }
+      mutations.push(annotationRevision(entityId, revision.id, revision.text, revision.parents));
       newAnnotationRevisions += 1;
     }
   }
 
-  return { mutations, newSavedQueries, newPins, newAnnotationRevisions, alreadyHere, deletedHere };
+  return {
+    mutations,
+    newSavedQueries,
+    newPins,
+    newAnnotationRevisions,
+    alreadyHere,
+    deletedHere,
+    erasedVersionsSkipped,
+  };
 }

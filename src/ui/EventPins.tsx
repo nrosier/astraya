@@ -3,7 +3,7 @@
  */
 /**
  * @module EventPins
- * @purpose Renders the per-result Pin toggle, the Pinned events list and each pin annotation box of Event search, backed by the account op-log.
+ * @purpose Renders the per-result Pin toggle, the Pinned events list and each pin annotation box (with an erase) of Event search, backed by the account op-log.
  * @conventions A pin id is derived from the result's identity, so pinning is idempotent and unpinning then pinning again restores the same entity; unpin is a delete with Undo (no erase: a sky event holds no personal data); store refusals are mapped to wording here; an annotation is saved as one new revision that names every leaf it saw as a parent, so forks stay visible and resolvable; all parts render nothing or an unavailable note until the store has opened.
  * @exports PinButton, PinnedEvents
  */
@@ -176,6 +176,8 @@ function List({ store }: { readonly store: Store }): React.JSX.Element {
                   <PinAnnotation
                     store={store}
                     pinId={pin.id}
+                    entityId={state.annotationEntities.get(pin.id) ?? pin.id}
+                    entityErased={state.erased.annotations.has(state.annotationEntities.get(pin.id) ?? pin.id)}
                     label={pin.target.label}
                     note={state.annotations.get(pin.id)}
                   />
@@ -203,11 +205,17 @@ function List({ store }: { readonly store: Store }): React.JSX.Element {
 function PinAnnotation({
   store,
   pinId,
+  entityId,
+  entityErased,
   label,
   note,
 }: {
   readonly store: Store;
   readonly pinId: string;
+  /** Where this pin's annotation is written: the pin's own id, or the fresh id an erase pointed it at (#1195). */
+  readonly entityId: string;
+  /** True when this pin points at an annotation id that was erased (a peer's pointer can do that), so Erase stays available to move it on. */
+  readonly entityErased: boolean;
   readonly label: string;
   readonly note: Note | undefined;
 }): React.JSX.Element {
@@ -216,6 +224,12 @@ function PinAnnotation({
   // visible fork instead of being closed off by this save.
   const [draft, setDraft] = useState<{ readonly text: string; readonly parents: readonly string[] }>();
   const [saving, setSaving] = useState(false);
+  // A new entity id (after an erase) drops the draft, whose parents belong to the old one; the status line stays.
+  const [draftEntity, setDraftEntity] = useState(entityId);
+  if (draftEntity !== entityId) {
+    setDraftEntity(entityId);
+    setDraft(undefined);
+  }
   const [status, setStatus] = useState<{ readonly kind: 'error' | 'success'; readonly text: string }>();
   const max = String(ANNOTATION_MAX_CHARACTERS);
   const saved = note?.content ?? '';
@@ -230,7 +244,7 @@ function PinAnnotation({
     setSaving(true);
     // Naming the leaves the box showed when typing began resolves the forks this save has seen.
     store
-      .mutate([annotationRevision(pinId, newId('r'), value, draft.parents)])
+      .mutate([annotationRevision(entityId, newId('r'), value, draft.parents)])
       .then(() => {
         setSaving(false);
         setDraft(undefined);
@@ -242,9 +256,29 @@ function PinAnnotation({
           cause instanceof AnnotationRefusedError
             ? cause.refusal === 'too-long'
               ? t.annotationTooLong(max)
-              : t.annotationInvalid
+              : cause.refusal === 'erased'
+                ? t.annotationErasedElsewhere
+                : t.annotationInvalid
             : `${t.pinFailed} ${cause instanceof Error ? cause.message : String(cause)}`;
         setStatus({ kind: 'error', text });
+      });
+  };
+
+  const erase = (): void => {
+    // Confirmed before the store call: an erase has no undo, and it leaves the device and the account.
+    if (!window.confirm(t.annotationEraseConfirm(label))) return;
+    setStatus(undefined);
+    setSaving(true);
+    store
+      .eraseAnnotation(pinId)
+      .then(() => {
+        setSaving(false);
+        setDraft(undefined);
+        setStatus({ kind: 'success', text: t.annotationErased });
+      })
+      .catch((cause: unknown) => {
+        setSaving(false);
+        setStatus({ kind: 'error', text: `${t.pinFailed} ${cause instanceof Error ? cause.message : String(cause)}` });
       });
   };
 
@@ -272,6 +306,17 @@ function PinAnnotation({
         >
           {t.annotationSave}
         </Button>
+        {(note !== undefined || entityErased) && (
+          <Button
+            variant="danger"
+            size="compact"
+            aria-label={t.annotationEraseLabel(label)}
+            disabled={!store.writable || saving}
+            onClick={erase}
+          >
+            {t.annotationErase}
+          </Button>
+        )}
       </div>
       {status !== undefined && <StatusMessage kind={status.kind}>{status.text}</StatusMessage>}
     </>
