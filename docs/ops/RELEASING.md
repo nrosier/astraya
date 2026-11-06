@@ -88,6 +88,9 @@ After pushing, the workflow starts the amd64 image it just published and waits f
 `/healthz`, then checks the served page carries its CSP header. A pushed image that
 cannot serve a request is worse than a failed build, because it looks like success.
 
+Every pushed image is signed with keyless Cosign by digest; consumers verify it as
+described in [IMAGE-VERIFICATION.md](IMAGE-VERIFICATION.md).
+
 Credentials come from the workflow's built-in `GITHUB_TOKEN`, granted
 `packages: write` on the `image` job. There are no registry secrets to set up or
 rotate. The package must be public for `docker pull` to work without a login.

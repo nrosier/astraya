@@ -170,9 +170,7 @@ export function FocusInterpretation({
           <ul>
             {history.map((entry) => (
               <li key={entry.id}>
-                <button
-                  type="button"
-                  className="quiet"
+                <Button
                   disabled={openingId !== undefined}
                   onClick={() => {
                     openSaved(entry.id);
@@ -183,7 +181,7 @@ export function FocusInterpretation({
                     entry.basis === null ? '' : basisLabel(entry.basis, locale),
                     entry.description,
                   )}
-                </button>
+                </Button>
               </li>
             ))}
           </ul>

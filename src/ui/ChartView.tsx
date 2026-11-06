@@ -1212,18 +1212,14 @@ export function ChartDataView({
                   {tableSelection !== undefined && isolation !== undefined && (
                     <p className="chart-selection-bar" role="status">
                       {t.selectedOnChart(isolation.heading)}{' '}
-                      <button
-                        type="button"
-                        className="quiet"
+                      <Button
                         onClick={() => {
                           setActiveTab('wheel');
                         }}
                       >
                         {t.goToChart}
-                      </button>{' '}
-                      <button type="button" className="quiet" onClick={clearIsolation}>
-                        {t.isolationClear}
-                      </button>
+                      </Button>{' '}
+                      <Button onClick={clearIsolation}>{t.isolationClear}</Button>
                     </p>
                   )}
                   {currentTab === 'aspects' &&

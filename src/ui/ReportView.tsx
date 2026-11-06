@@ -86,6 +86,7 @@ import {
 import type { RulershipChoice } from '../astrology/rulership.js';
 import type { ChartData } from '../domain/chart-compute.js';
 import { NO_EXCLUSIONS, type InterpretationExclusions } from '../interpretation/rules.js';
+import { Button } from './primitives/Button.js';
 
 type InterpretationTabKey = 'standard' | 'ai' | 'past';
 const TAB_ORDER: readonly InterpretationTabKey[] = ['standard', 'ai', 'past'];
@@ -457,9 +458,7 @@ function AiCustomizedPanel({
           <ul>
             {savedResults.map((saved) => (
               <li key={saved.id}>
-                <button
-                  type="button"
-                  className="quiet"
+                <Button
                   disabled={openSavedId !== undefined}
                   onClick={() => {
                     openSaved(saved.id);
@@ -470,7 +469,7 @@ function AiCustomizedPanel({
                     savedKindLabel(saved, locale),
                     saved.description,
                   )}
-                </button>
+                </Button>
               </li>
             ))}
           </ul>
