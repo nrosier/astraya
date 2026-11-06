@@ -116,7 +116,7 @@ jobs:
   # rendered wheel and a real file download, and that two devices actually converge.
   # Split into five shards that run in parallel (#1095); e2e was the long pole of CI. Playwright's own `--shard` hands out
   # spec files without regard to their duration (four shards took 157, 178, 211 and 317 s), so `scripts/e2e-shard.mjs`
-  # gives each shard about the same total time from the weights in `e2e/shard-weights.json`.
+  # gives each shard about the same finish time, modelled on 4 workers, from the weights in `e2e/shard-weights.json`.
   e2e-shard:
     name: e2e (${{ matrix.shard }}/5)
     needs: changes
