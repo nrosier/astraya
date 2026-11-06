@@ -73,18 +73,15 @@ describe('StatusMessage (#513)', () => {
   );
 
   // #1162 (S5), a ratchet: no NEW hand-rolled status or alert element. A `<p>` or `<div>` whose `role` is "status" or
-  // "alert" (or an expression naming either) belongs in `StatusMessage`. Today's spots are allowlisted by file with the
-  // number each may keep, and #1211 reviews them one by one; the list can only shrink. The pattern reads one tag up to
+  // "alert" (or an expression naming either) belongs in `StatusMessage`. The recorded exceptions (§7) are allowlisted by
+  // file with the number each may keep; the list can only shrink. The pattern reads one tag up to
   // the first `>`, so an arrow function in an attribute before `role=` hides a tag from it.
   const HAND_ROLLED_LIVE_REGION = /<(?:p|div)\b[^>]*?\brole=(?:"(?:alert|status)"|\{[^}]*(?:alert|status)[^}]*\})/gs;
   const ALLOWED_HAND_ROLLED: Readonly<Record<string, number>> = {
     // A recorded exception (#1162, S2): popup rows inside a listbox, not result-region messages.
     'BirthPlaceSearch.tsx': 3,
-    // Awaiting review in #1211.
+    // Recorded exceptions (#1211), each with its reason in docs/ui/UI-UX_GUIDELINES.md §7.
     'ChartView.tsx': 1,
-    'CyclesView.tsx': 1,
-    'ExtendedSettingsPanel.tsx': 1,
-    'FixedStarPicker.tsx': 1,
     'NoteSaveStatus.tsx': 1,
     'PageHeader.tsx': 1,
     'PdfExportBuilder.tsx': 1,

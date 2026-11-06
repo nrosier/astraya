@@ -126,9 +126,9 @@ export function FixedStarPicker({
   return (
     <div className="settings-card-block fixed-star-picker">
       <div className="fixed-star-picker-toolbar">
-        <p className="hint" role="status">
+        <StatusMessage kind={stars.length === 0 ? 'zero' : 'success'}>
           {stars.length === 0 ? t.noneChosen(PRESET_STAR_NAMES.join(', ')) : t.chosenCount(stars.length)}
-        </p>
+        </StatusMessage>
         <Button
           disabled={catalogue === undefined}
           onClick={() => {

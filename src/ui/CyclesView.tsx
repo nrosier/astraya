@@ -486,9 +486,9 @@ export function CyclesView(): React.JSX.Element {
       <div aria-busy={result.kind === 'loading'}>
         {result.kind === 'ready' && result.rows.length > 0 && (
           <>
-            <p className="hint" role="status">
+            <StatusMessage kind="success">
               {selectedId === undefined ? '' : t.stepSelected(stepOf.get(selectedId) ?? 0, result.rows.length)}
-            </p>
+            </StatusMessage>
             <div ref={tableRef}>
               <SortableTable
                 caption={t.tableCaption}
