@@ -31,14 +31,21 @@ const known = files
 const median = known[Math.floor(known.length / 2)] ?? 1;
 const weightOf = (name) => (typeof weights[name] === 'number' ? weights[name] : median);
 
-/** When a shard finishes: its files in alphabetical order, each taken by the first free worker. */
+// Heavy specs (chart rendering, axe and viewport sweeps) slow each other down when they run at once on the same 4
+// vCPUs: a shard of four of them took 269 s on PR #1245 where the scheduler model said 160 s, while shards with one or
+// two ran as modelled. Each heavy spec beyond the first adds a penalty, measured as (269 - 160) / 3.
+const HEAVY_SECONDS = 85;
+const EXTRA_HEAVY_PENALTY = 35;
+
+/** When a shard finishes: its files in alphabetical order, each taken by the first free worker, plus the heavy penalty. */
 function makespan(names) {
   const free = Array.from({ length: WORKERS }, () => 0);
   for (const name of [...names].sort()) {
     const next = free.indexOf(Math.min(...free));
     free[next] += weightOf(name);
   }
-  return Math.max(...free);
+  const heavy = names.filter((name) => weightOf(name) >= HEAVY_SECONDS).length;
+  return Math.max(...free) + EXTRA_HEAVY_PENALTY * Math.max(0, heavy - 1);
 }
 
 // Longest first onto the shard with the least summed time.
