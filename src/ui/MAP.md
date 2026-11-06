@@ -32,6 +32,8 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `EmphasisGrid.tsx` + `emphasis-grid-model.ts` — Elements & modalities grid on screen (#821): flat bordered cells centred on both axes (drawn glyphs or token-sized text symbols), row and column totals; the PDF and sheet export keep `chart/emphasis-grid`. Deps: `chart/glyphs`, `chart/symbol-class`, `chart/symbol-text`, `astrology/emphasis`.
 - `timing-basis.ts` + `timing-basis.messages.ts` — Pure helper appending a timing view's own items (progression technique and MC method, solar-arc key, primary-direction key and semi-arc method) to the basis line (#1059). Deps: `calculation-basis`, `astrology/progressions`, `domain/primary-directions`.
 - `table-selection.tsx` — The table side of the wheel selection: `TableSelection`, each row kind's selection key, and the shared "Show on the chart" button column (the Aspects variant opens the Wheel view, #815). Deps: `interpretation/selection-key`, `chart/body-id`, `table-sort`, `primitives/Button`.
+- `advanced-groups-setting.ts` — Device preference for which Extended settings Advanced groups are open (#856). Deps: `settings-groups`.
+- `settings-groups.ts` — Table assigning each extended setting to a drawer tab group, and the count of non-default hidden values against the profile baseline (#856). Deps: `chart/extended-settings`, `chart/calculation-profiles`.
 - `appearance-settings.ts` — Motion (follow the system / reduce) and Density (standard / compact) device preferences, applied as root attributes. Deps: none.
 - `MapSettingsDialog.tsx` + `MapSettingsDialog.messages.ts` + `map-settings.ts` — The Astrocartography map settings: a secondary trigger and a right-hand staged drawer (one draft, one Apply), plus the read-only Map basis badge (#978). Deps: `primitives/StagedDialog`, `primitives/Badge`, `domain/astrocartography`.
 - `AspectMatrixGrid.tsx` — The on-screen aspect matrix (#820): an HTML token-styled grid whose cells select an aspect pair on the wheel; screen only, the sheet/PDF keep the SVG. Deps: `chart/aspect-matrix`, `chart/glyphs`, `interpretation/selection-key`, `symbol-setting`.
@@ -151,7 +153,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `electional.ts` — Electional screen (form parsing + result formatting). Deps: `astrology/electional`, `time/julian`, `./place-fields`.
 - `export-registry.tsx` — Per-screen export registration contexts. Deps: none (React only).
 - `person-calculation-settings.ts` — Hook for one person's calculation settings and rulership (own registers, else device default profile / default rulership) and async setters (reject on write failure); flags an unreadable register (#806). Deps: `store-context`, `default-calculation-profile`, `rulership-setting`, `domain/person`.
-- `UnreadableSettingsNotice.tsx` + `.messages.ts` — Notice shown instead of a chart when a person's saved settings are unreadable (#806). Deps: `primitives/StatusMessage`, `BackLink`.
+- `UnreadableSettingsNotice.tsx` + `.messages.ts` — Notice shown instead of a chart when a person's saved settings are unreadable (#806). Deps: `primitives/StatusMessage`.
 - `use-calculation-settings-migration.ts` — Once-per-account moves of device chart settings and ruler choice onto existing people, after first sync when signed in (#806). Deps: `session-context`, `sync/engine`, `domain/calculation-settings-migration`, `default-calculation-profile`, `rulership-setting`.
 - `extended-settings-summary.ts` — Diffs extended settings to summarize changes. Deps: `chart/extended-settings`.
 - `format.ts` — Locale-aware formatting (dates/coords). Deps: `interpretation/schema` (Locale type only).
@@ -196,8 +198,8 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `theme-dom.ts` — DOM/storage half of light/dark theme override. Deps: `./theme`.
 - `theme.ts` — Pure theme-selection logic (cycle order/labels). Deps: `ThemeToggle.messages`.
 - `tools-nav.ts` — Tools menu backing (tool list/groups/active-tool); grouped as Sky & cycles/Questions & planning/Birth data (#506/#509). Deps: `route`.
-- `BackLink.tsx` — Every screen's Back link (#652): history when the tab came from inside the app, else a fixed fallback. Deps: `./nav-history`, `shared.messages`.
-- `nav-history.ts` — Stamps each history entry with its in-app position, so Back can tell whether the previous page is inside the app; `replaceRoute` for in-place view changes. Deps: none.
+- `BackLink.tsx` — The one shared Back link (#1225), rendered by `App`: `← <previous page name>`, hidden when there is no previous page. Deps: `./nav-history`, `shared.messages`.
+- `nav-history.ts` — Stamps each history entry with its in-app position and records the page (href and name) behind it, so the shared Back link can name it; `replaceRoute` for in-place view and tab changes. Deps: none.
 - `use-stable-moment.ts` — Hooks that keep a birth moment (or any value) the same object while its content is unchanged, so chart effects can list it as a dependency. Deps: `../time/encode`.
 - `use-exclusive-open.ts` — Shared open/close hook for dropdown-button rows. Deps: none (React only).
 - `void-of-course-text.ts` — Composes void-of-course Moon sentence (transit screen). Deps: `astrology/bodies`, `astrology/signs`, `astrology/void-of-course`, `time/julian`.

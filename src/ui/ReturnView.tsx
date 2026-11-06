@@ -45,7 +45,6 @@ import type { Locale } from '../interpretation/schema.js';
 import type { TableColumn } from './table-sort.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useStableBy, useStableMoment } from './use-stable-moment.js';
-import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
 
 type Load =
@@ -233,14 +232,13 @@ export function ReturnView({
   }
 
   if (settingsUnreadable) {
-    return <UnreadableSettingsNotice personId={personId} name={person.displayName || ''} />;
+    return <UnreadableSettingsNotice name={person.displayName || ''} />;
   }
 
   const fallback = solar ? t.solarHeadingFallback : t.lunarHeadingFallback;
   if (person.moment === undefined || person.timeAccuracy === 'unknown') {
     return (
       <main className="shell">
-        <BackLink fallback={personHref(personId)} />
         <PageHeader title={fallback} titleTerm="solarReturn" variant="return" />
         <p>
           {t.needsCompleteRecord(person.displayName || t.thisPerson)}{' '}
@@ -258,7 +256,6 @@ export function ReturnView({
 
   return (
     <main className="shell shell--wide">
-      <BackLink fallback={personHref(personId)} />
       <PageHeader title={heading} titleTerm="solarReturn" basis={basisLine} variant="return">
         <PdfCreatorLink href={creatorHref} />
       </PageHeader>

@@ -12,6 +12,7 @@
  */
 import { appNavMessages } from './AppNav.messages.js';
 import { useMessages } from './messages.js';
+import { replaceRoute } from './nav-history.js';
 import { Select } from './primitives/Select.js';
 import { Tabs, tabPanelProps } from './primitives/Tabs.js';
 import type { Route } from './route.js';
@@ -47,7 +48,7 @@ export function SectionLayout({
   const { id } = tabPanelProps(idBase, active);
   const open = (key: string): void => {
     const target = items.find((item) => item.key === key);
-    if (target !== undefined) window.location.hash = target.href;
+    if (target !== undefined) replaceRoute(target.href);
   };
   return (
     <>

@@ -41,7 +41,6 @@ import type { BirthMomentInput } from '../time/types.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { formatFixed } from './format.js';
 import { judgeHoraryWithMotion, type HoraryJudgment } from '../domain/horary-judgment.js';
-import { BackLink } from './BackLink.js';
 import { replaceRoute } from './nav-history.js';
 import { PageHeader } from './PageHeader.js';
 import { useCalculationBasisLine } from './calculation-basis.js';
@@ -117,7 +116,6 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
 
   return (
     <main className="shell shell--wide">
-      <BackLink fallback="#/people" />
       <PageHeader title={t.heading} titleTerm="horary" basis={basisLine} basisEditHref={null} headingLevel={2} />
       <p className="hint">
         <GlossaryText text={t.hint} />

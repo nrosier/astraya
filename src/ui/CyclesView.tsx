@@ -45,7 +45,6 @@ import { SortableTable, csvExportTable, useCsvExports } from './SortableTable.js
 import { clampEphemerisYear, MAX_EPHEMERIS_YEAR, MIN_EPHEMERIS_YEAR } from './year-range.js';
 import type { TableColumn } from './table-sort.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
-import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
 import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
 import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
@@ -343,7 +342,6 @@ export function CyclesView(): React.JSX.Element {
 
   return (
     <main className="shell">
-      <BackLink fallback="#/people" />
       <PageHeader title={t.heading} titleTerm="cycle" basis={basisLine} basisEditHref={null} headingLevel={2} />
       <p className="hint">
         <GlossaryText text={t.hint} />

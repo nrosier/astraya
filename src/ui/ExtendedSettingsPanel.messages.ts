@@ -38,6 +38,16 @@ const en = {
 
   zodiacHousesLegend: 'Chart frame',
   houseSystemLegend: 'House system',
+  advancedTitle: {
+    profile: 'Advanced: all house systems and the orb scheme',
+    bodies: 'Advanced: orb fine-tuning, objects and formula points',
+    special: 'Advanced: variants, antiscia, declination, midpoint tree and motion',
+  },
+  advancedCustomised: (count: string) => `${count} customised`,
+  allHouseSystemsLegend: 'All house systems',
+  allHouseSystemsLabel: 'Every house system',
+  fineTuneAspectsLegend: 'Orb scale and minor aspects',
+  specialVariantsLegend: 'Variants and contacts',
   systemLabel: 'House system',
   zodiacLegend: 'Zodiac',
   tropical: 'Tropical',
@@ -328,6 +338,16 @@ const nl: typeof en = {
 
   zodiacHousesLegend: 'Grondvlak',
   houseSystemLegend: 'Huizensysteem',
+  advancedTitle: {
+    profile: 'Geavanceerd: alle huizensystemen en het orbenschema',
+    bodies: 'Geavanceerd: orben verfijnen, objecten en formulepunten',
+    special: 'Geavanceerd: varianten, antiscia, declinatie, middelpuntenboom en beweging',
+  },
+  advancedCustomised: (count: string) => `${count} aangepast`,
+  allHouseSystemsLegend: 'Alle huizensystemen',
+  allHouseSystemsLabel: 'Elk huizensysteem',
+  fineTuneAspectsLegend: 'Orbenschaal en kleine aspecten',
+  specialVariantsLegend: 'Varianten en contacten',
   systemLabel: 'Huizensysteem',
   zodiacLegend: 'Dierenriem',
   tropical: 'Tropisch',
