@@ -10,6 +10,7 @@
  */
 const en = {
   back: 'Back',
+  backNavLabel: 'Previous page',
   offlineNeeded: 'You are offline. This needs a connection; everything calculated on this device keeps working.',
   people: 'People',
   notFoundHeading: 'Not Found',
@@ -22,6 +23,7 @@ const en = {
 
 const nl: typeof en = {
   back: 'Terug',
+  backNavLabel: 'Vorige pagina',
   offlineNeeded:
     'Je bent offline. Dit heeft een verbinding nodig; alles wat op dit apparaat wordt berekend blijft werken.',
   people: 'Personen',

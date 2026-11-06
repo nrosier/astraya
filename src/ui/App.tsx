@@ -356,11 +356,7 @@ function AppShell(): React.JSX.Element {
                 {/* The account preferences' sign-in prompt, failed save and unreadable notice (#1066), on every route. */}
                 <AccountPreferencesNotices />
                 {/* The one Back link (#1225): above the section heading on every screen that has a place to go back to. */}
-                {routeShowsBackLink(parsed) && (
-                  <div className="back-bar">
-                    <BackLink />
-                  </div>
-                )}
+                {routeShowsBackLink(parsed) && <BackLink />}
                 {/* Sections with sub-views share one frame: a section h1 and a Tabs bar. Tools (#1139) and the three person
                     sections (#882, #1175) each get it; any other route renders its screen alone. */}
                 {toolKey === null ? (
