@@ -2,34 +2,27 @@
  * The sidebar's account tile and its popover (#964), replacing the scattered Sign out, Admin,
  * Preferences, language and theme pills that used to sit in the sidebar foot.
  *
- * The tile is the one popup trigger (`aria-haspopup`, `aria-expanded`). Its popover opens above
- * the tile and holds, top to bottom: the identity header, Preferences, Admin Panel (administrative
- * roles only), the segmented Language and Theme controls, and the account action (Sign out, or
- * Sign in for a guest). The segmented controls apply at once and leave the popover open.
- * Dismissal (Escape with focus back on the tile, a press outside, tabbing out, or a page change) is
- * `useExclusiveOpen`'s, the same rules as the header's other dropdowns, not a second open/close system.
- *
- * Theme here is a three-way segmented choice, `[ ☀ Light | ☾ Dark | ◐ System ]` (#1047, matching
- * Preferences; this replaces the two-way choice from #964). "System" is stored as `'system'` and
- * follows `prefers-color-scheme`. The Preferences page keeps its `ThemeToggle` unchanged.
+ * The tile is the one popup trigger (`aria-haspopup`, `aria-expanded`). Its popover opens above the tile and
+ * holds, top to bottom: the identity header, Preferences, Admin Panel (administrative roles only), and the
+ * account action (Sign out, or Sign in for a guest). Language, theme and the symbol class are chosen in
+ * Preferences, not here (#1183). The avatar, with the sync status dot on its corner, is its own button beside
+ * the tile (a guest gets the dot alone) and opens the sync popover (`SyncBadge`). Dismissal (Escape with focus
+ * back on the tile, a press outside, tabbing out, or a page change) is `useExclusiveOpen`'s, the same rules as
+ * the header's other dropdowns, not a second open/close system.
  */
 /**
  * @module ProfileTile
- * @purpose Sidebar account tile (signed-in or guest) and its popover: identity, Preferences, Admin Panel for admins, segmented Language and Theme, and Sign out or Sign in.
- * @conventions Open/close and focus rules come from use-exclusive-open.ts; the two quick toggles are segmented ChoiceGroups; theme goes through theme-dom.ts and locale through the shared locale store. Colours come only from existing app.css tokens. Text comes from ProfileTile.messages.ts and AccountPanel.messages.ts via useMessages().
+ * @purpose Sidebar account tile (signed-in or guest), its sync status dot and its popover: identity, Preferences, Admin Panel for admins, and Sign out or Sign in.
+ * @conventions Open/close and focus rules come from use-exclusive-open.ts. The popover holds exactly those items; language and theme live in Preferences (#1183). Hosts SyncBadge (the avatar and sync dot) as the first item of the row, beside the tile button, so no two targets overlap. Colours come only from existing app.css tokens. Text comes from ProfileTile.messages.ts and AccountPanel.messages.ts via useMessages().
  * @exports ProfileTile
  */
 import { useId, useState, useSyncExternalStore } from 'react';
-import { CORPUS_LOCALES } from '../interpretation/schema.js';
 import type { AuthUser } from '../sync/auth-client.js';
 import { accountPanelMessages } from './AccountPanel.messages.js';
-import { isLocale, setLocale, useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { profileTileMessages } from './ProfileTile.messages.js';
-import { ChoiceGroup } from './primitives/ChoiceGroup.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
-import { applyTheme, readStoredTheme, writeStoredTheme } from './theme-dom.js';
-import { isTheme, type Theme } from './theme.js';
+import { SyncBadge } from './SyncBadge.js';
 import { useExclusiveOpen } from './use-exclusive-open.js';
 
 const KEY = 'profile';
@@ -61,13 +54,11 @@ export function ProfileTile({
 }): React.JSX.Element {
   const t = useMessages(profileTileMessages);
   const account = useMessages(accountPanelMessages);
-  const [locale] = useLocale();
   // A page change (the hash) closes the popover, the same signal `AppNav` uses.
   const route = useSyncExternalStore(subscribeToHash, currentHash);
   const dropdown = useExclusiveOpen<typeof KEY>(route);
   const open = dropdown.open === KEY;
   const popupId = useId();
-  const [storedTheme, setStoredTheme] = useState<Theme>(() => readStoredTheme());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
 
@@ -106,6 +97,7 @@ export function ProfileTile({
         dropdown.onGroupBlur(KEY, event);
       }}
     >
+      <SyncBadge {...(user === undefined ? {} : { initial })} />
       {user === undefined ? (
         <>
           <button
@@ -144,9 +136,6 @@ export function ProfileTile({
             dropdown.toggle(KEY);
           }}
         >
-          <span className="profile-tile-avatar" aria-hidden="true">
-            {initial}
-          </span>
           <span className="profile-tile-name">{user.username}</span>
           {user.isAdmin && <span className="profile-tile-role">{roleLabel}</span>}
           <span className="profile-tile-kebab" aria-hidden="true">
@@ -182,44 +171,6 @@ export function ProfileTile({
                 {t.adminPanel}
               </a>
             )}
-          </div>
-          <div className="profile-popover-separator" aria-hidden="true" />
-          <div className="profile-popover-section">
-            <div className="profile-popover-row">
-              <span className="profile-popover-row-label" aria-hidden="true">
-                {t.language}
-              </span>
-              <ChoiceGroup
-                label={t.language}
-                segmented
-                value={locale}
-                options={CORPUS_LOCALES.map((code) => ({ value: code, label: code.toUpperCase() }))}
-                onChange={(value) => {
-                  if (isLocale(value)) setLocale(value);
-                }}
-              />
-            </div>
-            <div className="profile-popover-row">
-              <span className="profile-popover-row-label" aria-hidden="true">
-                {t.theme}
-              </span>
-              <ChoiceGroup
-                label={t.theme}
-                segmented
-                value={storedTheme}
-                options={[
-                  { value: 'light', label: `${t.lightGlyph} ${t.light}` },
-                  { value: 'dark', label: `${t.darkGlyph} ${t.dark}` },
-                  { value: 'system', label: `${t.systemGlyph} ${t.system}` },
-                ]}
-                onChange={(value) => {
-                  if (!isTheme(value)) return;
-                  writeStoredTheme(value);
-                  applyTheme(value);
-                  setStoredTheme(value);
-                }}
-              />
-            </div>
           </div>
           <div className="profile-popover-separator" aria-hidden="true" />
           <div className="profile-popover-section">

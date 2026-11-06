@@ -483,74 +483,60 @@ a.corner-pill.active {
   margin-top: var(--space-3);
 }
 
-/* The global sync/server badge (#101, #137, #230) — a compact pill that expands, on click,
-   into `.syncbadge-popover`'s full explanation (#250). `position: relative` anchors that
-   popover to the badge itself, same as `.accountpanel` anchors its own above. */
+/* The sync status dot (#101, #137, #230, #1183): the avatar and a dot on its corner are one button, the first item of
+   the `.profile` row, that opens `.syncbadge-popover`'s full explanation (#250). It sits beside the tile, not over it,
+   so no two targets overlap. A guest has no avatar: the dot alone sits in the same slot. */
 .syncbadge {
   position: relative;
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
-  gap: var(--space-2);
-  min-height: 2.25rem;
-  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3);
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  background: var(--surface);
-  color: var(--fg);
-  font-size: 0.75rem;
-  line-height: 1.2;
 }
 
-.syncbadge[data-tone='warn'] {
-  border-color: var(--aspect-hard);
-  color: var(--aspect-hard);
-}
-
-.syncbadge-text {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-}
-
-/* A disclosure trigger, not a label: the `›` mirrors the old `.statusbar summary::after`
-   marker so opening feels like the same gesture that used to live in the footer. */
-.syncbadge-label {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
+.syncbadge-trigger {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: var(--target-min);
+  min-height: var(--target-min);
   padding: 0;
   border: none;
+  border-radius: 999px;
   background: none;
-  color: inherit;
-  font: inherit;
-  font-weight: 600;
   cursor: pointer;
 }
 
-.syncbadge-label::after {
-  content: '›';
-  color: var(--muted);
-  transition: transform 0.15s;
+.syncbadge-trigger:hover:not(:disabled) {
+  background: none;
 }
 
-.syncbadge-label[aria-expanded='true']::after {
-  /* Points up, not down (`-90deg` not `90deg`): the popover it discloses opens upward
-     from this bottom-left badge, not downward. */
-  transform: rotate(-90deg);
+.syncbadge-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--accent) 16%, var(--surface));
+  color: var(--accent);
+  font-weight: 650;
 }
 
-.syncbadge-user {
-  color: var(--muted);
+/* The dot sits on the avatar's bottom-right corner; a guest's lone dot is centred in its slot. */
+.syncbadge-avatar + .syncbadge-dot {
+  position: absolute;
+  right: calc(50% - 1.1rem);
+  bottom: calc(50% - 1.1rem);
 }
 
-/* Floats above the badge rather than in the page flow, same shape and same reasoning as
-   `.accountpanel-popover` — opens upward and left-anchored since the badge sits near the
-   bottom-left corner of the viewport (#230). */
+/* Floats above the tile on the rail and below it in the wrapped header, the same direction as `.profile-popover`;
+   `left` pulls it back to the tile's own start edge. */
 .syncbadge-popover {
   position: absolute;
-  bottom: 2.5rem;
+  bottom: calc(100% + 0.5rem);
   left: 0;
-  width: 18rem;
+  z-index: 26;
+  width: min(18rem, calc(100vw - 2rem));
   padding: var(--space-4);
   border-radius: 0.5rem;
   border: 1px solid var(--line);
@@ -560,9 +546,25 @@ a.corner-pill.active {
   box-shadow: var(--shadow-popover);
 }
 
+@media (max-width: 63.99rem) {
+  .syncbadge-popover {
+    top: calc(100% + 0.5rem);
+    bottom: auto;
+  }
+}
+
 .syncbadge-popover p {
   margin: 0;
   max-width: 44rem;
+}
+
+.syncbadge-popover .syncbadge-title {
+  margin-bottom: var(--space-1);
+  font-weight: 600;
+}
+
+.syncbadge[data-tone='warn'] .syncbadge-title {
+  color: var(--aspect-hard);
 }
 
 /* The notes-held-back line (#919): its own paragraph, set apart from the status detail above it. */
@@ -570,34 +572,22 @@ a.corner-pill.active {
   margin-top: var(--space-2);
 }
 
-.syncbadge-sync {
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: 999px;
-  border: none;
-  background: transparent;
-  color: inherit;
-  font-size: var(--text-base);
-  line-height: 1;
-  cursor: pointer;
+.syncbadge-popover button {
+  margin-top: var(--space-3);
 }
 
-.syncbadge-sync:hover {
-  background: var(--surface-hover);
-}
-
-.syncbadge-sync:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-/* The sync dot (#964): green when every change is synced, grey when this device holds it alone. */
+/* The dot: green when every change is synced, the warning tone when this device holds the data alone and it needs
+   attention, grey otherwise. The surface ring keeps it readable over the avatar. */
 .syncbadge-dot {
-  flex: 0 0 auto;
-  width: 0.55rem;
-  height: 0.55rem;
+  width: 0.7rem;
+  height: 0.7rem;
   border-radius: 999px;
   background: var(--muted);
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+.syncbadge[data-tone='warn'] .syncbadge-dot {
+  background: var(--aspect-hard);
 }
 
 .syncbadge-dot[data-state='synced'] {
@@ -1923,19 +1913,6 @@ label.stacked textarea:focus-visible {
 .profile-tile-guest:hover,
 .profile-tile-menu:hover {
   background: var(--bg-hover);
-}
-
-.profile-tile-avatar {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: 999px;
-  background: color-mix(in oklab, var(--accent) 16%, var(--surface));
-  color: var(--accent);
-  font-weight: 650;
 }
 
 .profile-tile-name {
@@ -7685,7 +7662,6 @@ button.mgrid-pair:focus-visible {
 
 /* Small controls that keep their look but grow to the target, in both directions. */
 .data-table th button,
-.syncbadge-label,
 .workspace-rail-toggle,
 .birth-record-status .primitive-tooltip-trigger {
   min-height: var(--target-min);

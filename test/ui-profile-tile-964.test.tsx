@@ -11,9 +11,19 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AuthUser } from '../src/sync/auth-client.js';
-import { getLocale, setLocale } from '../src/ui/locale.js';
+import { setLocale } from '../src/ui/locale.js';
 import { ProfileTile } from '../src/ui/ProfileTile.js';
-import { applyTheme, readStoredTheme } from '../src/ui/theme-dom.js';
+
+// The sync dot needs a session provider and a server (see ui-syncbadge.test.tsx); here only its place in the tile matters.
+vi.mock('../src/ui/SyncBadge.js', () => ({
+  SyncBadge: ({ initial }: { initial?: string }) => (
+    <div className="syncbadge">
+      <button type="button" className="syncbadge-trigger" aria-label="stub">
+        {initial}
+      </button>
+    </div>
+  ),
+}));
 
 const ADMIN: AuthUser = {
   id: 'u-admin',
@@ -72,17 +82,6 @@ function popover(container: HTMLElement): HTMLElement | null {
   return container.querySelector<HTMLElement>('.profile-popover');
 }
 
-function segment(container: HTMLElement, group: string, label: string): HTMLInputElement {
-  const radios = Array.from(
-    container.querySelectorAll<HTMLInputElement>(`[role="radiogroup"][aria-label="${group}"] input`),
-  );
-  // Theme labels carry their glyph (`☾ Dark`), so the option is matched by its trailing word.
-  return required(
-    radios.find((input) => (input.closest('label')?.textContent ?? '').trim().endsWith(label)),
-    `${group} option ${label}`,
-  );
-}
-
 beforeEach(() => {
   setLocale('en');
 });
@@ -110,10 +109,11 @@ describe('profile tile trigger (ARIA)', () => {
     expect(popover(container)).not.toBeNull();
   });
 
-  it('shows the avatar initial, the display name and an admin role badge for an admin', () => {
+  it('shows the display name and an admin role badge in the tile, and hands the avatar initial to the sync button', () => {
     const container = mount({ user: ADMIN });
     const text = trigger(container).textContent;
-    expect(text).toContain('N');
+    expect(text).not.toContain('N');
+    expect(container.querySelector('.syncbadge-trigger')?.textContent).toBe('N');
     expect(text).toContain('nick');
     expect(text).toContain('Admin');
     expect(container.querySelector('.profile-tile-kebab')?.getAttribute('aria-hidden')).toBe('true');
@@ -225,118 +225,32 @@ describe('profile popover', () => {
     expect(popover(container)).toBeNull();
   });
 
-  it('gives a guest the Preferences and language/theme controls from the menu trigger', () => {
+  it('gives a guest Preferences from the menu trigger', () => {
     const container = mount({ user: undefined });
     act(() => {
       required(container.querySelector<HTMLButtonElement>('.profile-tile-menu'), 'guest menu trigger').click();
     });
     expect(popover(container)?.querySelector('a[href="#/preferences"]')).not.toBeNull();
-    expect(segment(container, 'Language', 'NL')).toBeDefined();
-    expect(segment(container, 'Theme', 'Dark')).toBeDefined();
   });
 });
 
-describe('segmented language and theme controls', () => {
-  it('renders the language as a labelled EN | NL segmented group', () => {
-    const container = mount({ user: PLAIN_USER });
+describe('the popover holds no language or theme control (#1183)', () => {
+  it('has no theme or language radiogroup, and shows only identity, Preferences, Admin Panel and the account action', () => {
+    const container = mount({ user: ADMIN });
     openMenu(container);
-    expect(segment(container, 'Language', 'EN').checked).toBe(true);
-    expect(segment(container, 'Language', 'NL').checked).toBe(false);
+    const popover = container.querySelector('.profile-popover');
+    if (popover === null) throw new Error('fixture bug: no popover');
+    expect(popover.querySelector('[role="radiogroup"], [role="radio"], input[type="radio"]')).toBeNull();
+    expect(popover.querySelector('.profile-popover-identity')).not.toBeNull();
+    expect(Array.from(popover.querySelectorAll('a')).map((a) => a.textContent)).toEqual(['Preferences', 'Admin Panel']);
+    expect(Array.from(popover.querySelectorAll('button')).map((b) => b.textContent)).toEqual(['Sign out']);
   });
 
-  it('switches the locale immediately and keeps the popover open', () => {
-    const container = mount({ user: PLAIN_USER });
-    openMenu(container);
-    act(() => {
-      segment(container, 'Language', 'NL').click();
-    });
-    expect(getLocale()).toBe('nl');
-    expect(popover(container)).not.toBeNull();
-    expect(trigger(container).getAttribute('aria-expanded')).toBe('true');
-  });
-
-  it('renders the theme as a labelled Light | Dark | System segmented group', () => {
-    const container = mount({ user: PLAIN_USER });
-    openMenu(container);
-    const group = container.querySelector('[role="radiogroup"][aria-label="Theme"]');
-    expect(group).not.toBeNull();
-    expect(group?.textContent).toContain('☀');
-    expect(group?.textContent).toContain('☾');
-    expect(group?.textContent).toContain('System');
-    expect(group?.querySelectorAll('input')).toHaveLength(3);
-  });
-
-  it('stores system when System is chosen, clears the explicit theme, and keeps Light and Dark storing their values (#1047)', () => {
-    const container = mount({ user: PLAIN_USER });
-    openMenu(container);
-    act(() => {
-      segment(container, 'Theme', 'Dark').click();
-    });
-    expect(localStorage.getItem('astraya.theme')).toBe('dark');
-    act(() => {
-      segment(container, 'Theme', 'System').click();
-    });
-    expect(localStorage.getItem('astraya.theme')).toBe('system');
-    expect(document.documentElement.dataset.theme).toBeUndefined();
-    expect(segment(container, 'Theme', 'System').checked).toBe(true);
-    act(() => {
-      segment(container, 'Theme', 'Light').click();
-    });
-    expect(localStorage.getItem('astraya.theme')).toBe('light');
-    expect(document.documentElement.dataset.theme).toBe('light');
-  });
-
-  it('restores the chosen theme after a reload (remount reads the stored choice) (#1047)', () => {
-    const first = mount({ user: PLAIN_USER });
-    openMenu(first);
-    act(() => {
-      segment(first, 'Theme', 'Dark').click();
-    });
-    expect(localStorage.getItem('astraya.theme')).toBe('dark');
-    act(() => {
-      mounted?.root.unmount();
-    });
-    mounted?.container.remove();
-    mounted = undefined;
-    // A reload starts with no data-theme; main.tsx then applies the stored choice before first paint.
-    delete document.documentElement.dataset.theme;
-    applyTheme(readStoredTheme());
-    expect(document.documentElement.dataset.theme).toBe('dark');
-
-    const reloaded = mount({ user: PLAIN_USER });
-    openMenu(reloaded);
-    expect(segment(reloaded, 'Theme', 'Dark').checked).toBe(true);
-  });
-
-  it('labels the System option in Dutch as Systeem', () => {
-    setLocale('nl');
-    const container = mount({ user: PLAIN_USER });
-    openMenu(container);
-    expect(segment(container, 'Thema', 'Systeem')).toBeDefined();
-  });
-
-  it('applies the chosen theme immediately, stores it, and keeps the popover open', () => {
-    const container = mount({ user: PLAIN_USER });
-    openMenu(container);
-    act(() => {
-      segment(container, 'Theme', 'Dark').click();
-    });
-    expect(document.documentElement.dataset.theme).toBe('dark');
-    expect(localStorage.getItem('astraya.theme')).toBe('dark');
-    expect(popover(container)).not.toBeNull();
-    act(() => {
-      segment(container, 'Theme', 'Light').click();
-    });
-    expect(document.documentElement.dataset.theme).toBe('light');
-  });
-
-  it('labels the language and theme groups in Dutch', () => {
-    setLocale('nl');
-    const container = mount({ user: PLAIN_USER });
-    openMenu(container);
-    expect(container.querySelector('[role="radiogroup"][aria-label="Taal"]')).not.toBeNull();
-    expect(container.querySelector('[role="radiogroup"][aria-label="Thema"]')).not.toBeNull();
-    expect(popover(container)?.textContent).toContain('Voorkeuren');
+  it('carries the sync dot as a sibling of the tile button, never inside it', () => {
+    const container = mount({ user: ADMIN });
+    const dot = container.querySelector('.syncbadge-trigger');
+    expect(dot).not.toBeNull();
+    expect(dot?.closest('.profile-tile')).toBeNull();
   });
 });
 

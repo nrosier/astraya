@@ -12,13 +12,14 @@
  */
 /**
  * @module SyncBadge
- * @purpose Always-visible, collapsible badge answering "where does my data live, and is it safe?" — persistence, online, and sync-engine status, present on every route.
- * @conventions Mounted on every route in App.tsx including routes with no open store; uses SyncBadge.messages.ts and status.messages.ts for en/nl text via useMessages().
+ * @purpose Always-visible status dot answering "where does my data live, and is it safe?" — persistence, online, and sync-engine status; it opens a popover with the explanation, a link and Sync now (#1183).
+ * @conventions Mounted by ProfileTile, so on every route including routes with no open store. One button holds the avatar (a signed-in account's initial) and the dot on its corner, beside the tile button rather than over it, so no two targets overlap; its name is the status label; uses SyncBadge.messages.ts and status.messages.ts for en/nl text via useMessages().
  * @exports SyncBadge
  */
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useMessages } from './messages.js';
-import { useSession, useSyncEngine } from './session-context.js';
+import { Button } from './primitives/Button.js';
+import { useSyncEngine } from './session-context.js';
 import { describeStatus, type SyncState } from './status.js';
 import { statusMessages } from './status.messages.js';
 import { syncBadgeMessages } from './SyncBadge.messages.js';
@@ -75,10 +76,10 @@ function useNow(intervalMs: number): number {
   return now;
 }
 
-export function SyncBadge(): React.JSX.Element {
+export function SyncBadge({ initial }: { readonly initial?: string }): React.JSX.Element {
+  // `initial` is the signed-in account's initial, drawn as the avatar the dot sits on; a guest has none.
   const engine = useSyncEngine();
   const store = useOptionalStore();
-  const { user } = useSession();
   const online = useOnline();
   const sync = useSyncState();
   const now = useNow(30_000);
@@ -138,45 +139,35 @@ export function SyncBadge(): React.JSX.Element {
       className="syncbadge"
       data-tone={status.tone === 'warn' ? 'warn' : 'ok'}
       onBlur={(event) => {
-        // A disclosure, not a dialog: the badge keeps focus on opening, and the popover's link follows it in Tab
-        // order. Focus leaving the badge altogether closes the popover (§9, #1081).
+        // A disclosure, not a dialog: the dot keeps focus on opening, and the popover's link and button follow it in
+        // Tab order. Focus leaving the badge altogether closes the popover (§9, #1081).
         if (open && !(event.relatedTarget instanceof Node && event.currentTarget.contains(event.relatedTarget))) {
           setOpen(false);
         }
       }}
     >
-      <span className="syncbadge-dot" data-state={sync.kind === 'synced' ? 'synced' : 'local'} aria-hidden="true" />
-      <span className="syncbadge-text">
-        <button
-          ref={triggerRef}
-          type="button"
-          className="syncbadge-label"
-          aria-expanded={open}
-          aria-controls={POPOVER_ID}
-          onClick={() => {
-            setOpen((was) => !was);
-          }}
-        >
-          {status.label}
-        </button>
-        {user !== undefined && <span className="syncbadge-user">{t.loggedInAs(user.username)}</span>}
-      </span>
-      {engine !== undefined && (
-        <button
-          type="button"
-          className="syncbadge-sync"
-          disabled={sync.kind === 'syncing'}
-          title={t.syncNow}
-          aria-label={t.syncNow}
-          onClick={() => {
-            engine.syncNow();
-          }}
-        >
-          ↻
-        </button>
-      )}
+      <button
+        ref={triggerRef}
+        type="button"
+        className="syncbadge-trigger"
+        aria-label={status.label}
+        aria-expanded={open}
+        aria-controls={POPOVER_ID}
+        title={status.label}
+        onClick={() => {
+          setOpen((was) => !was);
+        }}
+      >
+        {initial !== undefined && (
+          <span className="syncbadge-avatar" aria-hidden="true">
+            {initial}
+          </span>
+        )}
+        <span className="syncbadge-dot" data-state={sync.kind === 'synced' ? 'synced' : 'local'} aria-hidden="true" />
+      </button>
       {open && (
         <div id={POPOVER_ID} className="syncbadge-popover" role="status" aria-label={status.label}>
+          <p className="syncbadge-title">{status.label}</p>
           <p>
             {status.detail}
             {status.action !== undefined && (
@@ -187,6 +178,17 @@ export function SyncBadge(): React.JSX.Element {
             )}
           </p>
           {status.heldBackLine !== undefined && <p className="syncbadge-held-back">{status.heldBackLine}</p>}
+          {engine !== undefined && (
+            <Button
+              size="compact"
+              disabled={sync.kind === 'syncing'}
+              onClick={() => {
+                engine.syncNow();
+              }}
+            >
+              {t.syncNow}
+            </Button>
+          )}
         </div>
       )}
     </div>
