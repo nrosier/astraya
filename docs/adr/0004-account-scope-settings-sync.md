@@ -229,7 +229,11 @@ Not in scope, unchanged: every `scope: 'device'` entry; `transitFilter:<context>
 log); the Tier 2 consent (`request`, never persisted).
 
 Decided: the Advanced open or closed state is a device preference, not account scope (Q1, option A). The orb library and
-transit-filter default are not in the registry and are tracked as a separate issue, #1149 (Q4, option A).
+transit-filter default were tracked as a separate issue, #1149 (Q4, option A). That issue decided (2026-11-06) that the
+orb library (`astraya:orbLibrary`), its per-context source (`astraya:orbContextSource`) and the default transit-filter
+profile (`astraya:transitFilter:<context>`) are account scope, following guidelines 3.2. They are in the registry as
+account scope, still stored in the browser and not synced; building their sync is #1220, and until it lands the registry
+lists them in `ACCOUNT_SYNC_TRACKED_ELSEWHERE`. The three entries above are the only ones this ADR's build syncs.
 
 ### 3.4 Conflict rules
 
@@ -427,7 +431,8 @@ All four questions are decided. Each answer is recorded on #1066 (linked under e
   Options: (A) track as a separate issue, recommended; (B) include now. Why A first: larger JSON shapes, no registry
   entry yet, and adding fields later needs no format change.
   **Decided: A.** The orb profile and transit-filter scope mismatch is tracked as a separate issue
-  ([#1066 comment](https://github.com/nrosier/astraya/issues/1066#issuecomment-6638104548)).
+  ([#1066 comment](https://github.com/nrosier/astraya/issues/1066#issuecomment-6638104548)). #1149 later decided account
+  scope for all three, with their sync tracked in #1220 (see 3.3).
 
 ## 8. db-integrity review
 

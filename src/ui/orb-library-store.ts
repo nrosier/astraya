@@ -1,11 +1,12 @@
 /**
- * The device's named orb profiles and each context's choice of orbs (#590): a device preference, like the saved
- * calculation default. Never synced, never sent anywhere. Read from localStorage and validated as a whole on the
+ * The user's named orb profiles and each context's choice of orbs (#590). Account scope by decision (#1149,
+ * guidelines §3.2), but stored in this browser and not yet synced: its sync is #1220. Never sent anywhere until then.
+ * Read from localStorage and validated as a whole on the
  * way in, so a damaged stored value reads as an empty library rather than a partial one.
  */
 /**
  * @module ui/orb-library-store
- * @purpose Device-stored orb library and per-context orb source (#590), read through a validating parser and shared with React through useSyncExternalStore.
+ * @purpose Browser-stored orb library and per-context orb source (#590), account scope pending its sync (#1220), read through a validating parser and shared with React through useSyncExternalStore.
  * @conventions localStorage, JSON, validated by astrology/orb-library on every read; a refused write keeps the value in memory for this page. Changes reach other mounted components in the tab through an event and other tabs through `storage`.
  * @exports ORB_LIBRARY_KEY, readOrbLibrary, writeOrbLibrary, readOrbContextSource, writeOrbContextSource, useOrbLibrary, useOrbContextSource
  */
