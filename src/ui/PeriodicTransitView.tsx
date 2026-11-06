@@ -500,7 +500,7 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.forecastFallback} />
+        <PageHeader headingLevel={2} title={t.forecastFallback} />
         <p>
           {t.notCompleteForecast(person.displayName || t.thisPerson)}{' '}
           <a href={personHref(personId)}>{t.personPageLink}</a>.
@@ -513,7 +513,7 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.forecastFallback} />
+        <PageHeader headingLevel={2} title={t.forecastFallback} />
         <p>
           <GlossaryText text={t.needsKnownTime(person.displayName || t.thisPerson)} />
         </p>
@@ -524,7 +524,11 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
   return (
     <main className="shell">
       <BackLink fallback={personHref(personId)} />
-      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.forecastFallback} basis={basisLine} />
+      <PageHeader
+        headingLevel={2}
+        title={person.displayName ? t.heading(person.displayName) : t.forecastFallback}
+        basis={basisLine}
+      />
       <p className="hint">
         <GlossaryText text={t.hint(person.displayName || t.thisFallback)} />
       </p>

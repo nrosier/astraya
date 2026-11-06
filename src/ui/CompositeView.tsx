@@ -117,7 +117,7 @@ export function CompositeView({
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.compositeFallback} titleTerm="composite" />
+        <PageHeader headingLevel={2} title={t.compositeFallback} titleTerm="composite" />
         <p>
           <GlossaryText text={t.needsCompleteRecord(person.displayName || t.thisPerson)} />{' '}
           <a href={personHref(personId)}>{t.personPageLink}</a>.
@@ -133,6 +133,7 @@ export function CompositeView({
     <main className="shell shell--wide">
       <BackLink fallback={personHref(personId)} />
       <PageHeader
+        headingLevel={2}
         title={person.displayName ? t.heading(person.displayName) : t.compositeFallback}
         titleTerm="composite"
         basis={basisLine}

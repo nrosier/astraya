@@ -50,7 +50,7 @@ async function personWithChart(page: Page): Promise<void> {
 }
 
 const entry = (page: Page, name: string) => page.getByRole('banner').getByRole('link', { name, exact: true });
-const tabs = (page: Page, name: string) => page.getByRole('navigation', { name: `${name} subtabs` });
+const tabs = (page: Page, name: string) => page.getByRole('tablist', { name: `${name} subtabs` });
 
 const SECTIONS = [
   { name: 'Transits & Forecast', url: /#\/people\/[^/]+\/timing\/transits$/, tabs: ['Transits', 'Forecast'] },
@@ -74,8 +74,8 @@ for (const section of SECTIONS) {
     await expect(entry(page, section.name)).toHaveAttribute('aria-current', 'page');
     const row = tabs(page, section.name);
     await expect(row).toBeVisible();
-    await expect(row.getByRole('link')).toHaveText(section.tabs);
-    await expect(row.getByRole('link').first()).toHaveAttribute('aria-current', 'page');
+    await expect(row.getByRole('tab')).toHaveText(section.tabs);
+    await expect(row.getByRole('tab').first()).toHaveAttribute('aria-selected', 'true');
   });
 }
 
@@ -84,12 +84,12 @@ test('choosing a tab opens that sub-view and keeps the section entry current', a
   await personWithChart(page);
 
   await entry(page, 'Progressions & Directions').click();
-  await tabs(page, 'Progressions & Directions').getByRole('link', { name: 'Profections', exact: true }).click();
+  await tabs(page, 'Progressions & Directions').getByRole('tab', { name: 'Profections', exact: true }).click();
   await expect(page).toHaveURL(/#\/people\/[^/]+\/timing\/profections$/);
   await expect(entry(page, 'Progressions & Directions')).toHaveAttribute('aria-current', 'page');
-  await expect(tabs(page, 'Progressions & Directions').getByRole('link', { name: 'Profections' })).toHaveAttribute(
-    'aria-current',
-    'page',
+  await expect(tabs(page, 'Progressions & Directions').getByRole('tab', { name: 'Profections' })).toHaveAttribute(
+    'aria-selected',
+    'true',
   );
 });
 
@@ -98,7 +98,7 @@ test('a chosen section tab survives a reload of the same route (#882)', async ()
   await personWithChart(page);
 
   await entry(page, 'Progressions & Directions').click();
-  await tabs(page, 'Progressions & Directions').getByRole('link', { name: 'Profections', exact: true }).click();
+  await tabs(page, 'Progressions & Directions').getByRole('tab', { name: 'Profections', exact: true }).click();
   await expect(page).toHaveURL(/#\/people\/[^/]+\/timing\/profections$/);
   const url = page.url();
 
@@ -106,11 +106,11 @@ test('a chosen section tab survives a reload of the same route (#882)', async ()
   await expect(page).toHaveURL(url);
   await expect(tabs(page, 'Progressions & Directions')).toBeVisible();
   await expect(
-    tabs(page, 'Progressions & Directions').getByRole('link', { name: 'Profections', exact: true }),
-  ).toHaveAttribute('aria-current', 'page');
+    tabs(page, 'Progressions & Directions').getByRole('tab', { name: 'Profections', exact: true }),
+  ).toHaveAttribute('aria-selected', 'true');
   await expect(
-    tabs(page, 'Progressions & Directions').getByRole('link', { name: 'Timing timeline', exact: true }),
-  ).not.toHaveAttribute('aria-current', 'page');
+    tabs(page, 'Progressions & Directions').getByRole('tab', { name: 'Timing timeline', exact: true }),
+  ).toHaveAttribute('aria-selected', 'false');
   await expect(entry(page, 'Progressions & Directions')).toHaveAttribute('aria-current', 'page');
 });
 
@@ -132,7 +132,8 @@ async function tabUntilFocused(page: Page, target: Locator, description: string)
   throw new Error(`Tab never reached ${description}; last focused element: ${focused}`);
 }
 
-// Each section: the sub-view the sidebar entry opens first, and a non-first sub-view reached by Tab + Enter.
+// Each section: the sub-view the sidebar entry opens first, and the next sub-view, reached from the keyboard. The bar is
+// a WAI-ARIA tablist (#1175): Tab stops on the open tab and ArrowRight moves to the next one, opening it.
 const KEYBOARD_SECTIONS = [
   { name: 'Transits & Forecast', subView: 'Forecast', subViewUrl: /#\/people\/[^/]+\/timing\/forecast$/ },
   { name: 'Progressions & Directions', subView: 'Profections', subViewUrl: /#\/people\/[^/]+\/timing\/profections$/ },
@@ -140,7 +141,7 @@ const KEYBOARD_SECTIONS = [
 ];
 
 for (const section of KEYBOARD_SECTIONS) {
-  test(`${section.name}: every sub-view is reachable with Tab and Enter (#882)`, async () => {
+  test(`${section.name}: the tab bar is reachable with Tab and its sub-views with the arrow keys (#882, #1175)`, async () => {
     test.setTimeout(60_000);
     await personWithChart(page);
 
@@ -148,11 +149,13 @@ for (const section of KEYBOARD_SECTIONS) {
     await page.keyboard.press('Enter');
     await expect(entry(page, section.name)).toHaveAttribute('aria-current', 'page');
 
-    const subView = tabs(page, section.name).getByRole('link', { name: section.subView, exact: true });
-    await tabUntilFocused(page, subView, `the "${section.subView}" tab of ${section.name}`);
-    await page.keyboard.press('Enter');
-    await expect(subView).toHaveAttribute('aria-current', 'page');
+    const openTab = tabs(page, section.name).getByRole('tab', { selected: true });
+    await tabUntilFocused(page, openTab, `the open tab of ${section.name}`);
+    await page.keyboard.press('ArrowRight');
+    const subView = tabs(page, section.name).getByRole('tab', { name: section.subView, exact: true });
     await expect(page).toHaveURL(section.subViewUrl);
+    await expect(subView).toHaveAttribute('aria-selected', 'true');
+    await expect(subView).toBeFocused();
   });
 }
 

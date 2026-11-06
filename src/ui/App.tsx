@@ -27,7 +27,7 @@ import { StoreProvider } from './store-context.js';
 import { SyncBadge } from './SyncBadge.js';
 import { useCalculationSettingsMigration } from './use-calculation-settings-migration.js';
 import { SymbolToggle } from './SymbolToggle.js';
-import { SectionNav } from './SectionNav.js';
+import { PersonSectionLayout } from './SectionLayout.js';
 import { ToolsLayout } from './ToolsLayout.js';
 import { activeToolKey } from './feature-registry.js';
 import { WorkspaceShell } from './WorkspaceShell.js';
@@ -361,10 +361,12 @@ function AppShell(): React.JSX.Element {
               <div id="main-content" className="main-content" tabIndex={-1}>
                 {/* The account preferences' sign-in prompt, failed save and unreadable notice (#1066), on every route. */}
                 <AccountPreferencesNotices />
-                {/* The sub-views of Transits & Forecast, Progressions & Directions, and Relationship Charts (#882); Tools has its own Tabs frame (#1139). */}
-                <SectionNav route={parsed} />
+                {/* Sections with sub-views share one frame: a section h1 and a Tabs bar. Tools (#1139) and the three person
+                    sections (#882, #1175) each get it; any other route renders its screen alone. */}
                 {toolKey === null ? (
-                  <Suspense fallback={<LoadingScreen />}>{screen}</Suspense>
+                  <PersonSectionLayout route={parsed}>
+                    <Suspense fallback={<LoadingScreen />}>{screen}</Suspense>
+                  </PersonSectionLayout>
                 ) : (
                   <ToolsLayout active={toolKey}>
                     <Suspense fallback={<LoadingScreen />}>{screen}</Suspense>

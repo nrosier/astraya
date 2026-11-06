@@ -50,7 +50,7 @@ test('a rule set on the card changes the transit contacts too (#590)', async () 
 
   await openSharedPerson(page, baseUrl, EINSTEIN);
   await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).click();
-  await page.getByRole('link', { name: 'Transits', exact: true }).click();
+  await page.getByRole('tab', { name: 'Transits', exact: true }).click();
   await expect(page.getByRole('table', { name: 'Contacts' })).toBeVisible();
 
   const totalCount = async (): Promise<number> => {
@@ -71,7 +71,7 @@ test('a rule set on the card changes the transit contacts too (#590)', async () 
   await expect(card).toBeHidden();
 
   await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).click();
-  await page.getByRole('link', { name: 'Transits', exact: true }).click();
+  await page.getByRole('tab', { name: 'Transits', exact: true }).click();
   await expect(page.getByRole('table', { name: 'Contacts' })).toBeVisible();
   await expect.poll(totalCount).toBeLessThan(builtInTotal);
 });

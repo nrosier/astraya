@@ -63,7 +63,7 @@ test('the Primary Directions time key can be changed to Ptolemy and the arc for 
 
   await openSharedPerson(page, baseUrl, EINSTEIN);
   await page.getByRole('link', { name: 'Progressions & Directions', exact: true }).click();
-  await page.getByRole('link', { name: 'Primary Directions (Placidus)', exact: true }).click();
+  await page.getByRole('tab', { name: 'Primary Directions (Placidus)', exact: true }).click();
 
   const keyGroup = page.getByRole('radiogroup', { name: 'Time key', exact: true });
   const arcLine = page.getByText(/Arc for this age: /);
@@ -87,7 +87,7 @@ test('the transit filter narrows the list of transits, and choosing All restores
 
   await openSharedPerson(page, baseUrl, EINSTEIN);
   await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).click();
-  await page.getByRole('link', { name: 'Transits', exact: true }).click();
+  await page.getByRole('tab', { name: 'Transits', exact: true }).click();
   await expect(page.getByRole('table', { name: 'Contacts' })).toBeVisible();
 
   const rows = page.getByRole('table', { name: 'Contacts' }).locator('tbody tr');
@@ -111,7 +111,7 @@ test('a target date entered on Primary Directions sets the age, and a date befor
 
   await openSharedPerson(page, baseUrl, EINSTEIN);
   await page.getByRole('link', { name: 'Progressions & Directions', exact: true }).click();
-  await page.getByRole('link', { name: 'Primary Directions (Placidus)', exact: true }).click();
+  await page.getByRole('tab', { name: 'Primary Directions (Placidus)', exact: true }).click();
   const asOf = page.getByLabel('As of', { exact: true });
   const age = page.getByLabel('Age (years)', { exact: true });
   await expect(page.getByText(/Arc for this age: /)).toBeVisible();

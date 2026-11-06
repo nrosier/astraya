@@ -51,8 +51,8 @@ test('a person with a known birth time gets a Profections screen with a Year/Mon
   await openSharedPerson(page, baseUrl, EINSTEIN);
 
   await page.getByRole('link', { name: 'Progressions & Directions', exact: true }).click();
-  await page.getByRole('link', { name: 'Profections', exact: true }).click();
-  await expect(page.getByRole('heading', { name: /profections/i, level: 1 })).toBeVisible();
+  await page.getByRole('tab', { name: 'Profections', exact: true }).click();
+  await expect(page.getByRole('heading', { name: /profections/i, level: 2 })).toBeVisible();
   await expect(page.locator('.page-header-basis')).toHaveText('Tropical · Whole-sign houses · Modern rulers');
   await expect(page.locator('.page-header-basis')).not.toContainText(/Placidus|orbs/);
   // The person's rulers follow into the line.
@@ -80,7 +80,7 @@ test('a person with a known birth time gets a Profections screen with a Year/Mon
 
   // The person's Traditional rulers follow to the Transits line too (its chart rulers use them), not Modern.
   await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).click();
-  await page.getByRole('link', { name: 'Transits', exact: true }).click();
+  await page.getByRole('tab', { name: 'Transits', exact: true }).click();
   await expect(page.locator('.page-header-basis')).toHaveText(
     'Tropical · Placidus · Traditional rulers · Standard orbs',
   );
@@ -90,6 +90,6 @@ test('a person with an unknown birth time is told profections need one', async (
   await openSharedPerson(page, baseUrl, MARIC);
 
   await page.getByRole('link', { name: 'Progressions & Directions', exact: true }).click();
-  await page.getByRole('link', { name: 'Profections', exact: true }).click();
+  await page.getByRole('tab', { name: 'Profections', exact: true }).click();
   await expect(page.getByText(/need a known birth time/)).toBeVisible();
 });

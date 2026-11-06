@@ -50,8 +50,8 @@ test('a person with a known birth time gets a Progressions screen with technique
   await openSharedPerson(page, baseUrl, EINSTEIN);
 
   await page.getByRole('link', { name: 'Progressions & Directions', exact: true }).click();
-  await page.getByRole('link', { name: 'Progressions', exact: true }).click();
-  await expect(page.getByRole('heading', { name: /progressions/i, level: 1 })).toBeVisible();
+  await page.getByRole('tab', { name: 'Progressions', exact: true }).click();
+  await expect(page.getByRole('heading', { name: /progressions/i, level: 2 })).toBeVisible();
   await expect(page.locator('.page-header-basis')).toHaveText(
     'Tropical · Placidus · Standard orbs · Secondary progression · Naibod MC',
   );
@@ -71,6 +71,6 @@ test('a person with an unknown birth time is told progressions need one', async 
   await openSharedPerson(page, baseUrl, MARIC);
 
   await page.getByRole('link', { name: 'Progressions & Directions', exact: true }).click();
-  await page.getByRole('link', { name: 'Progressions', exact: true }).click();
+  await page.getByRole('tab', { name: 'Progressions', exact: true }).click();
   await expect(page.getByText(/need a known birth time/)).toBeVisible();
 });

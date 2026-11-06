@@ -247,7 +247,7 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.progressionsFallback} titleTerm="progression" />
+        <PageHeader headingLevel={2} title={t.progressionsFallback} titleTerm="progression" />
         <p>
           <GlossaryText text={t.notCompleteProgressions(person.displayName || t.thisPerson)} />{' '}
           <a href={personHref(personId)}>{t.personPageLink}</a>.
@@ -260,7 +260,7 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.progressionsFallback} titleTerm="progression" />
+        <PageHeader headingLevel={2} title={t.progressionsFallback} titleTerm="progression" />
         <p>
           <GlossaryText text={t.needsKnownTime(person.displayName || t.thisPerson)} />
         </p>
@@ -274,6 +274,7 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
     <main className="shell">
       <BackLink fallback={personHref(personId)} />
       <PageHeader
+        headingLevel={2}
         title={person.displayName ? t.heading(person.displayName) : t.progressionsFallback}
         titleTerm="progression"
         basis={basisLine}

@@ -142,7 +142,7 @@ test.describe('Selection card overhang on every single-wheel chart screen (#817)
       await page.setViewportSize({ width, height });
       await openSharedPerson(page, baseUrl, EINSTEIN);
       await page.getByRole('link', { name: 'Relationship Charts', exact: true }).click();
-      await page.getByRole('link', { name: 'Composite', exact: true }).click();
+      await page.getByRole('tab', { name: 'Composite', exact: true }).click();
       await page.getByLabel('Compose with').selectOption({ label: 'Max Born' });
       await expect(page.locator('.chart-workbench-dial .chart-wheel svg').first()).toBeVisible();
       expectOverhang(await measure(page, 'composite', width, height));

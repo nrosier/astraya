@@ -63,7 +63,7 @@ test('with people but none viewed, #/ shows the picker; choosing one shows their
     await page.reload();
     await expect(page.getByRole('heading', { name: 'Home', level: 1 })).toBeVisible();
     await page.getByLabel('Person', { exact: true }).selectOption({ label: EINSTEIN.name });
-    await expect(page.getByRole('heading', { name: /timing timeline/i, level: 1 })).toContainText(EINSTEIN.name);
+    await expect(page.getByRole('heading', { name: /timing timeline/i, level: 2 })).toContainText(EINSTEIN.name);
     await expect(page).toHaveURL(/#\/$/);
   } finally {
     await context.close();
@@ -79,7 +79,7 @@ test('on #/ with a last-viewed person, the person section links are in the sideb
     await page.waitForURL(/#\/people\/[^/]+\//);
     await waitForLastPersonWritten(page);
     await page.goto(`${baseUrl}/#/`);
-    await expect(page.getByRole('heading', { name: /timing timeline/i, level: 1 })).toContainText(EINSTEIN.name);
+    await expect(page.getByRole('heading', { name: /timing timeline/i, level: 2 })).toContainText(EINSTEIN.name);
     const nav = page.locator('nav#app-nav');
     await expect(nav.getByRole('link', { name: 'Overview', exact: true })).toBeVisible();
     await expect(nav.getByRole('link', { name: 'Tools', exact: true })).toBeVisible();
@@ -114,7 +114,7 @@ test('after viewing a person, #/ shows their timeline, survives reload, and Back
     await page.waitForURL(/#\/people\/[^/]+\//);
     await waitForLastPersonWritten(page);
     await page.goto(`${baseUrl}/#/`);
-    const heading = page.getByRole('heading', { name: /timing timeline/i, level: 1 });
+    const heading = page.getByRole('heading', { name: /timing timeline/i, level: 2 });
     await expect(heading).toContainText(EINSTEIN.name);
     await expect(page).toHaveURL(/#\/$/);
     await page.reload();

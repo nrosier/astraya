@@ -377,7 +377,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.primaryDirectionsFallback} titleTerm="primaryDirection" />
+        <PageHeader headingLevel={2} title={t.primaryDirectionsFallback} titleTerm="primaryDirection" />
         <p>
           <GlossaryText text={t.notCompletePrimaryDirections(person.displayName || t.thisPerson)} />{' '}
           <a href={personHref(personId)}>{t.personPageLink}</a>.
@@ -390,7 +390,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.primaryDirectionsFallback} titleTerm="primaryDirection" />
+        <PageHeader headingLevel={2} title={t.primaryDirectionsFallback} titleTerm="primaryDirection" />
         <p>
           <GlossaryText text={t.needsKnownTime(person.displayName || t.thisPerson)} />
         </p>
@@ -415,6 +415,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
       />
       <BackLink fallback={personHref(personId)} />
       <PageHeader
+        headingLevel={2}
         title={person.displayName ? t.heading(person.displayName) : t.primaryDirectionsFallback}
         titleTerm="primaryDirection"
         basis={basisLine}
