@@ -114,11 +114,11 @@ jobs:
   # Drives a real browser against a real, locally-booted server (#72/#107) — proving
   # what the unit suite above can't: that a person's birth data actually produces a
   # rendered wheel and a real file download, and that two devices actually converge.
-  # Split into eight shards that run in parallel (#1095); e2e was the long pole of CI. Four shards were uneven (summed
-  # test time 591, 658, 485 and 360 s on 2026-11-06, the longest shard setting the wait), and each shard's setup is only
-  # about a minute, so more shards shorten the wait for the slowest one.
+  # Split into five shards that run in parallel (#1095); e2e was the long pole of CI. Playwright's own `--shard` hands out
+  # spec files without regard to their duration (four shards took 157, 178, 211 and 317 s), so `scripts/e2e-shard.mjs`
+  # gives each shard about the same total time from the weights in `e2e/shard-weights.json`.
   e2e-shard:
-    name: e2e (${{ matrix.shard }}/8)
+    name: e2e (${{ matrix.shard }}/5)
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
@@ -131,7 +131,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+        shard: [1, 2, 3, 4, 5]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
@@ -141,9 +141,10 @@ jobs:
       - run: npm ci
       - run: npm run ephe:sync
       - run: npm run corpus:split
-      # test:e2e is `npm run build && playwright test`; the shard runs the same two steps so it can pass --shard.
+      # test:e2e is `npm run build && playwright test`; the shard runs the same two steps so it can pass its own spec files.
       - run: npm run build
-      - run: npx playwright test --shard=${{ matrix.shard }}/8
+      # The weighted split (see above) prints this shard's spec files; every spec file lands on exactly one shard.
+      - run: npx playwright test $(node scripts/e2e-shard.mjs ${{ matrix.shard }} 5)
       - name: Upload Playwright traces on failure
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
