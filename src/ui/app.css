@@ -2314,8 +2314,59 @@ label.stacked textarea:focus-visible {
   display: none;
 }
 
-/* The Aspects view's family Select sits on its own row above the tables (#815). */
+/* The aspect-family and consultation-preset Selects sit beside the chart type, in one row (#1224, #815, #1063): each
+   keeps the type Select's width and height, and the row wraps onto the next line on a narrow screen. */
+.chart-controls-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.chart-controls-slot,
 .aspect-family-filter {
+  display: contents;
+}
+
+.chart-controls-row > .chart-type-select,
+.chart-controls-row .aspect-family-filter .primitive-field {
+  flex: 0 1 20rem;
+  min-width: min(100%, 12rem);
+}
+
+.chart-controls-row .aspect-family-filter .primitive-field {
+  gap: var(--space-1);
+  margin: 0;
+}
+
+/* On a phone the Selects stack, so each keeps the same space below it instead of the type Select's larger one. */
+@media (max-width: 40rem) {
+  .chart-controls-row {
+    padding-bottom: var(--space-4);
+  }
+
+  .chart-controls-row .chart-type-select .primitive-field {
+    margin-bottom: 0;
+  }
+}
+
+.chart-controls-row .aspect-family-filter .primitive-field select {
+  box-sizing: border-box;
+  /* The same height as the chart-type Select beside them. */
+  height: 2.68rem;
+  min-height: 0;
+}
+
+/* The view bar sits right under the row, as it does under a lone chart-type Select. */
+.chart-controls-row + .tab-row {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+/* Without a chart-type row (a page with no type Select), the Selects stand alone under the wheel or above the matrix. */
+.chart-workbench-dial > .aspect-family-filter,
+#chart-view-matrix > .aspect-family-filter {
+  display: block;
   max-width: 20rem;
   margin: 0 0 var(--space-4);
 }
@@ -7791,7 +7842,8 @@ a.quiet,
     min-height: var(--target-min);
   }
 
-  .chart-type-select .primitive-field select {
+  .chart-type-select .primitive-field select,
+  .chart-controls-row .aspect-family-filter .primitive-field select {
     height: var(--control-height);
   }
 }
