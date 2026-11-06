@@ -6389,13 +6389,6 @@ button.primitive-button-compact {
   line-height: 1.5;
 }
 
-/* A helper note under a Preferences row (issue 966): muted text on the card, no box, so it reads as a callout. */
-.symbol-setting-note {
-  margin: var(--space-2) 0 0;
-  color: var(--muted);
-  font-size: var(--text-xs);
-}
-
 @media (pointer: coarse) {
   .primitive-field .primitive-control-compact,
   .primitive-control-compact {
@@ -7956,6 +7949,20 @@ a.quiet,
 .preferences-card-title {
   margin: 0 0 var(--space-3);
   font-size: var(--text-lg);
+}
+
+/* The Appearance tab's two groups side by side from 1024px, stacked below (#1185). */
+.preferences-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  column-gap: var(--space-6);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .preferences-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 /* A 60/40 grid (issue 966): the text takes three fifths, the control two fifths, right-aligned. A grid keeps both columns on

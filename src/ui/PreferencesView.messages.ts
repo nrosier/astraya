@@ -96,6 +96,7 @@ const en = {
     'House system, zodiac, orbs, and which points show — the starting point for people who have no chart settings of their own. Each person keeps their own settings, changed from that person’s chart screens with the same control.',
   chartSetupNeedsEngine: 'Chart setup needs the calculation engine, which is still loading.',
   themeLabel: 'Light, dark, or follow the system.',
+  infoLabel: (title: string) => `About ${title}`,
   motionLabel: 'Motion',
   motionHint:
     'Reduce motion switches off transitions and smooth scrolling. Your system’s own setting is always respected as well.',
@@ -230,6 +231,7 @@ const nl: typeof en = {
     'Huizensysteem, dierenriem, orbs en welke punten worden getoond — het startpunt voor personen die nog geen eigen horoscoopinstellingen hebben. Elke persoon houdt eigen instellingen, die je wijzigt op de horoscoopschermen van die persoon met dezelfde bediening.',
   chartSetupNeedsEngine: 'Horoscoopinstellingen hebben de rekenmachine nodig, die nog wordt geladen.',
   themeLabel: 'Licht, donker, of het systeem volgen.',
+  infoLabel: (title: string) => `Over ${title}`,
   motionLabel: 'Beweging',
   motionHint:
     'Minder beweging zet overgangen en vloeiend scrollen uit. De instelling van je systeem wordt altijd ook gerespecteerd.',
