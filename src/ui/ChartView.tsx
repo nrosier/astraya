@@ -127,6 +127,7 @@ import { useStore, useStoreState } from './store-context.js';
 import type { EphemerisProvider } from '../ephemeris/types.js';
 import type { Locale } from '../interpretation/schema.js';
 import type { BirthMomentInput } from '../time/types.js';
+import { Disclosure } from './primitives/Disclosure.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import {
   ChartOverlaySettingsPanel,
@@ -1040,16 +1041,24 @@ export function ChartDataView({
           <StatusMessage kind="error">{t.chartError(overlayLoad.message)}</StatusMessage>
         )}
         {overlayRingData !== undefined && (
-          <section className="chart-overlay-provenance" aria-label={overlayT.ringProvenance}>
-            <h3>{overlayT.ringProvenance}</h3>
-            <ul>
-              {overlayRingData.map((ring) => (
-                <li key={ring.label}>
-                  <strong>{ring.label}</strong>: {ring.provenance}
-                </li>
-              ))}
-            </ul>
-          </section>
+          // The calculation snapshot identities are internal provenance, not for readers: a Diagnostics disclosure,
+          // closed by default, keeps them reachable (#1232, owner decision 2026-11-06).
+          <Disclosure
+            title={overlayT.diagnosticsTitle}
+            showLabel={overlayT.diagnosticsShow}
+            hideLabel={overlayT.diagnosticsHide}
+          >
+            <section className="chart-overlay-provenance" aria-label={overlayT.ringProvenance}>
+              <h3>{overlayT.ringProvenance}</h3>
+              <ul>
+                {overlayRingData.map((ring) => (
+                  <li key={ring.label}>
+                    <strong>{ring.label}</strong>: {ring.provenance}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          </Disclosure>
         )}
         {/* One workbench: the dial, then its inspector straight after it in DOM and focus order (#511).
             The outer element is the inline-size query container; see `.chart-workbench` in app.css. */}
