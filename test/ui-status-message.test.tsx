@@ -28,6 +28,25 @@ describe('StatusMessage (#513)', () => {
     expect(message.getAttribute('aria-busy') === 'true').toBe(kind === 'loading' || kind === 'updating');
   });
 
+  it('puts an optional detail inside the same live region, not in a second paragraph (#1162)', () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    act(() => {
+      createRoot(container).render(
+        <StatusMessage kind="error" detail="why">
+          headline
+        </StatusMessage>,
+      );
+    });
+    expect(container.querySelectorAll('p')).toHaveLength(1);
+    expect(container.querySelector('p')?.getAttribute('role')).toBe('alert');
+    expect(container.querySelector('.status-detail')?.textContent).toBe('why');
+    act(() => {
+      createRoot(container).render(<StatusMessage kind="error">headline</StatusMessage>);
+    });
+    expect(container.querySelector('.status-detail')).toBeNull();
+  });
+
   it('is used instead of a hand-rolled warning or loading paragraph', () => {
     const offenders = readdirSync('src/ui')
       .filter((name) => name.endsWith('.tsx'))
@@ -52,4 +71,8 @@ describe('StatusMessage (#513)', () => {
       expect(HAND_ROLLED_ROLE_PARAGRAPH.test(source)).toBe(false);
     },
   );
+
+  it('ReportView no longer wraps its AI-rejection message in a hand-rolled alert div (#1162)', () => {
+    expect(/<div\b[^>]*\brole="alert"/.test(readFileSync('src/ui/ReportView.tsx', 'utf-8'))).toBe(false);
+  });
 });

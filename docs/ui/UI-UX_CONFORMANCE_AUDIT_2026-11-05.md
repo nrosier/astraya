@@ -79,7 +79,7 @@ Notes on the table:
 - **§6 navigation.** Every `window.location.hash` write in `src/ui` is a select-driven navigation (`AdminNav.tsx:42`, `SectionNav.tsx:66, 96`, `ChartTypeSelector.tsx:37`, `ToolsLayout.tsx:36`) or a redirect after a save (`People.tsx:61`, `PersonForm.tsx:187`, `SetupForm.tsx:59`). The guideline allows both, so no navigating `<button>` was found.
 - **§7 loading.** `StatusMessage` sets `aria-busy` for the `loading` and `updating` kinds (`StatusMessage.tsx:14, 35`), so the loading results on `AdminPanel`, `CorpusOverridesPanel` and `CorpusCandidatesPanel` are **Pass**.
 - **§8/§9 tables.** A table caption is `h3` by default (`SortableTable.tsx:105`). It is a failure only when no `h2` sits above it under the page `h1`. Chart and consultation tables sit under `h2` section headings, so they pass; the chart and relocated tables not confirmed in a browser are listed below.
-- **Rectification §7.** The page shows its states through `StatusMessage`; the hand-rolled `BirthPlaceSearch` alert is the failure (#1162).
+- **Rectification §7.** The page shows its states through `StatusMessage`; the `BirthPlaceSearch` dropdown rows (searching, no matches, failed) are a recorded exception (#1162, decision S2, 2026-11-06): they are rows inside a listbox popup with their own spacing and a spinner, not result-region messages, and keep their `status` and `alert` roles.
 
 ## Failures (filed as issues)
 
