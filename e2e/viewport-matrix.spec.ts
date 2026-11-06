@@ -1,6 +1,6 @@
 /**
  * The required viewport matrix (#514, `docs/ui/UI-UX_IMPLEMENTATION_PLAN.md` §9): the screens a person actually uses —
- * People, the person's Overview, the natal chart in each view, Transits, the PDF builder, Preferences — at 390×844,
+ * People, the person's Overview, the natal chart in each view, Transits, the PDF builder, Preferences, About and the changelog — at 390×844,
  * 768×1024, 1280×800, 1440×900 and 3440×1440, in both themes: nothing scrolls sideways, and axe finds no WCAG 2 A/AA
  * violation. A layout regression at one size, or a colour that fails in one theme, fails here by name.
  */
@@ -376,6 +376,9 @@ for (const theme of THEMES) {
       ['transits', `#/people/${id ?? ''}/timing/transits`],
       ['PDF builder', '#/documents/pdf'],
       ['preferences', '#/preferences'],
+      // The text-heavy pages (#1176): a long code span in the changelog once ran past the viewport on a phone.
+      ['about', '#/about'],
+      ['changelog', '#/changelog'],
     ];
     expect(personUrl).toContain('#/people/');
     for (const viewport of VIEWPORTS) {

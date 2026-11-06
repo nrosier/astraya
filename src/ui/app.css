@@ -1606,6 +1606,11 @@ code {
   color: var(--accent);
 }
 
+/* A long inline code span in the changelog (a file path, a command) wraps instead of pushing the page sideways on a phone (#1176). */
+.prose code {
+  overflow-wrap: anywhere;
+}
+
 /*
  * Buttons.
  *
