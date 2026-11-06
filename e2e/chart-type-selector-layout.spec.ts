@@ -133,6 +133,30 @@ for (const viewport of [
       });
     }
 
+    for (const type of ['Natal', 'Draconic'] as const) {
+      test(`${type}: chart type, aspect family and consultation preset sit side by side in one row (#1224)`, async () => {
+        await openSharedPerson(page, baseUrl, EINSTEIN);
+        await openChart(page, type);
+
+        const selects = [
+          await box(page.getByLabel('Chart type', { exact: true })),
+          await box(page.getByLabel('Aspects shown', { exact: true })),
+          await box(page.getByLabel('Consultation preset', { exact: true })),
+        ];
+        const wheel = await box(page.locator('div.chart-wheel'));
+        const [first, ...rest] = selects;
+        if (first === undefined) throw new Error('no selects measured');
+        for (const [index, select] of rest.entries()) {
+          expect
+            .soft(Math.abs(select.top - first.top), `${type}: select ${String(index + 2)} top`)
+            .toBeLessThanOrEqual(1);
+          expect.soft(select.height, `${type}: select ${String(index + 2)} height`).toBeCloseTo(first.height, 0);
+        }
+        for (const select of selects)
+          expect.soft(select.bottom, `${type}: selects above the wheel`).toBeLessThanOrEqual(wheel.top);
+      });
+    }
+
     test('every chart type uses the same selector design values (height, margins, gap)', async () => {
       test.setTimeout(120_000);
       const rows: { type: string; metrics: SelectorMetrics }[] = [];

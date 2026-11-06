@@ -5,9 +5,9 @@
  */
 /**
  * @module ChartTypeSelector
- * @purpose Renders the one chart-type Select (natal/draconic/harmonic/solar-return/lunar-return) shown at the top of a person's Charts page.
+ * @purpose Renders the one chart-type Select (natal/draconic/harmonic/solar-return/lunar-return) shown at the top of a person's Charts page, in a row with a slot for the chart's aspect family and preset Selects (#1224).
  * @conventions A labelled shared Select, not links; choosing a type sets the page's hash with the open view preserved. `changeChartView` keeps the open view in the URL via `history.replaceState` + a synthetic `hashchange`.
- * @exports ChartTypeSelector, changeChartView
+ * @exports ChartTypeSelector, CHART_CONTROLS_SLOT_CLASS, changeChartView
  */
 import { CHART_TYPES, type ChartType, type ChartViewKind } from './chart-sections.js';
 import { chartHref } from './route.js';
@@ -15,6 +15,9 @@ import { chartTypesMessages } from './ChartTypes.messages.js';
 import { useMessages } from './messages.js';
 import { Select } from './primitives/Select.js';
 import { replaceRoute } from './nav-history.js';
+
+/** The element `ChartView` finds to place the aspect family and preset Selects beside the chart type (#1224). */
+export const CHART_CONTROLS_SLOT_CLASS = 'chart-controls-slot';
 
 export function ChartTypeSelector({
   personId,
@@ -27,16 +30,21 @@ export function ChartTypeSelector({
 }): React.JSX.Element {
   const t = useMessages(chartTypesMessages);
   return (
-    <div className="chart-type-select">
-      <Select
-        label={t.typeSelectorLabel}
-        value={type}
-        options={CHART_TYPES.map((candidate) => ({ value: candidate, label: t.typeLabels[candidate] }))}
-        onChange={(value) => {
-          const next = CHART_TYPES.find((candidate) => candidate === value);
-          if (next !== undefined) window.location.hash = chartHref(personId, view, next);
-        }}
-      />
+    <div className="chart-controls-row">
+      <div className="chart-type-select">
+        <Select
+          label={t.typeSelectorLabel}
+          value={type}
+          options={CHART_TYPES.map((candidate) => ({ value: candidate, label: t.typeLabels[candidate] }))}
+          onChange={(value) => {
+            const next = CHART_TYPES.find((candidate) => candidate === value);
+            if (next !== undefined) window.location.hash = chartHref(personId, view, next);
+          }}
+        />
+      </div>
+      {/* The chart's aspect family and preset Selects are portalled in here by `ChartView` (#1224), so the three
+          sit in one row on every chart page. */}
+      <div className={CHART_CONTROLS_SLOT_CLASS} />
     </div>
   );
 }

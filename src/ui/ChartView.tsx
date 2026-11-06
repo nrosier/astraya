@@ -40,7 +40,7 @@ import { ASPECTS, aspectHarmonicFamily, DEFAULT_ORB_CONFIG, type Aspect } from '
 import { Select } from './primitives/Select.js';
 import { AspectFamilyControls } from './AspectFamilyControls.js';
 import { isContactShown, type AspectFamilyKey, type ConsultationPreset, type OrbCaps } from './aspect-family-filter.js';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   aspectRows,
@@ -109,7 +109,7 @@ import {
 } from './chart-sections.js';
 import { chartTypesMessages } from './ChartTypes.messages.js';
 import { chartHref, personHref, routeHref, type ExportBuilderSection } from './route.js';
-import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
+import { CHART_CONTROLS_SLOT_CLASS, ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
 import { ChartViewNav } from './ChartViewNav.js';
 import { usePageActionsTarget } from './page-actions-slot.js';
 import { useNarrowViewport } from './use-narrow-viewport.js';
@@ -327,7 +327,6 @@ function renderMatrixView(
   selection?: TableSelection,
   onOpenFormulas?: () => void,
   families: ReadonlySet<AspectFamilyKey> = new Set(),
-  onFamiliesChange?: (families: ReadonlySet<AspectFamilyKey>) => void,
   orbCaps?: OrbCaps,
 ): React.ReactNode {
   const full = chartSheetInput(data, [], displayName, pointVisibility, (bodyKey) => bodyShortName(bodyKey, locale));
@@ -344,7 +343,6 @@ function renderMatrixView(
         };
   return (
     <>
-      {onFamiliesChange !== undefined && <AspectFamilyControls families={families} onChange={onFamiliesChange} />}
       <p className="hint">{t.matrixHint}</p>
       <AspectMatrixGrid
         input={input.matrix}
@@ -905,6 +903,20 @@ export function ChartDataView({
     setOrbCaps(preset?.orbs);
     setPresetKey(preset?.key);
   }, []);
+  // The aspect family and preset Selects go into the chart-type row's slot (#1224). A page with no chart-type row has
+  // no slot, and keeps them where they were: under the wheel, and above the matrix.
+  const [controlsSlot, setControlsSlot] = useState<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    setControlsSlot(document.querySelector<HTMLElement>(`.${CHART_CONTROLS_SLOT_CLASS}`));
+  }, [typeSelector]);
+  const aspectControls = (
+    <AspectFamilyControls
+      families={aspectFamilies}
+      onChange={changeFamilies}
+      presetKey={presetKey}
+      onPreset={choosePreset}
+    />
+  );
   const wheelMarkup = overlayLoad.kind === 'ready' ? overlayLoad.markup : dial?.markup;
   const overlayRingData = overlayLoad.kind === 'ready' ? overlayLoad.ringData : undefined;
 
@@ -1015,6 +1027,7 @@ export function ChartDataView({
   const tabs: readonly ChartViewKind[] = CHART_VIEWS.filter((view) => (view === 'wheel' ? sheet !== undefined : true));
   // A chosen view that has since gone (a setting made the wheel unavailable) falls back to the first one shown.
   const currentTab: ChartViewKind = tabs.includes(activeTab) ? activeTab : (tabs[0] ?? 'aspects');
+  const showAspectControls = load.kind === 'ready' && (currentTab === 'wheel' || currentTab === 'matrix');
 
   // After "Show" on a table row (#815) the Wheel view is visible: focus its named region and bring it into view.
   // Deferred a frame because the app moves focus to the screen's heading on every route change (`App.tsx`, #69),
@@ -1068,12 +1081,7 @@ export function ChartDataView({
                 onClick={handleWheelClick}
                 onKeyDown={handleWheelKeyDown}
               />
-              <AspectFamilyControls
-                families={aspectFamilies}
-                onChange={changeFamilies}
-                presetKey={presetKey}
-                onPreset={choosePreset}
-              />
+              {controlsSlot === null && aspectControls}
             </div>
             <SelectionInspector
               facts={isolation}
@@ -1164,6 +1172,9 @@ export function ChartDataView({
       />
       {/* The chart type sits above the view bar, as on the derived chart pages (#981): a stacked label and select. */}
       {typeSelector}
+      {/* The aspect family and consultation preset sit in the chart-type row (#1224): three selects side by side, so the
+          wheel keeps its height. They filter the wheel and the matrix, so they show on those two views. */}
+      {controlsSlot !== null && showAspectControls && createPortal(aspectControls, controlsSlot)}
       {/* Directly under the chart type (#801): the chart's own views once there is a chart to view, and the
           Overlays and Extended settings triggers pinned at the far right (#818, #817). The row stays in place while the chart
           loads or fails, so the Extended settings card (a setting that might fix a failed or slow calculation, #442)
@@ -1259,6 +1270,7 @@ export function ChartDataView({
                         </>
                       );
                     })()}
+                  {currentTab === 'matrix' && controlsSlot === null && aspectControls}
                   {currentTab === 'matrix' &&
                     renderMatrixView(
                       load.data,
@@ -1269,7 +1281,6 @@ export function ChartDataView({
                       tableSelection,
                       settingsPanel === null ? undefined : openFormulaDrawer,
                       aspectFamilies,
-                      changeFamilies,
                       orbCaps,
                     )}
                   {currentTab === 'elements' && renderElementsView(load.data, displayName, pointVisibility, t, locale)}
