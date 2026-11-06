@@ -944,6 +944,30 @@ footer {
   }
 }
 
+/*
+ * The timing views' layout (#1234; reused by #1233, #1235, #1236, #1237): the main table (contacts, directions) in the
+ * left 60% and the positions beside it in the right 40%, the same 3fr/2fr split as `.tool-layout`; one column below
+ * 52rem, main first. Each column keeps its own height, so a table's sticky header (#1065) pins inside its own frame.
+ */
+.timing-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+  margin-bottom: var(--space-6);
+}
+
+@media (min-width: 52rem) {
+  .timing-layout {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  }
+}
+
+.timing-layout-main,
+.timing-layout-side {
+  min-width: 0;
+}
+
 .tool-card {
   display: grid;
   /* One column that may shrink below a long select option's width, so the card never widens the page on a phone. */

@@ -20,6 +20,9 @@ const en = {
   heading: (name: string) => `${name}’s Solar Arc Directions`,
   hint: 'Every natal body and angle is shifted by the same arc — the distance the Sun itself has moved since birth, in symbolic (a-day-for-a-year) time. Unlike a progressed chart, nothing here depends on a progressed Moon or planetary speed.',
   asOfLabel: 'As of',
+  nowLabel: 'Now',
+  hintInfoLabel: 'About solar arc directions',
+  positionLabel: 'Position',
   calculating: 'Calculating…',
   error: (message: string) => `Solar arc directions could not be calculated. ${message}`,
 
@@ -32,10 +35,6 @@ const en = {
   noContacts: 'No directed-to-natal contacts within orb.',
 
   bodyLabel: 'Body',
-  signLabel: 'Sign',
-  degLabel: 'Deg',
-  minLabel: 'Min',
-  secLabel: 'Sec',
   houseLabel: 'House',
 
   bodyALabel: 'Directed',
@@ -62,6 +61,9 @@ const nl: typeof en = {
   heading: (name: string) => `Solar arc-directies van ${name}`,
   hint: 'Elk natal hemellichaam en elke hoek wordt verschoven met dezelfde boog — de afstand die de Zon zelf heeft afgelegd sinds de geboorte, in symbolische (een-dag-voor-een-jaar) tijd. In tegenstelling tot een progressieve horoscoop hangt hier niets af van een progressieve Maan of planetaire snelheid.',
   asOfLabel: 'Vanaf',
+  nowLabel: 'Nu',
+  hintInfoLabel: 'Over zonneboogdirecties',
+  positionLabel: 'Positie',
   calculating: 'Berekenen…',
   error: (message: string) => `Solar arc-directies konden niet worden berekend. ${message}`,
 
@@ -74,10 +76,6 @@ const nl: typeof en = {
   noContacts: 'Geen gedirigeerd-natale contacten binnen orb.',
 
   bodyLabel: 'Hemellichaam',
-  signLabel: 'Teken',
-  degLabel: 'Gr',
-  minLabel: 'Min',
-  secLabel: 'Sec',
   houseLabel: 'Huis',
 
   bodyALabel: 'Gedirigeerd',

@@ -156,6 +156,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `UnreadableSettingsNotice.tsx` + `.messages.ts` — Notice shown instead of a chart when a person's saved settings are unreadable (#806). Deps: `primitives/StatusMessage`.
 - `use-calculation-settings-migration.ts` — Once-per-account moves of device chart settings and ruler choice onto existing people, after first sync when signed in (#806). Deps: `session-context`, `sync/engine`, `domain/calculation-settings-migration`, `default-calculation-profile`, `rulership-setting`.
 - `extended-settings-summary.ts` — Diffs extended settings to summarize changes. Deps: `chart/extended-settings`.
+- `position-column.ts` — The shared merged Position column (sign plus degrees and minutes) for the timing tables (#1234). Deps: `format`, `astro-names.messages`, `table-sort`.
 - `format.ts` — Locale-aware formatting (dates/coords). Deps: `interpretation/schema` (Locale type only).
 - `forward-geocode.ts` — Place-name → coordinates resolution (MapTiler/Nominatim). Deps: `./geocode-provider`.
 - `geocode-provider.ts` — Geocoding backend selection (self-hosted/MapTiler/Nominatim). Deps: build-time env vars.
