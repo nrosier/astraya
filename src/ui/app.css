@@ -7951,7 +7951,7 @@ a.quiet,
   font-size: var(--text-lg);
 }
 
-/* The Appearance tab's two groups side by side from 1024px, stacked below (#1185). */
+/* The Appearance tab's two groups side by side from 1024px, stacked below (issue 1185). */
 .preferences-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
