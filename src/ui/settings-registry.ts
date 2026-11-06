@@ -175,10 +175,10 @@ export const SETTINGS: readonly SettingDefinition[] = [
     key: 'astraya:orbLibrary',
     scope: 'account',
     owner:
-      "The user's named orb profiles (revisioned): the orb library the natal, transit and synastry charts draw their orbs from (docs/ui/UI-UX_GUIDELINES.md §3.2 'orb profile', decided account scope on #1149). Stored in this browser until its sync lands (#1220)",
+      "The user's named orb profiles (revisioned): the orb library the natal, transit and synastry charts draw their orbs from (docs/ui/UI-UX_GUIDELINES.md §3.2 'orb profile', decided account scope on #1149), synced across the account's devices (#1220)",
     describeDefault: 'an empty library (the built-in orb scale applies)',
-    persistence: 'local-storage',
-    synced: false,
+    persistence: 'indexeddb-oplog',
+    synced: true,
     editingSurface: 'OrbLibraryEditor.tsx (Preferences, Astrology defaults)',
     commitMode: 'staged',
     sensitive: false,
@@ -188,10 +188,10 @@ export const SETTINGS: readonly SettingDefinition[] = [
     key: 'astraya:orbContextSource',
     scope: 'account',
     owner:
-      "Which orb profile each chart type (natal, transit, synastry) uses, the choice of profile from the user's orb library (#1149). Stored in this browser until its sync lands (#1220)",
+      "Which orb profile each chart type (natal, transit, synastry) uses, the choice of profile from the user's orb library (#1149), synced across the account's devices (#1220)",
     describeDefault: 'no profile chosen (the chart type uses its own orbs)',
-    persistence: 'local-storage',
-    synced: false,
+    persistence: 'indexeddb-oplog',
+    synced: true,
     editingSurface: 'OrbLibraryEditor.tsx (Preferences, Astrology defaults)',
     commitMode: 'immediate',
     sensitive: false,
@@ -201,10 +201,10 @@ export const SETTINGS: readonly SettingDefinition[] = [
     key: 'astraya:transitFilter:<context>',
     scope: 'account',
     owner:
-      "The Transits/Forecast screens' remembered default filter per context (daily/yearly), the user's default transit-filter profile (docs/ui/UI-UX_GUIDELINES.md §3.2)",
+      "The Transits/Forecast screens' remembered default filter per context (daily/yearly), the user's default transit-filter profile (docs/ui/UI-UX_GUIDELINES.md §3.2); two account fields, transitFilterDaily and transitFilterYearly (#1220)",
     describeDefault: "the 'important' preset for that context",
-    persistence: 'local-storage',
-    synced: false,
+    persistence: 'indexeddb-oplog',
+    synced: true,
     editingSurface: 'TransitFilterPanel.tsx ("Apply as Default")',
     commitMode: 'staged',
     sensitive: false,
@@ -268,15 +268,10 @@ export const SETTINGS: readonly SettingDefinition[] = [
 
 /**
  * Account-scope settings whose cross-device sync is owned by another open issue, so the "account scope syncs" rule
- * names them rather than hiding them. Each entry must say which issue. Remove an entry when its sync lands.
+ * names them rather than hiding them. Each entry must say which issue. Remove an entry when its sync lands. Empty since
+ * #1220 moved the orb library, its source and the transit-filter default into the op log.
  */
-export const ACCOUNT_SYNC_TRACKED_ELSEWHERE: Readonly<Record<string, string>> = {
-  // Moved to account scope by #1149 (guidelines §3.2); their sync is not part of #1066 (ADR 0004 decision Q4) and is
-  // built under #1220.
-  'astraya:orbLibrary': '#1220',
-  'astraya:orbContextSource': '#1220',
-  'astraya:transitFilter:<context>': '#1220',
-};
+export const ACCOUNT_SYNC_TRACKED_ELSEWHERE: Readonly<Record<string, string>> = {};
 
 /**
  * The plan's required invariants (§5.2): reject a request-scope setting with persistence, a

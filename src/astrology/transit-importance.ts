@@ -46,7 +46,7 @@
  * @module TransitImportance
  * @purpose Defines transit filter presets (daily/yearly, important/outer/personal/all) and a deterministic importance score for ranking transit contacts.
  * @conventions Fixed, documented convention (#416): daily default favors fast triggers (Sun through Mars, plus slow planets only within 1° of exact) at 1.5° orb; yearly favors Jupiter through Chiron at 3.5° orb; score = W_transit × W_natal × W_aspect × orb multiplier × applying bonus (1.15x); the chart ruler stands in for the (uncovered) Ascendant as a natal target.
- * @exports TRANSIT_ORB_CONFIG, transitPreset, presetOf, sameFilter, orbLimitFor, passesTransitFilter, filterTransits, chartRulerKeysOf, transitImportance, rankTransits, fastTriggers
+ * @exports TRANSIT_ORB_CONFIG, SavedTransitFilter, TRANSIT_PRESETS, isTransitFilter, readSavedTransitFilter, transitPreset, presetOf, sameFilter, orbLimitFor, passesTransitFilter, filterTransits, chartRulerKeysOf, transitImportance, rankTransits, fastTriggers
  */
 import { DEFAULT_ORB_CONFIG, type Aspect, type OrbConfig } from './aspects.js';
 import { bodyById } from './bodies.js';
@@ -328,4 +328,45 @@ export function fastTriggers(contacts: readonly Aspect[], rules: TransitRuleCont
     (PERSONAL_PLANET_KEYS as readonly string[]).includes(keyOf(contact.bodyA)),
   );
   return rankTransits(fast, daily, rules.chartRulerKeys).slice(0, limit);
+}
+
+/** The default filter a reader saved for one context (#489, #1220): a named preset, or a full custom filter. */
+export type SavedTransitFilter = { readonly preset: TransitPreset } | { readonly custom: TransitFilter };
+
+export const TRANSIT_PRESETS: readonly TransitPreset[] = ['important', 'outer', 'personal', 'all'];
+const ORB_SENSITIVITIES: readonly OrbSensitivity[] = ['tight', 'balanced', 'wide'];
+
+function isStringList(value: unknown): value is readonly string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === 'string');
+}
+
+/** Whether a value is a whole, well-formed `TransitFilter`. */
+export function isTransitFilter(value: unknown): value is TransitFilter {
+  if (typeof value !== 'object' || value === null) return false;
+  const candidate = value as Record<string, unknown>;
+  const overrides = candidate.orbOverrides;
+  return (
+    isStringList(candidate.transiting) &&
+    isStringList(candidate.natal) &&
+    isStringList(candidate.aspects) &&
+    typeof candidate.maxOrb === 'number' &&
+    typeof overrides === 'object' &&
+    overrides !== null &&
+    Object.values(overrides).every((limit) => typeof limit === 'number') &&
+    ORB_SENSITIVITIES.includes(candidate.orbSensitivity as OrbSensitivity) &&
+    typeof candidate.applyingOnly === 'boolean'
+  );
+}
+
+/**
+ * The saved default filter a stored value holds, or `undefined` when it is neither a known preset nor a whole custom
+ * filter. Strict: a value that does not read is never repaired into a default here.
+ */
+export function readSavedTransitFilter(value: unknown): SavedTransitFilter | undefined {
+  if (typeof value !== 'object' || value === null) return undefined;
+  const { preset, custom } = value as { preset?: unknown; custom?: unknown };
+  const known = TRANSIT_PRESETS.find((candidate) => candidate === preset);
+  if (known !== undefined) return { preset: known };
+  if (isTransitFilter(custom)) return { custom };
+  return undefined;
 }

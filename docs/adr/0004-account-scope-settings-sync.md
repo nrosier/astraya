@@ -1,6 +1,6 @@
 # 4. Account-scope settings sync through an op-log `account` register
 
-- **Status:** accepted (built in #1066; the operator runbook of section 4 is [`docs/ops/ACCOUNT-PREFERENCES-RECOVERY.md`](../ops/ACCOUNT-PREFERENCES-RECOVERY.md))
+- **Status:** accepted (built in #1066, extended by #1220 with four more fields, section 10; the operator runbook of section 4 is [`docs/ops/ACCOUNT-PREFERENCES-RECOVERY.md`](../ops/ACCOUNT-PREFERENCES-RECOVERY.md))
 - **Date:** 2026-11-04
 - **Issue:** #1066 (blocks #856)
 - **Extends:** [ADR 0002](0002-local-first-with-optional-sync.md) (local-first storage, opaque relay, purge amendment #308)
@@ -66,11 +66,14 @@ An account preference is an ordinary operation. Nothing about the envelope chang
 
 ### 2.2 Fields (a closed allowlist for this entity)
 
-| Field                       | Value                                                                     | Reader validation                                                                                           |
-| --------------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `locale`                    | `"en"` or `"nl"`                                                          | `CORPUS_LOCALES` (`src/interpretation/schema.ts`)                                                           |
-| `defaultRulership`          | `"modern"`, `"traditional"` or `"both"`                                   | `isRulershipChoice` (`src/astrology/rulership.ts`)                                                          |
-| `defaultCalculationProfile` | `{ version, settings }`, exactly `serializeCalculationSettings(settings)` | `readCalculationSettings` strict decoder (`src/domain/person.ts`); a newer or invalid value is `unreadable` |
+| Field                                       | Value                                                                     | Reader validation                                                                                                                                      |
+| ------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `locale`                                    | `"en"` or `"nl"`                                                          | `CORPUS_LOCALES` (`src/interpretation/schema.ts`)                                                                                                      |
+| `defaultRulership`                          | `"modern"`, `"traditional"` or `"both"`                                   | `isRulershipChoice` (`src/astrology/rulership.ts`)                                                                                                     |
+| `defaultCalculationProfile`                 | `{ version, settings }`, exactly `serializeCalculationSettings(settings)` | `readCalculationSettings` strict decoder (`src/domain/person.ts`); a newer or invalid value is `unreadable`                                            |
+| `orbLibrary`                                | `{ version: 1, profiles: [...] }`, at most 50 profiles (#1220)            | `readOrbLibraryStrict` (`src/astrology/orb-library.ts`); a dropped profile, a duplicate id or a version other than 1 is `unreadable`                   |
+| `orbContextSource`                          | `{ version: 1, transit?, synastry?, natal? }` (#1220)                     | `readOrbContextSourceStrict`; a context that is not a string, or a version other than 1, is `unreadable`                                               |
+| `transitFilterDaily`, `transitFilterYearly` | `{ version: 1, preset }` or `{ version: 1, custom }` (#1220)              | `readSavedTransitFilter` (`src/astrology/transit-importance.ts`); an unknown preset, a partial custom filter or a version other than 1 is `unreadable` |
 
 Rules:
 
@@ -80,7 +83,10 @@ Rules:
   `use-calculation-settings-migration.ts`), so the `rulership` that `parseCalculationSnapshot` also returns is vestigial and
   is not stored in the new field. "Save as my default" writes both fields in one `store.mutate` batch (one durable commit).
 - A structured value carries its own version (as `calculationSettings` does). A simple enum gains members by client
-  release; an older client sees an unknown member as `unreadable` and keeps the log record.
+  release; an older client sees an unknown member as `unreadable` and keeps the log record. The four #1220 values are
+  structured, so each is written with `version: 1` and a reader refuses any other version. A newer build that adds a key
+  to one of them must bump the version, so an older build never reads a richer value as a complete one and rewrites it
+  without the parts it cannot see (db-integrity review 2, finding B1). Within version 1 an unknown key is not preserved.
 - The field names `deleted` and `purged` are reserved on this entity and ignored by its materialiser (section 3.4).
 - Any other field name is ignored by the materialiser and kept in the log. The Advanced open or closed state is not an
   account field: it is a device preference (Q1, decided A, [#1066 comment](https://github.com/nrosier/astraya/issues/1066#issuecomment-6638104548)).
@@ -222,18 +228,18 @@ SessionProvider: bind(store) on every store switch; cache replaced wholesale
 
 ### 3.3 Which settings are account-scoped
 
-In scope: `locale`, `defaultRulership`, `defaultCalculationProfile` (the three registry entries with
-`scope: 'account'`; guidelines 3.2 lists language, default rulership and default calculation profile).
+In scope: `locale`, `defaultRulership`, `defaultCalculationProfile` (the registry entries with `scope: 'account'`;
+guidelines 3.2 lists language, default rulership and default calculation profile), and, since #1220, the orb library
+(`astraya:orbLibrary`), its per-context source (`astraya:orbContextSource`) and the default transit-filter profile
+(`astraya:transitFilter:<context>`, two fields: `transitFilterDaily` and `transitFilterYearly`). The owner decided on #1149
+(2026-11-06) that these are account scope, following guidelines 3.2. Every registry entry with `scope: 'account'` is now
+`indexeddb-oplog` and `synced: true`, and `ACCOUNT_SYNC_TRACKED_ELSEWHERE` is empty.
 
-Not in scope, unchanged: every `scope: 'device'` entry; `transitFilter:<context>` (`page`); `person.*` (already in the op
-log); the Tier 2 consent (`request`, never persisted).
+Not in scope, unchanged: every `scope: 'device'` entry; `person.*` (already in the op log); the Tier 2 consent
+(`request`, never persisted).
 
 Decided: the Advanced open or closed state is a device preference, not account scope (Q1, option A). The orb library and
-transit-filter default were tracked as a separate issue, #1149 (Q4, option A). That issue decided (2026-11-06) that the
-orb library (`astraya:orbLibrary`), its per-context source (`astraya:orbContextSource`) and the default transit-filter
-profile (`astraya:transitFilter:<context>`) are account scope, following guidelines 3.2. They are in the registry as
-account scope, still stored in the browser and not synced; building their sync is #1220, and until it lands the registry
-lists them in `ACCOUNT_SYNC_TRACKED_ELSEWHERE`. The three entries above are the only ones this ADR's build syncs.
+transit-filter default were first tracked as a separate issue, #1149 (Q4, option A), and built in #1220 (section 10).
 
 ### 3.4 Conflict rules
 
@@ -355,8 +361,17 @@ The prompt is a UI primitive with i18n parity (`*.messages.ts` en and nl); the s
     makes it explicit rather than silent (db-integrity finding 9).
   - The legacy value is parsed with the existing lenient parsers (`isLocale`, `isRulershipChoice`,
     `parseCalculationSnapshot`) and written in the new strict shape.
+- **Second generation of legacy values (#1220).** Most devices already set `astraya:accountSettingsMigrated` when the
+  #1066 build first ran, so the orb library, its source and the two transit filters, which were `localStorage` keys of
+  their own (`astraya:orbLibrary`, `astraya:orbContextSource`, `astraya:transitFilter:daily` and `:yearly`), get their own
+  capture key `astraya:legacyAccountSettingsV2` and guard `astraya:accountSettingsMigratedV2`. Each generation is
+  captured and guarded on its own; both go into the one reconcile plan and are retired together. They are parsed with the
+  old lenient readers (a bad profile is dropped, a damaged filter is skipped), offered only when non-empty, and written
+  in the new versioned shape.
 - **Downgrade then upgrade:** an older build writes only `localStorage`; on the next upgrade the guard is already set and
-  the register wins at bind. Rare; the older build's changes in that window are lost. Accepted.
+  the register wins at bind. Rare; the older build's changes in that window are lost. Accepted. For the #1220 fields, a
+  build older than #1220 still reads and writes the old device keys, which a #1220 build no longer reads: edits made
+  there are not carried to the account, and the stale device values are never offered again once the guard is set.
 - **Rollout order:** any. Devices on the old build ignore the `account` ops and keep working with device-local settings.
 
 ## 6. Verification strategy
@@ -468,6 +483,25 @@ fields the profile readers use, and key rotation. The author checked the first t
 `docs/ui/UI-UX_GUIDELINES.md` and the three reader call sites. Key rotation (`server/ops/rotate-key.ts`) is covered by
 test 4 rather than by reading. The re-review confirmed the conditions as met on the revised text.
 
+### 8.1 Review 2 (#1220, 2026-11-06)
+
+`db-integrity` reviewed the four added fields and returned **BLOCK**, then the findings below were fixed. The wire
+contract, the relay, the purge paths and the cross-account controls were unchanged and correct for the new fields.
+
+| #   | Severity     | Finding                                                                                                                  | Where addressed                                                         |
+| --- | ------------ | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| B1  | Blocking     | The three new structured values carried no version, so an older build rewrote a newer build's richer value and lost data | Section 2.2 rules: `version: 1`, other versions `unreadable`; tests     |
+| B2  | Blocking     | Saving a 51st profile made the whole library unreadable on every device, and the next save replaced it                   | The editor refuses a 51st profile (`MAX_ORB_PROFILES`); test            |
+| B3  | Blocking     | An unreadable library or source could be overwritten from an editor that showed it empty                                 | The editor is read-only while the value is unreadable; test             |
+| B3b | Blocking     | The sign-in prompt showed an unreadable account value as the default                                                     | `ReconcileProposal.accountUnreadable`; the prompt names it; test        |
+| N1  | Non-blocking | `serializeAccountValue` ran a JSON round trip before the JSON check, so a NaN became a null                              | The check runs on the value as it stands; a non-JSON value throws; test |
+| N2  | Non-blocking | The ADR was not amended                                                                                                  | This section and section 10                                             |
+| N3  | Non-blocking | Storage is not bounded in bytes                                                                                          | Accepted, section 10                                                    |
+| N4  | Non-blocking | The first-paint cache was rewritten on every store notification                                                          | Written only when its text changed                                      |
+| N5  | Non-blocking | A stale older-build tab can briefly hide the new fields in a read-only tab                                               | Accepted, section 10                                                    |
+| N6  | Non-blocking | Removing a profile was two commits                                                                                       | One `setAccountPreferences` call with both fields                       |
+| N7  | Non-blocking | A legacy value reaches an account that never set the field without a prompt                                              | Accepted, section 10                                                    |
+
 ## 9. Build notes (#1066)
 
 Choices the build made where the text above leaves room. None changes the wire contract, the relay, or a decided question.
@@ -476,5 +510,29 @@ Choices the build made where the text above leaves room. None changes the wire c
 - **Read-only tabs.** A tab whose store is read-only never writes the first-paint cache. It reads the writer tab's changes from the cache through the `storage` event.
 - **Prompt default.** Each differing setting in the reconcile prompt starts on this device's value, which is the newer one or the one of unknown age. Dismissing still means "Use my account's".
 - **Offline account store.** An account store reconciles only once its sync engine reports `synced`. A store opened offline at boot, with no engine yet, waits.
-- **Registry exception.** `validateSettings` now requires `synced: true` to mean `persistence: 'indexeddb-oplog'`, and `scope: 'account'` to mean `synced: true`. The one account-scope entry whose sync is not part of this build, the default transit filter, is named in `ACCOUNT_SYNC_TRACKED_ELSEWHERE` with its issue (#1149), so the gap is visible and not silent.
+- **Registry exception.** `validateSettings` requires `synced: true` to mean `persistence: 'indexeddb-oplog'`, and `scope: 'account'` to mean `synced: true`. An account-scope entry whose sync is not part of the build can be named in `ACCOUNT_SYNC_TRACKED_ELSEWHERE` with its issue, so the gap is visible and not silent. The list held the transit filter, then the orb library and its source (#1149), and has been empty since #1220.
 - **Test 4.** The relay tests cover the round trip, per-user isolation, a person purge leaving `account` rows, and a deny-listed `account` entity confined to its user, with the recovery step. The deletion-impact preview and key rotation are generic over the payload and have no `account`-specific test.
+
+## 10. Amendment: the orb library, its source and the saved transit filters (#1220)
+
+Four more fields on the same entity (section 2.2), by the owner's decision on #1149. Nothing about the envelope, the
+spine, `OP_VERSION`, `BODY_KEYS`, `UPCASTS` or the relay changed: the field names are the only new frozen contract, and
+they do not collide with the reserved `deleted` and `purged`.
+
+- **Shapes.** Each is a versioned plain-JSON value (section 2.2). The library is rewritten whole on each staged save;
+  a library holds at most 50 profiles, which the editor enforces and the reader requires.
+- **Size.** There is no per-op or body limit in `src/store/ops.ts` below the depth cap (16; the library nests about 5).
+  A maximal library is roughly 100 KB of JSON, under the push batch budget (256 KB, and one oversized op is sent alone)
+  and the server's 1 MB body limit. `MAX_OPS_PER_USER` counts ops, not bytes, so a save is one op whatever its size. Each
+  save keeps up to about 100 KB permanently in IndexedDB and on the relay, which is accepted at the staged save rate.
+- **Readers and screens.** `orb-library-store.ts` and `useTransitFilter` read the `account-preferences` snapshot and save
+  through `setAccountPreferences`; nothing reads these values from `localStorage` any more. An unreadable value reads as
+  empty, is listed in the unreadable notice, and the library editor is read-only for it, so a save can never replace a
+  value the reader cannot see (the single-value fields of #1066 are replaced by an informed choice; a collection is not).
+- **Migration.** A second capture generation, section 5. The sign-in prompt shows the new fields with readable
+  summaries, and names an account value this build cannot read instead of calling it the default.
+- **Accepted limits.** (a) Rule 2 writes a legacy device value into an account that never set the field without asking, so
+  on a shared browser the first account to sign in after the upgrade receives that browser's orb library (the device scope
+  those keys always had; finding 9). (b) While a #1066-build tab and a #1220-build tab are open together, the older tab's
+  three-field cache can briefly hide the four new fields in the newer tab's `storage` handler; nothing is lost in the log.
+  (c) A pre-#1220 build ignores the four fields and keeps its own device values (section 5, downgrade).

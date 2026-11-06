@@ -12,7 +12,17 @@ const en = {
     locale: 'Language',
     defaultRulership: 'Default rulership',
     defaultCalculationProfile: 'Default calculation profile',
+    orbLibrary: 'Orb library',
+    orbContextSource: 'Orb profile per chart type',
+    transitFilterDaily: 'Default transit filter (Transits)',
+    transitFilterYearly: 'Default transit filter (Forecast)',
   },
+  orbProfileCount: (count: number, names: string) =>
+    count === 1 ? `1 orb profile (${names})` : `${String(count)} orb profiles (${names})`,
+  orbContextNames: { transit: 'Transits', synastry: 'Synastry', natal: 'Natal' },
+  orbCardSource: 'the chart’s own orbs',
+  transitPresetNames: { important: 'Important', outer: 'Outer', personal: 'Personal', all: 'All' },
+  transitCustom: 'Custom filter',
   rulershipNames: { modern: 'Modern', traditional: 'Traditional', both: 'Both' },
   profileNames: {
     custom: 'Custom',
@@ -21,6 +31,7 @@ const en = {
     'sidereal-lahiri-v1': 'Sidereal (Lahiri)',
   },
   defaultValue: 'Astraya default',
+  unreadableValue: 'saved by a newer version of Astraya',
 
   reconcileHeading: 'Which settings should you keep?',
   reconcileIntroAccount:
@@ -48,7 +59,17 @@ const nl: typeof en = {
     locale: 'Taal',
     defaultRulership: 'Standaard heersende planeten',
     defaultCalculationProfile: 'Standaard berekeningsprofiel',
+    orbLibrary: 'Orbenbibliotheek',
+    orbContextSource: 'Orbenprofiel per horoscoopsoort',
+    transitFilterDaily: 'Standaard transitfilter (Transits)',
+    transitFilterYearly: 'Standaard transitfilter (Prognose)',
   },
+  orbProfileCount: (count: number, names: string) =>
+    count === 1 ? `1 orbenprofiel (${names})` : `${String(count)} orbenprofielen (${names})`,
+  orbContextNames: { transit: 'Transits', synastry: 'Synastrie', natal: 'Geboortehoroscoop' },
+  orbCardSource: 'de eigen orben van de horoscoop',
+  transitPresetNames: { important: 'Belangrijk', outer: 'Buiten', personal: 'Persoonlijk', all: 'Alle' },
+  transitCustom: 'Aangepast filter',
   rulershipNames: { modern: 'Modern', traditional: 'Traditioneel', both: 'Beide' },
   profileNames: {
     custom: 'Aangepast',
@@ -57,6 +78,7 @@ const nl: typeof en = {
     'sidereal-lahiri-v1': 'Siderisch (Lahiri)',
   },
   defaultValue: 'Standaard van Astraya',
+  unreadableValue: 'bewaard door een nieuwere versie van Astraya',
 
   reconcileHeading: 'Welke instellingen wil je houden?',
   reconcileIntroAccount:

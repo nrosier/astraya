@@ -1,121 +1,48 @@
 /**
- * The user's named orb profiles and each context's choice of orbs (#590). Account scope by decision (#1149,
- * guidelines §3.2), but stored in this browser and not yet synced: its sync is #1220. Never sent anywhere until then.
- * Read from localStorage and validated as a whole on the
- * way in, so a damaged stored value reads as an empty library rather than a partial one.
+ * The user's named orb profiles and each context's choice of orbs (#590). Account scope (#1149, guidelines §3.2): both
+ * live in the op log on the `account` entity (#1220, ADR 0004) and follow a signed-in reader across devices. This
+ * module keeps the small read, write and hook API the screens already used; the values, the local-first apply, the
+ * one-time move from the old device keys and the sign-in reconciliation are `account-preferences.ts`'s.
  */
 /**
  * @module ui/orb-library-store
- * @purpose Browser-stored orb library and per-context orb source (#590), account scope pending its sync (#1220), read through a validating parser and shared with React through useSyncExternalStore.
- * @conventions localStorage, JSON, validated by astrology/orb-library on every read; a refused write keeps the value in memory for this page. Changes reach other mounted components in the tab through an event and other tabs through `storage`.
- * @exports ORB_LIBRARY_KEY, readOrbLibrary, writeOrbLibrary, readOrbContextSource, writeOrbContextSource, useOrbLibrary, useOrbContextSource
+ * @purpose The orb library and per-context orb source (#590) as account-scope preferences: read and hook accessors over the account-preferences store, and writers that save through it.
+ * @conventions Reads come from the account-preferences snapshot (memory), never from localStorage. A writer applies the value at once and saves it to the open store in the background; a failed save is reported through the account-preferences failure notice, not thrown here. An unreadable stored value reads as empty and is flagged by that notice, never repaired.
+ * @exports ORB_LIBRARY_KEY, ORB_CONTEXT_SOURCE_KEY, readOrbLibrary, writeOrbLibrary, readOrbContextSource, writeOrbContextSource, writeOrbLibraryAndSource, useOrbLibrary, useOrbContextSource
  */
-import { useSyncExternalStore } from 'react';
-import { validateOrbLibrary, type OrbContextSource, type OrbLibrary } from '../astrology/orb-library.js';
+import type { OrbContextSource, OrbLibrary } from '../astrology/orb-library.js';
+import { getAccountPreferences, setAccountPreferences, useAccountPreferences } from './account-preferences.js';
 
+/** The registry keys of the two settings (and their pre-#1220 device keys). */
 export const ORB_LIBRARY_KEY = 'astraya:orbLibrary';
 export const ORB_CONTEXT_SOURCE_KEY = 'astraya:orbContextSource';
-const CHANGED_EVENT = 'astraya:orb-library-changed';
-
-const EMPTY_LIBRARY: OrbLibrary = { profiles: [] };
-const EMPTY_SOURCE: OrbContextSource = {};
-
-let memoryLibrary: OrbLibrary | undefined;
-let memorySource: OrbContextSource | undefined;
-
-function readRaw(key: string): unknown {
-  try {
-    const stored = localStorage.getItem(key);
-    return stored === null ? undefined : (JSON.parse(stored) as unknown);
-  } catch {
-    return undefined;
-  }
-}
 
 export function readOrbLibrary(): OrbLibrary {
-  const raw = readRaw(ORB_LIBRARY_KEY);
-  if (raw === undefined) return memoryLibrary ?? EMPTY_LIBRARY;
-  return validateOrbLibrary(raw);
+  return getAccountPreferences().orbLibrary;
 }
 
 export function readOrbContextSource(): OrbContextSource {
-  const raw = readRaw(ORB_CONTEXT_SOURCE_KEY);
-  if (raw === undefined || typeof raw !== 'object' || raw === null) return memorySource ?? EMPTY_SOURCE;
-  const { transit, synastry, natal } = raw as Record<string, unknown>;
-  const source: { transit?: string; synastry?: string; natal?: string } = {};
-  if (typeof transit === 'string') source.transit = transit;
-  if (typeof synastry === 'string') source.synastry = synastry;
-  if (typeof natal === 'string') source.natal = natal;
-  return source;
-}
-
-function write(key: string, value: unknown, remember: (fallback: unknown) => void): void {
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    remember(value);
-  }
-  window.dispatchEvent(new Event(CHANGED_EVENT));
+  return getAccountPreferences().orbContextSource;
 }
 
 export function writeOrbLibrary(library: OrbLibrary): void {
-  write(ORB_LIBRARY_KEY, library, (value) => {
-    memoryLibrary = value as OrbLibrary;
-  });
+  // A failure is shown by the account-preferences notice (it sets `failure`), so the rejection has nowhere else to go.
+  void setAccountPreferences({ orbLibrary: library }).catch(() => undefined);
 }
 
 export function writeOrbContextSource(source: OrbContextSource): void {
-  write(ORB_CONTEXT_SOURCE_KEY, source, (value) => {
-    memorySource = value as OrbContextSource;
-  });
+  void setAccountPreferences({ orbContextSource: source }).catch(() => undefined);
 }
 
-function subscribe(onChange: () => void): () => void {
-  window.addEventListener(CHANGED_EVENT, onChange);
-  window.addEventListener('storage', onChange);
-  return () => {
-    window.removeEventListener(CHANGED_EVENT, onChange);
-    window.removeEventListener('storage', onChange);
-  };
-}
-
-// useSyncExternalStore needs a stable reference until the stored value changes, so each snapshot is cached by its raw text.
-let libraryRaw: string | null | undefined;
-let libraryValue: OrbLibrary = EMPTY_LIBRARY;
-function librarySnapshot(): OrbLibrary {
-  let raw: string | null;
-  try {
-    raw = localStorage.getItem(ORB_LIBRARY_KEY);
-  } catch {
-    return memoryLibrary ?? EMPTY_LIBRARY;
-  }
-  if (raw !== libraryRaw) {
-    libraryRaw = raw;
-    libraryValue = readOrbLibrary();
-  }
-  return libraryValue;
-}
-
-let sourceRaw: string | null | undefined;
-let sourceValue: OrbContextSource = EMPTY_SOURCE;
-function sourceSnapshot(): OrbContextSource {
-  let raw: string | null;
-  try {
-    raw = localStorage.getItem(ORB_CONTEXT_SOURCE_KEY);
-  } catch {
-    return memorySource ?? EMPTY_SOURCE;
-  }
-  if (raw !== sourceRaw) {
-    sourceRaw = raw;
-    sourceValue = readOrbContextSource();
-  }
-  return sourceValue;
+/** Save both in one durable commit (removing a profile also resets every context that chose it). */
+export function writeOrbLibraryAndSource(library: OrbLibrary, source: OrbContextSource): void {
+  void setAccountPreferences({ orbLibrary: library, orbContextSource: source }).catch(() => undefined);
 }
 
 export function useOrbLibrary(): OrbLibrary {
-  return useSyncExternalStore(subscribe, librarySnapshot, () => EMPTY_LIBRARY);
+  return useAccountPreferences().orbLibrary;
 }
 
 export function useOrbContextSource(): OrbContextSource {
-  return useSyncExternalStore(subscribe, sourceSnapshot, () => EMPTY_SOURCE);
+  return useAccountPreferences().orbContextSource;
 }

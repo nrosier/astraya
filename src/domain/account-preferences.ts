@@ -2,7 +2,7 @@
  * Typed reading and sign-in reconciliation of the account preferences (#1066, ADR 0004).
  *
  * The fold keeps the account registers as raw values. This module gives each field its meaning: a language, a
- * rulership model, or a calculation profile. A value this build cannot read (a newer client's, or a bad one) is
+ * rulership model, a calculation profile, an orb library or source, or a saved transit filter. A value this build cannot read (a newer client's, or a bad one) is
  * `unreadable`: it is never repaired with a default, because that would silently change the reader's choice. A
  * `null` is an explicit reset to the Astraya default and is distinct from a field that was never written.
  *
@@ -20,9 +20,16 @@
  * @module domain/account-preferences
  * @purpose Decodes the account preference registers into typed values and plans the sign-in reconciliation between this device's candidates and the account's registers.
  * @conventions Unreadable values stay unreadable and are never coerced to defaults; `null` means an explicit reset; values are compared as canonical JSON; reconciliation never writes over a newer account value and never decides an unknown-age conflict itself.
- * @exports AccountFieldRead, AccountPreferenceValues, AccountPreferencesRead, readAccountPreferences, readAccountFieldValue, serializeAccountValue, ReconcileCandidate, ReconcileCandidates, ReconcileProposal, ReconcileResolution, ReconcilePlan, planReconcile, resolutionWrites, canonicalJson
+ * @exports ACCOUNT_VALUE_VERSION, AccountFieldRead, AccountPreferenceValues, AccountPreferencesRead, readAccountPreferences, readAccountFieldValue, serializeAccountValue, ReconcileCandidate, ReconcileCandidates, ReconcileProposal, ReconcileResolution, ReconcilePlan, planReconcile, resolutionWrites, canonicalJson
  */
+import {
+  readOrbContextSourceStrict,
+  readOrbLibraryStrict,
+  type OrbContextSource,
+  type OrbLibrary,
+} from '../astrology/orb-library.js';
 import { isRulershipChoice, type RulershipChoice } from '../astrology/rulership.js';
+import { readSavedTransitFilter, type SavedTransitFilter } from '../astrology/transit-importance.js';
 import type { ExtendedSettings } from '../chart/extended-settings.js';
 import { CORPUS_LOCALES, type Locale } from '../interpretation/schema.js';
 import {
@@ -30,15 +37,32 @@ import {
   ACCOUNT_ENTITY_ID,
   ACCOUNT_FIELDS,
   ACCOUNT_LOCALE_FIELD,
+  ACCOUNT_ORB_LIBRARY_FIELD,
+  ACCOUNT_ORB_SOURCE_FIELD,
   ACCOUNT_PROFILE_FIELD,
   ACCOUNT_RULERSHIP_FIELD,
+  ACCOUNT_TRANSIT_FILTER_DAILY_FIELD,
+  ACCOUNT_TRANSIT_FILTER_YEARLY_FIELD,
   type AccountField,
   type AccountRegisters,
 } from '../store/account.js';
 import { compareHlc, type Hlc } from '../store/hlc.js';
 import type { Mutation } from '../store/oplog.js';
-import type { JsonValue } from '../store/ops.js';
+import { isJsonValue, type JsonValue } from '../store/ops.js';
 import { readCalculationSettings, serializeCalculationSettings } from './person.js';
+
+/**
+ * The version every structured value of the #1220 fields carries (ADR 0004 section 2.2: a structured value carries its
+ * own version). A reader that does not know a value's version treats it as unreadable, so an older build never rewrites
+ * a newer build's richer shape without the parts it cannot see. A newer shape bumps this number.
+ */
+export const ACCOUNT_VALUE_VERSION = 1;
+
+function hasCurrentVersion(value: unknown): boolean {
+  return (
+    typeof value === 'object' && value !== null && (value as { version?: unknown }).version === ACCOUNT_VALUE_VERSION
+  );
+}
 
 /** What one account field holds. `default` is an explicit reset (`null`); `unset` was never written. */
 export type AccountFieldRead<T> =
@@ -52,12 +76,20 @@ export interface AccountPreferenceValues {
   readonly [ACCOUNT_LOCALE_FIELD]: Locale;
   readonly [ACCOUNT_RULERSHIP_FIELD]: RulershipChoice;
   readonly [ACCOUNT_PROFILE_FIELD]: ExtendedSettings;
+  readonly [ACCOUNT_ORB_LIBRARY_FIELD]: OrbLibrary;
+  readonly [ACCOUNT_ORB_SOURCE_FIELD]: OrbContextSource;
+  readonly [ACCOUNT_TRANSIT_FILTER_DAILY_FIELD]: SavedTransitFilter;
+  readonly [ACCOUNT_TRANSIT_FILTER_YEARLY_FIELD]: SavedTransitFilter;
 }
 
 export interface AccountPreferencesRead {
   readonly [ACCOUNT_LOCALE_FIELD]: AccountFieldRead<Locale>;
   readonly [ACCOUNT_RULERSHIP_FIELD]: AccountFieldRead<RulershipChoice>;
   readonly [ACCOUNT_PROFILE_FIELD]: AccountFieldRead<ExtendedSettings>;
+  readonly [ACCOUNT_ORB_LIBRARY_FIELD]: AccountFieldRead<OrbLibrary>;
+  readonly [ACCOUNT_ORB_SOURCE_FIELD]: AccountFieldRead<OrbContextSource>;
+  readonly [ACCOUNT_TRANSIT_FILTER_DAILY_FIELD]: AccountFieldRead<SavedTransitFilter>;
+  readonly [ACCOUNT_TRANSIT_FILTER_YEARLY_FIELD]: AccountFieldRead<SavedTransitFilter>;
 }
 
 function isLocale(value: unknown): value is Locale {
@@ -75,14 +107,38 @@ export function readAccountFieldValue<F extends AccountField>(
   if (field === ACCOUNT_RULERSHIP_FIELD) {
     return (isRulershipChoice(value) ? value : undefined) as AccountPreferenceValues[F] | undefined;
   }
+  if (field === ACCOUNT_ORB_LIBRARY_FIELD) {
+    return (hasCurrentVersion(value) ? readOrbLibraryStrict(value) : undefined) as
+      AccountPreferenceValues[F] | undefined;
+  }
+  if (field === ACCOUNT_ORB_SOURCE_FIELD) {
+    return (hasCurrentVersion(value) ? readOrbContextSourceStrict(value) : undefined) as
+      AccountPreferenceValues[F] | undefined;
+  }
+  if (field === ACCOUNT_TRANSIT_FILTER_DAILY_FIELD || field === ACCOUNT_TRANSIT_FILTER_YEARLY_FIELD) {
+    return (hasCurrentVersion(value) ? readSavedTransitFilter(value) : undefined) as
+      AccountPreferenceValues[F] | undefined;
+  }
   const read = readCalculationSettings(value);
   return (read?.kind === 'settings' ? read.settings : undefined) as AccountPreferenceValues[F] | undefined;
 }
 
-/** The register value written for a field: the plain string, or the versioned settings shape a person uses (#806). */
+/** The register value written for a field: a plain string, the versioned settings shape a person uses (#806), or a versioned #1220 value. */
 export function serializeAccountValue<F extends AccountField>(field: F, value: AccountPreferenceValues[F]): JsonValue {
   if (field === ACCOUNT_PROFILE_FIELD) return serializeCalculationSettings(value as ExtendedSettings);
-  return value as string;
+  // The #1220 values are plain data (strings, finite numbers, booleans, lists and maps of them) under a version.
+  const versioned =
+    field === ACCOUNT_ORB_LIBRARY_FIELD
+      ? { version: ACCOUNT_VALUE_VERSION, profiles: (value as OrbLibrary).profiles }
+      : field === ACCOUNT_ORB_SOURCE_FIELD
+        ? { version: ACCOUNT_VALUE_VERSION, ...(value as OrbContextSource) }
+        : field === ACCOUNT_TRANSIT_FILTER_DAILY_FIELD || field === ACCOUNT_TRANSIT_FILTER_YEARLY_FIELD
+          ? { version: ACCOUNT_VALUE_VERSION, ...(value as SavedTransitFilter) }
+          : undefined;
+  if (versioned === undefined) return value as string;
+  // Checked as it stands, never through a JSON round trip: that would turn a NaN into a null before this ran.
+  if (!isJsonValue(versioned)) throw new Error(`The "${field}" preference is not a JSON value`);
+  return versioned;
 }
 
 function readField<F extends AccountField>(
@@ -102,6 +158,10 @@ export function readAccountPreferences(registers: AccountRegisters): AccountPref
     [ACCOUNT_LOCALE_FIELD]: readField(registers, ACCOUNT_LOCALE_FIELD),
     [ACCOUNT_RULERSHIP_FIELD]: readField(registers, ACCOUNT_RULERSHIP_FIELD),
     [ACCOUNT_PROFILE_FIELD]: readField(registers, ACCOUNT_PROFILE_FIELD),
+    [ACCOUNT_ORB_LIBRARY_FIELD]: readField(registers, ACCOUNT_ORB_LIBRARY_FIELD),
+    [ACCOUNT_ORB_SOURCE_FIELD]: readField(registers, ACCOUNT_ORB_SOURCE_FIELD),
+    [ACCOUNT_TRANSIT_FILTER_DAILY_FIELD]: readField(registers, ACCOUNT_TRANSIT_FILTER_DAILY_FIELD),
+    [ACCOUNT_TRANSIT_FILTER_YEARLY_FIELD]: readField(registers, ACCOUNT_TRANSIT_FILTER_YEARLY_FIELD),
   };
 }
 
@@ -128,6 +188,8 @@ export interface ReconcileProposal {
   readonly field: AccountField;
   readonly deviceValue: JsonValue;
   readonly accountValue: JsonValue | null;
+  /** Set when the account holds a value this build cannot read (a newer build's), so it is not shown as the default. */
+  readonly accountUnreadable?: true;
 }
 
 export interface ReconcileResolution {
@@ -166,9 +228,14 @@ export function planReconcile(candidates: ReconcileCandidates, target: AccountRe
     // Rule 4.
     if (candidate.hlc !== undefined && compareHlc(candidate.hlc, existing.hlc) < 0) continue;
     // Rule 5. An unreadable account value is not shown as a choice; the device's value is still offered against it.
-    const accountValue =
-      existing.value !== null && readAccountFieldValue(field, existing.value) !== undefined ? existing.value : null;
-    proposals.push({ field, deviceValue: candidate.value, accountValue });
+    const readable = existing.value !== null && readAccountFieldValue(field, existing.value) !== undefined;
+    const unreadable = existing.value !== null && !readable;
+    proposals.push({
+      field,
+      deviceValue: candidate.value,
+      accountValue: readable ? existing.value : null,
+      ...(unreadable ? { accountUnreadable: true as const } : {}),
+    });
   }
   return { writes, proposals };
 }

@@ -16,6 +16,12 @@ import {
   type TransitRuleContext,
 } from '../src/astrology/transit-importance.js';
 import { computeTransit } from '../src/domain/transit.js';
+import { DB_NAME } from '../src/store/db.js';
+import {
+  accountCacheKey,
+  getAccountPreferences,
+  resetAccountPreferencesForTests,
+} from '../src/ui/account-preferences.js';
 import { setLocale } from '../src/ui/locale.js';
 import { EVERY_BODY_KEY, TransitFilterPanel, useTransitFilter } from '../src/ui/TransitFilterPanel.js';
 import { getEngine } from './engine-harness.js';
@@ -54,6 +60,7 @@ afterEach(() => {
     mounted = undefined;
   }
   localStorage.clear();
+  resetAccountPreferencesForTests();
 });
 
 function Harness({ locale, context }: { locale: 'en' | 'nl'; context: TransitContext }) {
@@ -284,11 +291,12 @@ describe('TransitFilterPanel (#416)', () => {
     expect(selectedPreset(container)).toBe('All');
   });
 
-  it('remembers the choice per screen on this device, and a preset is rebuilt rather than frozen', async () => {
+  it('remembers the choice per screen as an account preference, and a preset is rebuilt rather than frozen', async () => {
     const container = await mount('en', 'daily');
     await choose(container, 'Show', 'Outer');
     await unmount();
-    expect(JSON.parse(localStorage.getItem('astraya:transitFilter:daily') ?? 'null')).toEqual({ preset: 'outer' });
+    expect(getAccountPreferences().transitFilterDaily).toEqual({ preset: 'outer' });
+    expect(getAccountPreferences().transitFilterYearly).toBeUndefined();
     expect(selectedPreset(await mount('en', 'daily'))).toBe('Outer');
     await unmount();
     // The yearly screen is its own context and still starts on its default.
@@ -313,9 +321,9 @@ describe('TransitFilterPanel (#416)', () => {
     await check(container, 'Aspects', 'Minor');
     await clickCardButton(container, 'Apply');
     expect(selectedPreset(container)).toBe('Custom');
-    expect(localStorage.getItem('astraya:transitFilter:daily')).toBeNull();
+    expect(getAccountPreferences().transitFilterDaily).toBeUndefined();
     await unmount();
-    // A fresh mount reads from storage, not the unmounted screen's in-memory state — the applied
+    // A fresh mount reads the saved default, not the unmounted screen's in-memory state — the applied
     // customization was never remembered, so it starts back on the real default.
     const again = await mount();
     expect(selectedPreset(again)).toBe('Important');
@@ -343,11 +351,17 @@ describe('TransitFilterPanel (#416)', () => {
     expect(checkboxUnder(container, 'Aspects', 'Minor').checked).toBe(false);
   });
 
-  it('ignores a damaged saved value and starts on the default', async () => {
-    localStorage.setItem('astraya:transitFilter:daily', '{"custom":{"transiting":"nope"}}');
+  it('starts on the default when the saved value cannot be read, and flags it rather than repairing it', async () => {
+    localStorage.setItem(
+      accountCacheKey(DB_NAME),
+      JSON.stringify({ transitFilterDaily: { custom: { transiting: 'nope' } } }),
+    );
+    resetAccountPreferencesForTests();
     expect(selectedPreset(await mount())).toBe('Important');
+    expect(getAccountPreferences().unreadable).toEqual(['transitFilterDaily']);
     await unmount();
-    localStorage.setItem('astraya:transitFilter:daily', 'not json');
+    localStorage.setItem(accountCacheKey(DB_NAME), 'not json');
+    resetAccountPreferencesForTests();
     expect(selectedPreset(await mount())).toBe('Important');
   });
 

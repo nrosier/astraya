@@ -8,6 +8,9 @@ const en = {
   heading: 'Orb profiles',
   hint: 'Named sets of orbs kept on this device. Each change to a profile is a new revision; a chart already drawn keeps the revision it used.',
   none: 'No orb profiles yet. The card’s orbs are used everywhere.',
+  tooMany: (max: number) => `You can keep up to ${String(max)} orb profiles. Remove one to add another.`,
+  locked:
+    'Your account holds orb settings saved by a newer version of Astraya, which this version cannot read. They are kept as they are, and cannot be changed here.',
   add: 'Add orb profile',
   edit: (name: string) => `Edit ${name}`,
   remove: (name: string) => `Remove ${name}`,
@@ -37,6 +40,10 @@ const nl: typeof en = {
   heading: 'Orbisprofielen',
   hint: 'Benoemde sets orbissen die op dit apparaat bewaard worden. Elke wijziging van een profiel is een nieuwe revisie; een grafiek die al getekend is, houdt de revisie die ze gebruikte.',
   none: 'Nog geen orbisprofielen. De orbissen van de kaart worden overal gebruikt.',
+  tooMany: (max: number) =>
+    `Je kunt maximaal ${String(max)} orbisprofielen bewaren. Verwijder er een om een ander toe te voegen.`,
+  locked:
+    'Je account heeft orbisinstellingen die zijn bewaard door een nieuwere versie van Astraya. Deze versie kan ze niet lezen. Ze blijven ongewijzigd en kunnen hier niet worden aangepast.',
   add: 'Orbisprofiel toevoegen',
   edit: (name: string) => `${name} bewerken`,
   remove: (name: string) => `${name} verwijderen`,
