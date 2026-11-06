@@ -11,14 +11,7 @@ import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
-import {
-  applySettings,
-  closeSettings,
-  gotoAndSettle,
-  openNatalChart,
-  openSettings,
-  reloadAndSettle,
-} from './support.ts';
+import { applySettings, gotoAndSettle, openNatalChart, openSettings, reloadAndSettle } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
