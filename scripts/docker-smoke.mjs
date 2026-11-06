@@ -24,6 +24,13 @@ function docker(args, options = {}) {
   return spawnSync('docker', args, { stdio: options.quiet ? 'pipe' : 'inherit', encoding: 'utf8' });
 }
 
+/** The commit being built, or `unknown` when git is unavailable (the label is then still set). */
+function gitRevision() {
+  const result = spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' });
+  const sha = result.status === 0 ? result.stdout.trim() : '';
+  return sha === '' ? 'unknown' : sha;
+}
+
 function freePort() {
   return new Promise((resolve, reject) => {
     const server = createServer();
@@ -50,7 +57,16 @@ async function main() {
   if (!NO_BUILD) {
     console.log(`Building ${IMAGE} …`);
     // GITHUB_SHA is a build argument the About page reads; a local build has no commit to name.
-    const build = docker(['build', '--build-arg', 'GITHUB_SHA=local-smoke', '-t', IMAGE, '.']);
+    const build = docker([
+      'build',
+      '--build-arg',
+      'GITHUB_SHA=local-smoke',
+      '--build-arg',
+      `GIT_REVISION=${gitRevision()}`,
+      '-t',
+      IMAGE,
+      '.',
+    ]);
     if (build.status !== 0) {
       console.error('The image did not build.');
       return 1;
