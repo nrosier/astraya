@@ -53,7 +53,7 @@ test('one header holds the name, account, language and theme, and the old fixed 
   await expect(header).toBeVisible();
   await expect(header.getByRole('link', { name: 'Astraya, back to the people list' })).toBeVisible();
   await expect(header.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible();
-  // The sync dot is grey while the data is only on this device (#964); the manual sync button is ↻.
+  // The sync dot is grey while the data is only on this device (#964), and it is a button (#1183).
   await expect(header.locator('.syncbadge-dot')).toHaveAttribute('data-state', 'local');
   // Language and theme are now segmented controls in the profile popover (#964), not footer pills.
   await expect(header.locator('.language-toggle')).toHaveCount(0);
@@ -79,11 +79,12 @@ for (const { width, height, rail } of RAIL_FOOT_VIEWPORTS) {
     const footBox = await foot.boundingBox();
     if (headerBox === null || footBox === null) throw new Error('not laid out');
 
-    // The utilities in the one container: the sync bar, the account tile (a guest's Sign in) and the symbol toggle (#964).
+    // The utilities in the one container: the account tile (a guest's Sign in) and its sync dot (#964, #1183). The
+    // glyph toggle is gone from the sidebar (#1183); the symbol class is chosen in Preferences.
+    await expect(foot.locator('.symbol-toggle')).toHaveCount(0);
     for (const control of [
-      foot.locator('.syncbadge'),
+      foot.locator('.syncbadge-trigger'),
       foot.getByRole('button', { name: 'Sign in', exact: true }),
-      foot.locator('.symbol-toggle'),
     ]) {
       await expect(control).toBeVisible();
       const box = await control.boundingBox();
@@ -141,7 +142,7 @@ test('the first Tab reaches a skip link that moves focus to the content without 
 
 test('the sync popover closes on Escape, a click outside and focus leaving the badge (#1081)', async ({ page }) => {
   await gotoAndSettle(page, `${baseUrl}/#/people`);
-  const badge = page.locator('button.syncbadge-label');
+  const badge = page.locator('button.syncbadge-trigger');
   const popover = page.locator('.syncbadge-popover');
 
   // Escape closes it even after focus has moved on, and returns focus to the badge.
@@ -195,7 +196,7 @@ test('on a phone-width screen the header and the sign-in dialog stay inside the 
   const header = page.getByRole('banner');
   for (const control of [
     header.getByRole('button', { name: 'Sign in', exact: true }),
-    header.locator('.symbol-toggle'),
+    header.locator('.syncbadge-trigger'),
   ]) {
     await expect(control).toBeVisible();
     const box = await control.boundingBox();
@@ -256,88 +257,15 @@ test.describe('with the shared people (#799)', () => {
     await expect(header).toBeInViewport({ ratio: 0.99 });
     expect((await header.boundingBox())?.y).toBeGreaterThan(-1);
 
-    // And it is clickable down there: the profile popover's theme control works without scrolling back up (#964).
+    // And it is clickable down there: the profile popover opens and its Preferences link works without scrolling
+    // back up (#964, #1183; the theme control lives in Preferences now).
     const menu = header
       .locator('[aria-haspopup="true"].profile-tile, [aria-haspopup="true"].profile-tile-menu')
       .first();
     await menu.click();
-    const dark = page.locator('.profile-popover').getByRole('radio', { name: /Dark$/ });
-    await dark.check();
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-    // #1047: Light and System sit beside Dark; System clears the explicit override and stores 'system'.
-    await page
-      .locator('.profile-popover')
-      .getByRole('radio', { name: /Light$/ })
-      .check();
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-    await page
-      .locator('.profile-popover')
-      .getByRole('radio', { name: /System$/ })
-      .check();
-    await expect(page.locator('html')).not.toHaveAttribute('data-theme');
-    expect(await page.evaluate(() => localStorage.getItem('astraya.theme'))).toBe('system');
-    await page.keyboard.press('Escape');
-  });
-
-  test('the popover theme radiogroup is operated by keyboard alone (#1047)', async () => {
-    await gotoAndSettle(page, `${baseUrl}/#/people`);
-    const header = page.getByRole('banner');
-    await header
-      .locator('[aria-haspopup="true"].profile-tile, [aria-haspopup="true"].profile-tile-menu')
-      .first()
-      .click();
-    const popover = page.locator('.profile-popover');
-    await expect(popover).toBeVisible();
-
-    // The Theme control is announced as a radiogroup named "Theme", with three native radio options.
-    const group = popover.getByRole('radiogroup', { name: 'Theme', exact: true });
-    await expect(group).toBeVisible();
-    const light = group.getByRole('radio', { name: /Light$/ });
-    const dark = group.getByRole('radio', { name: /Dark$/ });
-    const system = group.getByRole('radio', { name: /System$/ });
-    await expect(group.getByRole('radio')).toHaveCount(3);
-
-    // The seeded context starts with no explicit override: System is the checked option.
-    await expect(system).toBeChecked();
-    await expect(page.locator('html')).not.toHaveAttribute('data-theme');
-
-    // Focus the group's current option from the keyboard side, then move with the arrow keys only.
-    await system.focus();
-    await expect(system).toBeFocused();
-
-    // ArrowRight wraps from the last option (System) to the first (Light), selecting it.
-    await page.keyboard.press('ArrowRight');
-    await expect(light).toBeFocused();
-    await expect(light).toBeChecked();
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-    expect(await page.evaluate(() => localStorage.getItem('astraya.theme'))).toBe('light');
-
-    // ArrowRight moves to Dark and selects it.
-    await page.keyboard.press('ArrowRight');
-    await expect(dark).toBeFocused();
-    await expect(dark).toBeChecked();
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-    expect(await page.evaluate(() => localStorage.getItem('astraya.theme'))).toBe('dark');
-
-    // Space on the already-checked Dark option leaves the selection unchanged.
-    await page.keyboard.press('Space');
-    await expect(dark).toBeChecked();
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-
-    // ArrowLeft moves back to Light.
-    await page.keyboard.press('ArrowLeft');
-    await expect(light).toBeFocused();
-    await expect(light).toBeChecked();
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-
-    // ArrowLeft wraps from Light to System, which clears the explicit override and stores 'system'.
-    await page.keyboard.press('ArrowLeft');
-    await expect(system).toBeFocused();
-    await expect(system).toBeChecked();
-    await expect(page.locator('html')).not.toHaveAttribute('data-theme');
-    expect(await page.evaluate(() => localStorage.getItem('astraya.theme'))).toBe('system');
-
-    await page.keyboard.press('Escape');
+    await expect(page.locator('.profile-popover').getByRole('radio')).toHaveCount(0);
+    await page.locator('.profile-popover').getByRole('link', { name: 'Preferences', exact: true }).click();
+    await expect(page).toHaveURL(/#\/preferences$/);
   });
 });
 
@@ -380,12 +308,13 @@ test.describe('signed in: the sync dot and the manual sync button (#964)', () =>
     await gotoAndSettle(page, `${signedUrl}/#/people`);
     await signIn(page, USERNAME, PASSWORD);
     const header = page.getByRole('banner');
-    await expect(page.getByText('Synced', { exact: true }).first()).toBeVisible({ timeout: 20_000 });
+    await expect(header.getByRole('button', { name: 'Synced', exact: true })).toBeVisible({ timeout: 20_000 });
 
     // Green (synced), not grey (local), once the engine has reached its synced state.
     await expect(header.locator('.syncbadge-dot')).toHaveAttribute('data-state', 'synced');
 
-    // The ↻ button is present and enabled, and clicking it sends a real request to the relay.
+    // The popover's Sync now button is present and enabled, and clicking it sends a real request to the relay.
+    await header.getByRole('button', { name: 'Synced', exact: true }).click();
     const syncButton = header.getByRole('button', { name: 'Sync now', exact: true });
     await expect(syncButton).toBeEnabled();
     const opsRequest = page.waitForResponse((response) => response.url().includes('/api/ops'));

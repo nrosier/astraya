@@ -106,7 +106,7 @@ export const SETTINGS: readonly SettingDefinition[] = [
     describeDefault: 'drawn glyphs',
     persistence: 'local-storage',
     synced: false,
-    editingSurface: 'SymbolToggle.tsx',
+    editingSurface: 'SymbolSetting.tsx',
     commitMode: 'immediate',
     sensitive: false,
     resetTarget: 'This device default (drawn glyphs)',

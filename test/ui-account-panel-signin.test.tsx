@@ -18,6 +18,7 @@ vi.mock('../src/ui/session-context.tsx', () => ({
     signOut: vi.fn(),
     resolveAdoption: vi.fn(),
   }),
+  useSyncEngine: () => undefined,
   removeAccountData: vi.fn(),
 }));
 vi.mock('../src/ui/oidc-pkce.ts', () => ({

@@ -11,14 +11,7 @@ import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
-import {
-  applySettings,
-  closeSettings,
-  gotoAndSettle,
-  openNatalChart,
-  openSettings,
-  reloadAndSettle,
-} from './support.ts';
+import { applySettings, gotoAndSettle, openNatalChart, openSettings, reloadAndSettle } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -142,7 +135,7 @@ test.describe('with the shared people (#799)', () => {
     await expect(page.getByLabel('Pluto', { exact: true })).toHaveValue('monogram');
   });
 
-  test('the header toggle writes the symbols as text, and the line weight changes the drawn glyphs', async () => {
+  test('the line weight changes the drawn glyphs', async () => {
     test.setTimeout(90_000);
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await openNatalChart(page);
@@ -155,19 +148,5 @@ test.describe('with the shared people (#799)', () => {
     await expect(page.locator('.chart-wheel g[style*="--glyph-stroke:9"]').first()).toBeAttached();
     await page.getByLabel('Line weight', { exact: true }).selectOption('regular');
     await expect(page.locator('.chart-wheel g[style*="--glyph-stroke"]')).toHaveCount(0);
-
-    // The header toggle: text only on, and the Symbols setting follows.
-    await closeSettings(page);
-    const toggle = page.getByRole('button', { name: 'Text-only symbols', exact: true });
-    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
-    await toggle.click();
-    await expect(toggle).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('.chart-wheel text.chart-symbol-text-text', { hasText: 'SUN' }).first()).toBeAttached();
-    await openSettings(page, 'Display & glyphs');
-    await expect(page.getByLabel('Symbols', { exact: true })).toHaveValue('text');
-    await closeSettings(page);
-    await toggle.click();
-    await openSettings(page, 'Display & glyphs');
-    await expect(page.getByLabel('Symbols', { exact: true })).toHaveValue('drawn');
   });
 });

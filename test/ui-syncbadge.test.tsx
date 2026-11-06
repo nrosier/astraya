@@ -80,7 +80,7 @@ describe('signed out, no store, no sync engine', () => {
       await vi.waitFor(() => {
         expect(container.querySelector('.syncbadge')).not.toBeNull();
       }, WAIT);
-      expect(container.querySelector('.syncbadge-label')?.textContent).toContain('Local only');
+      expect(container.querySelector('.syncbadge-trigger')?.getAttribute('aria-label')).toBe('Local only');
     } finally {
       unmount(root, container);
     }
@@ -93,6 +93,62 @@ describe('signed out, no store, no sync engine', () => {
         expect(container.querySelector('.syncbadge-dot')).not.toBeNull();
       }, WAIT);
       expect(container.querySelector('.syncbadge-dot')?.getAttribute('data-state')).toBe('local');
+    } finally {
+      unmount(root, container);
+    }
+  });
+});
+
+describe('the dot is a button that opens the sync popover (#1183)', () => {
+  it('is named by the status, closed at first, and opens the explanation on press and closes on Escape', async () => {
+    const { container, root } = mount();
+    try {
+      await vi.waitFor(() => {
+        expect(container.querySelector('.syncbadge-trigger')).not.toBeNull();
+      }, WAIT);
+      const trigger = container.querySelector<HTMLButtonElement>('.syncbadge-trigger');
+      if (trigger === null) throw new Error('fixture bug: no trigger');
+      expect(trigger.getAttribute('aria-expanded')).toBe('false');
+      expect(container.querySelector('.syncbadge-popover')).toBeNull();
+      act(() => {
+        trigger.click();
+      });
+      expect(trigger.getAttribute('aria-expanded')).toBe('true');
+      expect(container.querySelector('.syncbadge-popover')?.textContent).toContain('Local only');
+      act(() => {
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      });
+      expect(container.querySelector('.syncbadge-popover')).toBeNull();
+      expect(document.activeElement).toBe(trigger);
+    } finally {
+      unmount(root, container);
+    }
+  });
+
+  it('draws the avatar initial under the dot for a signed-in account, and only the dot for a guest', async () => {
+    const guest = mount();
+    try {
+      await vi.waitFor(() => {
+        expect(guest.container.querySelector('.syncbadge-trigger')).not.toBeNull();
+      }, WAIT);
+      expect(guest.container.querySelector('.syncbadge-avatar')).toBeNull();
+    } finally {
+      unmount(guest.root, guest.container);
+    }
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+    act(() => {
+      root.render(
+        <SessionProvider>
+          <SyncBadge initial="N" />
+        </SessionProvider>,
+      );
+    });
+    try {
+      await vi.waitFor(() => {
+        expect(container.querySelector('.syncbadge-avatar')?.textContent).toBe('N');
+      }, WAIT);
     } finally {
       unmount(root, container);
     }

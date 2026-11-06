@@ -72,7 +72,9 @@ async function closeDevices(...devices: readonly Device[]): Promise<void> {
 }
 
 async function waitSynced(page: Page): Promise<void> {
-  await expect(page.getByText('Synced', { exact: true })).toBeVisible({ timeout: SYNCED_TIMEOUT });
+  await expect(page.getByRole('banner').getByRole('button', { name: 'Synced', exact: true })).toBeVisible({
+    timeout: SYNCED_TIMEOUT,
+  });
 }
 
 /** Reopens the store and sync engine from scratch, so the next `waitSynced` proves a full pull. */

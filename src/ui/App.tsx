@@ -24,9 +24,7 @@ import { parseRoute } from './route.js';
 import { SessionProvider, useStoreStatus } from './session-context.js';
 import { AccountPreferencesNotices } from './AccountPreferencesNotices.js';
 import { StoreProvider } from './store-context.js';
-import { SyncBadge } from './SyncBadge.js';
 import { useCalculationSettingsMigration } from './use-calculation-settings-migration.js';
-import { SymbolToggle } from './SymbolToggle.js';
 import { PersonSectionLayout } from './SectionLayout.js';
 import { ToolsLayout } from './ToolsLayout.js';
 import { activeToolKey } from './feature-registry.js';
@@ -320,12 +318,11 @@ function AppShell(): React.JSX.Element {
           it stays `AppNav.tsx`'s existing horizontal bar with its own folding panel, unchanged.
           The header is still first in the DOM, so a keyboard user meets the skip link, then the
           controls, before any page content. Its skip link is the first focusable thing on every
-          page (#421). `AccountPanel` sits right next to `SyncBadge` (#230): sign-in/out is the
-          thing that changes the sync badge's state. The ephemeris status line joins the brand
+          page (#421). `AccountPanel` hosts the sync dot (#230, #1183): sign-in/out is the
+          thing that changes its state. The ephemeris status line joins the brand
           (#234) — once ready it is an implementation detail again, but a silent failure here is
           precisely the bug class this project is built to avoid, so it stays visible on every
-          route. Language and theme are side by side: both are "change how the page looks",
-          picked together more often than either alone. */}
+          route. Language, theme and the symbol class are chosen in Preferences (#1183). */}
             <WorkspaceShell
               header={
                 <header
@@ -342,13 +339,11 @@ function AppShell(): React.JSX.Element {
                     {engineStatus !== 'ready' && <p className="status app-header-status">{engineStatus}</p>}
                   </div>
                   <AppNav route={parsed} />
-                  {/* The utilities container (#882), now with the profile tile (#964): the sync bar and the
-                      account tile sit at the rail's foot, and the tile's popover holds Preferences, Admin for
-                      administrators, the language and theme segments and sign-out. */}
+                  {/* The utilities container (#882), now with the profile tile (#964): the account tile, with its sync dot
+                      (#1183), sits at the rail's foot, and the tile's popover holds Preferences, Admin for administrators
+                      and sign-out. */}
                   <div className="app-header-end">
-                    <SyncBadge />
                     <AccountPanel />
-                    <SymbolToggle />
                   </div>
                   {/* The version, About & Licence and the update notice sit at the rail's foot (previously a page footer). */}
                   <SidebarFooter />

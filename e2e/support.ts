@@ -83,8 +83,8 @@ export async function createPerson(page: Page, input: PersonInput): Promise<void
  * adoption prompt (#109) instead of completing the switch — accept it, since callers
  * that pre-populate local data want it to end up on the account.
  *
- * Signed-in confirmation comes from `SyncBadge`'s "(logged in as: {username})" rather
- * than from `AccountPanel` itself, which no longer repeats it (#230).
+ * Signed-in confirmation is the account tile in the sidebar showing the username (#1183), rather than
+ * from `AccountPanel` itself, which no longer repeats it (#230).
  */
 export async function signIn(page: Page, username: string, password: string): Promise<void> {
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
@@ -93,7 +93,7 @@ export async function signIn(page: Page, username: string, password: string): Pr
   await dialog.getByLabel('Password', { exact: true }).fill(password);
   await dialog.getByRole('button', { name: 'Sign in', exact: true }).click();
   const adopt = page.getByRole('button', { name: 'Add it to my account', exact: true });
-  const signedIn = page.getByText(`(logged in as: ${username})`, { exact: true });
+  const signedIn = page.getByRole('banner').locator('.profile-tile-name', { hasText: username });
   await expect(adopt.or(signedIn)).toBeVisible();
   if (await adopt.isVisible()) {
     await adopt.click();
@@ -102,21 +102,18 @@ export async function signIn(page: Page, username: string, password: string): Pr
 }
 
 /**
- * Switches the interface language through the profile popover's segmented `[ EN | NL ]` control
- * (#964). The control applies at once and leaves the popover open, so the menu is closed after.
+ * Switches the interface language in Preferences, where the segmented `[ EN | NL ]` control lives (#1183; the
+ * profile popover no longer has it). It applies at once; the page the test was on is reopened afterwards, so the
+ * caller carries on where it was, now in the new language.
  */
 export async function setLanguage(page: Page, code: 'EN' | 'NL'): Promise<void> {
+  const before = page.url();
+  await page.goto(new URL('#/preferences', before).href);
   await page
-    .getByRole('banner')
-    .locator('[aria-haspopup="true"].profile-tile, [aria-haspopup="true"].profile-tile-menu')
-    .first()
-    .click();
-  await page
-    .locator('.profile-popover')
     .getByRole('radiogroup', { name: /^(Language|Taal)$/ })
     .getByRole('radio', { name: code, exact: true })
     .check();
-  await page.keyboard.press('Escape');
+  await page.goto(before);
 }
 
 /** Opens Preferences from the sidebar's profile popover (#964): open the account menu, then choose Preferences. */
