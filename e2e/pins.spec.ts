@@ -85,4 +85,24 @@ test('pin a result, keep it across a reload, unpin with Undo (#1061)', async ({ 
   await page.getByRole('button', { name: 'Undo', exact: true }).click();
   await expect(page.locator('.saved-query-list .name', { hasText: label })).toBeVisible();
   await expect(page.getByLabel(`Note on ${label}`, { exact: true })).toHaveValue('Edited note.');
+
+  // Erase the note for good: confirmed, no undo, and the pin can be annotated again afterwards (#1195).
+  let confirmation = '';
+  page.once('dialog', (dialog) => {
+    confirmation = dialog.message();
+    void dialog.accept();
+  });
+  await page.getByRole('button', { name: `Erase the note on ${label}`, exact: true }).click();
+  await expect(page.getByText('Note erased.')).toBeVisible();
+  expect(confirmation).toContain('cannot be undone');
+  await expect(page.getByLabel(`Note on ${label}`, { exact: true })).toHaveValue('');
+  await expect(page.getByRole('button', { name: `Erase the note on ${label}`, exact: true })).toHaveCount(0);
+  await reloadAndSettle(page);
+  await expect(page.getByLabel(`Note on ${label}`, { exact: true })).toHaveValue('');
+
+  await page.getByLabel(`Note on ${label}`, { exact: true }).fill('Written after the erase.');
+  await page.getByRole('button', { name: 'Save note', exact: true }).click();
+  await expect(page.getByText('Note saved.')).toBeVisible();
+  await reloadAndSettle(page);
+  await expect(page.getByLabel(`Note on ${label}`, { exact: true })).toHaveValue('Written after the erase.');
 });

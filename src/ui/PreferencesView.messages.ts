@@ -172,6 +172,9 @@ const en = {
   restoreResearchStaged: (research: ResearchPreview): string =>
     `Research: ${String(research.newSavedQueries)} new saved ${research.newSavedQueries === 1 ? 'query' : 'queries'}, ${String(research.newPins)} new ${research.newPins === 1 ? 'pin' : 'pins'}, ${String(research.newAnnotationRevisions)} new note ${research.newAnnotationRevisions === 1 ? 'version' : 'versions'}; ${String(research.alreadyHere)} already here (not changed)` +
     (research.deletedHere > 0 ? `, ${String(research.deletedHere)} deleted on this device (not brought back)` : '') +
+    (research.erasedVersionsSkipped > 0
+      ? `, ${String(research.erasedVersionsSkipped)} note ${research.erasedVersionsSkipped === 1 ? 'version' : 'versions'} you erased here (not brought back)`
+      : '') +
     '.',
   restoreResearchAlso: (research: ResearchPreview): string =>
     `It also adds ${String(research.newSavedQueries)} saved ${research.newSavedQueries === 1 ? 'query' : 'queries'}, ${String(research.newPins)} ${research.newPins === 1 ? 'pin' : 'pins'} and ${String(research.newAnnotationRevisions)} note ${research.newAnnotationRevisions === 1 ? 'version' : 'versions'}.`,
@@ -306,6 +309,9 @@ const nl: typeof en = {
     `Onderzoek: ${String(research.newSavedQueries)} ${research.newSavedQueries === 1 ? 'nieuwe opgeslagen zoekopdracht' : 'nieuwe opgeslagen zoekopdrachten'}, ${String(research.newPins)} ${research.newPins === 1 ? 'nieuwe pin' : 'nieuwe pins'}, ${String(research.newAnnotationRevisions)} ${research.newAnnotationRevisions === 1 ? 'nieuwe notitieversie' : 'nieuwe notitieversies'}; ${String(research.alreadyHere)} al aanwezig (niet gewijzigd)` +
     (research.deletedHere > 0
       ? `, ${String(research.deletedHere)} verwijderd op dit apparaat (niet teruggebracht)`
+      : '') +
+    (research.erasedVersionsSkipped > 0
+      ? `, ${String(research.erasedVersionsSkipped)} ${research.erasedVersionsSkipped === 1 ? 'notitieversie' : 'notitieversies'} die je hier hebt gewist (niet teruggebracht)`
       : '') +
     '.',
   restoreResearchAlso: (research: ResearchPreview): string =>
