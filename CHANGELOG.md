@@ -6,6 +6,37 @@ see [docs/ops/RELEASING.md](docs/ops/RELEASING.md).
 
 ## [Unreleased]
 
+## [0.48.0] — 2026-11-06
+
+**Event-search pins can be annotated, erased and exported, the orb library and more settings sync across your account, and Appearance & Accessibility is a compact two-column page.**
+
+### Added
+
+- **Pin event-search results and annotate the pins (#1061).** Annotations can be erased without blocking the pin (#1195).
+- **Saved queries, pins and annotations are in the full export and restore (#1194).**
+- **Aspect-family filters for the wheel and matrix, and consultation presets on demand only (#1063).**
+- **Table column headers stick while scrolling (#1065).**
+- **The orb library, its source and the saved transit filters sync across the account (#1220).**
+- **Language, default rulership and default calculation profile sync per account (#1066).**
+- **The Admin section carries an application-wide scope label (#1164).**
+
+### Changed
+
+- **Appearance & Accessibility is a compact two-column page with info tooltips (#1185).**
+- **The person sections use the Tools frame, a section h1 over a Tabs bar (#1175).**
+- **The sidebar foot drops the glyph toggle, the sync pill and the popover's theme and language controls (#1183).**
+
+### Fixed
+
+- **Pin and annotation edge cases (#1061, #1194, #1195).** A new pin beats an unsynced unpin, a pin cannot be purged, and annotation purge rules and saves are fork-safe. Restore can no longer undo an unpin, mis-identify a pin or write erased data back. A cut-short erase finishes, stale saves are refused and erased versions are remembered.
+- **Status and alert messages render through StatusMessage, including the AI-rejection message and plain count hints (#1162, #1211).**
+- **The remaining classed raw buttons use the Button primitive (#1161).**
+- **Page, table, panel and interpretation headings sit at the right level under the page h1, and page headings are title-cased (#1163, #1140).**
+- **Every page uses the 80rem Charts width, and long inline code in the changelog wraps instead of scrolling sideways on a phone (#1176).**
+- **The Admin scope label and section controls are spaced and inset at 390px (#1164, #1188).**
+- **The phone nav panel uses the popover shadow token (#1166).**
+- **The family and preset controls sit below the wheel (#1063).**
+
 ## [0.47.0] — 2026-11-05
 
 **Every tool now has the same page layout, with a Tools tab bar, calculation-basis lines on the timing views, and 44px touch targets. Home opens on the last person's timeline, event searches can be saved, and the published image records the commit it was built from.**
