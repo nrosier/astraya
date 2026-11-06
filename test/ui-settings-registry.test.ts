@@ -7,6 +7,7 @@
  * scope, persistence and sync disagree (#1066).
  */
 import { describe, expect, it } from 'vitest';
+import { ORB_CONTEXT_SOURCE_KEY, ORB_LIBRARY_KEY } from '../src/ui/orb-library-store.js';
 import {
   ACCOUNT_SYNC_TRACKED_ELSEWHERE,
   SETTINGS,
@@ -68,9 +69,11 @@ describe('validateSettings', () => {
     expect(scopeOf('astraya:showDegreeSymbol')).toBe('device');
   });
 
-  it('registers the default transit-filter profile as account scope (guidelines §3.2, #1149)', () => {
+  it('registers the default transit-filter profile and the orb library as account scope (guidelines §3.2, #1149)', () => {
     const scopeOf = (key: string) => SETTINGS.find((setting) => setting.key === key)?.scope;
     expect(scopeOf('astraya:transitFilter:<context>')).toBe('account');
+    expect(scopeOf('astraya:orbLibrary')).toBe('account');
+    expect(scopeOf('astraya:orbContextSource')).toBe('account');
   });
 
   it('registers lastPersonId and workspaceRailCollapsed as device-local settings (#1165)', () => {
@@ -121,11 +124,22 @@ describe('scope, persistence and sync agree (#1066)', () => {
     expect(violations.some((violation) => violation.includes('must sync'))).toBe(true);
   });
 
-  it('names its one exception, owned by #1149, and that exception is a real account-scope entry', () => {
-    expect(ACCOUNT_SYNC_TRACKED_ELSEWHERE).toEqual({ 'astraya:transitFilter:<context>': '#1149' });
-    const entry = SETTINGS.find((setting) => setting.key === 'astraya:transitFilter:<context>');
-    expect(entry?.scope).toBe('account');
-    expect(entry?.synced).toBe(false);
+  it('names the account-scope settings whose sync is owned by #1220, and each is a real unsynced account-scope entry', () => {
+    expect(ACCOUNT_SYNC_TRACKED_ELSEWHERE).toEqual({
+      'astraya:orbLibrary': '#1220',
+      'astraya:orbContextSource': '#1220',
+      'astraya:transitFilter:<context>': '#1220',
+    });
+    for (const key of Object.keys(ACCOUNT_SYNC_TRACKED_ELSEWHERE)) {
+      const entry = SETTINGS.find((setting) => setting.key === key);
+      expect(entry?.scope, key).toBe('account');
+      expect(entry?.synced, key).toBe(false);
+    }
+  });
+
+  it('keys the orb library entries to the keys the orb library store actually uses (#1149)', () => {
+    expect(ORB_LIBRARY_KEY).toBe('astraya:orbLibrary');
+    expect(ORB_CONTEXT_SOURCE_KEY).toBe('astraya:orbContextSource');
   });
 
   it('stores the three account preferences in the op log, synced', () => {

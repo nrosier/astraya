@@ -172,6 +172,32 @@ export const SETTINGS: readonly SettingDefinition[] = [
     resetTarget: 'This device default (expanded)',
   },
   {
+    key: 'astraya:orbLibrary',
+    scope: 'account',
+    owner:
+      "The user's named orb profiles (revisioned): the orb library the natal, transit and synastry charts draw their orbs from (docs/ui/UI-UX_GUIDELINES.md §3.2 'orb profile', decided account scope on #1149). Stored in this browser until its sync lands (#1220)",
+    describeDefault: 'an empty library (the built-in orb scale applies)',
+    persistence: 'local-storage',
+    synced: false,
+    editingSurface: 'OrbLibraryEditor.tsx (Preferences, Astrology defaults)',
+    commitMode: 'staged',
+    sensitive: false,
+    resetTarget: 'an empty library',
+  },
+  {
+    key: 'astraya:orbContextSource',
+    scope: 'account',
+    owner:
+      "Which orb profile each chart type (natal, transit, synastry) uses, the choice of profile from the user's orb library (#1149). Stored in this browser until its sync lands (#1220)",
+    describeDefault: 'no profile chosen (the chart type uses its own orbs)',
+    persistence: 'local-storage',
+    synced: false,
+    editingSurface: 'OrbLibraryEditor.tsx (Preferences, Astrology defaults)',
+    commitMode: 'immediate',
+    sensitive: false,
+    resetTarget: 'no profile chosen',
+  },
+  {
     key: 'astraya:transitFilter:<context>',
     scope: 'account',
     owner:
@@ -245,8 +271,11 @@ export const SETTINGS: readonly SettingDefinition[] = [
  * names them rather than hiding them. Each entry must say which issue. Remove an entry when its sync lands.
  */
 export const ACCOUNT_SYNC_TRACKED_ELSEWHERE: Readonly<Record<string, string>> = {
-  // Moved to account scope by #1149 (guidelines §3.2); its sync is not part of #1066 (ADR 0004 decision Q4).
-  'astraya:transitFilter:<context>': '#1149',
+  // Moved to account scope by #1149 (guidelines §3.2); their sync is not part of #1066 (ADR 0004 decision Q4) and is
+  // built under #1220.
+  'astraya:orbLibrary': '#1220',
+  'astraya:orbContextSource': '#1220',
+  'astraya:transitFilter:<context>': '#1220',
 };
 
 /**
