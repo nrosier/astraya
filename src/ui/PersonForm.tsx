@@ -218,7 +218,6 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
           )}
         </div>
       </PageHeader>
-      <p className="tagline">{t.tagline}</p>
 
       {saveError !== undefined && <StatusMessage kind="error">{t.saveFailed(saveError)}</StatusMessage>}
 
@@ -229,7 +228,12 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
       <div className="birth-record">
         <div className="birth-record-column">
           <section className="birth-record-card birth-record-card--identity" aria-labelledby="birth-card-identity">
-            <h3 id="birth-card-identity">{t.identityCardHeading}</h3>
+            <h3 id="birth-card-identity">
+              {t.identityCardHeading}{' '}
+              <Tooltip text={t.tagline} label={t.identityInfoLabel} className="primitive-tooltip-icon">
+                ?
+              </Tooltip>
+            </h3>
             <TextField
               label={t.nameLabel}
               value={current.displayName}
