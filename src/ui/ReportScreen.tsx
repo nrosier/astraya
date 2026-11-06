@@ -18,6 +18,7 @@ import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { computeChartData, housesAreDefined, type ChartData } from '../domain/chart-compute.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { reportScreenMessages } from './ReportScreen.messages.js';
+import { reportViewMessages } from './ReportView.messages.js';
 import { ReportView } from './ReportView.js';
 import { useMessages } from './messages.js';
 import { useStoreState } from './store-context.js';
@@ -28,6 +29,7 @@ import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
 import { settingsForContext, toChartCalculationOptions } from '../chart/extended-settings.js';
 import { interpretationExclusions } from '../chart/object-policy.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import { Tooltip } from './primitives/Tooltip.js';
 import { useStableBy, useStableMoment } from './use-stable-moment.js';
 import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
@@ -45,6 +47,13 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
   // The person's chosen fixed stars (#860), as the natal chart reads them.
   const fixedStars = useStableBy(person?.fixedStars, (stars) => JSON.stringify(stars ?? []));
   const t = useMessages(reportScreenMessages);
+  const viewT = useMessages(reportViewMessages);
+  // The reading's disclaimer is a tooltip on the page heading, in every state of the screen (#1230).
+  const disclaimer = (
+    <Tooltip text={viewT.interpretationDisclaimer} label={t.disclaimerInfoLabel} className="primitive-tooltip-icon">
+      ?
+    </Tooltip>
+  );
   const { provider } = useEphemerisProvider();
   // The chart the Charts page draws (#732): its natal-context settings, rulers and custom points — not a
   // default-settings chart under the same name, which would read out a different chart from the one on screen.
@@ -104,7 +113,7 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.reportFallback} basis={basisLine} />
+        <PageHeader title={t.reportFallback} titleAside={disclaimer} basis={basisLine} />
         <p>
           {t.notCompleteReport(person.displayName || t.thisPerson)}{' '}
           <a href={personHref(personId)}>{t.personPageLink}</a>.
@@ -120,7 +129,7 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.reportFallback} basis={basisLine} />
+        <PageHeader title={t.reportFallback} titleAside={disclaimer} basis={basisLine} />
         <p>{t.needsKnownTime(person.displayName || t.thisPerson)}</p>
       </main>
     );
@@ -129,7 +138,11 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
   return (
     <main className="shell">
       <BackLink fallback={personHref(personId)} />
-      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.reportFallback} basis={basisLine} />
+      <PageHeader
+        title={person.displayName ? t.heading(person.displayName) : t.reportFallback}
+        titleAside={disclaimer}
+        basis={basisLine}
+      />
 
       {/* The result region: busy while the report (re)calculates, as the Astrocartography map is. */}
       <div aria-busy={load.kind === 'loading'}>

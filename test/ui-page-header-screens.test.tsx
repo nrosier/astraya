@@ -124,10 +124,10 @@ async function headingOf(node: ReactNode, tag: 'h1' | 'h2' = 'h1'): Promise<HTML
 }
 
 function expectPageHeader(h1: HTMLHeadingElement): void {
-  expect(h1.parentElement?.className).toBe('page-header-row');
-  expect(h1.parentElement?.parentElement?.className).toMatch(
-    /^page-header( page-header--section| page-header--return)?$/,
-  );
+  // With an info tooltip beside the title (#1226/#1228/#1230) the h1 sits in `page-header-title`, inside the row.
+  const row = h1.parentElement?.className === 'page-header-title' ? h1.parentElement.parentElement : h1.parentElement;
+  expect(row?.className).toBe('page-header-row');
+  expect(row?.parentElement?.className).toMatch(/^page-header( page-header--section| page-header--return)?$/);
   expect(h1.textContent).not.toBe('');
 }
 

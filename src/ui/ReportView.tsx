@@ -595,7 +595,6 @@ export function ReportView({
       />
 
       <div {...tabPanelProps('interpretation', activeTab)}>
-        <p className="hint">{t.interpretationDisclaimer}</p>
         {exclude.size > 0 && (
           // What the reading leaves out (#721), so the scope can be checked without comparing it to the chart.
           <p className="hint report-scope">

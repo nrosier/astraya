@@ -21,6 +21,7 @@ const en = {
   birthRecordHeading: 'Birth record',
 
   identityCardHeading: 'Identity and birth timestamp',
+  identityInfoLabel: 'About the identity and birth timestamp',
   nameLabel: 'Name',
   placeOfBirthLabel: 'Place of birth',
   placeOfBirthPlaceholder: 'Vevay, Indiana',
@@ -101,6 +102,7 @@ const nl: typeof en = {
   birthRecordHeading: 'Geboortegegevens',
 
   identityCardHeading: 'Identiteit en geboortemoment',
+  identityInfoLabel: 'Over de identiteit en het geboortemoment',
   nameLabel: 'Naam',
   placeOfBirthLabel: 'Geboorteplaats',
   placeOfBirthPlaceholder: 'Vevay, Indiana',

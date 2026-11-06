@@ -97,6 +97,7 @@ import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
 import { rulershipSettingMessages } from './RulershipSetting.messages.js';
 import { FilterSummary } from './primitives/FilterSummary.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import { Tooltip } from './primitives/Tooltip.js';
 import { consultationViewMessages } from './ConsultationView.messages.js';
 import { BackLink } from './BackLink.js';
 import type { JulianDayUT } from '../ephemeris/types.js';
@@ -520,7 +521,16 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
             <div className="consultation-grid">
               <div className="consultation-col">
                 <section className="consultation-section" aria-labelledby="consultation-transits-heading">
-                  <h2 id="consultation-transits-heading">{t.majorTransitsHeading}</h2>
+                  <h2 id="consultation-transits-heading">
+                    {t.majorTransitsHeading}{' '}
+                    <Tooltip
+                      text={t.rankingConvention}
+                      label={t.majorTransitsInfoLabel}
+                      className="primitive-tooltip-icon"
+                    >
+                      ?
+                    </Tooltip>
+                  </h2>
                   <FilterSummary
                     summary={transitFilterT.count(
                       filteredContacts.length,
@@ -528,8 +538,7 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
                       transitFilterT.presetsShort[presetOf(filter, rules) ?? 'custom'],
                     )}
                   />
-                  {/* The weights and orbs have no published source (transit-importance.ts, #590), so say so (#681). */}
-                  <p className="hint">{t.rankingConvention}</p>
+                  {/* The weights and orbs have no published source (transit-importance.ts, #590), so the heading tooltip says so (#681, #1226). */}
                   {majorRows.length === 0 ? (
                     <p className="hint">{t.noShownTransits}</p>
                   ) : (
