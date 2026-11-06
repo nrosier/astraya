@@ -65,7 +65,6 @@ import { synastryText } from './synastry-text.js';
 import { wheelCorpus } from './wheel-corpus.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useStableMoment } from './use-stable-moment.js';
-import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
 
 type Load =
@@ -330,13 +329,12 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
   }
 
   if (settingsUnreadable) {
-    return <UnreadableSettingsNotice personId={personId} name={person.displayName || ''} />;
+    return <UnreadableSettingsNotice name={person.displayName || ''} />;
   }
 
   if (person.moment === undefined || person.timeAccuracy === 'unknown') {
     return (
       <main className="shell shell--wide">
-        <BackLink fallback={personHref(personId)} />
         <PageHeader headingLevel={2} title={t.synastryFallback} titleTerm="synastry" />
         <p>
           <GlossaryText text={t.needsCompleteRecord(person.displayName || t.thisPerson)} />{' '}
@@ -359,7 +357,6 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
         snapshotIdentity={artifactProvenanceIdentity(load.kind === 'ready' ? load.artifact : undefined, snapshot)}
         generatedAt={formatTimestamp(new Date())}
       />
-      <BackLink fallback={personHref(personId)} />
       <PageHeader
         headingLevel={2}
         title={person.displayName ? t.heading(person.displayName) : t.synastryFallback}

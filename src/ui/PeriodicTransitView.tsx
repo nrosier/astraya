@@ -68,7 +68,6 @@ import type { BodyId, JulianDayUT } from '../ephemeris/types.js';
 import type { CorpusPlacement, Locale } from '../interpretation/schema.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useStableMoment } from './use-stable-moment.js';
-import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
 import { useCalculationBasisLine } from './calculation-basis.js';
 import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
@@ -499,7 +498,6 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
   if (person.moment === undefined) {
     return (
       <main className="shell">
-        <BackLink fallback={personHref(personId)} />
         <PageHeader headingLevel={2} title={t.forecastFallback} />
         <p>
           {t.notCompleteForecast(person.displayName || t.thisPerson)}{' '}
@@ -512,7 +510,6 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
   if (person.timeAccuracy === 'unknown') {
     return (
       <main className="shell">
-        <BackLink fallback={personHref(personId)} />
         <PageHeader headingLevel={2} title={t.forecastFallback} />
         <p>
           <GlossaryText text={t.needsKnownTime(person.displayName || t.thisPerson)} />
@@ -523,7 +520,6 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
 
   return (
     <main className="shell">
-      <BackLink fallback={personHref(personId)} />
       <PageHeader
         headingLevel={2}
         title={person.displayName ? t.heading(person.displayName) : t.forecastFallback}

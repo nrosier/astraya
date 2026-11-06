@@ -16,14 +16,12 @@ import { changelogMessages } from './Changelog.messages.js';
 import { renderMarkdown } from './markdown.js';
 import { useMessages } from './messages.js';
 import { APP_VERSION, SOURCE_URL, sourceFileUrl } from '../version.js';
-import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
 
 export function Changelog(): React.JSX.Element {
   const t = useMessages(changelogMessages);
   return (
     <main className="shell">
-      <BackLink fallback="#/people" />
       <PageHeader title={t.heading} />
       <p className="tagline">
         {t.runningBefore}

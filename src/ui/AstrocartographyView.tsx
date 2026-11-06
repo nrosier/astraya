@@ -47,7 +47,6 @@ import type { BodyId, GeoPosition } from '../ephemeris/types.js';
 import type { CorpusEntry, Locale } from '../interpretation/schema.js';
 import { wheelCorpus } from './wheel-corpus.js';
 import { useStableMoment } from './use-stable-moment.js';
-import { BackLink } from './BackLink.js';
 import { useCalculationBasisLine } from './calculation-basis.js';
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
 
@@ -175,7 +174,6 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
   if (person.moment === undefined) {
     return (
       <main className="shell">
-        <BackLink fallback={personHref(personId)} />
         <PageHeader title={t.astrocartographyFallback} titleTerm="astrocartography" />
         <p>
           {t.notCompleteMap(person.displayName || t.thisPerson)} <a href={personHref(personId)}>{t.personPageLink}</a>.
@@ -187,7 +185,6 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
   if (person.timeAccuracy === 'unknown') {
     return (
       <main className="shell">
-        <BackLink fallback={personHref(personId)} />
         <PageHeader title={t.astrocartographyFallback} titleTerm="astrocartography" />
         <p>
           <GlossaryText text={t.needsKnownTime(person.displayName || t.thisPerson)} />
@@ -198,7 +195,6 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
 
   return (
     <main className="shell">
-      <BackLink fallback={personHref(personId)} />
       <PageHeader
         title={person.displayName ? t.heading(person.displayName) : t.astrocartographyFallback}
         titleTerm="astrocartography"

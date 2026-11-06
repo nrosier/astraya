@@ -16,6 +16,7 @@
 import { activeAdminTabKey, ADMIN_TABS } from './admin-nav.js';
 import { adminNavMessages } from './AdminNav.messages.js';
 import { useMessages } from './messages.js';
+import { replaceRoute } from './nav-history.js';
 import { Select } from './primitives/Select.js';
 import type { Route } from './route.js';
 import { ScrollingTabRow } from './ScrollingTabRow.js';
@@ -40,7 +41,7 @@ export function AdminNav({ route }: { route: Route }): React.JSX.Element {
               ]}
               onChange={(value) => {
                 const target = ADMIN_TABS.find((tab) => tab.key === value);
-                if (target !== undefined) window.location.hash = target.href;
+                if (target !== undefined) replaceRoute(target.href);
               }}
             />
           </div>

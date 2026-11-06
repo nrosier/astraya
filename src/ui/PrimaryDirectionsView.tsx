@@ -77,7 +77,6 @@ import { StatusMessage } from './primitives/StatusMessage.js';
 import { Checkbox } from './primitives/Checkbox.js';
 import type { PrimaryDirectionMethod, PrimaryDirectionMode } from '../astrology/primary-directions.js';
 import { useStableBy, useStableMoment } from './use-stable-moment.js';
-import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
 import { useCalculationBasisLine, withBasisItems } from './calculation-basis.js';
 import { primaryDirectionsBasisItems } from './timing-basis.js';
@@ -370,13 +369,12 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
   }
 
   if (settingsUnreadable) {
-    return <UnreadableSettingsNotice personId={personId} name={person.displayName || ''} />;
+    return <UnreadableSettingsNotice name={person.displayName || ''} />;
   }
 
   if (person.moment === undefined) {
     return (
       <main className="shell">
-        <BackLink fallback={personHref(personId)} />
         <PageHeader headingLevel={2} title={t.primaryDirectionsFallback} titleTerm="primaryDirection" />
         <p>
           <GlossaryText text={t.notCompletePrimaryDirections(person.displayName || t.thisPerson)} />{' '}
@@ -389,7 +387,6 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
   if (person.timeAccuracy === 'unknown') {
     return (
       <main className="shell">
-        <BackLink fallback={personHref(personId)} />
         <PageHeader headingLevel={2} title={t.primaryDirectionsFallback} titleTerm="primaryDirection" />
         <p>
           <GlossaryText text={t.needsKnownTime(person.displayName || t.thisPerson)} />
@@ -413,7 +410,6 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
         )}
         generatedAt={formatTimestamp(new Date())}
       />
-      <BackLink fallback={personHref(personId)} />
       <PageHeader
         headingLevel={2}
         title={person.displayName ? t.heading(person.displayName) : t.primaryDirectionsFallback}

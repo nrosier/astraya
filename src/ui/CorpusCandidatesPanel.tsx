@@ -40,7 +40,6 @@ import type { CorpusCandidate } from '../sync/admin-client.js';
 import type { Locale } from '../interpretation/schema.js';
 import { EmptyState } from './primitives/EmptyState.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
-import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
 
 /** The triage tone for a candidate: a mismatch is a warning-level fact, a match is plain (never green). */
@@ -154,7 +153,6 @@ export function CorpusCandidatesPanel(): React.JSX.Element {
   return (
     <main className="shell admin-view">
       <div className="admin-view-head">
-        <BackLink fallback="#/admin" />
         <PageHeader title={t.heading} />
         <p>{t.intro}</p>
       </div>

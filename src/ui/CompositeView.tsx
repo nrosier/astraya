@@ -38,7 +38,6 @@ import { useStoreState } from './store-context.js';
 import type { ChartData } from '../domain/chart-compute.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useStableMoment } from './use-stable-moment.js';
-import { BackLink } from './BackLink.js';
 import { replaceRoute } from './nav-history.js';
 import { PageHeader } from './PageHeader.js';
 
@@ -116,7 +115,6 @@ export function CompositeView({
   if (person.moment === undefined || person.timeAccuracy === 'unknown') {
     return (
       <main className="shell">
-        <BackLink fallback={personHref(personId)} />
         <PageHeader headingLevel={2} title={t.compositeFallback} titleTerm="composite" />
         <p>
           <GlossaryText text={t.needsCompleteRecord(person.displayName || t.thisPerson)} />{' '}
@@ -131,7 +129,6 @@ export function CompositeView({
 
   return (
     <main className="shell shell--wide">
-      <BackLink fallback={personHref(personId)} />
       <PageHeader
         headingLevel={2}
         title={person.displayName ? t.heading(person.displayName) : t.compositeFallback}

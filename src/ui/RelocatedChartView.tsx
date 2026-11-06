@@ -47,7 +47,6 @@ import { usePersonCalculationSettings } from './person-calculation-settings.js';
 import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
 import { orbsOf } from '../chart/extended-settings.js';
 import { useStableBy, useStableMoment } from './use-stable-moment.js';
-import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
 import { Button } from './primitives/Button.js';
 
@@ -268,13 +267,12 @@ export function RelocatedChartView({
   }
 
   if (settingsUnreadable) {
-    return <UnreadableSettingsNotice personId={personId} name={person.displayName || ''} />;
+    return <UnreadableSettingsNotice name={person.displayName || ''} />;
   }
 
   if (person.moment === undefined || person.timeAccuracy === 'unknown') {
     return (
       <main className="shell">
-        <BackLink fallback={personHref(personId)} />
         <PageHeader title={t.relocatedChartFallback} />
         <p>
           <GlossaryText text={t.needsCompleteRecord(person.displayName || t.thisPerson)} />{' '}
@@ -288,7 +286,6 @@ export function RelocatedChartView({
 
   return (
     <main className="shell shell--wide">
-      <BackLink fallback={personHref(personId)} />
       <PageHeader title={person.displayName ? t.heading(person.displayName) : t.headingFallback} basis={basisLine} />
       <ChartTypeSelector personId={personId} type="relocated" view={view} />
       <p className="hint">

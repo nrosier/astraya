@@ -32,7 +32,6 @@ import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useMessages } from './messages.js';
 import { eventSearchViewMessages } from './EventSearchView.messages.js';
-import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
 import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
 import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
@@ -194,7 +193,6 @@ export function EventSearchView(): React.JSX.Element {
 
   return (
     <main className="shell">
-      <BackLink fallback="#/people" />
       <PageHeader title={t.heading} basis={basisLine} basisEditHref={null} headingLevel={2} />
       <div className="tool-layout">
         <section className="tool-card tool-form" aria-labelledby="event-search-heading">

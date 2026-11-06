@@ -114,7 +114,7 @@ for (const viewport of [
         await openSharedPerson(page, baseUrl, EINSTEIN);
         await openChart(page, type);
 
-        const back = await box(page.locator('main p.back').first());
+        const back = await box(page.locator('p.back').first());
         const heading = await box(page.getByRole('heading', { level: 1 }));
         expect
           .soft(back.bottom, `${type} at ${String(viewport.width)}: back link above the heading`)

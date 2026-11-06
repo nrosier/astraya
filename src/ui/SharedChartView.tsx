@@ -33,7 +33,6 @@ import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { sharedChartViewMessages } from './SharedChartView.messages.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
-import { BackLink } from './BackLink.js';
 import { replaceRoute } from './nav-history.js';
 import { PageHeader } from './PageHeader.js';
 
@@ -136,7 +135,6 @@ export function SharedChartView(): React.JSX.Element {
 
   return (
     <main className="shell shell--wide">
-      <BackLink fallback="#/people" />
       {/* No Edit link: Preferences edits this viewer's own settings, not the sender's. */}
       <PageHeader title={t.sharedChart} basis={snapshot === undefined ? undefined : basisLine} basisEditHref={null} />
       <p className="hint">{t.hint}</p>

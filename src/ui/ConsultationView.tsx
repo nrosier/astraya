@@ -99,7 +99,6 @@ import { FilterSummary } from './primitives/FilterSummary.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { Tooltip } from './primitives/Tooltip.js';
 import { consultationViewMessages } from './ConsultationView.messages.js';
-import { BackLink } from './BackLink.js';
 import type { JulianDayUT } from '../ephemeris/types.js';
 
 type Load =
@@ -289,7 +288,7 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
   if (person === undefined) return <PersonNotFound />;
 
   if (settingsUnreadable) {
-    return <UnreadableSettingsNotice personId={personId} name={person.displayName || ''} />;
+    return <UnreadableSettingsNotice name={person.displayName || ''} />;
   }
 
   // The title names the feature and the person (#1064 decision, 2026-11-05); the basis line keeps the subject.
@@ -298,7 +297,6 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
   if (person.moment === undefined) {
     return (
       <main className="shell">
-        <BackLink fallback={personHref(personId)} />
         <PageHeader title={title} />
         <p>
           {t.notComplete(subject)} <a href={personHref(personId)}>{t.personPageLink}</a>.
@@ -471,7 +469,6 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
 
   return (
     <main className="shell consultation">
-      <BackLink fallback={personHref(personId)} />
       <PageHeader title={title} basis={basisLine}>
         <a className="primitive-button-primary" href={chartHref(personId, 'wheel', 'natal', undefined, selectedDay)}>
           {t.viewWheel}

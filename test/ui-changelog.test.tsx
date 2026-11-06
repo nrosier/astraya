@@ -40,7 +40,6 @@ describe('Changelog screen chrome', () => {
     setLocale('en');
     const container = mount();
     expect(container.querySelector('h1')?.textContent).toBe('Changelog');
-    expect(container.querySelector('.back')?.textContent).toContain('Back');
     expect(container.querySelector('.tagline')?.textContent).toContain('You are running');
     expect(container.querySelector('footer a')?.textContent).toBe('Full commit history');
   });
@@ -49,7 +48,6 @@ describe('Changelog screen chrome', () => {
     setLocale('nl');
     const container = mount();
     expect(container.querySelector('h1')?.textContent).toBe('Changelog');
-    expect(container.querySelector('.back')?.textContent).toContain('Terug');
     expect(container.querySelector('.tagline')?.textContent).toContain('Je gebruikt');
     expect(container.querySelector('footer a')?.textContent).toBe('Volledige commitgeschiedenis');
   });

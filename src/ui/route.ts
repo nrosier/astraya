@@ -32,7 +32,7 @@
  * @module ui/route
  * @purpose Pure hash-route parsing and construction for every screen in the app, on the one canonical scheme, plus one-time-token query extraction (set-password, setup).
  * @conventions Pure and separate from components so it is tested without a DOM; hash routing since the built app is static files with no server rewrite rule; ids are validated with domain/id.js's isPersonId rather than accepted as any string; an unknown, obsolete or malformed hash falls back to Home with no redirect or alias; `parseRoute(routeHref(r))` round-trips for every route.
- * @exports Route, ExportBuilderSection, PreferencesSection, PREFERENCES_SECTIONS, parseRoute, routeHref, chartHref, personHref, setPasswordToken, setupToken
+ * @exports Route, ExportBuilderSection, PreferencesSection, PREFERENCES_SECTIONS, parseRoute, routeHref, chartHref, personHref, routeShowsBackLink, setPasswordToken, setupToken
  */
 import { isPersonId } from '../domain/id.js';
 import { chartViewFromHash, isChartType, isChartView, type ChartType, type ChartViewKind } from './chart-sections.js';
@@ -420,4 +420,18 @@ export function setupToken(hash: string): string | null {
   const queryIndex = hash.indexOf('?');
   if (queryIndex === -1) return null;
   return new URLSearchParams(hash.slice(queryIndex + 1)).get('token');
+}
+
+/** Routes that are a place of their own, with no screen above them to go back to; every other screen shows the Back link (#1225). */
+const NO_BACK_LINK: ReadonlySet<Route['kind']> = new Set([
+  'home',
+  'people',
+  'documents',
+  'preferences',
+  'export-builder',
+]);
+
+/** Whether the app shell shows the Back link above this route's heading (it still hides when there is no previous page). */
+export function routeShowsBackLink(route: Route): boolean {
+  return !NO_BACK_LINK.has(route.kind);
 }

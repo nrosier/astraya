@@ -213,7 +213,6 @@ function serializeCustomPoints(points: readonly CustomPointDefinition[]): readon
 import { parseCoordinate } from './map-settings.js';
 import { orbConfigForContext } from '../astrology/orb-profiles.js';
 import { useStableBy, useStableMoment } from './use-stable-moment.js';
-import { BackLink } from './BackLink.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -1521,13 +1520,12 @@ export function ChartView({
   }
 
   if (settingsUnreadable) {
-    return <UnreadableSettingsNotice personId={personId} name={person.displayName || ''} />;
+    return <UnreadableSettingsNotice name={person.displayName || ''} />;
   }
 
   if (person.moment === undefined) {
     return (
       <main className="shell">
-        <BackLink fallback={personHref(personId)} />
         <PageHeader title={pageTitle} />
         <p>
           {t.notCompleteChart(person.displayName || t.thisPersonCapitalized)}{' '}
@@ -1547,7 +1545,6 @@ export function ChartView({
 
     return (
       <main className="shell shell--wide">
-        <BackLink fallback={personHref(personId)} />
         <PageHeader title={pageTitle} basis={basisLine}>
           <PdfCreatorLink href={creatorHref} />
         </PageHeader>
@@ -1613,7 +1610,6 @@ export function ChartView({
 
   return (
     <main className="shell shell--wide">
-      <BackLink fallback={personHref(personId)} />
       <PageHeader title={pageTitle} basis={basisLine}>
         <PdfCreatorLink href={creatorHref} />
       </PageHeader>

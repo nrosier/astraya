@@ -20,7 +20,7 @@ import { ExportRegistryProvider } from './export-registry.js';
 import { PageActionsProvider } from './page-actions-slot.js';
 import { PwaStatus } from './PwaStatus.js';
 import { SidebarFooter } from './SidebarFooter.js';
-import { parseRoute } from './route.js';
+import { parseRoute, routeShowsBackLink } from './route.js';
 import { SessionProvider, useStoreStatus } from './session-context.js';
 import { AccountPreferencesNotices } from './AccountPreferencesNotices.js';
 import { StoreProvider } from './store-context.js';
@@ -114,7 +114,6 @@ function Stored({ children }: { children: React.ReactNode }): React.JSX.Element 
   if (status.kind === 'failed') {
     return (
       <main className="shell">
-        <BackLink fallback="#/people" />
         <DocumentTitle heading={t.noLocalStorage} />
         <h1>{t.noLocalStorage}</h1>
         <StatusMessage kind="error">{t.noLocalStorageWarning(status.message)}</StatusMessage>
@@ -356,6 +355,12 @@ function AppShell(): React.JSX.Element {
               <div id="main-content" className="main-content" tabIndex={-1}>
                 {/* The account preferences' sign-in prompt, failed save and unreadable notice (#1066), on every route. */}
                 <AccountPreferencesNotices />
+                {/* The one Back link (#1225): above the section heading on every screen that has a place to go back to. */}
+                {routeShowsBackLink(parsed) && (
+                  <div className="back-bar">
+                    <BackLink />
+                  </div>
+                )}
                 {/* Sections with sub-views share one frame: a section h1 and a Tabs bar. Tools (#1139) and the three person
                     sections (#882, #1175) each get it; any other route renders its screen alone. */}
                 {toolKey === null ? (
