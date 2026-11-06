@@ -114,16 +114,18 @@ jobs:
   # Drives a real browser against a real, locally-booted server (#72/#107) — proving
   # what the unit suite above can't: that a person's birth data actually produces a
   # rendered wheel and a real file download, and that two devices actually converge.
-  # Split into four shards that run in parallel (#1095); e2e was the long pole of CI.
+  # Split into eight shards that run in parallel (#1095); e2e was the long pole of CI. Four shards were uneven (summed
+  # test time 591, 658, 485 and 360 s on 2026-11-06, the longest shard setting the wait), and each shard's setup is only
+  # about a minute, so more shards shorten the wait for the slowest one.
   e2e-shard:
-    name: e2e (${{ matrix.shard }}/4)
+    name: e2e (${{ matrix.shard }}/8)
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
@@ -137,7 +139,7 @@ jobs:
         run: npx playwright install --with-deps chromium
       # test:e2e is `npm run build && playwright test`; the shard runs the same two steps so it can pass --shard.
       - run: npm run build
-      - run: npx playwright test --shard=${{ matrix.shard }}/4
+      - run: npx playwright test --shard=${{ matrix.shard }}/8
       - name: Upload Playwright traces on failure
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
