@@ -13,6 +13,7 @@ import { Checkbox } from './primitives/Checkbox.js';
 import { chartOverlaySettingsPanelMessages } from './ChartOverlaySettingsPanel.messages.js';
 import { todayInputValue } from './format.js';
 import { useMessages } from './messages.js';
+import { Button } from './primitives/Button.js';
 
 export type ChartOverlaySource = 'natal' | 'draconic' | 'transit' | 'progressed' | 'directed' | 'return' | 'relocated';
 export type ChartOverlayReturnKind = 'solar' | 'lunar';
@@ -155,12 +156,10 @@ export function ChartOverlaySettingsPanel({
         returnFocusTo={triggerRef}
         footer={
           <div className="settings-card-footer-group">
-            <button type="button" className="quiet" onClick={close}>
-              {t.cancel}
-            </button>
-            <button
-              type="button"
-              className="primitive-button-primary"
+            <Button onClick={close}>{t.cancel}</Button>
+            <Button
+              variant="primary"
+
               disabled={sameSettings(draft, value)}
               onClick={() => {
                 onApply(draft);
@@ -168,7 +167,7 @@ export function ChartOverlaySettingsPanel({
               }}
             >
               {t.apply}
-            </button>
+            </Button>
           </div>
         }
       >
@@ -410,24 +409,12 @@ function OverlayRow({
       <div className="chart-overlay-row-toggle">
         <Checkbox label={label} checked={checked} disabled={disabled} onChange={onChange} />
         <span className="chart-overlay-row-order">
-          <button
-            type="button"
-            className="quiet"
-            aria-label={moveUpLabel}
-            disabled={onMoveUp === undefined}
-            onClick={onMoveUp}
-          >
+          <Button aria-label={moveUpLabel} disabled={onMoveUp === undefined} onClick={onMoveUp}>
             ↑
-          </button>
-          <button
-            type="button"
-            className="quiet"
-            aria-label={moveDownLabel}
-            disabled={onMoveDown === undefined}
-            onClick={onMoveDown}
-          >
+          </Button>
+          <Button aria-label={moveDownLabel} disabled={onMoveDown === undefined} onClick={onMoveDown}>
             ↓
-          </button>
+          </Button>
         </span>
       </div>
       {children !== undefined && <div className="chart-overlay-row-inputs">{children}</div>}

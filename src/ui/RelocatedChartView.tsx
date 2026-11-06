@@ -49,6 +49,7 @@ import { orbsOf } from '../chart/extended-settings.js';
 import { useStableBy, useStableMoment } from './use-stable-moment.js';
 import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
+import { Button } from './primitives/Button.js';
 
 type Load =
   | { readonly kind: 'idle' }
@@ -308,15 +309,13 @@ export function RelocatedChartView({
           onChange={selectLocation}
         />
         {(person.relocationPlaces?.length ?? 0) > 0 && selectedLocationId !== '' && (
-          <button
-            type="button"
-            className="quiet"
+          <Button
             onClick={() => {
               removeLocation(selectedLocationId);
             }}
           >
             {t.deleteSavedLocation}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -350,14 +349,9 @@ export function RelocatedChartView({
       </div>
       <div className="relocation-save-place">
         <TextField label={t.saveLocationName} value={locationName} onChange={setLocationName} />
-        <button
-          type="button"
-          className="quiet"
-          disabled={relocationPlace === undefined || locationName.trim() === ''}
-          onClick={saveLocation}
-        >
+        <Button disabled={relocationPlace === undefined || locationName.trim() === ''} onClick={saveLocation}>
           {t.saveLocation}
-        </button>
+        </Button>
       </div>
       {locationError !== undefined && <StatusMessage kind="error">{t.savedLocationError(locationError)}</StatusMessage>}
 

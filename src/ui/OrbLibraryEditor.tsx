@@ -138,25 +138,21 @@ export function OrbLibraryEditor({
           {profiles.map((profile) => (
             <li key={profile.id}>
               <strong>{profile.name}</strong> — {t.revisionLabel(profile.revision)}{' '}
-              <button
-                type="button"
-                className="quiet"
+              <Button
                 onClick={() => {
                   setDraft(draftOf(profile));
                   setError(undefined);
                 }}
               >
                 {t.edit(profile.name)}
-              </button>{' '}
-              <button
-                type="button"
-                className="quiet"
+              </Button>{' '}
+              <Button
                 onClick={() => {
                   remove(profile.id);
                 }}
               >
                 {t.remove(profile.name)}
-              </button>
+              </Button>
             </li>
           ))}
         </ul>
@@ -206,19 +202,17 @@ export function OrbLibraryEditor({
           />
           {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
           <p>
-            <button type="button" className="quiet" onClick={save} disabled={draft.name.trim() === ''}>
+            <Button onClick={save} disabled={draft.name.trim() === ''}>
               {existing === undefined ? t.saveNew : t.saveRevision(nextRevision(existing))}
-            </button>{' '}
-            <button
-              type="button"
-              className="quiet"
+            </Button>{' '}
+            <Button
               onClick={() => {
                 setDraft(undefined);
                 setError(undefined);
               }}
             >
               {t.cancel}
-            </button>
+            </Button>
           </p>
         </div>
       )}

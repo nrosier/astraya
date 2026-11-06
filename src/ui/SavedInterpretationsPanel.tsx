@@ -30,6 +30,7 @@ import { useMessages } from './messages.js';
 import { savedTypeLabel } from './result-basis-label.js';
 import { formatSavedTime } from './saved-time.js';
 import { savedInterpretationsPanelMessages } from './SavedInterpretationsPanel.messages.js';
+import { Button } from './primitives/Button.js';
 
 type LoadState = 'loading' | 'error' | 'ready';
 
@@ -230,9 +231,7 @@ export function SavedInterpretationsPanel({
           const hasDescription = item.description !== null && item.description !== '';
           return (
             <li key={item.id} className="saved-interpretation-row">
-              <button
-                type="button"
-                className="quiet"
+              <Button
                 onClick={(event) => {
                   openSaved(item.id, event.currentTarget);
                 }}
@@ -251,10 +250,8 @@ export function SavedInterpretationsPanel({
                   ·
                 </span>{' '}
                 <span className="saved-interpretation-type">{type}</span>
-              </button>{' '}
-              <button
-                type="button"
-                className="quiet"
+              </Button>{' '}
+              <Button
                 disabled={deleting}
                 onClick={() => {
                   setDeleteError(false);
@@ -262,7 +259,7 @@ export function SavedInterpretationsPanel({
                 }}
               >
                 {t.pastDelete}
-              </button>
+              </Button>
               {pendingDelete?.from === 'list' && pendingDelete.id === item.id && (
                 <DeleteConfirmation
                   busy={deleting}
@@ -319,9 +316,7 @@ export function SavedInterpretationsPanel({
             >
               {t.pastDelete}
             </button>{' '}
-            <button type="button" className="quiet" onClick={closeModal}>
-              {t.pastClose}
-            </button>
+            <Button onClick={closeModal}>{t.pastClose}</Button>
           </>
         }
       >

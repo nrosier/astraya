@@ -16,6 +16,7 @@ import { aspectDisplayName, bodyDisplayName, signDisplayName } from './astro-nam
 import type { BiWheelAspect, BiWheelFacts, BodyOnRing } from './bi-wheel-selection.js';
 import { biWheelSelectionPanelMessages } from './BiWheelSelectionPanel.messages.js';
 import { useMessages } from './messages.js';
+import { Button } from './primitives/Button.js';
 
 interface Props {
   readonly facts: BiWheelFacts;
@@ -61,9 +62,7 @@ export function BiWheelSelectionPanel({ facts, ringLabels, locale, onClear }: Pr
     <div className="chart-isolation-panel">
       <div className="chart-isolation-head">
         <strong>{heading}</strong>
-        <button type="button" className="quiet" onClick={onClear}>
-          {t.clear}
-        </button>
+        <Button onClick={onClear}>{t.clear}</Button>
       </div>
 
       {facts.kind === 'body' && (

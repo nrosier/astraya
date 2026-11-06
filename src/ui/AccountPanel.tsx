@@ -71,15 +71,14 @@ function AdoptionPanel({
         >
           {t.addToAccountButton}
         </button>
-        <button
-          className="quiet"
+        <Button
           disabled={busy}
           onClick={() => {
             resolve(false);
           }}
         >
           {t.leaveOnDeviceButton}
-        </button>
+        </Button>
       </p>
     </div>
   );
@@ -349,9 +348,9 @@ function RemoveAccountData({ userId, onRemoved }: { userId: string; onRemoved: (
       <p>{t.removeDataPrompt}</p>
       {error !== undefined && <StatusMessage kind="error">{t.removeDataFailed(error)}</StatusMessage>}
       <p className="actions">
-        <button className="quiet" disabled={busy} onClick={remove}>
+        <Button disabled={busy} onClick={remove}>
           {t.removeDataButton}
-        </button>
+        </Button>
       </p>
     </div>
   );
