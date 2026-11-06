@@ -7,7 +7,7 @@
 /**
  * @module ui/primitives/Disclosure
  * @purpose Shared expandable region: a full-width 44px trigger row (title, summary, explicit action text, chevron) controlling a panel.
- * @conventions A real button with aria-expanded/aria-controls (not a bare browser triangle); opening never moves focus; the panel's content is only mounted while open; uncontrolled, starting closed unless `defaultOpen` — a caller wanting it to reset on a new subject remounts it with a `key`. Wording comes from the caller's locale files.
+ * @conventions A real button with aria-expanded/aria-controls (not a bare browser triangle); opening never moves focus; the panel's content is only mounted while open; uncontrolled by default, starting closed unless `defaultOpen` — a caller wanting it to reset on a new subject remounts it with a `key`. A caller that remembers the state passes `open` and `onOpenChange` (#856) and owns it. Wording comes from the caller's locale files.
  * @exports Disclosure, DisclosureProps
  */
 import { useId, useState } from 'react';
@@ -20,6 +20,9 @@ export interface DisclosureProps {
   readonly showLabel: string;
   readonly hideLabel: string;
   readonly defaultOpen?: boolean | undefined;
+  /** Controlled mode (#856): when given, the caller owns the open state and `onOpenChange` is told of each toggle. */
+  readonly open?: boolean | undefined;
+  readonly onOpenChange?: ((open: boolean) => void) | undefined;
   readonly children: React.ReactNode;
 }
 
@@ -29,9 +32,12 @@ export function Disclosure({
   showLabel,
   hideLabel,
   defaultOpen = false,
+  open: controlledOpen,
+  onOpenChange,
   children,
 }: DisclosureProps): React.JSX.Element {
-  const [open, setOpen] = useState(defaultOpen);
+  const [ownOpen, setOwnOpen] = useState(defaultOpen);
+  const open = controlledOpen ?? ownOpen;
   const panelId = useId();
   return (
     <div className={open ? 'primitive-disclosure open' : 'primitive-disclosure'}>
@@ -41,7 +47,8 @@ export function Disclosure({
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => {
-          setOpen((current) => !current);
+          if (controlledOpen === undefined) setOwnOpen(!open);
+          onOpenChange?.(!open);
         }}
       >
         <span className="primitive-disclosure-text">

@@ -422,6 +422,37 @@ test.describe('with the shared people (#799)', () => {
     await expectSavedAfterClose(0);
   });
 
+  test('an Advanced group starts closed on Profile, Bodies and Special, none on Display, and the open state is remembered (#856)', async () => {
+    test.setTimeout(90_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
+
+    const card = page.locator('dialog.settings-card');
+    const panel = card.locator('[role="tabpanel"]:not([hidden])');
+    await openSettings(page);
+    for (const tab of ['Profile', 'Bodies', 'Special'] as const) {
+      await card.getByRole('tab', { name: tab, exact: true }).click();
+      await expect(panel.getByRole('button', { name: /^Advanced/ })).toHaveAttribute('aria-expanded', 'false');
+    }
+    await card.getByRole('tab', { name: 'Display & glyphs', exact: true }).click();
+    await expect(panel.getByRole('button', { name: /^Advanced/ })).toHaveCount(0);
+
+    // Open the Profile group, close the card and reload: the choice is a device preference, so it holds.
+    await card.getByRole('tab', { name: 'Profile', exact: true }).click();
+    await panel.getByRole('button', { name: /^Advanced/ }).click();
+    await expect(panel.getByRole('button', { name: /^Advanced/ })).toHaveAttribute('aria-expanded', 'true');
+    await page.keyboard.press('Escape');
+    await expect(card).toBeHidden();
+    await page.reload();
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
+    await openSettings(page);
+    await card.getByRole('tab', { name: 'Profile', exact: true }).click();
+    await expect(panel.getByRole('button', { name: /^Advanced/ })).toHaveAttribute('aria-expanded', 'true');
+    await card.getByRole('tab', { name: 'Bodies', exact: true }).click();
+    await expect(panel.getByRole('button', { name: /^Advanced/ })).toHaveAttribute('aria-expanded', 'false');
+  });
+
   test('the card is not part of the printed page', async () => {
     test.setTimeout(90_000);
     await openSharedPerson(page, baseUrl, EINSTEIN);

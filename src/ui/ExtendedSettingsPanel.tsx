@@ -26,6 +26,7 @@
 import { Checkbox } from './primitives/Checkbox.js';
 import { NumberField } from './primitives/NumberField.js';
 import { StagedDialog } from './primitives/StagedDialog.js';
+import { AdvancedGroup } from './primitives/AdvancedGroup.js';
 import { tabPanelProps, Tabs } from './primitives/Tabs.js';
 import { Disclosure } from './primitives/Disclosure.js';
 import { formatDecimal } from './format.js';
@@ -98,6 +99,8 @@ import { SortableTable } from './SortableTable.js';
 import type { TableColumn } from './table-sort.js';
 import { RulershipSetting } from './RulershipSetting.js';
 import { SymbolSetting } from './SymbolSetting.js';
+import { useAdvancedGroupOpen } from './advanced-groups-setting.js';
+import { customisedCount, ORB_SCALE_SEGMENTS, type AdvancedTab } from './settings-groups.js';
 import { useGlyphVariants, type GlyphLook } from './glyph-variant-setting.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { VARIANT_BODIES } from '../chart/glyph-variants.js';
@@ -122,6 +125,9 @@ const PLANET_KEYS: readonly ObjectKey[] = [
 ];
 const ASTEROID_KEYS: readonly ObjectKey[] = ['ceres', 'pallas', 'juno', 'vesta'];
 const POINT_KEYS: readonly ObjectKey[] = ['vertex', 'partOfFortune', 'partOfSpirit'];
+
+/** The house systems the first screen offers (#856): Placidus and Whole Sign, plus whichever is selected. */
+const FIRST_SCREEN_HOUSE_SYSTEMS: readonly string[] = ['P', 'W'];
 
 const NO_POINTS: readonly CustomPointDefinition[] = [];
 const NO_STARS: readonly ChosenFixedStar[] = [];
@@ -488,6 +494,15 @@ export function ExtendedSettingsPanel({
   const currentCitedPreset = matchCitedOrbPreset(draft.orbScalePercent, effective.orbRules);
   const currentScheme =
     currentOrbProfile === undefined ? undefined : matchCalculationScheme(draft.boundsScheme, currentOrbProfile);
+  // The Advanced groups (#856): open or closed is a device preference; a closed group says how many of its values
+  // differ from the active profile's baseline. Nothing here touches the draft, so Apply keeps every hidden value.
+  const [profileAdvancedOpen, setProfileAdvancedOpen] = useAdvancedGroupOpen('profile');
+  const [bodiesAdvancedOpen, setBodiesAdvancedOpen] = useAdvancedGroupOpen('bodies');
+  const [specialAdvancedOpen, setSpecialAdvancedOpen] = useAdvancedGroupOpen('special');
+  const advancedSummary = (tab: AdvancedTab, extra = 0): string | undefined => {
+    const count = customisedCount(tab, effective, extra);
+    return count === 0 ? undefined : t.advancedCustomised(String(count));
+  };
   const deviceChanged =
     atOpen !== undefined &&
     (symbolClass !== atOpen.symbolClass ||
@@ -876,7 +891,9 @@ export function ExtendedSettingsPanel({
                   <Select
                     label={t.houseSystemLegend}
                     value={draft.houseSystem}
-                    options={HOUSE_SYSTEMS.map((system) => ({
+                    options={HOUSE_SYSTEMS.filter(
+                      (system) => FIRST_SCREEN_HOUSE_SYSTEMS.includes(system.code) || system.code === draft.houseSystem,
+                    ).map((system) => ({
                       value: system.code,
                       label: houseSystemNames.get(system.code) ?? system.key,
                     }))}
@@ -903,26 +920,51 @@ export function ExtendedSettingsPanel({
                 </p>
               </fieldset>
 
-              <fieldset className="field-group settings-card-group">
-                <legend>{t.schemeLegend}</legend>
-                <p className="hint settings-card-tag">{t.appliesOnApply}</p>
-                <p className="hint">{t.schemeHint}</p>
-                <OptionCards
-                  label={t.schemeLabel}
-                  value={currentScheme ?? 'custom'}
-                  options={[
-                    ...(currentScheme === undefined
-                      ? [{ value: 'custom', title: t.schemeOptions.custom, consequence: t.schemeNotes.custom }]
-                      : []),
-                    ...CALCULATION_SCHEME_IDS.map((id) => ({
-                      value: id,
-                      title: CALCULATION_SCHEMES[id].name,
-                      consequence: CALCULATION_SCHEMES[id].description,
-                    })),
-                  ]}
-                  onChange={chooseScheme}
-                />
-              </fieldset>
+              <AdvancedGroup
+                title={t.advancedTitle.profile}
+                summary={advancedSummary('profile')}
+                showLabel={t.showDetails}
+                hideLabel={t.hideDetails}
+                open={profileAdvancedOpen}
+                onOpenChange={setProfileAdvancedOpen}
+              >
+                <fieldset className="field-group settings-card-group">
+                  <legend>{t.allHouseSystemsLegend}</legend>
+                  <p className="hint settings-card-tag">{t.appliesOnApply}</p>
+                  <Select
+                    label={t.allHouseSystemsLabel}
+                    value={draft.houseSystem}
+                    options={HOUSE_SYSTEMS.map((system) => ({
+                      value: system.code,
+                      label: houseSystemNames.get(system.code) ?? system.key,
+                    }))}
+                    onChange={(value) => {
+                      patch({ houseSystem: value });
+                    }}
+                  />
+                </fieldset>
+
+                <fieldset className="field-group settings-card-group">
+                  <legend>{t.schemeLegend}</legend>
+                  <p className="hint settings-card-tag">{t.appliesOnApply}</p>
+                  <p className="hint">{t.schemeHint}</p>
+                  <OptionCards
+                    label={t.schemeLabel}
+                    value={currentScheme ?? 'custom'}
+                    options={[
+                      ...(currentScheme === undefined
+                        ? [{ value: 'custom', title: t.schemeOptions.custom, consequence: t.schemeNotes.custom }]
+                        : []),
+                      ...CALCULATION_SCHEME_IDS.map((id) => ({
+                        value: id,
+                        title: CALCULATION_SCHEMES[id].name,
+                        consequence: CALCULATION_SCHEMES[id].description,
+                      })),
+                    ]}
+                    onChange={chooseScheme}
+                  />
+                </fieldset>
+              </AdvancedGroup>
             </>
           </div>
 
@@ -948,22 +990,6 @@ export function ExtendedSettingsPanel({
                     }}
                   />
                 </div>
-                <label>
-                  {t.scaleLabel}
-                  {draft.orbScalePercent > 0 ? '+' : ''}
-                  {draft.orbScalePercent}%
-                  <input
-                    type="range"
-                    aria-label={t.orbScaleAriaLabel}
-                    min={-90}
-                    max={90}
-                    step={10}
-                    value={draft.orbScalePercent}
-                    onChange={(event) => {
-                      patch({ orbScalePercent: Number(event.target.value) });
-                    }}
-                  />
-                </label>
                 <div className="settings-card-block">
                   <OptionCards
                     label={t.orbProfileLabel}
@@ -1027,116 +1053,148 @@ export function ExtendedSettingsPanel({
                       }}
                     />
                   </div>
-                  <Disclosure title={t.minorChooseEach} showLabel={t.showDetails} hideLabel={t.hideDetails}>
-                    {MINOR_ASPECTS.map((aspect) => (
-                      <Checkbox
-                        key={aspect.key}
-                        label={`${String(aspect.angle)}° ${aspectDisplayName(aspect.key, locale)}`}
-                        checked={draft.enabledMinorAspects.includes(aspect.key)}
-                        onChange={(value) => {
-                          setMinorAspect(aspect.key, value);
-                        }}
-                      />
-                    ))}
-                  </Disclosure>
                 </div>
               </fieldset>
 
-              <fieldset className="field-group settings-card-group">
-                <legend>{t.matrixLegend}</legend>
-                <p className="hint settings-card-tag">{t.appliesOnApply}</p>
-                <div className="settings-card-block">
-                  <OptionCards
-                    label={t.objectPresetLabel}
-                    value={currentObjectPreset ?? 'custom'}
-                    options={[
-                      ...(currentObjectPreset === undefined
-                        ? [
-                            {
-                              value: 'custom',
-                              title: t.objectPresetOptions.custom,
-                              consequence: t.objectPresetNotes.custom,
-                            },
-                          ]
-                        : []),
-                      ...OBJECT_POLICY_PRESET_IDS.map((id) => ({
-                        value: id,
-                        title: t.objectPresetOptions[id],
-                        consequence: t.objectPresetNotes[id],
-                      })),
-                    ]}
-                    onChange={choosePreset}
-                  />
-                </div>
-                <StatusMessage kind="success">
-                  {t.objectVisibleCount(
-                    String(Object.values(draft.objectPolicies).filter((policy) => policy.visible).length),
-                    String(Object.keys(draft.objectPolicies).length),
-                  )}
-                </StatusMessage>
-                <div className="settings-card-matrix-toolbar">
-                  {groupActions(t.planetsGroupLabel, PLANET_KEYS)}
-                  {groupActions(t.minorPlanetsLegend, ASTEROID_KEYS)}
-                  {groupActions(t.pointsGroupLabel, POINT_KEYS)}
-                </div>
-                <div className="settings-card-matrix-bulk" role="group" aria-label={t.matrixBulkLabel}>
-                  <Checkbox
-                    label={t.matrixAllVisible}
-                    checked={everyRow((policy) => policy.visible)}
-                    onChange={(on) => {
-                      setColumn('visible', on);
-                    }}
-                  />
-                  <Checkbox
-                    label={t.matrixAllAspects}
-                    checked={everyRow((policy) => policy.aspectParticipant)}
-                    onChange={(on) => {
-                      setColumn('aspects', on);
-                    }}
-                  />
-                  <Checkbox
-                    label={t.matrixAllReports}
-                    checked={everyRow(isInterpreted)}
-                    onChange={(on) => {
-                      setColumn('reports', on);
-                    }}
-                  />
-                </div>
-                <SortableTable
-                  caption={t.matrixLegend}
-                  columns={matrixColumns}
-                  rows={matrixRows}
-                  getRowKey={(row) => row.key}
-                />
-                <Disclosure title={t.aboutPoints} showLabel={t.showDetails} hideLabel={t.hideDetails}>
-                  <p className="hint">{t.vertexHelp}</p>
-                  <p className="hint">{t.spiritHelp}</p>
-                  <p className="hint">{t.aspectsToHint}</p>
-                </Disclosure>
-              </fieldset>
-
-              {onCustomPointsChange !== undefined && (
+              <AdvancedGroup
+                title={t.advancedTitle.bodies}
+                summary={advancedSummary('bodies', formulaRows.length)}
+                showLabel={t.showDetails}
+                hideLabel={t.hideDetails}
+                open={bodiesAdvancedOpen}
+                onOpenChange={setBodiesAdvancedOpen}
+              >
                 <fieldset className="field-group settings-card-group">
-                  <legend>{t.formulaHeading}</legend>
+                  <legend>{t.fineTuneAspectsLegend}</legend>
                   <p className="hint settings-card-tag">{t.appliesOnApply}</p>
-                  <p className="hint">{t.formulaStaged}</p>
-                  <FormulaPointsSection
-                    rows={formulaRows}
-                    name={pointName}
-                    formula={pointFormula}
-                    shown={pointShown}
-                    error={pointError}
-                    onName={setPointName}
-                    onFormula={setPointFormula}
-                    onShown={setPointShown}
-                    onAdd={addFormulaPoint}
-                    onRemove={removeFormulaPoint}
-                    onKeep={keepFormulaPoint}
-                    onMode={setFormulaMode}
-                    t={t}
-                  />
+                  <label>
+                    {t.scaleLabel}
+                    {draft.orbScalePercent > 0 ? '+' : ''}
+                    {draft.orbScalePercent}%
+                    <input
+                      type="range"
+                      aria-label={t.orbScaleAriaLabel}
+                      min={-90}
+                      max={90}
+                      step={10}
+                      value={draft.orbScalePercent}
+                      onChange={(event) => {
+                        patch({ orbScalePercent: Number(event.target.value) });
+                      }}
+                    />
+                  </label>
+                  <div className="settings-card-block">
+                    <Disclosure title={t.minorChooseEach} showLabel={t.showDetails} hideLabel={t.hideDetails}>
+                      {MINOR_ASPECTS.map((aspect) => (
+                        <Checkbox
+                          key={aspect.key}
+                          label={`${String(aspect.angle)}° ${aspectDisplayName(aspect.key, locale)}`}
+                          checked={draft.enabledMinorAspects.includes(aspect.key)}
+                          onChange={(value) => {
+                            setMinorAspect(aspect.key, value);
+                          }}
+                        />
+                      ))}
+                    </Disclosure>
+                  </div>
                 </fieldset>
-              )}
+
+                <fieldset className="field-group settings-card-group">
+                  <legend>{t.matrixLegend}</legend>
+                  <p className="hint settings-card-tag">{t.appliesOnApply}</p>
+                  <div className="settings-card-block">
+                    <OptionCards
+                      label={t.objectPresetLabel}
+                      value={currentObjectPreset ?? 'custom'}
+                      options={[
+                        ...(currentObjectPreset === undefined
+                          ? [
+                              {
+                                value: 'custom',
+                                title: t.objectPresetOptions.custom,
+                                consequence: t.objectPresetNotes.custom,
+                              },
+                            ]
+                          : []),
+                        ...OBJECT_POLICY_PRESET_IDS.map((id) => ({
+                          value: id,
+                          title: t.objectPresetOptions[id],
+                          consequence: t.objectPresetNotes[id],
+                        })),
+                      ]}
+                      onChange={choosePreset}
+                    />
+                  </div>
+                  <StatusMessage kind="success">
+                    {t.objectVisibleCount(
+                      String(Object.values(draft.objectPolicies).filter((policy) => policy.visible).length),
+                      String(Object.keys(draft.objectPolicies).length),
+                    )}
+                  </StatusMessage>
+                  <div className="settings-card-matrix-toolbar">
+                    {groupActions(t.planetsGroupLabel, PLANET_KEYS)}
+                    {groupActions(t.minorPlanetsLegend, ASTEROID_KEYS)}
+                    {groupActions(t.pointsGroupLabel, POINT_KEYS)}
+                  </div>
+                  <div className="settings-card-matrix-bulk" role="group" aria-label={t.matrixBulkLabel}>
+                    <Checkbox
+                      label={t.matrixAllVisible}
+                      checked={everyRow((policy) => policy.visible)}
+                      onChange={(on) => {
+                        setColumn('visible', on);
+                      }}
+                    />
+                    <Checkbox
+                      label={t.matrixAllAspects}
+                      checked={everyRow((policy) => policy.aspectParticipant)}
+                      onChange={(on) => {
+                        setColumn('aspects', on);
+                      }}
+                    />
+                    <Checkbox
+                      label={t.matrixAllReports}
+                      checked={everyRow(isInterpreted)}
+                      onChange={(on) => {
+                        setColumn('reports', on);
+                      }}
+                    />
+                  </div>
+                  <SortableTable
+                    caption={t.matrixLegend}
+                    columns={matrixColumns}
+                    rows={matrixRows}
+                    getRowKey={(row) => row.key}
+                  />
+                  <Disclosure title={t.aboutPoints} showLabel={t.showDetails} hideLabel={t.hideDetails}>
+                    <p className="hint">{t.vertexHelp}</p>
+                    <p className="hint">{t.spiritHelp}</p>
+                    <p className="hint">{t.aspectsToHint}</p>
+                  </Disclosure>
+                </fieldset>
+
+                {onCustomPointsChange !== undefined && (
+                  <fieldset className="field-group settings-card-group">
+                    <legend>{t.formulaHeading}</legend>
+                    <p className="hint settings-card-tag">{t.appliesOnApply}</p>
+                    <p className="hint">{t.formulaStaged}</p>
+                    <FormulaPointsSection
+                      rows={formulaRows}
+                      name={pointName}
+                      formula={pointFormula}
+                      shown={pointShown}
+                      error={pointError}
+                      onName={setPointName}
+                      onFormula={setPointFormula}
+                      onShown={setPointShown}
+                      onAdd={addFormulaPoint}
+                      onRemove={removeFormulaPoint}
+                      onKeep={keepFormulaPoint}
+                      onMode={setFormulaMode}
+                      t={t}
+                    />
+                  </fieldset>
+                )}
+              </AdvancedGroup>
             </>
           </div>
 
@@ -1174,172 +1232,187 @@ export function ExtendedSettingsPanel({
                     patch({ midpointsVisible: value });
                   }}
                 />
-                <div className="settings-card-indent">
-                  <div className="settings-card-choice-line">
-                    <span>{t.lilithLabel}</span>
-                    <ChoiceGroup
-                      label={t.lilithModelAriaLabel}
-                      segmented
-                      value={draft.lilithVariant}
-                      options={[
-                        { value: 'mean', label: t.mean },
-                        { value: 'true', label: t.true },
-                        { value: 'interpolated', label: t.interpolated },
-                      ]}
-                      onChange={(value) => {
-                        if (value === 'mean' || value === 'true' || value === 'interpolated')
-                          patch({ lilithVariant: value });
-                      }}
-                    />
-                  </div>
-                  <Disclosure title={t.aboutSpecial} showLabel={t.showDetails} hideLabel={t.hideDetails}>
-                    <p className="hint">{t.lilithHelp}</p>
-                    <p className="hint">{t.chironHelp}</p>
-                    <p className="hint">{t.nodeHelp}</p>
-                  </Disclosure>
-                </div>
-                <div className="settings-card-indent">
-                  <div className="settings-card-choice-line">
-                    <span>{t.lunarNodesLabel}</span>
-                    <ChoiceGroup
-                      label={t.lunarNodeModelAriaLabel}
-                      segmented
-                      value={draft.nodeVariant}
-                      options={[
-                        { value: 'mean', label: t.mean },
-                        { value: 'true', label: t.true },
-                      ]}
-                      onChange={(value) => {
-                        if (value === 'mean' || value === 'true') patch({ nodeVariant: value });
-                      }}
-                    />
-                  </div>
-                </div>
-                <div className="settings-card-indent">
-                  <Checkbox
-                    label={t.antiscia}
-                    checked={draft.antisciaVisible}
-                    onChange={(value) => {
-                      patch({ antisciaVisible: value });
-                    }}
-                  />
-                  <div className="settings-card-indent">
-                    <NumberField
-                      label={t.antisciaMaxOrbLabel}
-                      value={String(draft.antisciaMaxOrb)}
-                      min={0}
-                      max={10}
-                      step={0.5}
-                      decreaseLabel={t.antisciaMaxOrbDecreaseLabel}
-                      increaseLabel={t.antisciaMaxOrbIncreaseLabel}
-                      onChange={(value) => {
-                        const parsed = Number(value);
-                        if (value !== '' && Number.isFinite(parsed) && parsed >= 0) patch({ antisciaMaxOrb: parsed });
-                      }}
-                    />
-                  </div>
-                  <p className="hint settings-card-indent">{t.antisciaHint}</p>
-                </div>
-                <div className="settings-card-indent">
-                  <Checkbox
-                    label={t.declination}
-                    checked={draft.declinationVisible}
-                    onChange={(value) => {
-                      patch({ declinationVisible: value });
-                    }}
-                  />
-                  <div className="settings-card-indent">
-                    <NumberField
-                      label={t.declinationMaxOrbLabel}
-                      value={String(draft.declinationMaxOrb)}
-                      min={0}
-                      max={10}
-                      step={0.5}
-                      decreaseLabel={t.declinationMaxOrbDecreaseLabel}
-                      increaseLabel={t.declinationMaxOrbIncreaseLabel}
-                      onChange={(value) => {
-                        const parsed = Number(value);
-                        if (value !== '' && Number.isFinite(parsed) && parsed >= 0)
-                          patch({ declinationMaxOrb: parsed });
-                      }}
-                    />
-                  </div>
-                  <p className="hint settings-card-indent">{t.declinationHint}</p>
-                </div>
-                <div className="settings-card-indent">
-                  <Checkbox
-                    label={t.dial90}
-                    checked={draft.dial90Visible}
-                    onChange={(value) => {
-                      patch({ dial90Visible: value });
-                    }}
-                  />
-                  <div className="settings-card-indent">
-                    <NumberField
-                      label={t.midpointTreeOrbLabel}
-                      value={String(draft.midpointTreeOrb)}
-                      min={0}
-                      max={10}
-                      step={0.5}
-                      decreaseLabel={t.midpointTreeOrbDecreaseLabel}
-                      increaseLabel={t.midpointTreeOrbIncreaseLabel}
-                      onChange={(value) => {
-                        const parsed = Number(value);
-                        if (value !== '' && Number.isFinite(parsed) && parsed >= 0) patch({ midpointTreeOrb: parsed });
-                      }}
-                    />
-                  </div>
-                  <p className="hint settings-card-indent">{t.dial90Hint}</p>
-                </div>
               </fieldset>
 
-              <fieldset className="field-group settings-card-group">
-                <legend>{t.motionLegend}</legend>
-                <p className="hint settings-card-tag">{t.appliesOnApply}</p>
-                <Disclosure title={t.aboutMotion} showLabel={t.showDetails} hideLabel={t.hideDetails}>
-                  <p className="hint">{t.motionHint}</p>
-                  <p className="hint">{t.stationWindowHint}</p>
-                  <p className="hint">{t.motionScoreHint}</p>
-                </Disclosure>
-                <Checkbox
-                  label={t.stationWindowLabel}
-                  checked={draft.stationWindow !== undefined}
-                  onChange={(value) => {
-                    setDraft((current) =>
-                      value
-                        ? { ...current, stationWindow: { k: current.stationWindow?.k ?? STATION_WINDOW_DEFAULT_K } }
-                        : withoutStationWindow(current),
-                    );
-                  }}
-                />
-                {draft.stationWindow !== undefined && (
+              <AdvancedGroup
+                title={t.advancedTitle.special}
+                summary={advancedSummary('special')}
+                showLabel={t.showDetails}
+                hideLabel={t.hideDetails}
+                open={specialAdvancedOpen}
+                onOpenChange={setSpecialAdvancedOpen}
+              >
+                <fieldset className="field-group settings-card-group">
+                  <legend>{t.specialVariantsLegend}</legend>
+                  <p className="hint settings-card-tag">{t.appliesOnApply}</p>
                   <div className="settings-card-indent">
-                    <NumberField
-                      label={t.stationWindowKLabel}
-                      value={String(draft.stationWindow.k)}
-                      min={0.01}
-                      max={1}
-                      step={0.01}
-                      decreaseLabel={t.stationWindowKDecreaseLabel}
-                      increaseLabel={t.stationWindowKIncreaseLabel}
+                    <div className="settings-card-choice-line">
+                      <span>{t.lilithLabel}</span>
+                      <ChoiceGroup
+                        label={t.lilithModelAriaLabel}
+                        segmented
+                        value={draft.lilithVariant}
+                        options={[
+                          { value: 'mean', label: t.mean },
+                          { value: 'true', label: t.true },
+                          { value: 'interpolated', label: t.interpolated },
+                        ]}
+                        onChange={(value) => {
+                          if (value === 'mean' || value === 'true' || value === 'interpolated')
+                            patch({ lilithVariant: value });
+                        }}
+                      />
+                    </div>
+                    <Disclosure title={t.aboutSpecial} showLabel={t.showDetails} hideLabel={t.hideDetails}>
+                      <p className="hint">{t.lilithHelp}</p>
+                      <p className="hint">{t.chironHelp}</p>
+                      <p className="hint">{t.nodeHelp}</p>
+                    </Disclosure>
+                  </div>
+                  <div className="settings-card-indent">
+                    <div className="settings-card-choice-line">
+                      <span>{t.lunarNodesLabel}</span>
+                      <ChoiceGroup
+                        label={t.lunarNodeModelAriaLabel}
+                        segmented
+                        value={draft.nodeVariant}
+                        options={[
+                          { value: 'mean', label: t.mean },
+                          { value: 'true', label: t.true },
+                        ]}
+                        onChange={(value) => {
+                          if (value === 'mean' || value === 'true') patch({ nodeVariant: value });
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div className="settings-card-indent">
+                    <Checkbox
+                      label={t.antiscia}
+                      checked={draft.antisciaVisible}
                       onChange={(value) => {
-                        const parsed = Number(value);
-                        // Rounded to four places so a stepper's float arithmetic (0.05 + 0.01) never leaves a stray tail in the draft.
-                        if (value !== '' && isStationWindowK(parsed)) {
-                          patch({ stationWindow: { k: Math.round(parsed * 10000) / 10000 } });
-                        }
+                        patch({ antisciaVisible: value });
                       }}
                     />
+                    <div className="settings-card-indent">
+                      <NumberField
+                        label={t.antisciaMaxOrbLabel}
+                        value={String(draft.antisciaMaxOrb)}
+                        min={0}
+                        max={10}
+                        step={0.5}
+                        decreaseLabel={t.antisciaMaxOrbDecreaseLabel}
+                        increaseLabel={t.antisciaMaxOrbIncreaseLabel}
+                        onChange={(value) => {
+                          const parsed = Number(value);
+                          if (value !== '' && Number.isFinite(parsed) && parsed >= 0) patch({ antisciaMaxOrb: parsed });
+                        }}
+                      />
+                    </div>
+                    <p className="hint settings-card-indent">{t.antisciaHint}</p>
                   </div>
-                )}
-                <Checkbox
-                  label={t.motionScoreLabel}
-                  checked={draft.motionScore === true}
-                  onChange={(value) => {
-                    setDraft((current) => withMotionScore(current, value));
-                  }}
-                />
-              </fieldset>
+                  <div className="settings-card-indent">
+                    <Checkbox
+                      label={t.declination}
+                      checked={draft.declinationVisible}
+                      onChange={(value) => {
+                        patch({ declinationVisible: value });
+                      }}
+                    />
+                    <div className="settings-card-indent">
+                      <NumberField
+                        label={t.declinationMaxOrbLabel}
+                        value={String(draft.declinationMaxOrb)}
+                        min={0}
+                        max={10}
+                        step={0.5}
+                        decreaseLabel={t.declinationMaxOrbDecreaseLabel}
+                        increaseLabel={t.declinationMaxOrbIncreaseLabel}
+                        onChange={(value) => {
+                          const parsed = Number(value);
+                          if (value !== '' && Number.isFinite(parsed) && parsed >= 0)
+                            patch({ declinationMaxOrb: parsed });
+                        }}
+                      />
+                    </div>
+                    <p className="hint settings-card-indent">{t.declinationHint}</p>
+                  </div>
+                  <div className="settings-card-indent">
+                    <Checkbox
+                      label={t.dial90}
+                      checked={draft.dial90Visible}
+                      onChange={(value) => {
+                        patch({ dial90Visible: value });
+                      }}
+                    />
+                    <div className="settings-card-indent">
+                      <NumberField
+                        label={t.midpointTreeOrbLabel}
+                        value={String(draft.midpointTreeOrb)}
+                        min={0}
+                        max={10}
+                        step={0.5}
+                        decreaseLabel={t.midpointTreeOrbDecreaseLabel}
+                        increaseLabel={t.midpointTreeOrbIncreaseLabel}
+                        onChange={(value) => {
+                          const parsed = Number(value);
+                          if (value !== '' && Number.isFinite(parsed) && parsed >= 0)
+                            patch({ midpointTreeOrb: parsed });
+                        }}
+                      />
+                    </div>
+                    <p className="hint settings-card-indent">{t.dial90Hint}</p>
+                  </div>
+                </fieldset>
+
+                <fieldset className="field-group settings-card-group">
+                  <legend>{t.motionLegend}</legend>
+                  <p className="hint settings-card-tag">{t.appliesOnApply}</p>
+                  <Disclosure title={t.aboutMotion} showLabel={t.showDetails} hideLabel={t.hideDetails}>
+                    <p className="hint">{t.motionHint}</p>
+                    <p className="hint">{t.stationWindowHint}</p>
+                    <p className="hint">{t.motionScoreHint}</p>
+                  </Disclosure>
+                  <Checkbox
+                    label={t.stationWindowLabel}
+                    checked={draft.stationWindow !== undefined}
+                    onChange={(value) => {
+                      setDraft((current) =>
+                        value
+                          ? { ...current, stationWindow: { k: current.stationWindow?.k ?? STATION_WINDOW_DEFAULT_K } }
+                          : withoutStationWindow(current),
+                      );
+                    }}
+                  />
+                  {draft.stationWindow !== undefined && (
+                    <div className="settings-card-indent">
+                      <NumberField
+                        label={t.stationWindowKLabel}
+                        value={String(draft.stationWindow.k)}
+                        min={0.01}
+                        max={1}
+                        step={0.01}
+                        decreaseLabel={t.stationWindowKDecreaseLabel}
+                        increaseLabel={t.stationWindowKIncreaseLabel}
+                        onChange={(value) => {
+                          const parsed = Number(value);
+                          // Rounded to four places so a stepper's float arithmetic (0.05 + 0.01) never leaves a stray tail in the draft.
+                          if (value !== '' && isStationWindowK(parsed)) {
+                            patch({ stationWindow: { k: Math.round(parsed * 10000) / 10000 } });
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
+                  <Checkbox
+                    label={t.motionScoreLabel}
+                    checked={draft.motionScore === true}
+                    onChange={(value) => {
+                      setDraft((current) => withMotionScore(current, value));
+                    }}
+                  />
+                </fieldset>
+              </AdvancedGroup>
 
               {onFixedStarsChange !== undefined && (
                 <fieldset className="field-group settings-card-group">
@@ -1363,13 +1436,6 @@ export function ExtendedSettingsPanel({
     </div>
   );
 }
-
-// The orb scale's segmented control (#824): the three named steps the Orb profile cards also stand for.
-const ORB_SCALE_SEGMENTS = [
-  { value: 'tight', label: '-50%', percent: -50 },
-  { value: 'standard', label: '0%', percent: 0 },
-  { value: 'wide', label: '+40%', percent: 40 },
-] as const;
 
 /** The segment the scale sits on, or `custom` between them. */
 function segmentFor(percent: number): string {

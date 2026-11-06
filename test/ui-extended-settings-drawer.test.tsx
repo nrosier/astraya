@@ -7,7 +7,8 @@
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ADVANCED_GROUPS_KEY, resetAdvancedGroupsForTests } from '../src/ui/advanced-groups-setting.js';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from '../src/chart/extended-settings.js';
@@ -46,8 +47,16 @@ function fakeProvider(): EphemerisProvider {
   };
 }
 
+// These tests drive controls inside the Advanced groups, so each starts with all three open (#856); the tests of the
+// closed state itself are in ui-extended-settings-advanced.test.tsx.
+beforeEach(() => {
+  localStorage.setItem(ADVANCED_GROUPS_KEY, JSON.stringify(['profile', 'bodies', 'special']));
+  resetAdvancedGroupsForTests();
+});
+
 afterEach(() => {
   localStorage.clear();
+  resetAdvancedGroupsForTests();
   writeRulershipChoice('modern');
   document.body.innerHTML = '';
 });
