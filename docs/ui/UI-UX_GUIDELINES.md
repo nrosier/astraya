@@ -403,9 +403,19 @@ Every data-bearing component must define:
 
 Use a shared status component with `role="status"` and polite live announcements for progress/success, `role="alert"` for blocking failures, and `aria-busy` on the region being updated.
 
-In code that component is `StatusMessage`. A message that needs a reason beside its headline passes the reason as `detail`, which renders a second line inside the same live region; never a second paragraph. Screens do not hand-roll a `<p>` or `<div>` carrying `role="status"` or `role="alert"`; `test/ui-status-message.test.tsx` fails on any new one (a ratchet, #1162), and the spots that predate it are allowlisted there and reviewed in #1211.
+In code that component is `StatusMessage`. A message that needs a reason beside its headline passes the reason as `detail`, which renders a second line inside the same live region; never a second paragraph. Screens do not hand-roll a `<p>` or `<div>` carrying `role="status"` or `role="alert"`; `test/ui-status-message.test.tsx` fails on any new one (a ratchet, #1162), and the recorded exceptions below are allowlisted there.
 
 **Recorded exception (#1162, decision S2):** the rows inside the birth-place search popup (searching with a spinner, no matches, search failed) keep their own markup and their `status` and `alert` roles. They are rows in a listbox popup with their own spacing, not messages for a result region. Any other popup row that reports its own state may follow the same exception only if it is recorded here.
+
+**Recorded exceptions (#1211):** these keep their own markup and live-region role because each is not a result-region message, or its markup cannot be a single `<p>`.
+
+- Chart selection bar (`ChartView`) and the update prompts (`PwaStatus`, `SidebarFooter`): the announcement carries an action button, so it cannot be a plain paragraph.
+- Sync popover (`SyncBadge`): a labelled popover region with its own heading, detail and link.
+- Note save state (`NoteSaveStatus`): a persistent empty-capable region wrapping the visible line, so an announcement fires when the line appears.
+- Page-header export status (`PageHeader`) and the PDF builder build status (`PdfExportBuilder`): an always-present region with its own `status` look, tied to its button by `aria-describedby` (the builder), and sized for the title or action row.
+- Contact-step announcement (`SelectionInspector`): an atomic polite region read aloud while stepping through contacts.
+
+Every other `role="status"` or `role="alert"` message renders through `StatusMessage`.
 
 ## 8. Make dense data scannable
 

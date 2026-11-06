@@ -1076,12 +1076,12 @@ export function ExtendedSettingsPanel({
                     onChange={choosePreset}
                   />
                 </div>
-                <p className="hint" role="status">
+                <StatusMessage kind="success">
                   {t.objectVisibleCount(
                     String(Object.values(draft.objectPolicies).filter((policy) => policy.visible).length),
                     String(Object.keys(draft.objectPolicies).length),
                   )}
-                </p>
+                </StatusMessage>
                 <div className="settings-card-matrix-toolbar">
                   {groupActions(t.planetsGroupLabel, PLANET_KEYS)}
                   {groupActions(t.minorPlanetsLegend, ASTEROID_KEYS)}
