@@ -1068,6 +1068,9 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
     expect(rejection?.getAttribute('role')).toBe('alert');
     expect(rejection?.textContent).toContain(t.tier2CustomizationRejected);
     expect(rejection?.textContent).toContain(t.tier2CustomizationRejectedReason('Asks to promise an outcome.'));
+    expect(rejection?.querySelector('.status-detail')?.textContent).toBe(
+      t.tier2CustomizationRejectedReason('Asks to promise an outcome.'),
+    );
     expect(panelOf(container).textContent).not.toContain(t.tier2Error(''));
     expect(panelOf(container).querySelector('.tier2-result')).toBeNull();
 
@@ -1108,7 +1111,9 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
     await vi.waitFor(() => {
       expect(panelOf(container).querySelector('.ai-customized-rejection')).not.toBeNull();
     });
-    expect(panelOf(container).querySelectorAll('.ai-customized-rejection p')).toHaveLength(1);
+    const rejection = panelOf(container).querySelector('.ai-customized-rejection');
+    expect(rejection?.getAttribute('role')).toBe('alert');
+    expect(rejection?.querySelector('.status-detail')).toBeNull();
 
     act(() => {
       root.unmount();

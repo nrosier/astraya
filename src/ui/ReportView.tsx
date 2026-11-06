@@ -433,10 +433,13 @@ function AiCustomizedPanel({
       {!online && <StatusMessage kind="offline">{shared.offlineNeeded}</StatusMessage>}
       {error !== undefined && <StatusMessage kind="error">{t.tier2Error(error)}</StatusMessage>}
       {rejection !== undefined && (
-        <div className="ai-customized-rejection warning" role="alert">
-          <p>{t.tier2CustomizationRejected}</p>
-          {rejection.reason !== undefined && <p>{t.tier2CustomizationRejectedReason(rejection.reason)}</p>}
-        </div>
+        <StatusMessage
+          kind="error"
+          className="ai-customized-rejection"
+          detail={rejection.reason === undefined ? undefined : t.tier2CustomizationRejectedReason(rejection.reason)}
+        >
+          {t.tier2CustomizationRejected}
+        </StatusMessage>
       )}
       {result !== undefined && (
         <div className="tier2-result">
