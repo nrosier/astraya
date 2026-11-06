@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Validity checks for `settings-registry.ts` (#506/#509), per
  * `docs/ui/UI-UX_IMPLEMENTATION_PLAN.md` §5.2/§9: the shipped registry itself has no invariant
