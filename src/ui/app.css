@@ -3133,11 +3133,8 @@ label.stacked textarea:focus-visible {
   margin-top: var(--space-1);
 }
 
-.ai-customized-rejection p {
-  margin: 0;
-}
-
-.ai-customized-rejection p + p {
+.status-detail {
+  display: block;
   margin-top: var(--space-1);
 }
 

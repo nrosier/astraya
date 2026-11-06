@@ -176,6 +176,8 @@ export function BirthPlaceSearch({
               }}
             />
             {open && searchStatus !== 'idle' && (
+              // The three state rows below are popup rows inside a listbox, not result-region messages, so they keep their
+              // own markup and roles: a recorded exception to the StatusMessage rule (#1162, decision S2, guidelines §7).
               <div className="birth-place-search-dropdown">
                 {searchStatus === 'searching' && (
                   <p className="birth-place-search-state" role="status">
