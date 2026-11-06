@@ -100,6 +100,19 @@ export const SETTINGS: readonly SettingDefinition[] = [
     resetTarget: 'This device default (standard)',
   },
   {
+    key: 'astraya:advancedGroups',
+    scope: 'device',
+    owner:
+      'Which Advanced groups of the Extended settings drawer (Profile, Bodies, Special) are open; display only, never a calculation setting',
+    describeDefault: 'all closed',
+    persistence: 'local-storage',
+    synced: false,
+    editingSurface: 'ExtendedSettingsPanel.tsx (Advanced groups)',
+    commitMode: 'immediate',
+    sensitive: false,
+    resetTarget: 'This device default (all closed)',
+  },
+  {
     key: 'astraya:symbolClass',
     scope: 'device',
     owner: 'Which symbol class (drawn glyphs, Unicode, or text) charts and tables draw',

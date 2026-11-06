@@ -10,7 +10,8 @@
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ADVANCED_GROUPS_KEY, resetAdvancedGroupsForTests } from '../src/ui/advanced-groups-setting.js';
 import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from '../src/chart/extended-settings.js';
 import type { EphemerisProvider } from '../src/ephemeris/types.js';
 import { readDefaultCalculationProfile } from '../src/ui/default-calculation-profile.js';
@@ -58,8 +59,16 @@ function checkboxLabeled(container: HTMLElement, text: string): HTMLInputElement
   return input;
 }
 
+// These tests drive controls inside the Advanced groups, so each starts with all three open (#856); the tests of the
+// closed state itself are in ui-extended-settings-advanced.test.tsx.
+beforeEach(() => {
+  localStorage.setItem(ADVANCED_GROUPS_KEY, JSON.stringify(['profile', 'bodies', 'special']));
+  resetAdvancedGroupsForTests();
+});
+
 afterEach(() => {
   localStorage.clear();
+  resetAdvancedGroupsForTests();
   // The default rulership and profile are account preferences held in memory (#1066); start each test afresh.
   resetAccountPreferencesForTests();
 });
@@ -361,10 +370,10 @@ describe('ExtendedSettingsPanel', () => {
     const { container, root } = await mount(fakeProvider(), vi.fn());
     openCard(container);
 
-    // The house-system select, the symbols and line-weight selects and
-    // the Uranus and Pluto form selects (#419); the ayanamsa picker joins them.
+    // The house-system select and the Advanced group's full house-system list (#856), the symbols and line-weight
+    // selects and the Uranus and Pluto form selects (#419); the ayanamsa picker joins them.
     // The narrow-screen category select (#824) is a sixth select; the wide tabs are buttons, not selects.
-    expect(container.querySelectorAll('select')).toHaveLength(6);
+    expect(container.querySelectorAll('select')).toHaveLength(7);
     const siderealRadio = Array.from(
       container.querySelectorAll<HTMLInputElement>('[role="radiogroup"][aria-label="Zodiac"] input[type="radio"]'),
     ).find((radio) => !radio.checked);
@@ -376,7 +385,7 @@ describe('ExtendedSettingsPanel', () => {
     await act(async () => {
       await Promise.resolve();
     });
-    expect(container.querySelectorAll('select')).toHaveLength(7);
+    expect(container.querySelectorAll('select')).toHaveLength(8);
 
     unmount(container, root);
   });

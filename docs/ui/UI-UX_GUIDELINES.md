@@ -225,6 +225,7 @@ Use device scope for choices that reasonably differ by screen, operating system,
 - Reduced motion and interface density.
 - Drawn, Unicode, or text symbols.
 - Glyph weight and Uranus/Pluto variants.
+- Which Advanced groups of the Extended settings drawer are open.
 
 Store these locally and identify them as **This device**. A header toggle may provide fast access, but the same value must also have one canonical location under Preferences.
 

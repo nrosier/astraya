@@ -191,9 +191,20 @@ export async function openSettingsTab(page: Page, tab: SettingsTab): Promise<voi
   if (await wideTab.isVisible()) {
     await wideTab.click();
     await expect(wideTab).toHaveAttribute('aria-selected', 'true');
-    return;
+  } else {
+    await dialog.getByRole('combobox', { name: 'Category', exact: true }).selectOption({ label: tab });
   }
-  await dialog.getByRole('combobox', { name: 'Category', exact: true }).selectOption({ label: tab });
+  // Fine-tuning controls sit in a collapsed Advanced group on three of the tabs (#856). A spec that asks for a tab
+  // wants the controls in it, so open the group; a spec about the collapsed state clicks the tabs itself.
+  if (tab !== 'Display & glyphs') await openAdvancedGroup(page);
+}
+
+/** Opens the open tab's Advanced group (#856), if it is closed. */
+export async function openAdvancedGroup(page: Page): Promise<void> {
+  const panel = page.locator('dialog.settings-card [role="tabpanel"]:not([hidden])');
+  const group = panel.getByRole('button', { name: /^Advanced/ });
+  if ((await group.getAttribute('aria-expanded')) === 'false') await group.click();
+  await expect(group).toHaveAttribute('aria-expanded', 'true');
 }
 
 /** Closes the card with "Apply and redraw": the draft settings and rulers are saved on the person, and the symbols it previewed stay (#510, #806). */

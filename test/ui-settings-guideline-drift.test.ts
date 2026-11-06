@@ -44,6 +44,7 @@ const PHRASE_MAP: Readonly<Record<string, string>> = {
   'astraya:symbolClass': 'drawn, unicode, or text symbols',
   'astraya:glyphWeight': 'glyph weight',
   'astraya:glyphVariants': 'uranus/pluto variants',
+  'astraya:advancedGroups': 'advanced groups of the extended settings drawer',
 };
 
 /**
