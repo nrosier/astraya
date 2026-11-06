@@ -72,6 +72,14 @@ function card(modifier: string): HTMLElement {
 }
 
 describe('PersonForm card layout (#795)', () => {
+  it('puts the one-hour-error explanation in a tooltip on the identity heading, not in body text (#1228)', () => {
+    const heading = card('identity').querySelector('#birth-card-identity');
+    expect(heading?.textContent).toContain(t.identityCardHeading);
+    const trigger = heading?.querySelector('button[aria-label]');
+    expect(trigger?.getAttribute('aria-label')).toBe(t.identityInfoLabel);
+    expect(container?.querySelector('p.tagline')).toBeNull();
+  });
+
   it('orders the cards identity, place, notes, timezone details, export, replace data, danger', () => {
     const order = cards().map((element) =>
       [...element.classList].find((name) => name.startsWith('birth-record-card--')),

@@ -10,6 +10,7 @@
 const en = {
   personFallback: 'Person',
   reportFallback: 'Interpretation',
+  disclaimerInfoLabel: 'About reading the interpretation',
   thisPerson: 'This person',
   notCompleteReport: (name: string) =>
     `${name}’s birth record is not complete enough to calculate an interpretation yet. Fill in the missing fields on the`,
@@ -27,6 +28,7 @@ const en = {
 const nl: typeof en = {
   personFallback: 'Persoon',
   reportFallback: 'Interpretatie',
+  disclaimerInfoLabel: 'Over het lezen van de interpretatie',
   thisPerson: 'Deze persoon',
   notCompleteReport: (name: string) =>
     `Het geboorterecord van ${name} is niet volledig genoeg om een interpretatie te berekenen. Vul de ontbrekende velden in op de`,

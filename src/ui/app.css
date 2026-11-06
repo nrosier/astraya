@@ -2179,12 +2179,15 @@ label.stacked textarea:focus-visible {
   overflow-x: auto;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  /* Scroll cue (#1076): a fade along each side edge while more columns lie beyond it; the local layers in --bg cover it once that end is reached. */
+  /* Scroll cue (#1076, #1229): a fade along an edge only while more columns lie beyond it. The local cover layers
+     scroll with the content and must be at least as wide as the fades they hide: with narrower covers (#1076 used
+     --space-4 over --space-6) a band stayed on both sides of a table that fits. */
+  --scroll-cue-width: var(--space-6);
   background:
-    linear-gradient(to right, var(--bg), var(--bg)) local left / var(--space-4) 100% no-repeat,
-    linear-gradient(to left, var(--bg), var(--bg)) local right / var(--space-4) 100% no-repeat,
-    linear-gradient(to right, var(--line), transparent) scroll left / var(--space-6) 100% no-repeat,
-    linear-gradient(to left, var(--line), transparent) scroll right / var(--space-6) 100% no-repeat;
+    linear-gradient(to right, var(--bg), var(--bg)) local left / var(--scroll-cue-width) 100% no-repeat,
+    linear-gradient(to left, var(--bg), var(--bg)) local right / var(--scroll-cue-width) 100% no-repeat,
+    linear-gradient(to right, var(--line), transparent) scroll left / var(--scroll-cue-width) 100% no-repeat,
+    linear-gradient(to left, var(--line), transparent) scroll right / var(--scroll-cue-width) 100% no-repeat;
 }
 
 .data-table table {
