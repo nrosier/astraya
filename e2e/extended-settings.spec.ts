@@ -431,7 +431,7 @@ test.describe('with the shared people (#799)', () => {
     const card = page.locator('dialog.settings-card');
     const panel = card.locator('[role="tabpanel"]:not([hidden])');
     await openSettings(page);
-    for (const tab of ['Profile', 'Bodies', 'Special'] as const) {
+    for (const tab of ['Profile & frame', 'Bodies & orbs', 'Special points'] as const) {
       await card.getByRole('tab', { name: tab, exact: true }).click();
       await expect(panel.getByRole('button', { name: /^Advanced/ })).toHaveAttribute('aria-expanded', 'false');
     }
@@ -439,7 +439,7 @@ test.describe('with the shared people (#799)', () => {
     await expect(panel.getByRole('button', { name: /^Advanced/ })).toHaveCount(0);
 
     // Open the Profile group, close the card and reload: the choice is a device preference, so it holds.
-    await card.getByRole('tab', { name: 'Profile', exact: true }).click();
+    await card.getByRole('tab', { name: 'Profile & frame', exact: true }).click();
     await panel.getByRole('button', { name: /^Advanced/ }).click();
     await expect(panel.getByRole('button', { name: /^Advanced/ })).toHaveAttribute('aria-expanded', 'true');
     await page.keyboard.press('Escape');
@@ -447,9 +447,9 @@ test.describe('with the shared people (#799)', () => {
     await page.reload();
     await expect(page.locator('div.chart-wheel')).toBeVisible();
     await openSettings(page);
-    await card.getByRole('tab', { name: 'Profile', exact: true }).click();
+    await card.getByRole('tab', { name: 'Profile & frame', exact: true }).click();
     await expect(panel.getByRole('button', { name: /^Advanced/ })).toHaveAttribute('aria-expanded', 'true');
-    await card.getByRole('tab', { name: 'Bodies', exact: true }).click();
+    await card.getByRole('tab', { name: 'Bodies & orbs', exact: true }).click();
     await expect(panel.getByRole('button', { name: /^Advanced/ })).toHaveAttribute('aria-expanded', 'false');
   });
 
