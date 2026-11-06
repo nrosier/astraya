@@ -1,7 +1,7 @@
 /**
  * @module primitives/StatusMessage
  * @purpose The one message block for a result's state (#513, `docs/ui/UI-UX_GUIDELINES.md` §7): loading, updating, empty, zero, partial, offline, success and error, each with the right live-region semantics.
- * @conventions Errors are `role="alert"` (announced at once); every other kind is `role="status"` (polite). Appearance comes from the existing `.warning`/`.status` rules, keyed by `data-kind`, so a screen picks a kind, never a class.
+ * @conventions Errors are `role="alert"` (announced at once); every other kind is `role="status"` (polite). Appearance comes from the existing `.warning`/`.status` rules, keyed by `data-kind`, so a screen picks a kind, never a class. An optional `detail` is a second line inside the same live region (#1162), never a second paragraph.
  * @exports StatusMessage, STATUS_KINDS, StatusKind
  */
 import type { ReactNode } from 'react';
@@ -19,9 +19,12 @@ export function StatusMessage({
   children,
   id,
   className,
+  detail,
 }: {
   readonly kind: StatusKind;
   readonly children: ReactNode;
+  /** A second line in the same message, for a reason that goes with the headline (#1162). */
+  readonly detail?: ReactNode;
   readonly id?: string | undefined;
   readonly className?: string | undefined;
 }): React.JSX.Element {
@@ -35,6 +38,7 @@ export function StatusMessage({
       aria-busy={WORKING.has(kind) ? true : undefined}
     >
       {children}
+      {detail !== undefined && <span className="status-detail">{detail}</span>}
     </p>
   );
 }
