@@ -91,9 +91,9 @@ test('a natal, transit, and progressed triwheel is independently configurable (#
     return px;
   })()`);
   expect(hint.y - (diagnostics.y + diagnostics.height)).toBeGreaterThanOrEqual(step - 0.5);
-  // The ring calculation basis is behind a Calculation details disclosure, closed by default (#1232).
+  // The ring calculation basis is behind a Calculation disclosure, closed by default (#1232).
   await expect(page.getByRole('region', { name: 'Ring calculation basis' })).toHaveCount(0);
-  await page.getByRole('button', { name: /^Calculation details/ }).click();
+  await page.getByRole('button', { name: /^Calculation/ }).click();
   await expect(page.getByRole('region', { name: 'Ring calculation basis' })).toContainText('Natal');
   await expect(page.getByText('How each extra ring was calculated', { exact: false })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Ring calculation basis' })).toContainText('Transit');

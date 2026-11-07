@@ -1120,7 +1120,7 @@ export function ChartDataView({
           <StatusMessage kind="error">{t.chartError(overlayLoad.message)}</StatusMessage>
         )}
         {overlayRingData !== undefined && (
-          // The calculation snapshot identities are internal provenance, not for readers: a Calculation details disclosure (named Diagnostics until the owner found that sounded like debugging, 2026-11-07),
+          // The calculation snapshot identities are internal provenance, not for readers: a Calculation disclosure (named Diagnostics until the owner found that sounded like debugging, 2026-11-07),
           // closed by default, keeps them reachable (#1232, owner decision 2026-11-06).
           <div className="chart-diagnostics">
             <Disclosure
