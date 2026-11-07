@@ -21,6 +21,7 @@ import type { AuthUser } from '../sync/auth-client.js';
 import { accountPanelMessages } from './AccountPanel.messages.js';
 import { useMessages } from './messages.js';
 import { profileTileMessages } from './ProfileTile.messages.js';
+import { Button } from './primitives/Button.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { SyncBadge } from './SyncBadge.js';
 import { useExclusiveOpen } from './use-exclusive-open.js';
@@ -100,16 +101,16 @@ export function ProfileTile({
       <SyncBadge {...(user === undefined ? {} : { initial })} />
       {user === undefined ? (
         <>
-          <button
-            type="button"
+          <Button
+            variant="plain"
             className="profile-tile profile-tile-guest"
             onClick={() => {
               onSignIn();
             }}
           >
             {account.signInButton}
-          </button>
-          <button
+          </Button>
+          <Button
             ref={dropdown.buttonRef(KEY)}
             type="button"
             className="profile-tile-menu"
@@ -122,10 +123,11 @@ export function ProfileTile({
             }}
           >
             {t.kebabGlyph}
-          </button>
+          </Button>
         </>
       ) : (
-        <button
+        <Button
+          variant="plain"
           ref={dropdown.buttonRef(KEY)}
           type="button"
           className="profile-tile"
@@ -141,7 +143,7 @@ export function ProfileTile({
           <span className="profile-tile-kebab" aria-hidden="true">
             {t.kebabGlyph}
           </span>
-        </button>
+        </Button>
       )}
       {open && (
         <div id={popupId} className="profile-popover" role="group" aria-label={t.menuLabel}>
@@ -175,8 +177,8 @@ export function ProfileTile({
           <div className="profile-popover-separator" aria-hidden="true" />
           <div className="profile-popover-section">
             {user === undefined ? (
-              <button
-                type="button"
+              <Button
+                variant="plain"
                 className="profile-popover-action"
                 onClick={() => {
                   dropdown.close();
@@ -184,11 +186,11 @@ export function ProfileTile({
                 }}
               >
                 {account.signInButton}
-              </button>
+              </Button>
             ) : (
-              <button type="button" className="profile-popover-action danger" disabled={busy} onClick={signOut}>
+              <Button variant="plain" className="profile-popover-action danger" disabled={busy} onClick={signOut}>
                 {account.signOutButton}
-              </button>
+              </Button>
             )}
             {error !== undefined && <StatusMessage kind="error">{account.signOutFailed(error)}</StatusMessage>}
           </div>

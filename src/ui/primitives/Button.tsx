@@ -9,13 +9,13 @@
 /**
  * @module ui/primitives/Button
  * @purpose Shared button primitive: primary/quiet/danger/plain variants, standard/compact sizes, busy-label support.
- * @conventions A thin wrapper over a real <button>; variant/size map onto existing app.css classes (.quiet, .danger) plus a new .primitive-button-primary for the previously-missing emphasized default, and `plain` (no class) for the bare button look. `ref` is an ordinary prop (React 19), so a caller can focus or measure the button. Compact returns to standard touch sizing on coarse-pointer/touch layouts via CSS, not JS.
+ * @conventions A thin wrapper over a real <button>; variant/size map onto existing app.css classes (.quiet, .danger) plus a new .primitive-button-primary for the previously-missing emphasized default, and `plain` (no class) for the bare button look. An optional `className` is appended after the variant/size classes for a control's own placement or identity class (#1161). `ref` is an ordinary prop (React 19), so a caller can focus or measure the button. Compact returns to standard touch sizing on coarse-pointer/touch layouts via CSS, not JS.
  * @exports Button
  */
 export type ButtonVariant = 'primary' | 'quiet' | 'danger' | 'plain';
 export type ButtonSize = 'standard' | 'compact';
 
-export interface ButtonProps extends Omit<React.ComponentPropsWithRef<'button'>, 'className'> {
+export interface ButtonProps extends React.ComponentPropsWithRef<'button'> {
   readonly variant?: ButtonVariant;
   readonly size?: ButtonSize;
   /** Shown instead of children while a submitted action is in flight, e.g. "Building PDF…". */
@@ -39,10 +39,13 @@ export function Button({
   disabled,
   children,
   type = 'button',
+  className: extraClass,
   ...rest
 }: ButtonProps): React.JSX.Element {
   const sizeClass = size === 'compact' ? 'primitive-button-compact' : undefined;
-  const className = [VARIANT_CLASS[variant], sizeClass].filter((value) => value !== undefined).join(' ') || undefined;
+  const className =
+    [VARIANT_CLASS[variant], sizeClass, extraClass].filter((value) => value !== undefined && value !== '').join(' ') ||
+    undefined;
   return (
     <button
       type={type}

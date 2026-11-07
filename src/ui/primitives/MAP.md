@@ -2,7 +2,7 @@
 
 Shared UI primitives for the #506 UI/UX overhaul (Phase 1, #508). Business logic stays outside these components — the primitive owns anatomy, states, and keyboard/accessible behavior; the feature owns labels, options, validation, values, and domain consequences. Styled in `src/ui/app.css`'s "Shared primitive styling" block, driven by the `:root` design tokens added alongside these.
 
-- `Button.tsx` — Primary/quiet/danger variants, standard/compact sizes, busy-label support. Deps: none.
+- `Button.tsx` — Primary/quiet/danger/plain variants, optional className, standard/compact sizes, busy-label support. Deps: none.
 - `Field.tsx` + `Field.messages.ts` — Shared label/help/error/unit slot layout wrapping one form control (its own "optional" wording is translated); `useFieldIds` gives every other field primitive its id/aria-describedby wiring.
 - `TextField.tsx` — Single-line text input via `Field`. Deps: `./Field`.
 - `PasswordField.tsx` — Masked input via `Field` with a required autocomplete purpose; opt-in show/hide toggle. Deps: `./Field`.

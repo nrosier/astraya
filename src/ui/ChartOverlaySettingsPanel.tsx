@@ -137,15 +137,15 @@ export function ChartOverlaySettingsPanel({
 
   return (
     <div className="chart-overlay-settings">
-      <button
-        type="button"
+      <Button
+        variant="plain"
         ref={triggerRef}
         className="chart-overlay-trigger"
         aria-haspopup="dialog"
         onClick={openDrawer}
       >
         {t.trigger}
-      </button>
+      </Button>
       <StagedDialog
         open={open}
         heading={t.trigger}

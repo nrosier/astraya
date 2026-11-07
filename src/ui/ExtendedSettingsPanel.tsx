@@ -755,8 +755,8 @@ export function ExtendedSettingsPanel({
 
   return (
     <div className="extended-settings">
-      <button
-        type="button"
+      <Button
+        variant="plain"
         ref={triggerRef}
         className="extended-settings-trigger"
         aria-haspopup="dialog"
@@ -771,7 +771,7 @@ export function ExtendedSettingsPanel({
             <span className="extended-settings-trigger-count">{t.triggerChanged(String(segments.length))}</span>
           </>
         )}
-      </button>
+      </Button>
 
       <StagedDialog
         open={open}
