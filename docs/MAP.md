@@ -26,6 +26,7 @@ Topic folders:
 - `ops/CI.md` — What the GitHub Actions CI runs and when: jobs, e2e shards, cancelling superseded runs, timings (#1095). Deps: `.github/workflows/ci.yml`.
 - `ops/DEPENDENCIES.md` — Hand-maintained dependency/licence inventory root `CLAUDE.md`'s onboarding checklist points to. Deps: `node_modules/*/package.json` licence fields.
 - `ops/IMAGE-VERIFICATION.md` — How a consumer verifies the keyless Cosign signature on a published Docker image (#1209). Deps: `.github/workflows/docker.yml`.
+- `ops/VISUAL-REVIEW.md` — How a UI batch is shown to the owner for the visual check and how verdicts are recorded: capture spec, review page builder, coherence rules. Deps: `e2e/visual-review.spec.ts`, `scripts/build-visual-review.mjs`, `ui/UI-UX_GUIDELINES.md`.
 - `ops/RELEASING.md` — Release policy and tagging scheme (every milestone ends in a release).
 
 Subdirectories:

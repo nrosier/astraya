@@ -1,0 +1,51 @@
+// Builds the owner's visual review page (docs/ops/VISUAL-REVIEW.md): one HTML file with every screen in
+// e2e/visual-review-screens.json at 390, 1280 and 3440 in light and dark, taken from the screenshots a
+// `VISUAL_REVIEW_OUT=<dir> npx playwright test e2e/visual-review.spec.ts` run wrote, each with a verdict row and a box
+// that copies the owner's notes back. Usage: node scripts/build-visual-review.mjs <screenshot-dir> <out.html>
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+const [dir, out] = process.argv.slice(2);
+if (dir === undefined || out === undefined) {
+  console.error('usage: node scripts/build-visual-review.mjs <screenshot-dir> <out.html>');
+  process.exit(2);
+}
+
+const screens = JSON.parse(readFileSync(new URL('../e2e/visual-review-screens.json', import.meta.url), 'utf8'));
+const template = readFileSync(new URL('./visual-review-template.html', import.meta.url), 'utf8');
+const SIZES = [
+  ['390', 'Phone 390'],
+  ['1280', 'Laptop 1280'],
+  ['3440', 'Wide 3440'],
+];
+const THEMES = ['light', 'dark'];
+const escape = (text) =>
+  String(text).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
+const uri = (name) => `data:image/jpeg;base64,${readFileSync(join(dir, name)).toString('base64')}`;
+
+const cards = screens.map(({ slug, title, issues, check }) => {
+  const rows = THEMES.map((theme) => {
+    const figures = SIZES.flatMap(([size, label]) => {
+      const name = `${slug}__${size}__${theme}.jpg`;
+      if (!existsSync(join(dir, name))) return [];
+      const id = `${slug}-${size}-${theme}`;
+      return [
+        `<figure class="shot s${size}"><button type="button" class="zoom" data-src-id="${id}" aria-label="Enlarge ${escape(title)}, ${label}, ${theme}">` +
+          `<img id="${id}" loading="lazy" alt="${escape(title)} at ${label}, ${theme} theme" src="${uri(name)}"></button>` +
+          `<figcaption>${label}</figcaption></figure>`,
+      ];
+    });
+    return `<div class="theme-row" data-theme-row="${theme}"><h4>${theme[0].toUpperCase()}${theme.slice(1)}</h4><div class="shots">${figures.join('')}</div></div>`;
+  });
+  return (
+    `<section class="screen" id="${slug}"><header><h3>${escape(title)}</h3><span class="issue">${escape(issues)}</span></header>` +
+    `<p class="note">${escape(check)}</p>${rows.join('')}` +
+    `<div class="verdict" role="group" aria-label="Verdict for ${escape(title)}">` +
+    `<label><input type="radio" name="v-${slug}" value="ok"> Looks right</label>` +
+    `<label><input type="radio" name="v-${slug}" value="change"> Needs a change</label>` +
+    `<input type="text" id="n-${slug}" class="comment" placeholder="What should change?" aria-label="Comment for ${escape(title)}"></div></section>`
+  );
+});
+const nav = screens.map(({ slug, title }) => `<a href="#${slug}">${escape(title)}</a>`).join('');
+writeFileSync(out, template.replace('{{NAV}}', nav).replace('{{CARDS}}', cards.join('')));
+console.log(`wrote ${out}`);
