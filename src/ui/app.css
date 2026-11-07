@@ -6897,15 +6897,17 @@ button.primitive-button-compact {
 
 /* Where the header's actions are standard buttons and fields (the timing views: date, Now, filter, Export), the Export
    menu button takes the same height as its neighbours and they share a baseline, so the row reads as one set of controls. */
-.page-header-actions:has(> button.quiet, > .primitive-field, > .timing-header-control, > .primitive-select) {
+.page-header-actions:has(> button.quiet, > .primitive-field, > .primitive-choice-field, > .timing-header-control) {
   align-items: flex-end;
 }
 
-.page-header-actions .primitive-field {
+.page-header-actions .primitive-field,
+.page-header-actions .primitive-choice-field {
   margin-bottom: 0;
 }
 
-.page-header-actions:has(> button.quiet, > .primitive-field, > .timing-header-control) .page-header-export-toggle {
+.page-header-actions:has(> button.quiet, > .primitive-field, > .primitive-choice-field, > .timing-header-control)
+  .page-header-export-toggle {
   min-height: var(--control-height);
 }
 
