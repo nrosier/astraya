@@ -1,12 +1,14 @@
 // @vitest-environment jsdom
 /**
  * The PDF builder's saved AI interpretation picker (#759): only the PDF's language is offered, signed out it is
- * disabled and never fetches, and the chosen order is changed with Move up / Move down.
+ * disabled and never fetches, and the chosen order is changed with the arrow buttons (Move up / Move down).
  */
+import { readFileSync } from 'node:fs';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { SavedInterpretationSummary } from '../src/interpretation/tier2-client.js';
+import { setLocale } from '../src/ui/locale.js';
 import { PdfAiInterpretationPicker } from '../src/ui/PdfAiInterpretationPicker.js';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -134,6 +136,57 @@ describe('PdfAiInterpretationPicker', () => {
       buttons[2]?.click(); // move b up
     });
     expect(onChange).toHaveBeenLastCalledWith(['b', 'a', 'c']);
+  });
+
+  it('shows arrow symbols with accessible names in en and nl, disabled at the ends (#1304)', async () => {
+    list.mockResolvedValue([entry('a', 'en'), entry('b', 'en'), entry('c', 'nl'), entry('d', 'nl')]);
+    for (const [locale, ids, up, down] of [
+      ['en', ['a', 'b'], 'Move up', 'Move down'],
+      ['nl', ['c', 'd'], 'Omhoog', 'Omlaag'],
+    ] as const) {
+      setLocale(locale);
+      const c = await mount({ selectedIds: ids, locale });
+      const buttons = [...c.querySelectorAll('ol button')] as HTMLButtonElement[];
+      expect(buttons.map((b) => b.getAttribute('aria-label'))).toEqual([up, down, up, down]);
+      for (const b of buttons) {
+        expect(b.textContent).toBe('');
+        expect(b.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
+      }
+      expect(buttons.map((b) => b.querySelector('svg')?.getAttribute('data-arrow'))).toEqual([
+        'up',
+        'down',
+        'up',
+        'down',
+      ]);
+      expect(buttons.map((b) => b.disabled)).toEqual([true, false, false, true]);
+      act(() => {
+        root?.unmount();
+      });
+      container?.remove();
+    }
+  });
+
+  it('keeps the arrows on the row, after a label that truncates with an ellipsis, for a long title (#1304)', async () => {
+    const long = 'A very long interpretation title '.repeat(20).trim();
+    list.mockResolvedValue([entry('a', 'en', { description: long }), entry('b', 'en')]);
+    setLocale('en');
+    const c = await mount({ selectedIds: ['a', 'b'] });
+    const row = c.querySelector('ol li');
+    const label = row?.querySelector<HTMLElement>('.pdf-ai-row-label');
+    expect(label?.textContent).toContain(long);
+    expect(label?.title).toContain(long);
+    expect(row?.lastElementChild?.tagName).toBe('BUTTON');
+    expect([...(row?.querySelectorAll('button') ?? [])].map((b) => b.getAttribute('aria-label'))).toEqual([
+      'Move up',
+      'Move down',
+    ]);
+    expect(row?.querySelectorAll('svg')).toHaveLength(2);
+    // jsdom does no layout, so the truncation itself is asserted on the stylesheet rule.
+    const css = readFileSync('src/ui/app.css', 'utf8');
+    const rule = /\.pdf-ai-row-label \{([^}]*)\}/.exec(css)?.[1] ?? '';
+    expect(rule).toContain('text-overflow: ellipsis');
+    expect(rule).toContain('overflow: hidden');
+    expect(rule).toContain('min-width: 0');
   });
 
   it('shows time, description when present, and the specific type for each entry', async () => {
