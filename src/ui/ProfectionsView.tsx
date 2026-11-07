@@ -18,6 +18,9 @@
  * @exports ProfectionsView; toRow, columns, ProfectionRow (reused by pdf-export-plan.ts)
  */
 import { DateField } from './primitives/DateField.js';
+import { signDegreeColumn } from './position-column.js';
+import { Tooltip } from './primitives/Tooltip.js';
+import { Button } from './primitives/Button.js';
 import { GlossaryText } from './GlossaryText.js';
 import { personHref } from './route.js';
 import { useEffect, useMemo, useState } from 'react';
@@ -27,7 +30,7 @@ import { bodyById } from '../astrology/bodies.js';
 import { degreeParts } from '../domain/chart-tables.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
 import { computeProfections, type ProfectedPeriod, type ProfectionData } from '../domain/profections.js';
-import { bodyDisplayName, signDisplayName } from './astro-names.messages.js';
+import { bodyDisplayName } from './astro-names.messages.js';
 import { formatFixed, todayInputValue } from './format.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
@@ -54,6 +57,8 @@ type Load =
 
 export interface ProfectionRow {
   readonly period: string;
+  /** Ecliptic longitude, for the merged Position column's sort. */
+  readonly longitude: number;
   readonly sign: string;
   readonly degree: number;
   readonly minute: number;
@@ -70,6 +75,7 @@ export function toRow(period: string, profected: ProfectedPeriod): ProfectionRow
   const coRuler = profected.coRuler === undefined ? undefined : bodyById(profected.coRuler);
   return {
     period,
+    longitude: profected.longitude,
     ...parts,
     ruler: ruler?.name ?? String(profected.ruler),
     rulerKey: ruler?.key ?? String(profected.ruler),
@@ -80,15 +86,7 @@ export function toRow(period: string, profected: ProfectedPeriod): ProfectionRow
 export function columns(t: typeof profectionsViewMessages.en, locale: Locale): readonly TableColumn<ProfectionRow>[] {
   return [
     { key: 'period', label: t.periodLabel, valueOf: (row) => row.period },
-    {
-      key: 'sign',
-      label: t.signLabel,
-      valueOf: (row) => row.sign,
-      render: (row) => signDisplayName(row.sign, locale),
-    },
-    { key: 'degree', label: t.degLabel, valueOf: (row) => row.degree },
-    { key: 'minute', label: t.minLabel, valueOf: (row) => row.minute },
-    { key: 'second', label: t.secLabel, valueOf: (row) => row.second },
+    signDegreeColumn<ProfectionRow>(t.positionLabel, locale),
     {
       key: 'ruler',
       label: t.lordLabel,
@@ -210,61 +208,86 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
         headingLevel={2}
         title={person.displayName ? t.heading(person.displayName) : t.profectionsFallback}
         titleTerm="profection"
+        titleAside={
+          <Tooltip text={t.hint} label={t.hintInfoLabel} className="primitive-tooltip-icon">
+            ?
+          </Tooltip>
+        }
         basis={basisLine}
-      />
-      <p className="hint">
-        <GlossaryText text={t.hint} />
-      </p>
+      >
+        {/* The as-of date and Now sit in the header, to the right (#1236); Export stays in the page header (#887). */}
+        <div className="timing-header-control">
+          <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
+        </div>
+        <Button
+          onClick={() => {
+            setAsOf(todayInputValue());
+          }}
+        >
+          {t.nowLabel}
+        </Button>
+      </PageHeader>
 
-      <section className="profections-rulers-section" aria-labelledby="rulers-heading">
-        <h2 id="rulers-heading">{t.rulersHeading}</h2>
-        <RulershipSetting value={rulership} onChange={setRulership} />
-        <p className="profections-rulers-description">
-          {rulership === 'traditional' && <GlossaryText text={t.rulersTraditional} />}
-          {rulership === 'modern' && t.rulersModern}
-          {rulership === 'both' && t.rulersBoth}
-        </p>
-      </section>
+      <div className="timing-layout">
+        <div className="timing-layout-main">
+          {/* The result region: busy while the profections (re)calculate, as the Astrocartography map is. */}
+          <div aria-busy={load.kind === 'loading'}>
+            {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
-      <p>
-        <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
-      </p>
+            {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
 
-      {/* The result region: busy while the profections (re)calculate, as the Astrocartography map is. */}
-      <div aria-busy={load.kind === 'loading'}>
-        {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
-
-        {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
-
-        {load.kind === 'ready' && (
-          <>
-            <p className="hint">
-              {t.ageLine(`${formatFixed(load.data.age, 2)}${load.data.age < 0 ? ` ${t.beforeBirth}` : ''}`)}
-            </p>
-            {rows !== undefined && (
-              <SortableTable
-                caption={t.profectionsCaption}
-                captionTerm="profection"
-                columns={columns(t, locale)}
-                rows={rows}
-                getRowKey={(row) => row.period}
-                downloadFilename={deriveExportFilename(person.displayName, 'profections', 'csv')}
-              />
+            {load.kind === 'ready' && (
+              <>
+                <p className="hint">
+                  {t.ageLine(`${formatFixed(load.data.age, 2)}${load.data.age < 0 ? ` ${t.beforeBirth}` : ''}`)}
+                </p>
+                {rows !== undefined && (
+                  <SortableTable
+                    caption={t.profectionsCaption}
+                    captionTerm="profection"
+                    columns={columns(t, locale)}
+                    rows={rows}
+                    getRowKey={(row) => row.period}
+                    downloadFilename={deriveExportFilename(person.displayName, 'profections', 'csv')}
+                  />
+                )}
+                <section className="profection-meanings" aria-labelledby="profection-meanings-heading">
+                  <h2 id="profection-meanings-heading">{t.meaningHeading}</h2>
+                  {[
+                    { period: t.yearPeriod, house: load.data.year.house },
+                    { period: t.monthPeriod, house: load.data.month.house },
+                  ].map(({ period, house }) => (
+                    <div key={period}>
+                      <h3>{t.periodHouse(period, ordinal(house, locale))}</h3>
+                      <p>{resolvePlacementText({ category: 'profected-house', house }, locale, corpus)}</p>
+                    </div>
+                  ))}
+                </section>
+              </>
             )}
-            <section className="profection-meanings" aria-labelledby="profection-meanings-heading">
-              <h2 id="profection-meanings-heading">{t.meaningHeading}</h2>
-              {[
-                { period: t.yearPeriod, house: load.data.year.house },
-                { period: t.monthPeriod, house: load.data.month.house },
-              ].map(({ period, house }) => (
-                <div key={period}>
-                  <h3>{t.periodHouse(period, ordinal(house, locale))}</h3>
-                  <p>{resolvePlacementText({ category: 'profected-house', house }, locale, corpus)}</p>
-                </div>
-              ))}
-            </section>
-          </>
-        )}
+          </div>
+        </div>
+        <div className="timing-layout-side">
+          <section className="timing-controls" aria-label={t.rulersHeading}>
+            <RulershipSetting value={rulership} onChange={setRulership} />
+            <p className="hint">
+              {t.rulersInfoLabel}{' '}
+              <Tooltip
+                text={
+                  rulership === 'traditional'
+                    ? t.rulersTraditional
+                    : rulership === 'modern'
+                      ? t.rulersModern
+                      : t.rulersBoth
+                }
+                label={t.rulersInfoLabel}
+                className="primitive-tooltip-icon"
+              >
+                ?
+              </Tooltip>
+            </p>
+          </section>
+        </div>
       </div>
     </main>
   );
