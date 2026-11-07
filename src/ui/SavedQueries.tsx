@@ -8,7 +8,7 @@
  * @conventions Thin: every rule (validation, folding, the name cap, sort order) lives in `store/saved-queries`; writes go through `Store.mutate`/`remove`/`restore`/`purge` so they reach the op-log and sync; the panel renders nothing interactive until the store is open; an unreadable or incomplete query is listed with its reason and can only be deleted, never defaulted; opening fills the form and leaves running the search to the explicit button.
  * @exports SavedQueries
  */
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { newId } from '../domain/id.js';
 import {
   SAVED_QUERY_ENTITY,
@@ -72,6 +72,18 @@ function Panel({
   const max = String(SAVED_QUERY_NAME_MAX_CHARACTERS);
 
   const queries = sortedSavedQueries(state.savedQueries, locale);
+  // A link on Overview (#1261) opens Event search with `?query=<id>`: that saved search fills the form, once, as soon as
+  // the store holds it. It never runs it, like opening one from the list.
+  const linked = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.hash.split('?')[1] ?? '').get('query');
+    if (id === null || linked.current === id) return;
+    const query = state.savedQueries.get(id);
+    if (query?.status !== 'ready') return;
+    linked.current = id;
+    onOpen(query.definition.parameters);
+    setMessage(t.opened(query.name === '' ? t.unnamed : query.name));
+  }, [state.savedQueries, onOpen, t]);
   const deleted = sortedSavedQueries(state.deleted.savedQueries, locale);
   const nameError = isSavedQueryNameTooLong(name) ? t.nameTooLong(max) : undefined;
   const label = (query: SavedQuery): string => (query.name === '' ? t.unnamed : query.name);
