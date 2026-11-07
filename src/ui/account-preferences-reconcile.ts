@@ -84,9 +84,10 @@ export function useAccountPreferencesReconcile(): AccountReconcilePrompt | undef
           return;
         }
         const plan = planReconcile(candidates, store.state.account);
-        if (plan.writes.length > 0) await store.mutate(plan.writes);
+        // With nothing to ask, the writes go in now. With a question to ask, none of them do until it is answered:
+        // nothing from the capture reaches an account that did not answer the prompt (ADR 0004 section 5).
         if (plan.proposals.length === 0) {
-          await finish([]);
+          await finish(plan.writes);
           return;
         }
         if (isCancelled()) return;
@@ -96,7 +97,7 @@ export function useAccountPreferencesReconcile(): AccountReconcilePrompt | undef
             proposals: plan.proposals,
             account: isAccountStore,
             resolve: async (resolutions) => {
-              await finish(resolutionWrites(plan.proposals, resolutions));
+              await finish([...plan.writes, ...resolutionWrites(plan.proposals, resolutions)]);
               setPrompt(undefined);
             },
           },

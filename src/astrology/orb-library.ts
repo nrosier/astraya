@@ -8,7 +8,7 @@
  * @module astrology/orb-library
  * @purpose Pure model of the device's named orb profiles (#590): validation, revisions, the per-context source choice, and resolving a context to the orbs it uses.
  * @conventions Plain objects only, validated as a whole. A profile id is stable across revisions; each edit increments `revision`. A context's source is `'card'` (the Extended settings' orbs) or a profile id; an unknown id falls back to the card rather than failing. Synastry's tightening is applied by `computeSynastry`, not here.
- * @exports MAX_ORB_PROFILES, OrbProfileRecord, OrbLibrary, OrbContextSource, OrbSourceChoice, CARD_SOURCE, validateOrbProfileRecord, validateOrbLibrary, readOrbLibraryStrict, readOrbContextSourceStrict, nextRevision, sourceForContext, orbSettingsFor
+ * @exports MAX_ORB_PROFILES, OrbProfileRecord, OrbLibrary, OrbContextSource, OrbSourceChoice, CARD_SOURCE, validateOrbProfileRecord, newOrbProfileId, validateOrbLibrary, readOrbLibraryStrict, readOrbContextSourceStrict, nextRevision, sourceForContext, orbSettingsFor
  */
 import { citedPresetSettings, isCitedOrbPresetId, validateOrbRules, type OrbRulesValue } from './orb-profiles.js';
 
@@ -47,6 +47,19 @@ const SCALE_RANGE = { min: -90, max: 90 } as const;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/**
+ * A new profile's id: random, not `profile-<count + 1>`. The library syncs across the account's devices, and two devices
+ * with the same library would each mint the same counted id for different profiles (#1250). Always a valid id.
+ */
+export function newOrbProfileId(existing: readonly OrbProfileRecord[]): string {
+  const taken = new Set(existing.map((profile) => profile.id));
+  let candidate: string;
+  do {
+    candidate = `profile-${crypto.randomUUID().replaceAll('-', '').slice(0, 12)}`;
+  } while (taken.has(candidate));
+  return candidate;
 }
 
 /** Validates one saved profile as a whole: a malformed part drops the whole profile, never part of it (#590). */

@@ -205,6 +205,25 @@ describe('an account store (#1066)', () => {
     expect(migrated()).toBe(true);
   });
 
+  it('writes nothing from the capture to an account until the prompt is answered, not even a field it never set (ADR 0004 section 5)', async () => {
+    const store = await open(true);
+    // The account chose a locale, so the legacy locale conflicts; it never set the rulership, so that one would not.
+    await store.mutate([pref('locale', 'en')]);
+    legacy({ 'astraya:reportLocale': 'nl', 'astraya:rulershipChoice': 'traditional' });
+    session.store = store;
+    session.engine = makeEngine({ kind: 'synced', at: Date.now() }).engine;
+    mount();
+    await vi.waitFor(() => {
+      expect(latest?.proposals.map((proposal) => proposal.field)).toEqual(['locale']);
+    });
+    expect(store.state.account.defaultRulership).toBeUndefined();
+    await act(async () => {
+      await latest?.resolve([{ field: 'locale', use: 'account' }]);
+    });
+    expect(store.state.account.defaultRulership?.value).toBe('traditional');
+    expect(store.state.account.locale?.value).toBe('en');
+  });
+
   it('keeps a newer account value without asking, when the signed-out choice is older (rule 4)', async () => {
     const anonymous = await open(false);
     await anonymous.mutate([pref('locale', 'nl')]);
