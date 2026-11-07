@@ -27,12 +27,14 @@ const THEMES = ['light', 'dark'] as const;
 
 test.skip(OUT === undefined, 'Set VISUAL_REVIEW_OUT to capture the visual review screenshots');
 
-async function shoot(page: Page, slug: string): Promise<void> {
+async function shoot(page: Page, slug: string, ready?: () => Promise<void>): Promise<void> {
   for (const theme of THEMES) {
     await page.emulateMedia({ colorScheme: theme });
     for (const size of SIZES) {
       await page.setViewportSize({ width: size.w, height: size.h });
       await page.waitForTimeout(350);
+      // A screen whose open state does not survive a resize reopens itself here.
+      if (ready !== undefined) await ready();
       await page.screenshot({
         path: join(OUT ?? '', `${slug}__${String(size.w)}__${theme}.jpg`),
         type: 'jpeg',
@@ -127,6 +129,41 @@ test('capture the screens of the visual review', async ({ browser }) => {
   await page.locator('button.extended-settings-trigger').click();
   await page.locator('dialog.settings-card').waitFor();
   await shoot(page, '16-extended-settings-advanced-closed');
+
+  // #1229: the Consultation transit tables, without a card opened.
+  await page.getByRole('link', { name: 'Consultation', exact: true }).first().click();
+  await page.locator('.consultation-grid').waitFor({ timeout: 60_000 });
+  await page.waitForTimeout(800);
+  await shoot(page, '17-consultation-transit-tables');
+
+  // #1225: a page reached by a click from Overview shows where it came from.
+  await page.getByRole('link', { name: 'Overview', exact: true }).first().click();
+  await page.getByText(/^Now: profected/).waitFor({ timeout: 60_000 });
+  await page.getByRole('link', { name: 'View transits', exact: true }).click();
+  await page.getByRole('heading', { level: 1 }).first().waitFor();
+  await shoot(page, '18-back-link');
+
+  // #1161: the screens whose raw buttons became the Button primitive.
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await page.getByRole('heading', { level: 1 }).first().waitFor();
+  await shoot(page, '19-people-list');
+  await gotoAndSettle(page, `${baseUrl}/#/preferences`);
+  await page.getByRole('tab', { name: 'Astrology Defaults', exact: true }).click();
+  await page.waitForTimeout(500);
+  await shoot(page, '20-preferences-astrology');
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  await openNatalChart(page);
+  const reopenOverlays = async (): Promise<void> => {
+    const drawer = page.locator('.chart-overlay-settings dialog[open]');
+    if ((await drawer.count()) > 0) return;
+    // At phone width the trigger sits in the Chart actions sheet.
+    const actions = page.getByRole('button', { name: 'Chart actions', exact: true });
+    if (await actions.isVisible()) await actions.click();
+    await page.locator('button.chart-overlay-trigger:visible').first().click();
+    await drawer.waitFor();
+    await page.waitForTimeout(400);
+  };
+  await shoot(page, '21-chart-overlay-settings', reopenOverlays);
 
   await app.close();
 });
