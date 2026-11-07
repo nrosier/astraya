@@ -94,6 +94,27 @@ test('shows one "now" line that links to Consultation', async () => {
   await expect(page).toHaveURL(/\/consultation$/);
 });
 
+test('puts Sun, Moon and Rising in a card under the natal wheel, in the same column (#1173)', async () => {
+  test.setTimeout(90_000);
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  await openOverview();
+
+  const wheel = page.locator('section.overview-card--wheel');
+  const placements = page.getByRole('region', { name: 'Sun, Moon and Rising' });
+  await expect(placements).toBeVisible({ timeout: 60_000 });
+  await expect(placements.getByText('Sun', { exact: true })).toBeVisible();
+  await expect(placements.getByText('Moon', { exact: true })).toBeVisible();
+  await expect(placements.getByText('Rising', { exact: true })).toBeVisible();
+  await expect(placements.getByText(/Pisces/)).toBeVisible();
+  const above = await wheel.boundingBox();
+  const below = await placements.boundingBox();
+  if (above === null || below === null) throw new Error('expected both cards to have a layout box');
+  expect(below.y).toBeGreaterThanOrEqual(above.y + above.height);
+  expect(below.x).toBeCloseTo(above.x, 0);
+  expect(below.width).toBeCloseTo(above.width, 0);
+});
+
 test('offers comparing with another person once there are two people, and goes to the relationship screen', async () => {
   test.setTimeout(60_000);
   // The shared people hold more than one person, so the goal is there; with a single person it is not offered.
