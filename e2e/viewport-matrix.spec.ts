@@ -206,6 +206,63 @@ test('multi-card grids span the page content width at every bottom-edge viewport
 });
 
 /**
+ * An opened card does not stretch its neighbours (#1231, §10.1 rule 6): with a Disclosure open in one column of a
+ * multi-card row, the column beside it does not grow with it (it falls back to its own natural height), instead of filling with whitespace.
+ */
+test('opening a card in a multi-card row leaves the neighbouring column its own height (#1231)', async () => {
+  test.setTimeout(120_000);
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  const id = /#\/people\/([^/]+)/.exec(page.url())?.[1];
+  expect(id).toBeDefined();
+  for (const target of multiCardPages(id ?? '').filter((candidate) => candidate.name !== 'horary')) {
+    for (const viewport of BOTTOM_EDGE_VIEWPORTS) {
+      await page.setViewportSize(viewport);
+      await page.goto(`${baseUrl}/${target.hash}`);
+      await expect(page.locator(target.ready)).toBeVisible({ timeout: 30_000 });
+      const label = `${target.name} at ${String(viewport.width)}x${String(viewport.height)}`;
+      // Stacked columns (a phone) have no shared row, so there is nothing to stretch.
+      const sideBySide = await page.evaluate<boolean>(
+        `new Set(Array.from(document.querySelectorAll(${JSON.stringify(target.cards)})).map((el) => Math.round(el.getBoundingClientRect().top))).size === 1`,
+      );
+      if (!sideBySide) continue;
+      const heights = (): Promise<number[]> =>
+        page.evaluate<number[]>(
+          `Array.from(document.querySelectorAll(${JSON.stringify(target.cards)})).map((el) => el.getBoundingClientRect().height)`,
+        );
+      const trigger = page.locator(`${target.grid} .primitive-disclosure-trigger`).first();
+      const column = await page.evaluate<number>(
+        `(() => {
+          const trigger = document.querySelector(${JSON.stringify(`${target.grid} .primitive-disclosure-trigger`)});
+          return Array.from(document.querySelectorAll(${JSON.stringify(target.cards)})).findIndex((card) => card.contains(trigger));
+        })()`,
+      );
+      const before = await heights();
+      await trigger.click();
+      await expect(trigger).toHaveAttribute('aria-expanded', 'true');
+      const after = await heights();
+      expect(column, `${label}: the Disclosure sits in a column`).toBeGreaterThanOrEqual(0);
+      before.forEach((height, index) => {
+        if (index === column) {
+          expect(after[index] ?? 0, `${label}: the open column grows`).toBeGreaterThan(height);
+        } else {
+          expect(
+            after[index] ?? 0,
+            `${label}: neighbouring column ${String(index)} does not grow with the open one`,
+          ).toBeLessThanOrEqual(height + 1);
+        }
+      });
+      await trigger.click();
+      await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+      const closed = await heights();
+      expect(
+        Math.max(...closed) - Math.min(...closed),
+        `${label}: bottom edges line up again once it is closed`,
+      ).toBeLessThanOrEqual(1);
+    }
+  }
+});
+
+/**
  * The 90% rule (#895, `docs/ui/UI-UX_GUIDELINES.md` section 10.1): where cards or columns sit side by side, the
  * shorter one is at least 90% of the taller one. Measured on natural content height, so the stretch that aligns the
  * bottom edges cannot hide a shortfall: the probe sets the row to `align-items: start` and releases the last card's

@@ -297,7 +297,7 @@ Expandable reference content uses one shared `Disclosure` component. A disclosur
 - Explicit **Show meanings**/**Hide meanings**, **Show details**/**Hide details**, or equally specific action text.
 - The standard trailing chevron, which rotates in the open state and is hidden from assistive technology.
 
-The entire trigger row has a minimum 44px target, pointer affordance, border/surface treatment consistent with other controls, and distinct hover, focus-visible, active, and open states. Opening must not move focus. The panel is associated with its trigger, and the trigger exposes expanded state. Several disclosures may remain open when comparison is useful.
+The entire trigger row has a minimum 44px target, pointer affordance, border/surface treatment consistent with other controls, and distinct hover, focus-visible, active, and open states. Opening must not move focus. The panel is associated with its trigger, and the trigger exposes expanded state. Several disclosures may remain open when comparison is useful. In a multi-card row an open disclosure follows §10.1 rule 6: its card grows and the neighbouring cards keep their own height.
 
 `<details>/<summary>` is an acceptable semantic implementation. Remove the native marker only after adding the shared chevron and explicit action wording. Do not ship a raw triangle beside a title, a glyph-only trigger, or a one-off accordion skin in a feature stylesheet.
 
@@ -475,6 +475,7 @@ These rules apply to every page that lays out more than one card, at every size 
 3. **Sizes follow content.** A card is never forced to a different height just to match a neighbour. Equal bottom edges come from the shared grid, not from fixed heights.
 4. **Grid edges match the content width.** The grid's left and right edges line up with the page's content width on every page.
 5. **Use shared classes and tokens.** Multi-card layouts use the shared grid or card classes and design tokens only; no hard-coded hex, rgb, or hsl values.
+6. **An open card does not stretch its neighbours (#1231, owner decision 2026-11-07).** When a card in a row opens (a `Disclosure`, an expanded section), the row stops stretching: the open card grows, and the cards beside it keep their own height instead of filling with whitespace. This is the expanded-state exception to rule 1, so the bottom edges differ only while a card is open and line up again when it closes. The 90% rule (rule 2) is judged with every card closed. The shared grids (`.consultation-grid`, `.birth-record`) apply this with one `:has(.primitive-disclosure.open)` rule; a multi-card page that gains a `Disclosure` in a column adds its grid to that rule.
 
 ### 10.2 Tool-page layout
 
