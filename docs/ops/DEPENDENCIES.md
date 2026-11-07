@@ -38,24 +38,26 @@ tracking, not licence compliance.
 
 ## Build and test (never shipped — not subject to the AGPL-compatibility constraint above)
 
-| Package                                    | Purpose                                                                                              | Licence              |
-| :----------------------------------------- | :--------------------------------------------------------------------------------------------------- | :------------------- |
-| `typescript`                               | Compiler/type-checker (`npm run typecheck`).                                                         | Apache-2.0           |
-| `typescript-eslint`                        | Type-aware ESLint rules (`strictTypeChecked`).                                                       | MIT                  |
-| `eslint`, `@eslint/js`, `globals`          | Lint engine and its rule/environment data.                                                           | MIT                  |
-| `eslint-plugin-react-hooks`                | Rules of Hooks and exhaustive effect dependencies, both at error for the React source (#638).        | MIT                  |
-| `prettier`                                 | Formatting (`npm run format`/`format:check`).                                                        | MIT                  |
-| `vite`                                     | Dev server and production bundler.                                                                   | MIT                  |
-| `@vitejs/plugin-react`                     | Vite's React/JSX transform.                                                                          | MIT                  |
-| `vitest`, `fast-check`                     | Unit/property test runner.                                                                           | MIT                  |
-| `@vitest/coverage-v8`                      | Coverage report (`npm run test:coverage`), report only with no threshold (#613).                     | MIT                  |
-| `knip`                                     | Unused files, exports and dependencies report (`npm run knip`), report only and never a gate (#613). | ISC                  |
-| `@playwright/test`, `@axe-core/playwright` | E2E runner and its accessibility-assertion integration.                                              | Apache-2.0 / MPL-2.0 |
-| `jsdom`                                    | DOM environment for component tests.                                                                 | MIT                  |
-| `fake-indexeddb`                           | In-memory IndexedDB for store tests.                                                                 | Apache-2.0           |
-| `tsx`                                      | Runs `.ts` scripts/tools directly (`tools/corpus-gen/`, ops scripts).                                | MIT                  |
-| `@types/*`                                 | TypeScript ambient types for the above.                                                              | MIT                  |
-| `@modelcontextprotocol/sdk`                | Agent/tooling support (`tools/`), excluded from `src/` by the `tools/` import boundary.              | MIT                  |
+| Package                                    | Purpose                                                                                                       | Licence              |
+| :----------------------------------------- | :------------------------------------------------------------------------------------------------------------ | :------------------- |
+| `typescript`                               | Compiler/type-checker (`npm run typecheck`).                                                                  | Apache-2.0           |
+| `typescript-eslint`                        | Type-aware ESLint rules (`strictTypeChecked`).                                                                | MIT                  |
+| `eslint`, `@eslint/js`, `globals`          | Lint engine and its rule/environment data.                                                                    | MIT                  |
+| `eslint-plugin-react-hooks`                | Rules of Hooks and exhaustive effect dependencies, both at error for the React source (#638).                 | MIT                  |
+| `prettier`                                 | Formatting (`npm run format`/`format:check`).                                                                 | MIT                  |
+| `vite`                                     | Dev server and production bundler.                                                                            | MIT                  |
+| `@vitejs/plugin-react`                     | Vite's React/JSX transform.                                                                                   | MIT                  |
+| `vitest`, `fast-check`                     | Unit/property test runner.                                                                                    | MIT                  |
+| `@vitest/coverage-v8`                      | Coverage report (`npm run test:coverage`), report only with no threshold (#613).                              | MIT                  |
+| `knip`                                     | Unused files, exports and dependencies report (`npm run knip`), report only and never a gate (#613).          | ISC                  |
+| `@playwright/test`, `@axe-core/playwright` | E2E runner and its accessibility-assertion integration.                                                       | Apache-2.0 / MPL-2.0 |
+| `jsdom`                                    | DOM environment for component tests.                                                                          | MIT                  |
+| `fake-indexeddb`                           | In-memory IndexedDB for store tests.                                                                          | Apache-2.0           |
+| `tsx`                                      | Runs `.ts` scripts/tools directly (`tools/corpus-gen/`, ops scripts).                                         | MIT                  |
+| `@types/*`                                 | TypeScript ambient types for the above.                                                                       | MIT                  |
+| `@modelcontextprotocol/sdk`                | Agent/tooling support (`tools/`), excluded from `src/` by the `tools/` import boundary.                       | MIT                  |
+| `oxlint`                                   | Advisory lint run only (`npm run lint:oxlint`, `.github/workflows/oxlint-advisory.yml`, #1284); never a gate. | MIT                  |
+| `oxlint-tsgolint`                          | Type-aware engine behind `oxlint --type-aware`, same advisory run (#1284).                                    | MIT                  |
 
 `@axe-core/playwright` is MPL-2.0, outside the MIT/BSD/Apache-2.0/ISC/CC0/BlueOak-1.0.0 set
 `CLAUDE.md` names. It is a devDependency used only by the Playwright a11y suite
@@ -66,6 +68,17 @@ software, so none applies to a tool that stays on the developer's and CI's
 machines. It is called out here rather than silently folded into the "all
 permissive" summary, since `CLAUDE.md`'s rule is written without a scope
 qualifier.
+
+## CI security scanners (#1279)
+
+Run only in GitHub Actions (`.github/workflows/security-scan.yml`), never installed or shipped. All are pinned to a commit SHA; see `docs/ops/SECURITY-SCANS.md`.
+
+| Tool                                                                                    | Purpose                                      | Licence    |
+| :-------------------------------------------------------------------------------------- | :------------------------------------------- | :--------- |
+| Syft (`anchore/sbom-action`)                                                            | CycloneDX SBOM.                              | Apache-2.0 |
+| Grype (`anchore/scan-action`)                                                           | Vulnerability scan of the SBOM.              | Apache-2.0 |
+| Trivy (`aquasecurity/trivy-action`)                                                     | CVE, secret and IaC/Dockerfile cross-check.  | Apache-2.0 |
+| `github/codeql-action/upload-sarif`, `actions/github-script`, `actions/upload-artifact` | SARIF upload, tracking issue, SBOM artifact. | MIT        |
 
 ## Renovate and the Docker base image
 

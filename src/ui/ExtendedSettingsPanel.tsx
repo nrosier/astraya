@@ -108,6 +108,8 @@ import type { SymbolClass } from '../chart/symbol-class.js';
 import type { EphemerisProvider } from '../ephemeris/types.js';
 
 const MINOR_ASPECTS = ASPECTS.filter((aspect) => aspect.family === 'minor');
+/** The decile, septile and novile (#1184): chosen one by one, never part of the "all minor" set. */
+const HIGHER_HARMONIC_ASPECTS = ASPECTS.filter((aspect) => aspect.family === 'higher-harmonic');
 
 const LAHIRI_AYANAMSA_ID = ayanamsaByKey('lahiri')?.id ?? AYANAMSAS[0]?.id ?? 1;
 
@@ -1085,10 +1087,10 @@ export function ExtendedSettingsPanel({
                   </label>
                   <div className="settings-card-block">
                     <Disclosure title={t.minorChooseEach} showLabel={t.showDetails} hideLabel={t.hideDetails}>
-                      {MINOR_ASPECTS.map((aspect) => (
+                      {[...MINOR_ASPECTS, ...HIGHER_HARMONIC_ASPECTS].map((aspect) => (
                         <Checkbox
                           key={aspect.key}
-                          label={`${String(aspect.angle)}° ${aspectDisplayName(aspect.key, locale)}`}
+                          label={`${aspectAngleLabel(aspect.angle)} ${aspectDisplayName(aspect.key, locale)}`}
                           checked={draft.enabledMinorAspects.includes(aspect.key)}
                           onChange={(value) => {
                             setMinorAspect(aspect.key, value);
@@ -1440,6 +1442,13 @@ export function ExtendedSettingsPanel({
 /** The segment the scale sits on, or `custom` between them. */
 function segmentFor(percent: number): string {
   return ORB_SCALE_SEGMENTS.find((segment) => segment.percent === percent)?.value ?? 'custom';
+}
+
+/** An aspect angle as degrees, with arcminutes when it is not whole (the septile, 360/7, reads 51°26'). */
+function aspectAngleLabel(angle: number): string {
+  if (Number.isInteger(angle)) return `${String(angle)}°`;
+  const totalMinutes = Math.round(angle * 60);
+  return `${String(Math.floor(totalMinutes / 60))}°${String(totalMinutes % 60).padStart(2, '0')}'`;
 }
 
 /** The quintile minor aspects, the "Quintiles" minor set (#824). */

@@ -81,7 +81,12 @@ const SECT_LIGHT_WEIGHT = 0.4;
  */
 const ANGULARITY_ORB: Degrees = 8;
 
-const ASPECT_FAMILY_WEIGHT: Readonly<Record<AspectFamily, number>> = { major: 0.5, minor: 0.2 };
+const ASPECT_FAMILY_WEIGHT: Readonly<Record<AspectFamily, number>> = {
+  major: 0.5,
+  minor: 0.2,
+  // Astraya's own number, not sourced: the decile, septile and novile sit on the minor tier (#1184), so they weigh the same.
+  'higher-harmonic': 0.2,
+};
 
 type HouseClass = 'angular' | 'succedent' | 'cadent';
 const HOUSE_CLASS_WEIGHT: Readonly<Record<HouseClass, number>> = { angular: 1, succedent: 0.6, cadent: 0.3 };

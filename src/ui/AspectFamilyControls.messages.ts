@@ -20,6 +20,7 @@ const en = {
     major: 'Major: conjunction, sextile, square, trine, opposition',
     hardMinor: 'Hard minor: semisquare, sesquiquadrate, quincunx, semisextile',
     softMinor: 'Soft minor: quintile, biquintile',
+    higherHarmonic: 'Higher harmonic: decile, septile, novile',
     nodalAngular: 'Nodal and angular: contacts to the nodes, angles, Vertex and Fortune',
   },
 };
@@ -40,6 +41,7 @@ const nl: typeof en = {
     major: 'Hoofdaspecten: conjunctie, sextiel, kwadraat, driehoek, oppositie',
     hardMinor: 'Harde nevenaspecten: halfkwadraat, anderhalfkwadraat, quincunx, halfsextiel',
     softMinor: 'Zachte nevenaspecten: quintiel, biquintiel',
+    higherHarmonic: 'Hogere harmonieken: deciel, septiel, noniel',
     nodalAngular: 'Knopen en hoeken: contacten met de knopen, hoeken, Vertex en Fortuin',
   },
 };

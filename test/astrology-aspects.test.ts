@@ -34,10 +34,10 @@ function position(longitude: number, longitudeSpeed = 1): BodyPosition {
 }
 
 describe('the canonical aspect registry (#24)', () => {
-  it('has 11 distinct aspects with distinct angles in [0, 180]', () => {
-    expect(ASPECTS).toHaveLength(11);
-    expect(new Set(ASPECTS.map((a) => a.key)).size).toBe(11);
-    expect(new Set(ASPECTS.map((a) => a.angle)).size).toBe(11);
+  it('has 14 distinct aspects with distinct angles in [0, 180]', () => {
+    expect(ASPECTS).toHaveLength(14);
+    expect(new Set(ASPECTS.map((a) => a.key)).size).toBe(14);
+    expect(new Set(ASPECTS.map((a) => a.angle)).size).toBe(14);
     for (const aspect of ASPECTS) {
       expect(aspect.angle).toBeGreaterThanOrEqual(0);
       expect(aspect.angle).toBeLessThanOrEqual(180);
@@ -56,6 +56,18 @@ describe('the canonical aspect registry (#24)', () => {
     }
     expect(aspectByKey('quintile')?.angle).toBe(72);
     expect(aspectByKey('biquintile')?.angle).toBe(144);
+  });
+
+  it('holds the decile, septile and novile as exact 360/n angles in their own higher-harmonic family (#1184)', () => {
+    // Angles as named by the owner on #1063; the septile is not rounded to 51.4.
+    expect(aspectByKey('decile')?.angle).toBe(360 / 10);
+    expect(aspectByKey('decile')?.angle).toBe(36);
+    expect(aspectByKey('novile')?.angle).toBe(360 / 9);
+    expect(aspectByKey('novile')?.angle).toBe(40);
+    expect(aspectByKey('septile')?.angle).toBe(360 / 7);
+    for (const key of ['decile', 'novile', 'septile']) {
+      expect(aspectByKey(key)?.family, key).toBe('higher-harmonic');
+    }
   });
 
   it('round-trips through aspectByKey', () => {
@@ -87,6 +99,14 @@ describe('orbFor (#24)', () => {
       expect(orbFor(key, 'planet', 'planet')).toBe(DEFAULT_ORB_CONFIG.minorOrb);
       expect(orbFor(key, 'luminary', 'luminary')).toBe(DEFAULT_ORB_CONFIG.minorOrb);
     }
+  });
+
+  it('puts the decile, septile and novile on the same flat minor tier, an Astraya default with no source claimed (#1184)', () => {
+    for (const key of ['decile', 'septile', 'novile']) {
+      expect(orbFor(key, 'planet', 'planet')).toBe(DEFAULT_ORB_CONFIG.minorOrb);
+      expect(orbFor(key, 'luminary', 'luminary')).toBe(DEFAULT_ORB_CONFIG.minorOrb);
+    }
+    expect(DEFAULT_ORB_CONFIG.minorOrb).toBe(2.5);
   });
 
   it('scales every tier by the configured percentage', () => {
@@ -183,6 +203,29 @@ describe('matchAspect (#24)', () => {
     expect(matchAspect(position(0), 'planet', position(150), 'planet')).toBeUndefined(); // quincunx, disabled by default
     const config = { ...DEFAULT_ORB_CONFIG, enabledMinorAspects: ['quincunx'] };
     expect(matchAspect(position(0), 'planet', position(150), 'planet', config)?.aspect.key).toBe('quincunx');
+  });
+
+  it('keeps the decile, septile and novile off by default and finds each exactly once enabled (#1184)', () => {
+    for (const [key, angle] of [
+      ['decile', 36],
+      ['novile', 40],
+      ['septile', 360 / 7],
+    ] as const) {
+      expect(matchAspect(position(0), 'planet', position(angle), 'planet'), `${key} off`).toBeUndefined();
+      const config = { ...DEFAULT_ORB_CONFIG, enabledMinorAspects: [key] };
+      const match = matchAspect(position(0), 'planet', position(angle), 'planet', config);
+      expect(match?.aspect.key).toBe(key);
+      expect(match?.orb).toBeCloseTo(0, 9);
+      // Just inside and just outside the 2°30' tier.
+      expect(matchAspect(position(0), 'planet', position(angle + 2.4), 'planet', config)?.aspect.key).toBe(key);
+      expect(matchAspect(position(0), 'planet', position(angle + 2.6), 'planet', config)).toBeUndefined();
+    }
+  });
+
+  it('resolves the decile and novile windows, which overlap between 37.5 and 38.5 degrees, to the tighter orb (#1184)', () => {
+    const config = { ...DEFAULT_ORB_CONFIG, enabledMinorAspects: ['decile', 'novile'] };
+    expect(matchAspect(position(0), 'planet', position(37.8), 'planet', config)?.aspect.key).toBe('decile');
+    expect(matchAspect(position(0), 'planet', position(38.2), 'planet', config)?.aspect.key).toBe('novile');
   });
 
   it('marks a fast body approaching an exact square as applying', () => {
@@ -341,6 +384,9 @@ describe('harmonicFamilyOf / aspectHarmonicFamily (#557)', () => {
       sesquiquadrate: 8,
       semisextile: 12,
       quincunx: 12,
+      decile: 10,
+      novile: 9,
+      septile: 7,
     };
     for (const aspect of ASPECTS) {
       expect(harmonicFamilyOf(aspect.angle)).toBe(expected[aspect.key]);

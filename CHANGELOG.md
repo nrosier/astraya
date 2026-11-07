@@ -6,6 +6,37 @@ see [docs/ops/RELEASING.md](docs/ops/RELEASING.md).
 
 ## [Unreleased]
 
+## [0.49.0] — 2026-11-07
+
+**The timing and transit pages share one card layout, Overview becomes a launchpad with a natal wheel, the birth record can say where its data came from, and the interface gets one Back link and one Button.**
+
+### Added
+
+- **Overview is a launchpad (#1173).** A birth-data health checklist with a fix link for each item, "continue where you left off" (the last chart, notes and your saved searches, #1261), a "now" line for the profected year, a small natal wheel and a Sun, Moon and Rising card.
+- **The birth record can record its source (#1262).** A data source and a note on it, carried in the person file and flagged on Overview while missing.
+- **The Timing Timeline is a Gantt chart (#1237).** Every technique on one date axis with the centre date marked, a searchable event table and a technique filter; a Bodies filter (#1260) limits the events that name a body to the major planets or to asteroids and Lilith.
+- **Solar Arc, Progressions, Profections and Primary Directions share one 60/40 layout (#1233, #1234, #1235, #1236)** with merged Position columns and a segmented rulership choice.
+- **Transits and Forecast are tabbed by period (#1227);** the transit filter is a button in the page header.
+- **Consultation presets do more (#1190).** They set layers, chart facts and the transit and solar arc orbs on demand, and Standard Overview and Predictive and Timing say the active Time Lord and profection year in the Selection card; Predictive and Timing hides minor aspects between natal bodies.
+- **Advanced groups in the Extended settings drawer (#856)** keep the rarely used choices on the Profile, Bodies and Special tabs one click away.
+- **A first-use People page (#1060)** offers an import, and a complete birth record points to the next step.
+- **Comparing with another person (#1060)** is offered on Overview once a second person exists.
+
+### Changed
+
+- **One Back link names the page you came from (#1225)** and is hidden on a first visit.
+- **Chart controls share a row (#1224):** chart type, aspect family and consultation preset sit side by side; the ring calculation basis is behind a closed "Calculation" disclosure (#1232).
+- **Open cards no longer stretch their neighbours (#1231)** in multi-card rows.
+- **Context notes are info tooltips on their headings (#1226, #1228, #1230).**
+- **Text on About and the Changelog is capped near 75 characters a line (#1176).**
+- **Export to PDF is the rightmost action in a chart page header (#856).**
+- **Every shared button comes from the Button component (#1161);** the table scroll fade shows only on an edge that hides columns (#1229).
+
+### Fixed
+
+- **Orb library profiles from two devices no longer overwrite each other (#1250):** each profile syncs on its own, with random ids, and nothing from an older device reaches an account before its prompt is answered.
+- **The data source note is capped at 200 characters** so one pasted note cannot stall syncing (#1262).
+
 ## [0.48.0] — 2026-11-06
 
 **Event-search pins can be annotated, erased and exported, the orb library and more settings sync across your account, and Appearance & Accessibility is a compact two-column page.**

@@ -1,0 +1,131 @@
+# Multi-engine security scan (#1279): Syft builds a CycloneDX SBOM, Grype scans
+# it, Trivy cross-checks CVEs and adds secret and IaC/Dockerfile checks. Both
+# engines upload SARIF to Code Scanning. Report only: nothing here fails a
+# pull request. Documented in docs/ops/SECURITY-SCANS.md.
+name: Security scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 4 * * 1' # Mondays 04:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    name: Syft, Grype and Trivy
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      id-token: write
+      security-events: write
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Syft SBOM (CycloneDX)
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: sbom.cyclonedx.json
+          upload-artifact: false
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sbom-cyclonedx
+          path: sbom.cyclonedx.json
+          if-no-files-found: error
+
+      - name: Grype scan of the SBOM
+        if: always()
+        uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
+        with:
+          sbom: sbom.cyclonedx.json
+          output-format: sarif
+          output-file: grype-results.sarif
+          severity-cutoff: high
+          fail-build: false
+
+      - name: Trivy scan (CVE, secret, IaC and Dockerfile)
+        if: always()
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          format: sarif
+          output: trivy-results.sarif
+          severity: CRITICAL,HIGH
+          exit-code: '0'
+
+      - name: Upload Grype SARIF
+        if: always() && hashFiles('grype-results.sarif') != ''
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: grype-results.sarif
+          category: grype-engine
+
+      - name: Upload Trivy SARIF
+        if: always() && hashFiles('trivy-results.sarif') != ''
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy-engine
+
+      - name: Count High and Critical findings
+        id: count
+        if: always() && github.event_name == 'schedule'
+        run: |
+          # A result counts when its rule's security-severity is >= 7.0 (GitHub's
+          # High threshold); a result whose rule carries none counts too.
+          total=0
+          for f in grype-results.sarif trivy-results.sarif; do
+            [ -f "$f" ] || continue
+            n=$(jq '[.runs[] | (.tool.driver.rules // []) as $rules | .results[]? as $res |
+              ($rules | map(select(.id == $res.ruleId)) | first // {}) as $rule |
+              (($rule.properties["security-severity"] // null) | if . == null then 100 else tonumber end) |
+              select(. >= 7)] | length' "$f")
+            # An unparseable or empty SARIF (a scanner that failed mid-write) leaves `n` empty, which broke the sum
+            # and could silently suppress the tracking issue; it counts as zero instead (#1279, verified 2026-11-07).
+            echo "$f: ${n:-0}"
+            total=$((total + ${n:-0}))
+          done
+          echo "total=$total" >> "$GITHUB_OUTPUT"
+
+      - name: Open or update the tracking issue
+        if: always() && github.event_name == 'schedule' && steps.count.outputs.total != '' && steps.count.outputs.total != '0'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          FINDINGS: ${{ steps.count.outputs.total }}
+        with:
+          script: |
+            const title = 'Security scan: High or Critical findings';
+            const label = 'risk:security';
+            const { owner, repo } = context.repo;
+            const runUrl = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
+            const secUrl = `${context.serverUrl}/${owner}/${repo}/security/code-scanning`;
+            const body = [
+              `The scheduled security scan found ${process.env.FINDINGS} High or Critical finding(s) (Grype and Trivy combined).`,
+              '',
+              `- Itemised alerts: ${secUrl}`,
+              `- Run: ${runUrl}`,
+              '',
+              'This issue is updated by the weekly scan; it is not opened twice.',
+            ].join('\n');
+            const open = await github.paginate(github.rest.issues.listForRepo, {
+              owner, repo, state: 'open', labels: label, per_page: 100,
+            });
+            const existing = open.find((i) => i.title === title && !i.pull_request);
+            if (existing) {
+              await github.rest.issues.update({ owner, repo, issue_number: existing.number, body });
+            } else {
+              await github.rest.issues.create({ owner, repo, title, body, labels: [label] });
+            }
