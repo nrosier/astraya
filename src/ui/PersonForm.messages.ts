@@ -29,7 +29,7 @@ const en = {
   dateLabel: 'Date',
   timeLabel: 'Time',
   timeKnownLabel: 'How the time is known',
-  sourceLabel: 'Source of the birth data',
+  sourceLabel: 'Data source',
   sourceNoteLabel: 'Source note (optional)',
   sourceKinds: {
     '': 'Not recorded',
@@ -122,7 +122,7 @@ const nl: typeof en = {
   dateLabel: 'Datum',
   timeLabel: 'Tijd',
   timeKnownLabel: 'Hoe de tijd bekend is',
-  sourceLabel: 'Bron van de geboortegegevens',
+  sourceLabel: 'Gegevensbron',
   sourceNoteLabel: 'Notitie bij de bron (optioneel)',
   sourceKinds: {
     '': 'Niet vastgelegd',

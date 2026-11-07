@@ -137,6 +137,28 @@ describe('validateFullExport', () => {
     expect(result.error).toMatchObject({ kind: 'malformed', path: 'people[0].birth.civil' });
   });
 
+  it('reads the source of the birth data from a file, and refuses an unrecognised one (#1262)', async () => {
+    const archive = await build([{ ...ADA, sourceKind: 'collection', sourceNote: 'Astro-Databank entry' }]);
+    const ok = validateFullExport(roundTripped(archive));
+    expect(ok.ok).toBe(true);
+    if (!ok.ok) return;
+    expect(ok.value.people[0]).toMatchObject({ sourceKind: 'collection', sourceNote: 'Astro-Databank entry' });
+
+    const copy = roundTripped(archive) as { people: [{ sourceKind: unknown }] };
+    copy.people[0].sourceKind = 'rumour';
+    const bad = validateFullExport(copy);
+    expect(bad.ok).toBe(false);
+    if (bad.ok) return;
+    expect(bad.error).toMatchObject({ kind: 'malformed', path: 'people[0].sourceKind' });
+  });
+
+  it('reads a file with no source as not recorded, not as a refusal (#1262)', async () => {
+    const result = validateFullExport(roundTripped(await build([ADA])));
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.people[0]).not.toHaveProperty('sourceKind');
+  });
+
   it('rejects a duplicate custom-point id, invalidating the whole list atomically', async () => {
     const person: Person = { ...ADA, customPoints: [{ id: 'cp-1', name: 'A', formula: 'sun' }] };
     const archive = await build([person]);

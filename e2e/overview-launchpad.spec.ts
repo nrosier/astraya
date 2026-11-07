@@ -60,6 +60,29 @@ test('lists what is uncertain in the birth data, and the fix link puts the curso
   await expect(page.getByLabel('How the time is known')).toBeFocused();
 });
 
+test('flags a missing birth-data source, and the fix link puts the cursor in the source field (#1262)', async () => {
+  test.setTimeout(60_000);
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  await openOverview();
+
+  const health = page.getByRole('region', { name: 'Birth data' });
+  await expect(health.getByText('The source of the birth data is not recorded.')).toBeVisible();
+  await health.getByRole('link', { name: 'Record the source' }).click();
+  await expect(page).toHaveURL(/\/birth-record\?focus=source$/);
+  const source = page.getByLabel('Data source');
+  await expect(source).toBeFocused();
+  // The choices are the ones the owner decided (#1262), with "Not recorded" first.
+  await expect(source.locator('option')).toHaveText([
+    'Not recorded',
+    'Birth certificate or registry',
+    'Family record',
+    'Remembered',
+    'Chart collection (for example Astro-Databank)',
+    'Other',
+  ]);
+  await expect(page.getByLabel('Source note (optional)')).toBeVisible();
+});
+
 test('offers no resume section until a chart is opened, then continues there', async () => {
   test.setTimeout(90_000);
   await openSharedPerson(page, baseUrl, EINSTEIN);

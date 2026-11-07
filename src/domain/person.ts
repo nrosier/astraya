@@ -130,8 +130,8 @@ export interface Person {
   readonly timeAccuracy: TimeAccuracy;
   /** Where the birth data came from (#1262); absent when none was recorded (records written before it). */
   readonly sourceKind?: BirthSourceKind | undefined;
-  /** A free-text note on the source, e.g. the registry or the collection entry; empty when there is none. */
-  readonly sourceNote: string;
+  /** A free-text note on the source, e.g. the registry or the collection entry; absent when there is none. */
+  readonly sourceNote?: string | undefined;
   readonly notes: string;
   readonly witness?: OffsetWitness;
   /** Valid named alternate places; absent in records written before #559. */
@@ -445,6 +445,7 @@ export function buildPerson(id: string, fields: ReadonlyMap<string, unknown>): P
   const calculation = readCalculationSettings(fields.get('calculationSettings'));
   const ruler = readRulership(fields.get('rulership'));
   const sourceKind = readBirthSourceKind(fields.get('sourceKind'));
+  const sourceNote = readText(fields.get('sourceNote'));
 
   const missing: string[] = [];
   if (civil === undefined) missing.push('civil');
@@ -471,7 +472,7 @@ export function buildPerson(id: string, fields: ReadonlyMap<string, unknown>): P
     placeLabel: readText(fields.get('placeLabel')) ?? '',
     timeAccuracy: readTimeAccuracy(fields.get('timeAccuracy')) ?? 'unknown',
     ...(sourceKind === undefined ? {} : { sourceKind }),
-    sourceNote: readText(fields.get('sourceNote')) ?? '',
+    ...(sourceNote === undefined || sourceNote === '' ? {} : { sourceNote }),
     notes: readText(fields.get('notes')) ?? '',
     ...(witness === undefined ? {} : { witness }),
     ...(relocationPlaces === undefined ? {} : { relocationPlaces }),

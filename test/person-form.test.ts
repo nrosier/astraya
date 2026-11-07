@@ -241,6 +241,15 @@ describe('turning a save into operations', () => {
     expect(mutations).toEqual([{ entity: 'person', entityId: ID, field: 'placeLabel', value: 'Vevay, IN' }]);
   });
 
+  it('writes the source of the birth data, and writes null to clear it (#1262)', () => {
+    const chosen = draftToMutations(ID, { ...VEVAY, sourceKind: 'family' }, VEVAY, T);
+    expect(chosen).toEqual([{ entity: 'person', entityId: ID, field: 'sourceKind', value: 'family' }]);
+    const cleared = draftToMutations(ID, VEVAY, { ...VEVAY, sourceKind: 'family' }, T);
+    expect(cleared).toEqual([{ entity: 'person', entityId: ID, field: 'sourceKind', value: null }]);
+    const noted = draftToMutations(ID, { ...VEVAY, sourceNote: ' Family Bible ' }, VEVAY, T);
+    expect(noted).toEqual([{ entity: 'person', entityId: ID, field: 'sourceNote', value: 'Family Bible' }]);
+  });
+
   it('never writes notes through the page Save (#919 autosaves them)', () => {
     // Notes are op-log revisions with their own autosave, so the page Save diff must not see them.
     expect(Object.keys(VEVAY)).not.toContain('notes');

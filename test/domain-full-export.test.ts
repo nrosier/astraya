@@ -95,6 +95,14 @@ describe('buildFullExport', () => {
     expect(person?.calculation?.snapshot.version).toBe(CURRENT_SNAPSHOT_VERSION);
   });
 
+  it('carries the source of the birth data when one is recorded, and omits it when not (#1262)', async () => {
+    const [recorded] = (await build([{ ...ADA, sourceKind: 'certificate', sourceNote: 'GRO register' }])).people;
+    expect(recorded).toMatchObject({ sourceKind: 'certificate', sourceNote: 'GRO register' });
+    const [plain] = (await build([ADA])).people;
+    expect(plain).not.toHaveProperty('sourceKind');
+    expect(plain).not.toHaveProperty('sourceNote');
+  });
+
   it('omits the field when the person chose no stars (#860)', async () => {
     const [person] = (await build([ADA])).people;
     expect(person).not.toHaveProperty('fixedStars');

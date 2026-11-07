@@ -87,7 +87,7 @@ export function draftFrom(person: Person): Draft {
     time: civil === undefined ? '' : `${pad(civil.hour)}:${pad(civil.minute)}:${pad(civil.second)}`,
     timeAccuracy: person.timeAccuracy,
     sourceKind: person.sourceKind ?? '',
-    sourceNote: person.sourceNote,
+    sourceNote: person.sourceNote ?? '',
     latitude: moment === undefined ? '' : String(moment.coordinates.latitude),
     longitude: moment === undefined ? '' : String(moment.coordinates.longitude),
     placeLabel: person.placeLabel,

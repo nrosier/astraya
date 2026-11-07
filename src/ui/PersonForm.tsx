@@ -298,15 +298,17 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
                 }}
               />
             </div>
-            <div data-health-field="source" className="birth-record-source">
-              <Select
-                label={t.sourceLabel}
-                value={current.sourceKind}
-                options={Object.entries(t.sourceKinds).map(([value, text]) => ({ value, label: text }))}
-                onChange={(value) => {
-                  set('sourceKind', value as Draft['sourceKind']);
-                }}
-              />
+            <div className="birth-record-source">
+              <div data-health-field="source">
+                <Select
+                  label={t.sourceLabel}
+                  value={current.sourceKind}
+                  options={Object.entries(t.sourceKinds).map(([value, text]) => ({ value, label: text }))}
+                  onChange={(value) => {
+                    set('sourceKind', value as Draft['sourceKind']);
+                  }}
+                />
+              </div>
               <TextField
                 label={t.sourceNoteLabel}
                 value={current.sourceNote}
@@ -422,6 +424,8 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
               scope={`birth/${personId}`}
               toMutation={(text) => birthNoteMutation(personId, store.state.birthNotes.get(personId), text)}
               inline
+              /* A fourth row keeps the 60/40 columns within the 90% rule now the identity card holds the data source (#1262). */
+              rows={4}
             />
             <NoteForks forks={birthNote?.forks ?? []} />
           </section>

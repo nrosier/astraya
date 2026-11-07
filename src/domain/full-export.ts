@@ -360,7 +360,7 @@ export async function buildFullExport(params: {
       placeLabel: person.placeLabel,
       timeAccuracy: person.timeAccuracy,
       ...(person.sourceKind === undefined ? {} : { sourceKind: person.sourceKind }),
-      ...(person.sourceNote === '' ? {} : { sourceNote: person.sourceNote }),
+      ...(person.sourceNote ? { sourceNote: person.sourceNote } : {}),
       notes: person.notes,
       ...(birthNote === undefined ? {} : { birthNote: { revisions: exportedRevisions(birthNote.revisions) } }),
       ...(consultationNotes.length === 0
