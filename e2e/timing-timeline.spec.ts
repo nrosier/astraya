@@ -103,6 +103,49 @@ test('cards on the timing pages are one default gap apart, whatever sits between
   for (const space of profections) expect(space).toBeCloseTo(gap, 0);
 });
 
+test('the bodies filter keeps events without a body and splits the rest between major planets and asteroids (#1260)', async () => {
+  test.setTimeout(120_000);
+  await openTimeline();
+
+  // Events per technique, read from the chart rows' own labels ("Firdaria: 3 events").
+  const counts = async (): Promise<Map<string, number>> => {
+    const labels = await page.getByRole('img', { name: /: \d+ events?$/ }).all();
+    const names = await Promise.all(labels.map(async (label) => (await label.getAttribute('aria-label')) ?? ''));
+    return new Map(
+      names.flatMap((name) => {
+        const match = /^(.*): (\d+) events?$/.exec(name);
+        return match?.[1] === undefined || match[2] === undefined ? [] : [[match[1], Number(match[2])] as const];
+      }),
+    );
+  };
+  const choose = async (name: string): Promise<void> => {
+    await page.getByRole('radiogroup', { name: 'Bodies' }).getByText(name, { exact: true }).click();
+  };
+
+  const all = await counts();
+  await choose('Major planets');
+  const major = await counts();
+  await choose('Asteroids and Lilith');
+  const minor = await counts();
+
+  expect(all.size).toBeGreaterThan(0);
+  for (const [track, total] of all) {
+    const inMajor = major.get(track) ?? 0;
+    const inMinor = minor.get(track) ?? 0;
+    if (['Zodiacal releasing', 'Firdaria', 'Profections'].includes(track)) {
+      // These name no body, so no filter takes them out.
+      expect(inMajor).toBe(total);
+      expect(inMinor).toBe(total);
+    } else {
+      // Every other event names bodies and falls on exactly one side.
+      expect(inMajor + inMinor).toBe(total);
+    }
+  }
+
+  await choose('All');
+  expect(await counts()).toEqual(all);
+});
+
 test('searches the events, and the technique filter takes a technique out of the chart and the table', async () => {
   test.setTimeout(90_000);
   await openTimeline();
