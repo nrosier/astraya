@@ -1,0 +1,98 @@
+[
+  {
+    "slug": "01-people-first-use",
+    "title": "People, first use",
+    "issues": "#1060",
+    "check": "With nobody stored: the explanation, the Add a person button and a secondary Import data link. Check the two actions line up and read as primary and secondary."
+  },
+  {
+    "slug": "02-about",
+    "title": "About",
+    "issues": "#1176",
+    "check": "Text capped near 75 characters a line while the page keeps the full shell width. Check it reads comfortably at 390 and 1280, and that nothing is stranded at 3440."
+  },
+  {
+    "slug": "03-charts-natal",
+    "title": "Charts, natal wheel",
+    "issues": "#1224, #1232",
+    "check": "Chart type, Aspects shown and Consultation preset side by side in one row; the ring calculation basis is no longer on the page. Check the three selects share a height and top edge, and the wheel and Selection card stay above the fold at 1280x800."
+  },
+  {
+    "slug": "04-overview",
+    "title": "Overview",
+    "issues": "#1173, #1060",
+    "check": "Birth data checklist with fix links, Continue where you left off, the now line and the next actions (with Compare with another person). Check the link rows have even spacing and the headings share one style."
+  },
+  {
+    "slug": "05-birth-record-open-card",
+    "title": "Birth record, a card open",
+    "issues": "#1228, #1231, #1060",
+    "check": "Info tooltip on the Identity heading, the next-step line, and the Timezone details card open. Check the neighbouring column does not stretch into empty space."
+  },
+  {
+    "slug": "06-consultation-open-card",
+    "title": "Consultation, a card open",
+    "issues": "#1226, #1231",
+    "check": "Ranking note is a tooltip on the Major active transits heading; one disclosure is open. Check the neighbouring column keeps its own height."
+  },
+  {
+    "slug": "07-interpretation",
+    "title": "Interpretation",
+    "issues": "#1230",
+    "check": "The disclaimer is a tooltip on the page heading. Check the heading and the tooltip icon line up."
+  },
+  {
+    "slug": "08-transits",
+    "title": "Transits",
+    "issues": "#1227",
+    "check": "Which transits to show is a header button. Check the button and Export share a height and baseline."
+  },
+  {
+    "slug": "09-forecast-daily",
+    "title": "Forecast, Daily",
+    "issues": "#1227",
+    "check": "Five period tabs, the as-of date under the heading, the filter button in the header. Check the tab row, the date and the button do not crowd the heading at 390."
+  },
+  {
+    "slug": "10-forecast-yearly",
+    "title": "Forecast, Yearly",
+    "issues": "#1227",
+    "check": "The Yearly tab: one period shows at a time."
+  },
+  {
+    "slug": "11-timing-timeline",
+    "title": "Timing Timeline",
+    "issues": "#1237",
+    "check": "Gantt chart, 5Y/10Y range, Now, searchable table and the technique filter. Check the track labels fit on one line, bars sit inside their rows, and the header controls share one height and bottom edge."
+  },
+  {
+    "slug": "12-profections",
+    "title": "Profections",
+    "issues": "#1236",
+    "check": "Segmented rulership choice, merged Position column, the table and meanings left, the rulership card right. The short right column is a documented exception to the 90% rule."
+  },
+  {
+    "slug": "13-progressions",
+    "title": "Progressions",
+    "issues": "#1235",
+    "check": "Technique, MC method, as-of date, Now and Export in the header; contacts left, positions right. Check the header controls align and the Position column reads well."
+  },
+  {
+    "slug": "14-solar-arc",
+    "title": "Solar Arc",
+    "issues": "#1234",
+    "check": "Contacts left, positions right, as-of, Now and Export in the header. Check the two tables end on the same bottom edge at 1280 and 3440."
+  },
+  {
+    "slug": "15-primary-directions",
+    "title": "Primary Directions",
+    "issues": "#1233",
+    "check": "Segmented key, direction and method; two-column significators and promissors; date, age and Now on one line; sticky panel on the right. The short sticky panel is a documented exception to the 90% rule."
+  },
+  {
+    "slug": "16-extended-settings-advanced-closed",
+    "title": "Extended settings drawer",
+    "issues": "#856",
+    "check": "Advanced groups collapsed by default on Profile, Bodies and Special. Check the group row and its customised count read clearly."
+  }
+]

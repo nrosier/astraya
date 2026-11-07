@@ -1,0 +1,499 @@
+<title>Visual Review</title>
+<meta name="claude:viewport-fit-sides" content="cover" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+/>
+<style>
+  /* Layout: a single review column. Each screen is a titled block with the checks to make, six screenshots (3 sizes x light/dark) and a verdict row. */
+  :root {
+    --bg: #f4f5f7;
+    --surface: #ffffff;
+    --fg: #1b1f27;
+    --muted: #5b6472;
+    --line: #d9dde4;
+    --accent: #2a5bd7;
+    --accent-fg: #ffffff;
+    --ok: #1d7a46;
+    --warn: #b4531a;
+    --font-body: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+      --bg: #14171d;
+      --surface: #1c2028;
+      --fg: #e8eaef;
+      --muted: #99a2b2;
+      --line: #2c323d;
+      --accent: #7ea3ff;
+      --accent-fg: #0d1220;
+      --ok: #5cc98a;
+      --warn: #f0985e;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme='dark'] {
+    --bg: #14171d;
+    --surface: #1c2028;
+    --fg: #e8eaef;
+    --muted: #99a2b2;
+    --line: #2c323d;
+    --accent: #7ea3ff;
+    --accent-fg: #0d1220;
+    --ok: #5cc98a;
+    --warn: #f0985e;
+    color-scheme: dark;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.5;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 24px 64px;
+  }
+  main {
+    max-width: 84rem;
+    margin: 0 auto;
+    display: grid;
+    gap: 24px;
+  }
+  h1 {
+    font-size: 1.6rem;
+    margin: 0;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  h3 {
+    font-size: 1.15rem;
+    margin: 0;
+  }
+  h4 {
+    font-size: 0.72rem;
+    margin: 0 0 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .lede {
+    color: var(--muted);
+    max-width: 62ch;
+    margin: 6px 0 0;
+  }
+  .bar {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 5;
+    background: var(--bg);
+    padding-block: 10px;
+    border-bottom: 1px solid var(--line);
+    display: grid;
+    gap: 10px;
+  }
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    align-items: center;
+  }
+  .seg {
+    display: inline-flex;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .seg button {
+    font: inherit;
+    padding: 6px 12px;
+    border: 0;
+    background: var(--surface);
+    color: var(--fg);
+    cursor: pointer;
+    border-right: 1px solid var(--line);
+  }
+  .seg button:last-child {
+    border-right: 0;
+  }
+  .seg button[aria-pressed='true'] {
+    background: var(--accent);
+    color: var(--accent-fg);
+  }
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  nav.index {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    font-size: 0.85rem;
+  }
+  nav.index a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  nav.index a:hover {
+    text-decoration: underline;
+  }
+  .screen {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 18px;
+    display: grid;
+    gap: 12px;
+    scroll-margin-top: 120px;
+    min-width: 0;
+  }
+  .screen header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    align-items: baseline;
+  }
+  .issue {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .note {
+    margin: 0;
+    max-width: 78ch;
+    color: var(--muted);
+  }
+  .shots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .shot {
+    margin: 0;
+    min-width: 0;
+  }
+  .shot figcaption {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .s390 {
+    flex: 0 0 150px;
+  }
+  .s1280 {
+    flex: 1 1 360px;
+  }
+  .s3440 {
+    flex: 1 1 360px;
+  }
+  .zoom {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--bg);
+    cursor: zoom-in;
+    overflow: hidden;
+  }
+  .zoom img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 22rem;
+    object-fit: cover;
+    object-position: top;
+  }
+  .s390 .zoom img {
+    max-height: 24rem;
+  }
+  .verdict {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    align-items: center;
+    border-top: 1px solid var(--line);
+    padding-top: 12px;
+  }
+  .verdict label {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    cursor: pointer;
+  }
+  .comment {
+    flex: 1 1 18rem;
+    min-width: 0;
+    font: inherit;
+    padding: 7px 10px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--fg);
+  }
+  .screen[data-verdict='ok'] {
+    border-color: var(--ok);
+  }
+  .screen[data-verdict='change'] {
+    border-color: var(--warn);
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+  .primary {
+    font: inherit;
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: 0;
+    background: var(--accent);
+    color: var(--accent-fg);
+    cursor: pointer;
+    font-weight: 500;
+  }
+  .status {
+    color: var(--muted);
+    font-size: 0.88rem;
+  }
+  #notes {
+    width: 100%;
+    min-height: 8rem;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--fg);
+  }
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.88);
+    z-index: 20;
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    overflow: auto;
+    padding: 24px 16px;
+  }
+  .lightbox[data-open='true'] {
+    display: flex;
+  }
+  .lightbox img {
+    max-width: none;
+    width: auto;
+    height: auto;
+    max-height: none;
+  }
+  .lightbox .close {
+    position: fixed;
+    top: calc(12px + env(safe-area-inset-top, 0px));
+    right: 16px;
+    font: inherit;
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: 0;
+    background: var(--surface);
+    color: var(--fg);
+    cursor: pointer;
+  }
+  @media (max-width: 40rem) {
+    .s390 {
+      flex-basis: 120px;
+    }
+  }
+</style>
+
+<main>
+  <div>
+    <h1>Visual Review</h1>
+    <p class="lede">
+      Every screen changed in this batch, at 390x844, 1280x800 and 3440x1440, in light and dark, captured from the
+      merged build. Read the check under each title, mark it, and copy the notes back to me. The two 90% exceptions are
+      decided and noted where they apply.
+    </p>
+  </div>
+  <div class="bar">
+    <div class="controls" role="group" aria-label="Show">
+      <span class="seg" id="seg-theme" role="group" aria-label="Theme"
+        ><button type="button" data-theme-pick="both" aria-pressed="true">Both themes</button
+        ><button type="button" data-theme-pick="light" aria-pressed="false">Light</button
+        ><button type="button" data-theme-pick="dark" aria-pressed="false">Dark</button></span
+      >
+      <span class="seg" id="seg-size" role="group" aria-label="Size"
+        ><button type="button" data-size-pick="all" aria-pressed="true">All sizes</button
+        ><button type="button" data-size-pick="390" aria-pressed="false">390</button
+        ><button type="button" data-size-pick="1280" aria-pressed="false">1280</button
+        ><button type="button" data-size-pick="3440" aria-pressed="false">3440</button></span
+      >
+      <span class="status" id="progress" aria-live="polite"></span>
+    </div>
+    <nav class="index" aria-label="Screens">{{NAV}}</nav>
+  </div>
+  {{CARDS}}
+  <section class="screen">
+    <h3>Notes to send back</h3>
+    <p class="note">Built from your marks and comments. Copy it into the chat.</p>
+    <textarea id="notes" readonly aria-label="Review notes"></textarea>
+    <div class="actions">
+      <button type="button" class="primary" id="copy">Copy notes</button
+      ><span class="status" id="copied" aria-live="polite"></span>
+    </div>
+  </section>
+</main>
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Screenshot">
+  <button type="button" class="close" id="close">Close</button><img id="lightbox-img" alt="" />
+</div>
+<script>
+  (function () {
+    var screens = Array.prototype.slice.call(document.querySelectorAll('section.screen[id]'));
+    var KEY = 'visual-review-v1';
+    var state = {};
+    try {
+      state = JSON.parse(localStorage.getItem(KEY) || '{}');
+    } catch (e) {
+      state = {};
+    }
+    function save() {
+      try {
+        localStorage.setItem(KEY, JSON.stringify(state));
+      } catch (e) {}
+    }
+    function titleOf(s) {
+      return s.querySelector('h3').textContent;
+    }
+    function render() {
+      var done = 0,
+        notes = [];
+      screens.forEach(function (s) {
+        var v = state[s.id] || {};
+        s.dataset.verdict = v.v || '';
+        var radios = s.querySelectorAll('input[type=radio]');
+        Array.prototype.forEach.call(radios, function (r) {
+          r.checked = r.value === v.v;
+        });
+        var c = s.querySelector('.comment');
+        if (c !== document.activeElement) c.value = v.c || '';
+        if (v.v) done++;
+        if (v.v === 'change' || (v.v === 'ok' && v.c)) {
+          notes.push(
+            titleOf(s) +
+              ' (' +
+              s.querySelector('.issue').textContent +
+              '): ' +
+              (v.v === 'ok' ? 'OK' : 'NEEDS A CHANGE') +
+              (v.c ? ' - ' + v.c : ''),
+          );
+        } else if (v.v === 'ok') {
+          notes.push(titleOf(s) + ' (' + s.querySelector('.issue').textContent + '): OK');
+        }
+      });
+      document.getElementById('progress').textContent = done + ' of ' + screens.length + ' marked';
+      document.getElementById('notes').value = notes.length
+        ? 'Visual review\
+' +
+          notes.join(
+            '\
+',
+          )
+        : 'Nothing marked yet.';
+    }
+    screens.forEach(function (s) {
+      s.addEventListener('change', function (e) {
+        if (e.target.type === 'radio') {
+          state[s.id] = Object.assign({}, state[s.id], { v: e.target.value });
+          save();
+          render();
+        }
+      });
+      s.querySelector('.comment').addEventListener('input', function (e) {
+        state[s.id] = Object.assign({}, state[s.id], { c: e.target.value });
+        save();
+        render();
+      });
+    });
+    var theme = 'both',
+      size = 'all';
+    function filter() {
+      Array.prototype.forEach.call(document.querySelectorAll('[data-theme-row]'), function (r) {
+        r.hidden = theme !== 'both' && r.dataset.themeRow !== theme;
+      });
+      Array.prototype.forEach.call(document.querySelectorAll('.shot'), function (f) {
+        f.hidden = size !== 'all' && !f.classList.contains('s' + size);
+      });
+      Array.prototype.forEach.call(document.querySelectorAll('[data-theme-pick]'), function (b) {
+        b.setAttribute('aria-pressed', String(b.dataset.themePick === theme));
+      });
+      Array.prototype.forEach.call(document.querySelectorAll('[data-size-pick]'), function (b) {
+        b.setAttribute('aria-pressed', String(b.dataset.sizePick === size));
+      });
+    }
+    document.getElementById('seg-theme').addEventListener('click', function (e) {
+      var b = e.target.closest('button');
+      if (b) {
+        theme = b.dataset.themePick;
+        filter();
+      }
+    });
+    document.getElementById('seg-size').addEventListener('click', function (e) {
+      var b = e.target.closest('button');
+      if (b) {
+        size = b.dataset.sizePick;
+        filter();
+      }
+    });
+    var box = document.getElementById('lightbox'),
+      boxImg = document.getElementById('lightbox-img');
+    document.addEventListener('click', function (e) {
+      var z = e.target.closest('.zoom');
+      if (z) {
+        var img = document.getElementById(z.dataset.srcId);
+        boxImg.src = img.src;
+        boxImg.alt = img.alt;
+        box.dataset.open = 'true';
+        box.scrollTop = 0;
+      }
+    });
+    function closeBox() {
+      box.dataset.open = 'false';
+    }
+    document.getElementById('close').addEventListener('click', closeBox);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeBox();
+    });
+    document.getElementById('copy').addEventListener('click', function () {
+      var ta = document.getElementById('notes'),
+        status = document.getElementById('copied');
+      function fallback() {
+        ta.removeAttribute('readonly');
+        ta.select();
+        ta.setSelectionRange(0, 99999);
+        ta.setAttribute('readonly', '');
+        status.textContent = 'Selected: press copy.';
+      }
+      try {
+        navigator.clipboard.writeText(ta.value).then(function () {
+          status.textContent = 'Copied.';
+        }, fallback);
+      } catch (e) {
+        fallback();
+      }
+    });
+    filter();
+    render();
+  })();
+</script>

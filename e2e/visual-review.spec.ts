@@ -1,0 +1,131 @@
+/**
+ * Captures every screen listed in `visual-review-screens.json` at 390x844, 1280x800 and 3440x1440 in light and dark, for
+ * the owner's visual review (docs/ops/VISUAL-REVIEW.md). It is a capture tool, not a test: it skips unless
+ * `VISUAL_REVIEW_OUT` names the folder to write the JPEGs to, so the normal e2e run and CI do nothing here.
+ *
+ * VISUAL_REVIEW_OUT=<dir> npx playwright test e2e/visual-review.spec.ts --project=chromium
+ * node scripts/build-visual-review.mjs <dir> <page.html>
+ *
+ * A screen's slug in the JSON must have a step below that opens it. Add the step when a screen is added to the review.
+ */
+import { mkdirSync, mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { expect, test } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { build } from '../server/index.ts';
+import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
+import { gotoAndSettle, openNatalChart } from './support.ts';
+
+const OUT = process.env.VISUAL_REVIEW_OUT;
+const SIZES = [
+  { w: 390, h: 844 },
+  { w: 1280, h: 800 },
+  { w: 3440, h: 1440 },
+] as const;
+const THEMES = ['light', 'dark'] as const;
+
+test.skip(OUT === undefined, 'Set VISUAL_REVIEW_OUT to capture the visual review screenshots');
+
+async function shoot(page: Page, slug: string): Promise<void> {
+  for (const theme of THEMES) {
+    await page.emulateMedia({ colorScheme: theme });
+    for (const size of SIZES) {
+      await page.setViewportSize({ width: size.w, height: size.h });
+      await page.waitForTimeout(350);
+      await page.screenshot({
+        path: join(OUT ?? '', `${slug}__${String(size.w)}__${theme}.jpg`),
+        type: 'jpeg',
+        quality: 58,
+        // The phone shot is the whole page; the wide ones are the first screen.
+        fullPage: size.w === 390,
+      });
+    }
+  }
+  await page.setViewportSize({ width: 1280, height: 800 });
+}
+
+test('capture the screens of the visual review', async ({ browser }) => {
+  test.setTimeout(900_000);
+  mkdirSync(OUT ?? '', { recursive: true });
+  process.env.LOG_LEVEL = 'silent';
+  const app = await build({ dbPath: join(mkdtempSync(join(tmpdir(), 'visual-review-')), 'astraya.db') });
+  await app.listen({ port: 0, host: '127.0.0.1' });
+  const address = app.server.address();
+  if (address === null || typeof address === 'string') throw new Error('server did not bind to a port');
+  const baseUrl = `http://127.0.0.1:${String(address.port)}`;
+
+  // First use: nobody stored.
+  const empty = await (await browser.newContext()).newPage();
+  await gotoAndSettle(empty, `${baseUrl}/#/people`);
+  await empty.getByText('Nobody yet.', { exact: false }).waitFor();
+  await shoot(empty, '01-people-first-use');
+  await gotoAndSettle(empty, `${baseUrl}/#/about`);
+  await empty.getByRole('heading', { level: 1 }).waitFor();
+  await shoot(empty, '02-about');
+
+  const page = await (await newSeededContext(browser, baseUrl)).newPage();
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+
+  await openNatalChart(page);
+  await page.locator('div.chart-wheel').waitFor();
+  await shoot(page, '03-charts-natal');
+
+  await page.getByRole('link', { name: 'Overview', exact: true }).first().click();
+  await page.getByText(/^Now: profected/).waitFor({ timeout: 60_000 });
+  await shoot(page, '04-overview');
+
+  await page.getByRole('link', { name: 'Birth record', exact: true }).first().click();
+  await page.getByRole('heading', { name: /Identity and birth timestamp/ }).waitFor();
+  await page
+    .getByRole('button', { name: /Timezone details/ })
+    .first()
+    .click();
+  await shoot(page, '05-birth-record-open-card');
+
+  await page.getByRole('link', { name: 'Consultation', exact: true }).first().click();
+  await page.locator('.consultation-grid').waitFor({ timeout: 60_000 });
+  await page.locator('.consultation-grid .primitive-disclosure-trigger').first().click();
+  await shoot(page, '06-consultation-open-card');
+
+  await page.getByRole('link', { name: 'Interpretation', exact: true }).first().click();
+  await page.getByRole('heading', { level: 1 }).first().waitFor();
+  // The reading comes from the corpus chunks (`npm run corpus:split`); without them the page says it could not load.
+  await expect(page.getByText(/Could not load the interpretation/)).toHaveCount(0, { timeout: 30_000 });
+  await shoot(page, '07-interpretation');
+
+  await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).first().click();
+  await page.getByRole('tab', { name: 'Transits', exact: true }).click();
+  await page.getByRole('table', { name: 'Contacts' }).waitFor({ timeout: 60_000 });
+  await shoot(page, '08-transits');
+  await page.getByRole('tab', { name: 'Forecast', exact: true }).click();
+  await page.getByRole('heading', { name: 'Daily', level: 2 }).waitFor({ timeout: 60_000 });
+  await shoot(page, '09-forecast-daily');
+  await page
+    .getByRole('tablist', { name: 'Forecast period' })
+    .getByRole('tab', { name: 'Yearly', exact: true })
+    .click();
+  await shoot(page, '10-forecast-yearly');
+
+  await page.getByRole('link', { name: 'Progressions & Directions', exact: true }).first().click();
+  for (const [tab, slug, ready] of [
+    ['Timing timeline', '11-timing-timeline', '.gantt'],
+    ['Profections', '12-profections', 'table'],
+    ['Progressions', '13-progressions', 'table'],
+    ['Solar Arc', '14-solar-arc', 'table'],
+    ['Primary Directions (Placidus)', '15-primary-directions', '.timing-controls'],
+  ] as const) {
+    await page.getByRole('tab', { name: tab, exact: true }).click();
+    await page.locator(ready).first().waitFor({ timeout: 90_000 });
+    await page.waitForTimeout(800);
+    await shoot(page, slug);
+  }
+
+  await openNatalChart(page);
+  await page.locator('button.extended-settings-trigger').click();
+  await page.locator('dialog.settings-card').waitFor();
+  await shoot(page, '16-extended-settings-advanced-closed');
+
+  await app.close();
+});
