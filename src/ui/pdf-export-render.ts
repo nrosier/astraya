@@ -66,6 +66,9 @@ const ASPECT_TONE: Readonly<Record<string, Rgb>> = {
   quintile: [10, 77, 40],
   biquintile: [10, 77, 40],
   quincunx: [10, 77, 40],
+  decile: [10, 77, 40],
+  novile: [10, 77, 40],
+  septile: [10, 77, 40],
 };
 const ALIGN: Readonly<Record<string, 'left' | 'right' | 'center'>> = { start: 'left', end: 'right', center: 'center' };
 /** y where content starts on a fresh page — the same 20 mm every page break below already uses. */

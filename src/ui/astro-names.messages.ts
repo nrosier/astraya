@@ -112,6 +112,9 @@ const enAspects = {
   sesquiquadrate: 'Sesquiquadrate',
   biquintile: 'Biquintile',
   quincunx: 'Quincunx',
+  decile: 'Decile',
+  novile: 'Novile',
+  septile: 'Septile',
   opposition: 'Opposition',
 };
 const nlAspects: typeof enAspects = {
@@ -125,6 +128,9 @@ const nlAspects: typeof enAspects = {
   sesquiquadrate: 'Sesquiquadraat',
   biquintile: 'Biquintiel',
   quincunx: 'Quincunx',
+  decile: 'Deciel',
+  novile: 'Noniel',
+  septile: 'Septiel',
   opposition: 'Oppositie',
 };
 export const aspectNamesMessages = { en: enAspects, nl: nlAspects };

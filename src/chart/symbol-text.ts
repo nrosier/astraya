@@ -61,7 +61,7 @@ export const SIGN_UNICODE: Readonly<Record<string, string>> = {
   Pisces: '♓',
 };
 
-/** There is no standard character for the quintile series, so those two are the letters astrologers write. */
+/** There is no standard character for the quintile series, so those two are the letters astrologers write; the decile, novile and septile follow the same letter pattern (D, N, S) with no source behind it (#1184). */
 export const ASPECT_UNICODE: Readonly<Record<string, string>> = {
   conjunction: '☌',
   semisextile: '⚺',
@@ -73,6 +73,9 @@ export const ASPECT_UNICODE: Readonly<Record<string, string>> = {
   sesquiquadrate: '⚼',
   biquintile: 'bQ',
   quincunx: '⚻',
+  decile: 'D',
+  novile: 'N',
+  septile: 'S',
   opposition: '☍',
 };
 
@@ -127,6 +130,9 @@ export const ASPECT_CODES: Readonly<Record<string, string>> = {
   sesquiquadrate: 'SQQ',
   biquintile: 'BQN',
   quincunx: 'QNX',
+  decile: 'DEC',
+  novile: 'NOV',
+  septile: 'SEP',
   opposition: 'OPP',
 };
 

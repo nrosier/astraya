@@ -112,8 +112,8 @@ describe('glyph geometry (#40)', () => {
     ...ASPECTS.map((a) => aspectGlyph(a.key)),
   ].filter((g): g is GlyphDefinition => g !== undefined);
 
-  it('covers all 20 bodies, the south node, 12 signs and 11 aspects with no gaps', () => {
-    expect(allGlyphs.length).toBe(20 + 1 + 12 + 11);
+  it('covers all 20 bodies, the south node, 12 signs and 14 aspects with no gaps', () => {
+    expect(allGlyphs.length).toBe(20 + 1 + 12 + 14);
   });
 
   it('draws at least one primitive per glyph', () => {

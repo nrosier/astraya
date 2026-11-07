@@ -30,6 +30,25 @@ describe('aspect families', () => {
     expect(keys('major')).toEqual(['conjunction', 'sextile', 'square', 'trine', 'opposition']);
     expect(keys('hardMinor')).toEqual(['semisquare', 'sesquiquadrate', 'quincunx', 'semisextile']);
     expect(keys('softMinor')).toEqual(['quintile', 'biquintile']);
+    // Own family, apart from the quintile series (#1184).
+    expect(keys('higherHarmonic')).toEqual(['decile', 'septile', 'novile']);
+  });
+
+  it('offer the higher-harmonic family as a filter and show its three aspects when it is chosen (#1184)', () => {
+    expect(FILTERABLE_FAMILIES.map((f) => f.key)).toContain('higherHarmonic');
+    for (const aspectKey of ['decile', 'septile', 'novile']) {
+      const contact = { aKey: 'sun', bKey: 'moon', aspectKey };
+      expect(isContactShown(contact, new Set<AspectFamilyKey>(['higherHarmonic']))).toBe(true);
+      expect(isContactShown(contact, new Set<AspectFamilyKey>(['softMinor']))).toBe(false);
+      expect(isContactShown(contact, new Set<AspectFamilyKey>(['major']))).toBe(false);
+      expect(isMajorAspect(aspectKey)).toBe(false);
+    }
+    expect(
+      isContactShown(
+        { aKey: 'sun', bKey: 'moon', aspectKey: 'quintile' },
+        new Set<AspectFamilyKey>(['higherHarmonic']),
+      ),
+    ).toBe(false);
   });
 
   it('offer no filter for parallels, which neither the wheel nor the matrix draws', () => {
