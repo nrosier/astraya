@@ -17,7 +17,9 @@ import { computeProfections } from '../domain/profections.js';
 import { bodyDisplayName, signDisplayName } from './astro-names.messages.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { hrefFor } from './feature-registry.js';
+import { sortedSavedQueries } from '../store/saved-queries.js';
 import { readLastChart } from './last-chart.js';
+import { routeHref } from './route.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { overviewMessages } from './Overview.messages.js';
@@ -33,6 +35,9 @@ import { usePersonCalculationSettings } from './person-calculation-settings.js';
 import { PageHeader } from './PageHeader.js';
 import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
 import { useStableMoment } from './use-stable-moment.js';
+
+/** How many saved searches Continue where you left off lists. */
+const MAX_SAVED_SEARCHES = 5;
 
 /** The current profected year: its sign, house and the planet that rules it. */
 interface NowLine {
@@ -101,6 +106,11 @@ export function Overview({ personId }: { readonly personId: string }): React.JSX
   const lastChart = readLastChart(personId);
   const consultationNotes = state.consultationNotes.get(personId)?.length ?? 0;
   const hasBirthNotes = person.notes.trim() !== '';
+  // The account's saved event searches (#1261, owner decision 2026-11-07: shown for every person, not attached to one).
+  // Only the readable ones open into Event search; the first few, in the list's own order.
+  const savedSearches = sortedSavedQueries(state.savedQueries, locale)
+    .flatMap((query) => (query.status === 'ready' ? [query] : []))
+    .slice(0, MAX_SAVED_SEARCHES);
   const resume: readonly { readonly key: string; readonly label: string; readonly href: string }[] = [
     ...(lastChart === undefined ? [] : [{ key: 'chart', label: t.resumeChart, href: lastChart }]),
     ...(hasBirthNotes
@@ -115,6 +125,11 @@ export function Overview({ personId }: { readonly personId: string }): React.JSX
             href: hrefFor('consultation', { personId }),
           },
         ]),
+    ...savedSearches.map((query) => ({
+      key: `saved-search-${query.id}`,
+      label: t.resumeSavedSearch(query.name),
+      href: `${routeHref({ kind: 'event-search' })}?query=${encodeURIComponent(query.id)}`,
+    })),
   ];
 
   // Every next action but editing the birth record itself needs a complete birth moment —

@@ -47,6 +47,7 @@ const en = {
   resumeHeading: 'Continue where you left off',
   resumeChart: 'The chart you last opened',
   resumeBirthNotes: 'The notes on the birth record',
+  resumeSavedSearch: (name: string) => (name === '' ? 'A saved search' : `Saved search: ${name}`),
   resumeConsultationNotes: (count: number) =>
     `${String(count)} consultation ${count === 1 ? 'note' : 'notes'} in Consultation`,
 };
@@ -90,6 +91,8 @@ const nl: typeof en = {
   resumeHeading: 'Ga verder waar je gebleven was',
   resumeChart: 'De horoscoop die je het laatst opende',
   resumeBirthNotes: 'De notities bij de geboortegegevens',
+  resumeSavedSearch: (name: string) =>
+    name === '' ? 'Een opgeslagen zoekopdracht' : `Opgeslagen zoekopdracht: ${name}`,
   resumeConsultationNotes: (count: number) =>
     `${String(count)} ${count === 1 ? 'consultatienotitie' : 'consultatienotities'} in Consultatie`,
 };

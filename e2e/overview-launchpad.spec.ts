@@ -10,7 +10,7 @@ import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { EINSTEIN, MARIC, newSeededContext, openSharedPerson } from './shared-people.ts';
-import { openNatalChart } from './support.ts';
+import { openNatalChart, openTool } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -162,6 +162,30 @@ test('on Transits the text above the wheel runs as wide as the wheel (#1225)', a
   // The text's box is the full content width, not a 44rem column.
   expect(hintBox.width).toBeGreaterThan(44 * 16 + 40);
   expect(hintBox.width).toBeGreaterThanOrEqual(wheelBox.width);
+});
+
+test('lists the account saved searches under Continue where you left off, and opens one into Event search (#1261)', async () => {
+  test.setTimeout(120_000);
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  await openOverview();
+  // Nothing saved yet: the card shows no saved search.
+  await expect(page.getByRole('link', { name: /^Saved search:/ })).toHaveCount(0);
+
+  await openTool(page, 'Ephemeris research');
+  await page.getByLabel('From', { exact: true }).fill('2027-03-01');
+  await page.getByLabel('To', { exact: true }).fill('2027-09-30');
+  await page.getByLabel('Query name', { exact: true }).fill('Mars stations 2027');
+  await page.getByRole('button', { name: 'Save query', exact: true }).click();
+  await expect(page.getByText('Saved “Mars stations 2027”.')).toBeVisible();
+
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  await openOverview();
+  const search = page.getByRole('link', { name: 'Saved search: Mars stations 2027' });
+  await expect(search).toBeVisible();
+  await search.click();
+  await expect(page.getByLabel('From', { exact: true })).toHaveValue('2027-03-01');
+  await expect(page.getByLabel('To', { exact: true })).toHaveValue('2027-09-30');
+  await expect(page.getByText(/events found/)).toHaveCount(0);
 });
 
 test('offers comparing with another person once there are two people, and goes to the relationship screen', async () => {
