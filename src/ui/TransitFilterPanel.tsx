@@ -19,7 +19,7 @@
  * @conventions State is remembered per context as an account preference (op log, #1220), as a preset name or full custom filter. "Change filters" (#489, #513) is the shared StagedDialog with a draft/dirty/Apply pattern; the global planetary-rulers preference deliberately lives in Preferences, not in it, with a fourth button (Apply as Default) splitting "apply to this view" from "apply and remember" — useTransitFilter exposes both a persisting setter and a session-only one for that split. Uses TransitFilterPanel.messages.ts for en/nl text via useMessages().
  * @exports TransitFilterPanel, useTransitFilter, EVERY_BODY_KEY
  */
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   HARD_ASPECT_KEYS,
   MINOR_ASPECT_KEYS,
@@ -114,20 +114,18 @@ interface Props {
   readonly locale: Locale;
 }
 
-export function TransitFilterPanel({
+/**
+ * The settings button for the transit filter (#1227): the one control in a transit screen's page header, which opens the
+ * staged filter card. The preset is chosen in the card with everything else, and `Apply` commits it.
+ */
+export function TransitFilterButton({
   filter,
   rules,
-  onChange,
   onApply,
   onApplyAsDefault,
-  shown,
-  total,
   locale,
-}: Props) {
+}: Omit<Props, 'onChange' | 'shown' | 'total'>) {
   const t = useMessages(transitFilterPanelMessages);
-  const id = useId();
-  const current = presetOf(filter, rules);
-  const presetName = t.presetsShort[current ?? 'custom'];
 
   // The dialog's own draft (#489): every control inside edits this, not the live filter.
   const [draft, setDraft] = useState<TransitFilter>(filter);
@@ -207,42 +205,10 @@ export function TransitFilterPanel({
   );
 
   return (
-    <section className="transit-filter" aria-labelledby={`${id}-heading`}>
-      <h2 id={`${id}-heading`} className="transit-filter-heading">
+    <>
+      <Button ref={triggerRef} aria-haspopup="dialog" aria-label={t.heading} onClick={openCard}>
         {t.heading}
-      </h2>
-      <ChoiceGroup
-        label={t.presetLabel}
-        value={current ?? 'custom'}
-        options={[
-          ...PRESETS.map((preset) => ({ value: preset, label: t.presetsShort[preset] })),
-          ...(current === undefined ? [{ value: 'custom', label: t.presetsShort.custom }] : []),
-        ]}
-        onChange={(value) => {
-          const preset = PRESETS.find((candidate) => candidate === value);
-          if (preset !== undefined) onChange(transitPreset(preset, rules));
-        }}
-      />
-      <FilterSummary
-        summary={t.count(shown, total, presetName)}
-        changeLabel={t.adjust}
-        onChange={openCard}
-        changeRef={triggerRef}
-        changeProps={{ 'aria-haspopup': 'dialog' }}
-      />
-      {current === 'important' && <p className="hint">{rules.context === 'daily' ? t.dailyNote : t.yearlyNote}</p>}
-      {shown === 0 && total > 0 && (
-        <StatusMessage kind="zero">
-          {t.empty(t.presets[current ?? 'custom'])}{' '}
-          <Button
-            onClick={() => {
-              onChange(transitPreset('all', rules));
-            }}
-          >
-            {t.clearFilters}
-          </Button>
-        </StatusMessage>
-      )}
+      </Button>
 
       <StagedDialog
         open={open}
@@ -272,6 +238,18 @@ export function TransitFilterPanel({
           </>
         }
       >
+        <ChoiceGroup
+          label={t.presetLabel}
+          value={presetOf(draft, rules) ?? 'custom'}
+          options={[
+            ...PRESETS.map((preset) => ({ value: preset, label: t.presetsShort[preset] })),
+            ...(presetOf(draft, rules) === undefined ? [{ value: 'custom', label: t.presetsShort.custom }] : []),
+          ]}
+          onChange={(value) => {
+            const preset = PRESETS.find((candidate) => candidate === value);
+            if (preset !== undefined) setDraft(transitPreset(preset, rules));
+          }}
+        />
         <ChoiceGroup
           label={t.orbLabel}
           value={draft.orbSensitivity}
@@ -313,6 +291,50 @@ export function TransitFilterPanel({
           {t.rulersNote} <a href={routeHref({ kind: 'preferences', section: 'astrology' })}>{t.rulersLink}</a>.
         </p>
       </StagedDialog>
-    </section>
+    </>
+  );
+}
+
+/**
+ * What the transit screen says about its filter (#1227), in the page body where the filter panel used to sit: how many of
+ * the contacts are shown under which preset, the rule the "Important" preset follows, and the way out of an empty list.
+ */
+export function TransitFilterStatus({
+  filter,
+  rules,
+  onChange,
+  shown,
+  total,
+}: Pick<Props, 'filter' | 'rules' | 'onChange' | 'shown' | 'total'>) {
+  const t = useMessages(transitFilterPanelMessages);
+  const current = presetOf(filter, rules);
+  const presetName = t.presetsShort[current ?? 'custom'];
+  return (
+    <div className="transit-filter-status">
+      <FilterSummary summary={t.count(shown, total, presetName)} />
+      {current === 'important' && <p className="hint">{rules.context === 'daily' ? t.dailyNote : t.yearlyNote}</p>}
+      {shown === 0 && total > 0 && (
+        <StatusMessage kind="zero">
+          {t.empty(t.presets[current ?? 'custom'])}{' '}
+          <Button
+            onClick={() => {
+              onChange(transitPreset('all', rules));
+            }}
+          >
+            {t.clearFilters}
+          </Button>
+        </StatusMessage>
+      )}
+    </div>
+  );
+}
+
+/** The button and the status together, for a place that has no page header to put the button in. */
+export function TransitFilterPanel(props: Props) {
+  return (
+    <>
+      <TransitFilterButton {...props} />
+      <TransitFilterStatus {...props} />
+    </>
   );
 }

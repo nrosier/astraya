@@ -361,6 +361,8 @@ test.describe('with the shared people (#799)', () => {
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).click();
     await page.getByRole('tab', { name: 'Forecast', exact: true }).click();
+    // The periods are tabs (#1227); the solar return is on the Yearly one.
+    await page.getByRole('tab', { name: 'Yearly', exact: true }).click();
     await expect(page.getByText(/Solar return for \d{4}/)).toBeVisible();
 
     const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();

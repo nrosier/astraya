@@ -323,14 +323,16 @@ Use a reading measure near 68 characters for interpretation prose. Use wider dat
 
 Do not solve every long page with another tab row, and do not force every related result into one continuous page. Use the smallest structure that keeps the user's current task and feedback together:
 
-| Structure                       | Use when                                                                                                                                            |
-| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Route-level local view**      | The content is a substantial task or visualization, benefits from Back/bookmark/share, or would push its interaction feedback several screens away. |
-| **In-page section with anchor** | The content forms one reading or analysis flow and remains understandable in sequence.                                                              |
-| **Tabs**                        | Two to four compact, mutually exclusive panels share one context and switching does not need its own URL or browser history.                        |
-| **Disclosure**                  | Optional explanation or secondary detail can open in place without interrupting the task.                                                           |
-| **Modal form**                  | Related settings must be reviewed and committed together while the result remains visible behind the dialog.                                        |
-| **Pagination/virtualization**   | Repeated data volume, rather than information architecture, makes a list or table long.                                                             |
+| Structure                       | Use when                                                                                                                                                       |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Route-level local view**      | The content is a substantial task or visualization, benefits from Back/bookmark/share, or would push its interaction feedback several screens away.            |
+| **In-page section with anchor** | The content forms one reading or analysis flow and remains understandable in sequence.                                                                         |
+| **Tabs**                        | Two to four compact, mutually exclusive panels share one context and switching does not need its own URL or browser history (five for a period choice, below). |
+| **Disclosure**                  | Optional explanation or secondary detail can open in place without interrupting the task.                                                                      |
+| **Modal form**                  | Related settings must be reviewed and committed together while the result remains visible behind the dialog.                                                   |
+| **Pagination/virtualization**   | Repeated data volume, rather than information architecture, makes a list or table long.                                                                        |
+
+**Five tabs for a period choice (#1227, owner decision 2026-11-06).** The Forecast page offers its five periods (daily, weekly, monthly, yearly and other returns) as tabs under the Transits section's own tab row. A period is one run of the same technique at a different scale, the five labels are short and fit one row at every size, and showing one period at a time removes a scroll of nine tables, so this one choice may use five tabs. Any other tab row stays at two to four panels, and a second tab row under a section's tabs is allowed only for a period choice of this kind.
 
 Split a page when it contains more than one dominant visualization with different selection contexts, when the result a control changes is no longer visible near that control, or when a secondary task routinely begins several screenfuls below the primary task. Keep each visualization's legend, selection feedback, and interpretation in the same view. Preserve context in the URL when moving between route-level local views.
 

@@ -34,6 +34,13 @@ test.afterAll(async () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
+/** Chooses a preset in the transit filter card, which a header button opens (#1227), and applies it. */
+async function choosePreset(page: Page, label: string): Promise<void> {
+  await page.getByRole('button', { name: 'Which transits to show', exact: true }).click();
+  await page.getByRole('radiogroup', { name: 'Show', exact: true }).getByLabel(label, { exact: true }).check();
+  await page.getByRole('button', { name: 'Apply', exact: true }).click();
+}
+
 test.describe('with the shared people (#799)', () => {
   let context: BrowserContext;
   let page: Page;
@@ -75,10 +82,10 @@ test.describe('with the shared people (#799)', () => {
     expect(shown).toBeLessThan(total);
     await expect(rows).toHaveCount(shown);
     await expect(crossLines).toHaveCount(shown);
-    await page.getByRole('radiogroup', { name: 'Show', exact: true }).getByLabel('All', { exact: true }).check();
+    await choosePreset(page, 'All');
     await expect(rows).toHaveCount(total);
     await expect(crossLines).toHaveCount(total);
-    await page.getByRole('radiogroup', { name: 'Show', exact: true }).getByLabel('Important', { exact: true }).check();
+    await choosePreset(page, 'Important');
 
     // Click-to-isolate (#418): the transiting Saturn is picked out on its own ring, the panel names
     // the ring, and a second click clears it.

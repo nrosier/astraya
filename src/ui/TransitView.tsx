@@ -63,7 +63,7 @@ import {
   type TransitRuleContext,
 } from '../astrology/transit-importance.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
-import { EVERY_BODY_KEY, TransitFilterPanel, useTransitFilter } from './TransitFilterPanel.js';
+import { EVERY_BODY_KEY, TransitFilterButton, TransitFilterStatus, useTransitFilter } from './TransitFilterPanel.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { PersonNotFound } from './PersonNotFound.js';
@@ -339,7 +339,18 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
         title={person.displayName ? t.heading(person.displayName) : t.transitsFallback}
         titleTerm="transit"
         basis={basisLine}
-      />
+      >
+        {/* The transit filter is one settings button, to the right of the heading (#1227). */}
+        {load.kind === 'ready' && wheelMarkup !== undefined && (
+          <TransitFilterButton
+            filter={filter}
+            rules={rules}
+            onApply={applyFilterForThisViewOnly}
+            onApplyAsDefault={setFilter}
+            locale={locale}
+          />
+        )}
+      </PageHeader>
       <p className="hint">
         <GlossaryText text={t.hint(person.displayName || t.thisPerson)} />
       </p>
@@ -358,15 +369,12 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
           <>
             {/* App-generated SVG from just-computed chart data, never user-supplied markup —
               the same trust boundary ChartView.tsx's sheet markup is injected under. */}
-            <TransitFilterPanel
+            <TransitFilterStatus
               filter={filter}
               rules={rules}
               onChange={setFilter}
-              onApply={applyFilterForThisViewOnly}
-              onApplyAsDefault={setFilter}
               shown={shownContacts.length}
               total={load.data.contacts.length}
-              locale={locale}
             />
 
             <p className="hint chart-wheel-hint">{wheelT.hint}</p>

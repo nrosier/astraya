@@ -117,20 +117,22 @@ function radio(container: HTMLElement, group: 'Show' | 'Orb', label: string): HT
   return found;
 }
 
+/**
+ * Chooses a radio in the filter card. The preset ("Show") is a card control since #1227, staged like the rest, so
+ * choosing one opens the card and applies it; the orb scale is chosen inside a card the test has already opened.
+ */
 async function choose(container: HTMLElement, group: 'Show' | 'Orb', label: string): Promise<void> {
+  if (group === 'Show') await openCard(container);
   const input = radio(container, group, label);
   await act(async () => {
     input.click();
     await Promise.resolve();
   });
+  if (group === 'Show') await clickCardButton(container, 'Apply');
 }
 
-/** The label of the preset radio that is selected. */
-const selectedPreset = (container: HTMLElement): string | undefined =>
-  [...container.querySelectorAll<HTMLInputElement>('[role="radiogroup"][aria-label="Show"] input')]
-    .find((input) => input.checked)
-    ?.closest('label')
-    ?.textContent.trim();
+/** The preset the status line names ("Important · 12 of 87 shown"); the card shows the same choice while it is open. */
+const selectedPreset = (container: HTMLElement): string | undefined => count(container).split(' · ')[0];
 
 function checkboxUnder(container: HTMLElement, legend: string, label: string): HTMLInputElement {
   const group = [...container.querySelectorAll('fieldset')].find(
@@ -293,7 +295,13 @@ describe('TransitFilterPanel (#416)', () => {
 
   it('remembers the choice per screen as an account preference, and a preset is rebuilt rather than frozen', async () => {
     const container = await mount('en', 'daily');
-    await choose(container, 'Show', 'Outer');
+    // The preset is a card control (#1227); only "Apply as Default" remembers it.
+    await openCard(container);
+    await act(async () => {
+      radio(container, 'Show', 'Outer').click();
+      await Promise.resolve();
+    });
+    await clickCardButton(container, 'Apply as Default');
     await unmount();
     expect(getAccountPreferences().transitFilterDaily).toEqual({ preset: 'outer' });
     expect(getAccountPreferences().transitFilterYearly).toBeUndefined();
@@ -381,7 +389,7 @@ describe('TransitFilterPanel (#416)', () => {
   it('is in Dutch when the language is Dutch', async () => {
     const container = await mount('nl');
     expect(count(container)).toMatch(/^Belangrijk · \d+ van \d+ getoond$/);
-    expect(container.textContent).toContain('Filters wijzigen');
+    expect(container.textContent).toContain('Welke transits tonen');
     await openCard(container);
     expect(container.textContent).toContain('Alleen toenemend');
     expect(container.textContent).toContain('Belangrijk, voor een dag');
