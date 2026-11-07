@@ -317,7 +317,7 @@ Each page should render in this order when applicable:
 
 The primary action must be visually strongest and appear near the inputs it submits. A long form should expose completion, dirty state, and a reachable Save action without forcing the user to scan to the bottom. Secondary and destructive actions must not compete with the primary action.
 
-Use a reading measure near 68 characters for interpretation prose. Use wider data shells for tables, charts, and builders. Do not solve both needs with one global maximum width.
+Use a reading measure near 68 characters for interpretation prose, and cap the text column of a text-heavy page (About, the Changelog) at about 75 characters (`--prose-measure`) while the shell stays at the Charts page width (#1176). Use wider data shells for tables, charts, and builders. Do not solve both needs with one global maximum width.
 
 ### Choose the right way to split content
 

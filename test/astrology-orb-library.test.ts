@@ -5,6 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   CARD_SOURCE,
+  newOrbProfileId,
   nextRevision,
   orbSettingsFor,
   readOrbContextSourceStrict,
@@ -131,5 +132,21 @@ describe('the strict readers of a synced value (#1220)', () => {
     expect(readOrbContextSourceStrict({ transit: 'house-style', horary: 'x' })).toEqual({ transit: 'house-style' });
     expect(readOrbContextSourceStrict({ transit: 5 })).toBeUndefined();
     expect(readOrbContextSourceStrict([])).toBeUndefined();
+  });
+});
+
+describe('newOrbProfileId (#1250)', () => {
+  it('is random, a valid profile id, and not the counted id two devices would both mint', () => {
+    const ids = Array.from({ length: 200 }, () => newOrbProfileId([good]));
+    expect(new Set(ids).size).toBe(200);
+    for (const id of ids) {
+      expect(validateOrbProfileRecord({ ...good, id })?.id).toBe(id);
+      expect(id).not.toBe('profile-2');
+    }
+  });
+
+  it('never returns an id the library already holds', () => {
+    const taken = Array.from({ length: 30 }, (_, index) => ({ ...good, id: `profile-${String(index)}` }));
+    expect(taken.map((profile) => profile.id)).not.toContain(newOrbProfileId(taken));
   });
 });
