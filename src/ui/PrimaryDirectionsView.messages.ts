@@ -60,6 +60,7 @@ const en = {
     'A bi-wheel is not shown for converse directions: this method carries the selected significator, not a single outer chart.',
   arcLine: (arc: string) => `Arc for this age: ${arc}°`,
 
+  wheelTitle: 'Natal and directed chart',
   natalRingLabel: 'Natal',
   directedRingLabel: 'Directed',
 
@@ -132,6 +133,7 @@ const nl: typeof en = {
     'Voor converse directies wordt geen bi-wheel getoond: deze methode draagt de gekozen significator, niet één vaste buitenste horoscoop.',
   arcLine: (arc: string) => `Boog voor deze leeftijd: ${arc}°`,
 
+  wheelTitle: 'Natale en gedirigeerde horoscoop',
   natalRingLabel: 'Natal',
   directedRingLabel: 'Gedirigeerd',
 
