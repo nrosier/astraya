@@ -2,7 +2,7 @@
  * @module ui/aspect-family-filter
  * @purpose Aspect-family filters for the wheel and the matrix, and the on-demand consultation presets built on them (#1063).
  * @conventions Pure, no React. Aspect keys are the existing `ASPECTS` keys (`astrology/aspects`); a family lists only keys that catalogue holds, so Decile, Septile and Novile (no catalogue entry) are not offered. No selection means no filter, which is the default view; Orb caps hide a contact whose orb is wider than the cap and never widen one.
- * @exports ConsultationPreset, CONSULTATION_PRESETS, AspectFamilyKey, AspectFamily, ASPECT_FAMILIES, FILTERABLE_FAMILIES, CATALOGUE_KEYS, OrbCaps, isContactShown, orbCapFor, toggleFamily
+ * @exports ConsultationPreset, PresetSwitches, CONSULTATION_PRESETS, AspectFamilyKey, AspectFamily, ASPECT_FAMILIES, FILTERABLE_FAMILIES, CATALOGUE_KEYS, OrbCaps, isContactShown, orbCapFor, toggleFamily
  */
 import { ASPECTS } from '../astrology/aspects.js';
 
@@ -95,13 +95,52 @@ export interface ConsultationPreset {
   readonly families: readonly AspectFamilyKey[];
   /** Orb limits for natal contacts; absent when the spec gives none that apply to the wheel and matrix (transit and solar arc orbs). */
   readonly orbs?: OrbCaps;
+  /** What the preset switches on the chart's own screen (#1190); absent means the preset leaves those choices as they are. */
+  readonly switches?: PresetSwitches;
+}
+
+/**
+ * The layer, chart-facts and orb choices a preset sets on the chart screen (#1190), as recorded on #1063 (2026-11-05).
+ * A layer left out is not touched. Orbs are degrees: the transit limit (3) and the solar arc limit (1) are the strict
+ * values #1063 names; 1 is also the window `SOLAR_ARC_ACTIVE_ORB_DEG` uses for an active solar arc contact.
+ */
+export interface PresetSwitches {
+  readonly layers?: Partial<Record<'transit' | 'progressed' | 'directed' | 'solarArc', boolean>>;
+  /** Essential dignities, sect and Almuten Figuris shown. */
+  readonly chartFacts?: boolean;
+  readonly transitOrb?: number;
+  readonly solarArcOrb?: number;
+  /** Draw the contacts between the rings, so the orb limits above have contacts to limit. */
+  readonly interRingAspects?: boolean;
 }
 
 /** Contents as recorded on #1063 (2026-11-05); owner sign-off of these contents is still to come. */
 export const CONSULTATION_PRESETS: readonly ConsultationPreset[] = [
-  { key: 'standardOverview', families: ['major', 'nodalAngular'], orbs: { luminary: 8, planet: 6 } },
-  { key: 'natalCore', families: ['major', 'parallels'], orbs: { luminary: 7, planet: 5 } },
-  { key: 'predictiveTiming', families: ['major', 'hardMinor'] },
+  {
+    key: 'standardOverview',
+    families: ['major', 'nodalAngular'],
+    orbs: { luminary: 8, planet: 6 },
+    switches: { layers: { transit: true }, chartFacts: true, transitOrb: 3 },
+  },
+  {
+    key: 'natalCore',
+    families: ['major', 'parallels'],
+    orbs: { luminary: 7, planet: 5 },
+    switches: {
+      layers: { transit: false, progressed: false, directed: false, solarArc: false },
+      chartFacts: true,
+    },
+  },
+  {
+    key: 'predictiveTiming',
+    families: ['major', 'hardMinor'],
+    switches: {
+      layers: { transit: true, solarArc: true },
+      transitOrb: 3,
+      solarArcOrb: 1,
+      interRingAspects: true,
+    },
+  },
   { key: 'dynamicSynastry', families: ['major', 'nodalAngular'], orbs: { luminary: 6, planet: 6 } },
 ];
 

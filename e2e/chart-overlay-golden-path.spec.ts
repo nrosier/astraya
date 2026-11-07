@@ -111,3 +111,32 @@ test('a natal, transit, and progressed triwheel is independently configurable (#
   await expect(dialog).toBeHidden();
   await expect(trigger).toBeFocused();
 });
+
+test('a consultation preset sets the layers and orbs on demand, and No preset restores them (#1190)', async () => {
+  test.setTimeout(120_000);
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  await openNatalChart(page);
+  await expect(page.locator('div.chart-wheel')).toBeVisible();
+  const trigger = page.locator('.chart-overlay-settings button.chart-overlay-trigger');
+  const dialog = page.locator('.chart-overlay-settings dialog');
+  const preset = page.getByLabel('Consultation preset');
+
+  // Opening the chart changes nothing: no extra ring, and the drawer shows the defaults.
+  await expect(page.locator('[data-ring-legend]')).toHaveCount(0);
+  await trigger.click();
+  await expect(dialog.getByRole('checkbox', { name: 'Solar arc ring', exact: true })).not.toBeChecked();
+  await expect(dialog.getByRole('checkbox', { name: 'Show dignities, sect and Almuten Figuris' })).toBeChecked();
+  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+
+  await preset.selectOption({ label: 'Predictive and timing: major and hard minor' });
+  await expect(page.locator('[data-ring-legend]')).toHaveCount(3);
+  await trigger.click();
+  await expect(dialog.getByRole('checkbox', { name: 'Transit ring', exact: true })).toBeChecked();
+  await expect(dialog.getByRole('checkbox', { name: 'Solar arc ring', exact: true })).toBeChecked();
+  await expect(dialog.getByLabel('Transit orb limit')).toHaveValue('3');
+  await expect(dialog.getByLabel('Solar arc orb limit')).toHaveValue('1');
+  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+
+  await preset.selectOption({ label: 'No preset (default view)' });
+  await expect(page.locator('[data-ring-legend]')).toHaveCount(0);
+});

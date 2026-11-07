@@ -420,6 +420,7 @@ function renderShapeSection(
   t: typeof chartViewMessages.en,
   locale: Locale,
   boundsScheme: BoundsScheme,
+  showFacts: boolean,
 ): React.ReactNode {
   const shape = chartShapeOf(data);
   // Always traditional (#545) — the same Almuten of the Ascendant the dignities section breaks down below.
@@ -456,7 +457,7 @@ function renderShapeSection(
           />
         </div>
       )}
-      {(lunarPhase !== undefined || hasHouses || almuten !== undefined) && (
+      {(lunarPhase !== undefined || (showFacts && (hasHouses || almuten !== undefined))) && (
         <dl className="metric-cards">
           {lunarPhase !== undefined && (
             <div className="flat-card">
@@ -471,13 +472,13 @@ function renderShapeSection(
               </dd>
             </div>
           )}
-          {hasHouses && (
+          {showFacts && hasHouses && (
             <div className="flat-card">
               <dt>{t.sectKeyLabel}</dt>
               <dd className="sect-summary">{data.sect === 'day' ? t.dayChart : t.nightChart}</dd>
             </div>
           )}
-          {almuten !== undefined && (
+          {showFacts && almuten !== undefined && (
             <div className="flat-card">
               <dt>{t.almutenKeyLabel}</dt>
               <dd className="almuten-summary">
@@ -627,7 +628,7 @@ export function renderDignitiesTable(
 
 /**
  * The Patterns & condition view (#511): the chart shape (with the Moon's phase and sect) next to its
- * own explanation, then dignities and dispositors — `docs/ui/UI-UX_GUIDELINES.md` §2's exact grouping.
+ * own explanation, then dignities and dispositors (the dignities, sect and Almuten Figuris can be switched off, #1190) — `docs/ui/UI-UX_GUIDELINES.md` §2's exact grouping.
  */
 export function renderPatternsView(
   data: ChartData,
@@ -638,12 +639,13 @@ export function renderPatternsView(
   locale: Locale,
   rulership: RulershipChoice,
   boundsScheme: BoundsScheme,
+  showFacts = true,
 ): React.ReactNode {
   return (
     <>
       <h3>{t.shapeTabLabel}</h3>
-      {renderShapeSection(data, housesRenderable, t, locale, boundsScheme)}
-      {renderDignitiesTable(data, displayName, pointVisibility, t, locale, rulership, boundsScheme)}
+      {renderShapeSection(data, housesRenderable, t, locale, boundsScheme, showFacts)}
+      {showFacts && renderDignitiesTable(data, displayName, pointVisibility, t, locale, rulership, boundsScheme)}
     </>
   );
 }
