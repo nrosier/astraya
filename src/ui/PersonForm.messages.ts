@@ -29,6 +29,8 @@ const en = {
   dateLabel: 'Date',
   timeLabel: 'Time',
   timeKnownLabel: 'How the time is known',
+  nextStep: 'The birth record is complete. Next:',
+  nextStepChart: 'open the natal chart.',
 
   locationCardHeading: 'Location and geocoding',
   latitudeLabel: 'Latitude',
@@ -110,6 +112,8 @@ const nl: typeof en = {
   dateLabel: 'Datum',
   timeLabel: 'Tijd',
   timeKnownLabel: 'Hoe de tijd bekend is',
+  nextStep: 'De geboortegegevens zijn compleet. Vervolgens:',
+  nextStepChart: 'de horoscoop openen.',
 
   locationCardHeading: 'Plaats en zoeken',
   latitudeLabel: 'Breedtegraad',

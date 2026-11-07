@@ -18,6 +18,7 @@ import { useEffect, useId, useState } from 'react';
 import { draftFrom, draftToMutations, timeToHhMm, validateDraft, type Draft } from '../domain/person-form.js';
 import { personFormValidationMessages } from '../domain/person-form.messages.js';
 import { formatOffset, resolveMoment } from '../time/resolve.js';
+import { hrefFor } from './feature-registry.js';
 import { Button } from './primitives/Button.js';
 import { Disclosure } from './primitives/Disclosure.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
@@ -231,6 +232,13 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
           )}
         </div>
       </PageHeader>
+
+      {/* A complete, saved record says what to do next (#1060): the chart is the first goal. */}
+      {moment !== undefined && !dirty && !saving && (
+        <p className="hint birth-record-next">
+          {t.nextStep} <a href={hrefFor('chart', { personId })}>{t.nextStepChart}</a>
+        </p>
+      )}
 
       {saveError !== undefined && <StatusMessage kind="error">{t.saveFailed(saveError)}</StatusMessage>}
 

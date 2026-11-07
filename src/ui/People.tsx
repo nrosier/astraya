@@ -12,7 +12,7 @@
  * @conventions A person is the primary entity (charts belong to people, not vice versa); a person with no birth moment is listed as exactly that rather than hidden or faked complete; deletes are tombstones, shown under "Deleted" with a restore option until purged. Text comes from co-located `People.messages.ts` via `useMessages()`.
  * @exports People
  */
-import { personHref } from './route.js';
+import { personHref, routeHref } from './route.js';
 import { PageHeader } from './PageHeader.js';
 import { useState } from 'react';
 import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
@@ -110,7 +110,15 @@ export function People(): React.JSX.Element {
       </p>
 
       {people.length === 0 ? (
-        <EmptyState message={t.empty} />
+        <EmptyState message={t.empty}>
+          {/* The first-use state offers the way in for someone who already holds data (#1060): the restore and
+              import on Preferences, since nothing is stored yet. It is derived from the stored people, never a flag. */}
+          <p>
+            <a className="quiet" href={routeHref({ kind: 'preferences', section: 'data' })}>
+              {t.importData}
+            </a>
+          </p>
+        </EmptyState>
       ) : (
         <ul className="people">
           {people.map((person) => (
