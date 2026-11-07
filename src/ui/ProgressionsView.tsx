@@ -279,40 +279,8 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
         basis={basisLine}
         basisEditHref={null}
       >
-        {/* The technique, MC method, as-of date and Now sit in the header, to the right (#1235); Export stays in the page header (#887). */}
-        <div className="timing-header-control">
-          <Select
-            label={t.techniqueLabel}
-            value={technique}
-            options={[
-              { value: 'secondary', label: t.secondaryTechnique },
-              { value: 'tertiary', label: t.tertiaryTechnique },
-              { value: 'minor', label: t.minorTechnique },
-            ]}
-            onChange={(value) => {
-              setTechnique(value as Technique);
-            }}
-          />
-        </div>
-        {technique === 'secondary' && (
-          <div className="timing-header-control">
-            <Select
-              label={t.mcMethodLabel}
-              value={mcMethod}
-              options={[
-                { value: 'quotidian', label: t.quotidianMethod },
-                { value: 'naibod', label: t.naibodMethod },
-                { value: 'solarArc', label: t.solarArcMethod },
-              ]}
-              onChange={(value) => {
-                setMcMethod(value as ProgressedMcMethod);
-              }}
-            />
-          </div>
-        )}
-        <div className="timing-header-control">
-          <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
-        </div>
+        {/* The as-of date, Now and Export sit in the heading row, to the right (#1235, owner review 2026-11-07). */}
+        <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
         <Button
           onClick={() => {
             setAsOf(todayInputValue());
@@ -321,6 +289,34 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
           {t.nowLabel}
         </Button>
       </PageHeader>
+      <div className="timing-toolbar">
+        <Select
+          label={t.techniqueLabel}
+          value={technique}
+          options={[
+            { value: 'secondary', label: t.secondaryTechnique },
+            { value: 'tertiary', label: t.tertiaryTechnique },
+            { value: 'minor', label: t.minorTechnique },
+          ]}
+          onChange={(value) => {
+            setTechnique(value as Technique);
+          }}
+        />
+        {technique === 'secondary' && (
+          <Select
+            label={t.mcMethodLabel}
+            value={mcMethod}
+            options={[
+              { value: 'quotidian', label: t.quotidianMethod },
+              { value: 'naibod', label: t.naibodMethod },
+              { value: 'solarArc', label: t.solarArcMethod },
+            ]}
+            onChange={(value) => {
+              setMcMethod(value as ProgressedMcMethod);
+            }}
+          />
+        )}
+      </div>
 
       {/* The result region: busy while the progressions (re)calculate, as the Astrocartography map is. */}
       <div aria-busy={load.kind === 'loading'}>
@@ -341,27 +337,31 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
             <div className="timing-layout">
               <div className="timing-layout-main">
                 {contacts !== undefined && contacts.length > 0 && (
-                  <SortableTable
-                    caption={t.contactsCaption}
-                    headingLevel={2}
-                    columns={contactColumns(t, locale)}
-                    rows={contacts}
-                    getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
-                    downloadFilename={deriveExportFilename(person.displayName, 'progression-contacts', 'csv')}
-                  />
+                  <section className="timing-card">
+                    <SortableTable
+                      caption={t.contactsCaption}
+                      headingLevel={2}
+                      columns={contactColumns(t, locale)}
+                      rows={contacts}
+                      getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
+                      downloadFilename={deriveExportFilename(person.displayName, 'progression-contacts', 'csv')}
+                    />
+                  </section>
                 )}
                 {contacts?.length === 0 && <p className="hint">{t.noContacts}</p>}
               </div>
               <div className="timing-layout-side">
                 {positions !== undefined && (
-                  <SortableTable
-                    caption={t.positionsCaption}
-                    headingLevel={2}
-                    columns={positionColumns(t, locale)}
-                    rows={positions}
-                    getRowKey={(row) => row.bodyKey}
-                    downloadFilename={deriveExportFilename(person.displayName, 'progressions', 'csv')}
-                  />
+                  <section className="timing-card">
+                    <SortableTable
+                      caption={t.positionsCaption}
+                      headingLevel={2}
+                      columns={positionColumns(t, locale)}
+                      rows={positions}
+                      getRowKey={(row) => row.bodyKey}
+                      downloadFilename={deriveExportFilename(person.displayName, 'progressions', 'csv')}
+                    />
+                  </section>
                 )}
               </div>
             </div>

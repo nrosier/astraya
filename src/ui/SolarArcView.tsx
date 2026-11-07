@@ -323,27 +323,31 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
             <div className="timing-layout">
               <div className="timing-layout-main">
                 {contacts !== undefined && contacts.length > 0 && (
-                  <SortableTable
-                    caption={t.contactsCaption}
-                    headingLevel={2}
-                    columns={contactColumns(t, locale)}
-                    rows={contacts}
-                    getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
-                    downloadFilename={deriveExportFilename(person.displayName, 'solar-arc-contacts', 'csv')}
-                  />
+                  <section className="timing-card">
+                    <SortableTable
+                      caption={t.contactsCaption}
+                      headingLevel={2}
+                      columns={contactColumns(t, locale)}
+                      rows={contacts}
+                      getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
+                      downloadFilename={deriveExportFilename(person.displayName, 'solar-arc-contacts', 'csv')}
+                    />
+                  </section>
                 )}
                 {contacts?.length === 0 && <p className="hint">{t.noContacts}</p>}
               </div>
               <div className="timing-layout-side">
                 {positions !== undefined && (
-                  <SortableTable
-                    caption={t.positionsCaption}
-                    headingLevel={2}
-                    columns={positionColumns(t, locale)}
-                    rows={positions}
-                    getRowKey={(row) => row.bodyKey}
-                    downloadFilename={deriveExportFilename(person.displayName, 'solar-arc', 'csv')}
-                  />
+                  <section className="timing-card">
+                    <SortableTable
+                      caption={t.positionsCaption}
+                      headingLevel={2}
+                      columns={positionColumns(t, locale)}
+                      rows={positions}
+                      getRowKey={(row) => row.bodyKey}
+                      downloadFilename={deriveExportFilename(person.displayName, 'solar-arc', 'csv')}
+                    />
+                  </section>
                 )}
               </div>
             </div>

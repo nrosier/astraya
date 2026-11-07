@@ -340,7 +340,8 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
         titleTerm="transit"
         basis={basisLine}
       >
-        {/* The transit filter is one settings button, to the right of the heading (#1227). */}
+        {/* The as-of date, the transit filter button and Export sit in the heading row, to the right (#1227, owner review 2026-11-07). */}
+        <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
         {load.kind === 'ready' && wheelMarkup !== undefined && (
           <TransitFilterButton
             filter={filter}
@@ -353,10 +354,6 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
       </PageHeader>
       <p className="hint">
         <GlossaryText text={t.hint(person.displayName || t.thisPerson)} />
-      </p>
-
-      <p>
-        <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
       </p>
 
       {/* The result region: busy while the transit (re)calculates, as the Astrocartography map is. */}

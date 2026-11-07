@@ -478,14 +478,16 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
                 )}
 
                 {activeRows !== undefined && activeRows.length > 0 && (
-                  <SortableTable
-                    caption={t.activeCaption(String(data.orb))}
-                    headingLevel={2}
-                    columns={columns}
-                    rows={activeRows}
-                    getRowKey={(row) => row.id}
-                    downloadFilename={deriveExportFilename(person.displayName, 'primary-directions-active', 'csv')}
-                  />
+                  <section className="timing-card">
+                    <SortableTable
+                      caption={t.activeCaption(String(data.orb))}
+                      headingLevel={2}
+                      columns={columns}
+                      rows={activeRows}
+                      getRowKey={(row) => row.id}
+                      downloadFilename={deriveExportFilename(person.displayName, 'primary-directions-active', 'csv')}
+                    />
+                  </section>
                 )}
                 {activeRows?.length === 0 && (
                   <p className="hint">
@@ -494,14 +496,16 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
                 )}
 
                 {allRows !== undefined && allRows.length > 0 && (
-                  <SortableTable
-                    caption={t.allCaption}
-                    headingLevel={2}
-                    columns={columns}
-                    rows={allRows}
-                    getRowKey={(row) => row.id}
-                    downloadFilename={deriveExportFilename(person.displayName, 'primary-directions', 'csv')}
-                  />
+                  <section className="timing-card">
+                    <SortableTable
+                      caption={t.allCaption}
+                      headingLevel={2}
+                      columns={columns}
+                      rows={allRows}
+                      getRowKey={(row) => row.id}
+                      downloadFilename={deriveExportFilename(person.displayName, 'primary-directions', 'csv')}
+                    />
+                  </section>
                 )}
                 {allRows?.length === 0 && <p className="hint">{t.noDirections}</p>}
               </>
