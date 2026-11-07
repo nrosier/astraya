@@ -441,7 +441,8 @@ const proseTerms: readonly {
   {
     view: 'ProfectionsView',
     term: 'houses',
-    visible: { en: 'house', nl: 'huis' },
+    // The profections hint is a heading tooltip since #1236, so the visible prose is the rulers hint's "houses".
+    visible: { en: 'houses', nl: 'huizen' },
     node: () => <ProfectionsView personId="p1" />,
   },
   {
