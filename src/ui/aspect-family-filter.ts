@@ -1,12 +1,12 @@
 /**
  * @module ui/aspect-family-filter
  * @purpose Aspect-family filters for the wheel and the matrix, and the on-demand consultation presets built on them (#1063).
- * @conventions Pure, no React. Aspect keys are the existing `ASPECTS` keys (`astrology/aspects`); a family lists only keys that catalogue holds, so Decile, Septile and Novile (no catalogue entry) are not offered. No selection means no filter, which is the default view; Orb caps hide a contact whose orb is wider than the cap and never widen one.
+ * @conventions Pure, no React. Aspect keys are the existing `ASPECTS` keys (`astrology/aspects`); a family lists only keys that catalogue holds, so the decile, septile and novile sit in their own higher-harmonic family (#1184), apart from the quintile series. No selection means no filter, which is the default view; Orb caps hide a contact whose orb is wider than the cap and never widen one.
  * @exports ConsultationPreset, PresetSwitches, isMajorAspect, CONSULTATION_PRESETS, AspectFamilyKey, AspectFamily, ASPECT_FAMILIES, FILTERABLE_FAMILIES, CATALOGUE_KEYS, OrbCaps, isContactShown, orbCapFor, toggleFamily
  */
 import { ASPECTS } from '../astrology/aspects.js';
 
-export type AspectFamilyKey = 'major' | 'hardMinor' | 'softMinor' | 'parallels' | 'nodalAngular';
+export type AspectFamilyKey = 'major' | 'hardMinor' | 'softMinor' | 'higherHarmonic' | 'parallels' | 'nodalAngular';
 
 export interface AspectFamily {
   readonly key: AspectFamilyKey;
@@ -21,6 +21,7 @@ export const ASPECT_FAMILIES: readonly AspectFamily[] = [
   { key: 'major', aspectKeys: ['conjunction', 'sextile', 'square', 'trine', 'opposition'], bodyKeys: [] },
   { key: 'hardMinor', aspectKeys: ['semisquare', 'sesquiquadrate', 'quincunx', 'semisextile'], bodyKeys: [] },
   { key: 'softMinor', aspectKeys: ['quintile', 'biquintile'], bodyKeys: [] },
+  { key: 'higherHarmonic', aspectKeys: ['decile', 'septile', 'novile'], bodyKeys: [] },
   // Parallels are declination contacts: the wheel and the matrix draw none, so this family has no line to show.
   { key: 'parallels', aspectKeys: [], bodyKeys: [] },
   {
