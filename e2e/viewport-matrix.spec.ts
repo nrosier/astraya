@@ -437,6 +437,29 @@ test('progressions timing-layout columns keep the shorter at least 90% of the ta
   expect(ratios.length, 'the pair sits side by side at the wide widths').toBe(2);
 });
 
+test('profections timing-layout pair is measured and reported, exempt from the 90% rule (#1236)', async () => {
+  // Documented exception, guideline section 10.1 rule 2 (owner decision 2026-11-07): the rulership card is short by design
+  // beside the table and meanings, so the ratio is reported but not asserted; the pair must still sit side by side.
+  test.setTimeout(120_000);
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  const id = /#\/people\/([^/]+)/.exec(page.url())?.[1];
+  expect(id).toBeDefined();
+  const report: string[] = [];
+  const ratios = await measureRatios(
+    page,
+    baseUrl,
+    {
+      name: 'profections',
+      hash: `#/people/${id ?? ''}/timing/profections`,
+      ready: '.timing-layout-side > .timing-controls',
+      cards: '.timing-layout > .timing-layout-main, .timing-layout > .timing-layout-side',
+    },
+    report,
+  );
+  console.log(report.join('\n'));
+  expect(ratios.length, 'the pair sits side by side at the wide widths').toBe(2);
+});
+
 test('the horary astrological parameters card spans the full form width at 1280×800', async () => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto(`${baseUrl}/#/explore/horary`);
