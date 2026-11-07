@@ -39,7 +39,7 @@ import { TimeField } from './primitives/TimeField.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { useStore, useStoreState } from './store-context.js';
 import type { Calendar } from '../time/types.js';
-import { BIRTH_SOURCE_NOTE_MAX_CHARACTERS, type TimeAccuracy } from '../domain/person.js';
+import { BIRTH_SOURCE_NOTE_MAX_CHARACTERS, PERSON_TEXT_MAX_CHARACTERS, type TimeAccuracy } from '../domain/person.js';
 import { PageHeader } from './PageHeader.js';
 import { orbSourceName, useCalculationBasisLine } from './calculation-basis.js';
 import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
@@ -258,6 +258,7 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
             <TextField
               label={t.nameLabel}
               value={current.displayName}
+              inputProps={{ maxLength: PERSON_TEXT_MAX_CHARACTERS }}
               error={errors.displayName}
               onChange={(value) => {
                 set('displayName', value);
@@ -350,6 +351,7 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
               label={t.placeOfBirthLabel}
               placeholder={t.placeOfBirthPlaceholder}
               value={current.placeLabel}
+              inputProps={{ maxLength: PERSON_TEXT_MAX_CHARACTERS }}
               onChange={(value) => {
                 set('placeLabel', value);
               }}
