@@ -19,6 +19,10 @@ A `changes` job checks whether a pull request touches anything outside `docs/`, 
 
 A new push to a pull request cancels that pull request's run in progress, so a fix-up push does not queue behind the run it replaces. Pushes to `main` are grouped by commit and are never cancelled.
 
+## Verify image (by hand)
+
+`.github/workflows/verify-image.yml` is run from the Actions tab (`gh workflow run verify-image.yml -f version=0.49.0`) and pushes nothing. It runs `cosign verify` on `latest` and on the version tag against this repository's workflow identity, checks that both tags resolve to one digest, runs `npm run docker:smoke` on a Linux runner and checks the image's revision label equals the commit, and checks that a plain `docker build .` still carries the label as `unknown`. The run log is the evidence the signing and revision issues (#1209, #1198) ask for.
+
 ## Timings
 
 Measured on 2026-11-03, before the shards (#1095): the single e2e job's test step took 813 s, and 508 s after #1093 removed an idle wait from the shared navigation helper. `check` takes about 5 minutes, of which the unit tests are about 100 s.
