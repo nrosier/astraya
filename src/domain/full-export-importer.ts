@@ -60,6 +60,7 @@ import {
   readText,
   readTimeAccuracy,
   type Person,
+  readBirthSourceKind,
 } from './person.js';
 import type { ExtendedSettings } from '../chart/extended-settings.js';
 import type { BirthMomentInput, Calendar } from '../time/types.js';
@@ -234,6 +235,15 @@ function validatePerson(raw: unknown, path: string): Result<ExportedPerson, Impo
   }
   const timeAccuracy = readTimeAccuracy(raw.timeAccuracy);
   if (timeAccuracy === undefined) return malformed(`${path}.timeAccuracy`, 'missing or not a recognised value');
+  // The source of the birth data (#1262) is additive: absent is fine, present but unrecognised is refused.
+  const sourceKind = readBirthSourceKind(raw.sourceKind);
+  if (raw.sourceKind !== undefined && sourceKind === undefined) {
+    return malformed(`${path}.sourceKind`, 'not a recognised value');
+  }
+  const sourceNote = raw.sourceNote === undefined ? undefined : readText(raw.sourceNote);
+  if (raw.sourceNote !== undefined && sourceNote === undefined) {
+    return malformed(`${path}.sourceNote`, 'not a string');
+  }
   const missingRaw = raw.missing;
   if (!Array.isArray(missingRaw) || !missingRaw.every((entry): entry is string => typeof entry === 'string')) {
     return malformed(`${path}.missing`, 'not an array of strings');
@@ -305,6 +315,8 @@ function validatePerson(raw: unknown, path: string): Result<ExportedPerson, Impo
       displayName,
       placeLabel,
       timeAccuracy,
+      ...(sourceKind === undefined ? {} : { sourceKind }),
+      ...(sourceNote === undefined || sourceNote === '' ? {} : { sourceNote }),
       notes,
       ...(birthNote === undefined ? {} : { birthNote }),
       ...(consultationNotes === undefined ? {} : { consultationNotes }),
@@ -575,6 +587,13 @@ function restoreMutations(
   if (existing?.displayName !== exported.displayName) write('displayName', exported.displayName);
   if (existing?.placeLabel !== exported.placeLabel) write('placeLabel', exported.placeLabel);
   if (existing?.timeAccuracy !== exported.timeAccuracy) write('timeAccuracy', exported.timeAccuracy);
+  // A file without a source leaves this device's source alone: absent is "not said", not "cleared".
+  if (exported.sourceKind !== undefined && existing?.sourceKind !== exported.sourceKind) {
+    write('sourceKind', exported.sourceKind);
+  }
+  if (exported.sourceNote !== undefined && existing?.sourceNote !== exported.sourceNote) {
+    write('sourceNote', exported.sourceNote);
+  }
 
   const birth = exported.birth;
   if (birth !== undefined && !same(existing?.moment, birth)) {

@@ -298,6 +298,23 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
                 }}
               />
             </div>
+            <div data-health-field="source" className="birth-record-source">
+              <Select
+                label={t.sourceLabel}
+                value={current.sourceKind}
+                options={Object.entries(t.sourceKinds).map(([value, text]) => ({ value, label: text }))}
+                onChange={(value) => {
+                  set('sourceKind', value as Draft['sourceKind']);
+                }}
+              />
+              <TextField
+                label={t.sourceNoteLabel}
+                value={current.sourceNote}
+                onChange={(value) => {
+                  set('sourceNote', value);
+                }}
+              />
+            </div>
             {unknown && (
               <div>
                 <p id={`${unknownTimeHintId}-reason`} className="hint">
