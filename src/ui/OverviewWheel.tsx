@@ -123,14 +123,14 @@ export function OverviewWheel({
       {placements.length > 0 && (
         <section className="overview-card overview-card--placements" aria-labelledby="overview-placements-heading">
           <h2 id="overview-placements-heading">{t.placementsHeading}</h2>
-          <dl className="overview-placements">
+          <ul className="overview-placements">
             {placements.map((row) => (
-              <div key={row.key}>
-                <dt>{row.label}</dt>
-                <dd>{row.text}</dd>
-              </div>
+              <li key={row.key}>
+                <span className="overview-placements-label">{row.label}</span>
+                <span>{row.text}</span>
+              </li>
             ))}
-          </dl>
+          </ul>
         </section>
       )}
     </>

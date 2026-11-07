@@ -321,7 +321,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
   }
 
   return (
-    <main className="shell">
+    <main className="shell shell--wide-text">
       {/* Invisible outside @media print (#564) — see app.css's own `.print-provenance` rule.
           This screen doesn't yet thread a user-configurable calculation snapshot through
           `computeTransit` (see PrintProvenance.tsx's doc comment) — `rulership` above only

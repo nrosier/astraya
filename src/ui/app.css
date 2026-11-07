@@ -8529,21 +8529,27 @@ a.quiet,
   display: grid;
   gap: var(--space-2);
   margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.overview-placements > div {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1) var(--space-3);
+.overview-placements > li {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  gap: var(--space-3);
 }
 
-.overview-placements dt {
-  min-width: 5.5rem;
+.overview-placements-label {
   color: var(--muted);
 }
 
-.overview-placements dd {
-  margin: 0;
+/*
+ * A screen led by a full-width wheel lets the text above it run the full width too (owner visual review 2026-11-07,
+ * issue 1225): the 44rem cap on a hint is for a column of text, not for a line over a picture as wide as the page.
+ */
+.shell--wide-text .hint,
+.shell--wide-text .filter-summary {
+  max-width: none;
 }
 
 .overview-wheel {
