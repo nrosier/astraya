@@ -968,6 +968,30 @@ footer {
   min-width: 0;
 }
 
+/* A control in a timing view's page header (#1235): a fixed share of the row, never wider than the screen, so the
+   technique, method and date sit on one line beside Export instead of each stretching to its widest option (19rem
+   fits "Secondary (a day for a year)"). */
+.timing-header-control {
+  flex: 0 1 19rem;
+  min-width: min(100%, 10rem);
+}
+
+.page-header-actions:has(.timing-header-control) {
+  /* Its own row under the title, to the right, so the title keeps its width and the controls their labels. */
+  flex: 1 1 100%;
+  min-width: 0;
+  max-width: 100%;
+  justify-content: flex-end;
+  align-items: flex-end;
+}
+
+/* On a phone each control takes the full row, so nothing is wider than the screen. */
+@media (max-width: 40rem) {
+  .timing-header-control {
+    flex-basis: 100%;
+  }
+}
+
 .tool-card {
   display: grid;
   /* One column that may shrink below a long select option's width, so the card never widens the page on a phone. */

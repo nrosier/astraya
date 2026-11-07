@@ -20,10 +20,13 @@ import { GlossaryText } from './GlossaryText.js';
 import { personHref } from './route.js';
 import { DateField } from './primitives/DateField.js';
 import { Select } from './primitives/Select.js';
+import { signDegreeColumn } from './position-column.js';
+import { Tooltip } from './primitives/Tooltip.js';
+import { Button } from './primitives/Button.js';
 import { useEffect, useMemo, useState } from 'react';
 import { bodyById } from '../astrology/bodies.js';
 import type { ProgressedMcMethod } from '../astrology/progressions.js';
-import { aspectDisplayName, bodyDisplayName, signDisplayName } from './astro-names.messages.js';
+import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
 import { crossAspectRows, degreeParts, type AspectRow, type DegreeParts } from '../domain/chart-tables.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
@@ -60,6 +63,8 @@ type Load =
   | { readonly kind: 'error'; readonly message: string };
 
 interface PositionRow extends DegreeParts {
+  /** Ecliptic longitude, for the merged Position column's sort. */
+  readonly longitude: number;
   readonly bodyKey: string;
   readonly bodyName: string;
   readonly house?: number;
@@ -73,6 +78,7 @@ export function positionRows(positions: readonly BodyPosition[], houses: HousePo
     return {
       bodyKey: body?.key ?? String(position.body),
       bodyName: body?.name ?? String(position.body),
+      longitude: position.longitude,
       ...degreeParts(position.longitude),
       ...(housesUsable ? { house: houseOf(position.longitude, houses.cusps) } : {}),
     };
@@ -80,8 +86,8 @@ export function positionRows(positions: readonly BodyPosition[], houses: HousePo
   if (!housesUsable) return bodyRows;
   return [
     ...bodyRows,
-    { bodyKey: 'asc', bodyName: 'Ascendant', ...degreeParts(houses.ascendant) },
-    { bodyKey: 'mc', bodyName: 'Midheaven', ...degreeParts(houses.midheaven) },
+    { bodyKey: 'asc', bodyName: 'Ascendant', longitude: houses.ascendant, ...degreeParts(houses.ascendant) },
+    { bodyKey: 'mc', bodyName: 'Midheaven', longitude: houses.midheaven, ...degreeParts(houses.midheaven) },
   ];
 }
 
@@ -96,15 +102,7 @@ export function positionColumns(
       valueOf: (row) => row.bodyName,
       render: (row) => bodyDisplayName(row.bodyKey, locale),
     },
-    {
-      key: 'sign',
-      label: t.signLabel,
-      valueOf: (row) => row.sign,
-      render: (row) => signDisplayName(row.sign, locale),
-    },
-    { key: 'degree', label: t.degLabel, valueOf: (row) => row.degree },
-    { key: 'minute', label: t.minLabel, valueOf: (row) => row.minute },
-    { key: 'second', label: t.secLabel, valueOf: (row) => row.second },
+    signDegreeColumn<PositionRow>(t.positionLabel, locale),
     {
       key: 'house',
       label: t.houseLabel,
@@ -273,42 +271,56 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
         headingLevel={2}
         title={person.displayName ? t.heading(person.displayName) : t.progressionsFallback}
         titleTerm="progression"
+        titleAside={
+          <Tooltip text={t.hint} label={t.hintInfoLabel} className="primitive-tooltip-icon">
+            ?
+          </Tooltip>
+        }
         basis={basisLine}
         basisEditHref={null}
-      />
-      <p className="hint">
-        <GlossaryText text={t.hint} />
-      </p>
-
-      <div className="field-grid">
-        <Select
-          label={t.techniqueLabel}
-          value={technique}
-          options={[
-            { value: 'secondary', label: t.secondaryTechnique },
-            { value: 'tertiary', label: t.tertiaryTechnique },
-            { value: 'minor', label: t.minorTechnique },
-          ]}
-          onChange={(value) => {
-            setTechnique(value as Technique);
-          }}
-        />
-        {technique === 'secondary' && (
+      >
+        {/* The technique, MC method, as-of date and Now sit in the header, to the right (#1235); Export stays in the page header (#887). */}
+        <div className="timing-header-control">
           <Select
-            label={t.mcMethodLabel}
-            value={mcMethod}
+            label={t.techniqueLabel}
+            value={technique}
             options={[
-              { value: 'quotidian', label: t.quotidianMethod },
-              { value: 'naibod', label: t.naibodMethod },
-              { value: 'solarArc', label: t.solarArcMethod },
+              { value: 'secondary', label: t.secondaryTechnique },
+              { value: 'tertiary', label: t.tertiaryTechnique },
+              { value: 'minor', label: t.minorTechnique },
             ]}
             onChange={(value) => {
-              setMcMethod(value as ProgressedMcMethod);
+              setTechnique(value as Technique);
             }}
           />
+        </div>
+        {technique === 'secondary' && (
+          <div className="timing-header-control">
+            <Select
+              label={t.mcMethodLabel}
+              value={mcMethod}
+              options={[
+                { value: 'quotidian', label: t.quotidianMethod },
+                { value: 'naibod', label: t.naibodMethod },
+                { value: 'solarArc', label: t.solarArcMethod },
+              ]}
+              onChange={(value) => {
+                setMcMethod(value as ProgressedMcMethod);
+              }}
+            />
+          </div>
         )}
-        <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
-      </div>
+        <div className="timing-header-control">
+          <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
+        </div>
+        <Button
+          onClick={() => {
+            setAsOf(todayInputValue());
+          }}
+        >
+          {t.nowLabel}
+        </Button>
+      </PageHeader>
 
       {/* The result region: busy while the progressions (re)calculate, as the Astrocartography map is. */}
       <div aria-busy={load.kind === 'loading'}>
@@ -325,28 +337,34 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
             </p>
             {usedMcMethod !== undefined && <p className="hint">{t.mcMethodLine(mcMethodLabel(t, usedMcMethod))}</p>}
 
-            {positions !== undefined && (
-              <SortableTable
-                caption={t.positionsCaption}
-                headingLevel={2}
-                columns={positionColumns(t, locale)}
-                rows={positions}
-                getRowKey={(row) => row.bodyKey}
-                downloadFilename={deriveExportFilename(person.displayName, 'progressions', 'csv')}
-              />
-            )}
-
-            {contacts !== undefined && contacts.length > 0 && (
-              <SortableTable
-                caption={t.contactsCaption}
-                headingLevel={2}
-                columns={contactColumns(t, locale)}
-                rows={contacts}
-                getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
-                downloadFilename={deriveExportFilename(person.displayName, 'progression-contacts', 'csv')}
-              />
-            )}
-            {contacts?.length === 0 && <p className="hint">{t.noContacts}</p>}
+            {/* The shared timing layout (#1234): contacts left, positions right, one column below 52rem. */}
+            <div className="timing-layout">
+              <div className="timing-layout-main">
+                {contacts !== undefined && contacts.length > 0 && (
+                  <SortableTable
+                    caption={t.contactsCaption}
+                    headingLevel={2}
+                    columns={contactColumns(t, locale)}
+                    rows={contacts}
+                    getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
+                    downloadFilename={deriveExportFilename(person.displayName, 'progression-contacts', 'csv')}
+                  />
+                )}
+                {contacts?.length === 0 && <p className="hint">{t.noContacts}</p>}
+              </div>
+              <div className="timing-layout-side">
+                {positions !== undefined && (
+                  <SortableTable
+                    caption={t.positionsCaption}
+                    headingLevel={2}
+                    columns={positionColumns(t, locale)}
+                    rows={positions}
+                    getRowKey={(row) => row.bodyKey}
+                    downloadFilename={deriveExportFilename(person.displayName, 'progressions', 'csv')}
+                  />
+                )}
+              </div>
+            </div>
           </>
         )}
       </div>

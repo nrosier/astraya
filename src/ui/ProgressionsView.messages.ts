@@ -28,6 +28,9 @@ const en = {
   naibodMethod: 'Naibod (mean solar motion)',
   solarArcMethod: 'Solar arc (match the Sun’s own progressed arc)',
   asOfLabel: 'As of',
+  nowLabel: 'Now',
+  hintInfoLabel: 'About progressions',
+  positionLabel: 'Position',
   calculating: 'Calculating…',
   error: (message: string) => `Progressions could not be calculated. ${message}`,
 
@@ -41,10 +44,6 @@ const en = {
 
   symbolLabel: 'Symbol',
   bodyLabel: 'Body',
-  signLabel: 'Sign',
-  degLabel: 'Deg',
-  minLabel: 'Min',
-  secLabel: 'Sec',
   houseLabel: 'House',
 
   bodyALabel: 'Progressed',
@@ -77,6 +76,9 @@ const nl: typeof en = {
   naibodMethod: 'Naibod (gemiddelde zonnebeweging)',
   solarArcMethod: 'Solar arc (gelijk aan de eigen progressieve boog van de Zon)',
   asOfLabel: 'Vanaf',
+  nowLabel: 'Nu',
+  hintInfoLabel: 'Over progressies',
+  positionLabel: 'Positie',
   calculating: 'Berekenen…',
   error: (message: string) => `Progressies konden niet worden berekend. ${message}`,
 
@@ -90,10 +92,6 @@ const nl: typeof en = {
 
   symbolLabel: 'Symbool',
   bodyLabel: 'Hemellichaam',
-  signLabel: 'Teken',
-  degLabel: 'Gr',
-  minLabel: 'Min',
-  secLabel: 'Sec',
   houseLabel: 'Huis',
 
   bodyALabel: 'Progressief',
