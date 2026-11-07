@@ -8675,3 +8675,8 @@ a.quiet,
   display: grid;
   gap: var(--space-1);
 }
+
+/* The Diagnostics disclosure of a chart with extra rings keeps clear of the hint line under it (owner visual review 2026-11-07, issue 1190). */
+.chart-diagnostics {
+  margin-bottom: var(--space-3);
+}

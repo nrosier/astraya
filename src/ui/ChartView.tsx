@@ -1122,22 +1122,25 @@ export function ChartDataView({
         {overlayRingData !== undefined && (
           // The calculation snapshot identities are internal provenance, not for readers: a Diagnostics disclosure,
           // closed by default, keeps them reachable (#1232, owner decision 2026-11-06).
-          <Disclosure
-            title={overlayT.diagnosticsTitle}
-            showLabel={overlayT.diagnosticsShow}
-            hideLabel={overlayT.diagnosticsHide}
-          >
-            <section className="chart-overlay-provenance" aria-label={overlayT.ringProvenance}>
-              <h3>{overlayT.ringProvenance}</h3>
-              <ul>
-                {overlayRingData.map((ring) => (
-                  <li key={ring.label}>
-                    <strong>{ring.label}</strong>: {ring.provenance}
-                  </li>
-                ))}
-              </ul>
-            </section>
-          </Disclosure>
+          <div className="chart-diagnostics">
+            <Disclosure
+              title={overlayT.diagnosticsTitle}
+              showLabel={overlayT.diagnosticsShow}
+              hideLabel={overlayT.diagnosticsHide}
+            >
+              <section className="chart-overlay-provenance" aria-label={overlayT.ringProvenance}>
+                <h3>{overlayT.ringProvenance}</h3>
+                <p className="hint">{overlayT.diagnosticsNote}</p>
+                <ul>
+                  {overlayRingData.map((ring) => (
+                    <li key={ring.label}>
+                      <strong>{ring.label}</strong>: {ring.provenance}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            </Disclosure>
+          </div>
         )}
         {/* One workbench: the dial, then its inspector straight after it in DOM and focus order (#511).
             The outer element is the inline-size query container; see `.chart-workbench` in app.css. */}
