@@ -22,6 +22,10 @@ const en = {
     `Now: profected year in ${sign}, ${house} house, lord ${lord}. See Consultation.`,
   nowHeading: 'Now',
   wheelHeading: 'Natal chart',
+  placementsHeading: 'Sun, Moon and Rising',
+  risingLabel: 'Rising',
+  placementLine: (sign: string, degree: string, house: string | undefined) =>
+    house === undefined ? `${sign} ${degree}` : `${sign} ${degree}, ${house} house`,
   healthHeading: 'Birth data',
   healthClear: 'Nothing is missing or uncertain in this birth record.',
   health: {
@@ -55,6 +59,10 @@ const nl: typeof en = {
     `Nu: profectiejaar in ${sign}, ${house} huis, heer ${lord}. Zie Consultatie.`,
   nowHeading: 'Nu',
   wheelHeading: 'Horoscoop',
+  placementsHeading: 'Zon, Maan en Ascendant',
+  risingLabel: 'Ascendant',
+  placementLine: (sign: string, degree: string, house: string | undefined) =>
+    house === undefined ? `${sign} ${degree}` : `${sign} ${degree}, ${house} huis`,
   healthHeading: 'Geboortegegevens',
   healthClear: 'In deze geboortegegevens ontbreekt niets en niets is onzeker.',
   health: {
