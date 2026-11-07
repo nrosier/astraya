@@ -6903,6 +6903,20 @@ button.primitive-button-compact {
   margin-left: auto;
 }
 
+/* Where the header's actions are standard buttons and fields (the timing views: date, Now, filter, Export), the Export
+   menu button takes the same height as its neighbours and they share a baseline, so the row reads as one set of controls. */
+.page-header-actions:has(> button.quiet, > .primitive-field, > .timing-header-control, > .primitive-select) {
+  align-items: flex-end;
+}
+
+.page-header-actions .primitive-field {
+  margin-bottom: 0;
+}
+
+.page-header-actions:has(> button.quiet, > .primitive-field, > .timing-header-control) .page-header-export-toggle {
+  min-height: var(--control-height);
+}
+
 /* Chart pages' Export PDF (#976): a primary accent link to the PDF creator, with an arrow for the navigation. */
 .chart-pdf-link {
   display: inline-flex;

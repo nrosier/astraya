@@ -6,14 +6,14 @@
 /**
  * @module RulershipSetting
  * @purpose Controlled control for choosing modern/traditional/both planetary rulers, shared by every screen that edits a ruler choice (a person's, a settings draft, or the device default).
- * @conventions Controlled (`value`/`onChange`, like `DegreeSymbolSetting`), never reads or writes storage itself; `onChange` may return a promise, and a rejection is shown beside the control rather than swallowed; uses RulershipSetting.messages.ts for en/nl text via useMessages(). Three exclusive choices that each need a consequence, so it is the shared `OptionCards` primitive (#513, `docs/ui/UI-UX_GUIDELINES.md` §6) with the full explanation as a hint beneath.
+ * @conventions Controlled (`value`/`onChange`, like `DegreeSymbolSetting`), never reads or writes storage itself; `onChange` may return a promise, and a rejection is shown beside the control rather than swallowed; uses RulershipSetting.messages.ts for en/nl text via useMessages(). Three short exclusive choices, so it is the shared segmented `ChoiceGroup` on every screen that uses it (#1236, owner decision 2026-11-06), with the chosen option's consequence and the full explanation as hints beneath.
  * @exports RulershipSetting
  */
 import { useState } from 'react';
 import { RULERSHIP_CHOICES, isRulershipChoice, type RulershipChoice } from '../astrology/rulership.js';
 import { GlossaryText } from './GlossaryText.js';
 import { useMessages } from './messages.js';
-import { OptionCards } from './primitives/OptionCards.js';
+import { ChoiceGroup } from './primitives/ChoiceGroup.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { rulershipSettingMessages } from './RulershipSetting.messages.js';
 
@@ -40,18 +40,16 @@ export function RulershipSetting({
   return (
     <div className="rulership-setting">
       <p className="rulership-setting-label">{t.label}</p>
-      <OptionCards
+      <ChoiceGroup
         label={t.label}
         value={value}
-        options={RULERSHIP_CHOICES.map((option) => ({
-          value: option,
-          title: t.titles[option],
-          consequence: t.consequences[option],
-        }))}
+        segmented
+        options={RULERSHIP_CHOICES.map((option) => ({ value: option, label: t.titles[option] }))}
         onChange={(next) => {
           if (isRulershipChoice(next)) choose(next);
         }}
       />
+      <p className="hint rulership-setting-consequence">{t.consequences[value]}</p>
       <p className="hint">
         <GlossaryText text={t.hint} />
       </p>

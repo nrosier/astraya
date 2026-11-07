@@ -173,13 +173,16 @@ function Controlled({
 }
 
 describe('RulershipSetting (#426, #806)', () => {
-  it('offers the three choices as option cards, the given one selected, under a named group with its explanation', async () => {
+  it('offers the three choices as one segmented group, the given one selected, with its consequence and explanation', async () => {
     const container = await mount(<Controlled />);
     const group = container.querySelector('[role="radiogroup"]');
     expect(group?.getAttribute('aria-label')).toBe('Planetary rulers');
     expect(radios(container).map((radio) => radio.checked)).toEqual([true, false, false]);
-    expect(container.querySelector('.primitive-option-card-title')?.textContent).toBe('Modern');
-    expect(container.querySelector('.hint')?.textContent).toContain('Scorpio, Aquarius and Pisces');
+    expect(group?.classList.contains('primitive-choice-group-segmented')).toBe(true);
+    expect(container.querySelector('.primitive-choice')?.textContent.trim()).toBe('Modern');
+    expect(container.querySelector('.rulership-setting-consequence')?.textContent).toContain(
+      'Scorpio, Aquarius and Pisces go to Pluto, Uranus and Neptune',
+    );
   });
 
   it('reports the choice to its caller and never writes the device preference itself', async () => {
@@ -208,6 +211,6 @@ describe('RulershipSetting (#426, #806)', () => {
     setLocale('nl');
     const container = await mount(<Controlled />);
     expect(container.textContent).toContain('Heersende planeten');
-    expect(container.querySelectorAll('.primitive-option-card-title')[2]?.textContent).toBe('Beide');
+    expect(container.querySelectorAll('.primitive-choice')[2]?.textContent.trim()).toBe('Beide');
   });
 });
