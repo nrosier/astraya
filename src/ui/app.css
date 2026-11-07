@@ -6980,6 +6980,16 @@ button.primitive-button-compact {
   align-items: flex-end;
 }
 
+/* The export actions end the row (owner visual review 2026-11-07): the settings triggers a chart page portals in come
+   after its PDF link in the DOM, so order puts the export menu, then the PDF link, last. */
+.page-header-actions > .page-header-export {
+  order: 20;
+}
+
+.page-header-actions > .chart-pdf-link {
+  order: 30;
+}
+
 .page-header-actions .primitive-field,
 .page-header-actions .primitive-choice-field {
   margin-bottom: 0;
