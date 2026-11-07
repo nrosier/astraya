@@ -20,6 +20,10 @@ const en = {
   heading: (name: string) => `${name}'s Profections`,
   hint: 'Annual and monthly profections: a house-per-year rotation of the natal Ascendant. The "Lord of the Year/Month" is the ruler of the profected sign, by the planetary rulers you choose below; the technique is Hellenistic and predates the outer planets, so Traditional is the historically faithful choice.',
   asOfLabel: 'As of',
+  nowLabel: 'Now',
+  positionLabel: 'Position',
+  hintInfoLabel: 'About profections',
+  rulersInfoLabel: 'About the Lords of the Year and Month',
   calculating: 'Calculating…',
   error: (message: string) => `Profections could not be calculated. ${message}`,
 
@@ -28,10 +32,6 @@ const en = {
 
   profectionsCaption: 'Profections',
   periodLabel: 'Period',
-  signLabel: 'Sign',
-  degLabel: 'Deg',
-  minLabel: 'Min',
-  secLabel: 'Sec',
   lordLabel: 'Lord',
 
   yearPeriod: 'Year',
@@ -40,7 +40,7 @@ const en = {
   meaningHeading: 'What the profected houses mean',
   periodHouse: (period: string, house: string) => `${period}: ${house} house`,
 
-  rulersHeading: 'About the Lords of the Year and Month',
+  rulersHeading: 'Planetary rulers',
   rulersTraditional:
     'The Traditional rulers recognize only the seven classical planets visible to the naked eye: Sun, Moon, Mercury, Venus, Mars, Jupiter and Saturn. This is the historically faithful choice for profections, a Hellenistic technique that predates modern astrology by 2000 years.',
   rulersModern:
@@ -62,6 +62,10 @@ const nl: typeof en = {
   heading: (name: string) => `Profecties van ${name}`,
   hint: 'Jaarlijkse en maandelijkse profecties: een rotatie van de natale Ascendant met één huis per jaar. De "Heerser van het Jaar/Maand" is de heerser van het geprofecteerde teken, volgens de heersende planeten die je hieronder kiest; de techniek is hellenistisch en dateert van vóór de buitenplaneten, dus Traditioneel is de historisch trouwste keuze.',
   asOfLabel: 'Vanaf',
+  nowLabel: 'Nu',
+  positionLabel: 'Positie',
+  hintInfoLabel: 'Over profecties',
+  rulersInfoLabel: 'Over de Heersers van het Jaar en Maand',
   calculating: 'Berekenen…',
   error: (message: string) => `Profecties konden niet worden berekend. ${message}`,
 
@@ -70,10 +74,6 @@ const nl: typeof en = {
 
   profectionsCaption: 'Profecties',
   periodLabel: 'Periode',
-  signLabel: 'Teken',
-  degLabel: 'Gr',
-  minLabel: 'Min',
-  secLabel: 'Sec',
   lordLabel: 'Heerser',
 
   yearPeriod: 'Jaar',
@@ -82,7 +82,7 @@ const nl: typeof en = {
   meaningHeading: 'Wat de geprofecteerde huizen betekenen',
   periodHouse: (period, house) => `${period}: ${house} huis`,
 
-  rulersHeading: 'Over de Heersers van het Jaar en Maand',
+  rulersHeading: 'Heersende planeten',
   rulersTraditional:
     'De Traditionele heersers erkennen alleen de zeven klassieke planeten die met het blote oog zichtbaar zijn: Zon, Maan, Mercurius, Venus, Mars, Jupiter en Saturnus. Dit is de historisch trouwste keuze voor profecties, een Hellenistische techniek die 2000 jaar ouder is dan de moderne astrologie.',
   rulersModern:
