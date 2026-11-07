@@ -23,7 +23,13 @@
  * @conventions Draft fields are strings (what the user typed), parsed only at validation boundaries, so a half-typed value is a work-in-progress rather than coerced into a plausible number; `draftToMutations` writes only fields that actually changed (comparing against the previous draft, not the stored person) so an untouched field never gets a newer timestamp that could overwrite another device's concurrent edit; date/time/coordinates are each written as one whole register, never split field-by-field, since a merge of two partial values would describe a moment or place nobody experienced.
  * @exports Draft, EMPTY_DRAFT, draftFrom, timeToHhMm, validateDraft, draftToMutations, DraftErrors, Validated
  */
-import { BIRTH_SOURCE_NOTE_MAX_CHARACTERS, type BirthSourceKind, type Person, type TimeAccuracy } from './person.js';
+import {
+  BIRTH_SOURCE_NOTE_MAX_CHARACTERS,
+  PERSON_TEXT_MAX_CHARACTERS,
+  type BirthSourceKind,
+  type Person,
+  type TimeAccuracy,
+} from './person.js';
 import type { personFormValidationMessages } from './person-form.messages.js';
 import type { BirthMomentInput, Calendar } from '../time/types.js';
 import type { Mutation } from '../store/oplog.js';
@@ -241,8 +247,15 @@ export function draftToMutations(
     mutations.push({ entity: 'person', entityId, field, value });
   };
 
-  if (draft.displayName.trim() !== previous.displayName.trim()) write('displayName', draft.displayName.trim());
-  if (draft.placeLabel.trim() !== previous.placeLabel.trim()) write('placeLabel', draft.placeLabel.trim());
+  // Capped as well as on the field (#1288), so a pasted or scripted value can never become an op the relay refuses; an
+  // unchanged longer stored value compares equal to itself and is not rewritten.
+  const capped = (text: string, max: number): string => Array.from(text.trim()).slice(0, max).join('');
+  if (
+    capped(draft.displayName, PERSON_TEXT_MAX_CHARACTERS) !== capped(previous.displayName, PERSON_TEXT_MAX_CHARACTERS)
+  )
+    write('displayName', capped(draft.displayName, PERSON_TEXT_MAX_CHARACTERS));
+  if (capped(draft.placeLabel, PERSON_TEXT_MAX_CHARACTERS) !== capped(previous.placeLabel, PERSON_TEXT_MAX_CHARACTERS))
+    write('placeLabel', capped(draft.placeLabel, PERSON_TEXT_MAX_CHARACTERS));
   if (draft.timeAccuracy !== previous.timeAccuracy) write('timeAccuracy', draft.timeAccuracy);
   // "Not recorded" is written as null, which the reader treats as no source (an empty string is not a kind either).
   if (draft.sourceKind !== previous.sourceKind) write('sourceKind', draft.sourceKind === '' ? null : draft.sourceKind);
