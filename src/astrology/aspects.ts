@@ -9,7 +9,8 @@
  * The "quintile series" is the family built on a fifth of the circle (72°):
  * quintile and biquintile. The decile (36°, a tenth of the circle) is
  * sometimes lumped in with it by name but is a different division, so it is
- * out of scope here rather than silently folded in.
+ * not part of that series: with the septile (360/7) and novile (40°) it forms
+ * the `higher-harmonic` family (#1184), angles exact as 360/n.
  *
  * `harmonicFamilyOf` (#557) is a second, distinct grouping from the major/minor
  * `AspectFamily` above: John Addey's harmonic theory ("Harmonics in Astrology", 1976) groups
@@ -23,13 +24,17 @@
 /**
  * @module Aspects
  * @purpose Computes Ptolemaic and minor aspects between bodies, including configurable orbs and applying/separating direction.
- * @conventions Three orb tiers (major, sextile, minor) widened for luminaries, scaled by a global percentage; Astraya's own defaults, with no verified published source (majors 7°/10° with a luminary, sextile 4°/5°30', minors flat 2°30'); minor aspects are opt-in via enabledMinorAspects; `harmonicFamilyOf` is Addey's harmonic-number grouping, a distinct concept from the major/minor `AspectFamily`; a calculated point's orb is the aspecting body's own moiety when the config has moieties (Lilly p. 208 for the Ascendant, an Astraya extension for MC/Vertex/lots), else the tier, and the rule used is recorded (#796).
+ * @conventions Three orb tiers (major, sextile, minor) widened for luminaries, scaled by a global percentage; Astraya's own defaults, with no verified published source (majors 7°/10° with a luminary, sextile 4°/5°30', minors flat 2°30'); minor and higher-harmonic (decile, septile, novile; angles exactly 360/n; same flat 2°30' tier as the minors, no published source claimed, #1184) aspects are opt-in via enabledMinorAspects; `harmonicFamilyOf` is Addey's harmonic-number grouping, a distinct concept from the major/minor `AspectFamily`; a calculated point's orb is the aspecting body's own moiety when the config has moieties (Lilly p. 208 for the Ascendant, an Astraya extension for MC/Vertex/lots), else the tier, and the rule used is recorded (#796).
  * @exports ASPECTS, DEFAULT_ORB_CONFIG, orbFor, orbForPoint, matchPointAspect, pointOrbConventionOf, angularSeparation, matchAspect, findAspects, findCrossAspects, subjectsFrom, fixedSubjects, harmonicFamilyOf, aspectHarmonicFamily
  */
 import { bodyById, type BodyCategory } from './bodies.ts';
 import type { BodyId, BodyPosition, Degrees } from '../ephemeris/types.js';
 
-export type AspectFamily = 'major' | 'minor';
+/**
+ * `higher-harmonic` holds the decile (H10), septile (H7) and novile (H9): divisions of the circle
+ * distinct from the quintile series (the decile is twice H5 but is a tenth, not a fifth, of the circle), so they sit in neither `minor` nor the quintile pair (#1184).
+ */
+export type AspectFamily = 'major' | 'minor' | 'higher-harmonic';
 
 export interface AspectDefinition {
   readonly key: string;
@@ -42,7 +47,10 @@ export interface AspectDefinition {
 export const ASPECTS: readonly AspectDefinition[] = [
   { key: 'conjunction', name: 'Conjunction', angle: 0, family: 'major' },
   { key: 'semisextile', name: 'Semisextile', angle: 30, family: 'minor' },
+  { key: 'decile', name: 'Decile', angle: 360 / 10, family: 'higher-harmonic' },
+  { key: 'novile', name: 'Novile', angle: 360 / 9, family: 'higher-harmonic' },
   { key: 'semisquare', name: 'Semisquare', angle: 45, family: 'minor' },
+  { key: 'septile', name: 'Septile', angle: 360 / 7, family: 'higher-harmonic' },
   { key: 'sextile', name: 'Sextile', angle: 60, family: 'major' },
   { key: 'quintile', name: 'Quintile', angle: 72, family: 'minor' },
   { key: 'square', name: 'Square', angle: 90, family: 'major' },
@@ -59,24 +67,19 @@ export function aspectByKey(key: string): AspectDefinition | undefined {
   return BY_KEY.get(key);
 }
 
-function gcd(a: number, b: number): number {
-  let x = Math.abs(a);
-  let y = Math.abs(b);
-  while (y !== 0) {
-    [x, y] = [y, x % y];
-  }
-  return x;
-}
-
 /**
  * Addey's harmonic number for an aspect angle (#557): the smallest `n` such that `angle` is a
  * whole-number multiple of `360/n` — e.g. a 90° square is H4 (`360/4 = 90`), a 72° quintile and
- * a 144° biquintile are both H5. `gcd(0, 360) = 360`, so a 0° conjunction correctly comes back
- * as H1 rather than dividing by zero.
+ * a 144° biquintile are both H5, and the septile (360/7, not a whole number of degrees) is H7
+ * (#1184). A 0° conjunction is a multiple of the whole circle, so it comes back as H1. The test
+ * allows a rounding tolerance because 360/7 is not exact in floating point.
  */
 export function harmonicFamilyOf(angle: Degrees): number {
-  const divisor = gcd(angle, 360);
-  return divisor === 0 ? 1 : 360 / divisor;
+  for (let n = 1; n <= 360; n++) {
+    const multiple = (angle * n) / 360;
+    if (Math.abs(multiple - Math.round(multiple)) < 1e-9) return n;
+  }
+  return 360;
 }
 
 /** `harmonicFamilyOf` for a named aspect, or `undefined` for an unknown key. */
@@ -87,7 +90,7 @@ export function aspectHarmonicFamily(aspectKey: string): number | undefined {
 
 /**
  * Orb configuration: three tiers (the four non-sextile major aspects,
- * sextile on its own, and the six minors as a single flat tier), each widened
+ * sextile on its own, and the six minors and the three higher-harmonic aspects as a single flat tier), each widened
  * when either body in the pair is a luminary (Sun or Moon) — the traditional
  * allowance for how much more an aspect involving a luminary is felt to
  * "reach" — followed by a global percentage scale applied to every tier at
@@ -95,10 +98,10 @@ export function aspectHarmonicFamily(aspectKey: string): number | undefined {
  *
  * These three tiers and their numbers are Astraya's own defaults: major aspects
  * at 7°, enlarged to 10° with a luminary; sextile at 4°, enlarged to 5°30'; every
- * minor aspect at a flat 2°30' regardless of which bodies are involved. They were
+ * minor and higher-harmonic aspect at a flat 2°30' regardless of which bodies are involved. They were
  * set to resemble common astrology software, but no published source for them has
  * been verified (see #590), so they are not presented as a citation.
- * `enabledMinorAspects` is which of the six minor aspects `matchAspect`
+ * `enabledMinorAspects` is which of the minor and higher-harmonic aspects `matchAspect`
  * considers at all — empty by default, since minor aspects are opt-in on
  * most tools rather than shown alongside the majors unconditionally.
  */
@@ -330,7 +333,7 @@ function bestMatch(
   const separation = angularSeparation(a.longitude, b.longitude);
   let best: (AspectMatch & { readonly orbRule: OrbRuleKind }) | undefined;
   for (const aspect of ASPECTS) {
-    if (aspect.family === 'minor' && !config.enabledMinorAspects.includes(aspect.key)) continue;
+    if (aspect.family !== 'major' && !config.enabledMinorAspects.includes(aspect.key)) continue;
     const orb = Math.abs(separation - aspect.angle);
     const { allowedOrb, rule } = resolve(aspect.key);
     if (orb > allowedOrb) continue;

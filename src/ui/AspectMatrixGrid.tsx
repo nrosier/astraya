@@ -18,7 +18,14 @@ import { Button } from './primitives/Button.js';
 
 /** The aspect keys of each colour family, matching the wheel's own grouping (hard warm, soft cool, minor green). */
 const HARD_ASPECTS: ReadonlySet<string> = new Set(['semisquare', 'square', 'sesquiquadrate', 'opposition']);
-const MINOR_ASPECTS: ReadonlySet<string> = new Set(['quintile', 'biquintile', 'quincunx']);
+const MINOR_ASPECTS: ReadonlySet<string> = new Set([
+  'quintile',
+  'biquintile',
+  'quincunx',
+  'decile',
+  'novile',
+  'septile',
+]);
 
 function familyClass(aspectKey: string): string {
   if (HARD_ASPECTS.has(aspectKey)) return 'mgrid-hard';

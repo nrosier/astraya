@@ -132,6 +132,9 @@ const ASPECT_NAMES: Readonly<Record<Locale, NameTable>> = {
     sesquiquadrate: 'sesquiquadrate',
     biquintile: 'biquintile',
     quincunx: 'quincunx',
+    decile: 'decile',
+    novile: 'novile',
+    septile: 'septile',
     opposition: 'opposition',
   },
   nl: {
@@ -145,6 +148,9 @@ const ASPECT_NAMES: Readonly<Record<Locale, NameTable>> = {
     sesquiquadrate: 'sesquikwadraat',
     biquintile: 'biquintiel',
     quincunx: 'quincunx',
+    decile: 'deciel',
+    novile: 'noniel',
+    septile: 'septiel',
     opposition: 'oppositie',
   },
 };
