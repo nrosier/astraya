@@ -414,6 +414,29 @@ test('solar arc timing-layout columns keep the shorter at least 90% of the talle
   expect(ratios.length, 'the pair sits side by side at the wide widths').toBe(2);
 });
 
+test('progressions timing-layout columns keep the shorter at least 90% of the taller (#1235)', async () => {
+  test.setTimeout(120_000);
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  const id = /#\/people\/([^/]+)/.exec(page.url())?.[1];
+  expect(id).toBeDefined();
+  const report: string[] = [];
+  const ratios = await measureRatios(
+    page,
+    baseUrl,
+    {
+      name: 'progressions',
+      hash: `#/people/${id ?? ''}/timing/progressions`,
+      ready: '.timing-layout-side > .timing-card',
+      cards: '.timing-layout > .timing-layout-main > .timing-card, .timing-layout > .timing-layout-side > .timing-card',
+    },
+    report,
+  );
+  console.log(report.join('\n'));
+  const short = ratios.filter((r) => r.ratio < NINETY_PERCENT).map((r) => `${r.label}: ${r.ratio.toFixed(3)}`);
+  expect(short, 'progressions shorter column below 90% of the taller').toEqual([]);
+  expect(ratios.length, 'the pair sits side by side at the wide widths').toBe(2);
+});
+
 test('the horary astrological parameters card spans the full form width at 1280×800', async () => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto(`${baseUrl}/#/explore/horary`);
