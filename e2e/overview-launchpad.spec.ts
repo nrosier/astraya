@@ -113,6 +113,32 @@ test('puts Sun, Moon and Rising in a card under the natal wheel, in the same col
   expect(below.y).toBeGreaterThanOrEqual(above.y + above.height);
   expect(below.x).toBeCloseTo(above.x, 0);
   expect(below.width).toBeCloseTo(above.width, 0);
+  // One row each, one above the other, with no frame of their own inside the card.
+  const sun = await placements.getByText('Sun', { exact: true }).boundingBox();
+  const moon = await placements.getByText('Moon', { exact: true }).boundingBox();
+  const rising = await placements.getByText('Rising', { exact: true }).boundingBox();
+  if (sun === null || moon === null || rising === null) throw new Error('expected the three rows to have a layout box');
+  expect(moon.y).toBeGreaterThan(sun.y);
+  expect(rising.y).toBeGreaterThan(moon.y);
+  expect(moon.x).toBeCloseTo(sun.x, 0);
+  await expect(placements.locator('li').first()).toHaveCSS('border-top-width', '0px');
+});
+
+test('on Transits the text above the wheel runs as wide as the wheel (#1225)', async () => {
+  test.setTimeout(90_000);
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).first().click();
+  await page.getByRole('tab', { name: 'Transits', exact: true }).click();
+  const wheel = page.locator('div.chart-wheel');
+  await expect(wheel).toBeVisible({ timeout: 60_000 });
+  const hint = page.getByText(/^A bi-wheel/);
+  const hintBox = await hint.boundingBox();
+  const wheelBox = await wheel.boundingBox();
+  if (hintBox === null || wheelBox === null) throw new Error('expected the text and the wheel to have a layout box');
+  // The text's box is the full content width, not a 44rem column.
+  expect(hintBox.width).toBeGreaterThan(44 * 16 + 40);
+  expect(hintBox.width).toBeGreaterThanOrEqual(wheelBox.width);
 });
 
 test('offers comparing with another person once there are two people, and goes to the relationship screen', async () => {
