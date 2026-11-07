@@ -74,6 +74,7 @@ test('capture the screens of the visual review', async ({ browser }) => {
 
   await page.getByRole('link', { name: 'Overview', exact: true }).first().click();
   await page.getByText(/^Now: profected/).waitFor({ timeout: 60_000 });
+  await page.locator('.overview-wheel svg').waitFor();
   await shoot(page, '04-overview');
 
   await page.getByRole('link', { name: 'Birth record', exact: true }).first().click();
