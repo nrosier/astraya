@@ -427,7 +427,39 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
         }
         basis={basisLine}
         basisEditHref={null}
-      />
+      >
+        {/* The as-of date, age and Now sit in the header, to the right, with Export after them (#1233, as Solar Arc). */}
+        <DateField
+          label={t.asOfLabel}
+          value={asOf}
+          onChange={(value) => {
+            setAsOf(value);
+          }}
+        />
+        <NumberField
+          label={t.ageLabel}
+          value={ageDraft ?? (shownAge === undefined ? '' : formatFixed(shownAge, 2))}
+          min={0}
+          step={0.1}
+          disabled={data === undefined}
+          onChange={(typed) => {
+            setAgeDraft(typed);
+            const age = Number(typed);
+            if (data === undefined || typed === '' || !Number.isFinite(age) || age < 0) return;
+            setAsOf(dateInputValue(data.natalJd + age * TROPICAL_YEAR_DAYS));
+          }}
+          onBlur={() => {
+            setAgeDraft(undefined);
+          }}
+        />
+        <Button
+          onClick={() => {
+            setAsOf(todayInputValue());
+          }}
+        >
+          {t.nowLabel}
+        </Button>
+      </PageHeader>
       {mismatches.length > 0 && (
         <Notice tone="warning">
           <GlossaryText text={t.mismatchNotice(mismatchPhrases(mismatches, requestedSnapshot, t).join('; '))} />
@@ -461,19 +493,22 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
 
                 {directed.kind === 'ready' && (
                   <>
-                    <p className="hint">{t.ageLine(formatFixed(directed.chart.ageYears, 2))}</p>
-                    <p className="hint">{t.arcLine(formatFixed(ageToArc(directed.chart.ageYears, data.key), 2))}</p>
-                    {wheelMarkup !== undefined && (
-                      // App-generated SVG from just-computed chart data, never user-supplied markup —
-                      // the same trust boundary ChartView.tsx's sheet markup is injected under.
-                      <div
-                        ref={wheelRef}
-                        className="chart-wheel chart-wheel-interactive"
-                        dangerouslySetInnerHTML={{ __html: wheelMarkup }}
-                        onClick={handleWheelClick}
-                        onKeyDown={handleWheelKeyDown}
-                      />
-                    )}
+                    <section className="timing-card" aria-labelledby="pd-wheel-title">
+                      <h2 id="pd-wheel-title">{t.wheelTitle}</h2>
+                      <p className="hint">{t.ageLine(formatFixed(directed.chart.ageYears, 2))}</p>
+                      <p className="hint">{t.arcLine(formatFixed(ageToArc(directed.chart.ageYears, data.key), 2))}</p>
+                      {wheelMarkup !== undefined && (
+                        // App-generated SVG from just-computed chart data, never user-supplied markup —
+                        // the same trust boundary ChartView.tsx's sheet markup is injected under.
+                        <div
+                          ref={wheelRef}
+                          className="chart-wheel chart-wheel-interactive"
+                          dangerouslySetInnerHTML={{ __html: wheelMarkup }}
+                          onClick={handleWheelClick}
+                          onKeyDown={handleWheelKeyDown}
+                        />
+                      )}
+                    </section>
                   </>
                 )}
 
@@ -513,7 +548,8 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
           </div>
         </div>
         <div className="timing-layout-side">
-          <section className="timing-controls" aria-label={t.controlsLabel}>
+          <section className="timing-controls" aria-labelledby="pd-controls-title">
+            <h2 id="pd-controls-title">{t.controlsLabel}</h2>
             <ChoiceGroup
               label={t.keyLabel}
               value={key}
@@ -610,38 +646,6 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
                   />
                 ))}
               </fieldset>
-            </div>
-            <div className="timing-date-row">
-              <DateField
-                label={t.asOfLabel}
-                value={asOf}
-                onChange={(value) => {
-                  setAsOf(value);
-                }}
-              />
-              <NumberField
-                label={t.ageLabel}
-                value={ageDraft ?? (shownAge === undefined ? '' : formatFixed(shownAge, 2))}
-                min={0}
-                step={0.1}
-                disabled={data === undefined}
-                onChange={(typed) => {
-                  setAgeDraft(typed);
-                  const age = Number(typed);
-                  if (data === undefined || typed === '' || !Number.isFinite(age) || age < 0) return;
-                  setAsOf(dateInputValue(data.natalJd + age * TROPICAL_YEAR_DAYS));
-                }}
-                onBlur={() => {
-                  setAgeDraft(undefined);
-                }}
-              />
-              <Button
-                onClick={() => {
-                  setAsOf(todayInputValue());
-                }}
-              >
-                {t.nowLabel}
-              </Button>
             </div>
           </section>
         </div>
