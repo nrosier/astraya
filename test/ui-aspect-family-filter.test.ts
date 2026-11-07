@@ -8,6 +8,7 @@ import {
   CONSULTATION_PRESETS,
   FILTERABLE_FAMILIES,
   isContactShown,
+  isMajorAspect,
   orbCapFor,
   toggleFamily,
   type AspectFamilyKey,
@@ -89,5 +90,34 @@ describe('consultation presets', () => {
       orbs: { luminary: 6, planet: 6 },
     });
     expect(CONSULTATION_PRESETS).toHaveLength(4);
+  });
+});
+
+describe('what presets say and hide (#1190)', () => {
+  const preset = (key: string) => CONSULTATION_PRESETS.find((candidate) => candidate.key === key);
+
+  it('asks for the Time Lord and profection lines in Standard Overview and Predictive and Timing only', () => {
+    expect(
+      CONSULTATION_PRESETS.filter((candidate) => candidate.switches?.timeLords === true).map(
+        (candidate) => candidate.key,
+      ),
+    ).toEqual(['standardOverview', 'predictiveTiming']);
+  });
+
+  it('hides minor natal aspects in Predictive and Timing only', () => {
+    expect(
+      CONSULTATION_PRESETS.filter((candidate) => candidate.switches?.suppressMinorNatal === true).map(
+        (candidate) => candidate.key,
+      ),
+    ).toEqual(['predictiveTiming']);
+    expect(preset('natalCore')?.switches?.suppressMinorNatal).toBeUndefined();
+  });
+
+  it('counts only the five Ptolemaic aspects as major', () => {
+    for (const key of ['conjunction', 'sextile', 'square', 'trine', 'opposition'])
+      expect(isMajorAspect(key)).toBe(true);
+    for (const key of ['semisquare', 'sesquiquadrate', 'quincunx', 'semisextile', 'quintile', 'biquintile']) {
+      expect(isMajorAspect(key)).toBe(false);
+    }
   });
 });
