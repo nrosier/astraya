@@ -6752,6 +6752,39 @@ button.primitive-button-compact {
   }
 }
 
+.pdf-ai-list {
+  padding: 0;
+  list-style-position: inside;
+}
+
+.pdf-ai-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.pdf-ai-row::marker {
+  content: none;
+}
+
+.pdf-ai-row-label {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pdf-ai-move {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+}
+
 .primitive-choice {
   display: inline-flex;
   align-items: center;

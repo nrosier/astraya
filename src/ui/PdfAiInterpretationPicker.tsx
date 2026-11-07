@@ -1,7 +1,7 @@
 /**
  * @module ui/PdfAiInterpretationPicker
  * @purpose Lets the signed-in user tick saved AI interpretations in the PDF's language in a selection modal (#762) and order the chosen ones in the PDF builder (#759); it generates nothing.
- * @conventions Controlled: owns only the fetched list, never the selection. Lists only the given person's results (#768) and drops ticks that are not in that list, all of them when the person changes. Only entries whose locale equals the PDF's locale are offered; signed out, the trigger is disabled and the list endpoint is never called. The modal only ticks entries (time, description when present, type; never the generic AI label); Move up/down stay in the builder's list; closing keeps the selection. UI strings follow the app locale; entry labels follow the PDF locale.
+ * @conventions Controlled: owns only the fetched list, never the selection. Lists only the given person's results (#768) and drops ticks that are not in that list, all of them when the person changes. Only entries whose locale equals the PDF's locale are offered; signed out, the trigger is disabled and the list endpoint is never called. The modal only ticks entries (time, description when present, type; never the generic AI label); Move up/down are icon-only arrow buttons (inline SVG, accessible name from the messages, 44px target) that stay in the builder's list; closing keeps the selection. UI strings follow the app locale; entry labels follow the PDF locale.
  * @exports PdfAiInterpretationPicker
  */
 import { useEffect, useRef, useState } from 'react';
@@ -14,6 +14,28 @@ import { StagedDialog } from './primitives/StagedDialog.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { savedTypeLabel } from './result-basis-label.js';
 import { formatSavedTime } from './saved-time.js';
+
+/** Inline arrow icon (no icon library, #1304); decorative, the button carries the accessible name. */
+function ArrowIcon({ direction }: { readonly direction: 'up' | 'down' }): React.JSX.Element {
+  return (
+    <svg
+      className="pdf-ai-move-icon"
+      data-arrow={direction}
+      viewBox="0 0 24 24"
+      width="20"
+      height="20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d={direction === 'up' ? 'M12 19V5M5 12l7-7 7 7' : 'M12 5v14M5 12l7 7 7-7'} />
+    </svg>
+  );
+}
 
 type LoadState =
   | { readonly status: 'idle' }
@@ -173,27 +195,33 @@ export function PdfAiInterpretationPicker({
         })}
       </StagedDialog>
       {chosen.length > 0 && (
-        <ol>
+        <ol className="pdf-ai-list">
           {chosen.map((entry, index) => (
-            <li key={entry.id}>
-              {describe(entry, locale, t.interpretationSavedTypeNeutral)}{' '}
+            <li key={entry.id} className="pdf-ai-row">
+              <span className="pdf-ai-row-label" title={describe(entry, locale, t.interpretationSavedTypeNeutral)}>
+                {describe(entry, locale, t.interpretationSavedTypeNeutral)}
+              </span>
               <button
                 type="button"
+                className="quiet pdf-ai-move"
+                aria-label={t.interpretationSavedMoveUp}
                 disabled={index === 0}
                 onClick={() => {
                   move(index, -1);
                 }}
               >
-                {t.interpretationSavedMoveUp}
-              </button>{' '}
+                <ArrowIcon direction="up" />
+              </button>
               <button
                 type="button"
+                className="quiet pdf-ai-move"
+                aria-label={t.interpretationSavedMoveDown}
                 disabled={index === chosen.length - 1}
                 onClick={() => {
                   move(index, 1);
                 }}
               >
-                {t.interpretationSavedMoveDown}
+                <ArrowIcon direction="down" />
               </button>
             </li>
           ))}
