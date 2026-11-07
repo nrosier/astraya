@@ -16,6 +16,7 @@ const en = {
   openChart: 'Open natal chart',
   openInterpretation: 'Open interpretation',
   viewTransits: 'View transits',
+  compareWithAnother: 'Compare with another person',
   completeBirthRecordFirst: 'Complete the birth record to unlock the chart and its other screens.',
   nowLine: (sign: string, house: string, lord: string) =>
     `Now: profected year in ${sign}, ${house} house, lord ${lord}. See Consultation.`,
@@ -46,6 +47,7 @@ const nl: typeof en = {
   openChart: 'Horoscoop openen',
   openInterpretation: 'Interpretatie openen',
   viewTransits: 'Transits bekijken',
+  compareWithAnother: 'Vergelijken met een andere persoon',
   completeBirthRecordFirst: 'Vul de geboortegegevens aan om de horoscoop en de andere schermen te ontgrendelen.',
   nowLine: (sign: string, house: string, lord: string) =>
     `Nu: profectiejaar in ${sign}, ${house} huis, heer ${lord}. Zie Consultatie.`,

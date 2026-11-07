@@ -129,6 +129,17 @@ export function Overview({ personId }: { readonly personId: string }): React.JSX
     { key: 'chart', label: t.openChart, href: hrefFor('chart', { personId }), alwaysEnabled: false },
     { key: 'report', label: t.openInterpretation, href: hrefFor('report', { personId }), alwaysEnabled: false },
     { key: 'transit', label: t.viewTransits, href: hrefFor('transit', { personId }), alwaysEnabled: false },
+    // Comparing needs someone to compare with, so the goal is not a first-run one: it appears with a second person (#1060).
+    ...(state.people.size >= 2
+      ? [
+          {
+            key: 'synastry',
+            label: t.compareWithAnother,
+            href: hrefFor('synastry', { personId }),
+            alwaysEnabled: false,
+          },
+        ]
+      : []),
   ];
 
   return (
