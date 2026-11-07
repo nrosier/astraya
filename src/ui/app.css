@@ -83,6 +83,8 @@
   --shell-max-width-wide: 80rem;
   /* The Extended settings drawer's widest width on a wide screen (#824, D-824c); full width on a phone. */
   --drawer-max-width: 42rem;
+  /* The reading measure of a text-heavy page (#1176). */
+  --prose-measure: 75ch;
   /* The sticky header's height (#421): what the page scrolls under, so anchors and focus
      scroll clear of it (`html`'s `scroll-padding-top` below), and how much the mobile header
      is allowed to grow. */
@@ -1699,7 +1701,13 @@ code {
 /* Rendered Markdown: the changelog. Headings here are document structure, so they
    look like headings rather than the tracked labels used for page sections. */
 .prose {
-  max-width: 42rem;
+  max-width: var(--prose-measure);
+}
+
+/* A text-heavy page keeps its text column to about 75 characters a line while the shell stays 80rem (#1176, owner
+   decision 2026-11-07): About's paragraphs, lists and the version list; the Changelog's `.prose` uses the same measure. */
+.shell--prose > :is(p, ul, ol, dl) {
+  max-width: var(--prose-measure);
 }
 
 .prose h2 {

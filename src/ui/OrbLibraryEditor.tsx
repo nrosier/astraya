@@ -9,6 +9,7 @@ import {
   CARD_SOURCE,
   MAX_ORB_PROFILES,
   nextRevision,
+  newOrbProfileId,
   validateOrbProfileRecord,
   type OrbContextSource,
   type OrbProfileRecord,
@@ -46,13 +47,6 @@ function draftOf(profile: OrbProfileRecord): Draft {
   };
 }
 
-function newId(existing: readonly OrbProfileRecord[]): string {
-  const taken = new Set(existing.map((profile) => profile.id));
-  let candidate = `profile-${String(existing.length + 1)}`;
-  for (let n = existing.length + 1; taken.has(candidate); n += 1) candidate = `profile-${String(n)}`;
-  return candidate;
-}
-
 export function OrbLibraryEditor({
   profiles,
   sources,
@@ -75,7 +69,7 @@ export function OrbLibraryEditor({
     if (draft === undefined) return;
     const rules = orbRulesFromDraft(draft.rules);
     const next = validateOrbProfileRecord({
-      id: draft.id ?? newId(profiles),
+      id: draft.id ?? newOrbProfileId(profiles),
       name: draft.name.trim(),
       revision: nextRevision(existing),
       scalePercent: Number(draft.scale),
