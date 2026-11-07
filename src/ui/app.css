@@ -8374,6 +8374,8 @@ a.quiet,
 
 .overview-now {
   margin: 0 0 var(--space-4);
+}
+
 /*
  * The timing timeline's Gantt chart (issue 1237): an HTML label beside a stretched SVG per track, so the names and the year
  * labels stay readable at any width. Colours are tokens: bars in the accent, the centre date in the solar colour.
