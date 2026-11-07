@@ -45,6 +45,7 @@ import { Checkbox } from './primitives/Checkbox.js';
 import { FilterSummary } from './primitives/FilterSummary.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { Button } from './primitives/Button.js';
+import { Tooltip } from './primitives/Tooltip.js';
 import { ChoiceGroup } from './primitives/ChoiceGroup.js';
 import { StagedDialog } from './primitives/StagedDialog.js';
 import { routeHref } from './route.js';
@@ -305,14 +306,20 @@ export function TransitFilterStatus({
   onChange,
   shown,
   total,
-}: Pick<Props, 'filter' | 'rules' | 'onChange' | 'shown' | 'total'>) {
+  emptyOnly = false,
+}: Pick<Props, 'filter' | 'rules' | 'onChange' | 'shown' | 'total'> & {
+  /** Only the way out of an empty list: the count and the rule live in the heading's info tooltip instead. */
+  readonly emptyOnly?: boolean;
+}) {
   const t = useMessages(transitFilterPanelMessages);
   const current = presetOf(filter, rules);
   const presetName = t.presetsShort[current ?? 'custom'];
   return (
     <div className="transit-filter-status">
-      <FilterSummary summary={t.count(shown, total, presetName)} />
-      {current === 'important' && <p className="hint">{rules.context === 'daily' ? t.dailyNote : t.yearlyNote}</p>}
+      {!emptyOnly && <FilterSummary summary={t.count(shown, total, presetName)} />}
+      {!emptyOnly && current === 'important' && (
+        <p className="hint">{rules.context === 'daily' ? t.dailyNote : t.yearlyNote}</p>
+      )}
       {shown === 0 && total > 0 && (
         <StatusMessage kind="zero">
           {t.empty(t.presets[current ?? 'custom'])}{' '}
@@ -336,5 +343,34 @@ export function TransitFilterPanel(props: Props) {
       <TransitFilterButton {...props} />
       <TransitFilterStatus {...props} />
     </>
+  );
+}
+
+/**
+ * The info tooltip of a transit screen's heading (owner review 2026-11-07): what the screen is for, then how many of the
+ * contacts the filter shows and the rule the Important preset follows. It replaces the text that sat between the date and
+ * the content.
+ */
+export function TransitHeadingInfo({
+  intro,
+  label,
+  filter,
+  rules,
+  shown,
+  total,
+}: Pick<Props, 'filter' | 'rules' | 'shown' | 'total'> & {
+  readonly intro: string;
+  readonly label: string;
+}) {
+  const t = useMessages(transitFilterPanelMessages);
+  const current = presetOf(filter, rules);
+  const note = current === 'important' ? (rules.context === 'daily' ? t.dailyNote : t.yearlyNote) : '';
+  const text = [intro, t.count(shown, total, t.presetsShort[current ?? 'custom']), note]
+    .filter((part) => part !== '')
+    .join(' ');
+  return (
+    <Tooltip text={text} label={label} className="primitive-tooltip-icon">
+      ?
+    </Tooltip>
   );
 }

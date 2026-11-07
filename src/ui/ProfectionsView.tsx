@@ -215,10 +215,8 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
         }
         basis={basisLine}
       >
-        {/* The as-of date and Now sit in the header, to the right (#1236); Export stays in the page header (#887). */}
-        <div className="timing-header-control">
-          <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
-        </div>
+        {/* The as-of date, Now and Export sit in the heading row, to the right (#1236, owner review 2026-11-07). */}
+        <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
         <Button
           onClick={() => {
             setAsOf(todayInputValue());
@@ -242,23 +240,25 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
                   {t.ageLine(`${formatFixed(load.data.age, 2)}${load.data.age < 0 ? ` ${t.beforeBirth}` : ''}`)}
                 </p>
                 {rows !== undefined && (
-                  <SortableTable
-                    caption={t.profectionsCaption}
-                    captionTerm="profection"
-                    columns={columns(t, locale)}
-                    rows={rows}
-                    getRowKey={(row) => row.period}
-                    downloadFilename={deriveExportFilename(person.displayName, 'profections', 'csv')}
-                  />
+                  <section className="timing-card">
+                    <SortableTable
+                      caption={t.profectionsCaption}
+                      captionTerm="profection"
+                      columns={columns(t, locale)}
+                      rows={rows}
+                      getRowKey={(row) => row.period}
+                      downloadFilename={deriveExportFilename(person.displayName, 'profections', 'csv')}
+                    />
+                  </section>
                 )}
-                <section className="profection-meanings" aria-labelledby="profection-meanings-heading">
+                <section className="timing-card profection-meanings" aria-labelledby="profection-meanings-heading">
                   <h2 id="profection-meanings-heading">{t.meaningHeading}</h2>
                   {[
                     { period: t.yearPeriod, house: load.data.year.house },
                     { period: t.monthPeriod, house: load.data.month.house },
                   ].map(({ period, house }) => (
                     <div key={period}>
-                      <h3>{t.periodHouse(period, ordinal(house, locale))}</h3>
+                      <h3 className="timing-card-subheading">{t.periodHouse(period, ordinal(house, locale))}</h3>
                       <p>{resolvePlacementText({ category: 'profected-house', house }, locale, corpus)}</p>
                     </div>
                   ))}
