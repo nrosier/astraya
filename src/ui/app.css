@@ -8355,7 +8355,7 @@ a.quiet,
   }
 }
 
-/* A birth-record field an Overview fix link can focus (#1173): the wrapper takes no box of its own. */
+/* A birth-record field an Overview fix link can focus (issue 1173): the wrapper takes no box of its own. */
 [data-health-field] {
   display: contents;
 }
