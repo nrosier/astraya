@@ -22,9 +22,11 @@ import {
   releasingPeriodsToTimelineEvents,
   releasingSubperiodsToTimelineEvents,
   secondaryProgressionToTimelineEvents,
+  eventMatchesBodyGroup,
   solarArcToTimelineEvents,
   TIMING_TIMELINE_TRACKS,
   timingTimelineTracks,
+  type TimelineBodyGroup,
   type TimingTimelineTrack,
   transitToTimelineEvents,
   type TimingTimelineEvent,
@@ -65,6 +67,8 @@ type Load =
 
 const YEAR_DAYS = 365.2425;
 /** The ranges the header offers: years either side of the centre date (#1237). */
+const BODY_GROUPS = ['all', 'major', 'minor'] as const satisfies readonly TimelineBodyGroup[];
+
 const RANGES = ['5', '10'] as const;
 type Range = (typeof RANGES)[number];
 
@@ -98,6 +102,7 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
   const [asOf, setAsOf] = useState(todayInputValue);
   const [range, setRange] = useState<Range>('5');
   const [query, setQuery] = useState('');
+  const [bodyGroup, setBodyGroup] = useState<TimelineBodyGroup>('all');
   const [hidden, setHidden] = useState<ReadonlySet<TimingTimelineTrack>>(new Set());
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   const target = useMemo(() => {
@@ -161,9 +166,14 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
   const tracks = useMemo(
     () =>
       load.kind === 'ready'
-        ? timingTimelineTracks(load.events, fromJd, toJd).filter(({ track }) => !hidden.has(track))
+        ? timingTimelineTracks(load.events, fromJd, toJd)
+            .filter(({ track }) => !hidden.has(track))
+            .map(({ track, events }) => ({
+              track,
+              events: events.filter((event) => eventMatchesBodyGroup(event, bodyGroup)),
+            }))
         : [],
-    [load, fromJd, toJd, hidden],
+    [load, fromJd, toJd, hidden, bodyGroup],
   );
   const rows = useMemo<readonly EventRow[]>(() => {
     const needle = query.trim().toLowerCase();
@@ -309,6 +319,17 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
               <div className="timing-layout-side">
                 <section className="timing-card" aria-labelledby="timeline-techniques-heading">
                   <h2 id="timeline-techniques-heading">{t.filterLegend}</h2>
+                  <ChoiceGroup
+                    label={t.bodiesLabel}
+                    value={bodyGroup}
+                    segmented
+                    showLabel
+                    options={BODY_GROUPS.map((group) => ({ value: group, label: t.bodyGroups[group] }))}
+                    onChange={(value) => {
+                      setBodyGroup(value === 'major' || value === 'minor' ? value : 'all');
+                    }}
+                  />
+                  <p className="hint">{t.bodiesNote}</p>
                   <div role="group" aria-labelledby="timeline-techniques-heading" className="timing-technique-filter">
                     {TIMING_TIMELINE_TRACKS.map((track) => (
                       <Checkbox

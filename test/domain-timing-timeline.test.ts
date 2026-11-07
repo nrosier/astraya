@@ -12,12 +12,14 @@ import { zodiacalReleasingPeriods, zodiacalReleasingSubperiods } from '../src/as
 import { computeProfections } from '../src/domain/profections.js';
 import type { SolarArcDirectionsData } from '../src/domain/solar-arc-directions.js';
 import {
+  eventMatchesBodyGroup,
   firdariaPeriodsToTimelineEvents,
   profectionToTimelineEvents,
   releasingPeriodsToTimelineEvents,
   releasingSubperiodsToTimelineEvents,
   solarArcToTimelineEvents,
   timingTimelineTracks,
+  type TimingTimelineEvent,
 } from '../src/domain/timing-timeline.js';
 import { julianDayFor } from '../src/time/julian.js';
 import { resolveMoment } from '../src/time/resolve.js';
@@ -170,5 +172,37 @@ describe('solarArcToTimelineEvents (#673)', () => {
         (t) => t.track === 'solar-arc',
       )?.events,
     ).toHaveLength(1);
+  });
+});
+
+describe('the bodies filter (#1260)', () => {
+  const at = (subject: TimingTimelineEvent['subject']): TimingTimelineEvent => ({
+    kind: 'x',
+    startJd: 1,
+    subject,
+    sourceModule: 'test',
+  });
+  const aspect = (from: string, to: string): TimingTimelineEvent =>
+    at({ kind: 'aspect', from, aspect: 'conjunction', to });
+  const shows = (event: TimingTimelineEvent): readonly boolean[] =>
+    (['all', 'major', 'minor'] as const).map((group) => eventMatchesBodyGroup(event, group));
+
+  it('shows an event that names no body under every filter', () => {
+    expect(shows(at({ kind: 'firdaria', ruler: 'sun' }))).toEqual([true, true, true]);
+    expect(shows(at({ kind: 'profection', sign: 'Libra', house: 4 }))).toEqual([true, true, true]);
+    expect(shows(at({ kind: 'return', which: 'solar-return' }))).toEqual([true, true, true]);
+  });
+
+  it('puts luminaries, planets, nodes and angles with the major planets', () => {
+    expect(shows(aspect('sun', 'saturn'))).toEqual([true, true, false]);
+    expect(shows(aspect('ascendant', 'trueNode'))).toEqual([true, true, false]);
+  });
+
+  it('puts Lilith, centaurs and asteroids in the minor group, whichever end names them', () => {
+    expect(shows(aspect('sun', 'chiron'))).toEqual([true, false, true]);
+    expect(shows(aspect('ceres', 'moon'))).toEqual([true, false, true]);
+    expect(shows(aspect('meanLilith', 'venus'))).toEqual([true, false, true]);
+    expect(shows(at({ kind: 'station', body: 'vesta', direction: 'retrograde' }))).toEqual([true, false, true]);
+    expect(shows(at({ kind: 'station', body: 'mars', direction: 'direct' }))).toEqual([true, true, false]);
   });
 });
