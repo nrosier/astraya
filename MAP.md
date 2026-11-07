@@ -26,6 +26,8 @@ Top-level application, release, and audit artifacts. Read the local map in each 
 - `README.md` — Project overview, install, usage, and release badge. Deps: package metadata.
 - `knip.json` — Report-only unused-code scan (`npm run knip`, #613); never a CI gate. Deps: `knip`.
 - `eslint.config.js` — Strict TypeScript, architecture-boundary, module-header and React-hooks lint configuration. Deps: ESLint.
+- `.oxlintrc.json` — Advisory-only oxlint rule set, migrated from `eslint.config.js` (#1284); never a CI gate. Deps: `oxlint`, `oxlint-plugins.js`.
+- `oxlint-plugins.js` — `local/require-module-header` ported as an oxlint JS plugin for the advisory run (#1284). Deps: `eslint.config.js` (source of truth).
 - `index.html` — Vite SPA document shell and baseline CSP meta tag. Deps: `src/main.tsx`.
 - `package.json` — Project metadata, scripts, runtime, and development dependencies. Deps: npm.
 - `package-lock.json` — Locked npm dependency graph. Deps: `package.json`.
