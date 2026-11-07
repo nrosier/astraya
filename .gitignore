@@ -77,13 +77,27 @@ data/
 docs/mockups/
 
 # Reference material is local only, never pushed. Only the index/format docs and the
-# three JSON data files that the test suite reads are tracked (#864).
+# three JSON data files that the test suite reads, plus sources.json, are tracked (#864).
 docs/references/*
 !docs/references/MAP.md
 !docs/references/SCHEMA.md
 !docs/references/orb-conventions.references.json
 !docs/references/derived-points.references.json
 !docs/references/aaf-chunks.references.json
+!docs/references/sources.json
 
 # Playwright MCP screenshots left in the repo root during manual checks.
 /*.png
+
+# Claude Code runtime state (locks, schedules, worktrees, checkpoints, per-machine memory),
+# mirrored from the shared .git/info/exclude so every checkout ignores it.
+**/.claude/scheduled_tasks.lock
+**/.claude/scheduled_tasks.json
+**/.claude/routines/.state/
+**/.claude/worktrees/
+**/.claude/checkpoints/
+**/.claude/mailbox/
+**/.claude/agent-registry.json
+**/.claude/agent-memory-local
+**/.claude/first-run
+**/.claude/assistant-daemon-state.json
