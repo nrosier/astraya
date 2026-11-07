@@ -94,5 +94,35 @@
     "title": "Extended settings drawer",
     "issues": "#856",
     "check": "Advanced groups collapsed by default on Profile, Bodies and Special. Check the group row and its customised count read clearly."
+  },
+  {
+    "slug": "17-consultation-transit-tables",
+    "title": "Consultation, transit tables",
+    "issues": "#1229",
+    "check": "Transit tables in Consultation: the light side bands (the scroll cue) appear only when a table is wider than its card. Check that no band shows on a table that fits, at 1280 and 3440."
+  },
+  {
+    "slug": "18-back-link",
+    "title": "Back link after a click",
+    "issues": "#1225",
+    "check": "Transits opened from Overview: the Back link above the heading names the previous page (Overview), is placed the same as on every other page, and is not shown on a first entry."
+  },
+  {
+    "slug": "19-people-list",
+    "title": "People, with people stored",
+    "issues": "#1161, #1060",
+    "check": "Buttons on the list (add, row actions) come from the Button primitive. Check they share one height, one corner radius and one weight, and the row actions line up."
+  },
+  {
+    "slug": "20-preferences-astrology",
+    "title": "Preferences, Astrology",
+    "issues": "#1161",
+    "check": "Buttons and selects on the page (Reset, orb library actions) use the Button primitive. Check heights and bottom edges match across each row."
+  },
+  {
+    "slug": "21-chart-overlay-settings",
+    "title": "Chart overlay settings drawer",
+    "issues": "#1161",
+    "check": "The drawer's footer buttons (Cancel and Apply overlays) and the up and down buttons use the Button primitive. Check the footer pair share a height and bottom edge and read as secondary and primary."
   }
 ]
