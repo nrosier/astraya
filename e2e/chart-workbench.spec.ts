@@ -775,7 +775,15 @@ test.describe('with the shared people (#799)', () => {
     const settingsBox = await box(settings);
     expect(overlaysBox.left).toBeGreaterThanOrEqual(header.left);
     expect(overlaysBox.right).toBeLessThanOrEqual(settingsBox.left);
-    expect(settingsBox.right).toBeCloseTo(header.right, 0);
+    // The PDF link (#856) is the rightmost action when the chart offers one; otherwise Extended settings ends the group.
+    const pdfLink = page.locator('.page-header-actions > .chart-pdf-link');
+    if ((await pdfLink.count()) > 0) {
+      const pdfBox = await box(pdfLink);
+      expect(settingsBox.right).toBeLessThanOrEqual(pdfBox.left + 0.5);
+      expect(pdfBox.right).toBeCloseTo(header.right, 0);
+    } else {
+      expect(settingsBox.right).toBeCloseTo(header.right, 0);
+    }
     await expect(tabRow.locator('button.chart-overlay-trigger')).toHaveCount(0);
     await expect(tabRow.locator('button.extended-settings-trigger')).toHaveCount(0);
     await noPrefixNoRow();
