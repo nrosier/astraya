@@ -7167,6 +7167,14 @@ button.primitive-disclosure-trigger:hover:not(:disabled) {
   align-items: stretch;
 }
 
+/* While a card in the row is open the row stops stretching (#1231, the expanded-state exception to §10.1 rule 1):
+   the neighbouring column keeps its own height instead of filling with whitespace, and the bottom edges differ only
+   until the card is closed again. The last card's slack grow has nothing to fill, so it needs no change. */
+.consultation-grid:has(.primitive-disclosure.open),
+.birth-record:has(.primitive-disclosure.open) {
+  align-items: start;
+}
+
 @container consultation (min-width: 48rem) {
   .consultation-grid {
     grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
