@@ -93,3 +93,14 @@ test('shows one "now" line that links to Consultation', async () => {
   await now.click();
   await expect(page).toHaveURL(/\/consultation$/);
 });
+
+test('offers comparing with another person once there are two people, and goes to the relationship screen', async () => {
+  test.setTimeout(60_000);
+  // The shared people hold more than one person, so the goal is there; with a single person it is not offered.
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  await openOverview();
+  const compare = page.getByRole('link', { name: 'Compare with another person', exact: true });
+  await expect(compare).toBeVisible();
+  await compare.click();
+  await expect(page).toHaveURL(/\/relationships\/synastry$/);
+});
