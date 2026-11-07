@@ -55,10 +55,15 @@ test('a person with a known birth time gets a Forecast screen with all four tier
   await expect(page.getByRole('heading', { name: /forecast/i, level: 2 })).toBeVisible();
   await expect(page.locator('.page-header-basis')).toHaveText('Tropical · Placidus · Modern rulers · Standard orbs');
 
+  // The periods are tabs (#1227): one is shown at a time, and each tab shows its own heading.
+  const periods = page.getByRole('tablist', { name: 'Forecast period' });
+  await expect(periods.getByRole('tab')).toHaveCount(5);
   await expect(page.getByRole('heading', { name: 'Daily', level: 2 })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Weekly', level: 2 })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Monthly', level: 2 })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Yearly', level: 2 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Weekly', level: 2 })).toHaveCount(0);
+  for (const name of ['Weekly', 'Monthly', 'Yearly']) {
+    await periods.getByRole('tab', { name, exact: true }).click();
+    await expect(page.getByRole('heading', { name, level: 2 })).toBeVisible();
+  }
 
   // Solar return is unconditional once loaded, so it's a stable anchor for "did this finish
   // calculating" that doesn't depend on whether any transit happens to be exact in this window.
@@ -72,6 +77,7 @@ test('changing the "as of" date recalculates the forecast', async () => {
 
   await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).click();
   await page.getByRole('tab', { name: 'Forecast', exact: true }).click();
+  await page.getByRole('tab', { name: 'Yearly', exact: true }).click();
   const before = await page.getByText(/Solar return for \d{4}/).textContent();
 
   await page.getByLabel('As of').fill('2030-06-15');
@@ -87,6 +93,7 @@ test('the planetary-return picker computes a return for the chosen body (#398)',
 
   await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).click();
   await page.getByRole('tab', { name: 'Forecast', exact: true }).click();
+  await page.getByRole('tab', { name: 'Other returns', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Other returns', level: 2 })).toBeVisible();
 
   // Jupiter is the default selection, and already renders a return sentence with no picking.

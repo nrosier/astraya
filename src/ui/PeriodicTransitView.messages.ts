@@ -27,6 +27,7 @@ const en = {
 
   signFallback: (n: string) => `sign ${n}`,
 
+  periodTablist: 'Forecast period',
   dailyHeading: 'Daily',
   moonInLabel: 'Moon in',
   houseSuffix: (house: number) => `, house ${String(house)}`,
@@ -98,6 +99,7 @@ const nl: typeof en = {
 
   signFallback: (n: string) => `teken ${n}`,
 
+  periodTablist: 'Voorspellingsperiode',
   dailyHeading: 'Dagelijks',
   moonInLabel: 'Maan in',
   houseSuffix: (house: number) => `, huis ${String(house)}`,
