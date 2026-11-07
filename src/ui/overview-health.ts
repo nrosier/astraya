@@ -9,11 +9,12 @@ import { resolveMoment } from '../time/resolve.js';
 import { hrefFor } from './feature-registry.js';
 
 /** The birth-record field a fix link focuses. */
-export type HealthFocus = 'date' | 'accuracy' | 'place';
+export type HealthFocus = 'date' | 'accuracy' | 'place' | 'source';
 
 export interface HealthItem {
   readonly kind: 'missing' | 'uncertain';
-  readonly what: 'date' | 'place' | 'placeName' | 'timeUnknown' | 'timeApproximate' | 'timeRemembered' | 'timezone';
+  readonly what:
+    'date' | 'place' | 'placeName' | 'timeUnknown' | 'timeApproximate' | 'timeRemembered' | 'timezone' | 'source';
   readonly focus: HealthFocus;
 }
 
@@ -35,6 +36,8 @@ export function birthDataHealth(person: Person): readonly HealthItem[] {
       items.push({ kind: 'uncertain', what: 'timezone', focus: 'place' });
     }
   }
+  // Last: the chart does not depend on it, but a record that does not say where its data came from is a shaky one (#1262).
+  if (person.sourceKind === undefined) items.push({ kind: 'uncertain', what: 'source', focus: 'source' });
   return items;
 }
 

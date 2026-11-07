@@ -25,7 +25,7 @@
  * @module person
  * @purpose Defines the `Person` entity — the primary entity and owner of birth data that every computed chart derives from — and assembles it from op-log register values.
  * @conventions Stores the civil-time/coordinates input as typed, never a resolved UTC offset, since historical timezone data can change (an `OffsetWitness` records what a past resolution said, for detecting drift, not for reuse); a field this build cannot read is reported as absent via `missing`, never defaulted (e.g. `{0,0}` is a real place, so it is never substituted for missing coordinates); `TimeAccuracy` distinguishes a genuinely unknown birth time, for which houses/angles are meaningless rather than merely approximate.
- * @exports Person, TimeAccuracy, OffsetWitness, RelocationPlace, CustomPointDefinition, ChosenFixedStar, PERSON_FIELDS, buildPerson, readCivil, readCoordinates, readCalendar, readTimeAccuracy, readWitness, readOffsetOverride, readText, readRelocationPlaces, readCustomPoints, readFixedStars, readCalculationSettings, CalculationSettingsRead, serializeCalculationSettings, readRulership, RulershipRead, serializeRulership, newPersonCalculationMutations
+ * @exports Person, TimeAccuracy, BirthSourceKind, BIRTH_SOURCE_NOTE_MAX_CHARACTERS, BIRTH_SOURCE_KINDS, readBirthSourceKind, OffsetWitness, RelocationPlace, CustomPointDefinition, ChosenFixedStar, PERSON_FIELDS, buildPerson, readCivil, readCoordinates, readCalendar, readTimeAccuracy, readWitness, readOffsetOverride, readText, readRelocationPlaces, readCustomPoints, readFixedStars, readCalculationSettings, CalculationSettingsRead, serializeCalculationSettings, readRulership, RulershipRead, serializeRulership, newPersonCalculationMutations
  */
 import { parseFormula } from '../astrology/formula-parser.js';
 import { isRulershipChoice, type RulershipChoice } from '../astrology/rulership.js';
@@ -128,6 +128,10 @@ export interface Person {
    */
   readonly placeLabel: string;
   readonly timeAccuracy: TimeAccuracy;
+  /** Where the birth data came from (#1262); absent when none was recorded (records written before it). */
+  readonly sourceKind?: BirthSourceKind | undefined;
+  /** A free-text note on the source, e.g. the registry or the collection entry; absent when there is none. */
+  readonly sourceNote?: string | undefined;
   readonly notes: string;
   readonly witness?: OffsetWitness;
   /** Valid named alternate places; absent in records written before #559. */
@@ -173,6 +177,8 @@ export const PERSON_FIELDS = [
   'zoneOverride',
   'placeLabel',
   'timeAccuracy',
+  'sourceKind',
+  'sourceNote',
   'notes',
   'witness',
   'relocationPlaces',
@@ -223,6 +229,22 @@ export function readCoordinates(value: unknown): Coordinates | undefined {
 
 export function readCalendar(value: unknown): Calendar | undefined {
   return value === 'gregorian' || value === 'julian' || value === 'auto' ? value : undefined;
+}
+
+/** Where the birth data came from (#1262), as the record chooses it; the free-text note beside it says more. */
+export const BIRTH_SOURCE_KINDS = ['certificate', 'family', 'memory', 'collection', 'other'] as const;
+export type BirthSourceKind = (typeof BIRTH_SOURCE_KINDS)[number];
+
+/**
+ * The longest a source note may be, in code points: a one-line pointer (a registry, a collection entry), the same
+ * limit as a pin's label. One uncapped register could make a single op too big for the relay to take, which stops the
+ * device syncing anything after it (db-integrity review of #1262).
+ */
+export const BIRTH_SOURCE_NOTE_MAX_CHARACTERS = 200;
+
+/** A recognised source kind, or undefined: an unset or unrecognised value reads as "not recorded", never a guess. */
+export function readBirthSourceKind(value: unknown): BirthSourceKind | undefined {
+  return BIRTH_SOURCE_KINDS.find((kind) => kind === value);
 }
 
 export function readTimeAccuracy(value: unknown): TimeAccuracy | undefined {
@@ -429,6 +451,8 @@ export function buildPerson(id: string, fields: ReadonlyMap<string, unknown>): P
   const fixedStars = readFixedStars(fields.get('fixedStars'));
   const calculation = readCalculationSettings(fields.get('calculationSettings'));
   const ruler = readRulership(fields.get('rulership'));
+  const sourceKind = readBirthSourceKind(fields.get('sourceKind'));
+  const sourceNote = readText(fields.get('sourceNote'));
 
   const missing: string[] = [];
   if (civil === undefined) missing.push('civil');
@@ -454,6 +478,8 @@ export function buildPerson(id: string, fields: ReadonlyMap<string, unknown>): P
     ...(moment === undefined ? {} : { moment }),
     placeLabel: readText(fields.get('placeLabel')) ?? '',
     timeAccuracy: readTimeAccuracy(fields.get('timeAccuracy')) ?? 'unknown',
+    ...(sourceKind === undefined ? {} : { sourceKind }),
+    ...(sourceNote === undefined || sourceNote === '' ? {} : { sourceNote }),
     notes: readText(fields.get('notes')) ?? '',
     ...(witness === undefined ? {} : { witness }),
     ...(relocationPlaces === undefined ? {} : { relocationPlaces }),

@@ -20,13 +20,13 @@ describe('birthDataHealth (#1173)', () => {
     expect(
       birthDataHealth(
         person({ civil, coordinates: ulm, placeLabel: 'Ulm', timeAccuracy: 'recorded', zoneOverride: 'Europe/Berlin' }),
-      ).filter((item) => item.what !== 'timezone'),
+      ).filter((item) => item.what !== 'timezone' && item.what !== 'source'),
     ).toEqual([]);
   });
 
   it('lists a missing date and a missing place as missing, each naming the field that fixes it', () => {
     const items = birthDataHealth(person({ timeAccuracy: 'recorded' }));
-    expect(items.map((item) => [item.what, item.kind, item.focus])).toEqual([
+    expect(items.map((item) => [item.what, item.kind, item.focus]).filter(([what]) => what !== 'source')).toEqual([
       ['date', 'missing', 'date'],
       ['place', 'missing', 'place'],
     ]);
@@ -48,6 +48,20 @@ describe('birthDataHealth (#1173)', () => {
       kind: 'uncertain',
       what: 'placeName',
       focus: 'place',
+    });
+  });
+
+  it('flags a birth record whose source is not recorded, and stops once it is (#1262)', () => {
+    const base = { civil, coordinates: ulm, placeLabel: 'Ulm', timeAccuracy: 'recorded' };
+    expect(birthDataHealth(person(base))).toContainEqual({ kind: 'uncertain', what: 'source', focus: 'source' });
+    expect(birthDataHealth(person({ ...base, sourceKind: 'certificate' })).map((item) => item.what)).not.toContain(
+      'source',
+    );
+    // A kind this build does not know reads as not recorded, never as a guess.
+    expect(birthDataHealth(person({ ...base, sourceKind: 'rumour' }))).toContainEqual({
+      kind: 'uncertain',
+      what: 'source',
+      focus: 'source',
     });
   });
 

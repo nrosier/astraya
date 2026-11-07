@@ -266,3 +266,21 @@ describe('the per-person fixedStars register (#803, D-803b)', () => {
     expect(person.calculationSettingsUnreadable).toBeUndefined();
   });
 });
+
+describe('the source of the birth data (#1262)', () => {
+  const fields = (extra: Record<string, unknown>) => new Map(Object.entries(extra));
+
+  it('reads a recognised kind and its note', () => {
+    const person = buildPerson('p-a', fields({ sourceKind: 'memory', sourceNote: 'Told by her mother' }));
+    expect(person.sourceKind).toBe('memory');
+    expect(person.sourceNote).toBe('Told by her mother');
+  });
+
+  it('reads nothing, an unrecognised kind or a cleared (null) kind as not recorded', () => {
+    for (const value of [undefined, 'rumour', null, '']) {
+      const person = buildPerson('p-a', fields(value === undefined ? {} : { sourceKind: value }));
+      expect(person.sourceKind).toBeUndefined();
+      expect(person.sourceNote).toBeUndefined();
+    }
+  });
+});

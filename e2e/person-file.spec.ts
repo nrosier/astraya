@@ -199,7 +199,7 @@ test.describe('with the shared people (#799)', () => {
     expect(danger.y).toBeGreaterThan(replace.y);
     // Date, how the time is known, and the time share one row.
     const tops = await Promise.all(
-      ['input[type="date"]', 'select', 'input[type="time"]'].map(async (selector) => {
+      ['input[type="date"]', '.birth-record-timestamp select', 'input[type="time"]'].map(async (selector) => {
         const found = await card('identity').locator(selector).boundingBox();
         return found?.y ?? Number.NaN;
       }),

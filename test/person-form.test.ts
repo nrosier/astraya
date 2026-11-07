@@ -241,6 +241,21 @@ describe('turning a save into operations', () => {
     expect(mutations).toEqual([{ entity: 'person', entityId: ID, field: 'placeLabel', value: 'Vevay, IN' }]);
   });
 
+  it('writes the source of the birth data, and writes null to clear it (#1262)', () => {
+    const chosen = draftToMutations(ID, { ...VEVAY, sourceKind: 'family' }, VEVAY, T);
+    expect(chosen).toEqual([{ entity: 'person', entityId: ID, field: 'sourceKind', value: 'family' }]);
+    const cleared = draftToMutations(ID, VEVAY, { ...VEVAY, sourceKind: 'family' }, T);
+    expect(cleared).toEqual([{ entity: 'person', entityId: ID, field: 'sourceKind', value: null }]);
+    const noted = draftToMutations(ID, { ...VEVAY, sourceNote: ' Family Bible ' }, VEVAY, T);
+    expect(noted).toEqual([{ entity: 'person', entityId: ID, field: 'sourceNote', value: 'Family Bible' }]);
+  });
+
+  it('caps the source note at 200 characters whatever is pasted (#1262)', () => {
+    const [mutation] = draftToMutations(ID, { ...VEVAY, sourceNote: 'y'.repeat(500) }, VEVAY, T);
+    expect(mutation?.field).toBe('sourceNote');
+    expect(typeof mutation?.value === 'string' ? Array.from(mutation.value).length : -1).toBe(200);
+  });
+
   it('never writes notes through the page Save (#919 autosaves them)', () => {
     // Notes are op-log revisions with their own autosave, so the page Save diff must not see them.
     expect(Object.keys(VEVAY)).not.toContain('notes');
