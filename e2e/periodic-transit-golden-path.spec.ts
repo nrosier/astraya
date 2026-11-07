@@ -110,3 +110,23 @@ test('a person with an unknown birth time is told a forecast needs one', async (
   await page.getByRole('tab', { name: 'Forecast', exact: true }).click();
   await expect(page.getByText(/needs a known birth time/)).toBeVisible();
 });
+
+test('at 390 wide the period choice is a labelled Select, not the tab row (#1227)', async () => {
+  test.setTimeout(60_000);
+  await page.setViewportSize({ width: 390, height: 844 });
+
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  // On a phone the navigation is folded behind the Menu button.
+  await page.getByRole('button', { name: 'Menu', exact: true }).click();
+  await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).click();
+  // At this width the section's own sub-views are a Select as well.
+  await page.getByRole('combobox', { name: 'Transits & Forecast subtabs' }).selectOption({ label: 'Forecast' });
+
+  await expect(page.getByRole('tablist', { name: 'Forecast period' })).toBeHidden();
+  const select = page.getByRole('combobox', { name: 'Forecast period' });
+  await expect(select).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Daily', level: 2 })).toBeVisible();
+  await select.selectOption({ label: 'Monthly' });
+  await expect(page.getByRole('heading', { name: 'Monthly', level: 2 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Daily', level: 2 })).toHaveCount(0);
+});
