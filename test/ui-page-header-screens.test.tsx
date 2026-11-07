@@ -22,6 +22,7 @@ vi.mock('../src/ui/store-context.js', () => {
   const state = {
     deleted: { people: new Map() },
     consultationNotes: new Map(),
+    savedQueries: new Map(),
     people: new Map([
       [
         'p1',
