@@ -173,3 +173,29 @@ describe('the extension chunk is documented', () => {
     for (const [key, pattern] of Object.entries(described)) expect(doc, key).toMatch(pattern);
   });
 });
+
+describe('name and place limit (#1288)', () => {
+  const aafWith = (displayName: string, placeLabel = 'London'): string =>
+    peopleToAaf([{ ...ADA, displayName, placeLabel }]).text;
+
+  it('refuses a name over 200 characters, reports it, and stages nothing to write', () => {
+    const { people, errors } = aafToExportedPeople(aafWith('N'.repeat(201)));
+    expect(people).toEqual([]);
+    expect(errors[0]?.message).toContain('200-character limit');
+    expect(stageFullExportRestore(archiveOf(people), new Map()).items).toEqual([]);
+  });
+
+  it('refuses a place over 200 characters', () => {
+    const { people, errors } = aafToExportedPeople(aafWith('Ada', 'P'.repeat(201)));
+    expect(people).toEqual([]);
+    expect(errors).toHaveLength(1);
+  });
+
+  it('accepts exactly 200 characters, counting an emoji as one', () => {
+    const name = '\u{1F600}'.repeat(200);
+    const { people, errors } = aafToExportedPeople(aafWith(name, 'P'.repeat(200)));
+    expect(errors).toEqual([]);
+    expect(people[0]?.displayName).toBe(name);
+    expect(people[0]?.placeLabel).toHaveLength(200);
+  });
+});

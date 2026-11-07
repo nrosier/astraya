@@ -25,7 +25,7 @@
  * @module person
  * @purpose Defines the `Person` entity — the primary entity and owner of birth data that every computed chart derives from — and assembles it from op-log register values.
  * @conventions Stores the civil-time/coordinates input as typed, never a resolved UTC offset, since historical timezone data can change (an `OffsetWitness` records what a past resolution said, for detecting drift, not for reuse); a field this build cannot read is reported as absent via `missing`, never defaulted (e.g. `{0,0}` is a real place, so it is never substituted for missing coordinates); `TimeAccuracy` distinguishes a genuinely unknown birth time, for which houses/angles are meaningless rather than merely approximate.
- * @exports Person, TimeAccuracy, PERSON_TEXT_MAX_CHARACTERS, BirthSourceKind, BIRTH_SOURCE_NOTE_MAX_CHARACTERS, BIRTH_SOURCE_KINDS, readBirthSourceKind, OffsetWitness, RelocationPlace, CustomPointDefinition, ChosenFixedStar, PERSON_FIELDS, buildPerson, readCivil, readCoordinates, readCalendar, readTimeAccuracy, readWitness, readOffsetOverride, readText, readRelocationPlaces, readCustomPoints, readFixedStars, readCalculationSettings, CalculationSettingsRead, serializeCalculationSettings, readRulership, RulershipRead, serializeRulership, newPersonCalculationMutations
+ * @exports Person, TimeAccuracy, PERSON_TEXT_MAX_CHARACTERS, overlongPersonText, BirthSourceKind, BIRTH_SOURCE_NOTE_MAX_CHARACTERS, BIRTH_SOURCE_KINDS, readBirthSourceKind, OffsetWitness, RelocationPlace, CustomPointDefinition, ChosenFixedStar, PERSON_FIELDS, buildPerson, readCivil, readCoordinates, readCalendar, readTimeAccuracy, readWitness, readOffsetOverride, readText, readRelocationPlaces, readCustomPoints, readFixedStars, readCalculationSettings, CalculationSettingsRead, serializeCalculationSettings, readRulership, RulershipRead, serializeRulership, newPersonCalculationMutations
  */
 import { parseFormula } from '../astrology/formula-parser.js';
 import { isRulershipChoice, type RulershipChoice } from '../astrology/rulership.js';
@@ -248,6 +248,19 @@ export const BIRTH_SOURCE_NOTE_MAX_CHARACTERS = 200;
  * syncing anything after it. A longer value already stored still reads; only a new write or an import is held to it.
  */
 export const PERSON_TEXT_MAX_CHARACTERS = 200;
+
+/**
+ * The first of a person's name and place label that is over {@link PERSON_TEXT_MAX_CHARACTERS} code points, or
+ * undefined when both fit (#1288). The one check every import path shares, so the rule cannot drift.
+ */
+export function overlongPersonText(person: {
+  readonly displayName: string;
+  readonly placeLabel: string;
+}): 'displayName' | 'placeLabel' | undefined {
+  if (Array.from(person.displayName).length > PERSON_TEXT_MAX_CHARACTERS) return 'displayName';
+  if (Array.from(person.placeLabel).length > PERSON_TEXT_MAX_CHARACTERS) return 'placeLabel';
+  return undefined;
+}
 
 /** A recognised source kind, or undefined: an unset or unrecognised value reads as "not recorded", never a guess. */
 export function readBirthSourceKind(value: unknown): BirthSourceKind | undefined {
