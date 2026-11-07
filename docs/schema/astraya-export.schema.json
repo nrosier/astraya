@@ -119,6 +119,11 @@
         "displayName": { "type": "string" },
         "placeLabel": { "type": "string" },
         "timeAccuracy": { "enum": ["recorded", "remembered", "approximate", "unknown"] },
+        "sourceKind": {
+          "enum": ["certificate", "family", "memory", "collection", "other"],
+          "description": "Where the birth data came from (#1262, additive); absent when none was recorded"
+        },
+        "sourceNote": { "type": "string", "description": "A note on the source (#1262, additive); absent when empty" },
         "notes": { "type": "string" },
         "birth": { "type": "object", "description": "BirthMomentInput — see src/time/types.ts" },
         "birthNote": {

@@ -39,7 +39,7 @@ import { TimeField } from './primitives/TimeField.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { useStore, useStoreState } from './store-context.js';
 import type { Calendar } from '../time/types.js';
-import type { TimeAccuracy } from '../domain/person.js';
+import { BIRTH_SOURCE_NOTE_MAX_CHARACTERS, type TimeAccuracy } from '../domain/person.js';
 import { PageHeader } from './PageHeader.js';
 import { orbSourceName, useCalculationBasisLine } from './calculation-basis.js';
 import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
@@ -298,6 +298,26 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
                 }}
               />
             </div>
+            <div className="birth-record-source">
+              <div data-health-field="source">
+                <Select
+                  label={t.sourceLabel}
+                  value={current.sourceKind}
+                  options={Object.entries(t.sourceKinds).map(([value, text]) => ({ value, label: text }))}
+                  onChange={(value) => {
+                    set('sourceKind', value as Draft['sourceKind']);
+                  }}
+                />
+              </div>
+              <TextField
+                label={t.sourceNoteLabel}
+                value={current.sourceNote}
+                inputProps={{ maxLength: BIRTH_SOURCE_NOTE_MAX_CHARACTERS }}
+                onChange={(value) => {
+                  set('sourceNote', value);
+                }}
+              />
+            </div>
             {unknown && (
               <div>
                 <p id={`${unknownTimeHintId}-reason`} className="hint">
@@ -405,6 +425,8 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
               scope={`birth/${personId}`}
               toMutation={(text) => birthNoteMutation(personId, store.state.birthNotes.get(personId), text)}
               inline
+              /* A fourth row keeps the 60/40 columns within the 90% rule now the identity card holds the data source (#1262). */
+              rows={4}
             />
             <NoteForks forks={birthNote?.forks ?? []} />
           </section>

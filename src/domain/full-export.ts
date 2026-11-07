@@ -79,7 +79,7 @@ import {
   positionRows,
   type PointVisibilityOptions,
 } from './chart-tables.js';
-import type { ChosenFixedStar, CustomPointDefinition, Person, RelocationPlace } from './person.js';
+import type { BirthSourceKind, ChosenFixedStar, CustomPointDefinition, Person, RelocationPlace } from './person.js';
 import type { FoldedNotes, NoteRevisionView } from '../store/notes.js';
 import type { ExportedResearch } from './research-export.js';
 import type { EphemerisProvider } from '../ephemeris/types.js';
@@ -151,6 +151,10 @@ export interface ExportedPerson {
   readonly displayName: string;
   readonly placeLabel: string;
   readonly timeAccuracy: Person['timeAccuracy'];
+  /** Where the birth data came from (#1262, additive); absent when none was recorded. */
+  readonly sourceKind?: BirthSourceKind;
+  /** The note on that source (#1262, additive); absent when empty. */
+  readonly sourceNote?: string;
   readonly notes: string;
   /** The birth record as stored: what a restore needs, and what a chart is computed from. */
   readonly birth?: NonNullable<Person['moment']>;
@@ -355,6 +359,8 @@ export async function buildFullExport(params: {
       displayName: person.displayName,
       placeLabel: person.placeLabel,
       timeAccuracy: person.timeAccuracy,
+      ...(person.sourceKind === undefined ? {} : { sourceKind: person.sourceKind }),
+      ...(person.sourceNote ? { sourceNote: person.sourceNote } : {}),
       notes: person.notes,
       ...(birthNote === undefined ? {} : { birthNote: { revisions: exportedRevisions(birthNote.revisions) } }),
       ...(consultationNotes.length === 0

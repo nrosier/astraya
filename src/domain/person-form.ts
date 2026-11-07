@@ -23,7 +23,7 @@
  * @conventions Draft fields are strings (what the user typed), parsed only at validation boundaries, so a half-typed value is a work-in-progress rather than coerced into a plausible number; `draftToMutations` writes only fields that actually changed (comparing against the previous draft, not the stored person) so an untouched field never gets a newer timestamp that could overwrite another device's concurrent edit; date/time/coordinates are each written as one whole register, never split field-by-field, since a merge of two partial values would describe a moment or place nobody experienced.
  * @exports Draft, EMPTY_DRAFT, draftFrom, timeToHhMm, validateDraft, draftToMutations, DraftErrors, Validated
  */
-import type { Person, TimeAccuracy } from './person.js';
+import { BIRTH_SOURCE_NOTE_MAX_CHARACTERS, type BirthSourceKind, type Person, type TimeAccuracy } from './person.js';
 import type { personFormValidationMessages } from './person-form.messages.js';
 import type { BirthMomentInput, Calendar } from '../time/types.js';
 import type { Mutation } from '../store/oplog.js';
@@ -37,6 +37,9 @@ export interface Draft {
   /** `HH:MM` or `HH:MM:SS`. */
   readonly time: string;
   readonly timeAccuracy: TimeAccuracy;
+  /** Where the birth data came from (#1262); empty is "not recorded". */
+  readonly sourceKind: BirthSourceKind | '';
+  readonly sourceNote: string;
   readonly latitude: string;
   readonly longitude: string;
   readonly placeLabel: string;
@@ -51,6 +54,8 @@ export const EMPTY_DRAFT: Draft = {
   date: '',
   time: '',
   timeAccuracy: 'recorded',
+  sourceKind: '',
+  sourceNote: '',
   latitude: '',
   longitude: '',
   placeLabel: '',
@@ -81,6 +86,8 @@ export function draftFrom(person: Person): Draft {
     date: civil === undefined ? '' : `${pad(civil.year, 4)}-${pad(civil.month)}-${pad(civil.day)}`,
     time: civil === undefined ? '' : `${pad(civil.hour)}:${pad(civil.minute)}:${pad(civil.second)}`,
     timeAccuracy: person.timeAccuracy,
+    sourceKind: person.sourceKind ?? '',
+    sourceNote: person.sourceNote ?? '',
     latitude: moment === undefined ? '' : String(moment.coordinates.latitude),
     longitude: moment === undefined ? '' : String(moment.coordinates.longitude),
     placeLabel: person.placeLabel,
@@ -237,6 +244,13 @@ export function draftToMutations(
   if (draft.displayName.trim() !== previous.displayName.trim()) write('displayName', draft.displayName.trim());
   if (draft.placeLabel.trim() !== previous.placeLabel.trim()) write('placeLabel', draft.placeLabel.trim());
   if (draft.timeAccuracy !== previous.timeAccuracy) write('timeAccuracy', draft.timeAccuracy);
+  // "Not recorded" is written as null, which the reader treats as no source (an empty string is not a kind either).
+  if (draft.sourceKind !== previous.sourceKind) write('sourceKind', draft.sourceKind === '' ? null : draft.sourceKind);
+  // Capped here as well as on the field, so a pasted or scripted value can never become an op the relay refuses.
+  const cappedNote = (text: string): string =>
+    Array.from(text.trim()).slice(0, BIRTH_SOURCE_NOTE_MAX_CHARACTERS).join('');
+  if (cappedNote(draft.sourceNote) !== cappedNote(previous.sourceNote))
+    write('sourceNote', cappedNote(draft.sourceNote));
   if (draft.calendar !== previous.calendar) write('calendar', draft.calendar);
   if (draft.zoneOverride.trim() !== previous.zoneOverride.trim()) write('zoneOverride', draft.zoneOverride.trim());
 

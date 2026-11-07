@@ -29,6 +29,16 @@ const en = {
   dateLabel: 'Date',
   timeLabel: 'Time',
   timeKnownLabel: 'How the time is known',
+  sourceLabel: 'Data source',
+  sourceNoteLabel: 'Source note (optional)',
+  sourceKinds: {
+    '': 'Not recorded',
+    certificate: 'Birth certificate or registry',
+    family: 'Family record',
+    memory: 'Remembered',
+    collection: 'Chart collection (for example Astro-Databank)',
+    other: 'Other',
+  },
   nextStep: 'The birth record is complete. Next:',
   nextStepChart: 'open the natal chart.',
 
@@ -112,6 +122,16 @@ const nl: typeof en = {
   dateLabel: 'Datum',
   timeLabel: 'Tijd',
   timeKnownLabel: 'Hoe de tijd bekend is',
+  sourceLabel: 'Gegevensbron',
+  sourceNoteLabel: 'Notitie bij de bron (optioneel)',
+  sourceKinds: {
+    '': 'Niet vastgelegd',
+    certificate: 'Geboorteakte of register',
+    family: 'Familiebron',
+    memory: 'Herinnering',
+    collection: 'Horoscopencollectie (bijvoorbeeld Astro-Databank)',
+    other: 'Anders',
+  },
   nextStep: 'De geboortegegevens zijn compleet. Vervolgens:',
   nextStepChart: 'de horoscoop openen.',
 
