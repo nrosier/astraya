@@ -3961,6 +3961,13 @@ dl.metric-cards {
   stroke-width: 1.25;
 }
 
+/* Dim the rest (#1302): a point that is not a selected significator keeps its glyph, tick and leader but at reduced
+   strength. 0.55 of --fg over --bg is 5.4:1 in dark and 3.9:1 in light, above the 3:1 WCAG 1.4.11 asks of graphical
+   objects. Single class and declared before the isolation rule, so a click-to-isolate fade (.chart-dimmed) still wins. */
+.chart-point-muted {
+  opacity: 0.55;
+}
+
 /* Horizon and meridian: the two lines a reader orients the whole chart by. */
 .chart-multiwheel-axis {
   stroke: var(--accent);

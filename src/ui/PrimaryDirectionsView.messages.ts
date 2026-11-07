@@ -61,6 +61,8 @@ const en = {
   arcLine: (arc: string) => `Arc for this age: ${arc}°`,
 
   wheelTitle: 'Natal and directed chart',
+  wheelEmphasisNote: (names: string) =>
+    `On both rings the selected significators are shown at full strength and the other points are dimmed. Selected: ${names}.`,
   natalRingLabel: 'Natal',
   directedRingLabel: 'Directed',
 
@@ -134,6 +136,8 @@ const nl: typeof en = {
   arcLine: (arc: string) => `Boog voor deze leeftijd: ${arc}°`,
 
   wheelTitle: 'Natale en gedirigeerde horoscoop',
+  wheelEmphasisNote: (names: string) =>
+    `Op beide ringen staan de gekozen significatoren op volle sterkte en zijn de overige punten gedimd. Gekozen: ${names}.`,
   natalRingLabel: 'Natal',
   directedRingLabel: 'Gedirigeerd',
 

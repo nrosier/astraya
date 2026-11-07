@@ -115,6 +115,11 @@ export interface MultiWheelOptions extends WheelOrientationOptions {
   readonly minSeparationDeg?: number;
   /** Omits the `<svg>` wrapper, for embedding in a larger sheet. */
   readonly bare?: boolean;
+  /**
+   * Body keys to keep at full strength on every ring (#1302). When given, every other body's glyph, tick and stack is
+   * drawn with the `chart-point-muted` class (reduced contrast, still visible). Omitted means no dimming at all.
+   */
+  readonly emphasizedBodies?: readonly string[];
 }
 
 const DEFAULT_SIZE = 800;
@@ -442,13 +447,14 @@ function renderBodyTicksSvg(
   band: RingBand,
   orientationOptions: WheelOrientationOptions,
   ring: number,
+  mutedKeys?: ReadonlySet<string>,
 ): string {
   return positions
     .map((position) => {
       const angle = wheelAngle(position.longitude, ascendant, orientationOptions);
       const inner = pointOnCircle(geometry.cx, geometry.cy, band.innerRadius, angle);
       const outer = pointOnCircle(geometry.cx, geometry.cy, band.innerRadius + geometry.bodyTickLength, angle);
-      return `<line x1="${fmt(inner.x)}" y1="${fmt(inner.y)}" x2="${fmt(outer.x)}" y2="${fmt(outer.y)}" class="chart-body-tick" ${bodyAttributes(position.key, position.longitude, ring)} />`;
+      return `<line x1="${fmt(inner.x)}" y1="${fmt(inner.y)}" x2="${fmt(outer.x)}" y2="${fmt(outer.y)}" class="chart-body-tick${mutedKeys?.has(position.key) === true ? ' chart-point-muted' : ''}" ${bodyAttributes(position.key, position.longitude, ring)} />`;
     })
     .join('');
 }
@@ -470,6 +476,7 @@ function renderBodyStacksSvg(
   minSeparationDeg: number,
   orientationOptions: WheelOrientationOptions,
   ring: number,
+  mutedKeys?: ReadonlySet<string>,
 ): string {
   const { cx, cy } = geometry;
   const parts: string[] = [];
@@ -515,7 +522,7 @@ function renderBodyStacksSvg(
       ),
     );
     parts.push(
-      `<g class="chart-body-stack" ${bodyAttributes(placement.key, placement.longitude, ring)}>${stack.join('')}</g>`,
+      `<g class="chart-body-stack${mutedKeys?.has(placement.key) === true ? ' chart-point-muted' : ''}" ${bodyAttributes(placement.key, placement.longitude, ring)}>${stack.join('')}</g>`,
     );
   }
   return parts.join('');
@@ -575,12 +582,25 @@ export function renderMultiWheelSvg(
       longitude: b.longitude,
       ...(b.retrograde === true ? { retrograde: true } : {}),
     }));
-    parts.push(renderBodyTicksSvg(glyphInputs, geometry, ascendant, band, orientationOptions, index));
+    const mutedKeys =
+      options?.emphasizedBodies === undefined
+        ? undefined
+        : new Set(glyphInputs.filter((g) => !options.emphasizedBodies?.includes(g.key)).map((g) => g.key));
+    parts.push(renderBodyTicksSvg(glyphInputs, geometry, ascendant, band, orientationOptions, index, mutedKeys));
     // Only a single ring's band is wide enough for the radial degree/sign/minute stack;
     // with several charts stacked, it would overlap neighbouring rings' glyphs.
     if (rings.length === 1) {
       parts.push(
-        renderBodyStacksSvg(glyphInputs, geometry, ascendant, band, minSeparationDeg, orientationOptions, index),
+        renderBodyStacksSvg(
+          glyphInputs,
+          geometry,
+          ascendant,
+          band,
+          minSeparationDeg,
+          orientationOptions,
+          index,
+          mutedKeys,
+        ),
       );
     }
     parts.push(
@@ -591,6 +611,7 @@ export function renderMultiWheelSvg(
         leaderEndRadius: Math.min(band.glyphRadius + geometry.bodyGlyphSize / 2, band.trueRadius),
         retrogradeFontSize: geometry.retrogradeFontSize,
         ring: index,
+        ...(mutedKeys !== undefined ? { mutedKeys } : {}),
       }),
     );
     if (ring.aspects !== undefined && ring.aspects.length > 0) {

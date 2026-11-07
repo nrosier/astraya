@@ -159,6 +159,11 @@ export interface GlyphRingOptions extends WheelOrientationOptions {
   readonly retrogradeFontSize?: number;
   /** Which ring these bodies are on, 0 for the innermost (and for a single wheel). Defaults to 0. */
   readonly ring?: number;
+  /**
+   * Body keys drawn at reduced contrast (`chart-point-muted`, #1302). Omitted or empty means nothing is muted, so every
+   * other wheel is unchanged. A muted point keeps its glyph, tick and leader; only its contrast drops.
+   */
+  readonly mutedKeys?: ReadonlySet<string>;
 }
 
 /**
@@ -235,7 +240,7 @@ export function renderGlyphRingSvg(
     }
 
     parts.push(
-      `<g class="chart-point" ${bodyAttributes(placement.key, placement.longitude, options?.ring ?? 0)}>${groupParts.join('')}</g>`,
+      `<g class="chart-point${options?.mutedKeys?.has(placement.key) === true ? ' chart-point-muted' : ''}" ${bodyAttributes(placement.key, placement.longitude, options?.ring ?? 0)}>${groupParts.join('')}</g>`,
     );
   }
   return parts.join('');
