@@ -157,6 +157,18 @@ for (const viewport of [
       });
     }
 
+    test('the PDF link is the rightmost action of a chart page header (owner review 2026-11-07)', async () => {
+      await openSharedPerson(page, baseUrl, EINSTEIN);
+      await openChart(page, 'Natal');
+      const xs = await page.evaluate<number[]>(
+        "[...document.querySelectorAll('.page-header-actions > *')].map((e) => e.getBoundingClientRect().x)",
+      );
+      const pdf = await page.evaluate<number>(
+        "document.querySelector('.page-header-actions > .chart-pdf-link').getBoundingClientRect().x",
+      );
+      expect(pdf).toBe(Math.max(...xs));
+    });
+
     test('every chart type uses the same selector design values (height, margins, gap)', async () => {
       test.setTimeout(120_000);
       const rows: { type: string; metrics: SelectorMetrics }[] = [];
