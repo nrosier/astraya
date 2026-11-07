@@ -10,9 +10,9 @@
  * @module domain/timing-timeline
  * @purpose Shared `TimingTimelineEvent` shape plus adapters for each timing technique exposed by TimingTimelineView.
  * @conventions Adapters are pure and one-way (technique output → events, never the reverse). An event says what it is about as data (`TimelineSubject`: keys and numbers), never as words, so the screen words it in the reader's language (#674).
- * @exports TimingTimelineEvent, TimelineSubject, TimelineReturn, ReleasingLot, TimingTimelineTrack, TIMING_TIMELINE_TRACKS, timingTimelineTracks, releasingPeriodsToTimelineEvents, firdariaPeriodsToTimelineEvents, profectionToTimelineEvents, primaryDirectionsToTimelineEvents, secondaryProgressionToTimelineEvents, solarArcToTimelineEvents, transitToTimelineEvents, periodicTransitToTimelineEvents
+ * @exports TimelineBodyGroup, timelineEventBodies, eventMatchesBodyGroup, TimingTimelineEvent, TimelineSubject, TimelineReturn, ReleasingLot, TimingTimelineTrack, TIMING_TIMELINE_TRACKS, timingTimelineTracks, releasingPeriodsToTimelineEvents, firdariaPeriodsToTimelineEvents, profectionToTimelineEvents, primaryDirectionsToTimelineEvents, secondaryProgressionToTimelineEvents, solarArcToTimelineEvents, transitToTimelineEvents, periodicTransitToTimelineEvents
  */
-import { bodyById } from '../astrology/bodies.js';
+import { bodyByKey, bodyById } from '../astrology/bodies.js';
 import type { Aspect } from '../astrology/aspects.js';
 import type { FirdariaPeriod } from '../astrology/firdaria.js';
 import type { TransitAspectEvent } from '../astrology/transit-events.js';
@@ -101,6 +101,32 @@ export function timingTimelineTracks(
     track,
     events: events.filter((event) => belongsToTrack(event, track) && isInWindow(event, fromJd, toJd)),
   }));
+}
+
+/** The bodies filter of the timeline (#1260): everything, the major planets, or the asteroids, centaurs and Lilith. */
+export type TimelineBodyGroup = 'all' | 'major' | 'minor';
+
+/** The keys of the bodies an event names: both ends of an aspect, the body of a station; none for the other kinds. */
+export function timelineEventBodies(subject: TimelineSubject): readonly string[] {
+  if (subject.kind === 'aspect') return [subject.from, subject.to];
+  if (subject.kind === 'station') return [subject.body];
+  return [];
+}
+
+/**
+ * Whether an event shows under a bodies filter. Major planets are the luminaries, planets and lunar nodes; the others
+ * (Lilith, centaurs, asteroids) are the minor group, and an angle or any key that is not a body counts with the major
+ * ones. An event that names no body (zodiacal releasing, firdaria, profections, returns) is always shown. "Major" shows
+ * an event only if none of its bodies is minor; "minor" shows it if any of its bodies is.
+ */
+export function eventMatchesBodyGroup(event: TimingTimelineEvent, group: TimelineBodyGroup): boolean {
+  const bodies = timelineEventBodies(event.subject);
+  if (group === 'all' || bodies.length === 0) return true;
+  const isMinor = (key: string): boolean => {
+    const category = bodyByKey(key)?.category;
+    return category === 'lilith' || category === 'centaur' || category === 'asteroid';
+  };
+  return group === 'minor' ? bodies.some(isMinor) : !bodies.some(isMinor);
 }
 
 const bodyKeyOf = (id: number): string => bodyById(id)?.key ?? String(id);
