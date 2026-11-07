@@ -8417,6 +8417,26 @@ a.quiet,
   }
 }
 
+/* The Forecast period choice (issue 1227): five tabs above 40rem, the labelled Select at 40rem and below. */
+.period-select {
+  display: none;
+}
+
+@media (max-width: 40rem) {
+  .period-tabs {
+    display: none;
+  }
+
+  .period-select {
+    display: block;
+    margin-bottom: var(--space-4);
+  }
+
+  .period-select .chart-view-select {
+    max-width: none;
+  }
+}
+
 .section-panel > main.shell {
   padding-top: var(--space-4);
 }
