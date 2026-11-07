@@ -208,6 +208,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
     return label;
   };
   const [locale] = useLocale();
+  const angleName = (key: string): string => t.angleLabels[key as keyof typeof t.angleLabels];
   // The settings the person's natal chart uses, resolved as ChartView does: the person's own settings and rulers (#797, #806). They are
   // recorded as the artifact's requested snapshot; the directions themselves are always Placidus/tropical.
   const { settings: cardSettings, unreadable: settingsUnreadable, rulership } = usePersonCalculationSettings(personId);
@@ -332,9 +333,10 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
       houses: directed.chart.houses,
       bodies: directed.chart.positions,
     };
-    return renderMultiWheelSvg([natalRing, directedRing]);
+    // Dim the rest (#1302): the chosen significators stay at full strength on both rings, every other point is dimmed.
+    return renderMultiWheelSvg([natalRing, directedRing], [], { emphasizedBodies: significators });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- the wheel renderers read the glyph settings from module state, so these are cache keys, not inputs the callback reads.
-  }, [load, directed, t, symbolClass, variants]);
+  }, [load, directed, t, symbolClass, variants, significators]);
   const { wheelRef, onClick: handleWheelClick, onKeyDown: handleWheelKeyDown } = useWheelIsolation(wheelMarkup);
 
   // Both tables' CSVs, in source order (the hits as computed, not the active-only subset), offered in the page header (#887).
@@ -504,6 +506,13 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
                       <h2 id="pd-wheel-title">{t.wheelTitle}</h2>
                       <p className="hint">{t.ageLine(formatFixed(directed.chart.ageYears, 2))}</p>
                       <p className="hint">{t.arcLine(formatFixed(ageToArc(directed.chart.ageYears, data.key), 2))}</p>
+                      <p className="hint">
+                        {t.wheelEmphasisNote(
+                          significators
+                            .map((key) => (key in t.angleLabels ? angleName(key) : bodyDisplayName(key, locale)))
+                            .join(', '),
+                        )}
+                      </p>
                       {wheelMarkup !== undefined && (
                         // App-generated SVG from just-computed chart data, never user-supplied markup —
                         // the same trust boundary ChartView.tsx's sheet markup is injected under.
