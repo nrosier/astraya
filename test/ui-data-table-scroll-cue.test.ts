@@ -13,8 +13,14 @@ const block = css.slice(start, css.indexOf('}', start) + 1).replace(/\/\*[\s\S]*
 describe('data table scroll cue (#1229)', () => {
   it('sizes every cover and fade layer from one width, so a cover always hides its fade', () => {
     expect(block).toMatch(/--scroll-cue-width: var\(--space-6\);/);
-    expect(block.match(/\/ var\(--scroll-cue-width\) 100% no-repeat/g)).toHaveLength(4);
+    expect(block.match(/\/ var\(--scroll-cue-width\) 100%\s+no-repeat/g)).toHaveLength(4);
     expect(block).not.toMatch(/\/ var\(--space-\d+\) 100%/);
+  });
+
+  it('paints the covers in the colour the table sits on: the page by default, a card surface inside a card', () => {
+    expect(block).toMatch(/--scroll-cover: var\(--bg\);/);
+    expect(block.match(/var\(--scroll-cover\), var\(--scroll-cover\)/g)).toHaveLength(2);
+    expect(css).toMatch(/\.consultation-section,[\s\S]*?\.data-table-scroll \{\s*--scroll-cover: var\(--surface\);/);
   });
 
   it('paints two local covers over two scroll fades, with tokens only', () => {

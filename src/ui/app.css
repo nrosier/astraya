@@ -971,7 +971,75 @@ footer {
 
 .timing-layout-main,
 .timing-layout-side {
+  display: grid;
+  /* One column that may shrink below a wide table, so a card never spills over its neighbour. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  align-content: start;
   min-width: 0;
+}
+
+/*
+ * A timing view's content sits in cards (owner visual review 2026-11-07): one card per table, chart or list, all the same
+ * surface, border, radius and padding, each with its title inside it (never on the border), and no card inside a card, so
+ * a table's own frame loses its border here. Titles share one size.
+ */
+.timing-card {
+  display: grid;
+  /* A column that may shrink below a wide table, which then scrolls in its own frame inside the card. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  align-content: start;
+  min-width: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.timing-card > h2,
+.timing-card .data-table-head h2,
+.timing-card .data-table-head h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 620;
+}
+
+.timing-card-subheading {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 620;
+}
+
+.timing-card p {
+  margin: 0;
+}
+
+.timing-card .data-table-head {
+  margin-bottom: 0;
+}
+
+.timing-card .data-table-scroll {
+  border: 0;
+  border-radius: 0;
+}
+
+/* A row of selects under the heading, left-aligned, for what a timing view calculates with (not when it looks). */
+.timing-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: flex-end;
+  margin-bottom: var(--space-4);
+}
+
+.timing-toolbar > * {
+  flex: 0 1 19rem;
+  min-width: min(100%, 10rem);
+}
+
+.timing-toolbar .primitive-field {
+  margin-bottom: 0;
 }
 
 .timing-layout--sticky > .timing-layout-side {
@@ -1016,10 +1084,17 @@ footer {
   column-gap: var(--space-3);
   min-width: 0;
   margin: 0;
+  padding: 0;
+  border: 0;
 }
 
 .timing-checks legend {
   grid-column: 1 / -1;
+  padding: 0;
+  margin-bottom: var(--space-2);
+  font-size: 0.8rem;
+  font-weight: 650;
+  color: var(--muted);
 }
 
 /* Target date, age and Now on one line. */
@@ -1042,30 +1117,6 @@ footer {
 /* The fields lose their own bottom margin here, so the inputs and the Now button share one height and one bottom edge. */
 .timing-date-row .primitive-field {
   margin-bottom: 0;
-}
-
-/* A control in a timing view's page header (#1235): a fixed share of the row, never wider than the screen, so the
-   technique, method and date sit on one line beside Export instead of each stretching to its widest option (19rem
-   fits "Secondary (a day for a year)"). */
-.timing-header-control {
-  flex: 0 1 19rem;
-  min-width: min(100%, 10rem);
-}
-
-.page-header-actions:has(.timing-header-control) {
-  /* Its own row under the title, to the right, so the title keeps its width and the controls their labels. */
-  flex: 1 1 100%;
-  min-width: 0;
-  max-width: 100%;
-  justify-content: flex-end;
-  align-items: flex-end;
-}
-
-/* On a phone each control takes the full row, so nothing is wider than the screen. */
-@media (max-width: 40rem) {
-  .timing-header-control {
-    flex-basis: 100%;
-  }
 }
 
 .tool-card {
@@ -2329,11 +2380,31 @@ label.stacked textarea:focus-visible {
      scroll with the content and must be at least as wide as the fades they hide: with narrower covers (#1076 used
      --space-4 over --space-6) a band stayed on both sides of a table that fits. */
   --scroll-cue-width: var(--space-6);
+  /* The covers must be the colour of whatever the table sits on: the page, or a card's surface (below). */
+  --scroll-cover: var(--bg);
   background:
-    linear-gradient(to right, var(--bg), var(--bg)) local left / var(--scroll-cue-width) 100% no-repeat,
-    linear-gradient(to left, var(--bg), var(--bg)) local right / var(--scroll-cue-width) 100% no-repeat,
+    linear-gradient(to right, var(--scroll-cover), var(--scroll-cover)) local left / var(--scroll-cue-width) 100%
+      no-repeat,
+    linear-gradient(to left, var(--scroll-cover), var(--scroll-cover)) local right / var(--scroll-cue-width) 100%
+      no-repeat,
     linear-gradient(to right, var(--line), transparent) scroll left / var(--scroll-cue-width) 100% no-repeat,
     linear-gradient(to left, var(--line), transparent) scroll right / var(--scroll-cue-width) 100% no-repeat;
+}
+
+/* A table on a card's surface: the covers take the card's colour, or a darker band shows either side of a table that fits. */
+:is(
+    .consultation-section,
+    .consultation-glance,
+    .tool-card,
+    .birth-record-card,
+    .horary-card,
+    .timing-card,
+    .timing-controls,
+    .primitive-disclosure-panel,
+    .acg-meanings-card
+  )
+  .data-table-scroll {
+  --scroll-cover: var(--surface);
 }
 
 .data-table table {
@@ -6905,7 +6976,7 @@ button.primitive-button-compact {
 
 /* Where the header's actions are standard buttons and fields (the timing views: date, Now, filter, Export), the Export
    menu button takes the same height as its neighbours and they share a baseline, so the row reads as one set of controls. */
-.page-header-actions:has(> button.quiet, > .primitive-field, > .primitive-choice-field, > .timing-header-control) {
+.page-header-actions:has(> button.quiet, > .primitive-field, > .primitive-choice-field) {
   align-items: flex-end;
 }
 
@@ -6924,9 +6995,14 @@ button.primitive-button-compact {
   margin-bottom: 0;
 }
 
-.page-header-actions:has(> button.quiet, > .primitive-field, > .primitive-choice-field, > .timing-header-control)
-  .page-header-export-toggle {
+.page-header-actions .page-header-export-toggle {
   min-height: var(--control-height);
+}
+
+/* A segmented choice in a page header is as tall as the buttons and fields beside it. */
+.page-header-actions .primitive-choice-group-segmented .primitive-choice {
+  /* The group's own border adds the other two pixels. */
+  min-height: calc(var(--control-height) - 2px);
 }
 
 /* Chart pages' Export PDF (#976): a primary accent link to the PDF creator, with an arrow for the navigation. */
