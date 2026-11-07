@@ -21,6 +21,7 @@ import { setupFormMessages } from './SetupForm.messages.js';
 import { sharedMessages } from './shared.messages.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { PageHeader } from './PageHeader.js';
+import { Button } from './primitives/Button.js';
 
 export function SetupForm(): React.JSX.Element {
   const { setup } = useSession();
@@ -85,9 +86,9 @@ export function SetupForm(): React.JSX.Element {
           />
         </div>
         <p className="actions">
-          <button type="submit" disabled={busy || username === '' || password === '' || confirm === ''}>
+          <Button variant="plain" type="submit" disabled={busy || username === '' || password === '' || confirm === ''}>
             {t.submitButton}
-          </button>
+          </Button>
         </p>
       </form>
     </main>

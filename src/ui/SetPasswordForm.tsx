@@ -19,6 +19,7 @@ import { setPasswordFormMessages } from './SetPasswordForm.messages.js';
 import { sharedMessages } from './shared.messages.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { DocumentTitle } from './document-title.js';
+import { Button } from './primitives/Button.js';
 
 export function SetPasswordForm(): React.JSX.Element {
   const [token] = useState(() => setPasswordToken(window.location.hash));
@@ -94,9 +95,9 @@ export function SetPasswordForm(): React.JSX.Element {
           />
         </div>
         <p className="actions">
-          <button type="submit" disabled={busy || password === '' || confirm === ''}>
+          <Button variant="plain" type="submit" disabled={busy || password === '' || confirm === ''}>
             {t.submitButton}
-          </button>
+          </Button>
         </p>
       </form>
     </main>

@@ -509,30 +509,33 @@ export function PreferencesView({
               </h2>
               <p className="hint">{t.exportEverythingHint}</p>
               <div className="preferences-action-group">
-                <button
+                <Button
+                  variant="plain"
                   type="button"
                   disabled={store === undefined}
                   aria-label={store === undefined ? `${t.exportEverything} — ${t.exportNeedsStore}` : undefined}
                   onClick={exportEverything}
                 >
                   {t.exportEverything}
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="plain"
                   type="button"
                   disabled={store === undefined}
                   aria-label={store === undefined ? `${t.exportPeopleCsv} — ${t.exportNeedsStore}` : undefined}
                   onClick={exportPeopleCsv}
                 >
                   {t.exportPeopleCsv}
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="plain"
                   type="button"
                   disabled={store === undefined}
                   aria-label={store === undefined ? `${t.exportPeopleAaf} — ${t.exportNeedsStore}` : undefined}
                   onClick={exportPeopleAaf}
                 >
                   {t.exportPeopleAaf}
-                </button>
+                </Button>
               </div>
             </section>
 

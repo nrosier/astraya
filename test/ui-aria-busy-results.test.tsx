@@ -232,6 +232,12 @@ describe('the calculation result regions (#888)', () => {
     // The planetary-return region renders only once the forecast is ready, so settle the forecast first.
     await untilSettled(container);
     expectSettledReady(container);
+    // The periods are tabs (#1227): the return region shows on its own tab.
+    act(() => {
+      [...container.querySelectorAll<HTMLElement>('[role="tab"]')]
+        .find((tab) => tab.textContent === 'Other returns')
+        ?.click();
+    });
     expect(busyRegions(container)).toHaveLength(2);
 
     act(() => {

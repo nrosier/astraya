@@ -963,6 +963,10 @@ footer {
   }
 }
 
+.forecast-as-of {
+  max-width: 20rem;
+}
+
 .timing-layout-main,
 .timing-layout-side {
   min-width: 0;

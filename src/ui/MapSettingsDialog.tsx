@@ -92,10 +92,10 @@ export function MapSettingsDialog({
 
   return (
     <>
-      <button
+      <Button
         type="button"
         ref={triggerRef}
-        className="quiet"
+        variant="quiet"
         aria-haspopup="dialog"
         onClick={() => {
           setDraft(applied);
@@ -103,7 +103,7 @@ export function MapSettingsDialog({
         }}
       >
         {t.trigger}
-      </button>
+      </Button>
 
       <StagedDialog
         open={open}

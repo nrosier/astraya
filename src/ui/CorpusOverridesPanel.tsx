@@ -375,9 +375,9 @@ export function CorpusOverridesPanel(): React.JSX.Element {
               }}
             />
             <p className="actions">
-              <button type="submit" disabled={busyKey === editing.key}>
+              <Button variant="plain" type="submit" disabled={busyKey === editing.key}>
                 {busyKey === editing.key ? t.savingLabel : t.saveButton}
-              </button>
+              </Button>
               <Button type="button" variant="quiet" onClick={cancelEdit}>
                 {t.cancelButton}
               </Button>

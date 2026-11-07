@@ -63,14 +63,15 @@ function AdoptionPanel({
       <p>{t.adoptionPrompt(changes(recordCount, t))}</p>
       {error !== undefined && <StatusMessage kind="error">{t.adoptionFailed(error)}</StatusMessage>}
       <p className="actions">
-        <button
+        <Button
+          variant="plain"
           disabled={busy}
           onClick={() => {
             resolve(true);
           }}
         >
           {t.addToAccountButton}
-        </button>
+        </Button>
         <Button
           disabled={busy}
           onClick={() => {
