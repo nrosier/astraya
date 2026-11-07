@@ -21,7 +21,7 @@ import { PageHeader } from './PageHeader.js';
 export function About({ seVersion }: { seVersion?: string | undefined }): React.JSX.Element {
   const t = useMessages(aboutMessages);
   return (
-    <main className="shell">
+    <main className="shell shell--prose">
       <PageHeader title={t.heading} />
 
       <h2>{t.versionHeading}</h2>
