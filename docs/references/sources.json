@@ -69,11 +69,11 @@
     "sha256": "be2866fcd6790e7806c3bfe8fb30cb05424364de0686441832254e3cb5902fd3",
     "text_path": "docs/references/text/bonatti-liber-astronomiae-tr-1-2-1-1994.txt",
     "pages_path": "docs/references/text/bonatti-liber-astronomiae-tr-1-2-1-1994.pages.tsv",
-    "page_count": 1,
+    "page_count": 63,
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
-    "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 4604 lines and no page markers."
+    "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 4604 lines and no page markers. Update 2026-11-07 (#864): text now carries \"=== p. N ===\" markers inserted before the page that follows each of the printed folio numbers on their own lines (62 footers, one inferred where the OCR misread 35 for 33); N is the printed folio, and page 1 holds all unnumbered front matter. The page index has 63 rows. The \"single entry\" and \"no page markers\" statements above are superseded."
   },
   {
     "id": "bonatti-liber-astronomiae-tr-2-2-2-3-1994",
@@ -88,11 +88,11 @@
     "sha256": "49ff588b762c0b976cb97af8920e0ba34f392f70863885fe08b10c7cf374036e",
     "text_path": "docs/references/text/bonatti-liber-astronomiae-tr-2-2-2-3-1994.txt",
     "pages_path": "docs/references/text/bonatti-liber-astronomiae-tr-2-2-2-3-1994.pages.tsv",
-    "page_count": 1,
+    "page_count": 96,
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
-    "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 5785 lines and no page markers."
+    "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 5785 lines and no page markers. Update 2026-11-07 (#864): text now carries \"=== p. N ===\" markers inserted before the page that follows each of the printed folio numbers on their own lines (95 footers, two inferred where the OCR misread the number); N is the printed folio, and page 1 holds all unnumbered front matter. The page index has 96 rows. The \"single entry\" and \"no page markers\" statements above are superseded."
   },
   {
     "id": "bonatti-liber-astronomiae-tr-3-1995",
@@ -107,11 +107,11 @@
     "sha256": "ff4282ae3f5395913e8ba670e7499afc5fb1763ca66e13c7cd2492dbd18b84f3",
     "text_path": "docs/references/text/bonatti-liber-astronomiae-tr-3-1995.txt",
     "pages_path": "docs/references/text/bonatti-liber-astronomiae-tr-3-1995.pages.tsv",
-    "page_count": 1,
+    "page_count": 72,
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
-    "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 5576 lines and no page markers."
+    "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 5576 lines and no page markers. Update 2026-11-07 (#864): text now carries \"=== p. N ===\" markers inserted before the page that follows each of the printed folio numbers on their own lines (71 footers, one inferred where the OCR misread 59); N is the printed folio, and page 1 holds all unnumbered front matter. The page index has 72 rows. The \"single entry\" and \"no page markers\" statements above are superseded."
   },
   {
     "id": "bonatti-liber-astronomiae-tr-4-8-1-10-2010",
@@ -130,7 +130,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
-    "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 13050 lines and no page markers."
+    "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 13050 lines and no page markers. Update 2026-11-07 (#864): no recoverable page breaks (the OCR has no page numbers, running heads or form feeds (page numbers appear only in the index entries)), so the text carries one \"=== p. 1 ===\" marker and the index stays a single row."
   },
   {
     "id": "bonatti-liber-astronomiae-tr-5-2010",
@@ -149,7 +149,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
-    "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 3770 lines and no page markers."
+    "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 3770 lines and no page markers. Update 2026-11-07 (#864): no recoverable page breaks (the OCR has no page numbers, running heads or form feeds), so the text carries one \"=== p. 1 ===\" marker and the index stays a single row."
   },
   {
     "id": "bonatti-liber-astronomiae-tr-6-1996",
@@ -164,11 +164,11 @@
     "sha256": "ef94e29b9be37fd2439f17b77aee8a101af0d900786f8e9eeb9ef9447f9afd68",
     "text_path": "docs/references/text/bonatti-liber-astronomiae-tr-6-1996.txt",
     "pages_path": "docs/references/text/bonatti-liber-astronomiae-tr-6-1996.pages.tsv",
-    "page_count": 1,
+    "page_count": 78,
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
-    "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 5147 lines and no page markers."
+    "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 5147 lines and no page markers. Update 2026-11-07 (#864): text now carries \"=== p. N ===\" markers inserted before the page that follows each of the printed folio numbers on their own lines (77 footers); N is the printed folio, and page 1 holds all unnumbered front matter. The page index has 78 rows. The \"single entry\" and \"no page markers\" statements above are superseded."
   },
   {
     "id": "bonatti-liber-astronomiae-tr-7-2010",
@@ -187,7 +187,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
-    "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 10053 lines and no page markers."
+    "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 10053 lines and no page markers. Update 2026-11-07 (#864): no recoverable page breaks (the OCR has no page numbers, running heads or form feeds), so the text carries one \"=== p. 1 ===\" marker and the index stays a single row."
   },
   {
     "id": "bonatti-liber-astronomiae-tr-8-2-2010",
@@ -206,7 +206,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
-    "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 4170 lines and no page markers."
+    "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 4170 lines and no page markers. Update 2026-11-07 (#864): no recoverable page breaks (the OCR has no page numbers, running heads or form feeds), so the text carries one \"=== p. 1 ===\" marker and the index stays a single row."
   },
   {
     "id": "bonatti-liber-astronomiae-tr-9-2010",
@@ -225,7 +225,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
-    "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 14023 lines and no page markers."
+    "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 14023 lines and no page markers. Update 2026-11-07 (#864): no recoverable page breaks (the OCR has no page numbers, running heads or form feeds), so the text carries one \"=== p. 1 ===\" marker and the index stays a single row."
   },
   {
     "id": "bonatti-translators-introduction-2007",
@@ -244,7 +244,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
-    "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 3137 lines and no page markers."
+    "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 3137 lines and no page markers. Update 2026-11-07 (#864): no recoverable page breaks (the running head \"INTRODUCTION <roman numeral>\" survives on only about 30 of roughly 60 pages and its numerals are garbled, so it is not reliable), so the text carries one \"=== p. 1 ===\" marker and the index stays a single row."
   },
   {
     "id": "brennan-hellenistic-astrology-2017",
@@ -681,7 +681,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
-    "notes": "Long-s and planet glyphs garbled; tables unreadable. Source has no page breaks, so the page index is a single entry. Text has 81210 lines and no page markers."
+    "notes": "Long-s and planet glyphs garbled; tables unreadable. Source has no page breaks, so the page index is a single entry. Text has 81210 lines and no page markers. Update 2026-11-07 (#864): text/ now holds only the contents of the HTML <pre> element, HTML entities decoded, with one \"=== p. 1 ===\" marker and no page chrome; the original HTML is untouched in sources/. The HTML has no page anchors or form feeds and the OCR has no reliable folio numbers (about 6700 stray numeric lines), so the index stays a single row."
   },
   {
     "id": "llewellyn-how-does-your-garden-grow-1991",
@@ -760,61 +760,61 @@
     "notes": "PDF metadata (author \"barry\", creation dates) is not bibliographic. Marked copyrighted conservatively."
   },
   {
-    "id": "unidentified-1",
-    "title": null,
-    "author": null,
-    "year": null,
-    "edition": null,
+    "id": "huber-aspect-pattern-astrology-2019",
+    "title": "Aspect Pattern Astrology",
+    "author": "Bruno & Louise Huber, Michael-Alexander Huber",
+    "year": "2019",
+    "edition": "2nd revised edition, HopeWell, 2019",
     "licence": "Unknown",
     "access_route": "Not recorded; PDF metadata author is the scanner \"Adriana Bertolozzi\"",
     "original_name": "Aspect-Pattern-Astrology-Bruno-Louise-Huber-Michael-Huber.pdf",
-    "processed_path": "docs/references/sources/pdf/unidentified-1.pdf",
+    "processed_path": "docs/references/sources/pdf/huber-aspect-pattern-astrology-2019.pdf",
     "sha256": "6f93494a51caee6fbe0adec36c04c0911dc1ea58158512b792c3076e49a311e9",
-    "text_path": "docs/references/text/unidentified-1.txt",
-    "pages_path": "docs/references/text/unidentified-1.pages.tsv",
+    "text_path": "docs/references/text/huber-aspect-pattern-astrology-2019.txt",
+    "pages_path": "docs/references/text/huber-aspect-pattern-astrology-2019.pages.tsv",
     "page_count": 135,
-    "status": "ocr-needed",
-    "provisional": true,
+    "status": "extracted",
+    "provisional": false,
     "copyrighted": true,
-    "notes": "Scanned, no text layer. Title and authors appear only in the filename (Bruno, Louise, Michael Huber; aspect pattern astrology), not in metadata or text. Needs OCR and a read of the title page."
+    "notes": "Scanned, no text layer; text OCR'd locally with ocrmypdf 17.13.0 / tesseract 5.5.4 (eng, --force-ocr), 135 pages, no empty pages. Two-column layout and symbol or chart pages are noisy (planet and sign glyphs misread). Title page: Aspect Pattern Astrology, Bruno & Louise Huber, Michael-Alexander Huber, HopeWell; 2nd revised edition 2019 (English first published 2005). Title and author from the copyright page. English edition first published 2005, revised 2019."
   },
   {
-    "id": "unidentified-2",
-    "title": null,
-    "author": null,
-    "year": null,
-    "edition": null,
+    "id": "marks-art-of-chart-interpretation-1986",
+    "title": "The Art of Chart Interpretation",
+    "author": "Tracy Marks",
+    "year": "1986",
+    "edition": "CRCS Publications, 1986",
     "licence": "Unknown",
     "access_route": "Not recorded; filename suggests a free-PDF site",
     "original_name": "the-art-of-chart-interpretation-by-tracy-markspdf-pdf-free.pdf",
-    "processed_path": "docs/references/sources/pdf/unidentified-2.pdf",
+    "processed_path": "docs/references/sources/pdf/marks-art-of-chart-interpretation-1986.pdf",
     "sha256": "7a68befd8b5ff916755caff7d41581d5528a8556f7b5f30a7762ace3464e4f0e",
-    "text_path": "docs/references/text/unidentified-2.txt",
-    "pages_path": "docs/references/text/unidentified-2.pages.tsv",
+    "text_path": "docs/references/text/marks-art-of-chart-interpretation-1986.txt",
+    "pages_path": "docs/references/text/marks-art-of-chart-interpretation-1986.pages.tsv",
     "page_count": 88,
-    "status": "ocr-needed",
-    "provisional": true,
+    "status": "extracted",
+    "provisional": false,
     "copyrighted": true,
-    "notes": "Scanned, no text layer. Title and author (Tracy Marks, The Art of Chart Interpretation) appear only in the filename."
+    "notes": "Scanned, no text layer; text OCR'd locally with ocrmypdf 17.13.0 / tesseract 5.5.4 (eng, --force-ocr), 88 pages, no empty pages. Scan holds two book pages per PDF page, so the layout is noisy and column text interleaves. Printed title and author: The Art of Chart Interpretation, Tracy Marks (CRCS Publications, 1986)."
   },
   {
-    "id": "unidentified-3",
-    "title": null,
-    "author": null,
+    "id": "tierney-all-around-the-zodiac-undated",
+    "title": "All Around the Zodiac",
+    "author": "Bil Tierney",
     "year": null,
     "edition": null,
     "licence": "Unknown",
     "access_route": "Not recorded; filename suggests a free-PDF site",
     "original_name": "bil-tierney-all-around-the-zodiac-pdf-free.pdf",
-    "processed_path": "docs/references/sources/pdf/unidentified-3.pdf",
+    "processed_path": "docs/references/sources/pdf/tierney-all-around-the-zodiac-undated.pdf",
     "sha256": "45b7c8f91c9a8ad6cf6f7c3cc85e028da8072afeb49437daa9c034fa6b20aeb1",
-    "text_path": "docs/references/text/unidentified-3.txt",
-    "pages_path": "docs/references/text/unidentified-3.pages.tsv",
+    "text_path": "docs/references/text/tierney-all-around-the-zodiac-undated.txt",
+    "pages_path": "docs/references/text/tierney-all-around-the-zodiac-undated.pages.tsv",
     "page_count": 84,
     "status": "provisional",
-    "provisional": true,
+    "provisional": false,
     "copyrighted": true,
-    "notes": "Text layer degraded (words run together, letters misread). Author \"Bil Tierney\" and title \"All Around the Zodiac\" appear only in the filename; first pages begin \"Chapter One Signs & Elements\" with no title page."
+    "notes": "Text layer degraded (words run together, letters misread). Author \"Bil Tierney\" and title \"All Around the Zodiac\" appear only in the filename; first pages begin \"Chapter One Signs & Elements\" with no title page. PDF is a partial scan, book pp. 15-181 as 84 two-page spreads; no title or imprint printed. Open Library gives Bil Tierney, Llewellyn, first published 2001, edition unverified."
   },
   {
     "id": "valens-anthologiarum-libri-1908",

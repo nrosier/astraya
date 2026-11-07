@@ -4,7 +4,7 @@ Layout (2026-11-05, #864): the real layout is `docs/references/sources/` (origin
 
 `docs/references/sources.json` is a JSON array with one record per source. Owner decision 2026-11-07: `sources.json` is tracked by git. It holds citation metadata, status, sha256, and access route only, with no copyrighted text. Extracted text stays local under `docs/references/text/`. Fields:
 
-- `id` — Stable slug for the source, also the base name of its processed files. Convention: `<surname>-<short-title>-<year>`, lowercase kebab-case, with `undated` as the year fallback. Pattern: `^[a-z0-9]+(-[a-z0-9]+)*-(\d{4}|undated)$`. Ids that do not match (currently `unidentified-1`, `unidentified-2`, `unidentified-3`) are provisional: they carry `provisional: true` and are renamed once the source is identified. Renaming is Mac-only work.
+- `id` — Stable slug for the source, also the base name of its processed files. Convention: `<surname>-<short-title>-<year>`, lowercase kebab-case, with `undated` as the year fallback. Pattern: `^[a-z0-9]+(-[a-z0-9]+)*-(\d{4}|undated)$`. Ids that do not match are provisional: they carry `provisional: true` and are renamed once the source is identified. The three provisional ids were renamed on 2026-11-07; renaming a provisional id is a new record id change with files moved.
 - `title` — Title of the work.
 - `author` — Author, editor or translator as cited.
 - `year` — Year of the edition used.
