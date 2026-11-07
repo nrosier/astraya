@@ -21,11 +21,15 @@ vi.mock('../src/ui/EphemerisProviderContext.js', () => {
 vi.mock('../src/ui/store-context.js', () => {
   const state = {
     deleted: { people: new Map() },
+    consultationNotes: new Map(),
     people: new Map([
       [
         'p1',
         {
           displayName: 'Test',
+          placeLabel: '',
+          notes: '',
+          missing: [],
           timeAccuracy: 'exact',
           moment: {
             civil: { year: 1970, month: 1, day: 1, hour: 0, minute: 0, second: 0 },

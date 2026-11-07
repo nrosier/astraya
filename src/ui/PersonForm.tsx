@@ -90,6 +90,23 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
   const birthNote = state.birthNotes.get(personId);
   const t = useMessages(personFormMessages);
   const unknownTimeHintId = useId();
+  // A fix link on the Overview (#1173) opens this form with `?focus=<field>`: the cursor goes to that field.
+  useEffect(() => {
+    const focus = new URLSearchParams(window.location.hash.split('?')[1] ?? '').get('focus');
+    if (focus === null) return;
+    // After the app has moved focus to the page heading for the new route, which it does in its own effect.
+    const timer = window.setTimeout(() => {
+      requestAnimationFrame(() => {
+        document
+          .querySelector<HTMLElement>(`[data-health-field="${focus}"]`)
+          ?.querySelector<HTMLElement>('input, select, button')
+          ?.focus();
+      });
+    }, 0);
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, []);
   const validationT = useMessages(personFormValidationMessages);
   // The person's own calculation profile (#1059): what every chart of theirs is cast with.
   const calculation = usePersonCalculationSettings(personId);
@@ -247,22 +264,26 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
               }}
             />
             <div className="birth-record-timestamp">
-              <DateField
-                label={t.dateLabel}
-                value={current.date}
-                error={errors.date}
-                onChange={(value) => {
-                  set('date', value);
-                }}
-              />
-              <Select
-                label={t.timeKnownLabel}
-                value={current.timeAccuracy}
-                options={Object.entries(accuracyOptions(t)).map(([value, text]) => ({ value, label: text }))}
-                onChange={(value) => {
-                  set('timeAccuracy', value as TimeAccuracy);
-                }}
-              />
+              <div data-health-field="date">
+                <DateField
+                  label={t.dateLabel}
+                  value={current.date}
+                  error={errors.date}
+                  onChange={(value) => {
+                    set('date', value);
+                  }}
+                />
+              </div>
+              <div data-health-field="accuracy">
+                <Select
+                  label={t.timeKnownLabel}
+                  value={current.timeAccuracy}
+                  options={Object.entries(accuracyOptions(t)).map(([value, text]) => ({ value, label: text }))}
+                  onChange={(value) => {
+                    set('timeAccuracy', value as TimeAccuracy);
+                  }}
+                />
+              </div>
               <TimeField
                 label={t.timeLabel}
                 step={60}
@@ -291,15 +312,17 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
 
           <section className="birth-record-card birth-record-card--location" aria-labelledby="birth-card-location">
             <h3 id="birth-card-location">{t.locationCardHeading}</h3>
-            <BirthPlaceSearch
-              onPick={(lat, lng, placeLabel) => {
-                setFields({
-                  latitude: String(lat),
-                  longitude: String(lng),
-                  ...(placeLabel === undefined ? {} : { placeLabel }),
-                });
-              }}
-            />
+            <div data-health-field="place">
+              <BirthPlaceSearch
+                onPick={(lat, lng, placeLabel) => {
+                  setFields({
+                    latitude: String(lat),
+                    longitude: String(lng),
+                    ...(placeLabel === undefined ? {} : { placeLabel }),
+                  });
+                }}
+              />
+            </div>
             {/* A label, not a lookup: the coordinates below are what the calculation uses, and this text is only
               for the reader. "Search for a place by name" above can fill it in from a search result, but the
               result is still just typed text afterward — never re-derived or locked (#290). */}

@@ -8357,6 +8357,25 @@ a.quiet,
   }
 }
 
+/* A birth-record field an Overview fix link can focus (issue 1173): the wrapper takes no box of its own. */
+[data-health-field] {
+  display: contents;
+}
+
+.overview-section {
+  margin-bottom: var(--space-6);
+}
+
+.overview-health {
+  display: grid;
+  gap: var(--space-2);
+  padding-left: var(--space-4);
+}
+
+.overview-now {
+  margin: 0 0 var(--space-4);
+}
+
 /*
  * The timing timeline's Gantt chart (issue 1237): an HTML label beside a stretched SVG per track, so the names and the year
  * labels stay readable at any width. Colours are tokens: bars in the accent, the centre date in the solar colour.
