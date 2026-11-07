@@ -256,6 +256,23 @@ describe('turning a save into operations', () => {
     expect(typeof mutation?.value === 'string' ? Array.from(mutation.value).length : -1).toBe(200);
   });
 
+  it('caps a name and a place label at 200 characters whatever is pasted, and never rewrites a longer stored one (#1288)', () => {
+    const [name, place] = draftToMutations(
+      ID,
+      { ...VEVAY, displayName: 'n'.repeat(500), placeLabel: 'p'.repeat(500) },
+      VEVAY,
+      T,
+    );
+    expect(name?.field).toBe('displayName');
+    expect(place?.field).toBe('placeLabel');
+    for (const mutation of [name, place]) {
+      expect(typeof mutation?.value === 'string' ? Array.from(mutation.value).length : -1).toBe(200);
+    }
+    // A stored value over the cap that nobody edited is not written again.
+    const stored = { ...VEVAY, displayName: 'n'.repeat(300) };
+    expect(draftToMutations(ID, stored, stored, T)).toEqual([]);
+  });
+
   it('never writes notes through the page Save (#919 autosaves them)', () => {
     // Notes are op-log revisions with their own autosave, so the page Save diff must not see them.
     expect(Object.keys(VEVAY)).not.toContain('notes');

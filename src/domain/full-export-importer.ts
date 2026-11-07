@@ -62,6 +62,7 @@ import {
   type Person,
   readBirthSourceKind,
   BIRTH_SOURCE_NOTE_MAX_CHARACTERS,
+  PERSON_TEXT_MAX_CHARACTERS,
 } from './person.js';
 import type { ExtendedSettings } from '../chart/extended-settings.js';
 import type { BirthMomentInput, Calendar } from '../time/types.js';
@@ -226,6 +227,15 @@ function validatePerson(raw: unknown, path: string): Result<ExportedPerson, Impo
   if (displayName === undefined) return malformed(`${path}.displayName`, 'missing or not a string');
   const placeLabel = readText(raw.placeLabel);
   if (placeLabel === undefined) return malformed(`${path}.placeLabel`, 'missing or not a string');
+  // Held to the same limit as the form (#1288), before any write.
+  for (const [field, text] of [
+    ['displayName', displayName],
+    ['placeLabel', placeLabel],
+  ] as const) {
+    if (Array.from(text).length > PERSON_TEXT_MAX_CHARACTERS) {
+      return malformed(`${path}.${field}`, `longer than the ${String(PERSON_TEXT_MAX_CHARACTERS)}-character limit`);
+    }
+  }
   const notes = readText(raw.notes);
   if (notes === undefined) return malformed(`${path}.notes`, 'missing or not a string');
   // The head text. Over the limit only when it is a legacy note (owner decision, 2026-11-02): either the file has no
