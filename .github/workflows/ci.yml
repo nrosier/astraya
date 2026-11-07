@@ -114,16 +114,24 @@ jobs:
   # Drives a real browser against a real, locally-booted server (#72/#107) — proving
   # what the unit suite above can't: that a person's birth data actually produces a
   # rendered wheel and a real file download, and that two devices actually converge.
-  # Split into four shards that run in parallel (#1095); e2e was the long pole of CI.
+  # Split into five shards that run in parallel (#1095); e2e was the long pole of CI. Playwright's own `--shard` hands out
+  # spec files without regard to their duration (four shards took 157, 178, 211 and 317 s), so `scripts/e2e-shard.mjs`
+  # gives each shard about the same finish time, modelled on 4 workers, from the weights in `e2e/shard-weights.json`.
   e2e-shard:
-    name: e2e (${{ matrix.shard }}/4)
+    name: e2e (${{ matrix.shard }}/5)
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
+    # Playwright's own image carries the browsers and their system libraries, so the job installs nothing with apt:
+    # `playwright install --with-deps` stalled for over 8 minutes on one shard of PR #1245. The tag must match the
+    # @playwright/test version in package-lock.json (Playwright says so, and fails, when the browser is missing).
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.0-noble
+      options: --ipc=host
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
@@ -133,11 +141,10 @@ jobs:
       - run: npm ci
       - run: npm run ephe:sync
       - run: npm run corpus:split
-      - name: Install Playwright's browser
-        run: npx playwright install --with-deps chromium
-      # test:e2e is `npm run build && playwright test`; the shard runs the same two steps so it can pass --shard.
+      # test:e2e is `npm run build && playwright test`; the shard runs the same two steps so it can pass its own spec files.
       - run: npm run build
-      - run: npx playwright test --shard=${{ matrix.shard }}/4
+      # The weighted split (see above) prints this shard's spec files; every spec file lands on exactly one shard.
+      - run: npx playwright test $(node scripts/e2e-shard.mjs ${{ matrix.shard }} 5)
       - name: Upload Playwright traces on failure
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
