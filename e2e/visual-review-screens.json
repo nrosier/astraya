@@ -124,5 +124,17 @@
     "title": "Chart overlay settings drawer",
     "issues": "#1161",
     "check": "The drawer's footer buttons (Cancel and Apply overlays) and the up and down buttons use the Button primitive. Check the footer pair share a height and bottom edge and read as secondary and primary."
+  },
+  {
+    "slug": "22-chart-preset-predictive",
+    "title": "Chart, Predictive and timing preset",
+    "issues": "#1190",
+    "check": "With the Predictive and timing preset chosen: two lines under the Selection heading (active Time Lord, profection year) with a See Consultation link, the transit ring on, and no minor natal aspects. Check the lines read clearly and the Selection card keeps its alignment with the wheel."
+  },
+  {
+    "slug": "23-overview-saved-search",
+    "title": "Overview, with a saved search",
+    "issues": "#1261",
+    "check": "Continue where you left off lists a saved search under the chart link. Check the link rows have even spacing and the card stays aligned with its neighbours."
   }
 ]

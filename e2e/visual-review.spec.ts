@@ -165,5 +165,27 @@ test('capture the screens of the visual review', async ({ browser }) => {
   };
   await shoot(page, '21-chart-overlay-settings', reopenOverlays);
 
+  // #1190: a consultation preset that adds lines to the Selection card.
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  await openNatalChart(page);
+  await page.getByLabel('Consultation preset').selectOption({ label: 'Predictive and timing: major and hard minor' });
+  await page.getByText(/^Active Time Lord/).waitFor({ timeout: 60_000 });
+  await page.waitForTimeout(800);
+  await shoot(page, '22-chart-preset-predictive');
+
+  // #1261: a saved search in Continue where you left off.
+  await page.getByRole('banner').getByRole('link', { name: 'Tools', exact: true }).click();
+  await page
+    .getByRole('tablist', { name: 'Tools subtabs' })
+    .getByRole('tab', { name: 'Ephemeris research', exact: true })
+    .click();
+  await page.getByLabel('Query name', { exact: true }).fill('Mars stations 2027');
+  await page.getByRole('button', { name: 'Save query', exact: true }).click();
+  await page.getByText('Saved “Mars stations 2027”.').waitFor();
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  await page.getByRole('link', { name: 'Overview', exact: true }).first().click();
+  await page.getByRole('link', { name: /^Saved search:/ }).waitFor({ timeout: 60_000 });
+  await shoot(page, '23-overview-saved-search');
+
   await app.close();
 });
