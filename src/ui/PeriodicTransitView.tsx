@@ -57,7 +57,13 @@ import {
   type TransitRuleContext,
 } from '../astrology/transit-importance.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
-import { EVERY_BODY_KEY, TransitFilterButton, TransitFilterStatus, useTransitFilter } from './TransitFilterPanel.js';
+import {
+  EVERY_BODY_KEY,
+  TransitFilterButton,
+  TransitFilterStatus,
+  TransitHeadingInfo,
+  useTransitFilter,
+} from './TransitFilterPanel.js';
 import { Tabs, tabPanelProps } from './primitives/Tabs.js';
 import { useLocale } from './locale.js';
 import { periodicTransitViewMessages } from './PeriodicTransitView.messages.js';
@@ -540,9 +546,22 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
       <PageHeader
         headingLevel={2}
         title={person.displayName ? t.heading(person.displayName) : t.forecastFallback}
+        titleAside={
+          data === undefined ? undefined : (
+            <TransitHeadingInfo
+              intro={t.hint(person.displayName || t.thisFallback)}
+              label={t.hintInfoLabel}
+              filter={filter}
+              rules={rules}
+              shown={contactsShown}
+              total={contactsTotal}
+            />
+          )
+        }
         basis={basisLine}
       >
-        {/* The transit filter is one settings button, to the right of the heading (#1227). */}
+        {/* The as-of date, the transit filter button and Export sit in the heading row, to the right (#1227, owner review 2026-11-07). */}
+        <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
         {data !== undefined && (
           <TransitFilterButton
             filter={filter}
@@ -554,15 +573,6 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
         )}
       </PageHeader>
 
-      {/* The as-of date sits directly under the heading, as Consultation's "As of" line does (#1227). */}
-      <p className="forecast-as-of">
-        <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
-      </p>
-
-      <p className="hint">
-        <GlossaryText text={t.hint(person.displayName || t.thisFallback)} />
-      </p>
-
       {data !== undefined && (
         <TransitFilterStatus
           filter={filter}
@@ -570,6 +580,7 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
           onChange={setFilter}
           shown={contactsShown}
           total={contactsTotal}
+          emptyOnly
         />
       )}
 

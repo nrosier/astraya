@@ -452,12 +452,6 @@ const proseTerms: readonly {
     node: () => <ReturnView personId="p1" kind="solar-return" view="wheel" compareType={undefined} />,
   },
   {
-    view: 'PeriodicTransitView',
-    term: 'aspect',
-    visible: { en: 'aspects', nl: 'aspecten' },
-    node: () => <PeriodicTransitView personId="p1" />,
-  },
-  {
     view: 'ProfectionsView',
     term: 'chartRuler',
     visible: { en: 'chart ruler', nl: 'horoscoopheerser' },

@@ -229,10 +229,8 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
         basis={basisLine}
         basisEditHref={null}
       >
-        {/* The centre date, the range either side of it and Now sit in the header, to the right; Export too (#887). */}
-        <div className="timing-header-control">
-          <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
-        </div>
+        {/* The centre date, the range either side of it, Now and Export sit in the heading row, to the right (owner review 2026-11-07). */}
+        <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
         <ChoiceGroup
           label={t.rangeLabel}
           value={range}
@@ -257,41 +255,45 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
         {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
         {load.kind === 'ready' && (
           <>
-            <TimingTimelineGantt
-              rows={ganttRows(tracks, fromJd, toJd)}
-              fromJd={fromJd}
-              toJd={toJd}
-              targetJd={load.centreJd}
-              label={t.axis(dateLabel(fromJd), dateLabel(toJd))}
-              trackLabels={t.tracks}
-              rowLabel={t.rowLabel}
-              describe={(event) =>
-                `${timelineSubjectLabel(event.subject, locale)}: ${
-                  event.endJd === undefined || event.endJd === event.startJd
-                    ? dateLabel(event.startJd)
-                    : t.range(dateLabel(event.startJd), dateLabel(event.endJd))
-                }`
-              }
-              targetTitle={t.targetLine(dateLabel(load.centreJd))}
-            />
-            <p className="hint">{t.targetLine(dateLabel(load.centreJd))}</p>
+            <section className="timing-card">
+              <TimingTimelineGantt
+                rows={ganttRows(tracks, fromJd, toJd)}
+                fromJd={fromJd}
+                toJd={toJd}
+                targetJd={load.centreJd}
+                label={t.axis(dateLabel(fromJd), dateLabel(toJd))}
+                trackLabels={t.tracks}
+                rowLabel={t.rowLabel}
+                describe={(event) =>
+                  `${timelineSubjectLabel(event.subject, locale)}: ${
+                    event.endJd === undefined || event.endJd === event.startJd
+                      ? dateLabel(event.startJd)
+                      : t.range(dateLabel(event.startJd), dateLabel(event.endJd))
+                  }`
+                }
+                targetTitle={t.targetLine(dateLabel(load.centreJd))}
+              />
+              <p className="hint">{t.targetLine(dateLabel(load.centreJd))}</p>
+            </section>
 
             {/* The event table on the left, the technique filter on the right (#1237, the shared timing layout). */}
             <div className="timing-layout">
               <div className="timing-layout-main">
-                <TextField label={t.searchLabel} value={query} onChange={setQuery} />
-                {rows.length === 0 ? (
-                  <p className="hint">{query.trim() === '' ? t.noEvents : t.noMatches}</p>
-                ) : (
-                  <SortableTable
-                    caption={t.tableCaption}
-                    headingLevel={2}
-                    columns={columns}
-                    rows={rows}
-                    getRowKey={(row) => row.key}
-                    downloadFilename={deriveExportFilename(person.displayName, 'timing-timeline', 'csv')}
-                  />
-                )}
+                <section className="timing-card">
+                  <TextField label={t.searchLabel} value={query} onChange={setQuery} />
+                  {rows.length === 0 ? (
+                    <p className="hint">{query.trim() === '' ? t.noEvents : t.noMatches}</p>
+                  ) : (
+                    <SortableTable
+                      caption={t.tableCaption}
+                      headingLevel={2}
+                      columns={columns}
+                      rows={rows}
+                      getRowKey={(row) => row.key}
+                      downloadFilename={deriveExportFilename(person.displayName, 'timing-timeline', 'csv')}
+                    />
+                  )}
+                </section>
                 {tracks.some(({ track }) => t.trackNotes[track] !== undefined) && (
                   <ul className="hint">
                     {tracks.map(({ track }) =>
@@ -305,24 +307,26 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
                 )}
               </div>
               <div className="timing-layout-side">
-                <fieldset className="timing-controls timing-technique-filter">
-                  <legend>{t.filterLegend}</legend>
-                  {TIMING_TIMELINE_TRACKS.map((track) => (
-                    <Checkbox
-                      key={track}
-                      label={t.tracks[track]}
-                      checked={!hidden.has(track)}
-                      onChange={(checked) => {
-                        setHidden((current) => {
-                          const next = new Set(current);
-                          if (checked) next.delete(track);
-                          else next.add(track);
-                          return next;
-                        });
-                      }}
-                    />
-                  ))}
-                </fieldset>
+                <section className="timing-card" aria-labelledby="timeline-techniques-heading">
+                  <h2 id="timeline-techniques-heading">{t.filterLegend}</h2>
+                  <div role="group" aria-labelledby="timeline-techniques-heading" className="timing-technique-filter">
+                    {TIMING_TIMELINE_TRACKS.map((track) => (
+                      <Checkbox
+                        key={track}
+                        label={t.tracks[track]}
+                        checked={!hidden.has(track)}
+                        onChange={(checked) => {
+                          setHidden((current) => {
+                            const next = new Set(current);
+                            if (checked) next.delete(track);
+                            else next.add(track);
+                            return next;
+                          });
+                        }}
+                      />
+                    ))}
+                  </div>
+                </section>
               </div>
             </div>
           </>
