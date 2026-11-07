@@ -14,6 +14,7 @@ import { selectionKey } from '../interpretation/selection-key.js';
 import type { Locale } from '../interpretation/schema.js';
 import { signDisplayName } from './astro-names.messages.js';
 import { useSymbolClass } from './symbol-setting.js';
+import { Button } from './primitives/Button.js';
 
 /** The aspect keys of each colour family, matching the wheel's own grouping (hard warm, soft cool, minor green). */
 const HARD_ASPECTS: ReadonlySet<string> = new Set(['semisquare', 'square', 'sesquiquadrate', 'opposition']);
@@ -235,8 +236,8 @@ export function AspectMatrixGrid({
                   const key = selectionKey.aspect(bodyId(row.key, 0), bodyId(column.key, 0));
                   return (
                     <div role="cell" key={column.key} className={cellClass}>
-                      <button
-                        type="button"
+                      <Button
+                        variant="plain"
                         className="mgrid-pair"
                         aria-label={name}
                         aria-pressed={active.selectedKey === key}
@@ -245,7 +246,7 @@ export function AspectMatrixGrid({
                         }}
                       >
                         {body}
-                      </button>
+                      </Button>
                     </div>
                   );
                 })}

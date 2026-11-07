@@ -140,27 +140,15 @@ const BUTTON_SCREENS: Readonly<Record<string, { readonly rawButtons: number; rea
   'src/ui/FocusInterpretation.tsx': { rawButtons: 0, reason: 'all classed buttons use Button' },
   'src/ui/SavedInterpretationsPanel.tsx': { rawButtons: 0, reason: 'all buttons use Button' },
   'src/ui/BirthPlaceSearch.tsx': { rawButtons: 0, reason: 'popup rows use Button' },
-  'src/ui/AspectMatrixGrid.tsx': {
-    rawButtons: 1,
-    reason: 'a matrix cell toggle with its own mgrid-pair look, not an action button',
-  },
+  'src/ui/AspectMatrixGrid.tsx': { rawButtons: 0, reason: 'all buttons use Button' },
   'src/ui/BiWheelSelectionPanel.tsx': { rawButtons: 0, reason: 'all classed buttons use Button' },
   'src/ui/TransitFilterPanel.tsx': { rawButtons: 0, reason: 'all classed buttons use Button' },
-  'src/ui/ChartOverlaySettingsPanel.tsx': {
-    rawButtons: 1,
-    reason: 'the drawer trigger has its own class, which Button does not take',
-  },
+  'src/ui/ChartOverlaySettingsPanel.tsx': { rawButtons: 0, reason: 'all buttons use Button' },
   'src/ui/MapSettingsDialog.tsx': { rawButtons: 0, reason: 'all buttons use Button' },
   'src/ui/OrbLibraryEditor.tsx': { rawButtons: 0, reason: 'all classed buttons use Button' },
   'src/ui/AccountPanel.tsx': { rawButtons: 0, reason: 'all buttons use Button' },
-  'src/ui/ExtendedSettingsPanel.tsx': {
-    rawButtons: 1,
-    reason: 'the drawer trigger has its own class, which Button does not take',
-  },
-  'src/ui/ProfileTile.tsx': {
-    rawButtons: 5,
-    reason: 'the account tile and its menu are shell controls with their own looks and refs, like the shell toggles',
-  },
+  'src/ui/ExtendedSettingsPanel.tsx': { rawButtons: 0, reason: 'all buttons use Button' },
+  'src/ui/ProfileTile.tsx': { rawButtons: 0, reason: 'all buttons use Button' },
 };
 
 describe('route screens use the Button primitive (#1161)', () => {
