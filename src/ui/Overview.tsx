@@ -1,13 +1,13 @@
 /**
  * The canonical per-person Overview screen (#506/#509, #1173): a task launchpad, not a generic dashboard
  * (`docs/ui/UI-UX_GUIDELINES.md` §2). It shows what is missing or uncertain in the birth data with a fix for each,
- * where the reader left off, one line about what is current, and a small set of real next actions. The full computed
+ * where the reader left off, one line about what is current, and a small set of real next actions, in cards beside a small natal wheel that opens the chart. The full computed
  * analysis stays on Consultation; nothing here repeats it.
  */
 /**
  * @module ui/Overview
  * @purpose Canonical per-person Overview screen (#506/#509, #1173): the birth-data health checklist, "continue where you left off", one "now" line linking to Consultation, and real next actions.
- * @conventions Uses the feature registry (feature-registry.ts) for every href rather than hand-written hashes; the health checklist is `overview-health.ts` and its readiness line reuses people-list.ts's summary(), so this screen and the People list cannot disagree about what is wrong; the "now" line is the profected year from `computeProfections`, the same calculation the Profections and Consultation screens use, and is left out where it cannot be calculated (no engine, no birth time); a section with nothing to show is not rendered; uses Overview.messages.ts for en/nl text via useMessages().
+ * @conventions Uses the feature registry (feature-registry.ts) for every href rather than hand-written hashes; the health checklist is `overview-health.ts` and its readiness line reuses people-list.ts's summary(), so this screen and the People list cannot disagree about what is wrong; the "now" line is the profected year from `computeProfections`, the same calculation the Profections and Consultation screens use, and is left out where it cannot be calculated (no engine, no birth time); a card with nothing to show is not rendered; the wheel is OverviewWheel, drawn by the chart screen's own dial renderer; uses Overview.messages.ts for en/nl text via useMessages().
  * @exports Overview
  */
 import { useEffect, useState } from 'react';
@@ -22,6 +22,7 @@ import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { overviewMessages } from './Overview.messages.js';
 import { birthDataHealth, birthRecordFixHref, type HealthItem } from './overview-health.js';
+import { OverviewWheel } from './OverviewWheel.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { orbSourceName, useCalculationBasisLine } from './calculation-basis.js';
 import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
@@ -145,66 +146,83 @@ export function Overview({ personId }: { readonly personId: string }): React.JSX
   return (
     <main className="shell">
       <PageHeader title={t.heading(person.displayName || t.personFallback)} basis={basisLine} />
-      <p>{summary(person, locale)}</p>
 
-      {now !== undefined && (
-        <p className="overview-now">
-          <a className="standalone-link" href={hrefFor('consultation', { personId })}>
-            {t.nowLine(
-              signDisplayName(now.sign, locale),
-              ordinal(now.house, locale),
-              bodyDisplayName(now.lord, locale),
-            )}
-          </a>
-        </p>
-      )}
+      <div className="overview-grid">
+        <section className="overview-card" aria-labelledby="overview-health-heading">
+          <h2 id="overview-health-heading">{t.healthHeading}</h2>
+          <p className="overview-summary">{summary(person, locale)}</p>
+          {health.length === 0 ? (
+            <p className="hint">{t.healthClear}</p>
+          ) : (
+            <ul className="overview-health">
+              {health.map((item) => (
+                <li key={item.what}>
+                  <span>{healthText(t, item)}</span>{' '}
+                  <a className="standalone-link" href={birthRecordFixHref(personId, item.focus)}>
+                    {t.healthFix[item.focus]}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
-      <section className="overview-section" aria-labelledby="overview-health-heading">
-        <h2 id="overview-health-heading">{t.healthHeading}</h2>
-        {health.length === 0 ? (
-          <p className="hint">{t.healthClear}</p>
-        ) : (
-          <ul className="overview-health">
-            {health.map((item) => (
-              <li key={item.what}>
-                <span>{healthText(t, item)}</span>{' '}
-                <a className="standalone-link" href={birthRecordFixHref(personId, item.focus)}>
-                  {t.healthFix[item.focus]}
-                </a>
-              </li>
-            ))}
-          </ul>
+        {person.moment !== undefined && (
+          <OverviewWheel
+            moment={personMoment ?? person.moment}
+            settings={personSettings}
+            rulership={rulership}
+            name={person.displayName || t.personFallback}
+            href={hrefFor('chart', { personId })}
+            heading={t.wheelHeading}
+            label={t.openChart}
+          />
         )}
-      </section>
 
-      {resume.length > 0 && (
-        <section className="overview-section" aria-labelledby="overview-resume-heading">
-          <h2 id="overview-resume-heading">{t.resumeHeading}</h2>
+        {now !== undefined && (
+          <section className="overview-card" aria-labelledby="overview-now-heading">
+            <h2 id="overview-now-heading">{t.nowHeading}</h2>
+            <p className="overview-now">
+              <a className="standalone-link" href={hrefFor('consultation', { personId })}>
+                {t.nowLine(
+                  signDisplayName(now.sign, locale),
+                  ordinal(now.house, locale),
+                  bodyDisplayName(now.lord, locale),
+                )}
+              </a>
+            </p>
+          </section>
+        )}
+
+        {resume.length > 0 && (
+          <section className="overview-card" aria-labelledby="overview-resume-heading">
+            <h2 id="overview-resume-heading">{t.resumeHeading}</h2>
+            <ul className="overview-actions">
+              {resume.map((item) => (
+                <li key={item.key}>
+                  <a href={item.href}>{item.label}</a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        <section className="overview-card" aria-labelledby="overview-next-heading">
+          <h2 id="overview-next-heading">{t.nextActionsHeading}</h2>
+          {!hasBirthMoment && <p className="hint">{t.completeBirthRecordFirst}</p>}
           <ul className="overview-actions">
-            {resume.map((item) => (
-              <li key={item.key}>
-                <a href={item.href}>{item.label}</a>
+            {actions.map((action) => (
+              <li key={action.key}>
+                {action.alwaysEnabled || hasBirthMoment ? (
+                  <a href={action.href}>{action.label}</a>
+                ) : (
+                  <span className="hint">{action.label}</span>
+                )}
               </li>
             ))}
           </ul>
         </section>
-      )}
-
-      <section className="overview-section" aria-labelledby="overview-next-heading">
-        <h2 id="overview-next-heading">{t.nextActionsHeading}</h2>
-        {!hasBirthMoment && <p className="hint">{t.completeBirthRecordFirst}</p>}
-        <ul className="overview-actions">
-          {actions.map((action) => (
-            <li key={action.key}>
-              {action.alwaysEnabled || hasBirthMoment ? (
-                <a href={action.href}>{action.label}</a>
-              ) : (
-                <span className="hint">{action.label}</span>
-              )}
-            </li>
-          ))}
-        </ul>
-      </section>
+      </div>
     </main>
   );
 }
