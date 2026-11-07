@@ -118,32 +118,27 @@ describe('data table header tokens (#826)', () => {
 
 /**
  * Route screens that must draw their action buttons through the `Button` primitive (#1161, guidelines §6 and §11).
- * The primitive always adds a variant class, so a bare `<button>` (no class) would pick up a different look; those are
- * the only raw buttons allowed, and each screen's count is pinned so a new raw button fails here. The shell toggles
+ * A bare `<button>` (no class) is `<Button variant="plain">`, which keeps its look, and `ref` passes through
+ * `Button`; the raw buttons that remain carry a class of their own or are shell controls, and each screen's count is
+ * pinned so a new raw button fails here. The shell toggles
  * (language, theme, symbol, sidebar) are outside this list by owner decision.
  */
 const BUTTON_SCREENS: Readonly<Record<string, { readonly rawButtons: number; readonly reason: string }>> = {
-  'src/ui/SetPasswordForm.tsx': { rawButtons: 1, reason: 'unclassed submit; primitive would change its look' },
-  'src/ui/SetupForm.tsx': { rawButtons: 1, reason: 'unclassed submit; primitive would change its look' },
-  'src/ui/AdminPanel.tsx': { rawButtons: 1, reason: 'unclassed submit; primitive would change its look' },
-  'src/ui/CorpusOverridesPanel.tsx': { rawButtons: 1, reason: 'unclassed submit; primitive would change its look' },
-  'src/ui/People.tsx': { rawButtons: 1, reason: 'unclassed add button; primitive would change its look' },
+  'src/ui/SetPasswordForm.tsx': { rawButtons: 0, reason: 'all buttons use Button' },
+  'src/ui/SetupForm.tsx': { rawButtons: 0, reason: 'all buttons use Button' },
+  'src/ui/AdminPanel.tsx': { rawButtons: 0, reason: 'all buttons use Button' },
+  'src/ui/CorpusOverridesPanel.tsx': { rawButtons: 0, reason: 'all buttons use Button' },
+  'src/ui/People.tsx': { rawButtons: 0, reason: 'all buttons use Button' },
   'src/ui/PersonForm.tsx': { rawButtons: 0, reason: 'all classed buttons use Button' },
-  'src/ui/PreferencesView.tsx': { rawButtons: 3, reason: 'unclassed export buttons; primitive would change its look' },
-  'src/ui/EventSearchView.tsx': {
-    rawButtons: 2,
-    reason: 'unclassed download buttons; primitive would change its look',
-  },
+  'src/ui/PreferencesView.tsx': { rawButtons: 0, reason: 'all buttons use Button' },
+  'src/ui/EventSearchView.tsx': { rawButtons: 0, reason: 'all buttons use Button' },
   'src/ui/CyclesView.tsx': { rawButtons: 0, reason: 'all classed buttons use Button' },
   'src/ui/RectificationView.tsx': { rawButtons: 0, reason: 'all classed buttons use Button' },
-  'src/ui/ReportView.tsx': { rawButtons: 1, reason: 'unclassed generate button; primitive would change its look' },
+  'src/ui/ReportView.tsx': { rawButtons: 0, reason: 'all buttons use Button' },
   'src/ui/ChartView.tsx': { rawButtons: 0, reason: 'all classed buttons use Button' },
   'src/ui/RelocatedChartView.tsx': { rawButtons: 0, reason: 'all classed buttons use Button' },
   'src/ui/FocusInterpretation.tsx': { rawButtons: 0, reason: 'all classed buttons use Button' },
-  'src/ui/SavedInterpretationsPanel.tsx': {
-    rawButtons: 3,
-    reason: 'two unclassed delete buttons, and the cancel button carries a ref the primitive does not forward',
-  },
+  'src/ui/SavedInterpretationsPanel.tsx': { rawButtons: 0, reason: 'all buttons use Button' },
   'src/ui/BirthPlaceSearch.tsx': { rawButtons: 0, reason: 'popup rows use Button' },
   'src/ui/AspectMatrixGrid.tsx': {
     rawButtons: 1,
@@ -153,17 +148,14 @@ const BUTTON_SCREENS: Readonly<Record<string, { readonly rawButtons: number; rea
   'src/ui/TransitFilterPanel.tsx': { rawButtons: 0, reason: 'all classed buttons use Button' },
   'src/ui/ChartOverlaySettingsPanel.tsx': {
     rawButtons: 1,
-    reason: 'the drawer trigger has its own class and a ref the primitive does not forward',
+    reason: 'the drawer trigger has its own class, which Button does not take',
   },
-  'src/ui/MapSettingsDialog.tsx': {
-    rawButtons: 1,
-    reason: 'the dialog trigger carries a ref the primitive does not forward',
-  },
+  'src/ui/MapSettingsDialog.tsx': { rawButtons: 0, reason: 'all buttons use Button' },
   'src/ui/OrbLibraryEditor.tsx': { rawButtons: 0, reason: 'all classed buttons use Button' },
-  'src/ui/AccountPanel.tsx': { rawButtons: 1, reason: 'unclassed adopt button; primitive would change its look' },
+  'src/ui/AccountPanel.tsx': { rawButtons: 0, reason: 'all buttons use Button' },
   'src/ui/ExtendedSettingsPanel.tsx': {
     rawButtons: 1,
-    reason: 'the drawer trigger has its own class and a ref the primitive does not forward',
+    reason: 'the drawer trigger has its own class, which Button does not take',
   },
   'src/ui/ProfileTile.tsx': {
     rawButtons: 5,

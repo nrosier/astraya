@@ -417,7 +417,8 @@ function AiCustomizedPanel({
           </ul>
         </div>
       )}
-      <button
+      <Button
+        variant="plain"
         type="button"
         disabled={
           !consent ||
@@ -430,7 +431,7 @@ function AiCustomizedPanel({
         onClick={handleGenerate}
       >
         {generating ? t.tier2Generating : t.tier2Generate}
-      </button>
+      </Button>
       {!online && <StatusMessage kind="offline">{shared.offlineNeeded}</StatusMessage>}
       {error !== undefined && <StatusMessage kind="error">{t.tier2Error(error)}</StatusMessage>}
       {rejection !== undefined && (

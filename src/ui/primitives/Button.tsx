@@ -8,14 +8,14 @@
  */
 /**
  * @module ui/primitives/Button
- * @purpose Shared button primitive: primary/quiet/danger variants, standard/compact sizes, busy-label support.
- * @conventions A thin wrapper over a real <button>; variant/size map onto existing app.css classes (.quiet, .danger) plus a new .primitive-button-primary for the previously-missing emphasized default. Compact returns to standard touch sizing on coarse-pointer/touch layouts via CSS, not JS.
+ * @purpose Shared button primitive: primary/quiet/danger/plain variants, standard/compact sizes, busy-label support.
+ * @conventions A thin wrapper over a real <button>; variant/size map onto existing app.css classes (.quiet, .danger) plus a new .primitive-button-primary for the previously-missing emphasized default, and `plain` (no class) for the bare button look. `ref` is an ordinary prop (React 19), so a caller can focus or measure the button. Compact returns to standard touch sizing on coarse-pointer/touch layouts via CSS, not JS.
  * @exports Button
  */
-export type ButtonVariant = 'primary' | 'quiet' | 'danger';
+export type ButtonVariant = 'primary' | 'quiet' | 'danger' | 'plain';
 export type ButtonSize = 'standard' | 'compact';
 
-export interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'className'> {
+export interface ButtonProps extends Omit<React.ComponentPropsWithRef<'button'>, 'className'> {
   readonly variant?: ButtonVariant;
   readonly size?: ButtonSize;
   /** Shown instead of children while a submitted action is in flight, e.g. "Building PDF…". */
@@ -23,10 +23,12 @@ export interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonE
   readonly busy?: boolean;
 }
 
-const VARIANT_CLASS: Readonly<Record<ButtonVariant, string>> = {
+/** `plain` carries no class: the bare button look, which is what the unclassed buttons that moved here had. */
+const VARIANT_CLASS: Readonly<Record<ButtonVariant, string | undefined>> = {
   primary: 'primitive-button-primary',
   quiet: 'quiet',
   danger: 'danger',
+  plain: undefined,
 };
 
 export function Button({
@@ -40,7 +42,7 @@ export function Button({
   ...rest
 }: ButtonProps): React.JSX.Element {
   const sizeClass = size === 'compact' ? 'primitive-button-compact' : undefined;
-  const className = [VARIANT_CLASS[variant], sizeClass].filter((value) => value !== undefined).join(' ');
+  const className = [VARIANT_CLASS[variant], sizeClass].filter((value) => value !== undefined).join(' ') || undefined;
   return (
     <button
       type={type}
