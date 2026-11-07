@@ -21,6 +21,7 @@ import { PageActionsProvider } from './page-actions-slot.js';
 import { PwaStatus } from './PwaStatus.js';
 import { SidebarFooter } from './SidebarFooter.js';
 import { parseRoute, routeShowsBackLink } from './route.js';
+import { writeLastChart } from './last-chart.js';
 import { SessionProvider, useStoreStatus } from './session-context.js';
 import { AccountPreferencesNotices } from './AccountPreferencesNotices.js';
 import { StoreProvider } from './store-context.js';
@@ -296,6 +297,11 @@ function AppShell(): React.JSX.Element {
   const parsed = parseRoute(route);
   const screen = renderScreen(parsed, seVersion);
   const toolKey = activeToolKey(parsed);
+  // The last chart screen of a person, for "continue where you left off" on their Overview (#1173).
+  useEffect(() => {
+    const here = parseRoute(route);
+    if (here.kind === 'chart') writeLastChart(here.personId, route);
+  }, [route]);
 
   return (
     // Wraps the whole shell, not just `Stored`: which store is open follows who is signed
