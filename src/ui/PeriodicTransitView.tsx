@@ -592,13 +592,29 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
 
         {data !== undefined && (
           <>
-            <Tabs
-              idBase="forecast-period"
-              label={t.periodTablist}
-              items={FORECAST_PERIODS.map((key) => ({ key, label: periodLabel(t, key) }))}
-              active={period}
-              onSelect={setPeriod}
-            />
+            {/* Five tabs above 40rem, the same labelled Select as the section frame at 40rem and below (#1227, owner decision 2026-11-07). */}
+            <div className="period-tabs">
+              <Tabs
+                idBase="forecast-period"
+                label={t.periodTablist}
+                items={FORECAST_PERIODS.map((key) => ({ key, label: periodLabel(t, key) }))}
+                active={period}
+                onSelect={setPeriod}
+              />
+            </div>
+            <div className="period-select">
+              <div className="chart-view-select">
+                <Select
+                  label={t.periodTablist}
+                  value={period}
+                  options={FORECAST_PERIODS.map((key) => ({ value: key, label: periodLabel(t, key) }))}
+                  onChange={(value) => {
+                    const next = FORECAST_PERIODS.find((key) => key === value);
+                    if (next !== undefined) setPeriod(next);
+                  }}
+                />
+              </div>
+            </div>
             <div {...tabPanelProps('forecast-period', period)}>
               {period === 'daily' && (
                 <section>
