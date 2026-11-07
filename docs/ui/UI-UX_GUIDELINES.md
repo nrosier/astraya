@@ -474,6 +474,8 @@ These rules apply to every page that lays out more than one card, at every size 
 
    **Documented exception (PDF builder, #1075).** The Documents PDF builder is exempt from the 90% rule by owner decision (2026-11-04). Every setting sits in the left column and the Export summary (`.pdf-summary-sticky`) sits at the top of the right column, so the summary is much shorter than the form and the columns are not balanced. The summary is a sticky panel that stays in view while the form scrolls; it sits beside the form only from the 64rem container breakpoint and stacks below the form on a phone. User impact: on wide screens the right column is mostly empty below the summary, and the user keeps the export contents in view as they choose sections. Measured at 1280×800: form column 1021px, summary 152px (15%); at 3440×1440 the same heights.
 
+   **Documented exception (Primary Directions, #1233; proposed, awaiting the owner).** The Primary Directions controls sit in a sticky panel beside the long results, so the panel is much shorter than the results column and stays in view while they scroll. As with the PDF builder, the two columns are not balanced and the 90% rule does not apply to this pair.
+
 3. **Sizes follow content.** A card is never forced to a different height just to match a neighbour. Equal bottom edges come from the shared grid, not from fixed heights.
 4. **Grid edges match the content width.** The grid's left and right edges line up with the page's content width on every page.
 5. **Use shared classes and tokens.** Multi-card layouts use the shared grid or card classes and design tokens only; no hard-coded hex, rgb, or hsl values.

@@ -972,6 +972,76 @@ footer {
   min-width: 0;
 }
 
+.timing-layout--sticky > .timing-layout-side {
+  /* The controls panel stays in view beside the long tables (#1233): the column stretches, the panel sticks in it. */
+  align-self: stretch;
+}
+
+/* On a phone the controls come first, as the form came before the results. */
+@media (max-width: 51.99rem) {
+  .timing-layout--sticky > .timing-layout-side {
+    order: -1;
+  }
+}
+
+.timing-controls {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+@media (min-width: 52rem) {
+  .timing-controls {
+    position: sticky;
+    top: var(--space-4);
+    max-height: calc(100vh - var(--space-8));
+    overflow-y: auto;
+  }
+}
+
+/* Significators and promissors: two columns of checkboxes each (#1233), the legend across the top. */
+.timing-checks {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.timing-checks fieldset {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: var(--space-3);
+  min-width: 0;
+  margin: 0;
+}
+
+.timing-checks legend {
+  grid-column: 1 / -1;
+}
+
+/* Target date, age and Now on one line. */
+.timing-date-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.timing-date-row > * {
+  flex: 1 1 8rem;
+  min-width: 0;
+}
+
+.timing-date-row > button {
+  flex: 0 0 auto;
+}
+
+/* The fields lose their own bottom margin here, so the inputs and the Now button share one height and one bottom edge. */
+.timing-date-row .primitive-field {
+  margin-bottom: 0;
+}
+
 /* A control in a timing view's page header (#1235): a fixed share of the row, never wider than the screen, so the
    technique, method and date sit on one line beside Export instead of each stretching to its widest option (19rem
    fits "Secondary (a day for a year)"). */
