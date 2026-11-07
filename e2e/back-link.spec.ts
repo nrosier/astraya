@@ -97,4 +97,51 @@ test.describe('with the shared people (#799)', () => {
     await back.click();
     await expect(page.locator('div.chart-wheel')).toBeVisible();
   });
+
+  test('the Back link keeps one place above the heading on every screen that has one, at each viewport in both themes (#1225)', async () => {
+    const viewports = [
+      { width: 390, height: 844 },
+      { width: 1280, height: 800 },
+      { width: 3440, height: 1440 },
+    ] as const;
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    const id = /#\/people\/([^/]+)/.exec(page.url())?.[1] ?? '';
+    expect(id).not.toBe('');
+    const hashes = [
+      '#/about',
+      '#/changelog',
+      `#/people/${id}/consultation`,
+      `#/people/${id}/charts/natal/wheel`,
+      `#/people/${id}/interpretation`,
+      `#/people/${id}/timing/transits`,
+      `#/people/${id}/timing/timeline`,
+      `#/people/${id}/relationships/synastry`,
+      '#/explore/cycles',
+    ];
+    for (const theme of ['light', 'dark'] as const) {
+      await page.evaluate(`localStorage.setItem('astraya.theme', '${theme}')`);
+      await page.reload();
+      for (const viewport of viewports) {
+        await page.setViewportSize(viewport);
+        let reference: number | undefined;
+        for (const hash of hashes) {
+          // A hash change inside the app is a new page, so a previous page is known and the link shows.
+          await page.evaluate(`window.location.hash = '${hash}'`);
+          const label = `${hash} at ${String(viewport.width)}x${String(viewport.height)} (${theme})`;
+          const back = page.locator('p.back a');
+          await expect(back, `${label}: has a Back link`).toBeVisible();
+          await expect(page.locator('p.back')).toHaveCount(1);
+          const mainTop = (await page.locator('#main-content').boundingBox())?.y ?? 0;
+          const backBox = await back.boundingBox();
+          const headingBox = await page.getByRole('heading', { level: 1 }).first().boundingBox();
+          expect(backBox, label).not.toBeNull();
+          expect(headingBox, label).not.toBeNull();
+          expect(backBox?.y ?? 0, `${label}: Back is above the heading`).toBeLessThan(headingBox?.y ?? 0);
+          const offset = (backBox?.y ?? 0) - mainTop;
+          reference ??= offset;
+          expect(offset, `${label}: Back keeps one vertical place`).toBe(reference);
+        }
+      }
+    }
+  });
 });
