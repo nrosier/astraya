@@ -1,8 +1,8 @@
 /**
  * @module TimingTimelineView
- * @purpose Renders a shared date-axis timeline for the app's timing techniques.
+ * @purpose Renders the timing techniques on one shared date axis: a Gantt chart of every track over a 5 or 10 year range either side of the centre date, the same events in a searchable table, and the technique filter beside it (#1237).
  * @conventions Keeps each calculation in its domain module and displays normalized TimingTimelineEvent records only; all visible labels use the co-located message catalogue.
- * @exports TimingTimelineTracks, TimingTimelineView
+ * @exports TimingTimelineView
  */
 import { useEffect, useMemo, useState } from 'react';
 import { firdariaPeriods } from '../astrology/firdaria.js';
@@ -23,15 +23,25 @@ import {
   releasingSubperiodsToTimelineEvents,
   secondaryProgressionToTimelineEvents,
   solarArcToTimelineEvents,
+  TIMING_TIMELINE_TRACKS,
   timingTimelineTracks,
+  type TimingTimelineTrack,
   transitToTimelineEvents,
-  type TimelineSubject,
   type TimingTimelineEvent,
-  type TimingTimelineTrackEvents,
 } from '../domain/timing-timeline.js';
 import { julianDayFor, civilFromJulianDay } from '../time/julian.js';
 import { resolveMoment } from '../time/resolve.js';
 import { DateField } from './primitives/DateField.js';
+import { Button } from './primitives/Button.js';
+import { Checkbox } from './primitives/Checkbox.js';
+import { ChoiceGroup } from './primitives/ChoiceGroup.js';
+import { TextField } from './primitives/TextField.js';
+import { Tooltip } from './primitives/Tooltip.js';
+import { deriveExportFilename } from '../domain/export-filename.js';
+import { SortableTable, csvExportTable, useCsvExports } from './SortableTable.js';
+import type { TableColumn } from './table-sort.js';
+import { TimingTimelineGantt } from './TimingTimelineGantt.js';
+import { ganttRows } from './timeline-gantt.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { PersonNotFound } from './PersonNotFound.js';
@@ -53,65 +63,23 @@ type Load =
   | { readonly kind: 'ready'; readonly events: readonly TimingTimelineEvent[]; readonly centreJd: number }
   | { readonly kind: 'error'; readonly message: string };
 
-const WINDOW_DAYS = 365.2425 * 5;
+const YEAR_DAYS = 365.2425;
+/** The ranges the header offers: years either side of the centre date (#1237). */
+const RANGES = ['5', '10'] as const;
+type Range = (typeof RANGES)[number];
+
+interface EventRow {
+  readonly key: string;
+  readonly track: string;
+  readonly event: string;
+  readonly start: string;
+  readonly end: string;
+  readonly startJd: number;
+}
 
 function dateLabel(jd: number): string {
   const date = civilFromJulianDay(jd);
   return `${String(date.year).padStart(4, '0')}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`;
-}
-
-export interface TimingTimelineTracksProps {
-  readonly axisLabel: string;
-  readonly tracks: readonly TimingTimelineTrackEvents[];
-  readonly labels: Readonly<Record<TimingTimelineTrackEvents['track'], string>>;
-  readonly noEvents: string;
-  readonly dateLabel: (jd: number) => string;
-  /** An event's subject in words, in the reader's language (`timelineSubjectLabel`, #674). */
-  readonly describe: (subject: TimelineSubject) => string;
-  /** A start and end date as one range, in the reader's language. */
-  readonly range: (start: string, end: string) => string;
-  /** A note under a track's heading, such as the convention it follows (#677). */
-  readonly notes?: Partial<Record<string, string>>;
-}
-
-/** The render-only shared-axis track list, separated so concurrent-technique output is testable without an ephemeris worker. */
-export function TimingTimelineTracks({
-  axisLabel,
-  tracks,
-  labels,
-  noEvents,
-  dateLabel: formatDate,
-  describe,
-  range,
-  notes = {},
-}: TimingTimelineTracksProps): React.JSX.Element {
-  return (
-    <section aria-label={axisLabel}>
-      <p>
-        <strong>{axisLabel}</strong>
-      </p>
-      {tracks.map(({ track, events }) => (
-        <section key={track} className="timing-timeline-track" aria-labelledby={`${track}-heading`}>
-          <h2 id={`${track}-heading`}>{labels[track]}</h2>
-          {notes[track] !== undefined && <p className="hint">{notes[track]}</p>}
-          {events.length === 0 ? (
-            <p className="hint">{noEvents}</p>
-          ) : (
-            <ol>
-              {events.map((event, index) => (
-                <li key={`${event.kind}-${String(event.startJd)}-${String(index)}`}>
-                  <strong>{describe(event.subject)}</strong> —{' '}
-                  {event.endJd === undefined || event.endJd === event.startJd
-                    ? formatDate(event.startJd)
-                    : range(formatDate(event.startJd), formatDate(event.endJd))}
-                </li>
-              ))}
-            </ol>
-          )}
-        </section>
-      ))}
-    </section>
-  );
 }
 
 export function TimingTimelineView({ personId }: { personId: string }): React.JSX.Element {
@@ -128,6 +96,9 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
     rulers: false,
   });
   const [asOf, setAsOf] = useState(todayInputValue);
+  const [range, setRange] = useState<Range>('5');
+  const [query, setQuery] = useState('');
+  const [hidden, setHidden] = useState<ReadonlySet<TimingTimelineTrack>>(new Set());
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   const target = useMemo(() => {
     const [year, month, day] = asOf.split('-').map(Number);
@@ -183,6 +154,56 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
     };
   }, [asOf, person?.moment, fixedStars, provider, target]);
 
+  const halfWindow = YEAR_DAYS * Number(range);
+  const fromJd = load.kind === 'ready' ? load.centreJd - halfWindow : 0;
+  const toJd = load.kind === 'ready' ? load.centreJd + halfWindow : 0;
+  // The tracks in the window, minus those the technique filter hides: the chart and the table both read this.
+  const tracks = useMemo(
+    () =>
+      load.kind === 'ready'
+        ? timingTimelineTracks(load.events, fromJd, toJd).filter(({ track }) => !hidden.has(track))
+        : [],
+    [load, fromJd, toJd, hidden],
+  );
+  const rows = useMemo<readonly EventRow[]>(() => {
+    const needle = query.trim().toLowerCase();
+    const all = tracks.flatMap(({ track, events }) =>
+      events.map((event, index) => {
+        const end = event.endJd === undefined || event.endJd === event.startJd ? undefined : event.endJd;
+        return {
+          key: `${track}-${event.kind}-${String(event.startJd)}-${String(index)}`,
+          track: t.tracks[track],
+          event: timelineSubjectLabel(event.subject, locale),
+          start: dateLabel(event.startJd),
+          end: end === undefined ? '' : dateLabel(end),
+          startJd: event.startJd,
+        };
+      }),
+    );
+    return needle === ''
+      ? all
+      : all.filter((row) => `${row.track} ${row.event} ${row.start} ${row.end}`.toLowerCase().includes(needle));
+  }, [tracks, query, t, locale]);
+  const columns: readonly TableColumn<EventRow>[] = [
+    { key: 'track', label: t.columnTrack, valueOf: (row) => row.track },
+    { key: 'event', label: t.columnEvent, valueOf: (row) => row.event },
+    { key: 'start', label: t.columnStart, valueOf: (row) => row.startJd, render: (row) => row.start },
+    { key: 'end', label: t.columnEnd, valueOf: (row) => row.end },
+  ];
+  useCsvExports(
+    person === undefined || load.kind !== 'ready'
+      ? undefined
+      : [
+          csvExportTable(
+            'events',
+            t.tableCaption,
+            deriveExportFilename(person.displayName, 'timing-timeline', 'csv'),
+            columns,
+            rows,
+          ),
+        ],
+  );
+
   if (person === undefined) return <PersonNotFound />;
   if (person.moment === undefined) {
     return (
@@ -195,36 +216,116 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
     );
   }
 
-  const fromJd = load.kind === 'ready' ? load.centreJd - WINDOW_DAYS : 0;
-  const toJd = load.kind === 'ready' ? load.centreJd + WINDOW_DAYS : 0;
-  const tracks = load.kind === 'ready' ? timingTimelineTracks(load.events, fromJd, toJd) : [];
-
   return (
     <main className="shell shell--wide">
       <PageHeader
         headingLevel={2}
         title={person.displayName ? t.heading(person.displayName) : t.fallback}
+        titleAside={
+          <Tooltip text={`${t.hint} ${t.source}`} label={t.hintInfoLabel} className="primitive-tooltip-icon">
+            ?
+          </Tooltip>
+        }
         basis={basisLine}
         basisEditHref={null}
-      />
-      <p className="hint">{t.hint}</p>
-      <p className="hint">{t.source}</p>
-      <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
+      >
+        {/* The centre date, the range either side of it and Now sit in the header, to the right; Export too (#887). */}
+        <div className="timing-header-control">
+          <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
+        </div>
+        <ChoiceGroup
+          label={t.rangeLabel}
+          value={range}
+          segmented
+          showLabel
+          options={RANGES.map((years) => ({ value: years, label: t.rangeYears(years) }))}
+          onChange={(value) => {
+            setRange(value === '10' ? '10' : '5');
+          }}
+        />
+        <Button
+          onClick={() => {
+            setAsOf(todayInputValue());
+          }}
+        >
+          {t.nowLabel}
+        </Button>
+      </PageHeader>
       {/* The result region: busy while the timeline (re)calculates, as the Astrocartography map is. */}
       <div aria-busy={load.kind === 'loading'}>
         {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
         {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
         {load.kind === 'ready' && (
-          <TimingTimelineTracks
-            axisLabel={t.axis(dateLabel(fromJd), dateLabel(toJd))}
-            tracks={tracks}
-            labels={t.tracks}
-            noEvents={t.noEvents}
-            dateLabel={dateLabel}
-            describe={(subject) => timelineSubjectLabel(subject, locale)}
-            range={t.range}
-            notes={t.trackNotes}
-          />
+          <>
+            <TimingTimelineGantt
+              rows={ganttRows(tracks, fromJd, toJd)}
+              fromJd={fromJd}
+              toJd={toJd}
+              targetJd={load.centreJd}
+              label={t.axis(dateLabel(fromJd), dateLabel(toJd))}
+              trackLabels={t.tracks}
+              rowLabel={t.rowLabel}
+              describe={(event) =>
+                `${timelineSubjectLabel(event.subject, locale)}: ${
+                  event.endJd === undefined || event.endJd === event.startJd
+                    ? dateLabel(event.startJd)
+                    : t.range(dateLabel(event.startJd), dateLabel(event.endJd))
+                }`
+              }
+              targetTitle={t.targetLine(dateLabel(load.centreJd))}
+            />
+            <p className="hint">{t.targetLine(dateLabel(load.centreJd))}</p>
+
+            {/* The event table on the left, the technique filter on the right (#1237, the shared timing layout). */}
+            <div className="timing-layout">
+              <div className="timing-layout-main">
+                <TextField label={t.searchLabel} value={query} onChange={setQuery} />
+                {rows.length === 0 ? (
+                  <p className="hint">{query.trim() === '' ? t.noEvents : t.noMatches}</p>
+                ) : (
+                  <SortableTable
+                    caption={t.tableCaption}
+                    headingLevel={2}
+                    columns={columns}
+                    rows={rows}
+                    getRowKey={(row) => row.key}
+                    downloadFilename={deriveExportFilename(person.displayName, 'timing-timeline', 'csv')}
+                  />
+                )}
+                {tracks.some(({ track }) => t.trackNotes[track] !== undefined) && (
+                  <ul className="hint">
+                    {tracks.map(({ track }) =>
+                      t.trackNotes[track] === undefined ? null : (
+                        <li key={track}>
+                          <strong>{t.tracks[track]}:</strong> {t.trackNotes[track]}
+                        </li>
+                      ),
+                    )}
+                  </ul>
+                )}
+              </div>
+              <div className="timing-layout-side">
+                <fieldset className="timing-controls timing-technique-filter">
+                  <legend>{t.filterLegend}</legend>
+                  {TIMING_TIMELINE_TRACKS.map((track) => (
+                    <Checkbox
+                      key={track}
+                      label={t.tracks[track]}
+                      checked={!hidden.has(track)}
+                      onChange={(checked) => {
+                        setHidden((current) => {
+                          const next = new Set(current);
+                          if (checked) next.delete(track);
+                          else next.add(track);
+                          return next;
+                        });
+                      }}
+                    />
+                  ))}
+                </fieldset>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </main>
