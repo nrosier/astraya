@@ -75,6 +75,8 @@ import type { TableColumn } from './table-sort.js';
 import type { Locale } from '../interpretation/schema.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { Checkbox } from './primitives/Checkbox.js';
+import { Button } from './primitives/Button.js';
+import { Tooltip } from './primitives/Tooltip.js';
 import type { PrimaryDirectionMethod, PrimaryDirectionMode } from '../astrology/primary-directions.js';
 import { useStableBy, useStableMoment } from './use-stable-moment.js';
 import { PageHeader } from './PageHeader.js';
@@ -414,207 +416,231 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
         headingLevel={2}
         title={person.displayName ? t.heading(person.displayName) : t.primaryDirectionsFallback}
         titleTerm="primaryDirection"
+        titleAside={
+          <Tooltip
+            text={`${t.hint} ${t.source} ${t.lockedNotice}`}
+            label={t.hintInfoLabel}
+            className="primitive-tooltip-icon"
+          >
+            ?
+          </Tooltip>
+        }
         basis={basisLine}
         basisEditHref={null}
       />
-      <p className="hint">
-        <GlossaryText text={t.hint} />
-      </p>
-      <p className="hint">
-        <GlossaryText text={t.source} />
-      </p>
-      <Notice>
-        <GlossaryText text={t.lockedNotice} />
-      </Notice>
       {mismatches.length > 0 && (
         <Notice tone="warning">
           <GlossaryText text={t.mismatchNotice(mismatchPhrases(mismatches, requestedSnapshot, t).join('; '))} />
         </Notice>
       )}
 
-      <div className="field-grid">
-        <ChoiceGroup
-          label={t.keyLabel}
-          value={key}
-          options={[
-            { value: PrimaryDirectionKey.NAIBOD, label: t.naibodKey },
-            { value: PrimaryDirectionKey.PTOLEMY, label: t.ptolemyKey },
-          ]}
-          onChange={(value) => {
-            setKey(value === PrimaryDirectionKey.PTOLEMY ? PrimaryDirectionKey.PTOLEMY : PrimaryDirectionKey.NAIBOD);
-          }}
-        />
-        <ChoiceGroup
-          label={t.modeLabel}
-          value={mode}
-          options={[
-            { value: 'direct', label: t.directMode },
-            { value: 'converse', label: t.converseMode },
-          ]}
-          onChange={(value) => {
-            setMode(value === 'converse' ? 'converse' : 'direct');
-          }}
-        />
-        <ChoiceGroup
-          label={t.methodLabel}
-          value={method}
-          options={[
-            { value: 'zodiacal', label: t.zodiacalMethod },
-            { value: 'in-mundo', label: t.inMundoMethod },
-          ]}
-          onChange={(value) => {
-            setMethod(value === 'in-mundo' ? 'in-mundo' : 'zodiacal');
-          }}
-        />
-        <fieldset>
-          <legend>{t.significatorsPickerLabel}</legend>
-          {PRIMARY_DIRECTION_ANGLE_KEYS.map((option) => (
-            <Checkbox
-              key={option}
-              label={angleLabel(option)}
-              checked={significators.includes(option)}
-              onChange={() => {
-                setSignificators((current) =>
-                  current.includes(option)
-                    ? current.length === 1
-                      ? current
-                      : current.filter((value) => value !== option)
-                    : [...current, option],
-                );
-              }}
-            />
-          ))}
-          {PRIMARY_DIRECTION_PROMISSORS.map((option) => (
-            <Checkbox
-              key={option}
-              label={bodyDisplayName(option, locale)}
-              checked={significators.includes(option)}
-              onChange={() => {
-                setSignificators((current) =>
-                  current.includes(option)
-                    ? current.length === 1
-                      ? current
-                      : current.filter((value) => value !== option)
-                    : [...current, option],
-                );
-              }}
-            />
-          ))}
-        </fieldset>
-        <fieldset>
-          <legend>{t.promissorsPickerLabel}</legend>
-          {PRIMARY_DIRECTION_PROMISSORS.map((option) => (
-            <Checkbox
-              key={option}
-              label={bodyDisplayName(option, locale)}
-              checked={promissors.includes(option)}
-              onChange={() => {
-                setPromissors((current) =>
-                  current.includes(option)
-                    ? current.length === 1
-                      ? current
-                      : current.filter((value) => value !== option)
-                    : [...current, option],
-                );
-              }}
-            />
-          ))}
-        </fieldset>
-        <DateField
-          label={t.asOfLabel}
-          value={asOf}
-          onChange={(value) => {
-            setAsOf(value);
-          }}
-        />
-        <NumberField
-          label={t.ageLabel}
-          value={ageDraft ?? (shownAge === undefined ? '' : formatFixed(shownAge, 2))}
-          min={0}
-          step={0.1}
-          disabled={data === undefined}
-          onChange={(typed) => {
-            setAgeDraft(typed);
-            const age = Number(typed);
-            if (data === undefined || typed === '' || !Number.isFinite(age) || age < 0) return;
-            setAsOf(dateInputValue(data.natalJd + age * TROPICAL_YEAR_DAYS));
-          }}
-          onBlur={() => {
-            setAgeDraft(undefined);
-          }}
-        />
-      </div>
+      <div className="timing-layout timing-layout--sticky">
+        <div className="timing-layout-main">
+          {/* The result region: busy while the directions (re)calculate, as the Astrocartography map is. */}
+          <div aria-busy={load.kind === 'loading' || directed.kind === 'loading'}>
+            {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
-      {/* The result region: busy while the directions (re)calculate, as the Astrocartography map is. */}
-      <div aria-busy={load.kind === 'loading' || directed.kind === 'loading'}>
-        {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
+            {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
 
-        {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
-
-        {data !== undefined && !data.defined && (
-          <StatusMessage kind="error">
-            <GlossaryText text={t.undefinedAtLatitude} />
-          </StatusMessage>
-        )}
-
-        {data?.defined === true && (
-          <>
-            {directed.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
-            {directed.kind === 'error' && <StatusMessage kind="error">{t.error(directed.message)}</StatusMessage>}
-            {directed.kind === 'before-birth' && (
-              <p className="hint">
-                <GlossaryText text={t.beforeBirth} />
-              </p>
+            {data !== undefined && !data.defined && (
+              <StatusMessage kind="error">
+                <GlossaryText text={t.undefinedAtLatitude} />
+              </StatusMessage>
             )}
-            {directed.kind === 'unavailable' && <p className="hint">{t.converseWheelUnavailable}</p>}
 
-            {directed.kind === 'ready' && (
+            {data?.defined === true && (
               <>
-                <p className="hint">{t.ageLine(formatFixed(directed.chart.ageYears, 2))}</p>
-                <p className="hint">{t.arcLine(formatFixed(ageToArc(directed.chart.ageYears, data.key), 2))}</p>
-                {wheelMarkup !== undefined && (
-                  // App-generated SVG from just-computed chart data, never user-supplied markup —
-                  // the same trust boundary ChartView.tsx's sheet markup is injected under.
-                  <div
-                    ref={wheelRef}
-                    className="chart-wheel chart-wheel-interactive"
-                    dangerouslySetInnerHTML={{ __html: wheelMarkup }}
-                    onClick={handleWheelClick}
-                    onKeyDown={handleWheelKeyDown}
+                {directed.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
+                {directed.kind === 'error' && <StatusMessage kind="error">{t.error(directed.message)}</StatusMessage>}
+                {directed.kind === 'before-birth' && (
+                  <p className="hint">
+                    <GlossaryText text={t.beforeBirth} />
+                  </p>
+                )}
+                {directed.kind === 'unavailable' && <p className="hint">{t.converseWheelUnavailable}</p>}
+
+                {directed.kind === 'ready' && (
+                  <>
+                    <p className="hint">{t.ageLine(formatFixed(directed.chart.ageYears, 2))}</p>
+                    <p className="hint">{t.arcLine(formatFixed(ageToArc(directed.chart.ageYears, data.key), 2))}</p>
+                    {wheelMarkup !== undefined && (
+                      // App-generated SVG from just-computed chart data, never user-supplied markup —
+                      // the same trust boundary ChartView.tsx's sheet markup is injected under.
+                      <div
+                        ref={wheelRef}
+                        className="chart-wheel chart-wheel-interactive"
+                        dangerouslySetInnerHTML={{ __html: wheelMarkup }}
+                        onClick={handleWheelClick}
+                        onKeyDown={handleWheelKeyDown}
+                      />
+                    )}
+                  </>
+                )}
+
+                {activeRows !== undefined && activeRows.length > 0 && (
+                  <SortableTable
+                    caption={t.activeCaption(String(data.orb))}
+                    headingLevel={2}
+                    columns={columns}
+                    rows={activeRows}
+                    getRowKey={(row) => row.id}
+                    downloadFilename={deriveExportFilename(person.displayName, 'primary-directions-active', 'csv')}
                   />
                 )}
+                {activeRows?.length === 0 && (
+                  <p className="hint">
+                    <GlossaryText text={t.noActive} />
+                  </p>
+                )}
+
+                {allRows !== undefined && allRows.length > 0 && (
+                  <SortableTable
+                    caption={t.allCaption}
+                    headingLevel={2}
+                    columns={columns}
+                    rows={allRows}
+                    getRowKey={(row) => row.id}
+                    downloadFilename={deriveExportFilename(person.displayName, 'primary-directions', 'csv')}
+                  />
+                )}
+                {allRows?.length === 0 && <p className="hint">{t.noDirections}</p>}
               </>
             )}
-
-            {activeRows !== undefined && activeRows.length > 0 && (
-              <SortableTable
-                caption={t.activeCaption(String(data.orb))}
-                headingLevel={2}
-                columns={columns}
-                rows={activeRows}
-                getRowKey={(row) => row.id}
-                downloadFilename={deriveExportFilename(person.displayName, 'primary-directions-active', 'csv')}
+          </div>
+        </div>
+        <div className="timing-layout-side">
+          <section className="timing-controls" aria-label={t.controlsLabel}>
+            <ChoiceGroup
+              label={t.keyLabel}
+              value={key}
+              options={[
+                { value: PrimaryDirectionKey.NAIBOD, label: t.naibodKey },
+                { value: PrimaryDirectionKey.PTOLEMY, label: t.ptolemyKey },
+              ]}
+              segmented
+              showLabel
+              onChange={(value) => {
+                setKey(
+                  value === PrimaryDirectionKey.PTOLEMY ? PrimaryDirectionKey.PTOLEMY : PrimaryDirectionKey.NAIBOD,
+                );
+              }}
+            />
+            <ChoiceGroup
+              label={t.modeLabel}
+              value={mode}
+              options={[
+                { value: 'direct', label: t.directMode },
+                { value: 'converse', label: t.converseMode },
+              ]}
+              segmented
+              showLabel
+              onChange={(value) => {
+                setMode(value === 'converse' ? 'converse' : 'direct');
+              }}
+            />
+            <ChoiceGroup
+              label={t.methodLabel}
+              value={method}
+              options={[
+                { value: 'zodiacal', label: t.zodiacalMethod },
+                { value: 'in-mundo', label: t.inMundoMethod },
+              ]}
+              segmented
+              showLabel
+              onChange={(value) => {
+                setMethod(value === 'in-mundo' ? 'in-mundo' : 'zodiacal');
+              }}
+            />
+            <div className="timing-checks">
+              <fieldset>
+                <legend>{t.significatorsPickerLabel}</legend>
+                {PRIMARY_DIRECTION_ANGLE_KEYS.map((option) => (
+                  <Checkbox
+                    key={option}
+                    label={angleLabel(option)}
+                    checked={significators.includes(option)}
+                    onChange={() => {
+                      setSignificators((current) =>
+                        current.includes(option)
+                          ? current.length === 1
+                            ? current
+                            : current.filter((value) => value !== option)
+                          : [...current, option],
+                      );
+                    }}
+                  />
+                ))}
+                {PRIMARY_DIRECTION_PROMISSORS.map((option) => (
+                  <Checkbox
+                    key={option}
+                    label={bodyDisplayName(option, locale)}
+                    checked={significators.includes(option)}
+                    onChange={() => {
+                      setSignificators((current) =>
+                        current.includes(option)
+                          ? current.length === 1
+                            ? current
+                            : current.filter((value) => value !== option)
+                          : [...current, option],
+                      );
+                    }}
+                  />
+                ))}
+              </fieldset>
+              <fieldset>
+                <legend>{t.promissorsPickerLabel}</legend>
+                {PRIMARY_DIRECTION_PROMISSORS.map((option) => (
+                  <Checkbox
+                    key={option}
+                    label={bodyDisplayName(option, locale)}
+                    checked={promissors.includes(option)}
+                    onChange={() => {
+                      setPromissors((current) =>
+                        current.includes(option)
+                          ? current.length === 1
+                            ? current
+                            : current.filter((value) => value !== option)
+                          : [...current, option],
+                      );
+                    }}
+                  />
+                ))}
+              </fieldset>
+            </div>
+            <div className="timing-date-row">
+              <DateField
+                label={t.asOfLabel}
+                value={asOf}
+                onChange={(value) => {
+                  setAsOf(value);
+                }}
               />
-            )}
-            {activeRows?.length === 0 && (
-              <p className="hint">
-                <GlossaryText text={t.noActive} />
-              </p>
-            )}
-
-            {allRows !== undefined && allRows.length > 0 && (
-              <SortableTable
-                caption={t.allCaption}
-                headingLevel={2}
-                columns={columns}
-                rows={allRows}
-                getRowKey={(row) => row.id}
-                downloadFilename={deriveExportFilename(person.displayName, 'primary-directions', 'csv')}
+              <NumberField
+                label={t.ageLabel}
+                value={ageDraft ?? (shownAge === undefined ? '' : formatFixed(shownAge, 2))}
+                min={0}
+                step={0.1}
+                disabled={data === undefined}
+                onChange={(typed) => {
+                  setAgeDraft(typed);
+                  const age = Number(typed);
+                  if (data === undefined || typed === '' || !Number.isFinite(age) || age < 0) return;
+                  setAsOf(dateInputValue(data.natalJd + age * TROPICAL_YEAR_DAYS));
+                }}
+                onBlur={() => {
+                  setAgeDraft(undefined);
+                }}
               />
-            )}
-            {allRows?.length === 0 && <p className="hint">{t.noDirections}</p>}
-          </>
-        )}
+              <Button
+                onClick={() => {
+                  setAsOf(todayInputValue());
+                }}
+              >
+                {t.nowLabel}
+              </Button>
+            </div>
+          </section>
+        </div>
       </div>
     </main>
   );
