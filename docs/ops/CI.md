@@ -23,6 +23,10 @@ A new push to a pull request cancels that pull request's run in progress, so a f
 
 `.github/workflows/verify-image.yml` is run from the Actions tab (`gh workflow run verify-image.yml -f version=0.49.0`) and pushes nothing. It runs `cosign verify` on `latest` and on the version tag against this repository's workflow identity, checks that both tags resolve to one digest, runs `npm run docker:smoke` on a Linux runner and checks the image's revision label equals the commit, and checks that a plain `docker build .` still carries the label as `unknown`. The run log is the evidence the signing and revision issues (#1209, #1198) ask for.
 
+## Security scan
+
+`.github/workflows/security-scan.yml` runs on pushes and pull requests to `main`, weekly on Mondays and by hand. Syft builds a CycloneDX SBOM, Grype scans it, Trivy cross-checks CVEs and adds secret and IaC/Dockerfile checks, and both upload SARIF to Code Scanning. It reports only and does not fail a pull request. See `docs/ops/SECURITY-SCANS.md`.
+
 ## Timings
 
 Measured on 2026-11-03, before the shards (#1095): the single e2e job's test step took 813 s, and 508 s after #1093 removed an idle wait from the shared navigation helper. `check` takes about 5 minutes, of which the unit tests are about 100 s.

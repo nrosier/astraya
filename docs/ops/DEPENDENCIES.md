@@ -67,6 +67,17 @@ machines. It is called out here rather than silently folded into the "all
 permissive" summary, since `CLAUDE.md`'s rule is written without a scope
 qualifier.
 
+## CI security scanners (#1279)
+
+Run only in GitHub Actions (`.github/workflows/security-scan.yml`), never installed or shipped. All are pinned to a commit SHA; see `docs/ops/SECURITY-SCANS.md`.
+
+| Tool                                                                                    | Purpose                                      | Licence    |
+| :-------------------------------------------------------------------------------------- | :------------------------------------------- | :--------- |
+| Syft (`anchore/sbom-action`)                                                            | CycloneDX SBOM.                              | Apache-2.0 |
+| Grype (`anchore/scan-action`)                                                           | Vulnerability scan of the SBOM.              | Apache-2.0 |
+| Trivy (`aquasecurity/trivy-action`)                                                     | CVE, secret and IaC/Dockerfile cross-check.  | Apache-2.0 |
+| `github/codeql-action/upload-sarif`, `actions/github-script`, `actions/upload-artifact` | SARIF upload, tracking issue, SBOM artifact. | MIT        |
+
 ## Renovate and the Docker base image
 
 `renovate.json` is the only automated dependency tooling. Two rules concern Docker (#122):
