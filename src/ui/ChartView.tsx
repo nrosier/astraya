@@ -43,7 +43,10 @@ import {
   CONSULTATION_PRESETS,
   isContactShown,
   isMajorAspect,
-  type AspectFamilyKey, type ConsultationPreset, type OrbCaps } from './aspect-family-filter.js';
+  type AspectFamilyKey,
+  type ConsultationPreset,
+  type OrbCaps,
+} from './aspect-family-filter.js';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {

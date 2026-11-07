@@ -53,7 +53,14 @@ export function PresetTimeLords({
           now.getUTCSeconds(),
         );
         const natalJd = await julianDayFor(provider, resolveMoment(moment));
-        const computed = await consultationYear(moment, natal, natalJd, nowJd, provider, rulership ?? DEFAULT_RULERSHIP_CHOICE);
+        const computed = await consultationYear(
+          moment,
+          natal,
+          natalJd,
+          nowJd,
+          provider,
+          rulership ?? DEFAULT_RULERSHIP_CHOICE,
+        );
         if (!effect.cancelled) setYear(computed);
       } catch {
         // Nothing is better than a wrong line; Consultation reports the calculation's own failure.
