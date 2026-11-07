@@ -26,6 +26,8 @@ import {
   readCoordinates,
   readCustomPoints,
   readRelocationPlaces,
+  overlongPersonText,
+  PERSON_TEXT_MAX_CHARACTERS,
   readTimeAccuracy,
   type Person,
 } from './person.js';
@@ -135,6 +137,16 @@ export function aafToExportedPeople(text: string): {
       });
       return;
     }
+    const displayName = [record.firstName, record.name].filter((part) => part !== '').join(' ');
+    // Over the name or place limit (#1288): refused and reported, never truncated, before anything is staged.
+    const overlong = overlongPersonText({ displayName, placeLabel: record.place });
+    if (overlong !== undefined) {
+      errors.push({
+        line: record.line ?? 0,
+        message: `the ${overlong === 'displayName' ? 'name' : 'place'} of ${Array.from(displayName).slice(0, 40).join('')} is longer than the ${String(PERSON_TEXT_MAX_CHARACTERS)}-character limit`,
+      });
+      return;
+    }
     const calendar = extension.calendar === 'auto' ? 'auto' : record.birth.calendar;
     // Key order matches person.ts's own assembly (calendar, zoneOverride, offsetOverrideMinutes), because the restore
     // staging compares birth records by their JSON text: the same record in another key order would read as changed.
@@ -149,7 +161,6 @@ export function aafToExportedPeople(text: string): {
     };
     const relocationPlaces = readRelocationPlaces(parseJson(extension.relocationPlaces));
     const customPoints = readCustomPoints(parseJson(extension.customPoints));
-    const displayName = [record.firstName, record.name].filter((part) => part !== '').join(' ');
     people.push({
       id: personIdFor(record, index),
       displayName,

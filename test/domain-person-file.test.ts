@@ -118,3 +118,29 @@ describe('stagePersonReplace (#699)', () => {
     expect(fields).not.toContain('rulership');
   });
 });
+
+describe('name and place limit (#1288)', () => {
+  const aafWith = (displayName: string, placeLabel = 'London'): string =>
+    peopleToAaf([{ ...ADA, displayName, placeLabel }]).text;
+
+  it('refuses an AAF file whose name is over 200 characters, before any write', () => {
+    const read = readPersonFile(aafWith('N'.repeat(201)));
+    expect(read.ok).toBe(false);
+    if (read.ok || read.error.kind !== 'no-people') throw new Error('expected no-people');
+    expect(read.error.aafErrors[0]?.message).toContain('200-character limit');
+  });
+
+  it('accepts an AAF file whose name and place are exactly 200 characters', () => {
+    const read = readPersonFile(aafWith('N'.repeat(200), 'P'.repeat(200)));
+    expect(read.ok).toBe(true);
+  });
+
+  it('refuses to stage a replace with a place over 200 characters, and accepts exactly 200', () => {
+    const read = readPersonFile(aafWith('Ada', 'P'.repeat(200)));
+    if (!read.ok || read.people[0] === undefined) throw new Error('fixture bug');
+    expect(stagePersonReplace(KEPT, read.people[0]).mutations.length).toBeGreaterThan(0);
+    expect(() => stagePersonReplace(KEPT, { ...read.people[0], placeLabel: 'P'.repeat(201) } as never)).toThrow(
+      /200-character limit/,
+    );
+  });
+});

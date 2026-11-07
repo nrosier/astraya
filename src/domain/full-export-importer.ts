@@ -63,6 +63,7 @@ import {
   readBirthSourceKind,
   BIRTH_SOURCE_NOTE_MAX_CHARACTERS,
   PERSON_TEXT_MAX_CHARACTERS,
+  overlongPersonText,
 } from './person.js';
 import type { ExtendedSettings } from '../chart/extended-settings.js';
 import type { BirthMomentInput, Calendar } from '../time/types.js';
@@ -228,13 +229,9 @@ function validatePerson(raw: unknown, path: string): Result<ExportedPerson, Impo
   const placeLabel = readText(raw.placeLabel);
   if (placeLabel === undefined) return malformed(`${path}.placeLabel`, 'missing or not a string');
   // Held to the same limit as the form (#1288), before any write.
-  for (const [field, text] of [
-    ['displayName', displayName],
-    ['placeLabel', placeLabel],
-  ] as const) {
-    if (Array.from(text).length > PERSON_TEXT_MAX_CHARACTERS) {
-      return malformed(`${path}.${field}`, `longer than the ${String(PERSON_TEXT_MAX_CHARACTERS)}-character limit`);
-    }
+  const overlong = overlongPersonText({ displayName, placeLabel });
+  if (overlong !== undefined) {
+    return malformed(`${path}.${overlong}`, `longer than the ${String(PERSON_TEXT_MAX_CHARACTERS)}-character limit`);
   }
   const notes = readText(raw.notes);
   if (notes === undefined) return malformed(`${path}.notes`, 'missing or not a string');

@@ -9,7 +9,7 @@ import type { AafParseError } from './aaf.js';
 import { aafToExportedPeople, isAafText } from './aaf-people.js';
 import type { ExportedPerson } from './full-export.js';
 import { stageFullExportRestore, validateFullExport, type ImportError } from './full-export-importer.js';
-import type { Person } from './person.js';
+import { overlongPersonText, PERSON_TEXT_MAX_CHARACTERS, type Person } from './person.js';
 import type { Coordinates } from '../time/types.js';
 
 export type PersonFileRead =
@@ -82,6 +82,12 @@ export function stagePersonReplace(
   existing: Person,
   incoming: ExportedPerson,
 ): { readonly mutations: readonly Mutation[]; readonly changes: readonly PersonChange[] } {
+  // The same limit as every other write (#1288). readPersonFile already refuses such a file, so the page never gets
+  // here with one; this stops any other caller writing an oversize name op (never truncated).
+  const overlong = overlongPersonText({ displayName: existing.displayName, placeLabel: incoming.placeLabel });
+  if (overlong === 'placeLabel') {
+    throw new RangeError(`placeLabel is longer than the ${String(PERSON_TEXT_MAX_CHARACTERS)}-character limit`);
+  }
   const replacement: ExportedPerson = {
     id: existing.id,
     displayName: existing.displayName,
