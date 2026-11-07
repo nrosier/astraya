@@ -264,6 +264,22 @@ for (const { width, height } of [
     );
     if (width === 390) expect(overflow).toBeGreaterThan(0);
     else expect(overflow).toBeLessThanOrEqual(1);
+    // The scroll cue's cover layers are the colour of the surface behind the frame, so a table that fits shows no
+    // band either side (#1229): a darker or lighter cover reads as a band on both edges.
+    const cover = await page.evaluate(`(() => {
+      const el = document.querySelector('.consultation-section .data-table-scroll');
+      const probe = document.createElement('i');
+      probe.style.color = getComputedStyle(el).getPropertyValue('--scroll-cover');
+      document.body.append(probe);
+      const cover = getComputedStyle(probe).color;
+      probe.remove();
+      let behind = el.parentElement;
+      while (behind !== null && ['rgba(0, 0, 0, 0)', 'transparent'].includes(getComputedStyle(behind).backgroundColor)) behind = behind.parentElement;
+      return { cover, behind: behind === null ? '' : getComputedStyle(behind).backgroundColor };
+    })()`);
+    expect(cover).toEqual({ cover: expect.any(String), behind: expect.any(String) });
+    const { cover: coverColour, behind: behindColour } = cover as { cover: string; behind: string };
+    expect(coverColour).toBe(behindColour);
     // The page itself never scrolls sideways: the table scrolls inside its frame.
     const pageOverflow = Number(await page.evaluate('document.documentElement.scrollWidth - window.innerWidth'));
     expect(pageOverflow).toBeLessThanOrEqual(0);
