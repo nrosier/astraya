@@ -250,7 +250,7 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
         </Button>
       </PageHeader>
       {/* The result region: busy while the timeline (re)calculates, as the Astrocartography map is. */}
-      <div aria-busy={load.kind === 'loading'}>
+      <div className="timing-stack" aria-busy={load.kind === 'loading'}>
         {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
         {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
         {load.kind === 'ready' && (

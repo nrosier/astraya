@@ -64,6 +64,45 @@ test('shows every technique as a row of the chart, with the centre date marked, 
   await expect(table.locator('tbody tr')).toHaveCount(marks);
 });
 
+test('cards on the timing pages are one default gap apart, whatever sits between them (#1236, #1237)', async () => {
+  test.setTimeout(120_000);
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await openTimeline();
+
+  // The measure is the page's own spacing token, so no number is written here.
+  const gap = await page.evaluate<number>(`(() => {
+    const unit = document.createElement('div');
+    unit.style.height = 'var(--space-4)';
+    document.body.append(unit);
+    const px = unit.getBoundingClientRect().height;
+    unit.remove();
+    return px;
+  })()`);
+  // Cards in one column, one above the other: the space from one's bottom to the next's top.
+  const between = async (): Promise<readonly number[]> =>
+    page.evaluate<readonly number[]>(`(() => {
+      const cards = [...document.querySelectorAll('.timing-card')].map((card) => card.getBoundingClientRect());
+      return cards.flatMap((card, index) => {
+        const next = cards[index + 1];
+        return next !== undefined && Math.abs(next.left - card.left) < 1 && next.top >= card.bottom
+          ? [Math.round((next.top - card.bottom) * 10) / 10]
+          : [];
+      });
+    })()`);
+
+  // The Gantt card, then the events card: the same gap as between any two cards.
+  const timeline = await between();
+  expect(timeline.length).toBeGreaterThan(0);
+  for (const space of timeline) expect(space).toBeCloseTo(gap, 0);
+
+  await page.getByRole('tab', { name: 'Profections', exact: true }).click();
+  await expect(page.getByRole('heading', { name: /Profection/ }).first()).toBeVisible({ timeout: 60_000 });
+  await expect(page.locator('.profection-meanings')).toBeVisible({ timeout: 60_000 });
+  const profections = await between();
+  expect(profections.length).toBeGreaterThan(0);
+  for (const space of profections) expect(space).toBeCloseTo(gap, 0);
+});
+
 test('searches the events, and the technique filter takes a technique out of the chart and the table', async () => {
   test.setTimeout(90_000);
   await openTimeline();

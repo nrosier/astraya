@@ -229,7 +229,7 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
       <div className="timing-layout">
         <div className="timing-layout-main">
           {/* The result region: busy while the profections (re)calculate, as the Astrocartography map is. */}
-          <div aria-busy={load.kind === 'loading'}>
+          <div className="timing-stack" aria-busy={load.kind === 'loading'}>
             {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
             {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
