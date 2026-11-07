@@ -104,9 +104,9 @@ export function People(): React.JSX.Element {
       )}
 
       <p>
-        <button type="button" onClick={create} disabled={busy}>
+        <Button variant="plain" type="button" onClick={create} disabled={busy}>
           {t.addPerson}
-        </button>
+        </Button>
       </p>
 
       {people.length === 0 ? (

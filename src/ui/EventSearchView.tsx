@@ -323,12 +323,12 @@ export function EventSearchView(): React.JSX.Element {
         {result.kind === 'ready' && (
           <section>
             <p>
-              <button type="button" onClick={download}>
+              <Button variant="plain" type="button" onClick={download}>
                 {t.downloadCsv}
-              </button>{' '}
-              <button type="button" onClick={downloadIcs}>
+              </Button>{' '}
+              <Button variant="plain" type="button" onClick={downloadIcs}>
                 {t.downloadIcs}
-              </button>
+              </Button>
             </p>
             <SortableTable
               headingLevel={2}

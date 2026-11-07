@@ -123,9 +123,9 @@ function CreateUserForm({ create }: { create: (username: string, role: Role) => 
         />
       </div>
       <p className="actions">
-        <button type="submit" disabled={busy || username.trim() === ''}>
+        <Button variant="plain" type="submit" disabled={busy || username.trim() === ''}>
           {t.createUserButton}
-        </button>
+        </Button>
       </p>
     </form>
   );

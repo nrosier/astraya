@@ -70,12 +70,12 @@ function DeleteConfirmation({
   return (
     <div className="saved-interpretation-delete-confirm warning" role="region" aria-label={t.pastDeleteConfirm}>
       <p>{t.pastDeleteConfirmMessage}</p>
-      <button type="button" disabled={busy} onClick={onConfirm}>
+      <Button variant="plain" type="button" disabled={busy} onClick={onConfirm}>
         {t.pastDeleteConfirm}
-      </button>{' '}
-      <button ref={cancelRef} type="button" className="quiet" disabled={busy} onClick={onCancel}>
+      </Button>{' '}
+      <Button ref={cancelRef} type="button" variant="quiet" disabled={busy} onClick={onCancel}>
         {t.pastDeleteCancel}
-      </button>
+      </Button>
     </div>
   );
 }
@@ -307,7 +307,8 @@ export function SavedInterpretationsPanel({
         returnFocusTo={openerRef}
         footer={
           <>
-            <button
+            <Button
+              variant="plain"
               type="button"
               disabled={deleting || openId === undefined}
               onClick={() => {
@@ -315,7 +316,7 @@ export function SavedInterpretationsPanel({
               }}
             >
               {t.pastDelete}
-            </button>{' '}
+            </Button>{' '}
             <Button onClick={closeModal}>{t.pastClose}</Button>
           </>
         }
