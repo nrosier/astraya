@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
-/** UI rendering contract for the shared timing timeline (#554). */
+/** UI rendering contract for the shared timing timeline (#554) and its Gantt chart (#1237). */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { describe, expect, it } from 'vitest';
 import { TIMING_TIMELINE_TRACKS, type TimingTimelineTrackEvents } from '../src/domain/timing-timeline.js';
-import { TimingTimelineTracks } from '../src/ui/TimingTimelineView.js';
+import { TimingTimelineGantt } from '../src/ui/TimingTimelineGantt.js';
+import { ganttFraction, ganttRows, yearTicks } from '../src/ui/timeline-gantt.js';
 import { timelineSubjectLabel } from '../src/ui/timing-timeline-labels.js';
 
 const labels = Object.fromEntries(TIMING_TIMELINE_TRACKS.map((track) => [track, track])) as Record<
@@ -50,42 +51,110 @@ const tracks: readonly TimingTimelineTrackEvents[] = [
   { track: 'periodic-transit', events: [] },
 ];
 
-describe('TimingTimelineTracks (#554)', () => {
-  it('renders three timing techniques simultaneously under one shared date axis', () => {
+describe('the timing timeline Gantt (#554, #1237)', () => {
+  it('draws three timing techniques at once, one labelled row each, over one shared date axis', () => {
     const container = document.createElement('div');
     document.body.append(container);
     const root: Root = createRoot(container);
     try {
       act(() => {
         root.render(
-          <TimingTimelineTracks
-            axisLabel="Shared date axis: 2000-01-01 to 2005-01-01"
-            tracks={tracks}
-            labels={labels}
-            noEvents="No events"
-            dateLabel={(jd) => `JD ${String(jd)}`}
-            describe={(subject) => timelineSubjectLabel(subject, 'en')}
-            range={(start, end) => `${start} to ${end}`}
-            notes={{ profections: 'Birthday to birthday.' }}
+          <TimingTimelineGantt
+            rows={ganttRows(tracks, 0, 100)}
+            fromJd={0}
+            toJd={100}
+            targetJd={50}
+            label="Shared date axis: 2000-01-01 to 2005-01-01"
+            trackLabels={labels}
+            rowLabel={(track, count) => `${track}: ${String(count)}`}
+            describe={(event) => timelineSubjectLabel(event.subject, 'en')}
+            targetTitle="Centre date"
           />,
         );
       });
       expect(container.querySelector('[aria-label="Shared date axis: 2000-01-01 to 2005-01-01"]')).not.toBeNull();
+      const rows = [...container.querySelectorAll('.gantt-row')];
+      expect(rows).toHaveLength(tracks.length);
       for (const track of ['zodiacal-releasing', 'firdaria', 'profections']) {
-        expect(container.querySelector(`#${track}-heading`)?.textContent).toBe(track);
+        expect(container.querySelector(`svg[aria-label="${track}: 1"]`)).not.toBeNull();
       }
-      expect(container.textContent).toContain('From Fortune: Leo, ruled by Sun');
-      expect(container.textContent).toContain('Leo, 5th house');
-      expect(container.textContent).toContain('JD 0 to JD 30');
-      expect(container.querySelector('[aria-labelledby="profections-heading"] .hint')?.textContent).toBe(
-        'Birthday to birthday.',
-      );
+      expect(container.querySelector('.gantt-bar title')?.textContent).toBe('From Fortune: Leo, ruled by Sun');
+      // 30 of 100 days: the bar spans a third of the 1000-unit axis, and the target line sits in the middle.
+      expect(container.querySelector('.gantt-bar')?.getAttribute('width')).toBe('300');
+      expect(container.querySelector('.gantt-target')?.getAttribute('x1')).toBe('500');
     } finally {
       act(() => {
         root.unmount();
       });
       container.remove();
     }
+  });
+});
+
+describe('the Gantt layout (#1237)', () => {
+  it('places a date as a fraction of the window, clamped to it', () => {
+    expect(ganttFraction(50, 0, 100)).toBe(0.5);
+    expect(ganttFraction(-10, 0, 100)).toBe(0);
+    expect(ganttFraction(500, 0, 100)).toBe(1);
+    expect(ganttFraction(5, 10, 10)).toBe(0);
+  });
+
+  it('clamps a bar that runs past the window, and marks an event with no end as a point', () => {
+    const rows = ganttRows(
+      [
+        {
+          track: 'transit',
+          events: [
+            {
+              kind: 'a',
+              startJd: -50,
+              endJd: 50,
+              subject: { kind: 'firdaria', ruler: 'sun' },
+              sourceModule: 'fixture',
+            },
+            { kind: 'b', startJd: 25, subject: { kind: 'firdaria', ruler: 'sun' }, sourceModule: 'fixture' },
+            { kind: 'c', startJd: 40, endJd: 40, subject: { kind: 'firdaria', ruler: 'sun' }, sourceModule: 'fixture' },
+          ],
+        },
+      ],
+      0,
+      100,
+    );
+    const marks = rows[0]?.marks ?? [];
+    expect(marks.map((mark) => [mark.start, mark.end, mark.point])).toEqual([
+      [0, 0.5, false],
+      [0.25, 0.25, true],
+      [0.4, 0.4, true],
+    ]);
+  });
+
+  it('draws the zodiacal-releasing subperiods as the thinner level 2', () => {
+    const rows = ganttRows(
+      [
+        {
+          track: 'zodiacal-releasing',
+          events: [
+            {
+              kind: 'x',
+              startJd: 0,
+              endJd: 10,
+              subject: { kind: 'releasing', lot: 'spirit', level: 2, sign: 'Leo', ruler: 'sun', loosingOfBond: false },
+              sourceModule: 'fixture',
+            },
+          ],
+        },
+      ],
+      0,
+      100,
+    );
+    expect(rows[0]?.marks[0]?.sub).toBe(true);
+  });
+
+  it('labels every first of January inside the window', () => {
+    // JD 2451544.5 is 2000-01-01 00:00 UT; a window of just over two years holds three such days.
+    const ticks = yearTicks(2451544, 2451544 + 365 * 2 + 2);
+    expect(ticks.map((tick) => tick.year)).toEqual([2000, 2001, 2002]);
+    expect(ticks[0]?.fraction).toBeGreaterThanOrEqual(0);
   });
 });
 
