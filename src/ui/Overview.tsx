@@ -138,7 +138,7 @@ export function Overview({ personId }: { readonly personId: string }): React.JSX
 
       {now !== undefined && (
         <p className="overview-now">
-          <a href={hrefFor('consultation', { personId })}>
+          <a className="standalone-link" href={hrefFor('consultation', { personId })}>
             {t.nowLine(
               signDisplayName(now.sign, locale),
               ordinal(now.house, locale),
@@ -157,7 +157,9 @@ export function Overview({ personId }: { readonly personId: string }): React.JSX
             {health.map((item) => (
               <li key={item.what}>
                 <span>{healthText(t, item)}</span>{' '}
-                <a href={birthRecordFixHref(personId, item.focus)}>{t.healthFix[item.focus]}</a>
+                <a className="standalone-link" href={birthRecordFixHref(personId, item.focus)}>
+                  {t.healthFix[item.focus]}
+                </a>
               </li>
             ))}
           </ul>
