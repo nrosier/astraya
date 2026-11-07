@@ -998,6 +998,7 @@ footer {
 }
 
 .timing-card > h2,
+.timing-controls > h2,
 .timing-card .data-table-head h2,
 .timing-card .data-table-head h3 {
   margin: 0;
