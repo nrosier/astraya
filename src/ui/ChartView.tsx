@@ -456,16 +456,13 @@ export function pdfCreatorHref(personId: string, section: ExportBuilderSection, 
 
 /**
  * The one export a chart page offers, drawn inside its `PageHeader` (#915, #976): a primary accent link to the PDF
- * creator, with a trailing arrow so it reads as navigation to another page, not a download. The file exports live in the creator.
+ * creator. The file exports live in the creator.
  */
 export function PdfCreatorLink({ href }: { readonly href: string }): React.JSX.Element {
   const t = useMessages(chartViewMessages);
   return (
     <a className="chart-pdf-link" href={href}>
       {t.exportPdfCreator}
-      <span className="chart-pdf-link-arrow" aria-hidden="true">
-        {' →'}
-      </span>
     </a>
   );
 }
