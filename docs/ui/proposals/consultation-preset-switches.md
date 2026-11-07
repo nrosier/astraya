@@ -1,6 +1,6 @@
 # Consultation preset switches proposal (#1190)
 
-Status: draft for owner approval. Nothing here is built. Per the issue, no code is written until this note is approved, and the 2026-11-06 decisions on #1190 (per chart; separate controls, not the orb-profile controls) are taken as given.
+Status: built in one pass with screenshots on the issue (owner decision 2026-11-07); the owner judges the result. Per the issue, no code is written until this note is approved, and the 2026-11-06 decisions on #1190 (per chart; separate controls, not the orb-profile controls) are taken as given.
 
 ## Goal and scope
 

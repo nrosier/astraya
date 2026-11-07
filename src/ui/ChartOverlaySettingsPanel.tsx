@@ -15,7 +15,8 @@ import { todayInputValue } from './format.js';
 import { useMessages } from './messages.js';
 import { Button } from './primitives/Button.js';
 
-export type ChartOverlaySource = 'natal' | 'draconic' | 'transit' | 'progressed' | 'directed' | 'return' | 'relocated';
+export type ChartOverlaySource =
+  'natal' | 'draconic' | 'transit' | 'progressed' | 'directed' | 'solarArc' | 'return' | 'relocated';
 export type ChartOverlayReturnKind = 'solar' | 'lunar';
 
 const OVERLAY_SOURCES: readonly ChartOverlaySource[] = [
@@ -24,6 +25,7 @@ const OVERLAY_SOURCES: readonly ChartOverlaySource[] = [
   'transit',
   'progressed',
   'directed',
+  'solarArc',
   'return',
   'relocated',
 ];
@@ -37,6 +39,8 @@ export interface ChartOverlaySettings {
   readonly progressedDate: string;
   readonly directed: boolean;
   readonly directedDate: string;
+  readonly solarArc: boolean;
+  readonly solarArcDate: string;
   readonly return: boolean;
   readonly returnKind: ChartOverlayReturnKind;
   readonly returnDate: string;
@@ -46,6 +50,12 @@ export interface ChartOverlaySettings {
   /** Relative order of optional rings; the current chart stays the fixed innermost base ring. */
   readonly order: readonly ChartOverlaySource[];
   readonly interRingAspects: boolean;
+  /** Widest orb in degrees the transit ring's contacts are drawn with; '' keeps the orbs in force (#1190). */
+  readonly transitOrb: string;
+  /** Widest orb in degrees the solar arc ring's contacts are drawn with; '' keeps the orbs in force (#1190). */
+  readonly solarArcOrb: string;
+  /** Whether the essential dignities, sect and Almuten Figuris are shown on the chart screen (#1190). */
+  readonly chartFacts: boolean;
 }
 
 export const DEFAULT_CHART_OVERLAY_SETTINGS: ChartOverlaySettings = {
@@ -57,6 +67,8 @@ export const DEFAULT_CHART_OVERLAY_SETTINGS: ChartOverlaySettings = {
   progressedDate: todayInputValue(),
   directed: false,
   directedDate: todayInputValue(),
+  solarArc: false,
+  solarArcDate: todayInputValue(),
   return: false,
   returnKind: 'solar',
   returnDate: todayInputValue(),
@@ -65,6 +77,9 @@ export const DEFAULT_CHART_OVERLAY_SETTINGS: ChartOverlaySettings = {
   longitude: '',
   order: OVERLAY_SOURCES,
   interRingAspects: false,
+  transitOrb: '',
+  solarArcOrb: '',
+  chartFacts: true,
 };
 
 function sameSettings(a: ChartOverlaySettings, b: ChartOverlaySettings): boolean {
@@ -77,6 +92,11 @@ function sameSettings(a: ChartOverlaySettings, b: ChartOverlaySettings): boolean
     a.progressedDate === b.progressedDate &&
     a.directed === b.directed &&
     a.directedDate === b.directedDate &&
+    a.solarArc === b.solarArc &&
+    a.solarArcDate === b.solarArcDate &&
+    a.transitOrb === b.transitOrb &&
+    a.solarArcOrb === b.solarArcOrb &&
+    a.chartFacts === b.chartFacts &&
     a.return === b.return &&
     a.returnKind === b.returnKind &&
     a.returnDate === b.returnDate &&
@@ -96,6 +116,7 @@ export function hasChartOverlays(settings: ChartOverlaySettings): boolean {
     settings.transit ||
     settings.progressed ||
     settings.directed ||
+    settings.solarArc ||
     settings.return ||
     settings.relocated
   );
@@ -268,6 +289,20 @@ function OverlayDraft({
               update({ transitDate });
             }}
           />
+          <NumberField
+            label={t.transitOrb}
+            help={t.orbHelp}
+            unit="°"
+            optional
+            value={draft.transitOrb}
+            min={0}
+            max={10}
+            step="any"
+            disabled={!draft.transit}
+            onChange={(transitOrb) => {
+              update({ transitOrb });
+            }}
+          />
         </OverlayRow>
         <OverlayRow
           label={t.progressed}
@@ -300,6 +335,37 @@ function OverlayDraft({
             disabled={!draft.directed}
             onChange={(directedDate) => {
               update({ directedDate });
+            }}
+          />
+        </OverlayRow>
+        <OverlayRow
+          label={t.solarArc}
+          checked={draft.solarArc}
+          {...rowControls('solarArc', t.solarArc)}
+          onChange={(solarArc) => {
+            update({ solarArc });
+          }}
+        >
+          <DateField
+            label={t.solarArcDate}
+            value={draft.solarArcDate}
+            disabled={!draft.solarArc}
+            onChange={(solarArcDate) => {
+              update({ solarArcDate });
+            }}
+          />
+          <NumberField
+            label={t.solarArcOrb}
+            help={t.orbHelp}
+            unit="°"
+            optional
+            value={draft.solarArcOrb}
+            min={0}
+            max={10}
+            step="any"
+            disabled={!draft.solarArc}
+            onChange={(solarArcOrb) => {
+              update({ solarArcOrb });
             }}
           />
         </OverlayRow>
@@ -375,6 +441,14 @@ function OverlayDraft({
           update({ interRingAspects });
         }}
       />
+      <Checkbox
+        label={t.chartFacts}
+        checked={draft.chartFacts}
+        onChange={(chartFacts) => {
+          update({ chartFacts });
+        }}
+      />
+      <p className="hint">{t.chartFactsHint}</p>
     </div>
   );
 }

@@ -62,6 +62,7 @@ import {
 } from '../domain/chart-compute.js';
 import { computeDraconic } from '../domain/draconic.js';
 import { computeRelocatedChart } from '../domain/relocated-chart.js';
+import { computeSolarArcDirections, type SolarArcDirectionsData } from '../domain/solar-arc-directions.js';
 import { computeSecondaryProgression, type SecondaryProgressionData } from '../domain/secondary-progression.js';
 import { computeTransit } from '../domain/transit.js';
 import { computeLunarReturnChart, computeSolarReturnChart } from '../domain/return-chart.js';
@@ -137,6 +138,7 @@ import {
   type ChartOverlaySettings,
   type ChartOverlaySource,
 } from './ChartOverlaySettingsPanel.js';
+import { orbLimitDegrees, presetOverlaySettings } from './preset-overlay-settings.js';
 import { chartOverlaySettingsPanelMessages } from './ChartOverlaySettingsPanel.messages.js';
 import { Button } from './primitives/Button.js';
 import type { FormulaProblem } from './custom-point-problem.js';
@@ -278,6 +280,18 @@ function directedOverlayRing(data: DirectedChart, label: string): WheelRingInput
     bodies: data.positions.map((position) => ({
       body: position.body,
       key: position.key,
+      longitude: position.longitude,
+    })),
+  };
+}
+
+function solarArcOverlayRing(data: SolarArcDirectionsData, label: string): WheelRingInput {
+  return {
+    label,
+    houses: data.houses,
+    bodies: data.directedPositions.map((position) => ({
+      body: position.body,
+      key: bodyById(position.body)?.key ?? String(position.body),
       longitude: position.longitude,
     })),
   };
@@ -676,11 +690,14 @@ export function ChartDataView({
   // The wheel's markup is cached on these, so a change of symbol form redraws it.
   const [variants] = useGlyphVariants();
   const overlayT = useMessages(chartOverlaySettingsPanelMessages);
-  const [overlaySettings, setOverlaySettings] = useState<ChartOverlaySettings>(() =>
-    initialTransitDate === undefined
-      ? DEFAULT_CHART_OVERLAY_SETTINGS
-      : { ...DEFAULT_CHART_OVERLAY_SETTINGS, transit: true, transitDate: initialTransitDate },
+  const openingOverlaySettings = useMemo<ChartOverlaySettings>(
+    () =>
+      initialTransitDate === undefined
+        ? DEFAULT_CHART_OVERLAY_SETTINGS
+        : { ...DEFAULT_CHART_OVERLAY_SETTINGS, transit: true, transitDate: initialTransitDate },
+    [initialTransitDate],
   );
+  const [overlaySettings, setOverlaySettings] = useState<ChartOverlaySettings>(openingOverlaySettings);
   const [overlayLoad, setOverlayLoad] = useState<OverlayLoad>({ kind: 'idle' });
 
   const pointVisibility = useMemo(() => toPointVisibilityOptions(extendedSettings), [extendedSettings]);
@@ -763,7 +780,16 @@ export function ChartDataView({
             ...calculationOptions,
             orbConfig: orbConfigForContext('transit', calculationOptions.orbConfig ?? DEFAULT_ORB_CONFIG),
           });
-          addChart('transit', overlayT.transit, transit.transit, transit.contacts);
+          // A transit orb limit (#1190) only hides wider contacts from the rings' cross-aspects; nothing is recalculated.
+          const transitOrb = orbLimitDegrees(overlaySettings.transitOrb);
+          addChart(
+            'transit',
+            overlayT.transit,
+            transit.transit,
+            transitOrb === undefined
+              ? transit.contacts
+              : transit.contacts.filter((contact) => contact.orb <= transitOrb),
+          );
         }
         if (overlaySettings.progressed) {
           const parts = dateParts(overlaySettings.progressedDate);
@@ -797,6 +823,25 @@ export function ChartDataView({
           overlays.set('directed', {
             ring: directedOverlayRing(directed, overlayT.directed),
             provenance: `${snapshot} · ${overlayT.primaryDirectionsProvenance}`,
+          });
+        }
+        if (overlaySettings.solarArc) {
+          const parts = dateParts(overlaySettings.solarArcDate);
+          if (parts === undefined) throw new Error('Solar arc date is incomplete.');
+          const [year, month, day] = parts;
+          const targetJd = await overlayContext.provider.julianDayFromUtc(year, month, day, 12, 0, 0);
+          const arcData = await computeSolarArcDirections(
+            overlayContext.moment,
+            targetJd,
+            overlayContext.provider,
+            calculationOptions,
+          );
+          const solarArcOrb = orbLimitDegrees(overlaySettings.solarArcOrb);
+          overlays.set('solarArc', {
+            ring: solarArcOverlayRing(arcData, overlayT.solarArc),
+            contacts:
+              solarArcOrb === undefined ? arcData.contacts : arcData.contacts.filter((c) => c.orb <= solarArcOrb),
+            provenance: `${snapshot} · ${overlayT.solarArcProvenance}`,
           });
         }
         if (overlaySettings.return) {
@@ -898,11 +943,16 @@ export function ChartDataView({
     setOrbCaps(undefined);
     setPresetKey(undefined);
   }, []);
-  const choosePreset = useCallback((preset: ConsultationPreset | undefined): void => {
-    setAspectFamilies(new Set(preset?.families ?? []));
-    setOrbCaps(preset?.orbs);
-    setPresetKey(preset?.key);
-  }, []);
+  const choosePreset = useCallback(
+    (preset: ConsultationPreset | undefined): void => {
+      setAspectFamilies(new Set(preset?.families ?? []));
+      setOrbCaps(preset?.orbs);
+      setPresetKey(preset?.key);
+      // The preset's layers, chart facts and transit and solar arc orbs (#1190): on demand only, for this chart.
+      setOverlaySettings((current) => presetOverlaySettings(current, preset, openingOverlaySettings));
+    },
+    [openingOverlaySettings],
+  );
   // The aspect family and preset Selects go into the chart-type row's slot (#1224). A page with no chart-type row has
   // no slot, and keeps them where they were: under the wheel, and above the matrix.
   const [controlsSlot, setControlsSlot] = useState<HTMLElement | null>(null);
@@ -1313,6 +1363,7 @@ export function ChartDataView({
                       locale,
                       rulership,
                       boundsScheme,
+                      overlaySettings.chartFacts,
                     )}
                 </div>
               )}
