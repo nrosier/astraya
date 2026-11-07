@@ -89,6 +89,11 @@ docs/references/*
 # Playwright MCP screenshots left in the repo root during manual checks.
 /*.png
 
+# Diagnostic logs written by the advisory oxlint CI job (#1284), and by anyone
+# reproducing it locally. Report output, not source.
+/oxlint-syntactic.log
+/oxlint-type-aware.log
+
 # Claude Code runtime state (locks, schedules, worktrees, checkpoints, per-machine memory),
 # mirrored from the shared .git/info/exclude so every checkout ignores it.
 **/.claude/scheduled_tasks.lock
