@@ -77,10 +77,25 @@ test('a natal, transit, and progressed triwheel is independently configurable (#
   await expect(page.locator('[data-ring-legend="0"]')).toContainText('Natal');
   await expect(page.locator('[data-ring-legend="1"]')).toContainText('Transit');
   await expect(page.locator('[data-ring-legend="2"]')).toContainText('Secondary progressed ring');
+  // The disclosure keeps one spacing step clear of the hint line under it (owner visual review 2026-11-07, #1190).
+  const diagnostics = await page.locator('.chart-diagnostics').boundingBox();
+  const hint = await page.locator('.chart-wheel-hint').boundingBox();
+  if (diagnostics === null || hint === null)
+    throw new Error('expected the disclosure and the hint to have a layout box');
+  const step = await page.evaluate<number>(`(() => {
+    const unit = document.createElement('div');
+    unit.style.height = 'var(--space-3)';
+    document.body.append(unit);
+    const px = unit.getBoundingClientRect().height;
+    unit.remove();
+    return px;
+  })()`);
+  expect(hint.y - (diagnostics.y + diagnostics.height)).toBeGreaterThanOrEqual(step - 0.5);
   // The ring calculation basis is behind a Diagnostics disclosure, closed by default (#1232).
   await expect(page.getByRole('region', { name: 'Ring calculation basis' })).toHaveCount(0);
   await page.getByRole('button', { name: /^Diagnostics/ }).click();
   await expect(page.getByRole('region', { name: 'Ring calculation basis' })).toContainText('Natal');
+  await expect(page.getByText('How each extra ring was calculated', { exact: false })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Ring calculation basis' })).toContainText('Transit');
   await expect(page.getByRole('region', { name: 'Ring calculation basis' })).toContainText('Secondary progressed ring');
   await expect(page.locator('[data-ring-a="1"][data-ring-b="0"]')).not.toHaveCount(0);
