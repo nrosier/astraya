@@ -94,12 +94,13 @@ type Load =
     }
   | { readonly kind: 'error'; readonly message: string };
 
+/** Every settled variant names the `PrimaryDirectionsData` it was computed from, so a render can tell it is stale (#1302). */
 type DirectedLoad =
   | { readonly kind: 'loading' }
-  | { readonly kind: 'before-birth'; readonly ageYears: number }
-  | { readonly kind: 'unavailable' }
-  | { readonly kind: 'ready'; readonly chart: DirectedChart }
-  | { readonly kind: 'error'; readonly message: string };
+  | { readonly kind: 'before-birth'; readonly ageYears: number; readonly source: PrimaryDirectionsData }
+  | { readonly kind: 'unavailable'; readonly source: PrimaryDirectionsData }
+  | { readonly kind: 'ready'; readonly chart: DirectedChart; readonly source: PrimaryDirectionsData }
+  | { readonly kind: 'error'; readonly message: string; readonly source: PrimaryDirectionsData };
 
 type Messages = typeof primaryDirectionsViewMessages.en;
 
@@ -241,7 +242,13 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
   const [significators, setSignificators] = useState<readonly string[]>(PRIMARY_DIRECTION_SIGNIFICATORS);
   const [promissors, setPromissors] = useState<readonly string[]>(PRIMARY_DIRECTION_PROMISSORS);
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
-  const [directed, setDirected] = useState<DirectedLoad>({ kind: 'loading' });
+  const [directedState, setDirected] = useState<DirectedLoad>({ kind: 'loading' });
+  // The directed chart is recomputed in an effect, one render after the directions load. Until then `directedState` still holds the
+  // chart of the previous directions, which must not be drawn beside the new tables (#1302): read it as loading.
+  const directed: DirectedLoad =
+    directedState.kind !== 'loading' && load.kind === 'ready' && directedState.source !== load.data
+      ? { kind: 'loading' }
+      : directedState;
 
   const targetDate = useMemo(() => {
     const [year, month, day] = asOf.split('-').map(Number);
@@ -284,7 +291,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
     }
     const data = load.data;
     if (data.mode === 'converse') {
-      setDirected({ kind: 'unavailable' });
+      setDirected({ kind: 'unavailable', source: data });
       return undefined;
     }
     const effect = { cancelled: false };
@@ -298,14 +305,14 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
         const targetJd = await provider.julianDay(targetDate.year, targetDate.month, targetDate.day, 12);
         const age = ageInYears(data.natalJd, targetJd);
         if (age < 0) {
-          if (!effect.cancelled) setDirected({ kind: 'before-birth', ageYears: age });
+          if (!effect.cancelled) setDirected({ kind: 'before-birth', ageYears: age, source: data });
           return;
         }
         const chart = await directedChartAt(data, age, provider);
-        if (!effect.cancelled) setDirected({ kind: 'ready', chart });
+        if (!effect.cancelled) setDirected({ kind: 'ready', chart, source: data });
       } catch (error) {
         if (!effect.cancelled)
-          setDirected({ kind: 'error', message: error instanceof Error ? error.message : String(error) });
+          setDirected({ kind: 'error', message: error instanceof Error ? error.message : String(error), source: data });
       }
     })();
 
