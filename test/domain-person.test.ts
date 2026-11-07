@@ -12,6 +12,7 @@ import {
   readRulership,
   serializeRulership,
   readRelocationPlaces,
+  readText,
   serializeCalculationSettings,
 } from '../src/domain/person.js';
 
@@ -282,5 +283,39 @@ describe('the source of the birth data (#1262)', () => {
       expect(person.sourceKind).toBeUndefined();
       expect(person.sourceNote).toBeUndefined();
     }
+  });
+});
+
+describe('values stored before the 200-character cap (#1288)', () => {
+  const longName = 'N'.repeat(300);
+  const longPlace = 'P'.repeat(300);
+  const emojiName = '\u{1F319}'.repeat(300);
+
+  it('reads an over-length displayName and placeLabel back untruncated', () => {
+    const person = buildPerson(
+      'p-long',
+      new Map<string, unknown>([
+        ['displayName', longName],
+        ['placeLabel', longPlace],
+      ]),
+    );
+    expect(person.displayName).toBe(longName);
+    expect(person.displayName).toHaveLength(300);
+    expect(person.placeLabel).toBe(longPlace);
+    expect(person.placeLabel).toHaveLength(300);
+  });
+
+  it('reads 300 emoji code points back untruncated', () => {
+    const person = buildPerson(
+      'p-emoji',
+      new Map<string, unknown>([
+        ['displayName', emojiName],
+        ['placeLabel', emojiName],
+      ]),
+    );
+    expect(person.displayName).toBe(emojiName);
+    expect(Array.from(person.displayName)).toHaveLength(300);
+    expect(person.placeLabel).toBe(emojiName);
+    expect(readText(emojiName)).toBe(emojiName);
   });
 });
