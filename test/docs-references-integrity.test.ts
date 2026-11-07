@@ -4,6 +4,7 @@
  * explicit reason on a clone that lacks them. The id and `used_by` checks need only tracked files and always run.
  * Each failure mode is also proven against temp-dir fixtures, independent of the real local files.
  */
+import { createHash } from 'node:crypto';
 import {
   existsSync,
   mkdirSync,
@@ -23,6 +24,7 @@ interface SourceRecord {
   readonly processed_path?: string | null;
   readonly text_path?: string | null;
   readonly pages_path?: string | null;
+  readonly sha256?: string | null;
   readonly provisional?: boolean;
   readonly used_by?: readonly string[];
 }
@@ -32,7 +34,8 @@ interface IntegrityReport {
   readonly usedByProblems: readonly string[];
   readonly recordFileProblems: readonly string[];
   readonly unlistedFileProblems: readonly string[];
-  /** Set when `sources/` is absent, so the two file-tree checks could not run. */
+  readonly shaProblems: readonly string[];
+  /** Set when `sources/` is absent, so the file-tree and hash checks could not run. */
   readonly localFilesAbsentReason: string | null;
 }
 
@@ -65,7 +68,14 @@ export function checkReferenceIntegrity(root: string): IntegrityReport {
     ? null
     : 'Mac-local files absent: sources/ not present';
   if (localFilesAbsentReason !== null) {
-    return { idProblems, usedByProblems, recordFileProblems: [], unlistedFileProblems: [], localFilesAbsentReason };
+    return {
+      idProblems,
+      usedByProblems,
+      recordFileProblems: [],
+      unlistedFileProblems: [],
+      shaProblems: [],
+      localFilesAbsentReason,
+    };
   }
 
   const recordFileProblems = records.flatMap((r) =>
@@ -90,7 +100,17 @@ export function checkReferenceIntegrity(root: string): IntegrityReport {
     .filter((f) => !isListed(resolve(f)))
     .map((f) => `${relative(root, f)} has no sources.json entry`);
 
-  return { idProblems, usedByProblems, recordFileProblems, unlistedFileProblems, localFilesAbsentReason };
+  const shaProblems = records.flatMap((r) => {
+    const p = r.processed_path;
+    if (typeof p !== 'string' || typeof r.sha256 !== 'string' || !existsSync(join(root, p))) return [];
+    if (!statSync(join(root, p)).isFile()) return [];
+    const actual = createHash('sha256')
+      .update(readFileSync(join(root, p)))
+      .digest('hex');
+    return actual === r.sha256 ? [] : [`${r.id}: sha256 of ${p} is ${actual}, sources.json records ${r.sha256}`];
+  });
+
+  return { idProblems, usedByProblems, recordFileProblems, unlistedFileProblems, shaProblems, localFilesAbsentReason };
 }
 
 const tmpRoots: string[] = [];
@@ -137,6 +157,7 @@ describe('checkReferenceIntegrity (fixtures)', () => {
       usedByProblems: [],
       recordFileProblems: [],
       unlistedFileProblems: [],
+      shaProblems: [],
       localFilesAbsentReason: null,
     });
   });
@@ -147,6 +168,20 @@ describe('checkReferenceIntegrity (fixtures)', () => {
     expect(report.recordFileProblems).toHaveLength(2);
     expect(report.recordFileProblems.join('\n')).toContain('processed_path');
     expect(report.recordFileProblems.join('\n')).toContain('pages_path');
+  });
+
+  it('passes when processed_path content matches sha256 and skips records without a hash', () => {
+    const hashed = { ...good, sha256: createHash('sha256').update('x').digest('hex') };
+    const noHash = { ...good, id: 'other-source-1650', sha256: null, used_by: [] };
+    const report = checkReferenceIntegrity(fixture([hashed, noHash], goodFiles));
+    expect(report.shaProblems).toEqual([]);
+  });
+
+  it('fails when processed_path content does not match sha256', () => {
+    const wrong = createHash('sha256').update('y').digest('hex');
+    const report = checkReferenceIntegrity(fixture([{ ...good, sha256: wrong }], goodFiles));
+    expect(report.shaProblems).toHaveLength(1);
+    expect(report.shaProblems.join('\n')).toContain('lilly-christian-astrology-1647: sha256 of');
   });
 
   it('fails when a used_by path does not exist', () => {
@@ -179,6 +214,7 @@ describe('checkReferenceIntegrity (fixtures)', () => {
     const report = checkReferenceIntegrity(root);
     expect(report.localFilesAbsentReason).toBe('Mac-local files absent: sources/ not present');
     expect(report.recordFileProblems).toEqual([]);
+    expect(report.shaProblems).toEqual([]);
     expect(report.usedByProblems).toHaveLength(1);
   });
 });
@@ -201,6 +237,13 @@ describe('docs/references/sources.json (real tree)', () => {
     () => {
       expect(report?.recordFileProblems).toEqual([]);
       expect(report?.unlistedFileProblems).toEqual([]);
+    },
+  );
+
+  it.skipIf(!present || (report?.localFilesAbsentReason ?? null) !== null)(
+    'has every processed_path matching its recorded sha256 (skipped: Mac-local files absent: sources/ not present)',
+    () => {
+      expect(report?.shaProblems).toEqual([]);
     },
   );
 });
