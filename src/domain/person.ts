@@ -25,7 +25,7 @@
  * @module person
  * @purpose Defines the `Person` entity — the primary entity and owner of birth data that every computed chart derives from — and assembles it from op-log register values.
  * @conventions Stores the civil-time/coordinates input as typed, never a resolved UTC offset, since historical timezone data can change (an `OffsetWitness` records what a past resolution said, for detecting drift, not for reuse); a field this build cannot read is reported as absent via `missing`, never defaulted (e.g. `{0,0}` is a real place, so it is never substituted for missing coordinates); `TimeAccuracy` distinguishes a genuinely unknown birth time, for which houses/angles are meaningless rather than merely approximate.
- * @exports Person, TimeAccuracy, BirthSourceKind, BIRTH_SOURCE_KINDS, readBirthSourceKind, OffsetWitness, RelocationPlace, CustomPointDefinition, ChosenFixedStar, PERSON_FIELDS, buildPerson, readCivil, readCoordinates, readCalendar, readTimeAccuracy, readWitness, readOffsetOverride, readText, readRelocationPlaces, readCustomPoints, readFixedStars, readCalculationSettings, CalculationSettingsRead, serializeCalculationSettings, readRulership, RulershipRead, serializeRulership, newPersonCalculationMutations
+ * @exports Person, TimeAccuracy, BirthSourceKind, BIRTH_SOURCE_NOTE_MAX_CHARACTERS, BIRTH_SOURCE_KINDS, readBirthSourceKind, OffsetWitness, RelocationPlace, CustomPointDefinition, ChosenFixedStar, PERSON_FIELDS, buildPerson, readCivil, readCoordinates, readCalendar, readTimeAccuracy, readWitness, readOffsetOverride, readText, readRelocationPlaces, readCustomPoints, readFixedStars, readCalculationSettings, CalculationSettingsRead, serializeCalculationSettings, readRulership, RulershipRead, serializeRulership, newPersonCalculationMutations
  */
 import { parseFormula } from '../astrology/formula-parser.js';
 import { isRulershipChoice, type RulershipChoice } from '../astrology/rulership.js';
@@ -234,6 +234,13 @@ export function readCalendar(value: unknown): Calendar | undefined {
 /** Where the birth data came from (#1262), as the record chooses it; the free-text note beside it says more. */
 export const BIRTH_SOURCE_KINDS = ['certificate', 'family', 'memory', 'collection', 'other'] as const;
 export type BirthSourceKind = (typeof BIRTH_SOURCE_KINDS)[number];
+
+/**
+ * The longest a source note may be, in code points: a one-line pointer (a registry, a collection entry), the same
+ * limit as a pin's label. One uncapped register could make a single op too big for the relay to take, which stops the
+ * device syncing anything after it (db-integrity review of #1262).
+ */
+export const BIRTH_SOURCE_NOTE_MAX_CHARACTERS = 200;
 
 /** A recognised source kind, or undefined: an unset or unrecognised value reads as "not recorded", never a guess. */
 export function readBirthSourceKind(value: unknown): BirthSourceKind | undefined {

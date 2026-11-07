@@ -39,7 +39,7 @@ import { TimeField } from './primitives/TimeField.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { useStore, useStoreState } from './store-context.js';
 import type { Calendar } from '../time/types.js';
-import type { TimeAccuracy } from '../domain/person.js';
+import { BIRTH_SOURCE_NOTE_MAX_CHARACTERS, type TimeAccuracy } from '../domain/person.js';
 import { PageHeader } from './PageHeader.js';
 import { orbSourceName, useCalculationBasisLine } from './calculation-basis.js';
 import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
@@ -312,6 +312,7 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
               <TextField
                 label={t.sourceNoteLabel}
                 value={current.sourceNote}
+                inputProps={{ maxLength: BIRTH_SOURCE_NOTE_MAX_CHARACTERS }}
                 onChange={(value) => {
                   set('sourceNote', value);
                 }}

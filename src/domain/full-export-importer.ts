@@ -61,6 +61,7 @@ import {
   readTimeAccuracy,
   type Person,
   readBirthSourceKind,
+  BIRTH_SOURCE_NOTE_MAX_CHARACTERS,
 } from './person.js';
 import type { ExtendedSettings } from '../chart/extended-settings.js';
 import type { BirthMomentInput, Calendar } from '../time/types.js';
@@ -243,6 +244,12 @@ function validatePerson(raw: unknown, path: string): Result<ExportedPerson, Impo
   const sourceNote = raw.sourceNote === undefined ? undefined : readText(raw.sourceNote);
   if (raw.sourceNote !== undefined && sourceNote === undefined) {
     return malformed(`${path}.sourceNote`, 'not a string');
+  }
+  if (sourceNote !== undefined && Array.from(sourceNote).length > BIRTH_SOURCE_NOTE_MAX_CHARACTERS) {
+    return malformed(
+      `${path}.sourceNote`,
+      `longer than the ${String(BIRTH_SOURCE_NOTE_MAX_CHARACTERS)}-character limit`,
+    );
   }
   const missingRaw = raw.missing;
   if (!Array.isArray(missingRaw) || !missingRaw.every((entry): entry is string => typeof entry === 'string')) {

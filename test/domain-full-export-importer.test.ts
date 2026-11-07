@@ -152,6 +152,40 @@ describe('validateFullExport', () => {
     expect(bad.error).toMatchObject({ kind: 'malformed', path: 'people[0].sourceKind' });
   });
 
+  it('refuses a source note over the cap, before any write (#1262)', async () => {
+    const copy = roundTripped(await build([ADA])) as { people: [{ sourceNote: unknown }] };
+    copy.people[0].sourceNote = 'x'.repeat(201);
+    const result = validateFullExport(copy);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toMatchObject({ kind: 'malformed', path: 'people[0].sourceNote' });
+  });
+
+  it('restores a source onto a person, and never clears the one this device holds when a file has none (#1262)', async () => {
+    const withSource = validateFullExport(
+      roundTripped(await build([{ ...ADA, sourceKind: 'certificate', sourceNote: 'GRO register' }])),
+    );
+    const without = validateFullExport(roundTripped(await build([ADA])));
+    expect(withSource.ok && without.ok).toBe(true);
+    if (!withSource.ok || !without.ok) return;
+    const fields = (preview: ReturnType<typeof stageFullExportRestore>): string[] =>
+      preview.items[0]?.mutations.map((m) => m.field) ?? [];
+
+    expect(fields(stageFullExportRestore(withSource.value, new Map()))).toEqual(
+      expect.arrayContaining(['sourceKind', 'sourceNote']),
+    );
+    const held: Person = { ...ADA, sourceKind: 'memory', sourceNote: 'Told by her mother' };
+    const cleared = fields(stageFullExportRestore(without.value, new Map([[ADA.id, held]])));
+    expect(cleared).not.toContain('sourceKind');
+    expect(cleared).not.toContain('sourceNote');
+    // A file that says the same thing as this device writes nothing.
+    const same = stageFullExportRestore(
+      withSource.value,
+      new Map([[ADA.id, { ...ADA, sourceKind: 'certificate', sourceNote: 'GRO register' }]]),
+    );
+    expect(fields(same)).not.toContain('sourceKind');
+  });
+
   it('reads a file with no source as not recorded, not as a refusal (#1262)', async () => {
     const result = validateFullExport(roundTripped(await build([ADA])));
     expect(result.ok).toBe(true);
