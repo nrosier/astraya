@@ -33,6 +33,8 @@ import { readSavedTransitFilter, type SavedTransitFilter } from '../astrology/tr
 import type { ExtendedSettings } from '../chart/extended-settings.js';
 import {
   canonicalJson,
+  orbLibraryRegister,
+  orbLibraryWrites,
   readAccountFieldValue,
   serializeAccountValue,
   type AccountPreferenceValues,
@@ -387,13 +389,18 @@ function recompute(): void {
   for (const listener of listeners) listener();
 }
 
+/** The store's registers by field. The orb library is one value here, folded from its per-profile registers (#1250). */
 function registersOf(store: Store): FieldValues {
   const out: FieldValues = {};
   for (const field of ACCOUNT_FIELDS) {
-    const register = store.state.account[field];
+    const register = foldedRegister(store.state.account, field);
     if (register !== undefined) out[field] = register.value;
   }
   return out;
+}
+
+function foldedRegister(registers: AccountRegisters, field: AccountField): AccountRegister | undefined {
+  return field === ACCOUNT_ORB_LIBRARY_FIELD ? orbLibraryRegister(registers) : registers[field];
 }
 
 function refreshFromStore(): void {
@@ -485,7 +492,10 @@ export function clearAccountPreferenceFailure(): void {
  * durable commit). Resolves once durable; on failure the change is rolled back, `failure` is set, and it rejects.
  */
 export async function setAccountPreferences(changes: Partial<AccountPreferenceValues>): Promise<void> {
-  const writes: { readonly field: AccountField; readonly value: JsonValue }[] = [];
+  /** What the screens see change, one entry per setting. */
+  const changed: { readonly field: AccountField; readonly value: JsonValue }[] = [];
+  /** What is appended: the same, except that the orb library is one operation per changed profile. */
+  const writes: { readonly field: string; readonly value: JsonValue }[] = [];
   for (const field of ACCOUNT_FIELDS) {
     if (!(field in changes)) continue;
     const next = changes[field];
@@ -495,19 +505,29 @@ export async function setAccountPreferences(changes: Partial<AccountPreferenceVa
     if (current !== undefined && canonicalJson(serializeAccountValue(field, current)) === canonicalJson(value)) {
       continue;
     }
-    writes.push({ field, value });
+    changed.push({ field, value });
+    if (field === ACCOUNT_ORB_LIBRARY_FIELD) {
+      // One register per profile, so a profile added on another device is never replaced by this save (#1250). A
+      // library the store never wrote (a legacy value shown from the device) is written in full.
+      const base = effective(field).written ? (current as OrbLibrary | undefined) : undefined;
+      for (const write of orbLibraryWrites(next as OrbLibrary, base ?? EMPTY_ORB_LIBRARY)) {
+        writes.push({ field: write.field, value: write.value });
+      }
+    } else {
+      writes.push({ field, value });
+    }
   }
-  if (writes.length === 0) return;
+  if (changed.length === 0) return;
 
   const target = bound?.store;
   if (target === undefined) {
     // No store open: this page only, nothing durable (ADR 0004 section 2.4).
-    fields = { ...fields, ...Object.fromEntries(writes.map(({ field, value }) => [field, value])) };
+    fields = { ...fields, ...Object.fromEntries(changed.map(({ field, value }) => [field, value])) };
     recompute();
     return;
   }
 
-  for (const { field, value } of writes) inflight.set(field, value);
+  for (const { field, value } of changed) inflight.set(field, value);
   failure = undefined;
   recompute();
   try {
@@ -517,14 +537,14 @@ export async function setAccountPreferences(changes: Partial<AccountPreferenceVa
   } catch (error) {
     // Roll back only if this store is still the bound one; a newer bind already replaced everything.
     if (bound?.store === target) {
-      for (const { field } of writes) inflight.delete(field);
+      for (const { field } of changed) inflight.delete(field);
       failure = error instanceof Error ? error.message : String(error);
       recompute();
     }
     throw error;
   }
   if (bound?.store === target) {
-    for (const { field, value } of writes) if (inflight.get(field) === value) inflight.delete(field);
+    for (const { field, value } of changed) if (inflight.get(field) === value) inflight.delete(field);
     refreshFromStore();
   }
 }
@@ -533,7 +553,7 @@ export async function setAccountPreferences(changes: Partial<AccountPreferenceVa
 export function captureSignInCandidates(anonymous: Store): AccountRegisters {
   const out: Partial<Record<AccountField, AccountRegister>> = {};
   for (const field of ACCOUNT_FIELDS) {
-    const register = anonymous.state.account[field];
+    const register = foldedRegister(anonymous.state.account, field);
     if (register !== undefined && register.value !== null) out[field] = register;
   }
   return out;

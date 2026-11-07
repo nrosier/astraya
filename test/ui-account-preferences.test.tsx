@@ -287,8 +287,9 @@ describe('the orb library and the saved transit filters (#1220)', () => {
       orbContextSource: { transit: 'house-style' },
       transitFilterYearly: { preset: 'outer' },
     });
+    // The library is one register per profile (#1250).
     expect(store.outgoing().map((record) => record.field)).toEqual([
-      'orbLibrary',
+      'orbProfile.house-style',
       'orbContextSource',
       'transitFilterYearly',
     ]);

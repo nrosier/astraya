@@ -77,11 +77,11 @@ export function validateOrbProfileRecord(value: unknown): OrbProfileRecord | und
 }
 
 /** Validates a stored library. Any profile that fails is dropped on its own, and duplicate ids keep the first. */
-export function validateOrbLibrary(value: unknown): OrbLibrary {
+export function validateOrbLibrary(value: unknown, limit: number = MAX_ORB_PROFILES): OrbLibrary {
   if (!isRecord(value) || !Array.isArray(value.profiles)) return { profiles: [] };
   const seen = new Set<string>();
   const profiles: OrbProfileRecord[] = [];
-  for (const item of value.profiles.slice(0, MAX_ORB_PROFILES)) {
+  for (const item of value.profiles.slice(0, limit) as unknown[]) {
     const profile = validateOrbProfileRecord(item);
     if (profile === undefined || seen.has(profile.id)) continue;
     seen.add(profile.id);
@@ -92,12 +92,13 @@ export function validateOrbLibrary(value: unknown): OrbLibrary {
 
 /**
  * The library a value holds, or `undefined` when any part of it is unreadable (a dropped profile, a duplicate id, too
- * many profiles). `validateOrbLibrary` repairs by dropping; this is for a synced value (#1220), where a silent repair
+ * many profiles; `limit` defaults to the editor's cap, and the synced library passes none because concurrent additions on
+ * two devices can exceed it, #1250). `validateOrbLibrary` repairs by dropping; this is for a synced value (#1220), where a silent repair
  * would change a reader's choice on one device but not another.
  */
-export function readOrbLibraryStrict(value: unknown): OrbLibrary | undefined {
-  if (!isRecord(value) || !Array.isArray(value.profiles) || value.profiles.length > MAX_ORB_PROFILES) return undefined;
-  const library = validateOrbLibrary(value);
+export function readOrbLibraryStrict(value: unknown, limit: number = MAX_ORB_PROFILES): OrbLibrary | undefined {
+  if (!isRecord(value) || !Array.isArray(value.profiles) || value.profiles.length > limit) return undefined;
+  const library = validateOrbLibrary(value, limit);
   return library.profiles.length === value.profiles.length ? library : undefined;
 }
 

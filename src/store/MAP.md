@@ -2,7 +2,7 @@
 
 IndexedDB-backed op-log (local source of truth). HLC-ordered operations, folded into current state. "Spine" of synced ops frozen forever (ADR 0002).
 
-- `account.ts` — Account preferences entity (#1066, ADR 0004): `account`/`preferences` fold to allowlisted per-field registers, write guard refusing `deleted`/`purged`/other ids, adoption filter, sign-in reconcile state shape. Deps: `hlc`, `ops`, `oplog` (type).
+- `account.ts` — Account preferences entity (#1066, ADR 0004): `account`/`preferences` fold to allowlisted per-field registers (and `orbProfile.<id>` per-profile orb registers, #1250), write guard refusing `deleted`/`purged`/other ids, adoption filter, sign-in reconcile state shape. Deps: `hlc`, `ops`, `oplog` (type).
 - `db.ts` — IndexedDB persistence: schema/migrations, CRUD for op records, snapshot, device/sync metadata. Durability before UI success. Deps: ops, fold.
 - `fold.ts` — Append-only log → people/charts/notes/saved queries/pins/account preferences (deterministic, byte-identical state on two devices). Last-write-wins field registers, note folding, materialization, snapshot. Deps: domain/chart, domain/person, account, hlc, notes, ops, pins, saved-queries.
 - `hlc.ts` — Hybrid logical clock: causally-total timestamps across devices (encode/decode, tick, receive, device-id generation/validation, drift detection). Deps: none.
