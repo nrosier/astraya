@@ -82,8 +82,9 @@ export function OrbLibraryEditor({
       return;
     }
     const others = profiles.filter((profile) => profile.id !== next.id);
-    // A 51st profile would make the whole library unreadable on every device, so it is refused here.
-    if (others.length >= MAX_ORB_PROFILES) {
+    // A new 51st profile is refused here. Concurrent additions on two devices can still pass 50 (#1250); the library
+    // stays readable, and an existing profile can still be edited or removed.
+    if (existing === undefined && others.length >= MAX_ORB_PROFILES) {
       setError(t.tooMany(MAX_ORB_PROFILES));
       setStatus(undefined);
       return;

@@ -8,6 +8,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { MAX_ORB_PROFILES, type OrbProfileRecord } from '../src/astrology/orb-library.js';
+import { serializeOrbProfile } from '../src/domain/account-preferences.js';
 import { DB_NAME } from '../src/store/db.js';
 import { openStore, type Store } from '../src/store/store.js';
 import {
@@ -148,6 +149,15 @@ describe('removing a profile', () => {
   it('writes the library and the reset choices in one durable commit', async () => {
     const store = await openStore({ name: 'astraya-orb-editor-remove' });
     opened.push(store);
+    // Both profiles are in the account first, as they are when the editor shows them.
+    await store.mutate(
+      [profile(1), profile(2)].map((entry) => ({
+        entity: 'account',
+        entityId: 'preferences',
+        field: `orbProfile.${entry.id}`,
+        value: serializeOrbProfile(entry),
+      })),
+    );
     bindAccountPreferences(store);
     const box = mount([profile(1), profile(2)], { transit: 'profile-1', natal: 'profile-2' });
     await act(async () => {
@@ -155,7 +165,10 @@ describe('removing a profile', () => {
       await Promise.resolve();
     });
     await new Promise((resolve) => setTimeout(resolve, 20));
-    expect(store.outgoing().map((record) => record.field)).toEqual(['orbLibrary', 'orbContextSource']);
+    const written = store.outgoing().slice(2);
+    expect(written.map((record) => record.field)).toEqual(['orbProfile.profile-1', 'orbContextSource']);
+    // The removed profile is a null in its own register (#1250), not a rewrite of the other profile.
+    expect(written[0]?.value).toBeNull();
     expect(store.state.account.orbContextSource?.value).toEqual({ version: 1, transit: 'card', natal: 'profile-2' });
   });
 });

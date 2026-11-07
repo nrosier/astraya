@@ -6,8 +6,8 @@
  * envelope, the spine, `OP_VERSION` or the relay. The account boundary is the per-account database and the relay's
  * per-user scoping, so the id carries no user identifier.
  *
- * **Each field is its own last-write-wins register**, folded like any other. Only the allowlisted fields are
- * materialised; any other field (a newer build's, say) stays in the log and is ignored here.
+ * **Each field is its own last-write-wins register**, folded like any other. Only the allowlisted fields (and the
+ * `orbProfile.<id>` family, #1250) are materialised; any other field (a newer build's, say) stays in the log and is ignored here.
  *
  * **Never deleted, never purged.** The relay treats any `purged: true` as a purge marker and would then refuse every
  * later preference write for that user. So `assertAccountMutation` refuses `deleted` and `purged` on this entity
@@ -18,8 +18,8 @@
  *
  * @module store/account
  * @purpose Folds the `account`/`preferences` entity into per-field registers, refuses account writes that could deny-list or erase it, and holds the sign-in reconciliation state shape.
- * @conventions Entity id is the frozen constant `preferences`; only `ACCOUNT_FIELDS` are materialised; `deleted`/`purged` are refused on write and ignored on fold; refusals carry a code so the UI owns the wording; fold and readers never throw.
- * @exports ACCOUNT_ENTITY, ACCOUNT_ENTITY_ID, ACCOUNT_LOCALE_FIELD, ACCOUNT_RULERSHIP_FIELD, ACCOUNT_PROFILE_FIELD, ACCOUNT_ORB_LIBRARY_FIELD, ACCOUNT_ORB_SOURCE_FIELD, ACCOUNT_TRANSIT_FILTER_DAILY_FIELD, ACCOUNT_TRANSIT_FILTER_YEARLY_FIELD, ACCOUNT_FIELDS, AccountField, isAccountField, AccountRegister, AccountRegisters, foldAccount, AccountRefusedError, assertAccountMutation, isAccountRecord, withoutAccountRecords, AccountReconcileState, readAccountReconcileState, newerHlc, AccountRefusal
+ * @conventions Entity id is the frozen constant `preferences`; only `ACCOUNT_FIELDS` and well-formed `orbProfile.<id>` fields are materialised; `deleted`/`purged` are refused on write and ignored on fold; refusals carry a code so the UI owns the wording; fold and readers never throw.
+ * @exports ACCOUNT_ENTITY, ACCOUNT_ENTITY_ID, ACCOUNT_LOCALE_FIELD, ACCOUNT_RULERSHIP_FIELD, ACCOUNT_PROFILE_FIELD, ACCOUNT_ORB_LIBRARY_FIELD, ACCOUNT_ORB_SOURCE_FIELD, ACCOUNT_TRANSIT_FILTER_DAILY_FIELD, ACCOUNT_TRANSIT_FILTER_YEARLY_FIELD, ACCOUNT_FIELDS, AccountField, isAccountField, ACCOUNT_ORB_PROFILE_PREFIX, AccountOrbProfileField, orbProfileField, orbProfileIdOf, isOrbProfileField, AccountRegister, AccountRegisters, foldAccount, AccountRefusedError, assertAccountMutation, isAccountRecord, withoutAccountRecords, AccountReconcileState, readAccountReconcileState, newerHlc, AccountRefusal
  */
 import { compareHlc, isHlc, type Hlc } from './hlc.js';
 import { isJsonValue, type JsonValue } from './ops.js';
@@ -39,6 +39,33 @@ export const ACCOUNT_ORB_LIBRARY_FIELD = 'orbLibrary';
 export const ACCOUNT_ORB_SOURCE_FIELD = 'orbContextSource';
 export const ACCOUNT_TRANSIT_FILTER_DAILY_FIELD = 'transitFilterDaily';
 export const ACCOUNT_TRANSIT_FILTER_YEARLY_FIELD = 'transitFilterYearly';
+
+/**
+ * Added by #1250 (ADR 0004 section 11): one register per orb profile, on the same entity, in a field named
+ * `orbProfile.<profile id>`. Two devices that each add a profile write different fields, so both survive; the
+ * whole-library `orbLibrary` field above stays readable as the older shape and is no longer written. The prefix is
+ * frozen forever once shipped.
+ */
+export const ACCOUNT_ORB_PROFILE_PREFIX = 'orbProfile.';
+export type AccountOrbProfileField = `orbProfile.${string}`;
+const ORB_PROFILE_ID = /^[A-Za-z0-9_-]{1,64}$/;
+
+/** The field one orb profile is stored in. */
+export function orbProfileField(id: string): AccountOrbProfileField {
+  return `${ACCOUNT_ORB_PROFILE_PREFIX}${id}`;
+}
+
+/** The profile id a field name carries, or `undefined` when the name is not a well-formed orb profile field. */
+export function orbProfileIdOf(field: string): string | undefined {
+  if (!field.startsWith(ACCOUNT_ORB_PROFILE_PREFIX)) return undefined;
+  const id = field.slice(ACCOUNT_ORB_PROFILE_PREFIX.length);
+  return ORB_PROFILE_ID.test(id) ? id : undefined;
+}
+
+/** Whether `field` is one of the per-profile orb fields. */
+export function isOrbProfileField(field: string): field is AccountOrbProfileField {
+  return orbProfileIdOf(field) !== undefined;
+}
 
 /** The closed allowlist of fields this build materialises (ADR 0004 section 2.2). */
 export const ACCOUNT_FIELDS = [
@@ -66,16 +93,23 @@ export interface AccountRegister {
   readonly hlc: Hlc;
 }
 
-/** The allowlisted registers that are set, by field. A field with no register is absent. */
-export type AccountRegisters = Readonly<Partial<Record<AccountField, AccountRegister>>>;
+/** The allowlisted registers that are set, by field (the per-profile orb fields included). A field with no register is absent. */
+export type AccountRegisters = Readonly<
+  Partial<Record<AccountField, AccountRegister>> & Partial<Record<AccountOrbProfileField, AccountRegister>>
+>;
 
 /** Keep only the allowlisted fields. `deleted`, `purged` and unknown fields are ignored, never surfaced. */
 export function foldAccount(fields: Readonly<Record<string, AccountRegister>> | undefined): AccountRegisters {
-  const out: Partial<Record<AccountField, AccountRegister>> = {};
+  const out: Partial<Record<AccountField, AccountRegister>> & Partial<Record<AccountOrbProfileField, AccountRegister>> =
+    {};
   if (fields === undefined) return out;
   for (const field of ACCOUNT_FIELDS) {
     const register = fields[field];
     if (register !== undefined) out[field] = register;
+  }
+  // Own keys only, and only well-formed names: a malformed id is kept in the log and ignored here.
+  for (const [field, register] of Object.entries(fields)) {
+    if (isOrbProfileField(field)) out[field] = register;
   }
   return out;
 }

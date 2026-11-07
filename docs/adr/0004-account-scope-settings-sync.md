@@ -66,14 +66,15 @@ An account preference is an ordinary operation. Nothing about the envelope chang
 
 ### 2.2 Fields (a closed allowlist for this entity)
 
-| Field                                       | Value                                                                     | Reader validation                                                                                                                                      |
-| ------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `locale`                                    | `"en"` or `"nl"`                                                          | `CORPUS_LOCALES` (`src/interpretation/schema.ts`)                                                                                                      |
-| `defaultRulership`                          | `"modern"`, `"traditional"` or `"both"`                                   | `isRulershipChoice` (`src/astrology/rulership.ts`)                                                                                                     |
-| `defaultCalculationProfile`                 | `{ version, settings }`, exactly `serializeCalculationSettings(settings)` | `readCalculationSettings` strict decoder (`src/domain/person.ts`); a newer or invalid value is `unreadable`                                            |
-| `orbLibrary`                                | `{ version: 1, profiles: [...] }`, at most 50 profiles (#1220)            | `readOrbLibraryStrict` (`src/astrology/orb-library.ts`); a dropped profile, a duplicate id or a version other than 1 is `unreadable`                   |
-| `orbContextSource`                          | `{ version: 1, transit?, synastry?, natal? }` (#1220)                     | `readOrbContextSourceStrict`; a context that is not a string, or a version other than 1, is `unreadable`                                               |
-| `transitFilterDaily`, `transitFilterYearly` | `{ version: 1, preset }` or `{ version: 1, custom }` (#1220)              | `readSavedTransitFilter` (`src/astrology/transit-importance.ts`); an unknown preset, a partial custom filter or a version other than 1 is `unreadable` |
+| Field                                       | Value                                                                       | Reader validation                                                                                                                                      |
+| ------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `locale`                                    | `"en"` or `"nl"`                                                            | `CORPUS_LOCALES` (`src/interpretation/schema.ts`)                                                                                                      |
+| `defaultRulership`                          | `"modern"`, `"traditional"` or `"both"`                                     | `isRulershipChoice` (`src/astrology/rulership.ts`)                                                                                                     |
+| `defaultCalculationProfile`                 | `{ version, settings }`, exactly `serializeCalculationSettings(settings)`   | `readCalculationSettings` strict decoder (`src/domain/person.ts`); a newer or invalid value is `unreadable`                                            |
+| `orbLibrary`                                | `{ version: 1, profiles: [...] }`, at most 50 profiles (#1220)              | `readOrbLibraryStrict` (`src/astrology/orb-library.ts`); a dropped profile, a duplicate id or a version other than 1 is `unreadable`                   |
+| `orbProfile.<id>`                           | `{ version: 1, ...profile }` or `null`, one per profile (#1250, section 11) | `validateOrbProfileRecord` plus `version: 1` and the field's id equal to the profile's `id`; the library folds from these and the field above          |
+| `orbContextSource`                          | `{ version: 1, transit?, synastry?, natal? }` (#1220)                       | `readOrbContextSourceStrict`; a context that is not a string, or a version other than 1, is `unreadable`                                               |
+| `transitFilterDaily`, `transitFilterYearly` | `{ version: 1, preset }` or `{ version: 1, custom }` (#1220)                | `readSavedTransitFilter` (`src/astrology/transit-importance.ts`); an unknown preset, a partial custom filter or a version other than 1 is `unreadable` |
 
 Rules:
 
@@ -519,8 +520,9 @@ Four more fields on the same entity (section 2.2), by the owner's decision on #1
 spine, `OP_VERSION`, `BODY_KEYS`, `UPCASTS` or the relay changed: the field names are the only new frozen contract, and
 they do not collide with the reserved `deleted` and `purged`.
 
-- **Shapes.** Each is a versioned plain-JSON value (section 2.2). The library is rewritten whole on each staged save;
-  a library holds at most 50 profiles, which the editor enforces and the reader requires.
+- **Shapes.** Each is a versioned plain-JSON value (section 2.2). The library was rewritten whole on each staged save;
+  **section 11 (#1250) replaced that with one register per profile**, so the next two bullets and the 50-profile reader
+  rule describe the #1220 build. The editor still refuses a new 51st profile.
 - **Size.** There is no per-op or body limit in `src/store/ops.ts` below the depth cap (16; the library nests about 5).
   A maximal library is roughly 100 KB of JSON, under the push batch budget (256 KB, and one oversized op is sent alone)
   and the server's 1 MB body limit. `MAX_OPS_PER_USER` counts ops, not bytes, so a save is one op whatever its size. Each
@@ -536,3 +538,63 @@ they do not collide with the reserved `deleted` and `purged`.
   those keys always had; finding 9). (b) While a #1066-build tab and a #1220-build tab are open together, the older tab's
   three-field cache can briefly hide the four new fields in the newer tab's `storage` handler; nothing is lost in the log.
   (c) A pre-#1220 build ignores the four fields and keeps its own device values (section 5, downgrade).
+
+## 11. Amendment: the orb library is one register per profile (#1250)
+
+The db-integrity review of #1220 found that the whole orb library was one last-write-wins value, so a profile added on
+one device while offline was lost when another device saved later (defect A). The owner decided on #1250 (2026-11-07):
+each profile is its own synced value, keyed by its id, so concurrent additions merge. This amends sections 2.2 and 10.
+
+- **Wire contract: unchanged.** Still the one entity `account`/`preferences`, still ordinary operations, `OP_VERSION` 1,
+  no change to the spine, `BODY_KEYS`, `UPCASTS`, the relay or `src/store/{ops,oplog,hlc}.ts`. The only new frozen
+  contract is a field-name family on the existing open `field` vocabulary: **`orbProfile.<profile id>`**, where the id
+  matches `^[A-Za-z0-9_-]{1,64}$` (the profile id rule). The prefix `orbProfile.` is frozen forever once shipped. It does
+  not collide with the reserved `deleted` and `purged`, or with any existing field.
+- **Value.** `{ version: 1, id, name, revision, scalePercent, aspectOrbs, bodyOrbs }`: one profile, the same record the
+  library held, plus the version every structured value carries. `null` removes the profile (a write, never a delete or
+  a purge, section 3.4). The `id` inside the value must equal the id in the field name; a mismatch is unreadable.
+- **Fold (`foldOrbLibrary`, `src/domain/account-preferences.ts`).** `store/account.ts` materialises every well-formed
+  `orbProfile.<id>` register next to the allowlisted fields; a malformed name stays in the log and is ignored. The library
+  is the whole-library `orbLibrary` register (the shape before #1250, the **base**) with each `orbProfile.<id>` register
+  that is **newer than the base** layered on it: a value sets that profile, a `null` removes it. A profile register older
+  than the base is superseded by it, so a replacement (the sign-in prompt writing the whole library) is never undone by
+  a stale part. The result depends on HLC order only, not on arrival order, and reapplying changes nothing.
+- **What the screens still see.** One `orbLibrary` value: `orbLibraryRegister` presents the folded library as a
+  synthetic whole-library register stamped with the newest of its parts. The first-paint cache, the snapshot, the
+  reconciliation and the notices read that, so none of them changed shape.
+- **Writes.** A save writes only the profiles that changed (`orbLibraryWrites`): a value for each new or edited profile,
+  a `null` for each removed one. A library the store never wrote (a legacy device value shown before the move) is
+  written in full. Nothing writes the whole-library `orbLibrary` register any more except the sign-in reconciliation,
+  which replaces the library as a unit by the reader's explicit choice.
+- **Concurrent edits.** Two devices that each add a profile write different fields, so both profiles survive. An edit of
+  one profile and a removal of another both stand. Two devices that edit the same profile still resolve last-write-wins
+  for that profile, and the later revision number wins with it (the earlier edit is superseded, as before; accepted).
+- **Id collisions.** The ids are random (#1254), so a collision is not expected. If one happens, it costs only that
+  profile (last write wins) and never another profile; a context's source naming an id falls back to the card when no
+  such profile exists (`sourceForContext`).
+- **The 50-profile cap.** The editor still refuses a new 51st profile. The reader no longer requires at most 50: two
+  devices can each add profiles up to the cap, and a library that grew past 50 by merging must stay readable and
+  editable, or one more device's save would make everyone's library unreadable. A profile can still be edited or
+  removed over the cap. Size grows with the profile count, not with each save: a save is now one small op per changed
+  profile (about 1 to 2 KB), where it was the whole library (about 44 to 137 KB, section 10), so the per-save storage
+  cost drops by about two orders of magnitude.
+- **Migration.** None needed for stored data. An existing whole-library `orbLibrary` register is read as the base and
+  keeps working; the first edit after the upgrade writes per-profile registers newer than it. The legacy `localStorage`
+  capture (section 5) is unchanged and still produces a whole-library candidate for the prompt. **Older builds** (the
+  #1220 build) read only `orbLibrary`, so they show the base, not the profiles added or removed since: their view of the
+  library is stale until they update, and an edit they make rewrites the whole library as a newer base, which replaces
+  newer per-profile registers (the loss this section removes, for the window in which both builds run; accepted, as the
+  #1220 build shipped on 2026-11-07). The same window has one more case: on an account with no `orbLibrary` base yet (only
+  `orbProfile.*` registers), a device on the older build shows an empty library, and a save there can overwrite newer
+  per-profile registers. This is accepted, for the same reason: the older build has no way to read per-profile registers,
+  and the window closes when that build is updated.
+- **Triage of D and E (#1250), with reasons.**
+  - **D, accepted.** The prompt still chooses the library and its source on their own. A source that names a profile the
+    chosen library lacks falls back to the card (`sourceForContext`), so nothing breaks and no profile is lost; the
+    reader sees the card's orbs for that context and can choose again. Grouping the two choices would change the
+    prompt's design for a rare case. The pre-#1220 `astraya:orbLibrary` device key is deliberately left in place: it is
+    the rollback copy for a downgrade (section 5), and deleting a reader's data without being asked is the larger risk.
+  - **E, deferred to the next change to the sync or the relay.** `GET /api/ops` returns at most 500 rows with no byte
+    cap. It is the pull-side counterpart of the push cap (#919), lives in `server/ops/routes.ts` (a frozen-contract
+    review file), and is not made worse by this change: per-profile ops are smaller than the whole-library op they
+    replace. Tracked on #1250's comments.

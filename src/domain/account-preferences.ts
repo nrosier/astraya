@@ -20,13 +20,15 @@
  * @module domain/account-preferences
  * @purpose Decodes the account preference registers into typed values and plans the sign-in reconciliation between this device's candidates and the account's registers.
  * @conventions Unreadable values stay unreadable and are never coerced to defaults; `null` means an explicit reset; values are compared as canonical JSON; reconciliation never writes over a newer account value and never decides an unknown-age conflict itself.
- * @exports ACCOUNT_VALUE_VERSION, AccountFieldRead, AccountPreferenceValues, AccountPreferencesRead, readAccountPreferences, readAccountFieldValue, serializeAccountValue, ReconcileCandidate, ReconcileCandidates, ReconcileProposal, ReconcileResolution, ReconcilePlan, planReconcile, resolutionWrites, canonicalJson
+ * @exports ACCOUNT_VALUE_VERSION, OrbLibraryFold, foldOrbLibrary, orbLibraryRegister, orbLibraryWrites, serializeOrbProfile, readOrbProfileValue, AccountFieldRead, AccountPreferenceValues, AccountPreferencesRead, readAccountPreferences, readAccountFieldValue, serializeAccountValue, ReconcileCandidate, ReconcileCandidates, ReconcileProposal, ReconcileResolution, ReconcilePlan, planReconcile, resolutionWrites, canonicalJson
  */
 import {
   readOrbContextSourceStrict,
   readOrbLibraryStrict,
+  validateOrbProfileRecord,
   type OrbContextSource,
   type OrbLibrary,
+  type OrbProfileRecord,
 } from '../astrology/orb-library.js';
 import { isRulershipChoice, type RulershipChoice } from '../astrology/rulership.js';
 import { readSavedTransitFilter, type SavedTransitFilter } from '../astrology/transit-importance.js';
@@ -43,7 +45,11 @@ import {
   ACCOUNT_RULERSHIP_FIELD,
   ACCOUNT_TRANSIT_FILTER_DAILY_FIELD,
   ACCOUNT_TRANSIT_FILTER_YEARLY_FIELD,
+  orbProfileField,
+  orbProfileIdOf,
   type AccountField,
+  type AccountOrbProfileField,
+  type AccountRegister,
   type AccountRegisters,
 } from '../store/account.js';
 import { compareHlc, type Hlc } from '../store/hlc.js';
@@ -108,7 +114,8 @@ export function readAccountFieldValue<F extends AccountField>(
     return (isRulershipChoice(value) ? value : undefined) as AccountPreferenceValues[F] | undefined;
   }
   if (field === ACCOUNT_ORB_LIBRARY_FIELD) {
-    return (hasCurrentVersion(value) ? readOrbLibraryStrict(value) : undefined) as
+    // No count cap: two devices can each add a profile at the cap, and the editor alone enforces it (#1250).
+    return (hasCurrentVersion(value) ? readOrbLibraryStrict(value, Number.POSITIVE_INFINITY) : undefined) as
       AccountPreferenceValues[F] | undefined;
   }
   if (field === ACCOUNT_ORB_SOURCE_FIELD) {
@@ -129,7 +136,7 @@ export function serializeAccountValue<F extends AccountField>(field: F, value: A
   // The #1220 values are plain data (strings, finite numbers, booleans, lists and maps of them) under a version.
   const versioned =
     field === ACCOUNT_ORB_LIBRARY_FIELD
-      ? { version: ACCOUNT_VALUE_VERSION, profiles: (value as OrbLibrary).profiles }
+      ? { version: ACCOUNT_VALUE_VERSION, profiles: sortedProfiles((value as OrbLibrary).profiles) }
       : field === ACCOUNT_ORB_SOURCE_FIELD
         ? { version: ACCOUNT_VALUE_VERSION, ...(value as OrbContextSource) }
         : field === ACCOUNT_TRANSIT_FILTER_DAILY_FIELD || field === ACCOUNT_TRANSIT_FILTER_YEARLY_FIELD
@@ -141,11 +148,137 @@ export function serializeAccountValue<F extends AccountField>(field: F, value: A
   return versioned;
 }
 
+// --- the orb library: one register per profile (#1250, ADR 0004 section 11) ---------------------------------
+
+/** Plain code-unit order of two strings, the same on every device. */
+function byCodeUnits(a: string, b: string): number {
+  return a < b ? -1 : a > b ? 1 : 0;
+}
+
+/** Profiles in the one order every device shows: name, then id. */
+function sortedProfiles(profiles: readonly OrbProfileRecord[]): readonly OrbProfileRecord[] {
+  return [...profiles].sort((a, b) => byCodeUnits(a.name, b.name) || byCodeUnits(a.id, b.id));
+}
+
+/** The register value of one profile: its record under a version. `null` (a removal) is written by the caller. */
+export function serializeOrbProfile(profile: OrbProfileRecord): JsonValue {
+  const versioned = { version: ACCOUNT_VALUE_VERSION, ...profile };
+  if (!isJsonValue(versioned)) throw new Error('The orb profile is not a JSON value');
+  return versioned;
+}
+
+/** The profile a register holds for `id`, or `undefined` when this build cannot read it (another version, another id). */
+export function readOrbProfileValue(id: string, value: unknown): OrbProfileRecord | undefined {
+  if (!hasCurrentVersion(value)) return undefined;
+  const profile = validateOrbProfileRecord(value);
+  return profile?.id === id ? profile : undefined;
+}
+
+/** What the orb library's registers hold: nothing written, a value this build cannot read, or the library. */
+export type OrbLibraryFold =
+  | { readonly kind: 'unset' }
+  | { readonly kind: 'unreadable' }
+  | { readonly kind: 'value'; readonly library: OrbLibrary };
+
+/**
+ * Fold the library from its registers (#1250, ADR 0004 section 11).
+ *
+ * The whole-library `orbLibrary` register is the **base**: the library as it stood when it was written (every build
+ * before #1250 wrote only this, and a reconciliation still writes it to replace the library). Each `orbProfile.<id>`
+ * register then **layers on top, only when it is newer than the base**: a value sets that profile, a `null` removes it.
+ * A profile register older than the base is superseded by it, so a replacement is never undone by a stale part.
+ *
+ * Two devices that each add a profile write different fields, so both profiles survive. Each profile is still
+ * last-write-wins on its own. One unreadable part makes the whole library unreadable, so a save can never replace
+ * what the reader cannot see (ADR 0004 section 10). The result does not depend on the order the registers arrive in.
+ */
+export function foldOrbLibrary(registers: AccountRegisters): OrbLibraryFold {
+  const base = registers[ACCOUNT_ORB_LIBRARY_FIELD];
+  const byId = new Map<string, OrbProfileRecord>();
+  let written = false;
+  if (base !== undefined) {
+    written = true;
+    if (base.value !== null) {
+      const library = readAccountFieldValue(ACCOUNT_ORB_LIBRARY_FIELD, base.value);
+      if (library === undefined) return { kind: 'unreadable' };
+      for (const profile of library.profiles) byId.set(profile.id, profile);
+    }
+  }
+  for (const [field, register] of Object.entries(registers) as [string, AccountRegister][]) {
+    const id = orbProfileIdOf(field);
+    if (id === undefined) continue;
+    if (base !== undefined && compareHlc(register.hlc, base.hlc) <= 0) continue;
+    written = true;
+    if (register.value === null) {
+      byId.delete(id);
+      continue;
+    }
+    const profile = readOrbProfileValue(id, register.value);
+    if (profile === undefined) return { kind: 'unreadable' };
+    byId.set(id, profile);
+  }
+  return written ? { kind: 'value', library: { profiles: sortedProfiles([...byId.values()]) } } : { kind: 'unset' };
+}
+
+/** The newest timestamp among the library's registers, or `undefined` when none is written. */
+function newestLibraryHlc(registers: AccountRegisters): Hlc | undefined {
+  let newest: Hlc | undefined;
+  for (const [field, register] of Object.entries(registers) as [string, AccountRegister][]) {
+    if (field !== ACCOUNT_ORB_LIBRARY_FIELD && orbProfileIdOf(field) === undefined) continue;
+    if (newest === undefined || compareHlc(register.hlc, newest) > 0) newest = register.hlc;
+  }
+  return newest;
+}
+
+/**
+ * The library as one synthetic `orbLibrary` register: the whole-library value every reader, the first-paint cache and
+ * the reconciliation already understand, stamped with the newest of its parts. `undefined` when no part is written. An
+ * unreadable part gives a value no reader accepts (version 0), so it is reported as unreadable and never shown as the
+ * default.
+ */
+export function orbLibraryRegister(registers: AccountRegisters): AccountRegister | undefined {
+  const hlc = newestLibraryHlc(registers);
+  if (hlc === undefined) return undefined;
+  const base = registers[ACCOUNT_ORB_LIBRARY_FIELD];
+  const layered = Object.entries(registers).some(
+    ([field, register]) =>
+      register !== undefined &&
+      orbProfileIdOf(field) !== undefined &&
+      (base === undefined || compareHlc(register.hlc, base.hlc) > 0),
+  );
+  // An explicit reset of the whole library, with nothing written after it, stays a reset (not an empty library).
+  if (base?.value === null && !layered) return base;
+  const folded = foldOrbLibrary(registers);
+  if (folded.kind === 'unset') return undefined;
+  if (folded.kind === 'unreadable') return { value: { version: 0 }, hlc };
+  return { value: serializeAccountValue(ACCOUNT_ORB_LIBRARY_FIELD, folded.library), hlc };
+}
+
+/**
+ * The writes that make the library `next` from `current`: one per profile that is new or changed, and a `null` for each
+ * one that is gone. Unchanged profiles are not written, so an edit of one profile never touches another.
+ */
+export function orbLibraryWrites(next: OrbLibrary, current: OrbLibrary): readonly Mutation[] {
+  const before = new Map(current.profiles.map((profile) => [profile.id, profile]));
+  const after = new Set(next.profiles.map((profile) => profile.id));
+  const writes: Mutation[] = [];
+  for (const profile of next.profiles) {
+    const old = before.get(profile.id);
+    const value = serializeOrbProfile(profile);
+    if (old !== undefined && canonicalJson(serializeOrbProfile(old)) === canonicalJson(value)) continue;
+    writes.push(accountWrite(orbProfileField(profile.id), value));
+  }
+  for (const profile of current.profiles) {
+    if (!after.has(profile.id)) writes.push(accountWrite(orbProfileField(profile.id), null));
+  }
+  return writes;
+}
+
 function readField<F extends AccountField>(
   registers: AccountRegisters,
   field: F,
 ): AccountFieldRead<AccountPreferenceValues[F]> {
-  const register = registers[field];
+  const register = field === ACCOUNT_ORB_LIBRARY_FIELD ? orbLibraryRegister(registers) : registers[field];
   if (register === undefined) return { kind: 'unset' };
   if (register.value === null) return { kind: 'default', hlc: register.hlc };
   const value = readAccountFieldValue(field, register.value);
@@ -204,12 +337,26 @@ export interface ReconcilePlan {
   readonly proposals: readonly ReconcileProposal[];
 }
 
-function accountWrite(field: AccountField, value: JsonValue): Mutation {
+function accountWrite(field: AccountField | AccountOrbProfileField, value: JsonValue): Mutation {
   return { entity: ACCOUNT_ENTITY, entityId: ACCOUNT_ENTITY_ID, field, value };
 }
 
+/** The registers with the library's parts replaced by the one `orbLibrary` register they fold to. */
+function withFoldedLibrary(registers: AccountRegisters): AccountRegisters {
+  const out: Partial<Record<AccountField, AccountRegister>> = {};
+  for (const field of ACCOUNT_FIELDS) {
+    const register = registers[field];
+    if (register !== undefined && field !== ACCOUNT_ORB_LIBRARY_FIELD) out[field] = register;
+  }
+  const library = orbLibraryRegister(registers);
+  if (library !== undefined) out[ACCOUNT_ORB_LIBRARY_FIELD] = library;
+  return out;
+}
+
 /** Plan the reconciliation of this device's candidates against the account's registers (rules 1 to 5 above). */
-export function planReconcile(candidates: ReconcileCandidates, target: AccountRegisters): ReconcilePlan {
+export function planReconcile(candidates: ReconcileCandidates, accountRegisters: AccountRegisters): ReconcilePlan {
+  // The library is compared as the one value it folds to, whichever registers hold it (#1250).
+  const target: AccountRegisters = withFoldedLibrary(accountRegisters);
   const writes: Mutation[] = [];
   const proposals: ReconcileProposal[] = [];
   for (const field of ACCOUNT_FIELDS) {
