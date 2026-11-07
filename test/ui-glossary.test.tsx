@@ -409,12 +409,6 @@ const proseTerms: readonly {
     node: () => <DraconicView personId="p1" view="wheel" compareType={undefined} />,
   },
   {
-    view: 'PrimaryDirectionsView',
-    term: 'primaryDirection',
-    visible: { en: 'Primary directions', nl: 'Primaire directies' },
-    node: () => <PrimaryDirectionsView personId="p1" />,
-  },
-  {
     view: 'RectificationView',
     term: 'midheaven',
     visible: { en: 'Midheaven', nl: 'Midheaven' },
