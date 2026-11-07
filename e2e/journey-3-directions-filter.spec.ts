@@ -2,7 +2,7 @@
  * Journey 3 of the final acceptance list (#514): enter a target date, change the Primary Directions
  * time key, and filter transits. Both controls are the real shared primitives on the real screens:
  * the time key is the Naibod/Ptolemy `ChoiceGroup` on the Primary Directions page, and the transit
- * filter is the "Show" preset `ChoiceGroup` plus the "Change filters" dialog on the Transits page.
+ * filter is the "Which transits to show" button in the page header, whose card holds the "Show" presets and the rest (#1227).
  *
  * Step -> box text:
  *   1. "Enter a target date"          -> the Primary Directions "As of" date field sets the age (third test).
@@ -82,6 +82,13 @@ test('the Primary Directions time key can be changed to Ptolemy and the arc for 
   await expect(arcLine).not.toHaveText(naibodArc ?? '');
 });
 
+/** Chooses a preset in the transit filter card, which a header button opens (#1227), and applies it. */
+async function choosePreset(page: Page, label: string): Promise<void> {
+  await page.getByRole('button', { name: 'Which transits to show', exact: true }).click();
+  await page.getByRole('radiogroup', { name: 'Show', exact: true }).getByLabel(label, { exact: true }).check();
+  await page.getByRole('button', { name: 'Apply', exact: true }).click();
+}
+
 test('the transit filter narrows the list of transits, and choosing All restores them', async () => {
   test.setTimeout(60_000);
 
@@ -92,15 +99,13 @@ test('the transit filter narrows the list of transits, and choosing All restores
 
   const rows = page.getByRole('table', { name: 'Contacts' }).locator('tbody tr');
   const [, total] = await transitCount(page);
-  const show = page.getByRole('radiogroup', { name: 'Show', exact: true });
-
-  await show.getByLabel('Personal', { exact: true }).check();
+  await choosePreset(page, 'Personal');
   await expect(page.locator('.filter-summary-count')).toContainText('Personal');
   const [narrowed] = await transitCount(page);
   expect(narrowed).toBeLessThan(total);
   await expect(rows).toHaveCount(narrowed);
 
-  await show.getByLabel('All', { exact: true }).check();
+  await choosePreset(page, 'All');
   await expect(rows).toHaveCount(total);
   const [restored] = await transitCount(page);
   expect(restored).toBe(total);
