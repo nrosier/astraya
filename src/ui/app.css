@@ -8417,6 +8417,26 @@ a.quiet,
   }
 }
 
+/* The Forecast period choice (issue 1227): five tabs above 40rem, the labelled Select at 40rem and below. */
+.period-select {
+  display: none;
+}
+
+@media (max-width: 40rem) {
+  .period-tabs {
+    display: none;
+  }
+
+  .period-select {
+    display: block;
+    margin-bottom: var(--space-4);
+  }
+
+  .period-select .chart-view-select {
+    max-width: none;
+  }
+}
+
 .section-panel > main.shell {
   padding-top: var(--space-4);
 }
@@ -8448,8 +8468,64 @@ a.quiet,
   display: contents;
 }
 
-.overview-section {
-  margin-bottom: var(--space-6);
+/* Overview cards (issue 1173): one surface, border, radius, padding and title size, the title inside; no card in a card. */
+.overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+@media (min-width: 52rem) {
+  .overview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.overview-card {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-4);
+  border: var(--border-hairline) solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.overview-card > * {
+  min-width: 0;
+  margin: 0;
+}
+
+.overview-card h2 {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+.overview-card--wheel {
+  /* The wheel sits beside the birth data on a wide page and spans the cards' rows. */
+  grid-column: 2;
+  grid-row: 1 / span 3;
+}
+
+@media (max-width: 51.99rem) {
+  .overview-card--wheel {
+    grid-column: auto;
+    grid-row: auto;
+  }
+}
+
+.overview-wheel {
+  display: block;
+  max-width: 26rem;
+  margin-inline: auto;
+}
+
+.overview-wheel svg {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 .overview-health {
