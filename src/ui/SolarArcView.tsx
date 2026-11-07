@@ -16,12 +16,15 @@
  * @exports SolarArcView; positionRows, positionColumns, contactColumns, toContactRow, formatExactDate, ContactRow (reused by pdf-export-plan.ts)
  */
 import { DateField } from './primitives/DateField.js';
+import { signDegreeColumn } from './position-column.js';
+import { Tooltip } from './primitives/Tooltip.js';
+import { Button } from './primitives/Button.js';
 import { GlossaryText } from './GlossaryText.js';
 import { personHref } from './route.js';
 import { useEffect, useMemo, useState } from 'react';
 import { bodyById } from '../astrology/bodies.js';
 import type { DirectedPosition } from '../astrology/solar-arc-directions.js';
-import { aspectDisplayName, bodyDisplayName, signDisplayName } from './astro-names.messages.js';
+import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
 import { degreeParts, type AspectRow, type DegreeParts } from '../domain/chart-tables.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
@@ -58,6 +61,8 @@ type Load =
   | { readonly kind: 'error'; readonly message: string };
 
 interface PositionRow extends DegreeParts {
+  /** Ecliptic longitude, for the merged Position column's sort. */
+  readonly longitude: number;
   readonly bodyKey: string;
   readonly bodyName: string;
   readonly house?: number;
@@ -71,6 +76,7 @@ export function positionRows(positions: readonly DirectedPosition[], houses: Hou
     return {
       bodyKey: body?.key ?? String(position.body),
       bodyName: body?.name ?? String(position.body),
+      longitude: position.longitude,
       ...degreeParts(position.longitude),
       ...(housesUsable ? { house: houseOf(position.longitude, houses.cusps) } : {}),
     };
@@ -78,8 +84,8 @@ export function positionRows(positions: readonly DirectedPosition[], houses: Hou
   if (!housesUsable) return bodyRows;
   return [
     ...bodyRows,
-    { bodyKey: 'asc', bodyName: 'Ascendant', ...degreeParts(houses.ascendant) },
-    { bodyKey: 'mc', bodyName: 'Midheaven', ...degreeParts(houses.midheaven) },
+    { bodyKey: 'asc', bodyName: 'Ascendant', longitude: houses.ascendant, ...degreeParts(houses.ascendant) },
+    { bodyKey: 'mc', bodyName: 'Midheaven', longitude: houses.midheaven, ...degreeParts(houses.midheaven) },
   ];
 }
 
@@ -94,15 +100,7 @@ export function positionColumns(
       valueOf: (row) => row.bodyName,
       render: (row) => bodyDisplayName(row.bodyKey, locale),
     },
-    {
-      key: 'sign',
-      label: t.signLabel,
-      valueOf: (row) => row.sign,
-      render: (row) => signDisplayName(row.sign, locale),
-    },
-    { key: 'degree', label: t.degLabel, valueOf: (row) => row.degree },
-    { key: 'minute', label: t.minLabel, valueOf: (row) => row.minute },
-    { key: 'second', label: t.secLabel, valueOf: (row) => row.second },
+    signDegreeColumn<PositionRow>(t.positionLabel, locale),
     {
       key: 'house',
       label: t.houseLabel,
@@ -287,16 +285,24 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
         headingLevel={2}
         title={person.displayName ? t.heading(person.displayName) : t.solarArcFallback}
         titleTerm="solarArc"
+        titleAside={
+          <Tooltip text={t.hint} label={t.hintInfoLabel} className="primitive-tooltip-icon">
+            ?
+          </Tooltip>
+        }
         basis={basisLine}
         basisEditHref={null}
-      />
-      <p className="hint">
-        <GlossaryText text={t.hint} />
-      </p>
-
-      <p>
+      >
+        {/* The as-of date and Now sit in the header, to the right (#1234); Export stays in the page header (#887). */}
         <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
-      </p>
+        <Button
+          onClick={() => {
+            setAsOf(todayInputValue());
+          }}
+        >
+          {t.nowLabel}
+        </Button>
+      </PageHeader>
 
       {/* The result region: busy while the directions (re)calculate, as the Astrocartography map is. */}
       <div aria-busy={load.kind === 'loading'}>
@@ -313,28 +319,34 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
             </p>
             <p className="hint">{t.arcLine(formatFixed(load.data.arc, 2))}</p>
 
-            {positions !== undefined && (
-              <SortableTable
-                caption={t.positionsCaption}
-                headingLevel={2}
-                columns={positionColumns(t, locale)}
-                rows={positions}
-                getRowKey={(row) => row.bodyKey}
-                downloadFilename={deriveExportFilename(person.displayName, 'solar-arc', 'csv')}
-              />
-            )}
-
-            {contacts !== undefined && contacts.length > 0 && (
-              <SortableTable
-                caption={t.contactsCaption}
-                headingLevel={2}
-                columns={contactColumns(t, locale)}
-                rows={contacts}
-                getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
-                downloadFilename={deriveExportFilename(person.displayName, 'solar-arc-contacts', 'csv')}
-              />
-            )}
-            {contacts?.length === 0 && <p className="hint">{t.noContacts}</p>}
+            {/* The shared timing layout (#1234): contacts left, positions right, one column below 52rem. */}
+            <div className="timing-layout">
+              <div className="timing-layout-main">
+                {contacts !== undefined && contacts.length > 0 && (
+                  <SortableTable
+                    caption={t.contactsCaption}
+                    headingLevel={2}
+                    columns={contactColumns(t, locale)}
+                    rows={contacts}
+                    getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
+                    downloadFilename={deriveExportFilename(person.displayName, 'solar-arc-contacts', 'csv')}
+                  />
+                )}
+                {contacts?.length === 0 && <p className="hint">{t.noContacts}</p>}
+              </div>
+              <div className="timing-layout-side">
+                {positions !== undefined && (
+                  <SortableTable
+                    caption={t.positionsCaption}
+                    headingLevel={2}
+                    columns={positionColumns(t, locale)}
+                    rows={positions}
+                    getRowKey={(row) => row.bodyKey}
+                    downloadFilename={deriveExportFilename(person.displayName, 'solar-arc', 'csv')}
+                  />
+                )}
+              </div>
+            </div>
           </>
         )}
       </div>

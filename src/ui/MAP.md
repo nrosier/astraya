@@ -50,7 +50,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `BiWheelSelectionPanel.tsx` + `BiWheelSelectionPanel.messages.ts` — Bi-wheel click-to-inspect panel (body/sign/aspect info). Deps: `./bi-wheel-selection`, `astro-names.messages`.
 - `BirthPlaceSearch.tsx` + `BirthPlaceSearch.messages.ts` — Geocoding place-name search field. Deps: `./forward-geocode`, `./geocode-provider`.
 - `Changelog.tsx` + `Changelog.messages.ts` — In-app CHANGELOG.md viewer. Deps: `./markdown`.
-- `ChartTypeSelector.tsx` — Chart-type Select (natal/draconic/harmonic/returns) in the Charts page header. Deps: `./chart-sections`, `primitives/Select`.
+- `ChartTypeSelector.tsx` — Chart-type Select (natal/draconic/harmonic/returns) in the Charts page header, with the slot the aspect Selects join (#1224). Deps: `./chart-sections`, `primitives/Select`.
 - `ChartTypes.messages.ts` — i18n labels for all chart types.
 - `ChartViewNav.tsx` — Chart screen's view navigation under the title row (#801, #818, #976): ordinary links in the shared `ScrollingTabRow` (wide) or a labelled Select (narrow), never ARIA tabs; view links only, with the page actions (Overlay settings, Extended settings) in the PageHeader on desktop and the Chart actions sheet at 640px and below. Deps: `./chart-sections`, `./ScrollingTabRow`, `./primitives/Select`.
 - `ScrollingTabRow.tsx` — Shared tab-row wrapper (#818): hidden-scrollbar horizontal scroller with start/end edge fades above 40rem, caller-supplied Select fallback and one "Chart actions" toggle for the pinned actions at 40rem and below (#826). Deps: `./primitives/Button`, `./primitives/useTabRowScroll`.
@@ -156,6 +156,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `UnreadableSettingsNotice.tsx` + `.messages.ts` — Notice shown instead of a chart when a person's saved settings are unreadable (#806). Deps: `primitives/StatusMessage`.
 - `use-calculation-settings-migration.ts` — Once-per-account moves of device chart settings and ruler choice onto existing people, after first sync when signed in (#806). Deps: `session-context`, `sync/engine`, `domain/calculation-settings-migration`, `default-calculation-profile`, `rulership-setting`.
 - `extended-settings-summary.ts` — Diffs extended settings to summarize changes. Deps: `chart/extended-settings`.
+- `position-column.ts` — The shared merged Position column (sign plus degrees and minutes) for the timing tables (#1234). Deps: `format`, `astro-names.messages`, `table-sort`.
 - `format.ts` — Locale-aware formatting (dates/coords). Deps: `interpretation/schema` (Locale type only).
 - `forward-geocode.ts` — Place-name → coordinates resolution (MapTiler/Nominatim). Deps: `./geocode-provider`.
 - `geocode-provider.ts` — Geocoding backend selection (self-hosted/MapTiler/Nominatim). Deps: build-time env vars.
@@ -207,7 +208,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `wheel-interaction.ts` — Pointer/keyboard wheel isolation (a selected body can also drop every aspect line not touching it, #1063), ring legend activation, and leader-arrow state, plus selecting a key outright for table Show buttons. Deps: `chart/body-id`.
 - `wheel-contacts.ts` — Keyboard next/previous contact for a selected body (#1063): orders its drawn aspect lines in zodiac order from the body and marks the current one on the wheel. Deps: `chart/body-id`.
 - `aspect-family-filter.ts` — Aspect-family filters and on-demand consultation presets for the wheel and matrix (#1063); pure. Deps: `astrology/aspects`.
-- `AspectFamilyControls.tsx` — The aspect-family and consultation-preset Selects above the wheel and matrix (#1063). Deps: `./aspect-family-filter`, `./AspectFamilyControls.messages`, `./primitives/Select`.
+- `AspectFamilyControls.tsx` — The aspect-family and consultation-preset Selects, shown beside the chart type for the wheel and matrix (#1063, #1224). Deps: `./aspect-family-filter`, `./AspectFamilyControls.messages`, `./primitives/Select`.
 - `AspectFamilyControls.messages.ts` — en/nl strings for the aspect-family and preset Selects (#1063). Deps: none.
 - `wheel-selection.ts` — Composes wheel-selection heading text. Deps: `astrology/signs`, `interpretation/schema`, `./astro-names.messages`.
 - `workspace-rail-setting.ts` — Device preference for whether the desktop workspace rail is collapsed (#506/#509). Deps: none.
