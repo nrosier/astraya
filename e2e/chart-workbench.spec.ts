@@ -213,6 +213,41 @@ test.describe('with the shared people (#799)', () => {
     await expect.poll(async () => shown.count()).toBe(before);
   });
 
+  test('Predictive and timing says the active Time Lord and profection year in the Selection card and hides minor natal aspects (#1190)', async () => {
+    test.setTimeout(120_000);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    const inspector = page.locator('.selection-inspector');
+    // Nothing is added until the preset is chosen.
+    await expect(inspector.getByText(/^Active Time Lord/)).toHaveCount(0);
+
+    await page.getByLabel('Consultation preset').selectOption({ label: 'Predictive and timing: major and hard minor' });
+    await expect(inspector.getByText(/^Active Time Lord \(firdaria\): .+/)).toBeVisible({ timeout: 60_000 });
+    await expect(inspector.getByText(/^Profection year: .+, \d+(st|nd|rd|th) house, lord .+/)).toBeVisible();
+    await expect(inspector.getByRole('link', { name: 'See Consultation' })).toBeVisible();
+
+    // Between natal bodies only the major aspects are drawn, on the wheel (with the transit ring on, the natal lines may
+    // all be hidden, which also holds) and in the matrix.
+    const MAJOR = new Set(['conjunction', 'sextile', 'square', 'trine', 'opposition']);
+    const natalLines = page.locator(
+      'svg.chart-dial g.chart-aspect-link:not(.chart-aspect-filtered)[data-ring-a="0"][data-ring-b="0"]',
+    );
+    const keys = await Promise.all((await natalLines.all()).map((line) => line.getAttribute('data-aspect-key')));
+    for (const key of keys) expect(MAJOR.has(key ?? '')).toBe(true);
+    await page.getByRole('link', { name: 'Aspect matrix', exact: true }).click();
+    const cells = page.locator('.mgrid-aspect .chart-aspect-glyph');
+    await expect(cells.first()).toBeVisible();
+    for (const glyph of await cells.all()) {
+      const classes = (await glyph.getAttribute('class')) ?? '';
+      expect([...MAJOR].some((key) => classes.includes(`chart-aspect-glyph-${key}`))).toBe(true);
+    }
+
+    // No preset brings the Selection card back to what it was.
+    await page.getByLabel('Consultation preset').selectOption({ label: 'No preset (default view)' });
+    await expect(inspector.getByText(/^Active Time Lord/)).toHaveCount(0);
+  });
+
   test('with a body selected, the arrow keys step through its aspect contacts in zodiac order, announced and marked on the wheel (#1063)', async () => {
     test.setTimeout(90_000);
     await page.setViewportSize({ width: 1280, height: 800 });

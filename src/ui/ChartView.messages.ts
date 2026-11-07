@@ -337,6 +337,11 @@ const en = {
   contactCurrent: (position: number, count: number, aspect: string, partner: string) =>
     `Contact ${String(position)} of ${String(count)}: ${aspect} ${partner}`,
   inspectorHeading: 'Selection',
+  presetTimeLord: (lord: string) => `Active Time Lord (firdaria): ${lord}`,
+  presetProfection: (sign: string, house: string, lords: string) =>
+    `Profection year: ${sign}, ${house} house, lord ${lords}`,
+  presetLordSeparator: ' and ',
+  presetSeeConsultation: 'See Consultation',
   inspectorEmpty: 'Select a planet, sign, house cusp, or aspect to explore it',
   selectionInterpretationHeading: 'What it means',
   selectionLoading: 'Loading the interpretation…',
@@ -686,6 +691,11 @@ const nl: typeof en = {
   contactCurrent: (position: number, count: number, aspect: string, partner: string) =>
     `Contact ${String(position)} van ${String(count)}: ${aspect} ${partner}`,
   inspectorHeading: 'Selectie',
+  presetTimeLord: (lord: string) => `Actieve tijdheer (firdaria): ${lord}`,
+  presetProfection: (sign: string, house: string, lords: string) =>
+    `Profectiejaar: ${sign}, ${house} huis, heer ${lords}`,
+  presetLordSeparator: ' en ',
+  presetSeeConsultation: 'Zie Consultatie',
   inspectorEmpty: 'Selecteer een planeet, teken, huispunt of aspect om het te verkennen',
   selectionInterpretationHeading: 'Wat het betekent',
   selectionLoading: 'De interpretatie wordt geladen…',
