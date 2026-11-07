@@ -151,6 +151,7 @@ export function SelectionInspector({
   contactStepper,
   derivedChartNote,
   personId,
+  presetNote,
 }: {
   readonly facts: WheelIsolationFacts | undefined;
   readonly selectionKey: string | undefined;
@@ -168,6 +169,8 @@ export function SelectionInspector({
   readonly derivedChartNote?: string | undefined;
   /** The person the chart belongs to (#768): the AI reading lists and saves under them. */
   readonly personId?: string | undefined;
+  /** Lines a consultation preset adds under the heading (#1190): the active Time Lord and the profected year. */
+  readonly presetNote?: React.ReactNode;
 }): React.JSX.Element {
   const t = useMessages(chartViewMessages);
   // Where the selection stands, as the badges under the heading: sign and degree, then house.
@@ -184,6 +187,7 @@ export function SelectionInspector({
       <h2 id="selection-inspector-heading" className="selection-inspector-title">
         {t.inspectorHeading}
       </h2>
+      {presetNote}
       {derivedChartNote !== undefined && <p className="hint selection-inspector-derived-note">{derivedChartNote}</p>}
       {facts === undefined || selectionKey === undefined ? (
         <p className="hint">{t.inspectorEmpty}</p>

@@ -2,7 +2,7 @@
  * @module ui/aspect-family-filter
  * @purpose Aspect-family filters for the wheel and the matrix, and the on-demand consultation presets built on them (#1063).
  * @conventions Pure, no React. Aspect keys are the existing `ASPECTS` keys (`astrology/aspects`); a family lists only keys that catalogue holds, so Decile, Septile and Novile (no catalogue entry) are not offered. No selection means no filter, which is the default view; Orb caps hide a contact whose orb is wider than the cap and never widen one.
- * @exports ConsultationPreset, PresetSwitches, CONSULTATION_PRESETS, AspectFamilyKey, AspectFamily, ASPECT_FAMILIES, FILTERABLE_FAMILIES, CATALOGUE_KEYS, OrbCaps, isContactShown, orbCapFor, toggleFamily
+ * @exports ConsultationPreset, PresetSwitches, isMajorAspect, CONSULTATION_PRESETS, AspectFamilyKey, AspectFamily, ASPECT_FAMILIES, FILTERABLE_FAMILIES, CATALOGUE_KEYS, OrbCaps, isContactShown, orbCapFor, toggleFamily
  */
 import { ASPECTS } from '../astrology/aspects.js';
 
@@ -42,6 +42,15 @@ export interface OrbCaps {
 }
 
 const LUMINARIES: ReadonlySet<string> = new Set(['sun', 'moon']);
+
+/** Whether a line between two bodies of the same chart stays when minor natal aspects are suppressed: only the major ones do. */
+export function isMajorAspect(aspectKey: string): boolean {
+  return MAJOR_KEYS.has(aspectKey);
+}
+
+const MAJOR_KEYS: ReadonlySet<string> = new Set(
+  ASPECT_FAMILIES.find((family) => family.key === 'major')?.aspectKeys ?? [],
+);
 
 export function orbCapFor(aKey: string, bKey: string, caps: OrbCaps): number {
   return LUMINARIES.has(aKey) || LUMINARIES.has(bKey) ? caps.luminary : caps.planet;
@@ -112,6 +121,10 @@ export interface PresetSwitches {
   readonly solarArcOrb?: number;
   /** Draw the contacts between the rings, so the orb limits above have contacts to limit. */
   readonly interRingAspects?: boolean;
+  /** Say the active firdaria lord and the profected year in the Selection card (owner decision on #1190, 2026-11-07). */
+  readonly timeLords?: boolean;
+  /** Hide the minor aspects between natal bodies, on the wheel and the matrix; contacts between rings follow the families. */
+  readonly suppressMinorNatal?: boolean;
 }
 
 /** Contents as recorded on #1063 (2026-11-05); owner sign-off of these contents is still to come. */
@@ -120,7 +133,7 @@ export const CONSULTATION_PRESETS: readonly ConsultationPreset[] = [
     key: 'standardOverview',
     families: ['major', 'nodalAngular'],
     orbs: { luminary: 8, planet: 6 },
-    switches: { layers: { transit: true }, chartFacts: true, transitOrb: 3 },
+    switches: { layers: { transit: true }, chartFacts: true, transitOrb: 3, timeLords: true },
   },
   {
     key: 'natalCore',
@@ -139,6 +152,8 @@ export const CONSULTATION_PRESETS: readonly ConsultationPreset[] = [
       transitOrb: 3,
       solarArcOrb: 1,
       interRingAspects: true,
+      timeLords: true,
+      suppressMinorNatal: true,
     },
   },
   { key: 'dynamicSynastry', families: ['major', 'nodalAngular'], orbs: { luminary: 6, planet: 6 } },

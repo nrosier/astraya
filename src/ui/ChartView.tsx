@@ -39,7 +39,11 @@ import type { Zodiac } from '../ephemeris/types.js';
 import { ASPECTS, aspectHarmonicFamily, DEFAULT_ORB_CONFIG, type Aspect } from '../astrology/aspects.js';
 import { Select } from './primitives/Select.js';
 import { AspectFamilyControls } from './AspectFamilyControls.js';
-import { isContactShown, type AspectFamilyKey, type ConsultationPreset, type OrbCaps } from './aspect-family-filter.js';
+import {
+  CONSULTATION_PRESETS,
+  isContactShown,
+  isMajorAspect,
+  type AspectFamilyKey, type ConsultationPreset, type OrbCaps } from './aspect-family-filter.js';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
@@ -117,6 +121,7 @@ import { useNarrowViewport } from './use-narrow-viewport.js';
 import { parseSelectionKey } from '../interpretation/selection.js';
 import { buildFocusObjectContext } from '../interpretation/focus-context.js';
 import { AspectMatrixGrid } from './AspectMatrixGrid.js';
+import { PresetTimeLords } from './PresetTimeLords.js';
 import { orbSourceName, useCalculationBasisLine } from './calculation-basis.js';
 import { type TableSelection } from './table-selection.js';
 import { SelectionInspector, type WheelIsolationFacts } from './SelectionInspector.js';
@@ -342,17 +347,21 @@ function renderMatrixView(
   onOpenFormulas?: () => void,
   families: ReadonlySet<AspectFamilyKey> = new Set(),
   orbCaps?: OrbCaps,
+  suppressMinorNatal = false,
 ): React.ReactNode {
   const full = chartSheetInput(data, [], displayName, pointVisibility, (bodyKey) => bodyShortName(bodyKey, locale));
   // The aspect-family filter (#1063): with none chosen the matrix is the sheet's own, unchanged.
   const input =
-    families.size === 0 && orbCaps === undefined
+    families.size === 0 && orbCaps === undefined && !suppressMinorNatal
       ? full
       : {
           ...full,
           matrix: {
             ...full.matrix,
-            aspects: full.matrix.aspects.filter((aspect) => isContactShown(aspect, families, orbCaps)),
+            aspects: full.matrix.aspects.filter(
+              (aspect) =>
+                isContactShown(aspect, families, orbCaps) && (!suppressMinorNatal || isMajorAspect(aspect.aspectKey)),
+            ),
           },
         };
   return (
@@ -676,6 +685,9 @@ export function ChartDataView({
   const [orbCaps, setOrbCaps] = useState<OrbCaps | undefined>();
   // A consultation preset (#1063) is applied only when the reader chooses one; none is chosen by default.
   const [presetKey, setPresetKey] = useState<ConsultationPreset['key'] | undefined>();
+  const presetSwitches = CONSULTATION_PRESETS.find((preset) => preset.key === presetKey)?.switches;
+  // Predictive and Timing hides the minor aspects between natal bodies (owner decision on #1190, 2026-11-07).
+  const suppressMinorNatal = presetSwitches?.suppressMinorNatal === true;
   // The matrix view's formula link opens the drawer on Bodies and orbs (#815); the drawer counts the requests.
   const [ownFormulaRequests, setOwnFormulaRequests] = useState(0);
   const openFormulaDrawer = (): void => {
@@ -1009,10 +1021,11 @@ export function ChartDataView({
         : undefined;
       link.classList.toggle(
         'chart-aspect-filtered',
-        !isContactShown({ aKey, bKey, aspectKey, orb }, aspectFamilies, orbCaps),
+        !isContactShown({ aKey, bKey, aspectKey, orb }, aspectFamilies, orbCaps) ||
+          (suppressMinorNatal && sameRing && !isMajorAspect(aspectKey)),
       );
     }
-  }, [wheelMarkup, wheelRef, aspectFamilies, orbCaps, filterData, activeTab]);
+  }, [wheelMarkup, wheelRef, aspectFamilies, orbCaps, filterData, activeTab, suppressMinorNatal]);
 
   // The Positions and Aspects tables share the wheel's selection (#418): a button on a row selects it on the
   // wheel, and the row the wheel has selected is marked. Only where there is a wheel, and never in the PDF.
@@ -1152,6 +1165,18 @@ export function ChartDataView({
               onClear={clearIsolation}
               lineIsolation={{ isolated: linesIsolated, onChange: setLinesIsolated }}
               contactStepper={contactStepper}
+              presetNote={
+                presetSwitches?.timeLords === true &&
+                overlayContext !== undefined &&
+                (chartType === undefined || chartType === 'natal') ? (
+                  <PresetTimeLords
+                    moment={overlayContext.moment}
+                    natal={data}
+                    rulership={overlayContext.options?.rulership}
+                    personId={personId}
+                  />
+                ) : undefined
+              }
               derivedChartNote={
                 isDerivedChartType(chartType)
                   ? t.derivedChartInterpretationNote(chartTypeT.typeLabels[chartType].toLocaleLowerCase(locale))
@@ -1340,6 +1365,7 @@ export function ChartDataView({
                       settingsPanel === null ? undefined : openFormulaDrawer,
                       aspectFamilies,
                       orbCaps,
+                      suppressMinorNatal,
                     )}
                   {currentTab === 'elements' && renderElementsView(load.data, displayName, pointVisibility, t, locale)}
                   {currentTab === 'placements' &&
