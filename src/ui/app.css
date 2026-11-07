@@ -2380,11 +2380,31 @@ label.stacked textarea:focus-visible {
      scroll with the content and must be at least as wide as the fades they hide: with narrower covers (#1076 used
      --space-4 over --space-6) a band stayed on both sides of a table that fits. */
   --scroll-cue-width: var(--space-6);
+  /* The covers must be the colour of whatever the table sits on: the page, or a card's surface (below). */
+  --scroll-cover: var(--bg);
   background:
-    linear-gradient(to right, var(--bg), var(--bg)) local left / var(--scroll-cue-width) 100% no-repeat,
-    linear-gradient(to left, var(--bg), var(--bg)) local right / var(--scroll-cue-width) 100% no-repeat,
+    linear-gradient(to right, var(--scroll-cover), var(--scroll-cover)) local left / var(--scroll-cue-width) 100%
+      no-repeat,
+    linear-gradient(to left, var(--scroll-cover), var(--scroll-cover)) local right / var(--scroll-cue-width) 100%
+      no-repeat,
     linear-gradient(to right, var(--line), transparent) scroll left / var(--scroll-cue-width) 100% no-repeat,
     linear-gradient(to left, var(--line), transparent) scroll right / var(--scroll-cue-width) 100% no-repeat;
+}
+
+/* A table on a card's surface: the covers take the card's colour, or a darker band shows either side of a table that fits. */
+:is(
+    .consultation-section,
+    .consultation-glance,
+    .tool-card,
+    .birth-record-card,
+    .horary-card,
+    .timing-card,
+    .timing-controls,
+    .primitive-disclosure-panel,
+    .acg-meanings-card
+  )
+  .data-table-scroll {
+  --scroll-cover: var(--surface);
 }
 
 .data-table table {
