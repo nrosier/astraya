@@ -152,6 +152,20 @@ describe('validateFullExport', () => {
     expect(bad.error).toMatchObject({ kind: 'malformed', path: 'people[0].sourceKind' });
   });
 
+  it('refuses a name or a place label over 200 characters, before any write (#1288)', async () => {
+    for (const field of ['displayName', 'placeLabel'] as const) {
+      const copy = roundTripped(await build([ADA])) as { people: [Record<string, unknown>] };
+      copy.people[0][field] = 'x'.repeat(201);
+      const result = validateFullExport(copy);
+      expect(result.ok).toBe(false);
+      if (result.ok) continue;
+      expect(result.error).toMatchObject({ kind: 'malformed', path: `people[0].${field}` });
+    }
+    const exactly = roundTripped(await build([ADA])) as { people: [Record<string, unknown>] };
+    exactly.people[0].displayName = 'x'.repeat(200);
+    expect(validateFullExport(exactly).ok).toBe(true);
+  });
+
   it('refuses a source note over the cap, before any write (#1262)', async () => {
     const copy = roundTripped(await build([ADA])) as { people: [{ sourceNote: unknown }] };
     copy.people[0].sourceNote = 'x'.repeat(201);
