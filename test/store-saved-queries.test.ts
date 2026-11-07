@@ -154,7 +154,7 @@ describe('foldSavedQuery', () => {
   it('marks an unknown body key, aspect key, kind or bad date invalid', () => {
     const cases: readonly EventSearchQueryParameters[] = [
       { ...PARAMETERS, stationBody: 'nibiru' },
-      { ...PARAMETERS, aspectKey: 'septile' },
+      { ...PARAMETERS, aspectKey: 'heptagon' },
       { ...PARAMETERS, kinds: ['comet' as never] },
       { ...PARAMETERS, from: '2027-02-30x' },
     ];

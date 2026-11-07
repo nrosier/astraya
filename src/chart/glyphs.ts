@@ -417,6 +417,14 @@ const ASPECT_GLYPHS: Readonly<Record<string, GlyphDefinition>> = {
     ),
   ]),
 
+  // The decile, novile and septile have no Kerykeion artwork. Like the quintile's Q, each is its initial letter,
+  // drawn as plain strokes by Astraya (#1184); this is a placeholder pending the owner's visual review.
+  decile: glyph('decile', [path('M28 21 L28 79 L47 79 C68 79 78 66 78 50 C78 34 68 21 47 21 L28 21')]),
+
+  novile: glyph('novile', [path('M25 79 L25 21 L75 79 L75 21')]),
+
+  septile: glyph('septile', [path('M74 31 C70 18 30 16 29 35 C28 53 72 46 71 65 C70 84 30 83 25 69')]),
+
   opposition: glyph('opposition', [
     path(
       'M46.1 67.16 C46.18 72.44 42.64 77.54 37.67 79.33 C33.23 81 27.91 80.03 24.42 76.8 C20.99 73.73 19.38 68.76 20.45 64.27 C21.5 59.64 25.25 55.71 29.88 54.58 C34.3 53.43 39.31 54.78 42.45 58.12 C44.76 60.52 46.13 63.82 46.1 67.16 L46.1 67.16 M80.53 32.73 C80.62 38.01 77.07 43.11 72.1 44.9 C67.67 46.57 62.34 45.6 58.85 42.37 C55.42 39.3 53.82 34.33 54.89 29.84 C55.93 25.21 59.68 21.28 64.31 20.14 C68.73 19 73.74 20.35 76.88 23.69 C79.19 26.09 80.56 29.39 80.53 32.73 L80.53 32.73 M41.87 58.41 C47.76 52.77 53.65 47.12 59.54 41.47',
