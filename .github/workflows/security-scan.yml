@@ -93,8 +93,10 @@ jobs:
               ($rules | map(select(.id == $res.ruleId)) | first // {}) as $rule |
               (($rule.properties["security-severity"] // null) | if . == null then 100 else tonumber end) |
               select(. >= 7)] | length' "$f")
-            echo "$f: $n"
-            total=$((total + n))
+            # An unparseable or empty SARIF (a scanner that failed mid-write) leaves `n` empty, which broke the sum
+            # and could silently suppress the tracking issue; it counts as zero instead (#1279, verified 2026-11-07).
+            echo "$f: ${n:-0}"
+            total=$((total + ${n:-0}))
           done
           echo "total=$total" >> "$GITHUB_OUTPUT"
 
