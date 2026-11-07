@@ -1,17 +1,21 @@
 // Builds the owner's visual review page (docs/ops/VISUAL-REVIEW.md): one HTML file with every screen in
 // e2e/visual-review-screens.json at 390, 1280 and 3440 in light and dark, taken from the screenshots a
 // `VISUAL_REVIEW_OUT=<dir> npx playwright test e2e/visual-review.spec.ts` run wrote, each with a verdict row and a box
-// that copies the owner's notes back. Usage: node scripts/build-visual-review.mjs <screenshot-dir> <out.html>
+// that copies the owner's notes back. Usage: node scripts/build-visual-review.mjs <screenshot-dir> <out.html> [slug,slug,...]
+// The optional list keeps only those screens, so a review of what changed stays under the 16 MB artifact limit.
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const [dir, out] = process.argv.slice(2);
+const [dir, out, only] = process.argv.slice(2);
 if (dir === undefined || out === undefined) {
   console.error('usage: node scripts/build-visual-review.mjs <screenshot-dir> <out.html>');
   process.exit(2);
 }
 
-const screens = JSON.parse(readFileSync(new URL('../e2e/visual-review-screens.json', import.meta.url), 'utf8'));
+const wanted = only === undefined ? undefined : only.split(',').map((slug) => slug.trim());
+const screens = JSON.parse(readFileSync(new URL('../e2e/visual-review-screens.json', import.meta.url), 'utf8')).filter(
+  ({ slug }) => wanted === undefined || wanted.some((prefix) => slug === prefix || slug.startsWith(`${prefix}-`)),
+);
 const template = readFileSync(new URL('./visual-review-template.html', import.meta.url), 'utf8');
 const SIZES = [
   ['390', 'Phone 390'],
