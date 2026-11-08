@@ -1,5 +1,5 @@
 // Builds the owner's visual review page (docs/ops/VISUAL-REVIEW.md): one HTML file with every screen in
-// e2e/visual-review-screens.json at 390, 1280 and 3440 in light and dark, taken from the screenshots a
+// e2e/visual-review-screens.json at 390, 1920 and 1280 in light and dark, taken from the screenshots a
 // `VISUAL_REVIEW_OUT=<dir> npx playwright test e2e/visual-review.spec.ts` run wrote, each with a verdict row and a box
 // that copies the owner's notes back. Usage: node scripts/build-visual-review.mjs <screenshot-dir> <out.html> [slug,slug,...]
 // The optional list keeps only those screens, so a review of what changed stays under the 16 MB artifact limit.
@@ -20,7 +20,7 @@ const template = readFileSync(new URL('./visual-review-template.html', import.me
 const SIZES = [
   ['390', 'Phone 390'],
   ['1280', 'Laptop 1280'],
-  ['3440', 'Wide 3440'],
+  ['1920', 'Desktop 1920'],
 ];
 const THEMES = ['light', 'dark'];
 const escape = (text) =>

@@ -1,5 +1,5 @@
 /**
- * Captures every screen listed in `visual-review-screens.json` at 390x844, 1280x800 and 3440x1440 in light and dark, for
+ * Captures every screen listed in `visual-review-screens.json` at 390x844, 1920x1080 and 1280x800 in light and dark, for
  * the owner's visual review (docs/ops/VISUAL-REVIEW.md). It is a capture tool, not a test: it skips unless
  * `VISUAL_REVIEW_OUT` names the folder to write the JPEGs to, so the normal e2e run and CI do nothing here.
  *
@@ -21,7 +21,7 @@ const OUT = process.env.VISUAL_REVIEW_OUT;
 const SIZES = [
   { w: 390, h: 844 },
   { w: 1280, h: 800 },
-  { w: 3440, h: 1440 },
+  { w: 1920, h: 1080 },
 ] as const;
 const THEMES = ['light', 'dark'] as const;
 
