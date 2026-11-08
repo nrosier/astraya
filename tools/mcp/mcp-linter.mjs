@@ -20,7 +20,7 @@
  * `claude mcp add --transport stdio astraya-linter -s project -- npx tsx tools/mcp/mcp-linter.mjs`.
  *
  * Imports from `src/interpretation/*.ts` directly — allowed in this direction (`tools/` may read
- * `src/`; `src/` may never read `tools/`, lint-enforced in `eslint.config.js`). Running under tsx,
+ * `src/`; `src/` may never read `tools/`, lint-enforced in `.oxlintrc.json`). Running under tsx,
  * same as every `tools/corpus-gen/*.mjs` script that already imports `.ts` files this way.
  */
 /**

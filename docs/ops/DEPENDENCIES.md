@@ -38,26 +38,23 @@ tracking, not licence compliance.
 
 ## Build and test (never shipped — not subject to the AGPL-compatibility constraint above)
 
-| Package                                    | Purpose                                                                                                       | Licence              |
-| :----------------------------------------- | :------------------------------------------------------------------------------------------------------------ | :------------------- |
-| `typescript`                               | Compiler/type-checker (`npm run typecheck`).                                                                  | Apache-2.0           |
-| `typescript-eslint`                        | Type-aware ESLint rules (`strictTypeChecked`).                                                                | MIT                  |
-| `eslint`, `@eslint/js`, `globals`          | Lint engine and its rule/environment data.                                                                    | MIT                  |
-| `eslint-plugin-react-hooks`                | Rules of Hooks and exhaustive effect dependencies, both at error for the React source (#638).                 | MIT                  |
-| `prettier`                                 | Formatting (`npm run format`/`format:check`).                                                                 | MIT                  |
-| `vite`                                     | Dev server and production bundler.                                                                            | MIT                  |
-| `@vitejs/plugin-react`                     | Vite's React/JSX transform.                                                                                   | MIT                  |
-| `vitest`, `fast-check`                     | Unit/property test runner.                                                                                    | MIT                  |
-| `@vitest/coverage-v8`                      | Coverage report (`npm run test:coverage`), report only with no threshold (#613).                              | MIT                  |
-| `knip`                                     | Unused files, exports and dependencies report (`npm run knip`), report only and never a gate (#613).          | ISC                  |
-| `@playwright/test`, `@axe-core/playwright` | E2E runner and its accessibility-assertion integration.                                                       | Apache-2.0 / MPL-2.0 |
-| `jsdom`                                    | DOM environment for component tests.                                                                          | MIT                  |
-| `fake-indexeddb`                           | In-memory IndexedDB for store tests.                                                                          | Apache-2.0           |
-| `tsx`                                      | Runs `.ts` scripts/tools directly (`tools/corpus-gen/`, ops scripts).                                         | MIT                  |
-| `@types/*`                                 | TypeScript ambient types for the above.                                                                       | MIT                  |
-| `@modelcontextprotocol/sdk`                | Agent/tooling support (`tools/`), excluded from `src/` by the `tools/` import boundary.                       | MIT                  |
-| `oxlint`                                   | Advisory lint run only (`npm run lint:oxlint`, `.github/workflows/oxlint-advisory.yml`, #1284); never a gate. | MIT                  |
-| `oxlint-tsgolint`                          | Type-aware engine behind `oxlint --type-aware`, same advisory run (#1284).                                    | MIT                  |
+| Package                                    | Purpose                                                                                                                                                                                                   | Licence              |
+| :----------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------- |
+| `typescript`                               | Compiler/type-checker (`npm run typecheck`). TypeScript 7, the native Go-based compiler (#1329).                                                                                                          | Apache-2.0           |
+| `prettier`                                 | Formatting (`npm run format`/`format:check`).                                                                                                                                                             | MIT                  |
+| `vite`                                     | Dev server and production bundler.                                                                                                                                                                        | MIT                  |
+| `@vitejs/plugin-react`                     | Vite's React/JSX transform.                                                                                                                                                                               | MIT                  |
+| `vitest`, `fast-check`                     | Unit/property test runner.                                                                                                                                                                                | MIT                  |
+| `@vitest/coverage-v8`                      | Coverage report (`npm run test:coverage`), report only with no threshold (#613).                                                                                                                          | MIT                  |
+| `knip`                                     | Unused files, exports and dependencies report (`npm run knip`), report only and never a gate (#613).                                                                                                      | ISC                  |
+| `@playwright/test`, `@axe-core/playwright` | E2E runner and its accessibility-assertion integration.                                                                                                                                                   | Apache-2.0 / MPL-2.0 |
+| `jsdom`                                    | DOM environment for component tests.                                                                                                                                                                      | MIT                  |
+| `fake-indexeddb`                           | In-memory IndexedDB for store tests.                                                                                                                                                                      | Apache-2.0           |
+| `tsx`                                      | Runs `.ts` scripts/tools directly (`tools/corpus-gen/`, ops scripts).                                                                                                                                     | MIT                  |
+| `@types/*`                                 | TypeScript ambient types for the above.                                                                                                                                                                   | MIT                  |
+| `@modelcontextprotocol/sdk`                | Agent/tooling support (`tools/`), excluded from `src/` by the `tools/` import boundary.                                                                                                                   | MIT                  |
+| `oxlint`                                   | The lint gate (`npm run lint`, in CI's `check` job). Rules of Hooks and exhaustive effect dependencies for the React source (#638) are its own `react` plugin. Replaced ESLint 2026-11-08 (#1284, #1329). | MIT                  |
+| `oxlint-tsgolint`                          | Type-aware engine behind `oxlint --type-aware`, Go-based, tracks TypeScript 7 (#1329).                                                                                                                    | MIT                  |
 
 `@axe-core/playwright` is MPL-2.0, outside the MIT/BSD/Apache-2.0/ISC/CC0/BlueOak-1.0.0 set
 `CLAUDE.md` names. It is a devDependency used only by the Playwright a11y suite
@@ -117,6 +114,10 @@ Evidence on `origin/main` (`c8c5089`, v0.46.0), from `npm ls glob minimatch` and
 
 Closing rule: #990 closes only after a Harbor scan of the next built image no longer reports either CVE. This note
 is not a substitute for that scan.
+
+**Update (2026-11-08, #1329):** `eslint`, `@eslint/config-array` and `typescript-eslint` — the dev-only source of
+the CVE-2026-118764 minimatch finding above — are removed entirely (oxlint replaced ESLint). Already moot for the
+shipped image per the table above; moot for `npm audit`/Harbor's dev-toolchain view too once this lands.
 
 ## Keeping this current
 

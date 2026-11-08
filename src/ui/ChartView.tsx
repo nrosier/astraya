@@ -947,7 +947,7 @@ export function ChartDataView({
       signWedgeStyle: toSignWedgeStyle(extendedSettings),
     };
     return { sheet: renderChartSheetSvg(input, options), dial: renderChartDialSvg(input, options) };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- the wheel renderers read the glyph settings from module state, so these are cache keys, not inputs the callback reads.
+    // oxlint-disable-next-line react/exhaustive-deps -- the wheel renderers read the glyph settings from module state, so these are cache keys, not inputs the callback reads.
   }, [load, housesRenderable, displayName, metaLines, extendedSettings, t, locale, symbolClass, variants]);
 
   const changeFamilies = useCallback((next: ReadonlySet<AspectFamilyKey>): void => {
