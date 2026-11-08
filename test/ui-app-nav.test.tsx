@@ -369,6 +369,15 @@ describe('the sidebar on every route (#965)', () => {
     expect(sidebarPairs()).toContainEqual(['PDF', '#/documents']);
   });
 
+  it('lists Birth record before Overview in the person sidebar (#1347)', async () => {
+    openStoreWithLastPerson();
+    await mount(parseRoute(ROUTE_HASHES['person-overview']));
+    const hrefs = sidebarPairs().map((pair) => (pair as string[])[1]);
+    const birth = hrefs.indexOf(`${PERSON_HASH}/birth-record`);
+    expect(birth).toBeGreaterThanOrEqual(0);
+    expect(birth).toBeLessThan(hrefs.indexOf(`${PERSON_HASH}/overview`));
+  });
+
   it('shows the person-page sidebar as the baseline', async () => {
     openStoreWithLastPerson();
     await mount(parseRoute(ROUTE_HASHES['person-overview']));
