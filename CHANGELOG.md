@@ -6,6 +6,35 @@ see [docs/ops/RELEASING.md](docs/ops/RELEASING.md).
 
 ## [Unreleased]
 
+## [0.50.0] — 2026-11-08
+
+**Table columns can be resized, Profections get their own age card, three higher-harmonic aspects join the minor family, and long names are capped so they cannot stall syncing.**
+
+### Added
+
+- **Table columns can be resized (#1301).** Drag a column edge on a pointer screen; a Reset action beside Copy and Download CSV appears once a column has been resized and clears every width in that table. The handle is hidden on touch screens.
+- **Profections show the age in their own card (#1300),** with the birth date beside it.
+- **Decile, novile and septile (#1184)** join as a higher-harmonic aspect family with exact 360/n angles, a flat 2°30′ orb (an Astraya default, no source claimed), their own filter, and off until enabled.
+- **The bi-wheel dims the bodies that are not significators (#1302).**
+- **PDF section reordering uses arrow symbols (#1304).**
+
+### Changed
+
+- **Export PDF no longer carries an arrow (#1307).**
+
+### Fixed
+
+- **A stale directed wheel no longer flashes over the Primary Directions tables (#1302).**
+- **Composite aspect and preset selects sit above the tab bar (#1303).**
+- **Planetary rule boxes line up in the Extended settings drawer (#1305).**
+- **Names are capped at 200 characters (#1288)** for a person's name and place label, and in AAF and person-file imports, so one pasted value cannot stall syncing; names already stored longer still read back whole.
+- **Consultation tables keep their actions row visible (#1301):** a rule meant to hide the duplicate table heading was hiding the whole row.
+
+### Notes for people running their own server
+
+- No server, database, Dockerfile or environment changes in this release.
+- Repository tooling (#1279, #1284): a multi-engine security scan workflow (Syft, Grype, Trivy) with cached tools and pinned versions, and an advisory, non-gating oxlint job.
+
 ## [0.49.0] — 2026-11-07
 
 **The timing and transit pages share one card layout, Overview becomes a launchpad with a natal wheel, the birth record can say where its data came from, and the interface gets one Back link and one Button.**
