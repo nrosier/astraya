@@ -161,6 +161,7 @@ import {
   midpointTreeColumns,
   allMidpointsColumns,
   renderAspectsTable,
+  type AspectContactFilter,
 } from './ChartViewAspects.js';
 import { emphasisColumns, renderElementsView } from './ChartViewElements.js';
 import {
@@ -434,6 +435,7 @@ function renderTableTab(
   boundsScheme: BoundsScheme,
   selection?: TableSelection,
   aspectHarmonicFamilyFilter?: number,
+  contactFilter?: AspectContactFilter,
 ): React.ReactNode {
   switch (tab) {
     case 'positions':
@@ -441,7 +443,16 @@ function renderTableTab(
     case 'houses':
       return renderHousesTable(data, displayName, pointVisibility, t, locale, selection);
     case 'aspects':
-      return renderAspectsTable(data, displayName, pointVisibility, t, locale, selection, aspectHarmonicFamilyFilter);
+      return renderAspectsTable(
+        data,
+        displayName,
+        pointVisibility,
+        t,
+        locale,
+        selection,
+        aspectHarmonicFamilyFilter,
+        contactFilter,
+      );
     case 'dignities':
       return renderDignitiesTable(data, displayName, pointVisibility, t, locale, rulership, boundsScheme);
     case 'derived':
@@ -1352,6 +1363,7 @@ export function ChartDataView({
                             boundsScheme,
                             tableSelection,
                             harmonicFamily,
+                            { families: aspectFamilies, orbCaps, suppressMinorNatal },
                           )}
                         </>
                       );
@@ -1477,6 +1489,27 @@ export function ChartView({
   // serializes requests through one promise chain, so out-of-order settings changes
   // still resolve in order.
   const { provider } = useEphemerisProvider();
+  // Memoised (#1333): the wheel's overlay effect depends on it, and a fresh object on every render redrew the wheel markup
+  // and cleared what "Show on the wheel" had selected.
+  const personMomentForOverlay = person?.moment;
+  const personCustomPoints = person?.customPoints;
+  const natalOverlayContext = useMemo(
+    (): ChartOverlayContext | undefined =>
+      provider === undefined || personMomentForOverlay === undefined
+        ? undefined
+        : {
+            moment: personMomentForOverlay,
+            provider,
+            baseLabel: t.natalFallback,
+            baseSource: 'natal',
+            options: {
+              ...toChartCalculationOptions(settings),
+              rulership,
+              ...(personCustomPoints === undefined ? {} : { customPoints: personCustomPoints }),
+            },
+          },
+    [provider, personMomentForOverlay, t.natalFallback, settings, rulership, personCustomPoints],
+  );
   const store = useStore();
 
   /** Saves the drawer's whole formula list as the person's one register (#824), one batch. */
@@ -1736,21 +1769,7 @@ export function ChartView({
         }}
         buildViewHref={(next) => chartHref(personId, next, 'natal', undefined, date)}
         initialTransitDate={date}
-        overlayContext={
-          provider === undefined
-            ? undefined
-            : {
-                moment: person.moment,
-                provider,
-                baseLabel: t.natalFallback,
-                baseSource: 'natal',
-                options: {
-                  ...toChartCalculationOptions(settings),
-                  rulership,
-                  ...(person.customPoints === undefined ? {} : { customPoints: person.customPoints }),
-                },
-              }
-        }
+        overlayContext={natalOverlayContext}
       />
     </main>
   );
