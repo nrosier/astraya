@@ -84,6 +84,7 @@ import { usePersonCalculationSettings } from './person-calculation-settings.js';
 import { unreadableSettingsNoticeMessages } from './UnreadableSettingsNotice.messages.js';
 import { orbSourceName, useCalculationBasisLine, withBasisItems } from './calculation-basis.js';
 import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
+import { useUserCorpusLayer } from './user-corpus-layer.js';
 import { useStoreState } from './store-context.js';
 import { readLastPersonId } from './last-person.js';
 import type { ExportBuilderSection } from './route.js';
@@ -173,6 +174,7 @@ export function PdfExportBuilder({
   const user = useSessionUserOrUndefined();
   const orbLibrary = useOrbLibrary();
   const orbSources = useOrbContextSource();
+  const userCorpus = useUserCorpusLayer(locale);
   const { provider } = useEphemerisProvider();
   const state = useStoreState();
   const people = useMemo(() => ordered(state.people), [state.people]);
@@ -480,6 +482,7 @@ export function PdfExportBuilder({
           people: state.people,
           orbLibrary,
           orbSources,
+          ...(userCorpus === undefined ? {} : { userCorpus }),
         },
         ct,
         t,

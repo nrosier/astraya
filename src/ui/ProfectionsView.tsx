@@ -44,6 +44,7 @@ import type { TableColumn } from './table-sort.js';
 import type { CorpusEntry, Locale } from '../interpretation/schema.js';
 import { ordinal } from './placement-label.js';
 import { wheelCorpus } from './wheel-corpus.js';
+import { useUserCorpusLayer } from './user-corpus-layer.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useStableMoment } from './use-stable-moment.js';
 import { PageHeader } from './PageHeader.js';
@@ -104,6 +105,7 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
   const personMoment = useStableMoment(person?.moment);
   const t = useMessages(profectionsViewMessages);
   const [locale] = useLocale();
+  const userLayer = useUserCorpusLayer(locale);
   const [asOf, setAsOf] = useState(todayInputValue);
   const { provider } = useEphemerisProvider();
   const { rulership, setRulership } = usePersonCalculationSettings(personId);
@@ -117,7 +119,7 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
   const [corpus, setCorpus] = useState<readonly CorpusEntry[]>([]);
   useEffect(() => {
     let cancelled = false;
-    wheelCorpus(locale).then(
+    wheelCorpus(locale, userLayer).then(
       (loaded) => {
         if (!cancelled) setCorpus(loaded);
       },
@@ -126,7 +128,7 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
     return () => {
       cancelled = true;
     };
-  }, [locale]);
+  }, [locale, userLayer]);
 
   const targetDate = useMemo(() => {
     const [year, month, day] = asOf.split('-').map(Number);

@@ -71,3 +71,51 @@ describe('loadRuntimeCorpus (#212)', () => {
     expect(result).toEqual([ENTRY]);
   });
 });
+
+describe('loadRuntimeCorpus: the reader’s own corrections (#1338)', () => {
+  const CHUNK = `${CORPUS_BASE_URL}en.json`;
+  const COMMITTED = { ...ENTRY, text: 'The committed text for the Sun in Aries.' };
+  const OVERRIDE = { ...ENTRY, text: 'The approved server-wide text for the Sun in Aries.' };
+  const OTHER = { ...ENTRY, key: 'planet-in-sign:moon:0', text: 'The committed text for the Moon in Aries.' };
+
+  function withOverrides(overrides: readonly CorpusEntry[]): typeof fetch {
+    return vi.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      if (url === CHUNK) return new Response(JSON.stringify([COMMITTED, OTHER]));
+      if (url === '/api/corpus-overrides/en') return new Response(JSON.stringify({ entries: overrides }));
+      return new Response('not found', { status: 404 });
+    });
+  }
+
+  const textOf = (entries: readonly CorpusEntry[], key: string): string | undefined =>
+    entries.find((entry) => entry.key === key)?.text;
+
+  it('a correction wins over the approved override and over the committed text', async () => {
+    const layer = new Map([[ENTRY.key, 'My own text for the Sun in Aries.']]);
+    const withOverride = await loadRuntimeCorpus('en', withOverrides([OVERRIDE]), layer);
+    expect(textOf(withOverride, ENTRY.key)).toBe('My own text for the Sun in Aries.');
+    const withoutOverride = await loadRuntimeCorpus('en', withOverrides([]), layer);
+    expect(textOf(withoutOverride, ENTRY.key)).toBe('My own text for the Sun in Aries.');
+    // Another key is untouched.
+    expect(textOf(withOverride, OTHER.key)).toBe(OTHER.text);
+  });
+
+  it('with no correction the override, or else the committed text, is used unchanged', async () => {
+    expect(textOf(await loadRuntimeCorpus('en', withOverrides([OVERRIDE])), ENTRY.key)).toBe(OVERRIDE.text);
+    expect(textOf(await loadRuntimeCorpus('en', withOverrides([])), ENTRY.key)).toBe(COMMITTED.text);
+    expect(textOf(await loadRuntimeCorpus('en', withOverrides([]), new Map()), ENTRY.key)).toBe(COMMITTED.text);
+  });
+
+  it('keeps everything but the text of a corrected entry, and ignores a correction for a missing entry', async () => {
+    const layer = new Map([
+      [ENTRY.key, 'My own text for the Sun in Aries.'],
+      ['planet-in-sign:venus:0', 'There is no such entry to correct.'],
+    ]);
+    const entries = await loadRuntimeCorpus('en', withOverrides([]), layer);
+    expect(entries).toHaveLength(2);
+    expect(entries.find((entry) => entry.key === ENTRY.key)).toEqual({
+      ...COMMITTED,
+      text: 'My own text for the Sun in Aries.',
+    });
+  });
+});

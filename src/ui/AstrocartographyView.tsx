@@ -46,6 +46,7 @@ import { useStoreState } from './store-context.js';
 import type { BodyId, GeoPosition } from '../ephemeris/types.js';
 import type { CorpusEntry, Locale } from '../interpretation/schema.js';
 import { wheelCorpus } from './wheel-corpus.js';
+import { useUserCorpusLayer } from './user-corpus-layer.js';
 import { useStableMoment } from './use-stable-moment.js';
 import { useCalculationBasisLine } from './calculation-basis.js';
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
@@ -78,6 +79,7 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
   const calculation = usePersonCalculationSettings(personId);
   const basisLine = useCalculationBasisLine(calculation.settings, calculation.rulership);
   const [locale] = useLocale();
+  const userLayer = useUserCorpusLayer(locale);
   const { provider } = useEphemerisProvider();
   // What the map is drawn from. Edited as a draft in the Map settings dialog and replaced as a whole on Apply, so
   // one commit is one recalculation and opening or cancelling the dialog never changes the map (#512).
@@ -106,7 +108,7 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
   }, []);
   useEffect(() => {
     let cancelled = false;
-    wheelCorpus(locale).then(
+    wheelCorpus(locale, userLayer).then(
       (loaded) => {
         if (!cancelled) setCorpus(loaded);
       },
@@ -115,7 +117,7 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
     return () => {
       cancelled = true;
     };
-  }, [locale]);
+  }, [locale, userLayer]);
 
   const relocationPlace: GeoPosition | undefined = useMemo(
     () => relocationOf({ relocationLat: settings.relocationLat, relocationLon: settings.relocationLon }),

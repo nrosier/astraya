@@ -23,10 +23,14 @@ import type { ResultBasis } from '../src/interpretation/result-basis.js';
 import { saveInterpretationResult } from '../server/interpretation/results.ts';
 import { ReportView } from '../src/ui/ReportView.js';
 import { reportViewMessages } from '../src/ui/ReportView.messages.js';
+import { corpusCorrectionMessages } from '../src/ui/CorpusCorrectionEditor.messages.js';
 import { toTier2ChartPayload } from '../src/interpretation/tier2-client.js';
 import { getLocale, setLocale } from '../src/ui/locale.js';
+import { resetAccountPreferencesForTests } from '../src/ui/account-preferences.js';
 import { formatSavedTime } from '../src/ui/saved-time.js';
 import { bodyByKey } from '../src/astrology/bodies.js';
+import { StoreProvider } from '../src/ui/store-context.js';
+import { openStore, type Store } from '../src/store/store.js';
 import { SessionProvider, useSession, useStoreStatus } from '../src/ui/session-context.js';
 import type { StoreStatus } from '../src/ui/session-context.js';
 import type { AuthUser } from '../src/sync/auth-client.js';
@@ -1547,3 +1551,168 @@ describe('interpretation configuration disclosure styles use tokens only (#881)'
     }
   });
 });
+
+describe('ReportView: a reader’s own correction of an entry (#1338)', () => {
+  const KEY = 'planet-in-sign:sun:0';
+  const COMMITTED_TEXT = 'The committed reading of the Sun in Aries is a steady, warm drive to begin things.';
+  const OWN_TEXT = 'My own reading of the Sun in Aries is a quiet courage that shows up when it is needed.';
+  const open: Store[] = [];
+  let counter = 0;
+
+  beforeEach(async () => {
+    localStorage.clear();
+    await act(async () => {
+      resetAccountPreferencesForTests();
+      setLocale('en');
+      await Promise.resolve();
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: RequestInfo | URL) => {
+        const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+        const body = url.startsWith('/api/corpus-overrides/')
+          ? { entries: [] }
+          : [
+              {
+                key: KEY,
+                locale: 'en',
+                tier: 'core',
+                tags: [],
+                provenance: { source: 'hand-written' },
+                text: COMMITTED_TEXT,
+              },
+            ];
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(body) }) as unknown as ReturnType<typeof fetch>;
+      }),
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    for (const store of open.splice(0)) store.close();
+  });
+
+  async function mountWithStore(): Promise<{ container: HTMLElement; root: Root; store: Store }> {
+    counter += 1;
+    const store = await openStore({ name: `astraya-report-correction-${String(counter)}` });
+    open.push(store);
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <StoreProvider store={store}>
+          <ReportView chart={makeChart()} />
+        </StoreProvider>,
+      );
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    return { container, root, store };
+  }
+
+  const shownTexts = (container: HTMLElement): string[] =>
+    Array.from(container.querySelectorAll('li.report-paragraph p')).map((p) => p.textContent);
+
+  const editButtonFor = (container: HTMLElement, text: string): HTMLButtonElement => {
+    const paragraph = Array.from(container.querySelectorAll('li.report-paragraph')).find((li) =>
+      li.textContent.includes(text),
+    );
+    const button = paragraph?.querySelector('button');
+    if (!(button instanceof HTMLButtonElement)) throw new Error('expected an Edit button on the corpus paragraph');
+    return button;
+  };
+
+  it('saving a correction shows it on the entry with an indicator; reset restores the committed text', async () => {
+    const { container, root, store } = await mountWithStore();
+    expect(shownTexts(container).some((text) => text.includes(COMMITTED_TEXT))).toBe(true);
+    expect(container.textContent).not.toContain(reportCorrectionBadge());
+
+    await act(async () => {
+      editButtonFor(container, COMMITTED_TEXT).click();
+      await Promise.resolve();
+    });
+    const textarea = document.querySelector('dialog textarea');
+    if (!(textarea instanceof HTMLTextAreaElement)) throw new Error('expected the editor text area');
+    await act(async () => {
+      typeInto(textarea, OWN_TEXT);
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      await Promise.resolve();
+    });
+    const saveButton = Array.from(document.querySelectorAll('dialog button')).find(
+      (button) => button.textContent === 'Save',
+    );
+    await act(async () => {
+      (saveButton as HTMLButtonElement).click();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+
+    expect(store.state.corrections.size).toBe(1);
+    expect(shownTexts(container).some((text) => text.includes(OWN_TEXT))).toBe(true);
+    expect(shownTexts(container).some((text) => text.includes(COMMITTED_TEXT))).toBe(false);
+    expect(container.textContent).toContain(reportCorrectionBadge());
+
+    await act(async () => {
+      editButtonFor(container, OWN_TEXT).click();
+      await Promise.resolve();
+    });
+    const resetButton = Array.from(document.querySelectorAll('dialog button')).find(
+      (button) => button.textContent === 'Reset to original',
+    );
+    await act(async () => {
+      (resetButton as HTMLButtonElement).click();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+
+    expect(store.state.corrections.size).toBe(0);
+    expect(shownTexts(container).some((text) => text.includes(COMMITTED_TEXT))).toBe(true);
+    expect(container.textContent).not.toContain(reportCorrectionBadge());
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('refuses text with HTML before any write and keeps the committed text', async () => {
+    const { container, root, store } = await mountWithStore();
+    await act(async () => {
+      editButtonFor(container, COMMITTED_TEXT).click();
+      await Promise.resolve();
+    });
+    const textarea = document.querySelector('dialog textarea');
+    if (!(textarea instanceof HTMLTextAreaElement)) throw new Error('expected the editor text area');
+    await act(async () => {
+      typeInto(textarea, `${OWN_TEXT} <b>bold</b>`);
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      await Promise.resolve();
+    });
+    const saveButton = Array.from(document.querySelectorAll('dialog button')).find(
+      (button) => button.textContent === 'Save',
+    );
+    await act(async () => {
+      (saveButton as HTMLButtonElement).click();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+
+    expect(store.state.corrections.size).toBe(0);
+    expect(store.outgoing(undefined)).toEqual([]);
+    expect(document.querySelector('dialog')?.textContent).toContain(corpusCorrectionMessages.en.markup);
+    expect(shownTexts(container).some((text) => text.includes(COMMITTED_TEXT))).toBe(true);
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+});
+
+/** Types into a React-controlled text area: the native setter, so React's value tracking sees a real change. */
+function typeInto(textarea: HTMLTextAreaElement, value: string): void {
+  Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set?.call(textarea, value);
+  textarea.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+function reportCorrectionBadge(): string {
+  return corpusCorrectionMessages.en.editedBadge;
+}

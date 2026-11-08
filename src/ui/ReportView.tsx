@@ -33,13 +33,13 @@
  */
 /**
  * @module ReportView
- * @purpose Renders an interpretation Report's sections/paragraphs with a provenance toggle and a degree-symbol (Sabian symbol) visibility toggle, plus the Tier 2 opt-in AI-customized interpretation sub-tab (grounded restyle or freeform full-chart modes).
+ * @purpose Renders an interpretation Report's sections/paragraphs with the reader's own corrections laid over the corpus (an Edit action opens `CorpusCorrectionEditor`, #1338), a provenance toggle and a degree-symbol (Sabian symbol) visibility toggle, plus the Tier 2 opt-in AI-customized interpretation sub-tab (grounded restyle or freeform full-chart modes).
  * @conventions Thin wiring over report-provenance.ts; fetches its corpus chunk at runtime via corpus-client.ts rather than importing the full synchronous CORPUS; uses ReportView.messages.ts for en/nl text via useMessages(); the degree-symbol toggle's own label/explanation/control lives in DegreeSymbolSetting.tsx (controlled); this file owns the value via useShowDegreeSymbol() from degree-symbol-setting.ts, passes it down, and uses it to filter paragraphs.
  * @exports ReportView
  */
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { assembleReport, reportPlacementKeys, type Report, type ReportParagraph } from '../interpretation/report.js';
-import { loadRuntimeCorpus } from '../interpretation/corpus-client.js';
+import { applyUserCorrections, loadRuntimeCorpus } from '../interpretation/corpus-client.js';
 import type { CorpusEntry, Locale } from '../interpretation/schema.js';
 import { checkCustomPrompt, type GuardrailIssue } from '../interpretation/prompt-guardrail.js';
 import { TextAreaField } from './primitives/TextAreaField.js';
@@ -73,6 +73,10 @@ import { SavedInterpretationsPanel } from './SavedInterpretationsPanel.js';
 import { GlossaryText } from './GlossaryText.js';
 import { GlossaryTerm } from './GlossaryTerm.js';
 import { useSessionUserOrUndefined } from './session-context.js';
+import { useOptionalStore } from './store-context.js';
+import { useUserCorpusLayer } from './user-corpus-layer.js';
+import { CorpusCorrectionEditor, type CorrectionTarget } from './CorpusCorrectionEditor.js';
+import { corpusCorrectionMessages } from './CorpusCorrectionEditor.messages.js';
 import { reportViewMessages } from './ReportView.messages.js';
 import {
   generateTier2Interpretation,
@@ -188,13 +192,49 @@ function PlacementBadgeList({
   );
 }
 
+/** What a paragraph needs to offer the reader's own correction of its text (#1338). */
+interface ParagraphEdit {
+  /** True when the text shown is the reader's own version. */
+  readonly edited: boolean;
+  readonly onEdit: (trigger: HTMLButtonElement) => void;
+}
+
+function ParagraphEditControls({
+  edit,
+  label,
+}: {
+  readonly edit: ParagraphEdit;
+  readonly label: string;
+}): React.JSX.Element {
+  const t = useMessages(corpusCorrectionMessages);
+  return (
+    <p className="report-paragraph-actions">
+      {edit.edited && <Badge>{t.editedBadge}</Badge>}
+      <Button
+        type="button"
+        variant="quiet"
+        size="compact"
+        aria-label={t.editActionLabel(label)}
+        onClick={(event) => {
+          edit.onEdit(event.currentTarget);
+        }}
+      >
+        {t.editAction}
+      </Button>
+    </p>
+  );
+}
+
 function Paragraph({
   paragraph,
   showProvenance,
   locale,
   underBodyHeading = false,
+  edit,
 }: {
   readonly paragraph: ReportParagraph;
+  /** Edit action for a corpus-backed paragraph (#1338); absent where the paragraph has no entry to correct or no store is open. */
+  readonly edit?: ParagraphEdit | undefined;
   readonly showProvenance: boolean;
   readonly locale: Locale;
   /** True under a body's heading, whose name the label then leaves out (#666). */
@@ -220,6 +260,7 @@ function Paragraph({
           <GlossaryText text={paragraph.text} />
         </p>
       )}
+      {edit !== undefined && <ParagraphEditControls edit={edit} label={label ?? paragraph.text.slice(0, 40)} />}
       {showProvenance && (
         <p className="report-provenance hint">
           {provenance.placement !== undefined && <>{provenance.placement} &middot; </>}
@@ -523,6 +564,38 @@ export function ReportView({
   const [showDegreeSymbol, setShowDegreeSymbol] = useShowDegreeSymbol();
   const [corpus, setCorpus] = useState<readonly CorpusEntry[] | undefined>(undefined);
   const [loadError, setLoadError] = useState<string | undefined>(undefined);
+  // The reader's own corrections (#1338) are laid over the loaded corpus here rather than refetching it, so saving or
+  // resetting one shows at once. `corpus` stays the text without them: that is the "original" the editor offers back.
+  const store = useOptionalStore();
+  const userLayer = useUserCorpusLayer(locale);
+  const shownCorpus = useMemo(
+    () => (corpus === undefined ? undefined : applyUserCorrections(corpus, userLayer)),
+    [corpus, userLayer],
+  );
+  const originalByKey = useMemo(() => new Map((corpus ?? []).map((entry) => [entry.key, entry.text])), [corpus]);
+  const [correcting, setCorrecting] = useState<CorrectionTarget | undefined>(undefined);
+  const editTriggerRef = useRef<HTMLElement | null>(null);
+  const editFor = (paragraph: ReportParagraph): ParagraphEdit | undefined => {
+    if (store === undefined || paragraph.source.kind !== 'corpus') return undefined;
+    const { key } = paragraph.source.entry;
+    const corrected = userLayer?.get(key);
+    return {
+      edited: corrected !== undefined,
+      onEdit: (trigger) => {
+        editTriggerRef.current = trigger;
+        setCorrecting({
+          key,
+          locale,
+          originalText: originalByKey.get(key) ?? paragraph.text,
+          correctedText: corrected,
+          label:
+            paragraph.placement === undefined
+              ? undefined
+              : reportParagraphLabel(paragraph.placement, locale, paragraph.longitude, false),
+        });
+      },
+    };
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -547,7 +620,7 @@ export function ReportView({
       </div>
     );
   }
-  if (corpus === undefined) {
+  if (shownCorpus === undefined) {
     return (
       <div className="report">
         <p>{t.loadingInterpretation}</p>
@@ -555,7 +628,7 @@ export function ReportView({
     );
   }
 
-  const report: Report = assembleReport(chart, locale, corpus, rulership, chartKind, exclude);
+  const report: Report = assembleReport(chart, locale, shownCorpus, rulership, chartKind, exclude);
 
   const controls = (
     <div className="report-controls">
@@ -661,6 +734,7 @@ export function ReportView({
                           paragraph={paragraph}
                           showProvenance={showProvenance}
                           locale={locale}
+                          edit={editFor(paragraph)}
                         />
                       ))}
                     </ul>
@@ -680,6 +754,7 @@ export function ReportView({
                             showProvenance={showProvenance}
                             locale={locale}
                             underBodyHeading
+                            edit={editFor(paragraph)}
                           />
                         ))}
                       </ul>
@@ -688,6 +763,16 @@ export function ReportView({
                 )}
               </section>
             ))}
+            {store !== undefined && (
+              <CorpusCorrectionEditor
+                store={store}
+                target={correcting}
+                returnFocusTo={editTriggerRef}
+                onClose={() => {
+                  setCorrecting(undefined);
+                }}
+              />
+            )}
           </>
         ) : activeTab === 'ai' ? (
           <AiCustomizedPanel

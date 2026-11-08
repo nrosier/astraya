@@ -26,6 +26,7 @@ import { chartViewMessages } from './ChartView.messages.js';
 import { useShowDegreeSymbol } from './degree-symbol-setting.js';
 import { useMessages } from './messages.js';
 import { wheelCorpus } from './wheel-corpus.js';
+import { useUserCorpusLayer } from './user-corpus-layer.js';
 import { placementHeading, SELECTION_TEXT_LIMIT } from './wheel-selection.js';
 
 export function WheelSelectionText({
@@ -43,12 +44,13 @@ export function WheelSelectionText({
   const t = useMessages(chartViewMessages);
   const [corpus, setCorpus] = useState<readonly CorpusEntry[] | undefined>(undefined);
   const [failed, setFailed] = useState(false);
+  const userLayer = useUserCorpusLayer(locale);
 
   useEffect(() => {
     let cancelled = false;
     setCorpus(undefined);
     setFailed(false);
-    wheelCorpus(locale).then(
+    wheelCorpus(locale, userLayer).then(
       (loaded) => {
         if (!cancelled) setCorpus(loaded);
       },
@@ -59,7 +61,7 @@ export function WheelSelectionText({
     return () => {
       cancelled = true;
     };
-  }, [locale]);
+  }, [locale, userLayer]);
 
   // The Sabian (degree-symbol) entry follows the device setting (#817): off leaves it out of the selection altogether.
   const [showDegreeSymbol] = useShowDegreeSymbol();
