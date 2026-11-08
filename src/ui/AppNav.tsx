@@ -49,9 +49,8 @@ import { useExclusiveOpen, type ExclusiveOpen } from './use-exclusive-open.js';
 // 'consultation' (#563) is here too, not in LEADING_KEYS below — it needs a complete birth
 // moment (isTabEnabled), unlike the two tabs that are always reachable.
 const UNGROUPED_KEYS = new Set(['overview', 'consultation', 'birth-record', 'chart', 'report', 'astrocartography']);
-// Rendered first, in this fixed order — the two tabs a person can land on regardless of
-// completeness (#506/#509's canonical Overview destination plus the existing Birth record tab),
-// per docs/ui/UI-UX_GUIDELINES.md §2's person-workspace order.
+// Rendered first (Birth record, then Overview, #1347) — the two tabs a person can land on
+// regardless of completeness. The order comes from PERSON_TABS, which is filtered below.
 const LEADING_KEYS = new Set(['overview', 'birth-record']);
 
 /** The person chip and that person's tabs. Needs the store, so it is only rendered once one is open. */

@@ -65,6 +65,14 @@ describe('isTabEnabled', () => {
 });
 
 describe('PERSON_TABS', () => {
+  it('puts Birth record first and Overview second, the rest in their order (#1347)', () => {
+    expect(PERSON_TABS[0]?.key).toBe('birth-record');
+    expect(PERSON_TABS[1]?.key).toBe('overview');
+    expect(PERSON_TABS[2]?.key).toBe('consultation');
+    expect(PERSON_TABS[3]?.key).toBe('chart');
+    expect(isTabEnabled('birth-record', false)).toBe(true);
+  });
+
   it('builds the same hrefs the old nav chain used', () => {
     const hrefs = Object.fromEntries(PERSON_TABS.map((tab) => [tab.key, tab.buildHref(ID)]));
     expect(hrefs).toEqual({
