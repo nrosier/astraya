@@ -55,8 +55,8 @@ These cause build/CI failures if violated:
 ## Code Standards (Build/Lint Enforced)
 
 - **TypeScript strict flags:** `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`, `noImplicitOverride`, `noFallthroughCasesInSwitch`.
-- **ESLint:** `strictTypeChecked` + `stylisticTypeChecked`. No `!` assertions; `interface` not `type`; no floating promises.
-- **JSDoc:** Every `src/`, `server/`, and `tools/` `.ts`/`.tsx`/`.mjs` file must have an `@module` header (`@purpose`, `@conventions`, `@exports`) — lint-enforced (`eslint.config.js`'s `local/require-module-header`). `test/`/`e2e/`/`scripts/`/config files are exempt; most already carry their own descriptive top-of-file prose instead.
+- **oxlint:** `.oxlintrc.json` mirrors ESLint's former `strictTypeChecked` + `stylisticTypeChecked` rule-for-rule, plus the `sweph-wasm`/`tools/` import boundaries, the `local/require-module-header` rule (`oxlint-plugins.js`) and the React Hooks rules. No `!` assertions; `interface` not `type`; no floating promises. `npm run lint` runs `oxlint --type-aware .` (syntactic rules plus the type-aware ones, via `tsgolint`); `npm run lint:fix` applies its autofixes.
+- **JSDoc:** Every `src/`, `server/`, and `tools/` `.ts`/`.tsx`/`.mjs` file must have an `@module` header (`@purpose`, `@conventions`, `@exports`) — lint-enforced (`.oxlintrc.json`/`oxlint-plugins.js`'s `local/require-module-header`). `test/`/`e2e/`/`scripts/`/config files are exempt; most already carry their own descriptive top-of-file prose instead.
 - **Pattern:** Pure TS (`.ts`), thin React (`.tsx`); test math directly in `.ts`.
 - **Domain Integrity:** No invented numbers/orbs; cite sources or reference tests for all house systems/conventions.
 - **Dependencies:** AGPL-3.0 compatible only (MIT/BSD/Apache-2.0/ISC/CC0/BlueOak-1.0.0); fonts may also be SIL OFL 1.1 or the Bitstream Vera licence (#655). Heavy deps use dynamic `import()`. `scripts/check-bundle-size.mjs` enforces lazy loading.

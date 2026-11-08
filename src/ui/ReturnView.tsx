@@ -23,7 +23,7 @@ import { crossAspectRows, type AspectRow } from '../domain/chart-tables.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
 import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
-import { ChartDataView, PdfCreatorLink, pdfCreatorHref } from './ChartView.js';
+import { ChartDataView, PdfCreatorLink, pdfCreatorHref, type ChartOverlayContext } from './ChartView.js';
 import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
 import { useCalculationBasisLine } from './calculation-basis.js';
 import { type ChartType, type ChartViewKind } from './chart-sections.js';
@@ -212,6 +212,33 @@ export function ReturnView({
   const metaLines = useMemo(() => [label], [label]);
   const contacts = useMemo(() => (load.kind === 'ready' ? crossAspectRows(load.result.contacts) : []), [load]);
 
+  // Memoised (#1333): a new object each render reruns the overlay effect and drops the wheel selection, as on the natal chart.
+  const personName = person?.displayName;
+  const overlayLabel = personName ? `${personName} — ${label}` : label;
+  const overlayContext = useMemo(
+    (): ChartOverlayContext | undefined =>
+      provider === undefined || personMoment === undefined
+        ? undefined
+        : {
+            moment: personMoment,
+            provider,
+            baseLabel: overlayLabel,
+            options: {
+              ...toChartCalculationOptions(settings),
+              rulership,
+              ...(fixedStars === undefined ? {} : { fixedStars }),
+            },
+          },
+    [provider, personMoment, overlayLabel, settings, rulership, fixedStars],
+  );
+
+  // Memoised (#1333): the wheel's overlay effect depends on `load`, so a new object each render would drop the selection.
+  const chartLoad = useMemo((): React.ComponentProps<typeof ChartDataView>['load'] => {
+    if (load.kind === 'ready') return { kind: 'ready', data: load.data };
+    // Never drawn while idle: the chart is only rendered once a calculation has started.
+    return load.kind === 'idle' ? { kind: 'loading' } : load;
+  }, [load]);
+
   // The contacts table's CSV, offered in the page header (#887).
   useCsvExports(
     load.kind === 'ready' && person !== undefined
@@ -268,7 +295,7 @@ export function ReturnView({
           <ChartDataView
             personId={personId}
             chartType={kind}
-            load={load.kind === 'ready' ? { kind: 'ready', data: load.data } : load}
+            load={chartLoad}
             displayName={displayName}
             showHouses
             metaLines={metaLines}
@@ -281,20 +308,7 @@ export function ReturnView({
               changeChartView(personId, kind, next);
             }}
             buildViewHref={(next) => chartHref(personId, next, kind)}
-            overlayContext={
-              provider === undefined
-                ? undefined
-                : {
-                    moment: person.moment,
-                    provider,
-                    baseLabel: displayName,
-                    options: {
-                      ...toChartCalculationOptions(settings),
-                      rulership,
-                      ...(fixedStars === undefined ? {} : { fixedStars }),
-                    },
-                  }
-            }
+            overlayContext={overlayContext}
           />
         )}
 

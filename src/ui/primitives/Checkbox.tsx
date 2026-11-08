@@ -21,6 +21,8 @@ export interface CheckboxProps {
   readonly hideLabel?: boolean | undefined;
   /** One line of explanation under the label; may hold a `GlossaryText` paragraph (#901). */
   readonly description?: React.ReactNode;
+  /** Drawn and announced as an on/off switch (`role="switch"`) rather than a tick box; same input, same behaviour. */
+  readonly switchStyle?: boolean | undefined;
 }
 
 export function Checkbox({
@@ -31,11 +33,13 @@ export function Checkbox({
   id,
   hideLabel,
   description,
+  switchStyle,
 }: CheckboxProps): React.JSX.Element {
   return (
-    <label className="primitive-choice">
+    <label className="primitive-choice" data-switch={switchStyle === true ? 'true' : undefined}>
       <input
         type="checkbox"
+        role={switchStyle === true ? 'switch' : undefined}
         id={id}
         checked={checked}
         disabled={disabled}

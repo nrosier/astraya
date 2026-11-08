@@ -41,6 +41,7 @@ import type { Locale } from '../interpretation/schema.js';
 import { EmptyState } from './primitives/EmptyState.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { PageHeader } from './PageHeader.js';
+import { CorpusSubmissionsSection } from './CorpusSubmissionsSection.js';
 
 /** The triage tone for a candidate: a mismatch is a warning-level fact, a match is plain (never green). */
 function triageTone(signal: CorpusCandidate['triageSignal']): BadgeTone | undefined {
@@ -295,6 +296,7 @@ export function CorpusCandidatesPanel(): React.JSX.Element {
             </ul>
           </>
         )}
+        <CorpusSubmissionsSection />
       </div>
     </main>
   );

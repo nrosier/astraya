@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 /**
  * The sidebar footer (ui-sidebar-footer): the version and About & Licence links live at the foot
- * of the sidebar, the update banner is hidden by default, and the main content no longer renders
- * a page `<footer>`. The main-content check reads `App.tsx` directly, since mounting the whole
+ * of the sidebar, the update prompt is not shown there (the bottom banner owns it, #1331), and the
+ * main content no longer renders a page `<footer>`. The main-content check reads `App.tsx` directly, since mounting the whole
  * shell needs the ephemeris worker and the open store.
  */
 import { readFileSync } from 'node:fs';
@@ -49,19 +49,12 @@ describe('sidebar footer', () => {
     expect(footer?.querySelector('a[href="#/changelog"]')?.textContent).toBe(`Version ${APP_VERSION}`);
   });
 
-  it('keeps the update banner hidden by default', () => {
+  it('renders no update block: the update prompt lives only in the bottom banner (#1331)', () => {
     const container = mount(<SidebarFooter />);
-    const banner = container.querySelector<HTMLElement>('.sidebar-footer-update');
-    expect(banner).not.toBeNull();
-    expect(banner?.hidden).toBe(true);
-  });
-
-  it('shows the banner with a Reload button only when an update is reported', () => {
-    const container = mount(<SidebarFooter updateAvailable />);
-    const banner = container.querySelector<HTMLElement>('.sidebar-footer-update');
-    expect(banner?.hidden).toBe(false);
-    expect(banner?.textContent).toContain('New version available');
-    expect(banner?.querySelector('button')?.textContent).toBe('Reload');
+    expect(container.querySelector('.sidebar-footer-update')).toBeNull();
+    expect(container.querySelector('[role="status"]')).toBeNull();
+    expect(container.querySelector('.sidebar-footer')?.textContent).not.toContain('New version available');
+    expect(container.querySelector('.sidebar-footer button')).toBeNull();
   });
 
   it('localises the footer text to Dutch', () => {

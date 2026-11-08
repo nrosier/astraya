@@ -89,8 +89,8 @@ docs/references/*
 # Playwright MCP screenshots left in the repo root during manual checks.
 /*.png
 
-# Diagnostic logs written by the advisory oxlint CI job (#1284), and by anyone
-# reproducing it locally. Report output, not source.
+# Diagnostic logs from a local `npx oxlint . > oxlint-syntactic.log`-style redirect. Report
+# output, not source.
 /oxlint-syntactic.log
 /oxlint-type-aware.log
 

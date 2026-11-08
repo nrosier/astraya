@@ -358,6 +358,33 @@ const MIGRATIONS: readonly ((db: DatabaseSync) => void)[] = [
       CREATE INDEX interpretation_results_user_person_created ON interpretation_results(user_id, person_id, created_at);
     `);
   },
+  // 17: corrections that signed-in users submit to the admins (#1338, slice 2). Its own table, not
+  // `corpus_candidates` (migration 9) or `corpus_overrides` (migration 5): a submission is not live and
+  // not an admin's bulk candidate, and nothing here is read by the public override route. A row is kept
+  // after a decision (status and decider), unlike a candidate (#1338 D4); only 'pending' exists until the
+  // approval slice. `submitted_by` is for the admin queue only and never leaves it. `accepted_at` and
+  // `licence_version` record the licence notice the submitter accepted (D7). `decided_by` is SET NULL so
+  // deleting an admin keeps the history row. Deleting the submitter removes their submissions.
+  (db) => {
+    db.exec(`
+      CREATE TABLE corpus_submissions (
+        id TEXT PRIMARY KEY,
+        key TEXT NOT NULL,
+        locale TEXT NOT NULL,
+        text TEXT NOT NULL,
+        submitted_by TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+        licence_accepted INTEGER NOT NULL CHECK (licence_accepted = 1),
+        licence_version TEXT NOT NULL,
+        accepted_at TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        decided_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+        decided_at TEXT
+      );
+      CREATE INDEX corpus_submissions_status ON corpus_submissions(status);
+      CREATE INDEX corpus_submissions_submitted_by ON corpus_submissions(submitted_by, status, created_at);
+    `);
+  },
 ];
 
 /** Migration steps whose table rebuild would otherwise break `REFERENCES` clauses pointing at the table being rebuilt. */

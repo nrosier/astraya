@@ -123,7 +123,7 @@ import type { CorpusEntry, Locale } from '../interpretation/schema.js';
 import type { BirthMomentInput } from '../time/types.js';
 import { assembleReport, type ReportParagraph } from '../interpretation/report.js';
 import { resolvePlacementText } from '../interpretation/compose.js';
-import { loadRuntimeCorpus } from '../interpretation/corpus-client.js';
+import { loadRuntimeCorpus, type UserCorpusLayer } from '../interpretation/corpus-client.js';
 import { getSavedInterpretation, type SavedInterpretationDetail } from '../interpretation/tier2-client.js';
 import { kindLabel } from './result-basis-label.js';
 import { formatSavedTime } from './saved-time.js';
@@ -301,6 +301,8 @@ export interface PdfPlanContext {
   readonly savedInterpretation?: (id: string) => Promise<SavedInterpretationDetail>;
   /** Injectable for the same reason `corpus-client.ts`'s own `fetchImpl` is — testability without a real network. */
   readonly corpusFetch?: typeof fetch;
+  /** The reader's own interpretation corrections for `locale` (#1338), laid over the corpus; absent means none. */
+  readonly userCorpus?: UserCorpusLayer;
   /** Every stored person, so a synastry/composite section's own `partnerId` can be resolved; absent (or missing the id) if neither section is in the selection. */
   readonly people?: ReadonlyMap<string, Person>;
   /** The device's named orb profiles and each context's source (#590); absent means the card's orbs everywhere. */
@@ -733,7 +735,7 @@ async function buildSynastrySectionPlan(
   context: PdfPlanContext,
   pt: typeof pdfExportMessages.en,
 ): Promise<readonly PdfSectionPlan[]> {
-  const { person, provider, locale, corpusFetch } = context;
+  const { person, provider, locale, corpusFetch, userCorpus } = context;
   if (person.moment === undefined) throw new Error('this person has no complete birth record');
   const partner = resolvePartner(options.partnerId, context);
   // Safe: both just checked above.
@@ -760,7 +762,9 @@ async function buildSynastrySectionPlan(
 
   const tables: PdfTablePlan[] = [];
   if (options.aspectsTable) {
-    const corpus = await loadRuntimeCorpus(locale, corpusFetch ?? fetch).catch((): readonly CorpusEntry[] => []);
+    const corpus = await loadRuntimeCorpus(locale, corpusFetch ?? fetch, userCorpus).catch(
+      (): readonly CorpusEntry[] => [],
+    );
     const ranked = rankedSynastryAspects(data);
     const importanceByRow = new Map(
       ranked.map(({ aspect, importance }) => [
@@ -1143,7 +1147,7 @@ async function buildProfectionsSectionPlan(
   context: PdfPlanContext,
   pt: typeof pdfExportMessages.en,
 ): Promise<readonly PdfSectionPlan[]> {
-  const { person, provider, rulership, locale, corpusFetch } = context;
+  const { person, provider, rulership, locale, corpusFetch, userCorpus } = context;
   if (person.moment === undefined) throw new Error('this person has no complete birth record');
   const pft = profectionsViewMessages[locale];
   const targetJd = await targetJdOf(options.asOfDate, provider);
@@ -1159,7 +1163,9 @@ async function buildProfectionsSectionPlan(
   const sections: PdfSectionPlan[] = [{ kind: 'chart', heading, tables }];
 
   if (options.meanings) {
-    const corpus = await loadRuntimeCorpus(locale, corpusFetch ?? fetch).catch((): readonly CorpusEntry[] => []);
+    const corpus = await loadRuntimeCorpus(locale, corpusFetch ?? fetch, userCorpus).catch(
+      (): readonly CorpusEntry[] => [],
+    );
     const fields = [
       { period: pft.yearPeriod, house: data.year.house },
       { period: pft.monthPeriod, house: data.month.house },
@@ -1180,7 +1186,7 @@ async function buildAstrocartographySectionPlan(
   context: PdfPlanContext,
   pt: typeof pdfExportMessages.en,
 ): Promise<readonly PdfSectionPlan[]> {
-  const { person, provider, locale, corpusFetch } = context;
+  const { person, provider, locale, corpusFetch, userCorpus } = context;
   if (person.moment === undefined) throw new Error('this person has no complete birth record');
   const data = await computeAstrocartography(person.moment, provider, {
     bodies: options.bodies,
@@ -1206,7 +1212,9 @@ async function buildAstrocartographySectionPlan(
   const sections: PdfSectionPlan[] = [{ kind: 'chart', heading, ...(svg === undefined ? {} : { svg }), tables: [] }];
 
   if (options.meanings && options.bodies.length > 0 && options.lineTypes.length > 0) {
-    const corpus = await loadRuntimeCorpus(locale, corpusFetch ?? fetch).catch((): readonly CorpusEntry[] => []);
+    const corpus = await loadRuntimeCorpus(locale, corpusFetch ?? fetch, userCorpus).catch(
+      (): readonly CorpusEntry[] => [],
+    );
     const fields = options.bodies.flatMap((body) => {
       const key = bodyKeyOf(body);
       return options.lineTypes.map((lineType) => ({
@@ -1312,7 +1320,7 @@ async function buildInterpretationSections(
   pt: typeof pdfExportMessages.en,
   errors: string[],
 ): Promise<readonly (PdfTextSectionPlan | PdfFieldsSectionPlan)[]> {
-  const { person, provider, settings, rulership, locale, corpusFetch } = context;
+  const { person, provider, settings, rulership, locale, corpusFetch, userCorpus } = context;
   const ids = selection.aiInterpretationIds;
   if (!selection.base && ids.length === 0) return [];
   const sections: (PdfTextSectionPlan | PdfFieldsSectionPlan)[] = [];
@@ -1336,7 +1344,7 @@ async function buildInterpretationSections(
       })),
     });
     try {
-      const corpus = await loadRuntimeCorpus(locale, corpusFetch ?? fetch);
+      const corpus = await loadRuntimeCorpus(locale, corpusFetch ?? fetch, userCorpus);
       const report = assembleReport(chart, locale, corpus, rulership, 'natal', exclude);
       for (const section of report.sections) {
         sections.push({

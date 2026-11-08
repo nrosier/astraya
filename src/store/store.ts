@@ -55,6 +55,7 @@ import {
   readAnnotationPointer,
 } from './annotations.js';
 import { PIN_ENTITY, PinRefusedError, assertPinMutation, pinAnnotationPointer, pinErasedRevision } from './pins.js';
+import { CORRECTION_ENTITY, CorrectionRefusedError, assertCorrectionMutation } from './corpus-corrections.js';
 import { assertSavedQueryMutation } from './saved-queries.js';
 import { append, appendAt, emptyLog, latest, purgeEntity, receiveRecords, since } from './oplog.js';
 import { MAX_COUNTER, createClock, encodeHlc, isNodeId, randomNodeId, receive } from './hlc.js';
@@ -388,6 +389,7 @@ export async function openStore(options: StoreOptions = {}): Promise<Store> {
         assertAnnotationMutation(mutation);
         assertAnnotationNotErased(mutation, state.erased.annotations);
         assertAccountMutation(mutation);
+        assertCorrectionMutation(mutation);
       }
       let next = log;
       const written: OpRecord[] = [];
@@ -405,7 +407,10 @@ export async function openStore(options: StoreOptions = {}): Promise<Store> {
       if (mutations.length === 0) return [];
       if (!tabLock.writable) throw new Error(NOT_WRITABLE_MESSAGE);
       // The same whole-batch guard as `write`: a seed must not be a way round it (#1066, db-integrity finding 3).
-      for (const mutation of mutations) assertAccountMutation(mutation);
+      for (const mutation of mutations) {
+        assertAccountMutation(mutation);
+        assertCorrectionMutation(mutation);
+      }
       const stored = await getMeta(db, SEED_COUNTER_KEY);
       const base = typeof stored === 'number' && Number.isInteger(stored) && stored >= 0 ? stored : 0;
       if (base + mutations.length > MAX_COUNTER) throw new Error('Seed counter exhausted.');
@@ -555,6 +560,8 @@ export async function openStore(options: StoreOptions = {}): Promise<Store> {
         // A pin id is derived from the event, so a purge would block pinning that event for good, locally and on the
         // relay's deny-list. Pins are only ever unpinned (a tombstone).
         if (entity === PIN_ENTITY) throw new PinRefusedError('invalid');
+        // A purge marker is a permanent relay deny-list entry; it would block correcting that text again (#1338).
+        if (entity === CORRECTION_ENTITY) throw new CorrectionRefusedError('invalid');
         // An annotation is erased through `eraseAnnotation`, which also points the pin at a fresh id; a bare marker on its
         // id would block annotating that pin again (#1195).
         if (entity === ANNOTATION_ENTITY) throw new AnnotationRefusedError('invalid');

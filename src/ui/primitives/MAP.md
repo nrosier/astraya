@@ -15,7 +15,7 @@ Shared UI primitives for the #506 UI/UX overhaul (Phase 1, #508). Business logic
 - `Badge.tsx` — Small static label chip for a fact beside a heading (e.g. a placement's sign and house), with an optional colour tone from existing tokens. Deps: none.
 - `StatList.tsx` — Definition list of label/value stat tiles inside the existing global `dl` card surface (#826); no consumer yet. Deps: none.
 - `EmptyState.tsx` — Shared "nothing here" block for an empty list or panel: message prop plus optional follow-up children, on the existing `.empty` look. Deps: none.
-- `Checkbox.tsx` — Shared checkbox anatomy, paired with `Radio`. Deps: none.
+- `Checkbox.tsx` — Shared checkbox anatomy, paired with `Radio`; optional `switchStyle` draws it as an on/off switch. Deps: none.
 - `Radio.tsx` — Shared radio anatomy; always used inside a caller-owned `name`/`radiogroup`. Deps: none.
 - `ChoiceGroup.tsx` — Segmented control (2-4 exclusive choices) as a labelled radiogroup over `Radio`; `segmented` draws joined horizontal segments and `showLabel` a visible label (#824). Deps: `./Radio`.
 - `OptionCards.tsx` — Radio option cards (2-5 choices needing a title + consequence line), fully-clickable cards.

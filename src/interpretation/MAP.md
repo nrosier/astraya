@@ -3,13 +3,14 @@
 Prose corpus (committed JSON per locale) + composition pipeline → written reports, schema/key format, Tier 2 (opt-in per-request LLM-customized) client contract. Build-time generator `tools/corpus-gen/` is a sibling directory; never imported from `src/`. Committed corpus data (`en.json`, `nl.json`) is under subdirectory `corpus/MAP.md`.
 
 - `compose.ts` — Fallback plain-sentence composer when corpus lacks entry. Deps: `astrology/bodies`, `astrology/aspects`, `astrology/signs`.
-- `corpus-client.ts` — Lazy-loads one locale's corpus chunk + overlays admin overrides. Deps: `./schema`.
+- `corpus-client.ts` — Lazy-loads one locale's corpus chunk + overlays admin overrides, then an injected per-reader corrections layer (#1338). Deps: `./schema`.
 - `corpus/` — Committed JSON interpretation corpus (`en.json`, `nl.json`, mid-regen); see `corpus/MAP.md`.
 - `dedupe.ts` — Finds near-duplicate corpus entries via trigram similarity. Deps: `./schema`.
 - `focus-context-schema.ts` — Wire shape + validation for Tier 2 "focus" request (structure chart data). Deps: `astrology/aspects`, `astrology/bodies`, `astrology/rulership`, `astrology/signs`.
 - `focus-context.ts` — Enriches focus-body context (sign/house/dispositor/aspects/ruled-houses) for Tier 2. Deps: `astrology/aspects`, `astrology/bodies`, `astrology/rulership`, `astrology/emphasis`, `astrology/signs`, `domain/chart-compute`, `./focus-context-schema`.
 - `index.ts` — Loads both-locales corpus synchronously for validation/tests. Deps: `./corpus/en.json`, `./corpus/nl.json`, `./loader`, `./schema`.
-- `lint.ts` — Style gate for corpus entries (length/fatalistic phrasing/medical claims/pronouns/language mismatch). Deps: `./schema`.
+- `lint.ts` — Style gate for corpus entries and shared plain-text (no HTML/link) check (length/fatalistic phrasing/medical claims/pronouns/language mismatch). Deps: `./schema`.
+- `submission-licence.ts` — Version string of the licence notice a submitter accepts (#1338); no imports, loaded by server and client.
 - `loader.ts` — Final gate: validates entries + enforces en/nl key parity. Deps: `./schema`.
 - `prompt-guardrail.ts` — Guards Tier 2 custom prompt text (length/injection/claims/PII/fabrication). Deps: `./lint`.
 - `report.ts` — Assembles chart → named sections of non-empty paragraphs + provenance; exclusion set supplied by caller (`chart/object-policy` `interpretationExclusions`, #721). Deps: `astrology/bodies`, `astrology/rulership`, `astrology/dispositors`, `astrology/emphasis`, `astrology/jones-shapes`, `astrology/signs`, `domain/chart-compute`, `./compose`, `./rules`, `./schema`.

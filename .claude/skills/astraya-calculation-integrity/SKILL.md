@@ -4,7 +4,7 @@ Use while writing or changing code under `src/ephemeris/`, `src/astrology/`, or 
 
 ## The one import boundary that must never move
 
-Per `docs/adr/0001-swiss-ephemeris-as-the-engine.md` and `eslint.config.js`'s `no-restricted-imports`: `sweph-wasm` is importable **only** inside `src/ephemeris/`. Everywhere else goes through `EphemerisProvider` (`src/ephemeris/types.ts`). Before adding any new import of `sweph-wasm`, or re-exporting something that transitively drags it in:
+Per `docs/adr/0001-swiss-ephemeris-as-the-engine.md` and `.oxlintrc.json`'s `no-restricted-imports`: `sweph-wasm` is importable **only** inside `src/ephemeris/`. Everywhere else goes through `EphemerisProvider` (`src/ephemeris/types.ts`). Before adding any new import of `sweph-wasm`, or re-exporting something that transitively drags it in:
 
 - Check the file path first — if it's not under `src/ephemeris/`, don't import it; find or add the method on `EphemerisProvider` instead.
 - `npm run check`'s lint pass enforces this (ESLint error, not a style nit), but don't rely on catching it after the fact — writing the import at all means redoing the change through the provider.

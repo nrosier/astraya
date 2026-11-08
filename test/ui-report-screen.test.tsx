@@ -44,6 +44,7 @@ const shown = { person: ADA };
 vi.mock('../src/ui/store-context.js', () => ({
   useStoreState: () => ({ people: new Map([[shown.person.id, shown.person]]) }),
   useStore: () => ({ mutate: () => Promise.resolve() }),
+  useOptionalStore: () => undefined,
 }));
 
 vi.mock('../src/domain/chart-compute.js', async (importOriginal) => {

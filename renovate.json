@@ -42,22 +42,21 @@
       ]
     },
     {
-      "description": "typescript-eslint gates which TypeScript version is usable: TS is pinned to the newest release its peer range accepts. Group them so the toolchain moves as one unit.",
-      "matchPackageNames": ["typescript", "typescript-eslint", "@typescript-eslint/**"],
-      "groupName": "typescript toolchain"
+      "description": "oxlint and oxlint-tsgolint are the lint gate (#1329); group them so the toolchain moves as one unit and keep the pairing off blanket automerge.",
+      "matchPackageNames": ["oxlint", "oxlint-tsgolint"],
+      "groupName": "oxlint toolchain"
     },
     {
-      "description": "typescript-eslint 8.70.0's peerDependencies cap typescript at '<6.1.0' — it does not support TS 7 yet. Hold the major bump until a typescript-eslint release raises that peer range; remove this rule once it does (see PR #141).",
+      "description": "A typescript bump can introduce new errors across the 5-project build regardless of the lint gate; keep it off blanket automerge even for a minor/patch release.",
       "matchPackageNames": ["typescript"],
-      "matchUpdateTypes": ["major"],
-      "enabled": false
+      "automerge": false
     },
     {
       "description": "Dev tooling patch and minor updates are safe to automerge once the check suite passes.",
       "matchDepTypes": ["devDependencies"],
       "matchUpdateTypes": ["minor", "patch"],
       "automerge": true,
-      "matchPackageNames": ["!typescript", "!typescript-eslint"]
+      "matchPackageNames": ["!typescript", "!oxlint", "!oxlint-tsgolint"]
     }
   ],
   "vulnerabilityAlerts": {

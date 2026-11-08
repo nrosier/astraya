@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { lintCorpus, lintEntry, MAX_LENGTH, MIN_LENGTH } from '../src/interpretation/lint.js';
+import { checkPlainText, lintCorpus, lintEntry, MAX_LENGTH, MIN_LENGTH } from '../src/interpretation/lint.js';
 import { CORPUS } from '../src/interpretation/index.js';
 import type { CorpusEntry } from '../src/interpretation/schema.js';
 
@@ -123,5 +123,26 @@ describe('lintCorpus (#57)', () => {
     // it starts failing the moment content that breaks a rule is added, rather than
     // being wired up only after there is something to catch.
     expect(lintCorpus(CORPUS)).toEqual([]);
+  });
+});
+
+describe('checkPlainText (#1338)', () => {
+  it('refuses markup and every kind of link, and passes plain text', () => {
+    expect(checkPlainText('See <b>this</b>')).toBe('markup');
+    expect(checkPlainText('See http://example.com now')).toBe('link');
+    expect(checkPlainText('See https://example.com now')).toBe('link');
+    expect(checkPlainText('See www.example now')).toBe('link');
+    expect(checkPlainText('Write to mailto:a@b now')).toBe('link');
+    expect(checkPlainText('Visit example.org today')).toBe('link');
+    expect(checkPlainText('A steady, deliberate approach, 3.5 times over.')).toBeUndefined();
+  });
+
+  it('stays fast on long crafted input (no polynomial backtracking)', () => {
+    for (const input of ['a'.repeat(5000) + '!', 'a.'.repeat(5000), 'a-'.repeat(5000) + '!', '1'.repeat(5000)]) {
+      const started = performance.now();
+      const result = checkPlainText(input);
+      expect(performance.now() - started).toBeLessThan(200);
+      expect(result).toBeUndefined();
+    }
   });
 });

@@ -63,6 +63,7 @@ import type { TableColumn } from './table-sort.js';
 import type { CorpusEntry, Locale } from '../interpretation/schema.js';
 import { synastryText } from './synastry-text.js';
 import { wheelCorpus } from './wheel-corpus.js';
+import { useUserCorpusLayer } from './user-corpus-layer.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useStableMoment } from './use-stable-moment.js';
 import { PageHeader } from './PageHeader.js';
@@ -138,6 +139,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
   // The wheel's markup is cached on these, so a change of symbol form redraws it.
   const [variants] = useGlyphVariants();
   const [locale] = useLocale();
+  const userLayer = useUserCorpusLayer(locale);
 
   const candidates = useMemo(
     () =>
@@ -220,7 +222,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
   useEffect(() => {
     if (!synastryReady) return undefined;
     let cancelled = false;
-    wheelCorpus(locale).then(
+    wheelCorpus(locale, userLayer).then(
       (loaded) => {
         if (!cancelled) setCorpus(loaded);
       },
@@ -229,7 +231,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
     return () => {
       cancelled = true;
     };
-  }, [synastryReady, locale]);
+  }, [synastryReady, locale, userLayer]);
 
   const wheelMarkup = useMemo(() => {
     if (load.kind !== 'ready') return undefined;
@@ -252,7 +254,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
       { outerRingIndex: 0, innerRingIndex: 1, aspects: load.data.aspects },
     ];
     return renderMultiWheelSvg([ringA, ringB], crossAspects);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- the wheel renderers read the glyph settings from module state, so these are cache keys, not inputs the callback reads.
+    // oxlint-disable-next-line react/exhaustive-deps -- the wheel renderers read the glyph settings from module state, so these are cache keys, not inputs the callback reads.
   }, [load, person, partner, t, symbolClass, variants]);
 
   const wheelT = useMessages(biWheelSelectionPanelMessages);

@@ -243,7 +243,7 @@
       }
     },
     {
-      "files": ["scripts/**/*.mjs", "tools/**/*.mjs", "eslint.config.js", "oxlint-plugins.js"],
+      "files": ["scripts/**/*.mjs", "tools/**/*.mjs", "oxlint-plugins.js"],
       "rules": {
         "typescript/await-thenable": "off",
         "typescript/consistent-return": "off",
@@ -307,7 +307,7 @@
       }
     },
     {
-      "files": ["scripts/**/*.mjs", "tools/**/*.mjs", "eslint.config.js", "oxlint-plugins.js", "vite.config.ts"],
+      "files": ["scripts/**/*.mjs", "tools/**/*.mjs", "oxlint-plugins.js", "vite.config.ts"],
       "env": {
         "node": true
       }

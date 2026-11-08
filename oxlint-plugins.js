@@ -1,16 +1,12 @@
 /**
- * Advisory-only oxlint JS plugin (#1284).
+ * oxlint JS plugin for Astraya's one custom lint rule (#1284, gating since #1329).
  *
- * Ports `local/require-module-header` from `eslint.config.js` so the advisory
- * oxlint run covers the same rule set as the gating ESLint run. The rule body is
- * the same as the ESLint one; only the packaging differs (oxlint reads plugins
- * from `jsPlugins` in `.oxlintrc.json` rather than from a flat-config `plugins`
- * key). `eslint.config.js` remains the single source of truth: if the rule
- * changes there, change it here too, or delete this file along with the rest of
- * the advisory setup.
+ * `require-module-header` enforces the `@module` JSDoc tag CLAUDE.md's Code Standards section
+ * requires on every `src/`, `server/` and `tools/` file (test/e2e/scripts/config are exempt).
+ * oxlint reads plugins from `jsPlugins` in `.oxlintrc.json` rather than from a flat-config
+ * `plugins` key, which is the only reason this lives in its own file instead of inline.
  *
- * The plugin is named `local` so the diagnostics read `local/require-module-header`
- * in both tools.
+ * The plugin is named `local` so the diagnostic reads `local/require-module-header`.
  */
 export default {
   meta: { name: 'local' },

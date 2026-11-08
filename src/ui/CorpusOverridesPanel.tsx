@@ -23,10 +23,11 @@
  * @exports CorpusOverridesPanel
  */
 import { Checkbox } from './primitives/Checkbox.js';
+import { StagedDialog } from './primitives/StagedDialog.js';
 import { Select } from './primitives/Select.js';
 import { TextAreaField } from './primitives/TextAreaField.js';
 import { TextField } from './primitives/TextField.js';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   deleteCorpusOverride,
   exportCorpusOverrides,
@@ -35,7 +36,8 @@ import {
 } from '../sync/admin-client.js';
 import { loadRuntimeCorpus } from '../interpretation/corpus-client.js';
 import { CORPUS_CATEGORIES, CORPUS_LOCALES, CORPUS_TIERS, categoryOfKey } from '../interpretation/schema.js';
-import { downloadBlob } from './download.js';
+import { downloadBlob, downloadText } from './download.js';
+import { rowsToCsv, type TableColumn } from './table-sort.js';
 import { LOCALE_LABELS, isLocale, useLocale } from './locale.js';
 import { categoryLabel, compareSortKeys, labelForKey, sortKeyForKey, tagLabel, tierLabel } from './placement-label.js';
 import { useMessages } from './messages.js';
@@ -72,9 +74,22 @@ interface EditState {
   readonly tags: string;
 }
 
+interface CorpusExportRow {
+  readonly entry: CorpusEntry;
+  readonly category: string;
+  readonly overridden: boolean;
+}
+
 interface PendingReset {
   readonly key: string;
   readonly overrideId: string;
+}
+
+function splitTags(value: string): string[] {
+  return value
+    .split(',')
+    .map((tag) => tag.trim())
+    .filter((tag) => tag !== '');
 }
 
 export function CorpusOverridesPanel(): React.JSX.Element {
@@ -98,6 +113,9 @@ export function CorpusOverridesPanel(): React.JSX.Element {
   const [pendingReset, setPendingReset] = useState<PendingReset>();
   const [busyKey, setBusyKey] = useState<string>();
   const [saveError, setSaveError] = useState<string>();
+  const [newTag, setNewTag] = useState('');
+  // The Edit button that opened the drawer: focus goes back to it when the drawer closes.
+  const editTriggerRef = useRef<HTMLElement | null>(null);
 
   const load = useCallback(
     (): Promise<void> =>
@@ -179,7 +197,9 @@ export function CorpusOverridesPanel(): React.JSX.Element {
     return category === undefined ? '—' : categoryLabel(category, uiLocale);
   };
 
-  const startEdit = (entry: CorpusEntry): void => {
+  const startEdit = (entry: CorpusEntry, trigger: HTMLElement): void => {
+    editTriggerRef.current = trigger;
+    setNewTag('');
     setEditing({
       key: entry.key,
       text: entry.text,
@@ -191,6 +211,7 @@ export function CorpusOverridesPanel(): React.JSX.Element {
 
   const cancelEdit = (): void => {
     setEditing(undefined);
+    setNewTag('');
     setSaveError(undefined);
   };
 
@@ -199,10 +220,7 @@ export function CorpusOverridesPanel(): React.JSX.Element {
     const identity = editing.key;
     setBusyKey(identity);
     setSaveError(undefined);
-    const tags = editing.tags
-      .split(',')
-      .map((tag) => tag.trim())
-      .filter((tag) => tag !== '');
+    const tags = splitTags(editing.tags);
     void upsertCorpusOverride({
       key: editing.key,
       locale: corpusLocale,
@@ -259,8 +277,74 @@ export function CorpusOverridesPanel(): React.JSX.Element {
       });
   };
 
-  // The toolbar's export, also in the header Export menu (#887).
-  useRegisterExports([{ key: 'corrections', label: t.exportButton, run: exportCorrections }]);
+  const exportFullJson = (): void => {
+    if (data === undefined) return;
+    downloadText(
+      `astraya-corpus-${corpusLocale}.json`,
+      JSON.stringify(data.corpus, null, 2),
+      'application/json;charset=utf-8',
+    );
+  };
+
+  const exportCsv = (): void => {
+    if (data === undefined) return;
+    const columns: readonly TableColumn<CorpusExportRow>[] = [
+      { key: 'key', label: t.keyColumn, valueOf: (row) => row.entry.key },
+      { key: 'category', label: t.categoryColumn, valueOf: (row) => row.category },
+      { key: 'tier', label: t.tierColumn, valueOf: (row) => row.entry.tier },
+      { key: 'tags', label: t.tagsColumn, valueOf: (row) => row.entry.tags.join(', ') },
+      {
+        key: 'status',
+        label: t.statusColumn,
+        valueOf: (row) => (row.overridden ? t.overriddenStatus : t.defaultStatus),
+      },
+      { key: 'text', label: t.textColumn, valueOf: (row) => row.entry.text },
+    ];
+    const rows = data.corpus.map((entry) => ({
+      entry,
+      category: categoryLabelOf(entry.key),
+      overridden: overrideMap.has(entry.key),
+    }));
+    downloadText(`astraya-corpus-${corpusLocale}.csv`, rowsToCsv(columns, rows), 'text/csv;charset=utf-8');
+  };
+
+  // The one export control: the page header's Export menu (#887, #1335).
+  useRegisterExports([
+    { key: 'corpus-json', label: t.exportJson, run: exportFullJson, disabled: data === undefined },
+    { key: 'corpus-csv', label: t.exportCsv, run: exportCsv, disabled: data === undefined },
+    { key: 'corrections', label: t.exportCorrectionsOnly, run: exportCorrections },
+  ]);
+
+  const editTags = editing === undefined ? [] : splitTags(editing.tags);
+  const addTag = (): void => {
+    const tag = newTag.trim();
+    if (editing === undefined || tag === '') return;
+    if (!editTags.includes(tag)) setEditing({ ...editing, tags: [...editTags, tag].join(', ') });
+    setNewTag('');
+  };
+  const removeTag = (tag: string): void => {
+    if (editing === undefined) return;
+    setEditing({ ...editing, tags: editTags.filter((existing) => existing !== tag).join(', ') });
+  };
+
+  const resetConfirmation =
+    pendingReset === undefined ? null : (
+      <StatusMessage kind="error">
+        {t.resetWarning(`${labelForKey(pendingReset.key, uiLocale)} (${pendingReset.key})`)}{' '}
+        <Button type="button" variant="danger" onClick={confirmReset}>
+          {t.resetPermanentlyButton}
+        </Button>{' '}
+        <Button
+          type="button"
+          variant="quiet"
+          onClick={() => {
+            setPendingReset(undefined);
+          }}
+        >
+          {t.cancelButton}
+        </Button>
+      </StatusMessage>
+    );
 
   return (
     <main className="shell admin-view">
@@ -272,123 +356,175 @@ export function CorpusOverridesPanel(): React.JSX.Element {
         {loadError !== undefined && <StatusMessage kind="error">{t.couldNotLoad(loadError)}</StatusMessage>}
 
         <div className="corpus-toolbar">
-          <Select
-            label={t.corpusLocaleLabel}
-            value={corpusLocale}
-            options={CORPUS_LOCALES.map((locale) => ({ value: locale, label: LOCALE_LABELS[locale] }))}
-            onChange={(value) => {
-              if (isLocale(value)) setCorpusLocale(value);
-            }}
-          />
-          <TextField label={t.searchLabel} value={search} onChange={setSearch} />
-          <Select
-            label={t.categoryLabel}
-            value={categoryFilter}
-            options={[
-              { value: '', label: t.allCategories },
-              ...CORPUS_CATEGORIES.map((category) => ({ value: category, label: categoryLabel(category, uiLocale) })),
-            ]}
-            onChange={(value) => {
-              setCategoryFilter(isCorpusCategory(value) ? value : '');
-            }}
-          />
-          <Select
-            label={t.tierLabel}
-            value={tierFilter}
-            options={[
-              { value: '', label: t.allTiers },
-              ...CORPUS_TIERS.map((tier) => ({ value: tier, label: tierLabel(tier, uiLocale) })),
-            ]}
-            onChange={(value) => {
-              setTierFilter(isCorpusTier(value) ? value : '');
-            }}
-          />
-          <Select
-            label={t.tagLabel}
-            value={tagFilter}
-            options={[
-              { value: '', label: t.allTags },
-              ...availableTags.map((tag) => ({ value: tag, label: tagLabel(tag, uiLocale) })),
-            ]}
-            onChange={setTagFilter}
-          />
-          <Checkbox label={t.overriddenOnlyLabel} checked={overriddenOnly} onChange={setOverriddenOnly} />
-          <div className="corpus-toolbar-end">
-            <Button variant="quiet" onClick={exportCorrections}>
-              {t.exportButton}
-            </Button>
-          </div>
-        </div>
-
-        {saveError !== undefined && <StatusMessage kind="error">{t.saveFailed(saveError)}</StatusMessage>}
-
-        {pendingReset !== undefined && (
-          <StatusMessage kind="error">
-            {t.resetWarning(`${labelForKey(pendingReset.key, uiLocale)} (${pendingReset.key})`)}{' '}
-            <Button type="button" variant="danger" onClick={confirmReset}>
-              {t.resetPermanentlyButton}
-            </Button>{' '}
-            <Button
-              type="button"
-              variant="quiet"
-              onClick={() => {
-                setPendingReset(undefined);
-              }}
-            >
-              {t.cancelButton}
-            </Button>
-          </StatusMessage>
-        )}
-
-        {editing !== undefined && (
-          <form
-            className="field-grid"
-            onSubmit={(event) => {
-              event.preventDefault();
-              save();
-            }}
-          >
-            <p>
-              <strong>{labelForKey(editing.key, uiLocale)}</strong> <code className="entry-key">{editing.key}</code>
-            </p>
-            <TextAreaField
-              label={t.textLabel}
-              rows={4}
-              value={editing.text}
+          <div className="corpus-toolbar-row">
+            <div className="corpus-toolbar-search">
+              <TextField label={t.searchLabel} value={search} onChange={setSearch} />
+            </div>
+            <Select
+              label={t.corpusLocaleLabel}
+              value={corpusLocale}
+              options={CORPUS_LOCALES.map((locale) => ({ value: locale, label: LOCALE_LABELS[locale] }))}
               onChange={(value) => {
-                setEditing({ ...editing, text: value });
+                if (isLocale(value)) setCorpusLocale(value);
+              }}
+            />
+            <Checkbox label={t.overriddenOnlyLabel} checked={overriddenOnly} onChange={setOverriddenOnly} switchStyle />
+          </div>
+          <div className="corpus-toolbar-row">
+            <Select
+              label={t.categoryLabel}
+              value={categoryFilter}
+              options={[
+                { value: '', label: t.allCategories },
+                ...CORPUS_CATEGORIES.map((category) => ({ value: category, label: categoryLabel(category, uiLocale) })),
+              ]}
+              onChange={(value) => {
+                setCategoryFilter(isCorpusCategory(value) ? value : '');
               }}
             />
             <Select
-              label={t.tierFieldLabel}
-              value={editing.tier}
-              options={CORPUS_TIERS.map((tier) => ({ value: tier, label: tier }))}
+              label={t.tierLabel}
+              value={tierFilter}
+              options={[
+                { value: '', label: t.allTiers },
+                ...CORPUS_TIERS.map((tier) => ({ value: tier, label: tierLabel(tier, uiLocale) })),
+              ]}
               onChange={(value) => {
-                if (isCorpusTier(value)) setEditing({ ...editing, tier: value });
+                setTierFilter(isCorpusTier(value) ? value : '');
               }}
             />
-            <TextField
-              label={t.tagsFieldLabel}
-              value={editing.tags}
-              onChange={(value) => {
-                setEditing({ ...editing, tags: value });
-              }}
+            <Select
+              label={t.tagLabel}
+              value={tagFilter}
+              options={[
+                { value: '', label: t.allTags },
+                ...availableTags.map((tag) => ({ value: tag, label: tagLabel(tag, uiLocale) })),
+              ]}
+              onChange={setTagFilter}
             />
-            <p className="actions">
-              <Button variant="plain" type="submit" disabled={busyKey === editing.key}>
-                {busyKey === editing.key ? t.savingLabel : t.saveButton}
-              </Button>
-              <Button type="button" variant="quiet" onClick={cancelEdit}>
-                {t.cancelButton}
-              </Button>
-              {overrideMap.has(editing.key) && (
-                <Button type="button" variant="danger" disabled={busyKey === editing.key} onClick={requestReset}>
-                  {t.resetButton}
-                </Button>
-              )}
-            </p>
-          </form>
+          </div>
+        </div>
+
+        {saveError !== undefined && editing === undefined && (
+          <StatusMessage kind="error">{t.saveFailed(saveError)}</StatusMessage>
         )}
+
+        {pendingReset !== undefined && editing === undefined && resetConfirmation}
+
+        <StagedDialog
+          open={editing !== undefined}
+          heading={editing === undefined ? t.editorHeading : labelForKey(editing.key, uiLocale)}
+          closeLabel={t.closeEditorLabel}
+          placement="right"
+          dialogClassName="settings-card corpus-editor"
+          onDiscard={cancelEdit}
+          returnFocusTo={editTriggerRef}
+          footer={
+            editing === undefined ? null : (
+              <>
+                <div className="settings-card-footer-group">
+                  {overrideMap.has(editing.key) && (
+                    <Button type="button" variant="danger" disabled={busyKey === editing.key} onClick={requestReset}>
+                      {t.resetButton}
+                    </Button>
+                  )}
+                </div>
+                <div className="settings-card-footer-group">
+                  <Button type="button" variant="quiet" onClick={cancelEdit}>
+                    {t.cancelButton}
+                  </Button>
+                  <Button variant="primary" type="button" disabled={busyKey === editing.key} onClick={save}>
+                    {busyKey === editing.key ? t.savingLabel : t.saveButton}
+                  </Button>
+                </div>
+              </>
+            )
+          }
+        >
+          {editing !== undefined && (
+            <form
+              className="corpus-editor-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                save();
+              }}
+            >
+              {saveError !== undefined && <StatusMessage kind="error">{t.saveFailed(saveError)}</StatusMessage>}
+              {pendingReset !== undefined && resetConfirmation}
+              <dl className="corpus-editor-identity">
+                <div>
+                  <dt>{t.keyColumn}</dt>
+                  <dd>
+                    <strong>{labelForKey(editing.key, uiLocale)}</strong>{' '}
+                    <code className="entry-key">{editing.key}</code>
+                  </dd>
+                </div>
+                <div>
+                  <dt>{t.categoryColumn}</dt>
+                  <dd>{categoryLabelOf(editing.key)}</dd>
+                </div>
+              </dl>
+              <div className="corpus-editor-text">
+                <TextAreaField
+                  label={t.textLabel}
+                  rows={12}
+                  value={editing.text}
+                  onChange={(value) => {
+                    setEditing({ ...editing, text: value });
+                  }}
+                />
+              </div>
+              <Select
+                label={t.tierFieldLabel}
+                value={editing.tier}
+                options={CORPUS_TIERS.map((tier) => ({ value: tier, label: tier }))}
+                onChange={(value) => {
+                  if (isCorpusTier(value)) setEditing({ ...editing, tier: value });
+                }}
+              />
+              <fieldset className="field-group corpus-tags">
+                <legend>{t.tagsFieldLabel}</legend>
+                {editTags.length > 0 && (
+                  <ul className="corpus-tag-chips">
+                    {editTags.map((tag) => (
+                      <li key={tag} className="corpus-tag-chip">
+                        <span>{tag}</span>
+                        <Button
+                          variant="quiet"
+                          size="compact"
+                          aria-label={t.removeTagLabel(tag)}
+                          onClick={() => {
+                            removeTag(tag);
+                          }}
+                        >
+                          ×
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div className="corpus-tag-add">
+                  <TextField
+                    label={t.addTagLabel}
+                    value={newTag}
+                    onChange={setNewTag}
+                    inputProps={{
+                      onKeyDown: (event) => {
+                        if (event.key === 'Enter') {
+                          event.preventDefault();
+                          addTag();
+                        }
+                      },
+                    }}
+                  />
+                  <Button type="button" variant="quiet" disabled={newTag.trim() === ''} onClick={addTag}>
+                    {t.addTagButton}
+                  </Button>
+                </div>
+              </fieldset>
+            </form>
+          )}
+        </StagedDialog>
 
         {data === undefined ? (
           <StatusMessage kind="loading">{t.loadingCorpus}</StatusMessage>
@@ -408,30 +544,46 @@ export function CorpusOverridesPanel(): React.JSX.Element {
                       data-overridden={overridden ? 'true' : 'false'}
                     >
                       <div className="corpus-entry-head">
+                        {meaningOf(entry.key) !== entry.key && (
+                          <h3 className="corpus-entry-meaning">
+                            <span className="entry-meaning">{meaningOf(entry.key)}</span>
+                          </h3>
+                        )}
                         <code className="corpus-entry-key">{entry.key}</code>
                         <span className="corpus-entry-tags">
                           <Badge>{categoryLabelOf(entry.key)}</Badge>
                           <Badge>{tierLabel(entry.tier, uiLocale)}</Badge>
                           {overridden && <Badge tone="accent">{t.overriddenStatus}</Badge>}
                         </span>
-                        <Button
-                          variant="quiet"
-                          size="compact"
-                          disabled={busyKey === entry.key}
-                          busy={busyKey === entry.key}
-                          busyLabel={t.savingLabel}
-                          onClick={() => {
-                            startEdit(entry);
-                          }}
-                        >
-                          {t.editButton}
-                        </Button>
+                        <span className="corpus-entry-actions">
+                          <Button
+                            variant="quiet"
+                            size="compact"
+                            disabled={busyKey === entry.key}
+                            busy={busyKey === entry.key}
+                            busyLabel={t.savingLabel}
+                            onClick={(event) => {
+                              startEdit(entry, event.currentTarget);
+                            }}
+                          >
+                            {t.editButton}
+                          </Button>
+                          {overridden && (
+                            <Button
+                              variant="danger"
+                              size="compact"
+                              disabled={busyKey === entry.key}
+                              onClick={() => {
+                                const override = overrideMap.get(entry.key);
+                                if (override !== undefined)
+                                  setPendingReset({ key: entry.key, overrideId: override.id });
+                              }}
+                            >
+                              {t.resetButton}
+                            </Button>
+                          )}
+                        </span>
                       </div>
-                      {meaningOf(entry.key) !== entry.key && (
-                        <p className="corpus-entry-meaning">
-                          <span className="entry-meaning">{meaningOf(entry.key)}</span>
-                        </p>
-                      )}
                       <p className="corpus-entry-text">{entry.text}</p>
                     </li>
                   );

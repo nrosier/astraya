@@ -1,12 +1,13 @@
 # tools/corpus-gen/ — Map
 
-Build-time interpretation-corpus tooling (17 scripts + shared lib in `lib/`). Regenerates `src/interpretation/corpus/en.json` and `nl.json`. Several scripts cost real API money (Gemini, OpenAI, astrologyapi.com).
+Build-time interpretation-corpus tooling (18 scripts + shared lib in `lib/`). Regenerates `src/interpretation/corpus/en.json` and `nl.json`. Several scripts cost real API money (Gemini, OpenAI, astrologyapi.com).
 
-**Critical:** Check `--help` before running any script. Never run from CI. Some write directly to shipped corpus/scratch state (batch-state/, eval-tracking/, feedback/, backups/, .data/) — not tracked here. This map documents the 17 active scripts only; see `lib/MAP.md` for shared library modules and `archive/MAP.md` for retired ones.
+**Critical:** Check `--help` before running any script. Never run from CI. Some write directly to shipped corpus/scratch state (batch-state/, eval-tracking/, feedback/, backups/, .data/) — not tracked here. This map documents the 18 active scripts only; see `lib/MAP.md` for shared library modules and `archive/MAP.md` for retired ones.
 
 Scripts:
 
 - `apply-batch-output.mjs` — Manual-recovery counterpart to `evaluate-corpus-batch.mjs`: apply an already-downloaded OpenAI batch output file by hand. No API calls.
+- `bake-overrides.mjs` — Human-run only, never CI (#1338 D3): previews (`--dry-run`) or writes (`--write`) approved server overrides into the committed corpus with a reconcile report; needs the owner's go-ahead per bake. Deps: `lib/bake-overrides`.
 - `audit-corpus.mjs` — Repeatable corpus checks (#427): key shape, locale parity, sign/house index shifts. Read-only, no API key.
 - `archive/benchmark-batch.mjs` — External quality signal (#368 Part 3): compare Astraya's prose vs. astrologyapi.com's for same placement. Samples, judges with Laya + embeddings + LLM. Calls astrologyapi.com, Gemini.
 - `archive/benchmark-dashboard.mjs` — Static HTML view of `benchmark-batch.mjs` history (sortable/filterable). Read-only, no API key.
