@@ -165,15 +165,9 @@ for (const size of [
     await expect(page.getByRole('region', { name: 'Now', exact: true })).toBeVisible();
     await expect(page.getByRole('region', { name: 'Next', exact: true })).toBeVisible();
 
-    // The default card gap is --space-4, resolved to pixels by the browser through a probe element.
-    const spaceFour = await page.locator('.overview-grid').evaluate((grid) => {
-      const probe = grid.ownerDocument.createElement('div');
-      probe.style.width = 'var(--space-4)';
-      grid.appendChild(probe);
-      const width = probe.getBoundingClientRect().width;
-      probe.remove();
-      return width;
-    });
+    // The default card gap is --space-4, which the grid's row-gap resolves to in pixels (the page root size is not 16px).
+    const rowGap = await page.evaluate<string>("getComputedStyle(document.querySelector('.overview-grid')).rowGap");
+    const spaceFour = Number.parseFloat(rowGap);
     expect(spaceFour).toBeGreaterThan(0);
     const above = await wheel.boundingBox();
     const below = await placements.boundingBox();
