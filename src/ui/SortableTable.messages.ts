@@ -3,7 +3,7 @@
  */
 /**
  * @module SortableTable.messages
- * @purpose English/Dutch message catalogue for the generic sortable data table's Copy/Download controls.
+ * @purpose English/Dutch message catalogue for the generic sortable data table's Copy/Download/Reset controls and its column-resize handle (#1301).
  * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via `useMessages()` by the sibling `SortableTable.tsx`.
  * @exports sortableTableMessages
  */
@@ -15,6 +15,7 @@ const en = {
   csvLabel: (table: string) => `${table} (CSV)`,
   resizeColumn: (column: string) => `Resize ${column} column`,
   columnWidth: (pixels: number) => `${String(pixels)} pixels wide`,
+  resetWidths: 'Reset widths',
 };
 
 const nl: typeof en = {
@@ -25,6 +26,7 @@ const nl: typeof en = {
   csvLabel: (table: string) => `${table} (CSV)`,
   resizeColumn: (column: string) => `Kolom ${column} verbreden of versmallen`,
   columnWidth: (pixels: number) => `${String(pixels)} pixels breed`,
+  resetWidths: 'Breedtes herstellen',
 };
 
 export const sortableTableMessages = { en, nl };

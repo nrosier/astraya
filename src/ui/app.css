@@ -2599,7 +2599,9 @@ label.stacked textarea:focus-visible {
 }
 
 /* Column resize (#1301). The handle sits on a header's right edge, inside the cell so it never widens the scroll frame: a window-splitter separator, focusable, with a
-   visible ring. Widths are fixed only after the first resize, and a table wider than its frame scrolls sideways. */
+   visible ring. Widths are fixed only after the first resize, and a table wider than its frame scrolls sideways.
+   Pointer screens only (owner decision): the handle is hidden by default and shown only under (pointer: fine); phones
+   and other coarse-pointer layouts keep the table's existing sideways scroll instead of a touch handle. */
 .data-table th {
   position: relative;
 }
@@ -2616,6 +2618,7 @@ label.stacked textarea:focus-visible {
 }
 
 .data-table-resize {
+  display: none;
   position: absolute;
   inset-block: 0;
   inset-inline-end: 0;
@@ -2623,6 +2626,12 @@ label.stacked textarea:focus-visible {
   width: var(--target-min);
   cursor: col-resize;
   touch-action: none;
+}
+
+@media (pointer: fine) {
+  .data-table-resize {
+    display: block;
+  }
 }
 
 .data-table-resize::after {
@@ -2643,16 +2652,6 @@ label.stacked textarea:focus-visible {
 .data-table-resize:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
-}
-
-/* Touch keeps the full 44px target at its natural height (guidelines section 6): the handle grows past the row. */
-@media (pointer: coarse) {
-  .data-table-resize {
-    inset-block: auto;
-    top: 50%;
-    height: var(--target-min);
-    transform: translateY(-50%);
-  }
 }
 
 @media print {
@@ -7682,12 +7681,14 @@ dl.consultation-tiles {
   gap: var(--space-2);
 }
 
-/* The table's caption is a heading for assistive technology; the card's own title already shows it (#800). */
+/* The table's caption is a heading for assistive technology; the card's own title already shows it (#800). Only the
+   heading itself is visually hidden (#1301) — the actions row beside it (Copy/Download CSV, and Reset once a
+   column is resized) stays visible and reachable; hiding the whole `.data-table-head` used to take Reset with it. */
 :is(.consultation-section, .primitive-disclosure-panel) .data-table {
   margin: 0;
 }
 
-.consultation-section .data-table-head {
+.consultation-section .data-table-head :is(h2, h3) {
   position: absolute;
   width: 1px;
   height: 1px;
