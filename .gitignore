@@ -106,3 +106,7 @@ docs/references/*
 **/.claude/agent-memory-local
 **/.claude/first-run
 **/.claude/assistant-daemon-state.json
+
+# Visual review screen list (#1300-#1307 handoff). Local and temporary: filled only when a
+# review is needed, then uploaded for the owner. Never committed; the file is `[]` when idle.
+e2e/visual-review-screens.json

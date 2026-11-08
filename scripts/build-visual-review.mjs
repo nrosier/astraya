@@ -16,6 +16,11 @@ const wanted = only === undefined ? undefined : only.split(',').map((slug) => sl
 const screens = JSON.parse(readFileSync(new URL('../e2e/visual-review-screens.json', import.meta.url), 'utf8')).filter(
   ({ slug }) => wanted === undefined || wanted.some((prefix) => slug === prefix || slug.startsWith(`${prefix}-`)),
 );
+if (screens.length === 0) {
+  // The screen list is empty when no review is needed (it is local and git-ignored). Fail clearly rather than write a blank page.
+  console.error('No screens to build. Fill e2e/visual-review-screens.json for a review, then run again.');
+  process.exit(1);
+}
 const template = readFileSync(new URL('./visual-review-template.html', import.meta.url), 'utf8');
 const SIZES = [
   ['390', 'Phone 390'],

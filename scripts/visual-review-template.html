@@ -194,7 +194,7 @@
   .s1280 {
     flex: 1 1 360px;
   }
-  .s3440 {
+  .s1920 {
     flex: 1 1 360px;
   }
   .zoom {
@@ -322,7 +322,7 @@
   <div>
     <h1>Visual Review</h1>
     <p class="lede">
-      Every screen changed in this batch, at 390x844, 1280x800 and 3440x1440, in light and dark, captured from the
+      Every screen changed in this batch, at 390x844, 1920x1080 and 1280x800, in light and dark, captured from the
       merged build. Read the check under each title, mark it, and copy the notes back to me. The two 90% exceptions are
       decided and noted where they apply.
     </p>
@@ -338,7 +338,7 @@
         ><button type="button" data-size-pick="all" aria-pressed="true">All sizes</button
         ><button type="button" data-size-pick="390" aria-pressed="false">390</button
         ><button type="button" data-size-pick="1280" aria-pressed="false">1280</button
-        ><button type="button" data-size-pick="3440" aria-pressed="false">3440</button></span
+        ><button type="button" data-size-pick="1920" aria-pressed="false">1920</button></span
       >
       <span class="status" id="progress" aria-live="polite"></span>
     </div>
@@ -389,27 +389,18 @@
         var c = s.querySelector('.comment');
         if (c !== document.activeElement) c.value = v.c || '';
         if (v.v) done++;
-        if (v.v === 'change' || (v.v === 'ok' && v.c)) {
-          notes.push(
-            titleOf(s) +
-              ' (' +
-              s.querySelector('.issue').textContent +
-              '): ' +
-              (v.v === 'ok' ? 'OK' : 'NEEDS A CHANGE') +
-              (v.c ? ' - ' + v.c : ''),
-          );
-        } else if (v.v === 'ok') {
-          notes.push(titleOf(s) + ' (' + s.querySelector('.issue').textContent + '): OK');
+        var line = titleOf(s) + ' (' + s.querySelector('.issue').textContent + '): ';
+        if (v.v === 'ok') {
+          notes.push(line + 'OK' + (v.c ? ' - ' + v.c : ''));
+        } else if (v.v === 'change') {
+          notes.push(line + 'NEEDS A CHANGE' + (v.c ? ' - ' + v.c : ''));
+        } else {
+          notes.push(line + 'NOT MARKED YET');
         }
       });
       document.getElementById('progress').textContent = done + ' of ' + screens.length + ' marked';
       document.getElementById('notes').value = notes.length
-        ? 'Visual review\
-' +
-          notes.join(
-            '\
-',
-          )
+        ? 'Visual review\n' + notes.join('\n')
         : 'Nothing marked yet.';
     }
     screens.forEach(function (s) {
