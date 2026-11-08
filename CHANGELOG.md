@@ -6,6 +6,36 @@ see [docs/ops/RELEASING.md](docs/ops/RELEASING.md).
 
 ## [Unreleased]
 
+## [0.51.0] — 2026-11-08
+
+**Readers can correct interpretation texts and send the corrections to the admins, admins can approve them, and the chart views get several wheel and Aspects-table fixes. Incomplete: the step that bakes approved corrections into the committed corpus exists as maintainer tooling but has not been run.**
+
+### Added
+
+- **Your own interpretation corrections (#1338).** The interpretation page has an Edit action with a drawer (Save and Reset) and an indicator. A correction is your own version of a text, saved on the device and synced to your profile through the existing encrypted log. It shows above an approved override and the committed text in the wheel, the PDF and the report. Text is checked before saving: the corpus length bounds apply, and HTML and links are refused.
+- **Submit a correction to the admins (#1338).** A signed-in user can send a correction to an admin queue after accepting the licence notice; the accepted notice version is recorded, and a submission made under another version of the notice is refused.
+- **Admin approval of submissions (#1338).** Admins see the submissions in the corpus section, and can approve or reject each one; a decided submission is kept with its decider.
+
+### Changed
+
+- **Corpus corrections panel (#1335):** one export menu, two-row filters, and the editor in a drawer.
+- **Show on wheel and the Aspects table (#1333):** Show on wheel highlights the body, Show keeps the aspect pair, and the Aspects table follows the filters. The per-tab rules for the chart type, aspects and preset are recorded in the docs.
+- **The update prompt appears once (#1331),** in the bottom banner. The sidebar footer keeps only the version and the About and Licence links.
+
+### Fixed
+
+- **Draconic, Harmonic, Return and Relocated views no longer rebuild their overlay context on every render (#1333).**
+- **Link check in submitted text (#1338):** the link pattern is bounded so crafted text cannot make it slow (CodeQL polynomial-redos).
+- **Corpus corrections are guarded when the store is seeded, not only when it is edited (#1338).**
+
+### Notes for people running their own server
+
+- Database migration 17 adds a `corpus_submissions` table (the submission queue). It runs on start; there is no manual step.
+- New routes: submit a correction, list the queue, approve and reject (admin only).
+- The Dockerfile copies one more `src/` file, `src/interpretation/submission-licence.ts`, which the submission route needs at run time. No new environment variables.
+- Maintainer tooling, not run (#1338): `tools/corpus-gen/bake-overrides.mjs` turns approved submissions into committed corpus text. Nothing in the app calls it.
+- Repository tooling (#1329): oxlint replaces ESLint as the lint gate (`npm run lint` now runs `oxlint --type-aware`), and TypeScript moves to 7.0.2.
+
 ## [0.50.0] — 2026-11-08
 
 **Table columns can be resized, Profections get their own age card, three higher-harmonic aspects join the minor family, and long names are capped so they cannot stall syncing.**
