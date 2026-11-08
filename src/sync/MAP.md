@@ -3,5 +3,6 @@
 Thin `fetch()` clients mirroring server routes (one function per route). Auth, admin, ops, corpus-overrides/candidates.
 
 - `admin-client.ts` — Admin UI surface: manage users, corpus overrides, corpus candidate triage, view interpretation usage/cost. Typed to mirror `server/auth/admin-routes.ts`, etc. Deps: interpretation/schema, auth-client.
+- `submission-client.ts` — Posts a reader's corrected text and licence acceptance to the submissions route (#1338). Deps: interpretation/schema, interpretation/submission-licence.
 - `auth-client.ts` — Client's only auth surface (login, logout, session check, OIDC, password set/bootstrap). Treats 401 from `me()` as "not signed in". Deps: none.
 - `engine.ts` — Keep local op-log ↔ server opaque relay converged (background push-pull with exponential backoff, decode tolerance, own-record filtering, clock-skew quarantine, quota stop, byte-capped push batches, oversized legacy notes kept out of the push and counted as held back, #919). Deps: store/hlc, store/notes, store/ops, store/store, ui/status, trace.

@@ -38,7 +38,7 @@ describe('server/db.ts', () => {
   it('sets PRAGMA user_version to the number of migrations applied', () => {
     const db = openDatabase(':memory:');
     const row = db.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
-    expect(row.user_version).toBe(16);
+    expect(row.user_version).toBe(17);
     db.close();
   });
 
@@ -56,7 +56,7 @@ describe('server/db.ts', () => {
       const second = openDatabase(path);
       expect(schemaOf(second)).toEqual(before);
       const row = second.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
-      expect(row.user_version).toBe(16);
+      expect(row.user_version).toBe(17);
       second.close();
     } finally {
       rmSync(dir, { recursive: true, force: true });
@@ -143,7 +143,7 @@ describe('server/db.ts', () => {
 
       const db = openDatabase(path);
       const row = db.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
-      expect(row.user_version).toBe(16);
+      expect(row.user_version).toBe(17);
 
       // The pre-existing row survived the users rebuild intact.
       const legacyUser = db.prepare('SELECT * FROM users WHERE id = ?').get('legacy-user') as
@@ -343,6 +343,8 @@ describe('server/db.ts', () => {
         -- Nor migration 16's person column and its index (#768).
         DROP INDEX interpretation_results_user_person_created;
         ALTER TABLE interpretation_results DROP COLUMN person_id;
+        -- Nor migration 17's submissions table (#1338).
+        DROP TABLE corpus_submissions;
         PRAGMA user_version = 12;
       `);
       first.close();
@@ -387,6 +389,8 @@ describe('server/db.ts', () => {
         -- Nor migration 16's person column and its index (#768).
         DROP INDEX interpretation_results_user_person_created;
         ALTER TABLE interpretation_results DROP COLUMN person_id;
+        -- Nor migration 17's submissions table (#1338).
+        DROP TABLE corpus_submissions;
         PRAGMA user_version = 13;
       `);
       first.close();
@@ -420,6 +424,8 @@ describe('server/db.ts', () => {
       first.exec(`
         DROP INDEX interpretation_results_user_person_created;
         ALTER TABLE interpretation_results DROP COLUMN person_id;
+        -- Nor migration 17's submissions table (#1338).
+        DROP TABLE corpus_submissions;
         INSERT INTO users (id, username, password_hash, created_at) VALUES ('u', 'owner', 'h', 'now');
         INSERT INTO interpretation_results (id, user_id, mode, locale, sections_json, key_version, iv, created_at)
           VALUES ('r', 'u', 'grounded', 'en', x'00', 1, x'00', 'now');
@@ -443,6 +449,35 @@ describe('server/db.ts', () => {
         }[]
       ).map((column) => column.name);
       expect(indexColumns).toEqual(['user_id', 'person_id', 'created_at']);
+      db.close();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('migration 17 adds corpus_submissions: pending by default, licence acceptance required, decider kept when an admin is deleted (#1338)', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'astraya-db-test-'));
+    try {
+      const db = openDatabase(join(dir, 'astraya.db'));
+      db.exec(`
+        INSERT INTO users (id, username, password_hash, created_at) VALUES ('u', 'user', 'h', 'now'), ('a', 'admin', 'h', 'now');
+        INSERT INTO corpus_submissions (id, key, locale, text, submitted_by, licence_accepted, licence_version, accepted_at, created_at, decided_by)
+          VALUES ('s', 'k', 'en', 't', 'u', 1, 'v', 'now', 'now', 'a');
+      `);
+      expect(db.prepare('SELECT status FROM corpus_submissions').get()).toEqual({ status: 'pending' });
+      // A submission without the acceptance cannot be stored.
+      expect(() =>
+        db
+          .prepare(
+            "INSERT INTO corpus_submissions (id, key, locale, text, submitted_by, licence_accepted, licence_version, accepted_at, created_at) VALUES ('x', 'k', 'en', 't', 'u', 0, 'v', 'now', 'now')",
+          )
+          .run(),
+      ).toThrow(/CHECK/);
+      // Deleting the decider keeps the history row; deleting the submitter removes theirs.
+      db.exec("DELETE FROM users WHERE id = 'a'");
+      expect(db.prepare('SELECT decided_by FROM corpus_submissions').get()).toEqual({ decided_by: null });
+      db.exec("DELETE FROM users WHERE id = 'u'");
+      expect(db.prepare('SELECT COUNT(*) AS n FROM corpus_submissions').get()).toEqual({ n: 0 });
       db.close();
     } finally {
       rmSync(dir, { recursive: true, force: true });

@@ -42,7 +42,13 @@ beforeEach(() => {
   setLocale('en');
   vi.stubGlobal(
     'fetch',
-    vi.fn(() => Promise.resolve(new Response(JSON.stringify({ candidates: CANDIDATES })))),
+    vi.fn((url: string) =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify(url.includes('corpus-submissions') ? { submissions: [] } : { candidates: CANDIDATES }),
+        ),
+      ),
+    ),
   );
 });
 
@@ -178,5 +184,48 @@ describe('CorpusCandidatesPanel cards and actions (#816 D-816b)', () => {
     expect(badge?.textContent).toBe('Diverges from tradition (0.20)');
     expect(container.querySelector('.corpus-queue-count')?.textContent).toBe('1 pending review');
     expect(container.querySelector('.corpus-queue-summary')?.textContent).toContain('Sorted worst triage score first');
+  });
+});
+
+describe('CorpusCandidatesPanel lists user submissions read-only (#1338 slice 2)', () => {
+  it('shows a "Submitted by users" section with status, text and submitter, and no decide buttons for it', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify(
+              url.includes('corpus-submissions')
+                ? {
+                    submissions: [
+                      {
+                        id: 's1',
+                        key: 'planet-in-sign:sun:2',
+                        locale: 'en',
+                        text: 'A user suggested this wording.',
+                        status: 'pending',
+                        submitterId: 'u1',
+                        submitterUsername: 'bob',
+                        licenceVersion: 'v1',
+                        acceptedAt: new Date().toISOString(),
+                        createdAt: new Date().toISOString(),
+                        decidedAt: undefined,
+                        decidedByUsername: undefined,
+                      },
+                    ],
+                  }
+                : { candidates: [] },
+            ),
+          ),
+        ),
+      ),
+    );
+    const container = await mount();
+    const section = container.querySelector<HTMLElement>('section.corpus-submissions');
+    expect(section?.querySelector('h2')?.textContent).toBe('Submitted by users');
+    expect(section?.textContent).toContain('A user suggested this wording.');
+    expect(section?.textContent).toContain('Submitted by bob');
+    expect(section?.textContent).toContain('Pending');
+    expect(section?.querySelectorAll('button')).toHaveLength(0);
   });
 });

@@ -17,7 +17,7 @@
  * @module interpretation/lint
  * @purpose Enforces the style rules (length, fatalistic phrasing, medical/legal/financial claims, gendered pronouns, repetitive openings, language mismatch) every corpus entry must pass before shipping.
  * @conventions Every rule is heuristic (keyword/length based, not semantic understanding) so the pass stays deterministic and CI-cheap; human review catches what these can't. Per-entry rules (lintEntry) are independent of the rest of the corpus; the repetitive-openings rule in lintCorpus needs the whole locale's set and skips corpora smaller than MIN_ENTRIES_FOR_OPENING_CHECK. MIN_LENGTH/MAX_LENGTH and the phrase/term lists are stated starting points, not derived facts.
- * @exports LintRule, LintIssue, MIN_LENGTH, MAX_LENGTH, FATALISTIC_PHRASES, MEDICAL_LEGAL_FINANCIAL_TERMS, containsTermFromWordStart, lintEntry, lintCorpus
+ * @exports LintRule, LintIssue, MIN_LENGTH, MAX_LENGTH, FATALISTIC_PHRASES, MEDICAL_LEGAL_FINANCIAL_TERMS, containsTermFromWordStart, PlainTextRefusal, checkPlainText, lintEntry, lintCorpus
  */
 import type { CorpusEntry, Locale } from './schema.js';
 
@@ -49,6 +49,24 @@ export interface LintIssue {
  */
 export const MIN_LENGTH = 40;
 export const MAX_LENGTH = 1600;
+
+/** An HTML tag, comment or declaration: `<` followed by a letter, `/`, `!` or `?`. */
+const MARKUP = /<[a-z/!?]/i;
+/** A link: a scheme with `://`, `www.`, `mailto:`, or a bare domain with a common top-level name. */
+const LINK =
+  /(?:[a-z][a-z0-9+.-]{0,31}:\/\/|\bwww\.|\bmailto:|\b[a-z0-9-]{1,63}\.(?:com|org|net|io|nl|co|app|dev|info|me|ly)\b)/i;
+
+export type PlainTextRefusal = 'markup' | 'link';
+
+/**
+ * Text a reader or admin typed must be plain: no HTML and no link. Shared by the reader's own-correction guard
+ * (`store/corpus-corrections`) and the server's submission route (#1338) so the two cannot disagree.
+ */
+export function checkPlainText(text: string): PlainTextRefusal | undefined {
+  if (MARKUP.test(text)) return 'markup';
+  if (LINK.test(text)) return 'link';
+  return undefined;
+}
 
 /**
  * Absolute, no-way-out phrasing. Astrology describes tendencies, and an entry
