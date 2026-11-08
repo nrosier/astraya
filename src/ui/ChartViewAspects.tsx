@@ -25,7 +25,7 @@ import { deriveExportFilename } from '../domain/export-filename.js';
 import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
 import { degreeColumns } from './ChartViewPlacements.js';
 import type { chartViewMessages } from './ChartView.messages.js';
-import { aspectSelectionKey, bodySelectionKey, selectColumn, type TableSelection } from './table-selection.js';
+import { aspectSelectionKey, selectColumn, type TableSelection } from './table-selection.js';
 import { isContactShown, isMajorAspect, type AspectFamilyKey, type OrbCaps } from './aspect-family-filter.js';
 import { SortableTable } from './SortableTable.js';
 import type { TableColumn } from './table-sort.js';
@@ -65,9 +65,11 @@ export function aspectColumns(
             t,
             selection,
             (row) =>
-              // Show highlights the row's first-named body, not the pair (#1333); the wheel's own filters still limit its contacts.
-              selection.selectableBodies.has(row.bodyAKey) ? bodySelectionKey(row.bodyAKey) : undefined,
-            (row) => bodyDisplayName(row.bodyAKey, locale),
+              selection.selectableBodies.has(row.bodyAKey) && selection.selectableBodies.has(row.bodyBKey)
+                ? aspectSelectionKey(row)
+                : undefined,
+            (row) =>
+              `${bodyDisplayName(row.bodyAKey, locale)} ${aspectDisplayName(row.aspectKey, locale)} ${bodyDisplayName(row.bodyBKey, locale)}`,
             undefined,
             true,
           ),

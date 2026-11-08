@@ -17,7 +17,7 @@ import {
   declinationColumns,
   filterAspectRowsByContactFilter,
 } from '../src/ui/ChartViewAspects.js';
-import { aspectSelectionKey, bodySelectionKey } from '../src/ui/table-selection.js';
+import { aspectSelectionKey } from '../src/ui/table-selection.js';
 import { SortableTable } from '../src/ui/SortableTable.js';
 import { rowsToCsv, rowsToTsv, type TableColumn } from '../src/ui/table-sort.js';
 
@@ -130,7 +130,7 @@ describe('the aspects table (#815)', () => {
     }
   });
 
-  it('has a Show button in every row that opens the wheel on the row’s body, not the pair (#815, #1333)', () => {
+  it('has a Show button in every row that opens the wheel on that aspect’s two bodies (#815)', () => {
     const shown: string[] = [];
     const withSelection = aspectColumns(t, 'en', {
       selectedKey: undefined,
@@ -144,14 +144,13 @@ describe('the aspects table (#815)', () => {
     const buttons = Array.from(container.querySelectorAll<HTMLButtonElement>('tbody button'));
     expect(buttons.map((b) => b.textContent)).toEqual(['Show', 'Show']);
     expect(buttons.map((b) => b.getAttribute('aria-label'))).toEqual([
-      'Show Sun on the wheel',
-      'Show Sun on the wheel',
+      'Show Sun Trine Moon on the wheel',
+      'Show Sun Square Saturn on the wheel',
     ]);
     act(() => {
       buttons[1]?.click();
     });
-    expect(shown).toEqual([bodySelectionKey('sun')]);
-    expect(shown).not.toEqual([aspectSelectionKey(ROWS[1] ?? fixtureBug())]);
+    expect(shown).toEqual([aspectSelectionKey(ROWS[1] ?? fixtureBug())]);
   });
 
   it('keeps the table inside the horizontal scroll frame', () => {
