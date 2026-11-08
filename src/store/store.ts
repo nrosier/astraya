@@ -407,7 +407,10 @@ export async function openStore(options: StoreOptions = {}): Promise<Store> {
       if (mutations.length === 0) return [];
       if (!tabLock.writable) throw new Error(NOT_WRITABLE_MESSAGE);
       // The same whole-batch guard as `write`: a seed must not be a way round it (#1066, db-integrity finding 3).
-      for (const mutation of mutations) assertAccountMutation(mutation);
+      for (const mutation of mutations) {
+        assertAccountMutation(mutation);
+        assertCorrectionMutation(mutation);
+      }
       const stored = await getMeta(db, SEED_COUNTER_KEY);
       const base = typeof stored === 'number' && Number.isInteger(stored) && stored >= 0 ? stored : 0;
       if (base + mutations.length > MAX_COUNTER) throw new Error('Seed counter exhausted.');

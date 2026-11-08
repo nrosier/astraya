@@ -226,6 +226,18 @@ describe('correction store round trip', () => {
     expect(store.outgoing(undefined)).toEqual([]);
   });
 
+  it('refuses to seed an over-length or markup correction, and writes nothing', async () => {
+    const store = await fresh();
+    const entityId = correctionId('en', KEY);
+    for (const value of ['x'.repeat(2000), `${TEXT_A} <b>x</b>`]) {
+      await expect(store.seed([{ entity: CORRECTION_ENTITY, entityId, field: 'text', value }])).rejects.toBeInstanceOf(
+        CorrectionRefusedError,
+      );
+    }
+    expect(store.state.corrections.size).toBe(0);
+    expect(store.outgoing(undefined)).toEqual([]);
+  });
+
   it('refuses a purge of a correction', async () => {
     const store = await fresh();
     await expect(store.purge(CORRECTION_ENTITY, correctionId('en', KEY))).rejects.toBeInstanceOf(
