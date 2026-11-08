@@ -30,7 +30,7 @@
 
 /**
  * @module store/fold
- * @purpose Folds the append-only operation log into materialised people, charts, notes, saved queries and account preferences — the pure, deterministic function every rendered screen's state depends on.
+ * @purpose Folds the append-only operation log into materialised people, charts, notes, saved queries, account preferences and the reader's own interpretation corrections — the pure, deterministic function every rendered screen's state depends on.
  * @conventions Last-write-wins per field by HLC timestamp, deliberately not a full CRDT, since one person typically creates a record once and rarely edits it concurrently; deleting sets a `deleted` field rather than removing the record, so undo is just another write; a `purged` field (once set, never unset) hides an entity entirely regardless of any other field's timestamp; registers are serialisable so they can be persisted as a snapshot and `resume`d from, with a full rebuild as the correctness fallback whenever a snapshot cannot be trusted.
  * @exports DELETED_FIELD, PURGED_FIELD, Register, Registers, EMPTY_REGISTERS, FoldSkips, Applied, applyRecords, State, materialise, fold, Snapshot, snapshotOf, Resumed, resume
  */
@@ -55,6 +55,7 @@ import {
   readErasedRevisionField,
 } from './annotations.js';
 import { foldPin, PIN_ENTITY, type Pin } from './pins.js';
+import { CORRECTION_ENTITY, foldCorrection, type CorpusCorrection } from './corpus-corrections.js';
 import { foldSavedQuery, SAVED_QUERY_ENTITY, type SavedQuery } from './saved-queries.js';
 
 /** The field that hides a record. A register like any other, so undo needs no new machinery. */
@@ -112,6 +113,7 @@ const KNOWN_ENTITIES: readonly string[] = [
   PIN_ENTITY,
   ANNOTATION_ENTITY,
   ACCOUNT_ENTITY,
+  CORRECTION_ENTITY,
 ];
 
 /**
@@ -252,6 +254,11 @@ export interface State {
    * fields. `deleted` and `purged` never apply to this entity, so they are not consulted.
    */
   readonly account: AccountRegisters;
+  /**
+   * The reader's own live corrections to interpretation text (#1338), by entity id (`<locale>|<key>`). A reset
+   * (tombstoned) or purged correction is absent.
+   */
+  readonly corrections: ReadonlyMap<string, CorpusCorrection>;
 }
 
 /**
@@ -360,6 +367,13 @@ export function materialise(registers: Registers): State {
     if (annotation !== undefined) annotations.set(pinId, annotation);
   }
 
+  const corrections = new Map<string, CorpusCorrection>();
+  for (const [id, fields] of Object.entries(registers[CORRECTION_ENTITY] ?? {})) {
+    if (isPurged(fields) || isDeleted(fields)) continue;
+    const correction = foldCorrection(id, fields);
+    if (correction !== undefined) corrections.set(id, correction);
+  }
+
   return {
     people,
     charts,
@@ -375,6 +389,7 @@ export function materialise(registers: Registers): State {
     erased: { savedQueries: erasedQueries, pins: erasedPins, annotations: erasedAnnotations },
     // Any other entity id under `account` is ignored: every device writes the one constant id.
     account: foldAccount(registers[ACCOUNT_ENTITY]?.[ACCOUNT_ENTITY_ID]),
+    corrections,
   };
 }
 

@@ -3,7 +3,7 @@
 Prose corpus (committed JSON per locale) + composition pipeline → written reports, schema/key format, Tier 2 (opt-in per-request LLM-customized) client contract. Build-time generator `tools/corpus-gen/` is a sibling directory; never imported from `src/`. Committed corpus data (`en.json`, `nl.json`) is under subdirectory `corpus/MAP.md`.
 
 - `compose.ts` — Fallback plain-sentence composer when corpus lacks entry. Deps: `astrology/bodies`, `astrology/aspects`, `astrology/signs`.
-- `corpus-client.ts` — Lazy-loads one locale's corpus chunk + overlays admin overrides. Deps: `./schema`.
+- `corpus-client.ts` — Lazy-loads one locale's corpus chunk + overlays admin overrides, then an injected per-reader corrections layer (#1338). Deps: `./schema`.
 - `corpus/` — Committed JSON interpretation corpus (`en.json`, `nl.json`, mid-regen); see `corpus/MAP.md`.
 - `dedupe.ts` — Finds near-duplicate corpus entries via trigram similarity. Deps: `./schema`.
 - `focus-context-schema.ts` — Wire shape + validation for Tier 2 "focus" request (structure chart data). Deps: `astrology/aspects`, `astrology/bodies`, `astrology/rulership`, `astrology/signs`.
