@@ -38,6 +38,7 @@ jobs:
         continue-on-error: true
         uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
         with:
+          syft-version: v1.57.0
           path: .
           format: cyclonedx-json
           output-file: sbom.cyclonedx.json
@@ -55,6 +56,7 @@ jobs:
         continue-on-error: true
         uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
         with:
+          syft-version: v1.57.0
           path: .
           format: cyclonedx-json
           output-file: sbom.cyclonedx.json
@@ -71,6 +73,7 @@ jobs:
         if: steps.syft1.outcome == 'failure' && steps.syft2.outcome == 'failure'
         uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
         with:
+          syft-version: v1.57.0
           path: .
           format: cyclonedx-json
           output-file: sbom.cyclonedx.json
@@ -93,6 +96,7 @@ jobs:
         continue-on-error: true
         uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
         with:
+          grype-version: v0.121.2
           sbom: sbom.cyclonedx.json
           output-format: sarif
           output-file: grype-results.sarif
@@ -112,6 +116,7 @@ jobs:
         continue-on-error: true
         uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
         with:
+          grype-version: v0.121.2
           sbom: sbom.cyclonedx.json
           output-format: sarif
           output-file: grype-results.sarif
@@ -130,6 +135,7 @@ jobs:
         if: always() && steps.grype1.outcome == 'failure' && steps.grype2.outcome == 'failure'
         uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
         with:
+          grype-version: v0.121.2
           sbom: sbom.cyclonedx.json
           output-format: sarif
           output-file: grype-results.sarif

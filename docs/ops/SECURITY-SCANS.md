@@ -16,6 +16,8 @@ Triggers: push to `main`, pull request to `main`, Mondays 04:00 UTC, and `workfl
 
 The Grype, Trivy and upload steps use `if: always()`, and each upload also checks that its file exists, so one scanner failing does not stop the other engine or its upload. Every action is pinned to a full commit SHA with the version as a comment.
 
+Syft is pinned to `v1.57.0` (`syft-version` on `anchore/sbom-action`) and Grype to `v0.121.2` (`grype-version` on `anchore/scan-action`), the latest releases at the time of the change. Bump both together with the action SHAs.
+
 ## Download retries (#1279)
 
 Syft, Grype and Trivy each download a binary (and Grype its vulnerability database) at run time. Those downloads have failed with HTTP 504 from github.com and with a Grype checksum mismatch after a partial download. Each of the three scanner steps therefore runs as up to three attempts of the same pinned action, with a 2 minute backoff before attempt 2 and a 5 minute backoff before attempt 3. The scan job `timeout-minutes` is 60: the worst case is 21 minutes of backoff (3 scanners x 7 minutes), plus 9 attempts at about 2 minutes each (18 minutes), plus about 5 minutes for checkout, artifact and SARIF uploads, which is 44 minutes, leaving a 16 minute margin. Attempts 1 and 2 are `continue-on-error`; attempt 3 is not, so a download that keeps failing still fails the job. Before a Grype or Trivy retry the previous SARIF output is deleted, so a partial file is never uploaded. Each retry re-fetches its download; nothing is cached between attempts. Tool versions, `severity-cutoff`, `fail-build` and Trivy's `exit-code` are unchanged.
