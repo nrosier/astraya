@@ -29,7 +29,46 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Syft SBOM (CycloneDX)
+      # Syft (anchore/sbom-action) downloads its binary at run time, and that download
+      # has failed with HTTP 504 (#1279). The same pinned action runs up to three times:
+      # attempts 1 and 2 are continue-on-error, attempt 3 is not, so a download that
+      # keeps failing still fails the job.
+      - name: Syft SBOM (CycloneDX), attempt 1
+        id: syft1
+        continue-on-error: true
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: sbom.cyclonedx.json
+          upload-artifact: false
+
+      - name: Back off before Syft attempt 2
+        if: steps.syft1.outcome == 'failure'
+        run: |
+          echo "::notice::Syft attempt 1 failed; retrying after a 20 second backoff"
+          sleep 20
+
+      - name: Syft SBOM (CycloneDX), attempt 2
+        id: syft2
+        if: steps.syft1.outcome == 'failure'
+        continue-on-error: true
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: sbom.cyclonedx.json
+          upload-artifact: false
+
+      - name: Back off before Syft attempt 3
+        if: steps.syft1.outcome == 'failure' && steps.syft2.outcome == 'failure'
+        run: |
+          echo "::notice::Syft attempt 2 failed; retrying after a 60 second backoff"
+          sleep 60
+
+      - name: Syft SBOM (CycloneDX), attempt 3
+        id: syft3
+        if: steps.syft1.outcome == 'failure' && steps.syft2.outcome == 'failure'
         uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
         with:
           path: .
@@ -44,8 +83,14 @@ jobs:
           path: sbom.cyclonedx.json
           if-no-files-found: error
 
-      - name: Grype scan of the SBOM
+      # Grype (anchore/scan-action) downloads its binary and vulnerability DB at run
+      # time. HTTP 504 and a checksum mismatch after a partial download (#1279) both
+      # fail the step; the retry re-runs the whole action, so the download is fetched
+      # again rather than reused. Attempt 3 is not continue-on-error and fails the job.
+      - name: Grype scan of the SBOM, attempt 1
+        id: grype1
         if: always()
+        continue-on-error: true
         uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
         with:
           sbom: sbom.cyclonedx.json
@@ -54,8 +99,90 @@ jobs:
           severity-cutoff: high
           fail-build: false
 
-      - name: Trivy scan (CVE, secret, IaC and Dockerfile)
+      - name: Back off before Grype attempt 2
+        if: always() && steps.grype1.outcome == 'failure'
+        run: |
+          echo "::notice::Grype attempt 1 failed; retrying after a 20 second backoff"
+          rm -f grype-results.sarif
+          sleep 20
+
+      - name: Grype scan of the SBOM, attempt 2
+        id: grype2
+        if: always() && steps.grype1.outcome == 'failure'
+        continue-on-error: true
+        uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
+        with:
+          sbom: sbom.cyclonedx.json
+          output-format: sarif
+          output-file: grype-results.sarif
+          severity-cutoff: high
+          fail-build: false
+
+      - name: Back off before Grype attempt 3
+        if: always() && steps.grype1.outcome == 'failure' && steps.grype2.outcome == 'failure'
+        run: |
+          echo "::notice::Grype attempt 2 failed; retrying after a 60 second backoff"
+          rm -f grype-results.sarif
+          sleep 60
+
+      - name: Grype scan of the SBOM, attempt 3
+        id: grype3
+        if: always() && steps.grype1.outcome == 'failure' && steps.grype2.outcome == 'failure'
+        uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
+        with:
+          sbom: sbom.cyclonedx.json
+          output-format: sarif
+          output-file: grype-results.sarif
+          severity-cutoff: high
+          fail-build: false
+
+      # Trivy (aquasecurity/trivy-action) downloads its binary and DB at run time, so it
+      # gets the same three-attempt pattern. Its inputs, including exit-code: '0', are unchanged.
+      - name: Trivy scan (CVE, secret, IaC and Dockerfile), attempt 1
+        id: trivy1
         if: always()
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          format: sarif
+          output: trivy-results.sarif
+          severity: CRITICAL,HIGH
+          exit-code: '0'
+
+      - name: Back off before Trivy attempt 2
+        if: always() && steps.trivy1.outcome == 'failure'
+        run: |
+          echo "::notice::Trivy attempt 1 failed; retrying after a 20 second backoff"
+          rm -f trivy-results.sarif
+          sleep 20
+
+      - name: Trivy scan (CVE, secret, IaC and Dockerfile), attempt 2
+        id: trivy2
+        if: always() && steps.trivy1.outcome == 'failure'
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          format: sarif
+          output: trivy-results.sarif
+          severity: CRITICAL,HIGH
+          exit-code: '0'
+
+      - name: Back off before Trivy attempt 3
+        if: always() && steps.trivy1.outcome == 'failure' && steps.trivy2.outcome == 'failure'
+        run: |
+          echo "::notice::Trivy attempt 2 failed; retrying after a 60 second backoff"
+          rm -f trivy-results.sarif
+          sleep 60
+
+      - name: Trivy scan (CVE, secret, IaC and Dockerfile), attempt 3
+        id: trivy3
+        if: always() && steps.trivy1.outcome == 'failure' && steps.trivy2.outcome == 'failure'
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           scan-type: fs

@@ -16,6 +16,10 @@ Triggers: push to `main`, pull request to `main`, Mondays 04:00 UTC, and `workfl
 
 The Grype, Trivy and upload steps use `if: always()`, and each upload also checks that its file exists, so one scanner failing does not stop the other engine or its upload. Every action is pinned to a full commit SHA with the version as a comment.
 
+## Download retries (#1279)
+
+Syft, Grype and Trivy each download a binary (and Grype its vulnerability database) at run time. Those downloads have failed with HTTP 504 from github.com and with a Grype checksum mismatch after a partial download. Each of the three scanner steps therefore runs as up to three attempts of the same pinned action, with a 20 second backoff before attempt 2 and a 60 second backoff before attempt 3. Attempts 1 and 2 are `continue-on-error`; attempt 3 is not, so a download that keeps failing still fails the job. Before a Grype or Trivy retry the previous SARIF output is deleted, so a partial file is never uploaded. Each retry re-fetches its download; nothing is cached between attempts. Tool versions, `severity-cutoff`, `fail-build` and Trivy's `exit-code` are unchanged.
+
 ## Decisions (#1279)
 
 - Label: the existing `risk:security`; no `security` label was created.
