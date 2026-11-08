@@ -414,7 +414,7 @@ In code that component is `StatusMessage`. A message that needs a reason beside 
 
 **Recorded exceptions (#1211):** these keep their own markup and live-region role because each is not a result-region message, or its markup cannot be a single `<p>`.
 
-- Chart selection bar (`ChartView`) and the update prompts (`PwaStatus`, `SidebarFooter`): the announcement carries an action button, so it cannot be a plain paragraph.
+- Chart selection bar (`ChartView`) and the update prompt (`PwaStatus`): the announcement carries an action button, so it cannot be a plain paragraph.
 - Sync popover (`SyncBadge`): a labelled popover region with its own heading, detail and link.
 - Note save state (`NoteSaveStatus`): a persistent empty-capable region wrapping the visible line, so an announcement fires when the line appears.
 - Page-header export status (`PageHeader`) and the PDF builder build status (`PdfExportBuilder`): an always-present region with its own `status` look, tied to its button by `aria-describedby` (the builder), and sized for the title or action row.
