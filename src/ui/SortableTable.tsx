@@ -14,7 +14,7 @@
  * @conventions Thin wiring over table-sort.ts's sorting/serialization logic; uses SortableTable.messages.ts for en/nl text via useMessages().
  * @exports SortableTable, CsvExportTable, csvExportTable, useCsvExports
  */
-import { useId, useState } from 'react';
+import { useId, useLayoutEffect, useRef, useState } from 'react';
 import { downloadText } from './download.js';
 import { type GlossaryTermId } from './astro-glossary.messages.js';
 import { GlossaryTerm } from './GlossaryTerm.js';
@@ -22,6 +22,7 @@ import { useRegisterExports } from './export-registry.js';
 import { useMessages } from './messages.js';
 import { Tooltip } from './primitives/Tooltip.js';
 import { sortableTableMessages } from './SortableTable.messages.js';
+import { dragColumnWidth, keyboardColumnWidth, MAX_COLUMN_WIDTH, MIN_COLUMN_WIDTH } from './table-column-width.js';
 import {
   columnAlign,
   rowsToCsv,
@@ -127,6 +128,34 @@ export function SortableTable<T>({
   const t = useMessages(sortableTableMessages);
   const [sort, setSort] = useState<SortState>();
   const [copied, setCopied] = useState(false);
+  // Column widths (#1301): empty until the first resize, then every column's measured width in px. They live in
+  // state only, so they reset on each visit (owner decision on the issue); nothing is stored.
+  const [widths, setWidths] = useState<Readonly<Record<string, number>>>({});
+  const tableRef = useRef<HTMLTableElement>(null);
+  const resized = Object.keys(widths).length > 0;
+  const drag = useRef<{ startX: number; startWidth: number } | undefined>(undefined);
+
+  /** Every column's current width, measured once so a fixed layout starts exactly where the automatic one was. */
+  const measured = (): Record<string, number> => {
+    if (resized) return { ...widths };
+    const heads = tableRef.current?.querySelectorAll('thead th') ?? [];
+    return Object.fromEntries(
+      columns.map((column, index) => [column.key, Math.round(heads[index]?.getBoundingClientRect().width ?? 0)]),
+    );
+  };
+  const setColumnWidth = (key: string, width: number): void => {
+    setWidths({ ...measured(), [key]: width });
+  };
+  const widthOf = (key: string): number => widths[key] ?? 0;
+  // The automatic layout's widths, read once the table is laid out, so a handle can always report its column's
+  // current width (a focusable separator must carry a value) before anything has been resized.
+  const [natural, setNatural] = useState<Readonly<Record<string, number>>>({});
+  useLayoutEffect(() => {
+    if (!resized) setNatural(measured());
+    // Measuring needs only a change of columns or rows; `measured` is rebuilt every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [columns, rows, resized]);
+  const currentWidth = (key: string): number => widths[key] ?? natural[key] ?? MIN_COLUMN_WIDTH;
   const sorted = sortRows(rows, columns, sort);
   // The heading is a sibling of <table>, not a <caption> inside it (so the Copy/Download
   // buttons can sit next to it without ending up inside the table's accessibility tree) —
@@ -178,7 +207,19 @@ export function SortableTable<T>({
         aria-labelledby={captionId}
         tabIndex={0}
       >
-        <table aria-labelledby={captionId}>
+        <table
+          ref={tableRef}
+          aria-labelledby={captionId}
+          className={resized ? 'data-table-resized' : undefined}
+          style={resized ? { width: columns.reduce((sum, column) => sum + widthOf(column.key), 0) } : undefined}
+        >
+          {resized && (
+            <colgroup>
+              {columns.map((column) => (
+                <col key={column.key} style={{ width: widthOf(column.key) }} />
+              ))}
+            </colgroup>
+          )}
           <thead>
             <tr>
               {columns.map((column) => {
@@ -229,6 +270,49 @@ export function SortableTable<T>({
                         </Tooltip>
                       )}
                     </span>
+                    <div
+                      className="data-table-resize"
+                      role="separator"
+                      aria-orientation="vertical"
+                      aria-label={t.resizeColumn(column.label)}
+                      aria-valuemin={MIN_COLUMN_WIDTH}
+                      aria-valuemax={MAX_COLUMN_WIDTH}
+                      aria-valuenow={currentWidth(column.key)}
+                      aria-valuetext={t.columnWidth(currentWidth(column.key))}
+                      tabIndex={0}
+                      onKeyDown={(event) => {
+                        const next = keyboardColumnWidth(
+                          measured()[column.key] ?? MIN_COLUMN_WIDTH,
+                          event.key,
+                          event.shiftKey,
+                        );
+                        if (next === undefined) return;
+                        event.preventDefault();
+                        setColumnWidth(column.key, next);
+                      }}
+                      onPointerDown={(event) => {
+                        event.preventDefault();
+                        event.currentTarget.setPointerCapture(event.pointerId);
+                        drag.current = {
+                          startX: event.clientX,
+                          startWidth: measured()[column.key] ?? MIN_COLUMN_WIDTH,
+                        };
+                      }}
+                      onPointerMove={(event) => {
+                        if (drag.current === undefined) return;
+                        setColumnWidth(
+                          column.key,
+                          dragColumnWidth(drag.current.startWidth, drag.current.startX, event.clientX),
+                        );
+                      }}
+                      onPointerUp={(event) => {
+                        drag.current = undefined;
+                        event.currentTarget.releasePointerCapture(event.pointerId);
+                      }}
+                      onPointerCancel={() => {
+                        drag.current = undefined;
+                      }}
+                    />
                   </th>
                 );
               })}

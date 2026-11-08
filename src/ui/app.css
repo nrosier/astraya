@@ -2598,6 +2598,69 @@ label.stacked textarea:focus-visible {
   }
 }
 
+/* Column resize (#1301). The handle sits on a header's right edge, inside the cell so it never widens the scroll frame: a window-splitter separator, focusable, with a
+   visible ring. Widths are fixed only after the first resize, and a table wider than its frame scrolls sideways. */
+.data-table th {
+  position: relative;
+}
+
+.data-table-resized {
+  table-layout: fixed;
+  max-width: none;
+}
+
+.data-table-resized th,
+.data-table-resized td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.data-table-resize {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  z-index: 2;
+  width: var(--target-min);
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.data-table-resize::after {
+  content: '';
+  position: absolute;
+  inset-block: var(--space-1);
+  inset-inline-start: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+  background: var(--line);
+}
+
+.data-table-resize:hover::after,
+.data-table-resize:focus-visible::after {
+  background: var(--accent);
+}
+
+.data-table-resize:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* Touch keeps the full 44px target at its natural height (guidelines section 6): the handle grows past the row. */
+@media (pointer: coarse) {
+  .data-table-resize {
+    inset-block: auto;
+    top: 50%;
+    height: var(--target-min);
+    transform: translateY(-50%);
+  }
+}
+
+@media print {
+  .data-table-resize {
+    display: none;
+  }
+}
+
 .data-table th button {
   width: 100%;
   min-height: 0;

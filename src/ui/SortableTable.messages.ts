@@ -13,6 +13,8 @@ const en = {
   downloadCsv: 'Download CSV',
   aboutColumn: (column: string) => `About ${column}`,
   csvLabel: (table: string) => `${table} (CSV)`,
+  resizeColumn: (column: string) => `Resize ${column} column`,
+  columnWidth: (pixels: number) => `${String(pixels)} pixels wide`,
 };
 
 const nl: typeof en = {
@@ -21,6 +23,8 @@ const nl: typeof en = {
   downloadCsv: 'CSV downloaden',
   aboutColumn: (column: string) => `Over ${column}`,
   csvLabel: (table: string) => `${table} (CSV)`,
+  resizeColumn: (column: string) => `Kolom ${column} verbreden of versmallen`,
+  columnWidth: (pixels: number) => `${String(pixels)} pixels breed`,
 };
 
 export const sortableTableMessages = { en, nl };
