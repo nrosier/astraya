@@ -26,6 +26,7 @@ import { computeComposite, type CompositeData } from '../domain/composite.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
 import type { ChartViewKind } from './chart-sections.js';
 import { ChartDataView } from './ChartView.js';
+import { ChartControlsOnly } from './ChartTypeSelector.js';
 import { ReportView } from './ReportView.js';
 import { compositeViewMessages } from './CompositeView.messages.js';
 import { useMessages } from './messages.js';
@@ -167,6 +168,7 @@ export function CompositeView({
           personId={personId}
           load={load}
           displayName={displayName || t.compositeFallback}
+          typeSelector={<ChartControlsOnly />}
           showHouses
           metaLines={[displayName]}
           view={view ?? 'wheel'}

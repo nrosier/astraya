@@ -60,6 +60,27 @@ test('two people with known birth times get a Composite screen with a wheel and 
   await expect(page.locator('div.chart-wheel')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Placements' })).toBeVisible();
 
+  // #1303: the aspect family and consultation preset Selects sit above the tab bar, outside the chart, and the first
+  // slot (the chart type, which composite does not have) stays empty.
+  const family = page.getByLabel('Aspects shown', { exact: true });
+  const preset = page.getByLabel('Consultation preset', { exact: true });
+  await expect(family).toBeVisible();
+  await expect(preset).toBeVisible();
+  const tabBar = await page
+    .locator('.tab-row__viewport')
+    .filter({ has: page.getByRole('link', { name: 'Placements' }) })
+    .first()
+    .boundingBox();
+  const familyBox = await family.boundingBox();
+  const presetBox = await preset.boundingBox();
+  const wheelBox = await page.locator('div.chart-wheel').boundingBox();
+  if (tabBar === null || familyBox === null || presetBox === null || wheelBox === null)
+    throw new Error('no bounding box');
+  expect(familyBox.y + familyBox.height).toBeLessThanOrEqual(tabBar.y);
+  expect(presetBox.y + presetBox.height).toBeLessThanOrEqual(tabBar.y);
+  expect(presetBox.y + presetBox.height).toBeLessThanOrEqual(wheelBox.y);
+  await expect(page.getByLabel('Chart type', { exact: true })).toHaveCount(0);
+
   // #359: the composite chart now also renders real interpretive text via `ReportView`,
   // reusing `report.ts`'s `assembleReport` the same way the natal Report tab already does.
   await expect(page.locator('.report-section').first()).toBeVisible();
