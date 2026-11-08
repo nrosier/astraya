@@ -17,7 +17,7 @@ import { GlossaryText } from './GlossaryText.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { computeDraconic, type DraconicData } from '../domain/draconic.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
-import { ChartDataView, PdfCreatorLink, pdfCreatorHref } from './ChartView.js';
+import { ChartDataView, PdfCreatorLink, pdfCreatorHref, type ChartOverlayContext } from './ChartView.js';
 import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
 import { type ChartType, type ChartViewKind } from './chart-sections.js';
 import { chartHref, personHref } from './route.js';
@@ -75,6 +75,24 @@ export function DraconicView({
   const orbs = useStableBy(orbsOf(extendedSettings), (config) => JSON.stringify(config));
   // The draconic chart calculates with the engine defaults, the person's orbs and rulers, and the draconic zodiac.
   const basisLine = useEngineBasisLine(rulership, extendedSettings, useMessages(calculationBasisMessages).draconic);
+
+  // Memoised (#1333): a new object each render reruns the overlay effect and drops the wheel selection, as on the natal chart.
+  const overlayContext = useMemo(
+    (): ChartOverlayContext | undefined =>
+      provider === undefined || personMoment === undefined
+        ? undefined
+        : {
+            moment: personMoment,
+            provider,
+            baseLabel: t.headingFallback,
+            baseSource: 'draconic',
+            options: {
+              ...(customPoints === undefined ? {} : { customPoints }),
+              ...(fixedStars === undefined ? {} : { fixedStars }),
+            },
+          },
+    [provider, personMoment, t.headingFallback, customPoints, fixedStars],
+  );
 
   useEffect(() => {
     if (personMoment === undefined || provider === undefined || settingsUnreadable) return undefined;
@@ -149,20 +167,7 @@ export function DraconicView({
           changeChartView(personId, 'draconic', next);
         }}
         buildViewHref={(next) => chartHref(personId, next, 'draconic')}
-        overlayContext={
-          provider === undefined
-            ? undefined
-            : {
-                moment: person.moment,
-                provider,
-                baseLabel: t.headingFallback,
-                baseSource: 'draconic',
-                options: {
-                  ...(customPoints === undefined ? {} : { customPoints }),
-                  ...(fixedStars === undefined ? {} : { fixedStars }),
-                },
-              }
-        }
+        overlayContext={overlayContext}
       />
 
       {load.kind === 'ready' && !housesAreDefined(load.data.houses) && (
