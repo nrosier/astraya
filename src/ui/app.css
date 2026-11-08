@@ -5478,23 +5478,155 @@ svg text.chart-symbol-text-unicode {
   border-color: transparent;
 }
 
-/* Filter toolbar: one wrapping row, Export pushed to the far right (#816 section 3). */
+/* Filter bar (#1335): two rows. Row 1 is the wide search, corpus language and the Overridden-only switch; row 2 is category, tier and tag. */
 .corpus-toolbar {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
+  flex-direction: column;
   gap: var(--space-3);
 }
 
-.corpus-toolbar .field-grid {
+.corpus-toolbar-row {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
   gap: var(--space-3);
 }
 
-.corpus-toolbar-end {
-  margin-left: auto;
+.corpus-toolbar-search {
+  flex: 1 1 20rem;
+  min-width: 0;
+}
+
+.corpus-toolbar-search .primitive-field input {
+  width: 100%;
+}
+
+/* A checkbox drawn as an on/off switch (role="switch"): the track and thumb come from existing tokens. */
+.primitive-choice[data-switch='true'] input[type='checkbox'] {
+  appearance: none;
+  position: relative;
+  flex: none;
+  width: 2.5rem;
+  height: 1.4rem;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-hover);
+  cursor: pointer;
+}
+
+.primitive-choice[data-switch='true'] input[type='checkbox']::after {
+  content: '';
+  position: absolute;
+  top: 0.15rem;
+  left: 0.15rem;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: var(--fg);
+  transition: transform 0.12s ease;
+}
+
+.primitive-choice[data-switch='true'] input[type='checkbox']:checked {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.primitive-choice[data-switch='true'] input[type='checkbox']:checked::after {
+  background: var(--bg);
+  transform: translateX(1.1rem);
+}
+
+.primitive-choice[data-switch='true'] input[type='checkbox']:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .primitive-choice[data-switch='true'] input[type='checkbox']::after {
+    transition: none;
+  }
+}
+
+/* The drawer editor (#1335): identity read-only, the text area takes the free height, tags as chips. */
+.corpus-editor-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-height: 100%;
+}
+
+.corpus-editor-identity {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.corpus-editor-identity dt {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.corpus-editor-identity dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.corpus-editor-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.corpus-editor-text .primitive-field {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.corpus-editor-text textarea {
+  flex: 1 1 auto;
+  min-height: 40dvh;
+  width: 100%;
+  line-height: var(--leading-body);
+  resize: vertical;
+}
+
+.corpus-tag-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2);
+  padding: 0;
+  list-style: none;
+}
+
+.corpus-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0 var(--space-1) 0 var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-hover);
+  font-size: var(--text-sm);
+}
+
+.corpus-tag-chip button {
+  min-width: 1.5rem;
+  min-height: 1.5rem;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  border-radius: 50%;
+}
+
+.corpus-tag-add {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-2);
 }
 
 .corpus-entry-list {
@@ -5529,9 +5661,15 @@ svg text.chart-symbol-text-unicode {
   gap: var(--space-2) var(--space-3);
 }
 
-.corpus-entry-head > .primitive-button-compact,
-.corpus-entry-head > .primitive-choice {
-  margin-left: auto;
+.corpus-entry-head > .corpus-entry-meaning {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.corpus-entry-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 
 .corpus-entry-key {
@@ -5555,12 +5693,14 @@ svg text.chart-symbol-text-unicode {
 
 .corpus-entry-meaning {
   margin: 0;
-  font-weight: 600;
+  font-size: var(--text-base);
+  font-weight: 700;
 }
 
 .corpus-entry-text {
   margin: 0;
   font-size: var(--text-sm);
+  line-height: var(--leading-body);
   white-space: pre-wrap;
 }
 

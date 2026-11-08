@@ -611,3 +611,137 @@ describe('CorpusOverridesPanel entry cards: overridden accent (#816 D-816c)', ()
     expect(card?.[1]).toMatch(/border:\s*1px solid var\(--line\)/);
   });
 });
+
+describe('CorpusOverridesPanel export and drawer editor (#1335)', () => {
+  let cleanup: (() => void) | undefined;
+
+  beforeEach(() => {
+    setLocale('en');
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    cleanup?.();
+    cleanup = undefined;
+  });
+
+  async function mountPanel(): Promise<HTMLElement> {
+    const { fetch: fetchMock } = makeFetchMock();
+    vi.stubGlobal('fetch', fetchMock);
+    const { container, root } = await mount();
+    cleanup = () => {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    };
+    return container;
+  }
+
+  const keysInOrder = (container: HTMLElement): (string | null | undefined)[] =>
+    tableRows(container).map((row) => row.querySelector('code.corpus-entry-key')?.textContent);
+
+  it('has no separate Export button in the toolbar (one export control: the header menu)', async () => {
+    const container = await mountPanel();
+    const labels = Array.from(container.querySelectorAll('button')).map((button) => button.textContent);
+    const m = corpusOverridesPanelMessages.en;
+    expect(labels).not.toContain(m.exportCorrectionsOnly);
+    expect(labels.some((label) => label.toLowerCase().includes('export'))).toBe(false);
+    expect(container.querySelector('.corpus-toolbar-end')).toBeNull();
+  });
+
+  it('puts the filters on two rows, with Overridden only as a switch', async () => {
+    const container = await mountPanel();
+    const rows = container.querySelectorAll('.corpus-toolbar > .corpus-toolbar-row');
+    expect(rows).toHaveLength(2);
+    expect(rows[0]?.querySelector('input[type="text"]')).not.toBeNull();
+    expect(rows[0]?.querySelectorAll('select')).toHaveLength(1);
+    expect(rows[0]?.querySelector('input[role="switch"]')).not.toBeNull();
+    expect(rows[1]?.querySelectorAll('select')).toHaveLength(3);
+  });
+
+  it('opens the edit drawer without reflowing the list', async () => {
+    const container = await mountPanel();
+    const before = keysInOrder(container);
+    expect(before).toHaveLength(2);
+    const dialog = container.querySelector('dialog');
+    expect(dialog?.hasAttribute('open')).toBe(false);
+
+    await act(async () => {
+      editButtonForKey(container, NEUTRAL_ENTRY.key).click();
+      await Promise.resolve();
+    });
+
+    const open = container.querySelector('dialog');
+    expect(open?.hasAttribute('open')).toBe(true);
+    expect(open?.getAttribute('aria-labelledby')).not.toBeNull();
+    expect(open?.getAttribute('data-placement')).toBe('right');
+    expect(open?.querySelector('textarea')).not.toBeNull();
+    expect(open?.querySelector('.settings-card-footer')?.textContent).toContain(
+      corpusOverridesPanelMessages.en.saveButton,
+    );
+    // The editor is not inline in the page, and the list is exactly as it was.
+    expect(container.querySelector('main > div > div > form')).toBeNull();
+    expect(keysInOrder(container)).toEqual(before);
+  });
+
+  it('closes on Escape and gives focus back to the Edit button', async () => {
+    const container = await mountPanel();
+    const edit = editButtonForKey(container, NEUTRAL_ENTRY.key);
+    edit.focus();
+    await act(async () => {
+      edit.click();
+      await Promise.resolve();
+    });
+    expect(container.querySelector('dialog')?.hasAttribute('open')).toBe(true);
+
+    await act(async () => {
+      container.querySelector('dialog')?.dispatchEvent(new Event('cancel', { cancelable: true }));
+      await Promise.resolve();
+    });
+
+    expect(container.querySelector('dialog')?.hasAttribute('open')).toBe(false);
+    expect(container.querySelector('dialog textarea')).toBeNull();
+    expect(document.activeElement).toBe(edit);
+  });
+
+  it('adds and removes tags as chips and saves them', async () => {
+    const { fetch: fetchMock, overrides } = makeFetchMock();
+    vi.stubGlobal('fetch', fetchMock);
+    const { container, root } = await mount();
+    cleanup = () => {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    };
+    await act(async () => {
+      editButtonForKey(container, NEUTRAL_ENTRY.key).click();
+      await Promise.resolve();
+    });
+    const t = corpusOverridesPanelMessages.en;
+    const tagInput = container.querySelector('dialog .corpus-tag-add input');
+    if (!(tagInput instanceof HTMLInputElement)) throw new Error('test fixture bug: no tag input');
+    await act(async () => {
+      setNativeValue(tagInput, 'fire');
+      await Promise.resolve();
+    });
+    await act(async () => {
+      findButton(container, t.addTagButton).click();
+      await Promise.resolve();
+    });
+    expect(Array.from(container.querySelectorAll('.corpus-tag-chip span')).map((c) => c.textContent)).toEqual([
+      'sun',
+      'fire',
+    ]);
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>(`button[aria-label="${t.removeTagLabel('sun')}"]`)?.click();
+      await Promise.resolve();
+    });
+    await act(async () => {
+      findButton(container, t.saveButton).click();
+      await flush();
+    });
+    expect(overrides[0]?.tags).toEqual(['fire']);
+  });
+});
