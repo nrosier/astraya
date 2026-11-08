@@ -121,8 +121,10 @@ jobs:
           build-args: |
             GITHUB_SHA=${{ github.sha }}
             GIT_REVISION=${{ github.sha }}
+          # Only main writes the buildkit cache (#1279). A pull request reads it but never saves to it, so PR
+          # builds do not fill the repository's 10 GB Actions cache and evict the scan's tool caches.
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: ${{ github.ref == 'refs/heads/main' && 'type=gha,mode=max' || '' }}
           provenance: false
 
       # Keyless signing: the signature is stored in ghcr.io beside the image and
