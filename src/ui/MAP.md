@@ -50,7 +50,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `BiWheelSelectionPanel.tsx` + `BiWheelSelectionPanel.messages.ts` — Bi-wheel click-to-inspect panel (body/sign/aspect info). Deps: `./bi-wheel-selection`, `astro-names.messages`.
 - `BirthPlaceSearch.tsx` + `BirthPlaceSearch.messages.ts` — Geocoding place-name search field. Deps: `./forward-geocode`, `./geocode-provider`.
 - `Changelog.tsx` + `Changelog.messages.ts` — In-app CHANGELOG.md viewer. Deps: `./markdown`.
-- `ChartTypeSelector.tsx` — Chart-type Select (natal/draconic/harmonic/returns) in the Charts page header, with the slot the aspect Selects join (#1224). Deps: `./chart-sections`, `primitives/Select`.
+- `ChartTypeSelector.tsx` — Chart-type Select (natal/draconic/harmonic/returns) in the Charts page header, plus a select-less controls row for composite (#1303), with the slot the aspect Selects join (#1224). Deps: `./chart-sections`, `primitives/Select`.
 - `ChartTypes.messages.ts` — i18n labels for all chart types.
 - `ChartViewNav.tsx` — Chart screen's view navigation under the title row (#801, #818, #976): ordinary links in the shared `ScrollingTabRow` (wide) or a labelled Select (narrow), never ARIA tabs; view links only, with the page actions (Overlay settings, Extended settings) in the PageHeader on desktop and the Chart actions sheet at 640px and below. Deps: `./chart-sections`, `./ScrollingTabRow`, `./primitives/Select`.
 - `ScrollingTabRow.tsx` — Shared tab-row wrapper (#818): hidden-scrollbar horizontal scroller with start/end edge fades above 40rem, caller-supplied Select fallback and one "Chart actions" toggle for the pinned actions at 40rem and below (#826). Deps: `./primitives/Button`, `./primitives/useTabRowScroll`.
