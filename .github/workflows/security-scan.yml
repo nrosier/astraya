@@ -29,6 +29,37 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      # Tool and vulnerability-DB caches (#1279). Restore runs on every run; save runs only on main, after the tools
+      # have been installed. Layouts are verified in the actions' sources: anchore/sbom-action and anchore/scan-action
+      # cache each tool at $RUNNER_TOOL_CACHE/<tool>/<version>/<arch> with a <arch>.complete marker, so the whole
+      # <tool> directory is cached. The Grype DB root is xdg.CacheHome/grype/db (~/.cache/grype/db on the runner).
+      # The DB key carries the date, so the DB refreshes each day; the scan action's own cache-db input is not used,
+      # because its fixed key never refreshes.
+      - name: Work out today's date for the Grype DB cache key
+        id: day
+        run: echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Syft tool cache
+        id: syft-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.tool_cache }}/syft
+          key: syft-${{ runner.os }}-${{ runner.arch }}-v1.57.0
+
+      - name: Restore Grype tool cache
+        id: grype-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.tool_cache }}/grype
+          key: grype-${{ runner.os }}-${{ runner.arch }}-v0.121.2
+
+      - name: Restore Grype vulnerability DB cache
+        id: grype-db-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/grype/db
+          key: grype-db-${{ runner.os }}-${{ steps.day.outputs.date }}
+
       # Syft (anchore/sbom-action) downloads its binary at run time, and that download
       # has failed with HTTP 504 (#1279). The same pinned action runs up to three times:
       # attempts 1 and 2 are continue-on-error, attempt 3 is not, so a download that
@@ -198,6 +229,30 @@ jobs:
           output: trivy-results.sarif
           severity: CRITICAL,HIGH
           exit-code: '0'
+
+      # Saves run only on main, and only when the restore was not an exact hit: a hit already has the key, and
+      # saving again would only log a reservation conflict. A tool directory is written only after its install
+      # finishes (its .complete marker), so a failed install saves nothing usable.
+      - name: Save Syft tool cache
+        if: always() && github.ref == 'refs/heads/main' && steps.syft-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.tool_cache }}/syft
+          key: syft-${{ runner.os }}-${{ runner.arch }}-v1.57.0
+
+      - name: Save Grype tool cache
+        if: always() && github.ref == 'refs/heads/main' && steps.grype-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.tool_cache }}/grype
+          key: grype-${{ runner.os }}-${{ runner.arch }}-v0.121.2
+
+      - name: Save Grype vulnerability DB cache
+        if: always() && github.ref == 'refs/heads/main' && steps.grype-db-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/grype/db
+          key: grype-db-${{ runner.os }}-${{ steps.day.outputs.date }}
 
       - name: Upload Grype SARIF
         if: always() && hashFiles('grype-results.sarif') != ''
