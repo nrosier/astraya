@@ -147,6 +147,43 @@ test('puts Sun, Moon and Rising in a card under the natal wheel, in the same col
   await expect(placements.locator('li').first()).toHaveCSS('border-top-width', '0px');
 });
 
+for (const size of [
+  { width: 1920, height: 1080 },
+  { width: 1280, height: 800 },
+]) {
+  test(`the Sun, Moon and Rising card sits under the wheel with the default card gap at ${String(size.width)}px (#1345)`, async () => {
+    test.setTimeout(90_000);
+    await page.setViewportSize(size);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openOverview();
+
+    const wheel = page.locator('section.overview-card--wheel');
+    const placements = page.getByRole('region', { name: 'Sun, Moon and Rising' });
+    await expect(placements).toBeVisible({ timeout: 60_000 });
+    // The other Overview cards still render.
+    await expect(page.getByRole('region', { name: 'Birth data' })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Now', exact: true })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Next', exact: true })).toBeVisible();
+
+    // The default card gap is --space-4, resolved to pixels by the browser through a probe element.
+    const spaceFour = await page.locator('.overview-grid').evaluate((grid) => {
+      const probe = grid.ownerDocument.createElement('div');
+      probe.style.width = 'var(--space-4)';
+      grid.appendChild(probe);
+      const width = probe.getBoundingClientRect().width;
+      probe.remove();
+      return width;
+    });
+    expect(spaceFour).toBeGreaterThan(0);
+    const above = await wheel.boundingBox();
+    const below = await placements.boundingBox();
+    if (above === null || below === null) throw new Error('expected both cards to have a layout box');
+    expect(below.x).toBeCloseTo(above.x, 0);
+    expect(below.width).toBeCloseTo(above.width, 0);
+    expect(below.y - (above.y + above.height)).toBeCloseTo(spaceFour, 1);
+  });
+}
+
 test('on Transits the text above the wheel runs as wide as the wheel (#1225)', async () => {
   test.setTimeout(90_000);
   await page.setViewportSize({ width: 1280, height: 800 });

@@ -8776,15 +8776,15 @@ a.quiet,
 }
 
 .overview-card--wheel {
-  /* The wheel sits beside the birth data on a wide page and spans the cards' rows. */
+  /* The wheel sits beside the birth data on a wide page, in one row (#1345). */
   grid-column: 2;
-  grid-row: 1 / span 3;
+  grid-row: 1;
 }
 
 /* Sun, Moon and Rising sit under the wheel, in the same column (owner visual review 2026-11-07). */
 .overview-card--placements {
   grid-column: 2;
-  grid-row: 4;
+  grid-row: 2;
 }
 
 @media (max-width: 51.99rem) {
