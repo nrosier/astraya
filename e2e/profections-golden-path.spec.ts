@@ -55,6 +55,12 @@ test('a person with a known birth time gets a Profections screen with a Year/Mon
   await expect(page.getByRole('heading', { name: /profections/i, level: 2 })).toBeVisible();
   await expect(page.locator('.page-header-basis')).toHaveText('Tropical · Whole-sign houses · Modern rulers');
   await expect(page.locator('.page-header-basis')).not.toContainText(/Placidus|orbs/);
+
+  // The age sits in its own card, title inside, with the birth date beside it (#1300).
+  await expect(page.getByRole('heading', { name: 'Age', level: 2 })).toBeVisible();
+  await expect(page.locator('[data-testid="profection-age"]')).toBeVisible();
+  await expect(page.locator('[data-testid="profection-birth-date"]')).toHaveText('March 14, 1879');
+
   // The person's rulers follow into the line.
   await page
     .getByRole('radiogroup', { name: 'Planetary rulers', exact: true })

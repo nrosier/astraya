@@ -73,12 +73,12 @@ qualifier.
 
 Run only in GitHub Actions (`.github/workflows/security-scan.yml`), never installed or shipped. All are pinned to a commit SHA; see `docs/ops/SECURITY-SCANS.md`.
 
-| Tool                                                                                    | Purpose                                      | Licence    |
-| :-------------------------------------------------------------------------------------- | :------------------------------------------- | :--------- |
-| Syft (`anchore/sbom-action`)                                                            | CycloneDX SBOM.                              | Apache-2.0 |
-| Grype (`anchore/scan-action`)                                                           | Vulnerability scan of the SBOM.              | Apache-2.0 |
-| Trivy (`aquasecurity/trivy-action`)                                                     | CVE, secret and IaC/Dockerfile cross-check.  | Apache-2.0 |
-| `github/codeql-action/upload-sarif`, `actions/github-script`, `actions/upload-artifact` | SARIF upload, tracking issue, SBOM artifact. | MIT        |
+| Tool                                                                                    | Purpose                                             | Licence    |
+| :-------------------------------------------------------------------------------------- | :-------------------------------------------------- | :--------- |
+| Syft (`anchore/sbom-action`)                                                            | CycloneDX SBOM. Pinned to v1.57.0.                  | Apache-2.0 |
+| Grype (`anchore/scan-action`)                                                           | Vulnerability scan of the SBOM. Pinned to v0.121.2. | Apache-2.0 |
+| Trivy (`aquasecurity/trivy-action`)                                                     | CVE, secret and IaC/Dockerfile cross-check.         | Apache-2.0 |
+| `github/codeql-action/upload-sarif`, `actions/github-script`, `actions/upload-artifact` | SARIF upload, tracking issue, SBOM artifact.        | MIT        |
 
 ## Renovate and the Docker base image
 
