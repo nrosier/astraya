@@ -353,6 +353,36 @@ test.describe('with the shared people (#799)', () => {
     expect(results.violations.map((v) => v.id)).toEqual([]);
   });
 
+  for (const size of [
+    { width: 1920, height: 1080 },
+    { width: 1280, height: 800 },
+  ]) {
+    test(`the planetary-rule strip and description box share left and right edges at ${String(size.width)}x${String(size.height)} (#1305)`, async () => {
+      test.setTimeout(90_000);
+      await page.setViewportSize(size);
+      await openSharedPerson(page, baseUrl, EINSTEIN);
+      await openNatalChart(page);
+      await openSettings(page, 'Profile & frame');
+      const card = page.locator('dialog.settings-card');
+      const group = card.locator('fieldset.settings-card-group', { hasText: 'Rulership' }).first();
+      const boxes = {
+        group,
+        segmented: group.getByRole('radiogroup', { name: 'Planetary rulers', exact: true }),
+        note: group.locator('p.settings-card-note'),
+      };
+      const edges: Record<string, { x: number; right: number }> = {};
+      for (const [name, locator] of Object.entries(boxes)) {
+        const box = await locator.boundingBox();
+        if (box === null) throw new Error(`${name} has no box`);
+        edges[name] = { x: box.x, right: box.x + box.width };
+      }
+      // The strip and the description box start and end on the same vertical lines, and stay inside the group.
+      expect(edges.segmented?.x).toBeCloseTo(edges.note?.x ?? Number.NaN, 0);
+      expect(edges.segmented?.right).toBeCloseTo(edges.note?.right ?? Number.NaN, 0);
+      expect(edges.note?.right ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual((edges.group?.right ?? 0) + 1);
+    });
+  }
+
   test('opening and cancelling the card keeps what is selected on the wheel (applying redraws, which clears it)', async () => {
     test.setTimeout(90_000);
     await openSharedPerson(page, baseUrl, EINSTEIN);

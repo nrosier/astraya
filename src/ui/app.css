@@ -7358,6 +7358,17 @@ button.primitive-disclosure-trigger:hover:not(:disabled) {
   font-weight: 600;
 }
 
+/* The segmented strip fills the column (#1305): three equal segments, so its right edge lines up with the full-width
+   description box below it instead of stopping short at its content width. */
+.rulership-setting .primitive-choice-group-segmented {
+  display: flex;
+  width: 100%;
+}
+
+.rulership-setting .primitive-choice-group-segmented .primitive-choice {
+  flex: 1 1 0;
+}
+
 /* The visible name of the Sabian-symbol-visibility control (#527), same weight/spacing as
    .rulership-setting-label — the two are deliberately the same shape: a bold name, a plain-text
    explanation, then the control itself. */
