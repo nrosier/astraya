@@ -54,7 +54,7 @@ export const MAX_LENGTH = 1600;
 const MARKUP = /<[a-z/!?]/i;
 /** A link: a scheme with `://`, `www.`, `mailto:`, or a bare domain with a common top-level name. */
 const LINK =
-  /(?:[a-z][a-z0-9+.-]*:\/\/|\bwww\.|\bmailto:|\b[a-z0-9-]+\.(?:com|org|net|io|nl|co|app|dev|info|me|ly)\b)/i;
+  /(?:[a-z][a-z0-9+.-]{0,31}:\/\/|\bwww\.|\bmailto:|\b[a-z0-9-]{1,63}\.(?:com|org|net|io|nl|co|app|dev|info|me|ly)\b)/i;
 
 export type PlainTextRefusal = 'markup' | 'link';
 
