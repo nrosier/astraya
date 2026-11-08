@@ -326,13 +326,14 @@ describe('the body exports of Event Search, Corpus Overrides, Preferences and th
     ]);
   }, 60_000);
 
-  it('Corpus Overrides lists its "Export corrections" download', async () => {
+  it('Corpus Overrides lists JSON, CSV and Corrections only in the one Export menu (#1335)', async () => {
     const container = await mount(
       <ExportRegistryProvider>
         <CorpusOverridesPanel />
       </ExportRegistryProvider>,
     );
-    expect(await untilExportLabels(container, 1)).toEqual([corpusOverridesPanelMessages.en.exportButton]);
+    const m = corpusOverridesPanelMessages.en;
+    expect(await untilExportLabels(container, 3)).toEqual([m.exportJson, m.exportCsv, m.exportCorrectionsOnly]);
   }, 60_000);
 
   it('Preferences lists full JSON, people CSV and people AAF, in the body order', async () => {
