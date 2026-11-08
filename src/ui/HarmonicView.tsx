@@ -26,7 +26,7 @@ import {
   type HarmonicPositionProvenanceRow,
 } from '../domain/harmonic.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
-import { ChartDataView, PdfCreatorLink, pdfCreatorHref } from './ChartView.js';
+import { ChartDataView, PdfCreatorLink, pdfCreatorHref, type ChartOverlayContext } from './ChartView.js';
 import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
 import { type ChartType, type ChartViewKind } from './chart-sections.js';
 import { chartHref, personHref } from './route.js';
@@ -117,6 +117,20 @@ export function HarmonicView({
   // The harmonic chart calculates with the engine defaults, the person's orbs and rulers, at the harmonic on screen.
   const baseBasis = useEngineBasisLine(rulership, extendedSettings);
   const basisLine = nValid ? withBasisItems(baseBasis, label) : baseBasis;
+
+  // Memoised (#1333): a new object each render reruns the overlay effect and drops the wheel selection, as on the natal chart.
+  const overlayContext = useMemo(
+    (): ChartOverlayContext | undefined =>
+      provider === undefined || personMoment === undefined
+        ? undefined
+        : {
+            moment: personMoment,
+            provider,
+            baseLabel: label,
+            ...(customPoints === undefined ? {} : { options: { customPoints } }),
+          },
+    [provider, personMoment, label, customPoints],
+  );
 
   useEffect(() => {
     if (personMoment === undefined || provider === undefined || settingsUnreadable || !nValid) {
@@ -215,16 +229,7 @@ export function HarmonicView({
               changeChartView(personId, 'harmonic', next);
             }}
             buildViewHref={(next) => chartHref(personId, next, 'harmonic')}
-            overlayContext={
-              provider === undefined
-                ? undefined
-                : {
-                    moment: person.moment,
-                    provider,
-                    baseLabel: label,
-                    ...(person.customPoints === undefined ? {} : { options: { customPoints: person.customPoints } }),
-                  }
-            }
+            overlayContext={overlayContext}
           />
         </>
       )}

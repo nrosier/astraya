@@ -20,7 +20,7 @@ import { GlossaryText } from './GlossaryText.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { computeRelocatedChart, relocatedComparisonRows, type RelocatedChartData } from '../domain/relocated-chart.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
-import { ChartDataView } from './ChartView.js';
+import { ChartDataView, type ChartOverlayContext } from './ChartView.js';
 import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
 import { type ChartType, type ChartViewKind } from './chart-sections.js';
 import { chartHref, personHref } from './route.js';
@@ -237,6 +237,32 @@ export function RelocatedChartView({
     };
   }, [settingsUnreadable, personMoment, provider, relocationPlace, customPoints, fixedStars, orbs]);
 
+  // Memoised (#1333): a new object each render reruns the overlay effect and drops the wheel selection, as on the natal chart.
+  const personName = person?.displayName;
+  const overlayLabel = personName ? `${personName} — ${t.headingFallback}` : t.headingFallback;
+  const overlayContext = useMemo(
+    (): ChartOverlayContext | undefined =>
+      provider === undefined || personMoment === undefined
+        ? undefined
+        : {
+            moment: personMoment,
+            provider,
+            baseLabel: overlayLabel,
+            options: {
+              ...(customPoints === undefined ? {} : { customPoints }),
+              ...(fixedStars === undefined ? {} : { fixedStars }),
+            },
+          },
+    [provider, personMoment, overlayLabel, customPoints, fixedStars],
+  );
+
+  // Memoised (#1333): the wheel's overlay effect depends on `load`, so a new object each render would drop the selection.
+  const chartLoad = useMemo((): React.ComponentProps<typeof ChartDataView>['load'] => {
+    if (load.kind === 'ready') return { kind: 'ready', data: load.data.relocated };
+    // Never drawn while idle: the chart is only rendered once a calculation has started.
+    return load.kind === 'idle' ? { kind: 'loading' } : load;
+  }, [load]);
+
   // The natal-vs-relocated table's CSV, in source order, offered in the page header (#887). Only once the screen
   // draws that table: a ready chart whose houses are defined, for a person with a complete record.
   useCsvExports(
@@ -362,7 +388,7 @@ export function RelocatedChartView({
           <ChartDataView
             personId={personId}
             chartType="relocated"
-            load={load.kind === 'ready' ? { kind: 'ready', data: load.data.relocated } : load}
+            load={chartLoad}
             displayName={displayName}
             showHouses
             metaLines={metaLines}
@@ -372,19 +398,7 @@ export function RelocatedChartView({
               changeChartView(personId, 'relocated', next);
             }}
             buildViewHref={(next) => chartHref(personId, next, 'relocated')}
-            overlayContext={
-              provider === undefined
-                ? undefined
-                : {
-                    moment: person.moment,
-                    provider,
-                    baseLabel: displayName,
-                    options: {
-                      ...(customPoints === undefined ? {} : { customPoints }),
-                      ...(fixedStars === undefined ? {} : { fixedStars }),
-                    },
-                  }
-            }
+            overlayContext={overlayContext}
           />
 
           {load.kind === 'ready' && !housesAreDefined(load.data.relocated.houses) && (
