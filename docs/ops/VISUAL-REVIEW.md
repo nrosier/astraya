@@ -1,7 +1,7 @@
 # Owner visual review
 
 How a finished UI change is shown to the owner for a visual check, and how the owner's answer is recorded. It meets the
-"Checked at 390x844, 1280x800 and 3440x1440 in light and dark" box that most UI issues carry (guidelines §17.2), which a
+"Checked at 390x844, 1920x1080 and 1280x800 in light and dark" box that most UI issues carry (guidelines §17.2), which a
 unit or e2e test cannot tick. The owner judges the screenshots; the coder does not tick that box on their own look.
 
 ## When
@@ -18,7 +18,7 @@ covers every screen the batch changed. Review again after the fixes it asks for.
    a `check`: one or two sentences saying what to look at (alignment, sizes, the rules in "Visual coherence" below). Add a
    step for a new slug in `e2e/visual-review.spec.ts`.
 3. **Capture.** `VISUAL_REVIEW_OUT=<dir> npx playwright test e2e/visual-review.spec.ts --project=chromium` writes each screen
-   at 390x844, 1280x800 and 3440x1440, in light and dark, as JPEGs. The spec skips without `VISUAL_REVIEW_OUT`, so CI never
+   at 390x844, 1920x1080 and 1280x800, in light and dark, as JPEGs. The spec skips without `VISUAL_REVIEW_OUT`, so CI never
    runs it.
 4. **Build the page.** `node scripts/build-visual-review.mjs <dir> <page.html> [04,05,...]`. It is one self-contained HTML
    file (keep it under the 16 MB artifact limit: JPEG quality 58 gives about 0.8 MB a screen). Past about 18 screens,
