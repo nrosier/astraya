@@ -2041,35 +2041,13 @@ label.stacked textarea:focus-visible {
   margin-top: var(--space-3);
 }
 
-/* Sidebar footer (`SidebarFooter.tsx`): the update notice above the version and licence line.
-   The update notice is hidden by default and shown only while an update is detected. */
+/* Sidebar footer (`SidebarFooter.tsx`): the version and licence line. */
 .sidebar-footer {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   font-size: 0.75rem;
   color: var(--muted);
-}
-
-.sidebar-footer-update {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-2);
-  border: 1px solid var(--accent);
-  border-radius: var(--radius-sm);
-  background: color-mix(in oklab, var(--accent) 12%, var(--surface));
-  color: var(--fg);
-}
-
-.sidebar-footer-update[hidden] {
-  display: none;
-}
-
-.sidebar-footer-update button {
-  padding: var(--space-1) var(--space-2);
-  font-size: 0.75rem;
 }
 
 .sidebar-footer-meta {

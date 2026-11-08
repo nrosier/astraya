@@ -350,6 +350,77 @@ test.describe('with the shared people (#799)', () => {
     await expect(page.locator('.chart-wheel')).toBeInViewport();
   });
 
+  test('Show on an Aspects row keeps the pair under the chart type and aspect filter (#1333)', async () => {
+    test.setTimeout(90_000);
+    await page.setViewportSize({ width: 1600, height: 1000 });
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    await expect(page.getByLabel('Chart type', { exact: true })).toContainText('Natal');
+    // With a filter that hides lines, the Aspects table lists exactly the contacts the wheel still draws (#1333).
+    const drawn = page.locator('svg.chart-dial g.chart-aspect-link:not(.chart-aspect-filtered)');
+    await expect.poll(async () => drawn.count()).toBeGreaterThan(3);
+    const all = await drawn.count();
+    // The preset's orb caps hide the widest contacts from the wheel.
+    await page.getByLabel('Consultation preset', { exact: true }).selectOption({
+      label: 'Natal and core temperament: major and parallels, orbs 7 and 5',
+    });
+    await expect.poll(async () => drawn.count()).toBeLessThan(all);
+    const kept = await drawn.count();
+    await page.getByRole('link', { name: 'Aspects', exact: true }).click();
+    // Rows with a Show button are contacts; the wheel draws no line for a conjunction, so those are left out of the count.
+    await expect(
+      page
+        .locator('#chart-view-aspects table')
+        .first()
+        .locator('tbody tr')
+        .filter({ has: page.getByRole('button', { name: /^Show .+ on the wheel$/ }) })
+        .filter({ hasNotText: 'Conjunction' }),
+    ).toHaveCount(kept);
+    await page.getByRole('link', { name: 'Wheel', exact: true }).click();
+    await page.getByLabel('Consultation preset', { exact: true }).selectOption({ label: 'No preset (default view)' });
+
+    await page.getByLabel('Aspects shown', { exact: true }).selectOption({
+      label: 'Major: conjunction, sextile, square, trine, opposition',
+    });
+    await page.getByRole('link', { name: 'Aspects', exact: true }).click();
+    // The table lists only what the wheel shows: no minor contact is in it.
+    const rows = page.locator('#chart-view-aspects table').first().locator('tbody tr');
+    await expect(rows.first()).toBeVisible();
+    const minor = /Semisquare|Sesquiquadrate|Quincunx|Semisextile|Quintile|Biquintile|Septile/i;
+    await expect(rows.filter({ hasText: minor })).toHaveCount(0);
+
+    // Show on a row with the Moon: the wheel keeps that row's pair and the line between them (#1333).
+    const show = page
+      .locator('#chart-view-aspects table')
+      .first()
+      .getByRole('button', { name: /^Show (Moon .+|.+ Moon) on the wheel$/ })
+      .first();
+    const label = (await show.getAttribute('aria-label')) ?? '';
+    const named = /^Show (\S+) \S+ (\S+) on the wheel$/.exec(label);
+    if (named === null) throw new Error(`unexpected Show label: ${label}`);
+    const pair = [named[1] ?? '', named[2] ?? ''].map((name) => name.toLowerCase());
+    expect(pair).toContain('moon');
+    await show.click();
+
+    await expect(page.getByRole('link', { name: 'Wheel', exact: true })).toHaveAttribute('aria-current', 'page');
+    await expect(page.locator('#chart-view-wheel')).toBeVisible();
+    for (const body of pair) {
+      await expect(page.locator(`.chart-wheel [data-body="${body}"]`).first()).not.toHaveClass(/chart-dimmed/);
+    }
+    const outside = ['sun', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'].find((body) => !pair.includes(body));
+    if (outside === undefined) throw new Error('no body outside the row');
+    await expect(page.locator(`.chart-wheel [data-body="${outside}"]`).first()).toHaveClass(/chart-dimmed/);
+    // Only major contacts are visible, and the family filter is still chosen.
+    await expect(page.getByLabel('Aspects shown', { exact: true })).toContainText('Major');
+    const shown = page.locator('svg.chart-dial g.chart-aspect-link:not(.chart-aspect-filtered)');
+    await expect.poll(async () => shown.count()).toBeGreaterThan(0);
+    await expect(
+      page.locator(
+        'svg.chart-dial g.chart-aspect-link:not(.chart-aspect-filtered):not([data-aspect-key="conjunction"]):not([data-aspect-key="sextile"]):not([data-aspect-key="square"]):not([data-aspect-key="trine"]):not([data-aspect-key="opposition"])',
+      ),
+    ).toHaveCount(0);
+  });
+
   test('the aspect matrix grid shows Name and House at 1280 and drops them at 390 (#820)', async () => {
     test.setTimeout(90_000);
     await openSharedPerson(page, baseUrl, EINSTEIN);

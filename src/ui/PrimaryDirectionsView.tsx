@@ -335,7 +335,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
     };
     // Dim the rest (#1302): the chosen significators stay at full strength on both rings, every other point is dimmed.
     return renderMultiWheelSvg([natalRing, directedRing], [], { emphasizedBodies: significators });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- the wheel renderers read the glyph settings from module state, so these are cache keys, not inputs the callback reads.
+    // oxlint-disable-next-line react/exhaustive-deps -- the wheel renderers read the glyph settings from module state, so these are cache keys, not inputs the callback reads.
   }, [load, directed, t, symbolClass, variants, significators]);
   const { wheelRef, onClick: handleWheelClick, onKeyDown: handleWheelKeyDown } = useWheelIsolation(wheelMarkup);
 

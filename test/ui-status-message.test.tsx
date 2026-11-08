@@ -87,7 +87,6 @@ describe('StatusMessage (#513)', () => {
     'PdfExportBuilder.tsx': 1,
     'PwaStatus.tsx': 1,
     'SelectionInspector.tsx': 1,
-    'SidebarFooter.tsx': 1,
     'SyncBadge.tsx': 1,
   };
 
