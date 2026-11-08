@@ -28,7 +28,7 @@
  * @conventions Entity id is `<locale>|<key>`; `text` and `baseHash` are last-write-wins registers and `deleted` the tombstone; `purged` is refused on write, and a purge marker from a peer hides the entity on fold; the write guard reuses the corpus `lintEntry` length rule and adds only a markup and a link check; fold functions never throw; refusals carry a code rather than prose so the UI owns the wording; only `{locale, key, text, baseHash}` is ever stored.
  * @exports CORRECTION_ENTITY, CORRECTION_TEXT_FIELD, CORRECTION_BASE_HASH_FIELD, correctionId, parseCorrectionId, CorpusCorrection, foldCorrection, CorrectionRefusal, CorrectionRefusedError, checkCorrectionText, textHash, correctionWrite, correctionReset, assertCorrectionMutation
  */
-import { lintEntry, MAX_LENGTH } from '../interpretation/lint.js';
+import { checkPlainText, lintEntry, MAX_LENGTH } from '../interpretation/lint.js';
 import { CORPUS_LOCALES, validateKey, type CorpusEntry, type Locale } from '../interpretation/schema.js';
 import type { NoteFieldRegister } from './notes.js';
 import type { Mutation } from './oplog.js';
@@ -107,12 +107,6 @@ export class CorrectionRefusedError extends Error {
   }
 }
 
-/** An HTML tag, comment or declaration: `<` followed by a letter, `/`, `!` or `?`. */
-const MARKUP = /<[a-z/!?]/i;
-/** A link: a scheme with `://`, `www.`, `mailto:`, or a bare domain with a common top-level name. */
-const LINK =
-  /(?:[a-z][a-z0-9+.-]*:\/\/|\bwww\.|\bmailto:|\b[a-z0-9-]+\.(?:com|org|net|io|nl|co|app|dev|info|me|ly)\b)/i;
-
 /**
  * Check correction text before anything is written. Empty, over-length and under-length text is refused by the corpus
  * `lintEntry` length rule (the same 40 to 1600 bounds every shipped entry meets); HTML tags and links are refused here
@@ -120,8 +114,8 @@ const LINK =
  */
 export function checkCorrectionText(locale: Locale, key: string, text: string): CorrectionRefusal | undefined {
   if (text.trim() === '') return 'empty';
-  if (MARKUP.test(text)) return 'markup';
-  if (LINK.test(text)) return 'link';
+  const plain = checkPlainText(text);
+  if (plain !== undefined) return plain;
   const entry: CorpusEntry = {
     key,
     locale,

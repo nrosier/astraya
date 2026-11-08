@@ -34,6 +34,7 @@ import { adminGroupStartupNotice } from './auth/admin-promotion.ts';
 import { registerOpsRoutes } from './ops/routes.ts';
 import { registerCorpusOverrideRoutes } from './corpus-overrides-routes.ts';
 import { registerCorpusCandidateRoutes } from './corpus-candidates-routes.ts';
+import { registerCorpusSubmissionRoutes } from './corpus-submissions-routes.ts';
 import { registerProfileOverlayRoute } from './profile-overlay.ts';
 import { registerInterpretationRoutes } from './interpretation-routes.ts';
 
@@ -188,6 +189,7 @@ export async function build(options: BuildOptions = {}) {
   registerOpsRoutes(app, db);
   registerCorpusOverrideRoutes(app, db);
   registerCorpusCandidateRoutes(app, db);
+  registerCorpusSubmissionRoutes(app, db);
   registerProfileOverlayRoute(app);
   registerInterpretationRoutes(app, db);
 

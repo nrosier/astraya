@@ -76,6 +76,7 @@ import { useSessionUserOrUndefined } from './session-context.js';
 import { useOptionalStore } from './store-context.js';
 import { useUserCorpusLayer } from './user-corpus-layer.js';
 import { CorpusCorrectionEditor, type CorrectionTarget } from './CorpusCorrectionEditor.js';
+import { SuggestCorrectionDialog } from './SuggestCorrectionDialog.js';
 import { corpusCorrectionMessages } from './CorpusCorrectionEditor.messages.js';
 import { reportViewMessages } from './ReportView.messages.js';
 import {
@@ -197,6 +198,8 @@ interface ParagraphEdit {
   /** True when the text shown is the reader's own version. */
   readonly edited: boolean;
   readonly onEdit: (trigger: HTMLButtonElement) => void;
+  /** Suggest the text to the admins (#1338, slice 2); absent unless the reader is signed in. */
+  readonly onSuggest?: ((trigger: HTMLButtonElement) => void) | undefined;
 }
 
 function ParagraphEditControls({
@@ -221,6 +224,19 @@ function ParagraphEditControls({
       >
         {t.editAction}
       </Button>
+      {edit.onSuggest !== undefined && (
+        <Button
+          type="button"
+          variant="quiet"
+          size="compact"
+          aria-label={t.suggestActionLabel(label)}
+          onClick={(event) => {
+            edit.onSuggest?.(event.currentTarget);
+          }}
+        >
+          {t.suggestAction}
+        </Button>
+      )}
     </p>
   );
 }
@@ -574,26 +590,36 @@ export function ReportView({
   );
   const originalByKey = useMemo(() => new Map((corpus ?? []).map((entry) => [entry.key, entry.text])), [corpus]);
   const [correcting, setCorrecting] = useState<CorrectionTarget | undefined>(undefined);
+  const [suggesting, setSuggesting] = useState<CorrectionTarget | undefined>(undefined);
   const editTriggerRef = useRef<HTMLElement | null>(null);
+  const signedInUser = useSessionUserOrUndefined();
   const editFor = (paragraph: ReportParagraph): ParagraphEdit | undefined => {
     if (store === undefined || paragraph.source.kind !== 'corpus') return undefined;
     const { key } = paragraph.source.entry;
     const corrected = userLayer?.get(key);
+    const targetFor = (): CorrectionTarget => ({
+      key,
+      locale,
+      originalText: originalByKey.get(key) ?? paragraph.text,
+      correctedText: corrected,
+      label:
+        paragraph.placement === undefined
+          ? undefined
+          : reportParagraphLabel(paragraph.placement, locale, paragraph.longitude, false),
+    });
     return {
       edited: corrected !== undefined,
       onEdit: (trigger) => {
         editTriggerRef.current = trigger;
-        setCorrecting({
-          key,
-          locale,
-          originalText: originalByKey.get(key) ?? paragraph.text,
-          correctedText: corrected,
-          label:
-            paragraph.placement === undefined
-              ? undefined
-              : reportParagraphLabel(paragraph.placement, locale, paragraph.longitude, false),
-        });
+        setCorrecting(targetFor());
       },
+      onSuggest:
+        signedInUser === undefined
+          ? undefined
+          : (trigger) => {
+              editTriggerRef.current = trigger;
+              setSuggesting(targetFor());
+            },
     };
   };
 
@@ -763,6 +789,15 @@ export function ReportView({
                 )}
               </section>
             ))}
+            {store !== undefined && signedInUser !== undefined && (
+              <SuggestCorrectionDialog
+                target={suggesting}
+                returnFocusTo={editTriggerRef}
+                onClose={() => {
+                  setSuggesting(undefined);
+                }}
+              />
+            )}
             {store !== undefined && (
               <CorpusCorrectionEditor
                 store={store}

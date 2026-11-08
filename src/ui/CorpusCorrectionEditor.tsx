@@ -6,7 +6,7 @@
  * @module CorpusCorrectionEditor
  * @purpose A drawer in which a reader edits, saves or resets their own version of one interpretation entry's text.
  * @conventions Controlled by the caller (`entry` open, `null` closed); the draft is staged and only Save writes, through `correctionWrite` so an invalid text is refused before any write; Reset writes the tombstone and shows only when the reader has a correction; wording comes from `CorpusCorrectionEditor.messages.ts` with refusal codes mapped to text here; reuses `StagedDialog`, `TextAreaField` and `Button`.
- * @exports CorpusCorrectionEditor, CorrectionTarget
+ * @exports CorpusCorrectionEditor, CorrectionTarget, refusalText
  */
 import { useEffect, useState } from 'react';
 import type { Locale } from '../interpretation/schema.js';
@@ -40,7 +40,8 @@ export interface CorrectionTarget {
 
 type Messages = (typeof corpusCorrectionMessages)['en'];
 
-function refusalText(t: Messages, refusal: CorrectionRefusal): string {
+/** The wording of a refusal code; shared with the submit dialog so both say the same thing. */
+export function refusalText(t: Messages, refusal: CorrectionRefusal): string {
   switch (refusal) {
     case 'empty':
       return t.empty;

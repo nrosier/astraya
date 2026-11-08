@@ -87,6 +87,10 @@ COPY --from=build /app/src/store/hlc.ts ./src/store/hlc.ts
 # machine-produced entry, so it needs this one file from src/ at runtime too.
 COPY --from=build /app/src/interpretation/lint.ts ./src/interpretation/lint.ts
 
+# server/corpus-submissions-routes.ts (#1338) refuses a submission made under another version of the
+# licence notice, so it loads the one constant the client also shows.
+COPY --from=build /app/src/interpretation/submission-licence.ts ./src/interpretation/submission-licence.ts
+
 # Tier 2 (#360, server/interpretation-routes.ts) re-resolves each request's
 # placementKeys against this server's own copy of the corpus, and runs the
 # same customPrompt guardrail the client already ran — authoritatively, not

@@ -1,11 +1,13 @@
 # server/ — Map
 
-9 root files + 3 subdirectories. See `server/auth/MAP.md`, `server/ops/MAP.md`, `server/interpretation/MAP.md`.
+11 root files + 3 subdirectories. See `server/auth/MAP.md`, `server/ops/MAP.md`, `server/interpretation/MAP.md`.
 
 - `corpus-candidates-routes.ts` — Admin review surface for bulk-generated corpus text (#370). List/filter/import/accept/reject pending candidates (lint-checked on accept). Deps: corpus-candidates, auth/identity, src/interpretation/lint.
 - `corpus-candidates.ts` — Pending-candidate queue: CRUD, bulk-import (idempotent per key/locale/source), accept/reject (promotes to override or deletes). Deps: db, corpus-overrides.
 - `corpus-overrides-routes.ts` — Admin corpus corrections + public read route (merged into runtime corpus). `GET /api/corpus-overrides/:locale`, `requireAdmin` list/upsert/delete/export. Deps: corpus-overrides, auth/identity, src/interpretation/lint.
 - `corpus-overrides.ts` — Data layer: CRUD `corpus_overrides` table, shape back to `CorpusEntry`, optional username hiding for public route. Deps: db, type-only imports from src/interpretation/schema.
+- `corpus-submissions-routes.ts` — User-submitted corrections (#1338): signed-in `POST /api/corpus-submissions` with per-user caps and licence acceptance, admin-only list; no public, decide or delete route. Deps: corpus-submissions, auth/identity, src/interpretation/lint, src/interpretation/submission-licence.
+- `corpus-submissions.ts` — Insert/count/list data layer for the `corpus_submissions` table (history rows, never deleted). Deps: db, corpus-overrides.
 - `csp.ts` — Single CSP definition (structural truth: "shipped app never calls model provider at runtime"). Builds response-header + meta-tag strings, strips static tag once issuer set. Deps: none.
 - `profile-overlay.ts` — Serves the optional `ASTRAYA_EASTER_EGG` setting read-only for the birth-record easter egg (#697). Deps: none.
 - `csrf.ts` — CSRF defence (Origin header host check against allowed hosts, never relay on SameSite). Deps: none.
