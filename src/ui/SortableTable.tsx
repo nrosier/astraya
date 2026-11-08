@@ -10,8 +10,8 @@
  */
 /**
  * @module SortableTable
- * @purpose Generic, reusable data table with sortable column headers, a Copy-to-clipboard button, and a CSV download, used across every tabular view in the app.
- * @conventions Thin wiring over table-sort.ts's sorting/serialization logic; uses SortableTable.messages.ts for en/nl text via useMessages().
+ * @purpose Generic, reusable data table with sortable column headers, resizable columns (#1301), a Copy-to-clipboard button, and a CSV download, used across every tabular view in the app.
+ * @conventions Thin wiring over table-sort.ts's sorting/serialization logic and table-column-width.ts's width arithmetic; uses SortableTable.messages.ts for en/nl text via useMessages(). Column widths are component state only (session-only, owner decision on #1301): never persisted, reset by the Reset action or a fresh mount.
  * @exports SortableTable, CsvExportTable, csvExportTable, useCsvExports
  */
 import { useId, useLayoutEffect, useRef, useState } from 'react';
@@ -183,20 +183,36 @@ export function SortableTable<T>({
       downloadText(downloadFilename, rowsToCsv(columns, sorted), 'text/csv;charset=utf-8');
   };
 
+  // Reset (#1301, owner decision): clears every column's width, which also reverts `resized` to false and
+  // lets the natural, measured widths take over again on the next layout pass. Shown only once resized,
+  // beside Copy/Download CSV, on every table this component renders — even one with no CSV download.
+  const resetWidths = (): void => {
+    setWidths({});
+  };
+
   return (
     <section className={wrap ? 'data-table data-table-wrap' : 'data-table'}>
       <div className="data-table-head">
         <Heading id={captionId}>
           {captionTerm === undefined ? caption : <GlossaryTerm id={captionTerm}>{caption}</GlossaryTerm>}
         </Heading>
-        {downloadFilename !== undefined && (
+        {(downloadFilename !== undefined || resized) && (
           <div className="data-table-actions">
-            <button type="button" className="quiet" onClick={copy}>
-              {copied ? t.copied : t.copy}
-            </button>
-            <button type="button" className="quiet" onClick={download}>
-              {t.downloadCsv}
-            </button>
+            {downloadFilename !== undefined && (
+              <>
+                <button type="button" className="quiet" onClick={copy}>
+                  {copied ? t.copied : t.copy}
+                </button>
+                <button type="button" className="quiet" onClick={download}>
+                  {t.downloadCsv}
+                </button>
+              </>
+            )}
+            {resized && (
+              <button type="button" className="quiet" onClick={resetWidths}>
+                {t.resetWidths}
+              </button>
+            )}
           </div>
         )}
       </div>

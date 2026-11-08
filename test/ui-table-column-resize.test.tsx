@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 /**
- * Resizable data-table columns (#1301): the width arithmetic, and the shared SortableTable's resize handle driven by
- * the keyboard and by a pointer drag. Widths are not stored anywhere, so a fresh mount starts unresized.
+ * Resizable data-table columns (#1301): the width arithmetic, the shared SortableTable's resize handle driven by
+ * the keyboard and by a pointer drag, and the Reset action that appears beside Copy/Download CSV only once a
+ * column has been resized. Widths are not stored anywhere, so a fresh mount starts unresized.
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -114,5 +115,56 @@ describe('SortableTable resize handle', () => {
       root?.unmount();
     });
     expect(mount().querySelector('col')).toBeNull();
+  });
+});
+
+/** The table-level action buttons (Copy/Download CSV/Reset), excluding each column's sort button. */
+function actionLabels(container: HTMLElement): string[] {
+  return [...container.querySelectorAll<HTMLElement>('.data-table-actions button')].map((b) => b.textContent);
+}
+
+describe('Reset widths action (#1301)', () => {
+  it('is absent before any resize, appears after one, and clears every column width when clicked', () => {
+    const container = mount();
+    expect(container.querySelector('.data-table-actions')).toBeNull();
+
+    const el = handle(container, 'Resize Id column');
+    act(() => {
+      el.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    });
+    expect(actionLabels(container)).toEqual(['Reset widths']);
+    expect(container.querySelector('col')).not.toBeNull();
+
+    const reset = container.querySelector<HTMLElement>('.data-table-actions button');
+    if (reset === null) throw new Error('no Reset button after resize');
+    act(() => {
+      reset.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    expect(container.querySelector('col')).toBeNull();
+    expect(container.querySelector('.data-table-actions')).toBeNull();
+  });
+
+  it('shows beside Copy/Download CSV once resized, even when the table has a CSV download', () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    root = createRoot(container);
+    act(() => {
+      root?.render(
+        <SortableTable
+          caption="T"
+          columns={COLUMNS}
+          rows={ROWS}
+          getRowKey={(row) => row.id}
+          downloadFilename="t.csv"
+        />,
+      );
+    });
+    expect(actionLabels(container)).toEqual(['Copy', 'Download CSV']);
+
+    const el = handle(container, 'Resize Name column');
+    act(() => {
+      el.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+    });
+    expect(actionLabels(container)).toEqual(['Copy', 'Download CSV', 'Reset widths']);
   });
 });
