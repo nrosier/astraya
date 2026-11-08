@@ -31,7 +31,7 @@ import { degreeParts } from '../domain/chart-tables.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
 import { computeProfections, type ProfectedPeriod, type ProfectionData } from '../domain/profections.js';
 import { bodyDisplayName } from './astro-names.messages.js';
-import { formatFixed, todayInputValue } from './format.js';
+import { formatCivilDate, formatFixed, todayInputValue } from './format.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { RulershipSetting } from './RulershipSetting.js';
@@ -236,9 +236,20 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
 
             {load.kind === 'ready' && (
               <>
-                <p className="hint">
-                  {t.ageLine(`${formatFixed(load.data.age, 2)}${load.data.age < 0 ? ` ${t.beforeBirth}` : ''}`)}
-                </p>
+                <section className="timing-card profection-age" aria-labelledby="profection-age-heading">
+                  <h2 id="profection-age-heading">{t.ageHeading}</h2>
+                  <p>
+                    <span className="profection-age-label">{t.ageLabel}</span>{' '}
+                    <strong data-testid="profection-age">
+                      {formatFixed(load.data.age, 2)}
+                      {load.data.age < 0 ? ` ${t.beforeBirth}` : ''}
+                    </strong>
+                  </p>
+                  <p>
+                    <span className="profection-age-label">{t.birthDateLabel}</span>{' '}
+                    <strong data-testid="profection-birth-date">{formatCivilDate(person.moment.civil, locale)}</strong>
+                  </p>
+                </section>
                 {rows !== undefined && (
                   <section className="timing-card">
                     <SortableTable

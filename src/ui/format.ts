@@ -13,7 +13,7 @@
  * @module ui/format
  * @purpose Locale-aware display formatting (#158) for values that aren't fixed strings — dates and geographic coordinates — complementing messages.ts's fixed-string i18n.
  * @conventions Framework-free like src/domain and src/chart: every function takes Locale explicitly rather than reading locale.ts's store, so non-UI modules (chart-tables.ts, multi-wheel.ts) can call in without a React/localStorage dependency.
- * @exports todayInputValue, formatCoordinate, formatSignDegree, formatFixed, formatDecimal, formatInteger, formatTimestamp, formatCents, utcDay
+ * @exports todayInputValue, formatCoordinate, formatSignDegree, formatFixed, formatDecimal, formatInteger, formatTimestamp, formatCivilDate, formatCents, utcDay
  */
 import { degreeParts } from '../domain/degree-parts.js';
 import type { Locale } from '../interpretation/schema.js';
@@ -100,6 +100,24 @@ export function formatTimestamp(value: string | number | Date): string {
   if (Number.isNaN(date.getTime())) return String(value);
   const two = (n: number): string => String(n).padStart(2, '0');
   return `${String(date.getFullYear()).padStart(4, '0')}-${two(date.getMonth() + 1)}-${two(date.getDate())} ${two(date.getHours())}:${two(date.getMinutes())}`;
+}
+
+/**
+ * A calendar date written out in the reader's language (`March 10, 1970` / `10 maart 1970`), no time. A civil date
+ * is a wall-clock date, not an instant, so it is formatted in UTC and never shifted by the reader's time zone.
+ */
+export function formatCivilDate(
+  civil: { readonly year: number; readonly month: number; readonly day: number },
+  locale: Locale,
+): string {
+  const date = new Date(0);
+  date.setUTCFullYear(civil.year, civil.month - 1, civil.day);
+  return new Intl.DateTimeFormat(locale === 'nl' ? 'nl-NL' : 'en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'UTC',
+  }).format(date);
 }
 
 /** An amount of US cents as dollars. The app prices only in USD, so the currency is named once, here. */

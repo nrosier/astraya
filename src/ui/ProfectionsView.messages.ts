@@ -27,7 +27,9 @@ const en = {
   calculating: 'Calculating…',
   error: (message: string) => `Profections could not be calculated. ${message}`,
 
-  ageLine: (age: string) => `Age ${age}`,
+  ageHeading: 'Age',
+  ageLabel: 'Age',
+  birthDateLabel: 'Born',
   beforeBirth: '(before birth)',
 
   profectionsCaption: 'Profections',
@@ -69,7 +71,9 @@ const nl: typeof en = {
   calculating: 'Berekenen…',
   error: (message: string) => `Profecties konden niet worden berekend. ${message}`,
 
-  ageLine: (age: string) => `Leeftijd ${age}`,
+  ageHeading: 'Leeftijd',
+  ageLabel: 'Leeftijd',
+  birthDateLabel: 'Geboren',
   beforeBirth: '(vóór de geboorte)',
 
   profectionsCaption: 'Profecties',
