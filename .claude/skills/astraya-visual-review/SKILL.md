@@ -1,6 +1,6 @@
 ---
 name: astraya-visual-review
-description: Hands a finished, merged UI batch to the owner for visual sign-off. Use when UI issues on main are waiting for the owner's 1920x1080 and 1280x800 light and dark check, or when the user asks for a visual review, a screenshot review, or a sign-off page. Builds main, captures the screens, produces the review page, publishes it privately, and records each verdict on its issue.
+description: Hands a finished, merged UI batch to the owner for visual sign-off. Use when UI issues on main are waiting for the owner's 1920x1080 and 1280x800 light and dark check, or when the user asks for a visual review, a screenshot review, or a sign-off page. Builds main, captures the screens, produces the review page, uploads it to claude.ai/artifacts, and records each verdict on its issue.
 ---
 
 # Astraya Visual Review
@@ -11,7 +11,7 @@ The owner judges the screenshots. A coder never ticks the visual box from its ow
 
 **Size mismatch to resolve before a handoff.** The owner's current sign-off on open issues is 1920x1080 and 1280x800, in light and dark. `docs/ops/VISUAL-REVIEW.md` and `e2e/visual-review.spec.ts` still capture 390x844, 1280x800 and 3440x1440. Until the process doc and the capture spec agree with the owner, confirm which sizes to capture with the user. Do not silently pick one set.
 
-**Screen coverage gap.** `e2e/visual-review-screens.json` has no screen for several open UI issues, so a batch can have nothing to capture. Report unmapped issues rather than inventing screens. Adding a screen is a code change and goes through a PR.
+**Screen list is local and temporary.** `e2e/visual-review-screens.json` is git-ignored and never committed. It is `[]` when no review is needed. Fill it locally for a review, and reset it to `[]` afterwards. Report any waiting issue that no screen covers, rather than inventing one.
 
 ## Procedure
 
@@ -23,7 +23,7 @@ Run the steps in order. Stop at the first step that fails and report why.
 
 2. **Build main in a clean worktree.** Use a detached worktree of `origin/main`, never the main checkout. Run `npm ci`, `npm run ephe:sync`, `npm run corpus:split`, `npm run build`. Without `corpus:split` the Interpretation screen fails to load, which is a capture problem, not a defect.
 
-3. **Map issues to screens.** Read `e2e/visual-review-screens.json`. Each entry's `issues` field names the issues it covers. Report any waiting issue that no screen covers. Do not invent a screen. Add a step to `e2e/visual-review.spec.ts` only through a normal PR.
+3. **Map issues to screens.** Fill `e2e/visual-review-screens.json` locally for this review only. Each entry's `issues` field names the issues it covers. Report any waiting issue that no screen covers. Do not invent a screen.
 
 4. **Capture.** `VISUAL_REVIEW_OUT=<dir> npx playwright test e2e/visual-review.spec.ts --project=chromium`, in the worktree. Confirm the expected files exist before going on.
 
@@ -31,7 +31,7 @@ Run the steps in order. Stop at the first step that fails and report why.
 
 6. **Check the visual coherence rules before showing anything.** Use the list in `docs/ops/VISUAL-REVIEW.md`: aligned and equal-height controls, the time selector, Now and Export right-aligned, titles inside cards, shared card surface. Measure the rendered heights and bottoms. Fix or report a failure before the owner sees the page, so they don't review a defect the coder could have caught.
 
-7. **Publish privately and hand over the link.** Use the available publishing tool if one exists in this session. If none exists, say so plainly, give the built file's path, and say how the owner can open it. Never invent a link.
+7. **Upload to claude.ai/artifacts and hand over the link.** Nothing is published to GitHub. If this session has no way to upload, say so plainly, give the built file's path, and say how the owner can open it. Never invent a link.
 
 8. **Record the outcome on each issue.** Post the owner's verdict verbatim as a comment on each issue, with the date. Then:
    - "Looks right" on every screen for an issue: tick that issue's visual box, and if it is the last unticked box, use the `astraya-issue-close` skill for the labels.
