@@ -4,7 +4,8 @@
  *
  * What it holds, left to right:
  * - on a person's screen, **whose chart** this is (the person chip) and that person's tabs: Birth
- *   record, Charts (a dropdown of the chart types: natal, draconic, harmonic, solar and lunar return),
+ *   record, Charts (one plain link; the chart type is chosen on the page by `ChartTypeSelector.tsx`:
+ *   natal, draconic, harmonic, solar and lunar return),
  *   Interpretation, Astrocartography and the three sections (Transits & Forecast, Progressions &
  *   Directions, Relationship Charts), each one plain link to its first sub-view (#882);
  * - **Tools**, on every screen: one plain link to the first calculator (#882). The sub-views of each
@@ -12,7 +13,8 @@
  * - **Build custom PDF…**, on every screen: a plain link, not a dropdown — it is the only export
  *   action left here. Full-data/people-CSV export moved to Preferences → Data & privacy (#510),
  *   and each screen's own exports (a chart's image, its print version) moved to that screen's own
- *   `PageHeader` (#506/#509) — `ChartView.tsx` is the only screen that registers any today. Moving
+ *   `PageHeader` (#506/#509), which reads the same registry (`PreferencesView.tsx`, `EventSearchView.tsx`,
+ *   `CorpusOverridesPanel.tsx` and `SortableTable.tsx` register today). Moving
  *   this link itself to a future Documents destination is the one piece of that same plan item
  *   still outstanding.
  *
