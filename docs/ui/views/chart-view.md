@@ -55,3 +55,20 @@ The target is one global "Show Sabian symbol notes" checkbox, with no per-card c
 **Status:** Not in this view. `ChartView.tsx` has no `Checkbox` (`grep -c Checkbox` returns 0). The toggle is `DegreeSymbolSetting.tsx`, rendered only in `ReportView.tsx:569`. The per-card-checkbox rule is therefore not placed in this file.
 
 Per-card checkboxes are absent here. The chart cards have no inline `Checkbox` (`grep` finds none in `ChartView.tsx`).
+
+## 9. What the chart type, aspects and preset limit (#1333)
+
+The chart type, the aspects shown (families and orb caps) and the consultation preset **limit** what a chart shows. They do not highlight. Show on wheel **highlights**: it selects the item, and the filters stay in force.
+
+| Tab                    | Limited by chart type, aspects and preset                                                                 | Show on wheel                                                                     |
+| ---------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Wheel                  | Yes: contact lines are hidden outside the chosen families and orbs                                        | Highlights the aspect pair (both bodies and the line between them); the rest dims |
+| Aspects                | Yes: the table follows the same contact filter as the Matrix, so its rows match the lines the wheel draws | Keeps the pair as above                                                           |
+| Matrix                 | Yes: the same contact filter as the Aspects table                                                         | Keeps the pair as above                                                           |
+| Placements             | No: independent of the aspect filter, since a placement has no aspect                                     | Highlights the body                                                               |
+| Elements               | No: independent of the aspect filter                                                                      | Not applicable                                                                    |
+| Patterns and condition | No: independent of the aspect filter                                                                      | Not applicable                                                                    |
+
+A selection survives a re-render of the chart. The overlay context is memoised on every chart view, so a Show click is not undone by a redraw.
+
+**Decided on #1333.** Placements, Elements and Patterns stay independent of the aspect filter, because a placement has no aspect to filter. Every other tab in the table above follows the rule for its kind.
