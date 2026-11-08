@@ -271,7 +271,7 @@ describe('what a submission does not touch', () => {
     expect(candidates.n).toBe(0);
   });
 
-  it('has no public submissions route, and no decide or delete route in this slice', async () => {
+  it('has no public submissions route and no delete route', async () => {
     const admin = await setupAdmin();
     const user = await createUser('bob');
     await submit(user.cookie, body());
@@ -281,8 +281,6 @@ describe('what a submission does not touch', () => {
       ['GET', '/api/corpus-submissions/en'],
       ['DELETE', `/api/corpus-submissions/${id}`],
       ['PATCH', '/api/corpus-submissions'],
-      ['POST', `/api/corpus-submissions/${id}/approve`],
-      ['POST', `/api/corpus-submissions/${id}/reject`],
       ['DELETE', '/api/corpus-submissions'],
     ] as const) {
       const response = await app.inject({ method, url, cookies, payload: {} });
@@ -302,5 +300,119 @@ describe('what a submission does not touch', () => {
         .map((row) => row.status)
         .sort(),
     ).toEqual(['pending', 'rejected']);
+  });
+});
+
+describe('approve and reject (#1338 slice 3)', () => {
+  const adminCookie = (cookie: string) => ({ [SESSION_COOKIE]: cookie });
+
+  async function pendingId(userCookie: string, overrides: Record<string, unknown> = {}): Promise<string> {
+    const response = await submit(userCookie, body(overrides));
+    expect(response.statusCode).toBe(201);
+    return response.json<{ id: string }>().id;
+  }
+
+  function decide(cookie: string, id: string, action: 'approve' | 'reject') {
+    return app.inject({ method: 'POST', url: `/api/corpus-submissions/${id}/${action}`, cookies: adminCookie(cookie) });
+  }
+
+  function overrideRows(): { key: string; locale: string; text: string }[] {
+    const raw = new DatabaseSync(dbPath);
+    const found = raw.prepare('SELECT key, locale, text FROM corpus_overrides').all() as unknown as {
+      key: string;
+      locale: string;
+      text: string;
+    }[];
+    raw.close();
+    return found;
+  }
+
+  it('approve makes the text the effective server-wide override for the key, at once', async () => {
+    const admin = await setupAdmin();
+    const user = await createUser('bob');
+    const id = await pendingId(user.cookie);
+    const response = await decide(admin, id, 'approve');
+    expect(response.statusCode).toBe(200);
+    const publicRoute = await app.inject({ method: 'GET', url: '/api/corpus-overrides/en' });
+    const { entries } = publicRoute.json<{ entries: { key: string; text: string }[] }>();
+    expect(entries.find((entry) => entry.key === KEY)?.text).toBe(GOOD_TEXT);
+    expect(overrideRows()).toHaveLength(1);
+  });
+
+  it('approve is refused when the lint gate fails, and nothing changes', async () => {
+    const admin = await setupAdmin();
+    const user = await createUser('bob');
+    const id = await pendingId(user.cookie);
+    // A stored row that would not pass today (the gate may have tightened since it was submitted).
+    const raw = new DatabaseSync(dbPath);
+    raw.prepare('UPDATE corpus_submissions SET text = ? WHERE id = ?').run('Too short.', id);
+    raw.close();
+    const response = await decide(admin, id, 'approve');
+    expect(response.statusCode).toBe(400);
+    expect(response.json<{ code: string }>().code).toBe('invalid-text');
+    expect(overrideRows()).toHaveLength(0);
+    expect(rows()[0]?.status).toBe('pending');
+  });
+
+  it('reject leaves corpus_overrides untouched', async () => {
+    const admin = await setupAdmin();
+    const user = await createUser('bob');
+    const id = await pendingId(user.cookie);
+    const response = await decide(admin, id, 'reject');
+    expect(response.statusCode).toBe(200);
+    expect(overrideRows()).toHaveLength(0);
+    expect(rows()[0]?.status).toBe('rejected');
+  });
+
+  it('keeps a decided row with its status, decider and time (D4)', async () => {
+    const admin = await setupAdmin();
+    const user = await createUser('bob');
+    const approvedId = await pendingId(user.cookie);
+    const rejectedId = await pendingId(user.cookie, { key: 'dignity-state:moon:ruler' });
+    await decide(admin, approvedId, 'approve');
+    await decide(admin, rejectedId, 'reject');
+    const raw = new DatabaseSync(dbPath);
+    const found = raw
+      .prepare('SELECT id, status, decided_by, decided_at FROM corpus_submissions ORDER BY status')
+      .all() as unknown as { id: string; status: string; decided_by: string | null; decided_at: string | null }[];
+    const adminId = (raw.prepare("SELECT id FROM users WHERE username = 'alice'").get() as unknown as { id: string })
+      .id;
+    raw.close();
+    expect(found.map((row) => row.status)).toEqual(['approved', 'rejected']);
+    for (const row of found) {
+      expect(row.decided_by).toBe(adminId);
+      expect(Number.isNaN(Date.parse(row.decided_at ?? ''))).toBe(false);
+    }
+    const listed = await app.inject({ method: 'GET', url: '/api/corpus-submissions', cookies: adminCookie(admin) });
+    const { submissions } = listed.json<{ submissions: { status: string; decidedByUsername: string }[] }>();
+    expect(submissions.map((row) => row.decidedByUsername)).toEqual(['alice', 'alice']);
+  });
+
+  it('refuses to decide an already-decided row, with a stable code, and changes nothing', async () => {
+    const admin = await setupAdmin();
+    const user = await createUser('bob');
+    const id = await pendingId(user.cookie);
+    await decide(admin, id, 'reject');
+    for (const action of ['approve', 'reject'] as const) {
+      const response = await decide(admin, id, action);
+      expect(response.statusCode).toBe(409);
+      expect(response.json<{ code: string }>().code).toBe('already-decided');
+    }
+    expect(rows()[0]?.status).toBe('rejected');
+    expect(overrideRows()).toHaveLength(0);
+    expect((await decide(admin, randomUUID(), 'approve')).json<{ code: string }>().code).toBe('not-found');
+  });
+
+  it('does not let a non-admin or an anonymous caller approve or reject', async () => {
+    await setupAdmin();
+    const user = await createUser('bob');
+    const id = await pendingId(user.cookie);
+    for (const action of ['approve', 'reject'] as const) {
+      expect((await decide(user.cookie, id, action)).statusCode).toBe(403);
+      const anonymous = await app.inject({ method: 'POST', url: `/api/corpus-submissions/${id}/${action}` });
+      expect(anonymous.statusCode).toBe(401);
+    }
+    expect(rows()[0]?.status).toBe('pending');
+    expect(overrideRows()).toHaveLength(0);
   });
 });

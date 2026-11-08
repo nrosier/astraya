@@ -3,15 +3,15 @@
  * `corpus_submissions` table (`server/db.ts` migration 17). A submission is a key, a language, a text and the
  * licence acceptance; the submitter's user id is kept for the admin queue and nothing else.
  *
- * Unlike `corpus-candidates.ts`, a row is never deleted here: a decision (a later slice) will set `status`,
- * `decided_by` and `decided_at` and leave the row as history (#1338 D4). This slice has no decision and no delete.
+ * Unlike `corpus-candidates.ts`, a row is never deleted here: a decision (slice 3) sets `status`, `decided_by` and
+ * `decided_at` and leaves the row as history (#1338 D4). There is no delete.
  */
 
 /**
  * @module corpus-submissions
  * @purpose Data-access layer for user-submitted interpretation corrections awaiting admin review, backed by the `corpus_submissions` table.
- * @conventions Insert-only plus list in this slice, with no delete and no decision function; the pending and per-day caps are counted here and enforced by the route inside the same synchronous handler, so the check and the insert cannot interleave; `submitterId` appears only in the admin listing shape.
- * @exports PENDING_CAP, DAILY_CAP, SubmissionStatus, CorpusSubmission, countPendingSubmissions, countRecentSubmissions, insertCorpusSubmission, listCorpusSubmissions
+ * @conventions Insert, list, fetch and decide, with no delete: a decision only ever moves a pending row to approved or rejected and keeps it; the pending and per-day caps are counted here and enforced by the route inside the same synchronous handler, so the check and the insert cannot interleave; `submitterId` appears only in the admin listing shape.
+ * @exports PENDING_CAP, DAILY_CAP, SubmissionStatus, CorpusSubmission, countPendingSubmissions, countRecentSubmissions, insertCorpusSubmission, listCorpusSubmissions, getCorpusSubmission, markSubmissionDecided
  */
 import { randomUUID } from 'node:crypto';
 import type { Database } from './db.ts';
@@ -123,4 +123,40 @@ export function listCorpusSubmissions(
     )
     .all(filter.status ?? null, filter.status ?? null) as unknown as SubmissionRow[];
   return rows.map(toSubmission);
+}
+
+/** One submission by id, or undefined. */
+export function getCorpusSubmission(db: Database, id: string): CorpusSubmission | undefined {
+  const row = db
+    .prepare(
+      `SELECT s.id, s.key, s.locale, s.text, s.status, s.submitted_by, s.licence_version, s.accepted_at,
+              s.created_at, s.decided_at, u.username AS submitter_username, d.username AS decided_by_username
+         FROM corpus_submissions s
+         LEFT JOIN users u ON u.id = s.submitted_by
+         LEFT JOIN users d ON d.id = s.decided_by
+        WHERE s.id = ?`,
+    )
+    .get(id) as unknown as SubmissionRow | undefined;
+  return row === undefined ? undefined : toSubmission(row);
+}
+
+/**
+ * Moves a pending row to approved or rejected and records the decider and the time (#1338 D4). The row is kept.
+ * Returns false when the row is not pending (already decided, or no such id), in which case nothing changes.
+ */
+export function markSubmissionDecided(
+  db: Database,
+  params: {
+    readonly id: string;
+    readonly status: 'approved' | 'rejected';
+    readonly decidedBy: string;
+    readonly now: string;
+  },
+): boolean {
+  const result = db
+    .prepare(
+      "UPDATE corpus_submissions SET status = ?, decided_by = ?, decided_at = ? WHERE id = ? AND status = 'pending'",
+    )
+    .run(params.status, params.decidedBy, params.now, params.id);
+  return result.changes > 0;
 }

@@ -187,8 +187,8 @@ describe('CorpusCandidatesPanel cards and actions (#816 D-816b)', () => {
   });
 });
 
-describe('CorpusCandidatesPanel lists user submissions read-only (#1338 slice 2)', () => {
-  it('shows a "Submitted by users" section with status, text and submitter, and no decide buttons for it', async () => {
+describe('CorpusCandidatesPanel lists user submissions (#1338)', () => {
+  it('shows a "Submitted by users" section with status, text and submitter', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn((url: string) =>
@@ -226,6 +226,62 @@ describe('CorpusCandidatesPanel lists user submissions read-only (#1338 slice 2)
     expect(section?.textContent).toContain('A user suggested this wording.');
     expect(section?.textContent).toContain('Submitted by bob');
     expect(section?.textContent).toContain('Pending');
-    expect(section?.querySelectorAll('button')).toHaveLength(0);
+    expect(section?.querySelectorAll('button')).toHaveLength(2);
+  });
+});
+
+describe('CorpusSubmissionsSection approve and reject (#1338 slice 3)', () => {
+  const submission = (id: string, status: string, extra: Record<string, unknown> = {}) => ({
+    id,
+    key: 'planet-in-sign:sun:2',
+    locale: 'en',
+    text: 'A user suggested this wording.',
+    status,
+    submitterId: 'u1',
+    submitterUsername: 'bob',
+    licenceVersion: 'v1',
+    acceptedAt: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+    ...extra,
+  });
+
+  it('asks for confirmation, posts the approval, then reloads and shows the decided row without buttons', async () => {
+    let decided = false;
+    const calls: string[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string, init?: RequestInit) => {
+        if (init?.method === 'POST') {
+          calls.push(`${init.method} ${url}`);
+          decided = true;
+          return Promise.resolve(new Response(JSON.stringify({ id: 's1', status: 'approved' })));
+        }
+        if (url.includes('corpus-submissions')) {
+          const row = decided
+            ? submission('s1', 'approved', { decidedAt: new Date().toISOString(), decidedByUsername: 'alice' })
+            : submission('s1', 'pending');
+          return Promise.resolve(new Response(JSON.stringify({ submissions: [row] })));
+        }
+        return Promise.resolve(new Response(JSON.stringify({ candidates: [] })));
+      }),
+    );
+    const container = await mount();
+    const section = container.querySelector<HTMLElement>('section.corpus-submissions');
+    const buttons = (): HTMLButtonElement[] => [...(section?.querySelectorAll('button') ?? [])];
+    act(() => {
+      buttons()[0]?.click();
+    });
+    // Nothing is sent before the confirmation.
+    expect(calls).toHaveLength(0);
+    expect(section?.textContent).toContain('every reader sees');
+    const confirm = buttons().find((button) => button.textContent === 'Approve and publish');
+    await act(async () => {
+      confirm?.click();
+      await Promise.resolve();
+    });
+    expect(calls).toEqual(['POST /api/corpus-submissions/s1/approve']);
+    expect(section?.textContent).toContain('Approved');
+    expect(section?.textContent).toContain('by alice');
+    expect(buttons()).toHaveLength(0);
   });
 });

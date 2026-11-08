@@ -1,28 +1,37 @@
 /**
- * User-submitted corrections (#1338, slice 2). A signed-in user posts a key, a language, a text and the licence
- * acceptance; the admins read the queue. There is no public route, no approve, no reject and no delete here.
+ * User-submitted corrections (#1338). A signed-in user posts a key, a language, a text and the licence
+ * acceptance; the admins read the queue and approve or reject (slice 3). There is no public route and no delete.
  */
 
 /**
  * @module corpus-submissions-routes
- * @purpose HTTP routes for submitting a correction to an interpretation entry (any signed-in user) and for listing the submissions (admin only).
- * @conventions The body is exactly `{locale, key, text, licenceAccepted, licenceVersion}`: any other field (a person id, a name, birth data) is refused, so nothing but those is ever stored; the key must be a canonical corpus key, the text passes `lintEntry` and `checkPlainText`; the pending cap (409 `pending-limit`) and the 24-hour cap (429 `daily-limit`) are counted per user and refuse before the insert, on top of a per-user per-minute rate limit; errors carry a stable `code`. The submitter id is only in the admin list.
+ * @purpose HTTP routes for submitting a correction to an interpretation entry (any signed-in user) for listing the submissions (admin only), and for approving or rejecting a pending one (admin only).
+ * @conventions The body is exactly `{locale, key, text, licenceAccepted, licenceVersion}`: any other field (a person id, a name, birth data) is refused, so nothing but those is ever stored; the key must be a canonical corpus key, the text passes `lintEntry` and `checkPlainText`; the pending cap (409 `pending-limit`) and the 24-hour cap (429 `daily-limit`) are counted per user and refuse before the insert, on top of a per-user per-minute rate limit; errors carry a stable `code`. The submitter id is only in the admin list. Approve (#1338 D2) re-runs `checkPlainText` and `lintEntry`, then upserts the server-wide override through `upsertCorpusOverride` and marks the row approved in one transaction; reject only marks the row. Neither deletes the row (D4); only a pending row can be decided (404 `not-found`, 409 `already-decided`, 400 `invalid-text`); both are per-admin rate limited.
  * @exports registerCorpusSubmissionRoutes
  */
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { Database } from './db.ts';
 import type { User } from './auth/identity.ts';
 import { requireAdmin, requireUser } from './auth/identity.ts';
-import { LOCALES, type Locale } from './corpus-overrides.ts';
+import {
+  LOCALES,
+  listCorpusOverrides,
+  upsertCorpusOverride,
+  type CorpusTier,
+  type Locale,
+} from './corpus-overrides.ts';
 import {
   DAILY_CAP,
   PENDING_CAP,
   countPendingSubmissions,
   countRecentSubmissions,
+  getCorpusSubmission,
   insertCorpusSubmission,
   listCorpusSubmissions,
+  markSubmissionDecided,
 } from './corpus-submissions.ts';
 import { checkPlainText, lintEntry } from '../src/interpretation/lint.ts';
+import { CORPUS } from '../src/interpretation/index.ts';
 import { validateKey, type CorpusEntry } from '../src/interpretation/schema.ts';
 import { SUBMISSION_LICENCE_VERSION } from '../src/interpretation/submission-licence.ts';
 
@@ -37,6 +46,20 @@ function authenticatedUser(request: FastifyRequest): User {
   if (!request.user) throw new Error('requireUser preHandler did not run before this handler.');
   return request.user;
 }
+
+/** The plain-text and content-quality gate shared by submit and approve; undefined when the text passes. */
+function textProblem(key: string, locale: Locale, text: string, tier: CorpusTier): string | undefined {
+  const plain = checkPlainText(text);
+  if (plain !== undefined) return plain === 'markup' ? 'HTML is not allowed' : 'Links are not allowed';
+  const candidate: CorpusEntry = { key, locale, text, tier, tags: [], provenance: { source: 'hand-written' } };
+  const issues = lintEntry(candidate);
+  return issues.length > 0
+    ? `Content-quality check failed: ${issues.map((issue) => issue.message).join('; ')}`
+    : undefined;
+}
+
+/** Thrown inside the approve transaction when another request decided the row first, so the transaction rolls back. */
+class AlreadyDecided extends Error {}
 
 export function registerCorpusSubmissionRoutes(app: FastifyInstance, db: Database): void {
   app.post<{ Body: Record<string, unknown> | null }>(
@@ -79,26 +102,8 @@ export function registerCorpusSubmissionRoutes(app: FastifyInstance, db: Databas
       if (licenceVersion !== SUBMISSION_LICENCE_VERSION) {
         return refuse(400, 'licence-version', 'The licence notice has changed; reload and accept the current one');
       }
-      const plain = checkPlainText(text);
-      if (plain !== undefined) {
-        return refuse(400, 'invalid-text', plain === 'markup' ? 'HTML is not allowed' : 'Links are not allowed');
-      }
-      const candidate: CorpusEntry = {
-        key,
-        locale,
-        text,
-        tier: 'nuance',
-        tags: [],
-        provenance: { source: 'hand-written' },
-      };
-      const issues = lintEntry(candidate);
-      if (issues.length > 0) {
-        return refuse(
-          400,
-          'invalid-text',
-          `Content-quality check failed: ${issues.map((issue) => issue.message).join('; ')}`,
-        );
-      }
+      const problem = textProblem(key, locale, text, 'nuance');
+      if (problem !== undefined) return refuse(400, 'invalid-text', problem);
 
       // Counted and inserted in one synchronous stretch (node:sqlite is synchronous), so two requests cannot both pass.
       const userId = authenticatedUser(request).id;
@@ -125,5 +130,79 @@ export function registerCorpusSubmissionRoutes(app: FastifyInstance, db: Databas
     '/api/corpus-submissions',
     { preHandler: requireAdmin(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
     async (_request, reply) => reply.send({ submissions: listCorpusSubmissions(db) }),
+  );
+
+  const decideRateLimit = {
+    max: 30,
+    timeWindow: '1 minute',
+    hook: 'preHandler' as const,
+    // Per admin, not per IP.
+    keyGenerator: (request: FastifyRequest) => request.user?.id ?? request.ip,
+  };
+
+  app.post<{ Params: { id: string } }>(
+    '/api/corpus-submissions/:id/approve',
+    { preHandler: requireAdmin(db), config: { rateLimit: decideRateLimit } },
+    async (request, reply) => {
+      const refuse = (status: number, code: string, error: string) => reply.code(status).send({ code, error });
+      const submission = getCorpusSubmission(db, request.params.id);
+      if (submission === undefined) return refuse(404, 'not-found', 'No such submission');
+      if (submission.status !== 'pending') return refuse(409, 'already-decided', 'This submission was already decided');
+      // Only the text changes: tier and tags stay those of the live override, else of the committed entry; a key
+      // with neither gets the lowest tier.
+      const committed =
+        listCorpusOverrides(db, submission.locale).find((entry) => entry.key === submission.key) ??
+        CORPUS.find((entry) => entry.key === submission.key && entry.locale === submission.locale);
+      const tier: CorpusTier = committed?.tier ?? 'nuance';
+      const tags = committed?.tags ?? [];
+      const problem = textProblem(submission.key, submission.locale, submission.text, tier);
+      if (problem !== undefined) return refuse(400, 'invalid-text', problem);
+
+      // One synchronous stretch inside a transaction: the override and the decision both happen or neither does.
+      const adminId = authenticatedUser(request).id;
+      db.exec('BEGIN IMMEDIATE');
+      try {
+        const decided = markSubmissionDecided(db, {
+          id: submission.id,
+          status: 'approved',
+          decidedBy: adminId,
+          now: new Date().toISOString(),
+        });
+        if (!decided) throw new AlreadyDecided();
+        upsertCorpusOverride(db, {
+          key: submission.key,
+          locale: submission.locale,
+          text: submission.text,
+          tier,
+          tags,
+          updatedByUserId: adminId,
+        });
+        db.exec('COMMIT');
+      } catch (error) {
+        db.exec('ROLLBACK');
+        if (error instanceof AlreadyDecided)
+          return refuse(409, 'already-decided', 'This submission was already decided');
+        throw error;
+      }
+      return reply.send({ id: submission.id, status: 'approved' });
+    },
+  );
+
+  app.post<{ Params: { id: string } }>(
+    '/api/corpus-submissions/:id/reject',
+    { preHandler: requireAdmin(db), config: { rateLimit: decideRateLimit } },
+    async (request, reply) => {
+      const refuse = (status: number, code: string, error: string) => reply.code(status).send({ code, error });
+      const submission = getCorpusSubmission(db, request.params.id);
+      if (submission === undefined) return refuse(404, 'not-found', 'No such submission');
+      const decided = markSubmissionDecided(db, {
+        id: submission.id,
+        status: 'rejected',
+        decidedBy: authenticatedUser(request).id,
+        now: new Date().toISOString(),
+      });
+      if (!decided) return refuse(409, 'already-decided', 'This submission was already decided');
+      return reply.send({ id: submission.id, status: 'rejected' });
+    },
   );
 }

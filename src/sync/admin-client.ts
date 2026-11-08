@@ -8,7 +8,7 @@
  * @module sync/admin-client
  * @purpose Provides thin `fetch()` wrappers for every admin-only server route — user management, corpus overrides, corpus candidate triage, and interpretation usage/cost reporting.
  * @conventions One function per route, each mirroring its server-side route file's shape exactly (noted in-line per section: `server/auth/admin-routes.ts`, `server/corpus-overrides.ts`, `server/corpus-candidates.ts`, `server/interpretation/usage.ts`); every call funnels through a shared `call()` helper that throws `AdminError` with the server's own error message on a non-2xx response.
- * @exports AdminUser, DeletionImpact, AdminError, listUsers, createUser, resetPassword, disableUser, enableUser, setUserRole, getDeletionImpact, deleteUser, CorpusOverride, UpsertCorpusOverrideParams, listCorpusOverrides, upsertCorpusOverride, deleteCorpusOverride, exportCorpusOverrides, CandidateSource, TriageSignal, CandidateStatus, CorpusCandidate, listCorpusCandidates, DecideCorpusCandidatesResult, decideCorpusCandidates, CorpusSubmission, listCorpusSubmissions, InterpretationUsageSummary, InterpretationUsageReport, getInterpretationUsage
+ * @exports AdminUser, DeletionImpact, AdminError, listUsers, createUser, resetPassword, disableUser, enableUser, setUserRole, getDeletionImpact, deleteUser, CorpusOverride, UpsertCorpusOverrideParams, listCorpusOverrides, upsertCorpusOverride, deleteCorpusOverride, exportCorpusOverrides, CandidateSource, TriageSignal, CandidateStatus, CorpusCandidate, listCorpusCandidates, DecideCorpusCandidatesResult, decideCorpusCandidates, CorpusSubmission, listCorpusSubmissions, approveCorpusSubmission, rejectCorpusSubmission, InterpretationUsageSummary, InterpretationUsageReport, getInterpretationUsage
  */
 import type { CorpusTier, Locale } from '../interpretation/schema.js';
 import type { Role } from './auth-client.js';
@@ -205,7 +205,7 @@ export async function decideCorpusCandidates(
   });
 }
 
-/** Mirrors `server/corpus-submissions.ts`'s `CorpusSubmission` (#1338): what users sent to the admins. Read-only in slice 2. */
+/** Mirrors `server/corpus-submissions.ts`'s `CorpusSubmission` (#1338): what users sent to the admins. Approve and reject are slice 3. */
 export interface CorpusSubmission {
   readonly id: string;
   readonly key: string;
@@ -224,6 +224,16 @@ export interface CorpusSubmission {
 export async function listCorpusSubmissions(): Promise<readonly CorpusSubmission[]> {
   const { submissions } = await call<{ submissions: readonly CorpusSubmission[] }>('/api/corpus-submissions');
   return submissions;
+}
+
+/** Approves a pending submission: its text becomes the server-wide override at once (#1338 D2). The row is kept. */
+export async function approveCorpusSubmission(id: string): Promise<void> {
+  await call(`/api/corpus-submissions/${id}/approve`, { method: 'POST' });
+}
+
+/** Rejects a pending submission. The row is kept as history (#1338 D4) and no override is written. */
+export async function rejectCorpusSubmission(id: string): Promise<void> {
+  await call(`/api/corpus-submissions/${id}/reject`, { method: 'POST' });
 }
 
 /** Mirrors `server/interpretation/usage.ts`'s `UserUsageSummary`, plus the last-24h figure the route adds alongside it. */
