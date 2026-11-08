@@ -11,8 +11,13 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { AntisciaRow, AspectRow, DeclinationContactRow } from '../src/domain/chart-tables.js';
 import { chartViewMessages } from '../src/ui/ChartView.messages.js';
-import { antisciaColumns, aspectColumns, declinationColumns } from '../src/ui/ChartViewAspects.js';
-import { aspectSelectionKey } from '../src/ui/table-selection.js';
+import {
+  antisciaColumns,
+  aspectColumns,
+  declinationColumns,
+  filterAspectRowsByContactFilter,
+} from '../src/ui/ChartViewAspects.js';
+import { aspectSelectionKey, bodySelectionKey } from '../src/ui/table-selection.js';
 import { SortableTable } from '../src/ui/SortableTable.js';
 import { rowsToCsv, rowsToTsv, type TableColumn } from '../src/ui/table-sort.js';
 
@@ -125,7 +130,7 @@ describe('the aspects table (#815)', () => {
     }
   });
 
-  it('has a Show button in every row that opens the wheel on that aspect’s two bodies (#815)', () => {
+  it('has a Show button in every row that opens the wheel on the row’s body, not the pair (#815, #1333)', () => {
     const shown: string[] = [];
     const withSelection = aspectColumns(t, 'en', {
       selectedKey: undefined,
@@ -139,17 +144,55 @@ describe('the aspects table (#815)', () => {
     const buttons = Array.from(container.querySelectorAll<HTMLButtonElement>('tbody button'));
     expect(buttons.map((b) => b.textContent)).toEqual(['Show', 'Show']);
     expect(buttons.map((b) => b.getAttribute('aria-label'))).toEqual([
-      'Show Sun Trine Moon on the wheel',
-      'Show Sun Square Saturn on the wheel',
+      'Show Sun on the wheel',
+      'Show Sun on the wheel',
     ]);
     act(() => {
       buttons[1]?.click();
     });
-    expect(shown).toEqual([aspectSelectionKey(ROWS[1] ?? fixtureBug())]);
+    expect(shown).toEqual([bodySelectionKey('sun')]);
+    expect(shown).not.toEqual([aspectSelectionKey(ROWS[1] ?? fixtureBug())]);
   });
 
   it('keeps the table inside the horizontal scroll frame', () => {
     expect(view().querySelector('.data-table-scroll table')).not.toBeNull();
+  });
+});
+
+describe('the aspects table follows the wheel and matrix filter (#1333)', () => {
+  const keys = (rows: readonly AspectRow[]): string[] => rows.map((row) => row.aspectKey);
+  const MIXED: readonly AspectRow[] = [
+    ...ROWS,
+    { ...(ROWS[0] ?? fixtureBug()), aspect: 'Semisquare', aspectKey: 'semisquare', orb: 1 },
+  ];
+
+  it('keeps every row with no filter', () => {
+    expect(filterAspectRowsByContactFilter(MIXED, undefined)).toEqual(MIXED);
+    expect(keys(filterAspectRowsByContactFilter(MIXED, { families: new Set() }))).toEqual([
+      'trine',
+      'square',
+      'semisquare',
+    ]);
+  });
+
+  it('keeps only the chosen families, as isContactShown does for the matrix', () => {
+    expect(keys(filterAspectRowsByContactFilter(MIXED, { families: new Set(['major']) }))).toEqual(['trine', 'square']);
+    expect(keys(filterAspectRowsByContactFilter(MIXED, { families: new Set(['hardMinor']) }))).toEqual(['semisquare']);
+  });
+
+  it('drops a contact wider than the orb cap', () => {
+    const rows = filterAspectRowsByContactFilter(MIXED, {
+      families: new Set(['major']),
+      orbCaps: { luminary: 2, planet: 2 },
+    });
+    expect(keys(rows)).toEqual(['trine']);
+  });
+
+  it('drops minor aspects when the preset suppresses them in a natal chart', () => {
+    expect(keys(filterAspectRowsByContactFilter(MIXED, { families: new Set(), suppressMinorNatal: true }))).toEqual([
+      'trine',
+      'square',
+    ]);
   });
 });
 

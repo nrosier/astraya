@@ -350,6 +350,52 @@ test.describe('with the shared people (#799)', () => {
     await expect(page.locator('.chart-wheel')).toBeInViewport();
   });
 
+  test('Show on an Aspects row highlights the body and keeps the chart type and aspect filter applied (#1333)', async () => {
+    test.setTimeout(90_000);
+    await page.setViewportSize({ width: 1600, height: 1000 });
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    await expect(page.getByLabel('Chart type', { exact: true })).toContainText('Natal');
+    await page.getByLabel('Aspects shown', { exact: true }).selectOption({
+      label: 'Major: conjunction, sextile, square, trine, opposition',
+    });
+    await page.getByRole('link', { name: 'Aspects', exact: true }).click();
+    // The table lists only what the wheel shows: no minor contact is in it.
+    const rows = page.locator('#chart-view-aspects table').first().locator('tbody tr');
+    await expect(rows.first()).toBeVisible();
+    const minor = /Semisquare|Sesquiquadrate|Quincunx|Semisextile|Quintile|Biquintile|Septile/i;
+    await expect(rows.filter({ hasText: minor })).toHaveCount(0);
+
+    await page
+      .locator('#chart-view-aspects table')
+      .first()
+      .getByRole('button', { name: /^Show Moon on the wheel$/ })
+      .first()
+      .click();
+
+    await expect(page.getByRole('link', { name: 'Wheel', exact: true })).toHaveAttribute('aria-current', 'page');
+    await expect(page.locator('#chart-view-wheel')).toBeVisible();
+    // The Moon is highlighted, not dimmed, while other bodies are dimmed.
+    await expect(page.locator('.chart-wheel [data-body="moon"]').first()).not.toHaveClass(/chart-dimmed/);
+    await expect(page.locator('.chart-wheel .chart-dimmed').first()).toBeAttached();
+    // The Moon's own contacts stay (the body is highlighted, not one pair), limited by the aspect filter.
+    const lines = page.locator('svg.chart-dial g.chart-aspect-link:not(.chart-aspect-filtered)');
+    const touchingMoon = page.locator(
+      'svg.chart-dial g.chart-aspect-link:not(.chart-aspect-filtered)[data-aspect-body-a="moon"], svg.chart-dial g.chart-aspect-link:not(.chart-aspect-filtered)[data-aspect-body-b="moon"]',
+    );
+    expect(await touchingMoon.count()).toBeGreaterThan(1);
+    await expect(lines.and(page.locator(':not(.chart-dimmed)'))).toHaveCount(await touchingMoon.count());
+    // Only major contacts are visible, and the family filter is still chosen.
+    await expect(page.getByLabel('Aspects shown', { exact: true })).toContainText('Major');
+    const shown = page.locator('svg.chart-dial g.chart-aspect-link:not(.chart-aspect-filtered)');
+    await expect.poll(async () => shown.count()).toBeGreaterThan(0);
+    await expect(
+      page.locator(
+        'svg.chart-dial g.chart-aspect-link:not(.chart-aspect-filtered):not([data-aspect-key="conjunction"]):not([data-aspect-key="sextile"]):not([data-aspect-key="square"]):not([data-aspect-key="trine"]):not([data-aspect-key="opposition"])',
+      ),
+    ).toHaveCount(0);
+  });
+
   test('the aspect matrix grid shows Name and House at 1280 and drops them at 390 (#820)', async () => {
     test.setTimeout(90_000);
     await openSharedPerson(page, baseUrl, EINSTEIN);

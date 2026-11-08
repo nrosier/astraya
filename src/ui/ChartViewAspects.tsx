@@ -2,7 +2,7 @@
  * @module ChartViewAspects
  * @purpose Renders the Aspects chart view tables (aspects, antiscia, declinations, midpoints) and their columns.
  * @conventions Moved out of ChartView.tsx (#817); the aspects table shows Applying as a dot plus label and the family as muted text on screen only (#815), while `render` stays plain text for copy, CSV and the PDF; takes the chart data and message bundle as arguments and never imports ChartView. The fixed-stars table moved to ChartViewPlacements (#815).
- * @exports AspectState, aspectColumns, declinationColumns, antisciaColumns, midpointTreeColumns, allMidpointsColumns, renderAspectsTable
+ * @exports AspectState, AspectContactFilter, filterAspectRowsByContactFilter, aspectColumns, declinationColumns, antisciaColumns, midpointTreeColumns, allMidpointsColumns, renderAspectsTable
  */
 import { formatOrb } from './format.js';
 import { aspectHarmonicFamily } from '../astrology/aspects.js';
@@ -25,7 +25,8 @@ import { deriveExportFilename } from '../domain/export-filename.js';
 import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
 import { degreeColumns } from './ChartViewPlacements.js';
 import type { chartViewMessages } from './ChartView.messages.js';
-import { aspectSelectionKey, selectColumn, type TableSelection } from './table-selection.js';
+import { aspectSelectionKey, bodySelectionKey, selectColumn, type TableSelection } from './table-selection.js';
+import { isContactShown, isMajorAspect, type AspectFamilyKey, type OrbCaps } from './aspect-family-filter.js';
 import { SortableTable } from './SortableTable.js';
 import type { TableColumn } from './table-sort.js';
 import type { Locale } from '../interpretation/schema.js';
@@ -64,11 +65,9 @@ export function aspectColumns(
             t,
             selection,
             (row) =>
-              selection.selectableBodies.has(row.bodyAKey) && selection.selectableBodies.has(row.bodyBKey)
-                ? aspectSelectionKey(row)
-                : undefined,
-            (row) =>
-              `${bodyDisplayName(row.bodyAKey, locale)} ${aspectDisplayName(row.aspectKey, locale)} ${bodyDisplayName(row.bodyBKey, locale)}`,
+              // Show highlights the row's first-named body, not the pair (#1333); the wheel's own filters still limit its contacts.
+              selection.selectableBodies.has(row.bodyAKey) ? bodySelectionKey(row.bodyAKey) : undefined,
+            (row) => bodyDisplayName(row.bodyAKey, locale),
             undefined,
             true,
           ),
@@ -224,6 +223,30 @@ export function allMidpointsColumns(
   ];
 }
 
+/** The wheel's own contact filter (#1063, #1333): the aspect families, the orb caps and the preset's minor-natal switch. */
+export interface AspectContactFilter {
+  readonly families: ReadonlySet<AspectFamilyKey>;
+  readonly orbCaps?: OrbCaps | undefined;
+  readonly suppressMinorNatal?: boolean | undefined;
+}
+
+/** Keeps the rows the wheel and the aspect matrix still show: the same `isContactShown` test, then the preset's major-only switch. */
+export function filterAspectRowsByContactFilter(
+  rows: readonly AspectRow[],
+  filter: AspectContactFilter | undefined,
+): readonly AspectRow[] {
+  if (filter === undefined) return rows;
+  return rows.filter(
+    (row) =>
+      isContactShown(
+        { aKey: row.bodyAKey, bKey: row.bodyBKey, aspectKey: row.aspectKey, orb: row.orb },
+        filter.families,
+        filter.orbCaps,
+      ) &&
+      (filter.suppressMinorNatal !== true || isMajorAspect(row.aspectKey)),
+  );
+}
+
 /** The Aspects view's tables (#511), one case of the old `renderTableTab`. */
 export function renderAspectsTable(
   data: ChartData,
@@ -233,8 +256,12 @@ export function renderAspectsTable(
   locale: Locale,
   selection?: TableSelection,
   aspectHarmonicFamilyFilter?: number,
+  contactFilter?: AspectContactFilter,
 ): React.ReactNode {
-  const rows = filterAspectRowsByHarmonicFamily(aspectRows(data, pointVisibility), aspectHarmonicFamilyFilter);
+  const rows = filterAspectRowsByContactFilter(
+    filterAspectRowsByHarmonicFamily(aspectRows(data, pointVisibility), aspectHarmonicFamilyFilter),
+    contactFilter,
+  );
   const declinationRows = declinationContactRows(data);
   const antiscionRows = antisciaRows(data);
   const midpointTreeHitRows =
