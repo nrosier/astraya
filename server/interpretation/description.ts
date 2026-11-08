@@ -30,7 +30,7 @@ const FORBIDDEN_CHARACTERS = /[<>{}[\]`|\\]|https?:|www\.|@\w/i;
 export function sanitizeDescription(raw: unknown): string | null {
   if (typeof raw !== 'string') return null;
   const cleaned = raw
-    // eslint-disable-next-line no-control-regex -- control characters (newlines, tabs, NULs) are exactly what is being removed
+    // oxlint-disable-next-line no-control-regex -- control characters (newlines, tabs, NULs) are exactly what is being removed
     .replace(/[\u0000-\u001f\u007f]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()

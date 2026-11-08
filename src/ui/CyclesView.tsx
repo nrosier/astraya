@@ -321,7 +321,7 @@ export function CyclesView(): React.JSX.Element {
             selectedId,
           )
         : undefined,
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- the wheel renderers read the glyph settings from module state, so these are cache keys, not inputs the callback reads.
+    // oxlint-disable-next-line react/exhaustive-deps -- the wheel renderers read the glyph settings from module state, so these are cache keys, not inputs the callback reads.
     [result, selectedId, symbolClass, variants],
   );
 

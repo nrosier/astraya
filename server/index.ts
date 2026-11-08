@@ -159,6 +159,11 @@ export async function build(options: BuildOptions = {}) {
     }
   });
 
+  // No await in this body, on purpose: Fastify's hook contract is the same async signature for
+  // every hook, and the `onRequest` hook just above genuinely awaits — keeping every hook here
+  // one shape is worth more than trimming `async` off this one (same reasoning as the carve-outs
+  // for `src/ephemeris/engine.ts` and the test doubles in `test/**/*.ts`).
+  // oxlint-disable-next-line typescript/require-await
   app.addHook('onSend', async (request, reply) => {
     reply.header('Content-Security-Policy', csp.header);
     reply.header('X-Content-Type-Options', 'nosniff');

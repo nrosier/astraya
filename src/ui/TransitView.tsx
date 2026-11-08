@@ -236,7 +236,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
       { innerRingIndex: 0, outerRingIndex: 1, aspects: shownContacts },
     ];
     return renderMultiWheelSvg([natalRing, transitRing], crossAspects);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- the wheel renderers read the glyph settings from module state, so these are cache keys, not inputs the callback reads.
+    // oxlint-disable-next-line react/exhaustive-deps -- the wheel renderers read the glyph settings from module state, so these are cache keys, not inputs the callback reads.
   }, [load, t, shownContacts, symbolClass, variants]);
 
   const wheelT = useMessages(biWheelSelectionPanelMessages);

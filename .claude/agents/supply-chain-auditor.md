@@ -32,10 +32,11 @@ from a template), not an intentional addition.
   bump it, tests pass" is not sufficient review — a version bump that changes
   ephemeris output by even a fraction of an arcsecond is a correctness
   regression, not a routine update.
-- **A TypeScript major-version bump is held back** on purpose, blocked by
-  `typescript-eslint`'s peer range (referenced in PR #141) — don't propose
-  forcing it through with an override without checking whether that peer range
-  has since caught up.
+- **A `typescript` bump of any size stays off blanket automerge** on purpose
+  (#1329): it moved to TypeScript 7 once oxlint replaced ESLint (which had
+  pinned `typescript-eslint`'s peer range as the real blocker), but a compiler
+  bump can still introduce new errors across the 5-project build regardless of
+  the lint gate, so it always wants a human look.
 - Check any *other* new special-cased package rule against whether the
   reasoning behind it still holds, rather than assuming every existing
   exception is permanent.

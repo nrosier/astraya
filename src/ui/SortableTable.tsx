@@ -153,7 +153,7 @@ export function SortableTable<T>({
   useLayoutEffect(() => {
     if (!resized) setNatural(measured());
     // Measuring needs only a change of columns or rows; `measured` is rebuilt every render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react/exhaustive-deps
   }, [columns, rows, resized]);
   const currentWidth = (key: string): number => widths[key] ?? natural[key] ?? MIN_COLUMN_WIDTH;
   const sorted = sortRows(rows, columns, sort);
