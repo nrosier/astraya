@@ -6,8 +6,11 @@
  */
 import type { JulianDayUT } from '../ephemeris/types.js';
 import type { TimingTimelineEvent, TimingTimelineTrack } from '../domain/timing-timeline.js';
-import { ganttFraction, yearTicks, type GanttRow } from './timeline-gantt.js';
+import { useLayoutEffect, useRef, useState } from 'react';
+import { ganttFraction, thinYearTicks, yearTicks, type GanttRow } from './timeline-gantt.js';
 
+/** Neighbouring year labels keep at least this many label font sizes between their centres (a four-digit year is about 2.4 wide, so 3 leaves a gap). */
+const TICK_SEPARATION_EM = 3;
 const WIDTH = 1000;
 const HEIGHT = 24;
 /** A bar never draws narrower than this, so a short period is still a visible mark. */
@@ -40,13 +43,29 @@ export function TimingTimelineGantt({
   describe,
   targetTitle,
 }: TimingTimelineGanttProps): React.JSX.Element {
-  const ticks = yearTicks(fromJd, toJd);
+  const scaleRef = useRef<HTMLSpanElement>(null);
+  const [plot, setPlot] = useState({ width: 0, fontPx: 12 });
+  useLayoutEffect(() => {
+    const element = scaleRef.current;
+    if (element === null || typeof ResizeObserver === 'undefined') return undefined;
+    const measure = (): void => {
+      const fontPx = parseFloat(getComputedStyle(element).fontSize);
+      setPlot({ width: element.clientWidth, fontPx: Number.isFinite(fontPx) ? fontPx : 12 });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+  const ticks = thinYearTicks(yearTicks(fromJd, toJd), plot.width, TICK_SEPARATION_EM * plot.fontPx);
   const target = ganttFraction(targetJd, fromJd, toJd) * WIDTH;
   return (
     <div className="gantt" role="group" aria-label={label}>
       <div className="gantt-axis" aria-hidden="true">
         <span />
-        <span className="gantt-scale">
+        <span className="gantt-scale" ref={scaleRef}>
           {ticks.map((tick) => (
             <span key={tick.year} className="gantt-tick" style={{ left: `${String(tick.fraction * 100)}%` }}>
               {tick.year}
