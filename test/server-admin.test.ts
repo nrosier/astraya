@@ -4,7 +4,7 @@
  * `test/server-ops.test.ts`, which this borrows its admin/second-user setup
  * helpers from.
  */
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -13,6 +13,8 @@ import { DatabaseSync } from 'node:sqlite';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { hashPassword } from '../server/auth/passwords.ts';
+import type * as PasswordsModule from '../server/auth/passwords.ts';
+import { consumePasswordSetToken } from '../server/auth/identity.ts';
 import { createClock, randomNodeId, tick } from '../src/store/hlc.ts';
 
 const BOOTSTRAP_TOKEN = 'test-bootstrap-token';
@@ -20,6 +22,21 @@ const SESSION_COOKIE = 'astraya_session';
 const ENCRYPTION_KEY = randomBytes(32).toString('base64');
 
 process.env.LOG_LEVEL = 'silent';
+
+// Real argon2, plus a hook that runs right after hashing finishes — lets a test
+// move the clock deterministically while a set-password request is mid-hash (#1379).
+const hashHooks = vi.hoisted(() => ({ afterHash: null as (() => void) | null }));
+vi.mock('../server/auth/passwords.ts', async (importOriginal) => {
+  const actual = await importOriginal<typeof PasswordsModule>();
+  return {
+    ...actual,
+    hashPassword: async (password: string): Promise<string> => {
+      const hashed = await actual.hashPassword(password);
+      hashHooks.afterHash?.();
+      return hashed;
+    },
+  };
+});
 
 let dir: string;
 let dbPath: string;
@@ -456,6 +473,98 @@ describe('POST /api/auth/set-password session revocation (#1360)', () => {
     const fresh = login.cookies.find((c) => c.name === SESSION_COOKIE)?.value;
     const me = await app.inject({ method: 'GET', url: '/api/auth/me', cookies: { [SESSION_COOKIE]: fresh ?? '' } });
     expect(me.statusCode).toBe(200);
+  });
+});
+
+describe('POST /api/auth/set-password single use (#1379)', () => {
+  async function newToken(username = 'carol'): Promise<{ token: string; userId: string }> {
+    const adminCookie = await setupAdmin(app);
+    const create = await app.inject({
+      method: 'POST',
+      url: '/api/admin/users',
+      cookies: { [SESSION_COOKIE]: adminCookie },
+      payload: { username },
+    });
+    const body = create.json<{ user: { id: string }; setPasswordUrl: string }>();
+    const token = extractSetPasswordToken(body.setPasswordUrl);
+    if (!token) throw new Error('no token');
+    return { token, userId: body.user.id };
+  }
+
+  function passwordHashOf(userId: string): string | null {
+    const raw = new DatabaseSync(dbPath);
+    const row = raw.prepare('SELECT password_hash FROM users WHERE id = ?').get(userId) as
+      { password_hash: string | null } | undefined;
+    raw.close();
+    return row?.password_hash ?? null;
+  }
+
+  it('lets exactly one of two simultaneous redemptions succeed', async () => {
+    const { token } = await newToken();
+    const redeem = (password: string) =>
+      app.inject({ method: 'POST', url: '/api/auth/set-password', payload: { token, password } });
+    const [a, b] = await Promise.all([redeem('first-brand-new-password'), redeem('second-brand-new-password')]);
+    expect([a.statusCode, b.statusCode].sort()).toEqual([200, 401]);
+    const loser = a.statusCode === 401 ? a : b;
+    expect(loser.json<{ error: string }>().error).toBe('This link is invalid or has expired');
+  });
+
+  it('does not change the password when the token expires while hashing', async () => {
+    const { token, userId } = await newToken();
+    const raw = new DatabaseSync(dbPath);
+    raw
+      .prepare('UPDATE users SET password_set_token_expires_at = ? WHERE id = ?')
+      .run(new Date(Date.now() + 60_000).toISOString(), userId);
+    raw.close();
+    vi.useFakeTimers({ toFake: ['Date'] });
+    hashHooks.afterHash = () => {
+      vi.setSystemTime(Date.now() + 3_600_000);
+    };
+    try {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/auth/set-password',
+        payload: { token, password: 'a-brand-new-password' },
+      });
+      expect(response.statusCode).toBe(401);
+    } finally {
+      hashHooks.afterHash = null;
+      vi.useRealTimers();
+    }
+    expect(passwordHashOf(userId)).toBeNull();
+  });
+
+  it('rejects a token that was already consumed, leaving the first password in place', async () => {
+    const { token, userId } = await newToken();
+    const first = await app.inject({
+      method: 'POST',
+      url: '/api/auth/set-password',
+      payload: { token, password: 'first-brand-new-password' },
+    });
+    expect(first.statusCode).toBe(200);
+    const hashAfterFirst = passwordHashOf(userId);
+    const second = await app.inject({
+      method: 'POST',
+      url: '/api/auth/set-password',
+      payload: { token, password: 'second-brand-new-password' },
+    });
+    expect(second.statusCode).toBe(401);
+    expect(passwordHashOf(userId)).toBe(hashAfterFirst);
+  });
+
+  it('refuses to write through a token that is already consumed, even when called directly', async () => {
+    const { token, userId } = await newToken();
+    const raw = new DatabaseSync(dbPath);
+    try {
+      expect(consumePasswordSetToken(raw, userId, token, 'hash-one')).toBe(true);
+      expect(consumePasswordSetToken(raw, userId, token, 'hash-two')).toBe(false);
+      const row = raw.prepare('SELECT password_hash FROM users WHERE id = ?').get(userId) as {
+        password_hash: string;
+      };
+      expect(row.password_hash).toBe('hash-one');
+    } finally {
+      raw.close();
+    }
   });
 });
 
