@@ -12,10 +12,11 @@
 /**
  * @module sessions
  * @purpose Server-side session storage: the cookie carries only a random session id, and the `sessions` row is the real source of truth, so revocation (disabling a user, signing out) takes effect on the very next request.
- * @conventions The `sessions.id` column holds `hashBearerToken(cookie)`, never the raw cookie value: `createSession` returns the raw value as `cookieValue` (the only place it exists) and `getSession`/`touchSession`/`revokeSession` take the raw cookie and hash it internally, with no fallback that also tries the raw value. Sliding expiry, not a fixed calendar expiry: `touchSession` extends it on each authenticated request; an OIDC-derived session gets a shorter TTL (`OIDC_SESSION_TTL_MS`) than a local one, since an upstream Authentik-side disable is otherwise invisible to Astraya once the token exchange is done.
- * @exports SESSION_COOKIE, Session, CreatedSession, CreateSessionOptions, createSession, getSession, touchSession, revokeSession, revokeAllSessionsForUser
+ * @conventions The `sessions.id` column holds `hashBearerToken(cookie)`, never the raw cookie value: `createSession` returns the raw value as `cookieValue` (the only place it exists) and `getSession`/`touchSession`/`revokeSession` take the raw cookie and hash it internally, with no fallback that also tries the raw value. Sliding expiry, not a fixed calendar expiry: `touchSession` extends it on an authenticated request; an OIDC-derived session gets a shorter TTL (`OIDC_SESSION_TTL_MS`) than a local one, since an upstream Authentik-side disable is otherwise invisible to Astraya once the token exchange is done. Touches are throttled (#1364): one conditional `UPDATE` writes only when `last_seen_at` is older than `TOUCH_INTERVAL_MS` (5 minutes), and only that write extends `expires_at`, so the worst case is an idle window up to 5 minutes shorter than the TTL; an active user cannot expire early, since the TTL is far longer than the interval. The same write stamps `users.last_seen_at`, which the admin user list reads, so last activity survives the sweep. Expired rows (and an OIDC row's stored ID token with them) are deleted by `sweepExpiredSessions`, in batches of `SWEEP_BATCH_SIZE`, yielding to the event loop between batches (`node:timers/promises`); the caller (`server/index.ts`) owns the timer.
+ * @exports SESSION_COOKIE, TOUCH_INTERVAL_MS, SWEEP_BATCH_SIZE, Session, CreatedSession, CreateSessionOptions, SweepLogger, createSession, getSession, touchSession, revokeSession, revokeAllSessionsForUser, sweepExpiredSessions
  */
 import { randomUUID } from 'node:crypto';
+import { setImmediate } from 'node:timers/promises';
 import type { Database } from '../db.ts';
 import { hashBearerToken } from './token-hash.ts';
 
@@ -34,6 +35,17 @@ const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
  * oversight — see the note in `.env.example`.
  */
 const OIDC_SESSION_TTL_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * The least time between two writes of one session's `last_seen_at`/`expires_at` (#1364). Without
+ * it every authenticated request, including each sync poll, was a WAL write. A small fraction of
+ * the shorter (24 h) TTL: the idle window can shrink by at most this much, and an active user can
+ * never expire early, because a request within the interval is always well before `expires_at`.
+ */
+export const TOUCH_INTERVAL_MS = 5 * 60 * 1000;
+
+/** Rows deleted per sweep statement, so one sweep never holds the write lock for long (#1364). */
+export const SWEEP_BATCH_SIZE = 500;
 
 export interface Session {
   readonly id: string;
@@ -70,6 +82,8 @@ export function createSession(db: Database, userId: string, options: CreateSessi
   db.prepare(
     'INSERT INTO sessions (id, user_id, created_at, expires_at, last_seen_at, oidc_id_token) VALUES (?, ?, ?, ?, ?, ?)',
   ).run(id, userId, now, expiresAt, now, oidcIdToken);
+  // A sign-in is activity: the admin list's "last seen" (`users.last_seen_at`) moves with it.
+  db.prepare('UPDATE users SET last_seen_at = ? WHERE id = ?').run(now, userId);
   return { id, userId, expiresAt, oidcIdToken, cookieValue };
 }
 
@@ -88,16 +102,38 @@ export function getSession(db: Database, cookieValue: string): Session | null {
   return { id: row.id, userId: row.user_id, expiresAt: row.expires_at, oidcIdToken: row.oidc_id_token };
 }
 
-/** Extends the sliding expiry window and records activity. Call once per authenticated request. */
+/**
+ * Extends the sliding expiry window and records activity. Call once per authenticated request.
+ *
+ * Takes the raw cookie value and hashes it before the conditional `UPDATE`, as `getSession` does (main's
+ * #1360 contract: the `sessions.id` column never holds the raw value).
+ *
+ * Throttled (#1364): a single conditional `UPDATE` writes only when the stored `last_seen_at` is
+ * older than `TOUCH_INTERVAL_MS`, and extends `expires_at` (by the OIDC or local TTL, chosen in SQL
+ * from `oidc_id_token`) only when it writes. A write also stamps the owner's `users.last_seen_at`.
+ */
 export function touchSession(db: Database, cookieValue: string): void {
   const sessionId = hashBearerToken(cookieValue);
-  const row = db.prepare('SELECT oidc_id_token FROM sessions WHERE id = ?').get(sessionId) as
-    { readonly oidc_id_token: string | null } | undefined;
+  const nowMs = Date.now();
+  const now = new Date(nowMs).toISOString();
+  const staleBefore = new Date(nowMs - TOUCH_INTERVAL_MS).toISOString();
+  const row = db
+    .prepare(
+      `UPDATE sessions
+       SET last_seen_at = ?,
+           expires_at = CASE WHEN oidc_id_token IS NOT NULL THEN ? ELSE ? END
+       WHERE id = ? AND last_seen_at < ?
+       RETURNING user_id`,
+    )
+    .get(
+      now,
+      new Date(nowMs + OIDC_SESSION_TTL_MS).toISOString(),
+      new Date(nowMs + SESSION_TTL_MS).toISOString(),
+      sessionId,
+      staleBefore,
+    ) as { readonly user_id: string } | undefined;
   if (!row) return;
-  const ttl = row.oidc_id_token !== null ? OIDC_SESSION_TTL_MS : SESSION_TTL_MS;
-  const now = new Date().toISOString();
-  const expiresAt = new Date(Date.now() + ttl).toISOString();
-  db.prepare('UPDATE sessions SET last_seen_at = ?, expires_at = ? WHERE id = ?').run(now, expiresAt, sessionId);
+  db.prepare('UPDATE users SET last_seen_at = ? WHERE id = ?').run(now, row.user_id);
 }
 
 export function revokeSession(db: Database, cookieValue: string): void {
@@ -107,4 +143,45 @@ export function revokeSession(db: Database, cookieValue: string): void {
 /** Used when disabling a user: existing sessions must die immediately, not merely block re-login. */
 export function revokeAllSessionsForUser(db: Database, userId: string): void {
   db.prepare('DELETE FROM sessions WHERE user_id = ?').run(userId);
+}
+
+/** Where `sweepExpiredSessions` reports a failure; Fastify's `app.log` fits. */
+export interface SweepLogger {
+  warn(obj: object, msg: string): void;
+}
+
+/** Databases with a sweep in progress, so a slow sweep and the next tick never overlap. */
+const sweeping = new WeakSet<Database>();
+
+/**
+ * Deletes every expired session (#1364), and with it an OIDC row's stored ID token, which serves no
+ * purpose once the session is dead. Strictly `expires_at < now` (ISO string, the same format the
+ * column holds), so a row expiring exactly now is kept, matching `getSession`. Deletes in batches of
+ * `SWEEP_BATCH_SIZE`, yielding to the event loop between batches, and stops early if the database is
+ * closed meanwhile. Never throws: a failure is logged with `log.warn` and the next run tries again.
+ * A call while a sweep of the same database is running returns 0 at once.
+ *
+ * @returns the number of rows deleted.
+ */
+export async function sweepExpiredSessions(db: Database, log: SweepLogger): Promise<number> {
+  if (sweeping.has(db)) return 0;
+  sweeping.add(db);
+  let deleted = 0;
+  try {
+    const statement = db.prepare(
+      'DELETE FROM sessions WHERE id IN (SELECT id FROM sessions WHERE expires_at < ? LIMIT ?)',
+    );
+    for (;;) {
+      const changes = Number(statement.run(new Date().toISOString(), SWEEP_BATCH_SIZE).changes);
+      deleted += changes;
+      if (changes < SWEEP_BATCH_SIZE) break;
+      await setImmediate();
+      if (!db.isOpen) break;
+    }
+  } catch (error) {
+    log.warn({ err: error }, 'expired-session sweep failed');
+  } finally {
+    sweeping.delete(db);
+  }
+  return deleted;
 }
