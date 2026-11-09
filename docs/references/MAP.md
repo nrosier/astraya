@@ -12,4 +12,3 @@ Reference archive for the astrology corpus. Copyrighted extracted text stays loc
 - `text/` — Local, gitignored extracted text (`.txt` and `.pages.tsv` per source); exists only on the Mac checkout holding the sources. Deps: `sources.json`.
 - `new/` — Local, gitignored intake folder for documents awaiting processing; exists only on the Mac checkout holding the sources.
 - `processed/` — Local, gitignored folder for originals already processed; exists only on the Mac checkout holding the sources. Deps: `sources.json`.
-- `ORB_SOURCES.md` — Not present; dropped.
