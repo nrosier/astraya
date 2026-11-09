@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { randomBytes, randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
@@ -434,15 +434,14 @@ describe('POST /api/auth/set-password session revocation (#1360)', () => {
     const staleSession = randomBytes(32).toString('hex');
     const raw = new DatabaseSync(dbPath);
     const now = new Date();
-    raw
-      .prepare('INSERT INTO sessions (id, user_id, created_at, expires_at, last_seen_at) VALUES (?, ?, ?, ?, ?)')
-      .run(
-        staleSession,
-        carolId,
-        now.toISOString(),
-        new Date(now.getTime() + 3_600_000).toISOString(),
-        now.toISOString(),
-      );
+    raw.prepare('INSERT INTO sessions (id, user_id, created_at, expires_at, last_seen_at) VALUES (?, ?, ?, ?, ?)').run(
+      // Row ids are sha256 of the cookie (#1360); the client still presents the raw value.
+      createHash('sha256').update(staleSession).digest('hex'),
+      carolId,
+      now.toISOString(),
+      new Date(now.getTime() + 3_600_000).toISOString(),
+      now.toISOString(),
+    );
     raw.close();
     const before = await app.inject({
       method: 'GET',
@@ -473,6 +472,94 @@ describe('POST /api/auth/set-password session revocation (#1360)', () => {
     const fresh = login.cookies.find((c) => c.name === SESSION_COOKIE)?.value;
     const me = await app.inject({ method: 'GET', url: '/api/auth/me', cookies: { [SESSION_COOKIE]: fresh ?? '' } });
     expect(me.statusCode).toBe(200);
+  });
+});
+
+describe('set-password tokens at rest (#1360)', () => {
+  function sha256(value: string): string {
+    return createHash('sha256').update(value).digest('hex');
+  }
+
+  /** Every users column holding exactly `value`, so a raw token stored anywhere on the row is caught. */
+  function usersColumnsHolding(userId: string, value: string): string[] {
+    const raw = new DatabaseSync(dbPath);
+    try {
+      const row = raw.prepare('SELECT * FROM users WHERE id = ?').get(userId) as Record<string, unknown>;
+      return Object.entries(row)
+        .filter(([, v]) => v === value)
+        .map(([k]) => k);
+    } finally {
+      raw.close();
+    }
+  }
+
+  function storedToken(userId: string): string | null {
+    const raw = new DatabaseSync(dbPath);
+    try {
+      const row = raw.prepare('SELECT password_set_token FROM users WHERE id = ?').get(userId) as {
+        password_set_token: string | null;
+      };
+      return row.password_set_token;
+    } finally {
+      raw.close();
+    }
+  }
+
+  it('stores sha256 of the token on create, and no users column holds the raw token', async () => {
+    const adminCookie = await setupAdmin(app);
+    const create = await app.inject({
+      method: 'POST',
+      url: '/api/admin/users',
+      cookies: { [SESSION_COOKIE]: adminCookie },
+      payload: { username: 'carol' },
+    });
+    expect(create.statusCode).toBe(201);
+    const body = create.json<{ user: { id: string }; setPasswordUrl: string }>();
+    const token = extractSetPasswordToken(body.setPasswordUrl);
+    if (!token) throw new Error('no token');
+    expect(storedToken(body.user.id)).toBe(sha256(token));
+    expect(storedToken(body.user.id)).not.toBe(token);
+    expect(usersColumnsHolding(body.user.id, token)).toEqual([]);
+  });
+
+  it('stores sha256 of the token on reset-password, and no users column holds the raw token', async () => {
+    const adminCookie = await setupAdmin(app);
+    await createAndLoginUser(app, 'bob', 'original-password');
+    const users = (
+      await app.inject({ method: 'GET', url: '/api/admin/users', cookies: { [SESSION_COOKIE]: adminCookie } })
+    ).json<{ users: { id: string; username: string }[] }>().users;
+    const bobId = users.find((u) => u.username === 'bob')?.id;
+    if (!bobId) throw new Error('bob not found');
+    const reset = await app.inject({
+      method: 'POST',
+      url: `/api/admin/users/${bobId}/reset-password`,
+      cookies: { [SESSION_COOKIE]: adminCookie },
+    });
+    expect(reset.statusCode).toBe(200);
+    const token = extractSetPasswordToken(reset.json<{ setPasswordUrl: string }>().setPasswordUrl);
+    if (!token) throw new Error('no token');
+    expect(storedToken(bobId)).toBe(sha256(token));
+    expect(storedToken(bobId)).not.toBe(token);
+    expect(usersColumnsHolding(bobId, token)).toEqual([]);
+  });
+
+  it('does not accept the stored hash itself as a token', async () => {
+    const adminCookie = await setupAdmin(app);
+    const create = await app.inject({
+      method: 'POST',
+      url: '/api/admin/users',
+      cookies: { [SESSION_COOKIE]: adminCookie },
+      payload: { username: 'carol' },
+    });
+    const body = create.json<{ user: { id: string }; setPasswordUrl: string }>();
+    const stored = storedToken(body.user.id);
+    if (!stored) throw new Error('no stored token');
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/auth/set-password',
+      payload: { token: stored, password: 'a-brand-new-password' },
+    });
+    expect(response.statusCode).toBe(401);
   });
 });
 

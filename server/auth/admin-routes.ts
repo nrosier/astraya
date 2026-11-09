@@ -28,6 +28,7 @@ import type { Database } from '../db.ts';
 import { getUserByUsername, requireAdmin, requireSuperAdmin, roleFields } from './identity.ts';
 import { isRole, ROLES, type Role } from './roles.ts';
 import { loadOidcConfig } from './oidc.ts';
+import { hashBearerToken } from './token-hash.ts';
 import { revokeAllSessionsForUser } from './sessions.ts';
 import { loadEncryptionKey } from '../ops/crypto.ts';
 import { previewDeletionImpact } from '../ops/deletion-impact.ts';
@@ -77,7 +78,7 @@ function toAdminUser(row: AdminUserRow): AdminUser {
   };
 }
 
-// #1364: last seen is `users.last_seen_at` (migration 19), stamped with each throttled session
+// #1364: last seen is `users.last_seen_at` (migration 20), stamped with each throttled session
 // touch, rather than MAX over `sessions`, so it survives the expired-session sweep.
 // #445: last-seen alone only reflects session heartbeats, not real activity — these two extra
 // LEFT JOINs (pre-aggregated, see #477) surface the most recent op the user
@@ -123,7 +124,7 @@ function mintPasswordSetToken(db: Database, userId: string): string {
   const token = randomBytes(48).toString('base64url');
   const expiresAt = new Date(Date.now() + PASSWORD_SET_TOKEN_TTL_MS).toISOString();
   db.prepare('UPDATE users SET password_set_token = ?, password_set_token_expires_at = ? WHERE id = ?').run(
-    token,
+    hashBearerToken(token),
     expiresAt,
     userId,
   );

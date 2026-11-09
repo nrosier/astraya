@@ -14,7 +14,7 @@
 /**
  * @module db
  * @purpose Owns and migrates the sync server's own SQLite database (`users`, `sessions`, `ops`, plus the narrow admin-curated exceptions to ADR 0002's "opaque relay" rule).
- * @conventions Migrations are an ordered, append-only array run inside `PRAGMA user_version`-gated transactions — never edit a past migration in place, only append a new one; a table rebuild needed to change a `REFERENCES` clause (SQLite has no `ALTER COLUMN`) must be added to `REQUIRES_FOREIGN_KEYS_OFF` so foreign keys are toggled off only around that step, and is checked with `PRAGMA foreign_key_check` before committing.
+ * @conventions Migrations are an ordered, append-only array run inside `PRAGMA user_version`-gated transactions — never edit a past migration in place, only append a new one; a table rebuild needed to change a `REFERENCES` clause (SQLite has no `ALTER COLUMN`) must be added to `REQUIRES_FOREIGN_KEYS_OFF` so foreign keys are toggled off only around that step, and is checked with `PRAGMA foreign_key_check` before committing. Bearer secrets (`sessions.id`, `users.password_set_token`) are stored only as SHA-256 hex from migration 18 on; a migration that changes how a secret is stored clears the old rows rather than converting them.
  * @exports Database, openDatabase
  */
 import { DatabaseSync } from 'node:sqlite';
@@ -385,13 +385,24 @@ const MIGRATIONS: readonly ((db: DatabaseSync) => void)[] = [
       CREATE INDEX corpus_submissions_submitted_by ON corpus_submissions(submitted_by, status, created_at);
     `);
   },
-  // 18: an index on `sessions.expires_at` (#1364), so the periodic expired-session sweep
+  // 18: set-password tokens and session ids are stored as SHA-256 hex (#1360), so a database read
+  // (backup, SQL injection, a leaked file) no longer yields a usable credential. Same columns, no table
+  // rebuild. Existing rows hold the raw values and are never hashed in place: every session is deleted
+  // (everyone signs in once more) and every pending set-password link is cleared (an admin re-issues it
+  // with reset-password), per the owner's decision on #1360.
+  (db) => {
+    db.exec(`
+      DELETE FROM sessions;
+      UPDATE users SET password_set_token = NULL, password_set_token_expires_at = NULL WHERE password_set_token IS NOT NULL;
+    `);
+  },
+  // 19: an index on `sessions.expires_at` (#1364), so the periodic expired-session sweep
   // (`sweepExpiredSessions` in `auth/sessions.ts`) is a range scan, not a full table scan. A plain
   // index: no rebuild, no foreign-key toggle.
   (db) => {
     db.exec('CREATE INDEX sessions_expires_at ON sessions(expires_at);');
   },
-  // 19: `users.last_seen_at` (#1364), so the admin user list keeps a user's last activity after the
+  // 20: `users.last_seen_at` (#1364), so the admin user list keeps a user's last activity after the
   // sweep deletes their expired sessions (it used to be derived as MAX over `sessions`). Nullable: a
   // user with no session ever stays unseen. Backfilled from the sessions present at upgrade time;
   // from here on it is written in the same throttled path as `sessions.last_seen_at`.

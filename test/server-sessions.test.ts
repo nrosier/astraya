@@ -4,7 +4,7 @@
  * expiry or the shorter OIDC TTL directly before this file existed.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import type { DatabaseSync } from 'node:sqlite';
 import { openDatabase } from '../server/db.ts';
 import {
@@ -62,11 +62,28 @@ describe('createSession', () => {
   });
 });
 
+describe('session ids at rest (#1360)', () => {
+  it('stores sha256 of the cookie value as the row id, never the cookie value itself', () => {
+    const created = createSession(db, userId);
+    const expected = createHash('sha256').update(created.cookieValue).digest('hex');
+    expect(created.id).toBe(expected);
+    expect(created.id).not.toBe(created.cookieValue);
+    const rows = db.prepare('SELECT id FROM sessions WHERE user_id = ?').all(userId) as { id: string }[];
+    expect(rows).toEqual([{ id: expected }]);
+    expect(db.prepare('SELECT COUNT(*) AS n FROM sessions WHERE id = ?').get(created.cookieValue)).toEqual({ n: 0 });
+  });
+});
+
 describe('getSession', () => {
   it('returns the session when it exists and has not expired', () => {
+    const { cookieValue, ...stored } = createSession(db, userId);
+    const found = getSession(db, cookieValue);
+    expect(found).toEqual(stored);
+  });
+
+  it('finds the session only by its raw cookie value, not by the stored hash (#1360)', () => {
     const created = createSession(db, userId);
-    const found = getSession(db, created.id);
-    expect(found).toEqual(created);
+    expect(getSession(db, created.id)).toBeNull();
   });
 
   it('returns null for an unknown session id', () => {
@@ -77,7 +94,7 @@ describe('getSession', () => {
     const created = createSession(db, userId);
     vi.useFakeTimers();
     vi.setSystemTime(Date.now() + SESSION_TTL_MS + 1000);
-    expect(getSession(db, created.id)).toBeNull();
+    expect(getSession(db, created.cookieValue)).toBeNull();
 
     vi.useRealTimers();
     const row = db.prepare('SELECT id FROM sessions WHERE id = ?').get(created.id);
@@ -91,7 +108,7 @@ describe('touchSession', () => {
     vi.useFakeTimers();
     vi.setSystemTime(Date.now() + TOUCH_INTERVAL_MS + 1000);
     const now = Date.now();
-    touchSession(db, created.id);
+    touchSession(db, created.cookieValue);
     vi.useRealTimers();
 
     const row = db.prepare('SELECT expires_at, last_seen_at FROM sessions WHERE id = ?').get(created.id) as {
@@ -107,7 +124,7 @@ describe('touchSession', () => {
     vi.useFakeTimers();
     vi.setSystemTime(Date.now() + TOUCH_INTERVAL_MS + 1000);
     const now = Date.now();
-    touchSession(db, created.id);
+    touchSession(db, created.cookieValue);
     vi.useRealTimers();
 
     const row = db.prepare('SELECT expires_at FROM sessions WHERE id = ?').get(created.id) as {
@@ -136,7 +153,7 @@ describe('touchSession', () => {
     vi.setSystemTime(Date.now() + TOUCH_INTERVAL_MS + 1000);
     const firstTouchAt = Date.now();
     const beforeFirst = writes();
-    touchSession(db, created.id);
+    touchSession(db, created.cookieValue);
     // One session row plus the owner's users.last_seen_at.
     expect(writes() - beforeFirst).toBe(2);
     const afterFirst = readRow();
@@ -146,14 +163,14 @@ describe('touchSession', () => {
     // A second request in quick succession: the conditional UPDATE matches no row.
     vi.setSystemTime(firstTouchAt + 1000);
     const beforeSecond = writes();
-    touchSession(db, created.id);
+    touchSession(db, created.cookieValue);
     expect(writes() - beforeSecond).toBe(0);
     expect(readRow()).toEqual(afterFirst);
 
     // Past the interval, the sliding expiry extends again.
     vi.setSystemTime(firstTouchAt + TOUCH_INTERVAL_MS + 1000);
     const thirdTouchAt = Date.now();
-    touchSession(db, created.id);
+    touchSession(db, created.cookieValue);
     const afterThird = readRow();
     expect(new Date(afterThird.last_seen_at).getTime()).toBe(thirdTouchAt);
     expect(new Date(afterThird.expires_at).getTime()).toBe(thirdTouchAt + SESSION_TTL_MS);
@@ -165,7 +182,7 @@ describe('touchSession', () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(Date.now() + TOUCH_INTERVAL_MS + 1000);
     const touchedAt = new Date().toISOString();
-    touchSession(db, created.id);
+    touchSession(db, created.cookieValue);
     vi.setSystemTime(Date.parse(touchedAt) + SESSION_TTL_MS + 1000);
     await sweepExpiredSessions(db, { warn: () => undefined });
     expect(db.prepare('SELECT COUNT(*) AS n FROM sessions').get()).toEqual({ n: 0 });
@@ -176,8 +193,8 @@ describe('touchSession', () => {
 describe('revokeSession', () => {
   it('deletes the session row so a subsequent getSession returns null', () => {
     const created = createSession(db, userId);
-    revokeSession(db, created.id);
-    expect(getSession(db, created.id)).toBeNull();
+    revokeSession(db, created.cookieValue);
+    expect(getSession(db, created.cookieValue)).toBeNull();
     expect(db.prepare('SELECT id FROM sessions WHERE id = ?').get(created.id)).toBeUndefined();
   });
 });
@@ -191,9 +208,9 @@ describe('revokeAllSessionsForUser', () => {
 
     revokeAllSessionsForUser(db, userId);
 
-    expect(getSession(db, mine1.id)).toBeNull();
-    expect(getSession(db, mine2.id)).toBeNull();
-    expect(getSession(db, other.id)).not.toBeNull();
+    expect(getSession(db, mine1.cookieValue)).toBeNull();
+    expect(getSession(db, mine2.cookieValue)).toBeNull();
+    expect(getSession(db, other.cookieValue)).not.toBeNull();
   });
 });
 

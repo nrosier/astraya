@@ -11,4 +11,5 @@ Sessions, OIDC, password/argon2, roles (user/admin/super_admin), login throttlin
 - `passwords.ts` — Hash/verify/weak-check via `@node-rs/argon2`. Fixed dummy hash for nonexistent-username timing equalization. Deps: @node-rs/argon2.
 - `roles.ts` — Three-tier rank (user/admin/super_admin): numeric rank, `hasRole`/`higherRole` helpers. Deps: none.
 - `routes.ts` — HTTP surface: `/api/auth/login`, `/api/auth/logout`, `/api/auth/me`, OIDC config/callback, `/api/setup`, `/api/auth/set-password`. Wires throttling, promotion, password checks, session creation. Deps: admin-promotion, bootstrap, identity, login-throttle, oidc, passwords, sessions.
-- `sessions.ts` — Session CRUD (create/lookup/throttled touch/revoke, sliding-expiry, OIDC shorter TTL) and the batched expired-session sweep; stamps `users.last_seen_at`. Revocation takes immediate effect. Deps: db, node:timers/promises.
+- `sessions.ts` — Session CRUD (create/lookup/throttled touch/revoke, sliding-expiry, OIDC shorter TTL) and the batched expired-session sweep; stamps `users.last_seen_at`. Revocation takes immediate effect. Stores only a hash of the cookie value. Deps: db, token-hash, node:timers/promises.
+- `token-hash.ts` — Single SHA-256 hex helper for bearer secrets stored at rest (session ids, set-password tokens). Deps: node:crypto.

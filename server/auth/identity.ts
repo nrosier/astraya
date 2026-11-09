@@ -16,6 +16,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { Database } from '../db.ts';
 import { hasRole, isRole, type Role } from './roles.ts';
+import { hashBearerToken } from './token-hash.ts';
 import { SESSION_COOKIE, getSession, touchSession } from './sessions.ts';
 
 export interface User {
@@ -119,7 +120,7 @@ export function getUserByPasswordSetToken(
   db: Database,
   token: string,
 ): { readonly user: User; readonly expiresAt: string | null } | null {
-  const row = db.prepare('SELECT * FROM users WHERE password_set_token = ?').get(token) as
+  const row = db.prepare('SELECT * FROM users WHERE password_set_token = ?').get(hashBearerToken(token)) as
     PasswordSetTokenRow | undefined;
   return row ? { user: toUser(row), expiresAt: row.password_set_token_expires_at } : null;
 }
@@ -138,7 +139,7 @@ export function consumePasswordSetToken(db: Database, userId: string, token: str
        WHERE id = ? AND password_set_token = ?
          AND (password_set_token_expires_at IS NULL OR password_set_token_expires_at >= ?)`,
     )
-    .run(passwordHash, userId, token, new Date().toISOString());
+    .run(passwordHash, userId, hashBearerToken(token), new Date().toISOString());
   return Number(result.changes) === 1;
 }
 

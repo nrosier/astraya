@@ -5,18 +5,20 @@
  * disabling a user, a sign-out — takes effect on the very next request. A
  * stateless JWT can't do that without a revocation list, at which point it's a
  * session table with extra steps. So the cookie carries only a random id; every
- * other fact about the session lives here.
+ * other fact about the session lives here. Only a SHA-256 hash of that id is stored,
+ * so a database read cannot be replayed as a cookie.
  */
 
 /**
  * @module sessions
  * @purpose Server-side session storage: the cookie carries only a random session id, and the `sessions` row is the real source of truth, so revocation (disabling a user, signing out) takes effect on the very next request.
- * @conventions Sliding expiry, not a fixed calendar expiry: `touchSession` extends it on an authenticated request; an OIDC-derived session gets a shorter TTL (`OIDC_SESSION_TTL_MS`) than a local one, since an upstream Authentik-side disable is otherwise invisible to Astraya once the token exchange is done. Touches are throttled (#1364): one conditional `UPDATE` writes only when `last_seen_at` is older than `TOUCH_INTERVAL_MS` (5 minutes), and only that write extends `expires_at`, so the worst case is an idle window up to 5 minutes shorter than the TTL; an active user cannot expire early, since the TTL is far longer than the interval. The same write stamps `users.last_seen_at`, which the admin user list reads, so last activity survives the sweep. Expired rows (and an OIDC row's stored ID token with them) are deleted by `sweepExpiredSessions`, in batches of `SWEEP_BATCH_SIZE`, yielding to the event loop between batches (`node:timers/promises`); the caller (`server/index.ts`) owns the timer.
- * @exports SESSION_COOKIE, TOUCH_INTERVAL_MS, SWEEP_BATCH_SIZE, Session, CreateSessionOptions, SweepLogger, createSession, getSession, touchSession, revokeSession, revokeAllSessionsForUser, sweepExpiredSessions
+ * @conventions The `sessions.id` column holds `hashBearerToken(cookie)`, never the raw cookie value: `createSession` returns the raw value as `cookieValue` (the only place it exists) and `getSession`/`touchSession`/`revokeSession` take the raw cookie and hash it internally, with no fallback that also tries the raw value. Sliding expiry, not a fixed calendar expiry: `touchSession` extends it on an authenticated request; an OIDC-derived session gets a shorter TTL (`OIDC_SESSION_TTL_MS`) than a local one, since an upstream Authentik-side disable is otherwise invisible to Astraya once the token exchange is done. Touches are throttled (#1364): one conditional `UPDATE` writes only when `last_seen_at` is older than `TOUCH_INTERVAL_MS` (5 minutes), and only that write extends `expires_at`, so the worst case is an idle window up to 5 minutes shorter than the TTL; an active user cannot expire early, since the TTL is far longer than the interval. The same write stamps `users.last_seen_at`, which the admin user list reads, so last activity survives the sweep. Expired rows (and an OIDC row's stored ID token with them) are deleted by `sweepExpiredSessions`, in batches of `SWEEP_BATCH_SIZE`, yielding to the event loop between batches (`node:timers/promises`); the caller (`server/index.ts`) owns the timer.
+ * @exports SESSION_COOKIE, TOUCH_INTERVAL_MS, SWEEP_BATCH_SIZE, Session, CreatedSession, CreateSessionOptions, SweepLogger, createSession, getSession, touchSession, revokeSession, revokeAllSessionsForUser, sweepExpiredSessions
  */
 import { randomUUID } from 'node:crypto';
 import { setImmediate } from 'node:timers/promises';
 import type { Database } from '../db.ts';
+import { hashBearerToken } from './token-hash.ts';
 
 export const SESSION_COOKIE = 'astraya_session';
 
@@ -65,8 +67,14 @@ export interface CreateSessionOptions {
   readonly oidcIdToken?: string;
 }
 
-export function createSession(db: Database, userId: string, options: CreateSessionOptions = {}): Session {
-  const id = randomUUID();
+/** A new session plus the raw cookie value, which exists only here and in the Set-Cookie header. */
+export interface CreatedSession extends Session {
+  readonly cookieValue: string;
+}
+
+export function createSession(db: Database, userId: string, options: CreateSessionOptions = {}): CreatedSession {
+  const cookieValue = randomUUID();
+  const id = hashBearerToken(cookieValue);
   const now = new Date().toISOString();
   const ttl = options.oidcIdToken !== undefined ? OIDC_SESSION_TTL_MS : SESSION_TTL_MS;
   const expiresAt = new Date(Date.now() + ttl).toISOString();
@@ -76,7 +84,7 @@ export function createSession(db: Database, userId: string, options: CreateSessi
   ).run(id, userId, now, expiresAt, now, oidcIdToken);
   // A sign-in is activity: the admin list's "last seen" (`users.last_seen_at`) moves with it.
   db.prepare('UPDATE users SET last_seen_at = ? WHERE id = ?').run(now, userId);
-  return { id, userId, expiresAt, oidcIdToken };
+  return { id, userId, expiresAt, oidcIdToken, cookieValue };
 }
 
 /**
@@ -85,9 +93,10 @@ export function createSession(db: Database, userId: string, options: CreateSessi
  * function's job, and a read path that also writes is a read path that can fail
  * for reasons unrelated to reading.
  */
-export function getSession(db: Database, sessionId: string): Session | null {
-  const row = db.prepare('SELECT id, user_id, expires_at, oidc_id_token FROM sessions WHERE id = ?').get(sessionId) as
-    SessionRow | undefined;
+export function getSession(db: Database, cookieValue: string): Session | null {
+  const row = db
+    .prepare('SELECT id, user_id, expires_at, oidc_id_token FROM sessions WHERE id = ?')
+    .get(hashBearerToken(cookieValue)) as SessionRow | undefined;
   if (!row) return null;
   if (new Date(row.expires_at).getTime() < Date.now()) return null;
   return { id: row.id, userId: row.user_id, expiresAt: row.expires_at, oidcIdToken: row.oidc_id_token };
@@ -96,11 +105,15 @@ export function getSession(db: Database, sessionId: string): Session | null {
 /**
  * Extends the sliding expiry window and records activity. Call once per authenticated request.
  *
+ * Takes the raw cookie value and hashes it before the conditional `UPDATE`, as `getSession` does (main's
+ * #1360 contract: the `sessions.id` column never holds the raw value).
+ *
  * Throttled (#1364): a single conditional `UPDATE` writes only when the stored `last_seen_at` is
  * older than `TOUCH_INTERVAL_MS`, and extends `expires_at` (by the OIDC or local TTL, chosen in SQL
  * from `oidc_id_token`) only when it writes. A write also stamps the owner's `users.last_seen_at`.
  */
-export function touchSession(db: Database, sessionId: string): void {
+export function touchSession(db: Database, cookieValue: string): void {
+  const sessionId = hashBearerToken(cookieValue);
   const nowMs = Date.now();
   const now = new Date(nowMs).toISOString();
   const staleBefore = new Date(nowMs - TOUCH_INTERVAL_MS).toISOString();
@@ -123,8 +136,8 @@ export function touchSession(db: Database, sessionId: string): void {
   db.prepare('UPDATE users SET last_seen_at = ? WHERE id = ?').run(now, row.user_id);
 }
 
-export function revokeSession(db: Database, sessionId: string): void {
-  db.prepare('DELETE FROM sessions WHERE id = ?').run(sessionId);
+export function revokeSession(db: Database, cookieValue: string): void {
+  db.prepare('DELETE FROM sessions WHERE id = ?').run(hashBearerToken(cookieValue));
 }
 
 /** Used when disabling a user: existing sessions must die immediately, not merely block re-login. */
