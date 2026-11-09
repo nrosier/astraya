@@ -79,6 +79,7 @@ import {
   positionRows,
   type PointVisibilityOptions,
 } from './chart-tables.js';
+import { sortLifeEvents, type LifeEvent } from './life-events.js';
 import type { BirthSourceKind, ChosenFixedStar, CustomPointDefinition, Person, RelocationPlace } from './person.js';
 import type { FoldedNotes, NoteRevisionView } from '../store/notes.js';
 import type { ExportedResearch } from './research-export.js';
@@ -162,6 +163,8 @@ export interface ExportedPerson {
   readonly missing: readonly string[];
   /** Named alternate places for a relocated chart (#559); absent if none are saved. Needed for a restore to be complete — see #587. */
   readonly relocationPlaces?: readonly RelocationPlace[];
+  /** Dated life events (#1399, additive: the version stays 4), in date-then-time order; absent if the person has none. */
+  readonly lifeEvents?: readonly LifeEvent[];
   /** Custom formula points (#566); absent if none are saved. Needed for a restore to be complete — see #587. */
   readonly customPoints?: readonly CustomPointDefinition[];
   /** The fixed stars this person chose from the catalogue (#860); absent if none are saved (the seven-star preset). */
@@ -373,6 +376,9 @@ export async function buildFullExport(params: {
           }),
       ...(person.moment === undefined ? {} : { birth: person.moment }),
       ...(person.relocationPlaces === undefined ? {} : { relocationPlaces: person.relocationPlaces }),
+      ...(person.lifeEvents === undefined || person.lifeEvents.length === 0
+        ? {}
+        : { lifeEvents: sortLifeEvents(person.lifeEvents) }),
       ...(person.customPoints === undefined ? {} : { customPoints: person.customPoints }),
       ...(person.fixedStars === undefined ? {} : { fixedStars: person.fixedStars }),
       // A person with no register of their own is charted from the device default; writing the resolved

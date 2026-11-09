@@ -46,6 +46,7 @@ import {
   type ExportedPerson,
   type FullExport,
 } from './full-export.js';
+import { lifeEventsMutation, readLifeEvents } from './life-events.js';
 import {
   readCalendar,
   readCivil,
@@ -278,6 +279,13 @@ function validatePerson(raw: unknown, path: string): Result<ExportedPerson, Impo
     relocationPlaces = places;
   }
 
+  let lifeEvents: ExportedPerson['lifeEvents'];
+  if (raw.lifeEvents !== undefined) {
+    const events = readLifeEvents(raw.lifeEvents);
+    if (events === undefined) return malformed(`${path}.lifeEvents`, 'malformed');
+    lifeEvents = events;
+  }
+
   let customPoints: ExportedPerson['customPoints'];
   if (raw.customPoints !== undefined) {
     const points = readCustomPoints(raw.customPoints);
@@ -336,6 +344,7 @@ function validatePerson(raw: unknown, path: string): Result<ExportedPerson, Impo
       ...(consultationNotes === undefined ? {} : { consultationNotes }),
       ...(birth === undefined ? {} : { birth }),
       ...(relocationPlaces === undefined ? {} : { relocationPlaces }),
+      ...(lifeEvents === undefined ? {} : { lifeEvents }),
       ...(customPoints === undefined ? {} : { customPoints }),
       ...(fixedStars === undefined ? {} : { fixedStars }),
       ...(calculationSettings === undefined ? {} : { calculationSettings }),
@@ -629,6 +638,10 @@ function restoreMutations(
 
   if (exported.relocationPlaces !== undefined && !same(existing?.relocationPlaces, exported.relocationPlaces)) {
     write('relocationPlaces', serializedPlaces(exported.relocationPlaces));
+  }
+  // A file without lifeEvents leaves the stored events alone (#1399); a present list is written only when it differs.
+  if (exported.lifeEvents !== undefined && !same(existing?.lifeEvents ?? [], exported.lifeEvents)) {
+    write('lifeEvents', lifeEventsMutation(entityId, exported.lifeEvents).value);
   }
   if (exported.customPoints !== undefined && !same(existing?.customPoints, exported.customPoints)) {
     write('customPoints', serializedCustomPoints(exported.customPoints));

@@ -103,6 +103,28 @@ describe('buildFullExport', () => {
     expect(plain).not.toHaveProperty('sourceNote');
   });
 
+  it('writes life events in date-then-time order, only when the person has some (#1399)', async () => {
+    const withEvents: Person = {
+      ...ADA,
+      lifeEvents: [
+        { id: 'e-untimed', date: '1840-05-01', label: 'Untimed' },
+        { id: 'e-late', date: '1840-05-01', time: '18:30', label: 'Late' },
+        { id: 'e-early', date: '1840-05-01', time: '09:00', label: 'Early' },
+        { id: 'e-first', date: '1835-01-02', label: 'First' },
+      ],
+    };
+    const [person] = (await build([withEvents])).people;
+    expect(person?.lifeEvents?.map((event) => event.id)).toEqual(['e-first', 'e-early', 'e-late', 'e-untimed']);
+    const [plain] = (await build([ADA])).people;
+    expect(plain).not.toHaveProperty('lifeEvents');
+    const [empty] = (await build([{ ...ADA, lifeEvents: [] }])).people;
+    expect(empty).not.toHaveProperty('lifeEvents');
+  });
+
+  it('keeps the export version at 4 after adding life events (#1399)', () => {
+    expect(FULL_EXPORT_VERSION).toBe(4);
+  });
+
   it('omits the field when the person chose no stars (#860)', async () => {
     const [person] = (await build([ADA])).people;
     expect(person).not.toHaveProperty('fixedStars');
