@@ -10,10 +10,10 @@
  * and every other angle is the near-arc midpoint of the corresponding angle in each natal
  * chart's own `HousePositions` — arithmetic only, no ephemeris call, in the same shape
  * `progressions.ts`'s `shiftHouses` already uses to build a new `HousePositions` by
- * transforming an existing one rather than recomputing from a Julian day. The alternative,
- * time/space-midpoint "Davison" method — averaging the two birth moments and places into one
- * real moment and asking the ephemeris for its houses — is a different technique and this
- * issue's own explicit non-goal: there is no single Julian day here to hand `provider.houses`.
+ * transforming an existing one rather than recomputing from a Julian day. The time/space-midpoint
+ * "Davison" method — averaging the two birth moments and places into one real moment and asking
+ * the ephemeris for its houses — is a different technique and lives in `davison.ts` (#1406);
+ * there is no single Julian day here to hand `provider.houses`.
  *
  * Every other field (the composite's own aspects, dignities, sect, and the two Arabic parts) is
  * then computed fresh from the composite's midpoint positions and houses, exactly as
@@ -23,7 +23,7 @@
 /**
  * @module composite
  * @purpose Computes a composite (midpoint) chart — a synthetic third chart derived from two people's natal charts — distinct from synastry's comparison of two existing charts (#169).
- * @conventions Every body's position is the near-arc midpoint (`midpointOf`, Ebertin's convention: half the shorter arc, not the naive average); houses use the "midpoint of cusps" method rather than the Davison time/space-midpoint method, since there is no single real Julian day to ask the ephemeris for houses; the composite's own aspects/dignities/sect/parts are computed fresh via the single-chart engine.
+ * @conventions Every body's position is the near-arc midpoint (`midpointOf`, Ebertin's convention: half the shorter arc, not the naive average); houses use the "midpoint of cusps" method, since there is no single real Julian day to ask the ephemeris for houses (the Davison time/space-midpoint chart is `davison.ts`, #1406); the composite's own aspects/dignities/sect/parts are computed fresh via the single-chart engine.
  * @exports computeComposite, CompositeData
  */
 import { DEFAULT_ORB_CONFIG, findAspects, subjectsFrom, type Aspect } from '../astrology/aspects.js';
