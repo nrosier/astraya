@@ -124,11 +124,22 @@ export function getUserByPasswordSetToken(
   return row ? { user: toUser(row), expiresAt: row.password_set_token_expires_at } : null;
 }
 
-/** Sets the password and clears the token — single-use by construction, not by a separate flag. */
-export function consumePasswordSetToken(db: Database, userId: string, passwordHash: string): void {
-  db.prepare(
-    'UPDATE users SET password_hash = ?, password_set_token = NULL, password_set_token_expires_at = NULL WHERE id = ?',
-  ).run(passwordHash, userId);
+/**
+ * Sets the password and clears the token — single-use by construction, not by a
+ * separate flag. The write is conditional on the token still matching and not
+ * being expired at write time, so two concurrent redemptions (or a token that
+ * expired while the password was hashing) cannot both succeed (#1379). Returns
+ * `true` only when exactly this call changed the row.
+ */
+export function consumePasswordSetToken(db: Database, userId: string, token: string, passwordHash: string): boolean {
+  const result = db
+    .prepare(
+      `UPDATE users SET password_hash = ?, password_set_token = NULL, password_set_token_expires_at = NULL
+       WHERE id = ? AND password_set_token = ?
+         AND (password_set_token_expires_at IS NULL OR password_set_token_expires_at >= ?)`,
+    )
+    .run(passwordHash, userId, token, new Date().toISOString());
+  return Number(result.changes) === 1;
 }
 
 /**

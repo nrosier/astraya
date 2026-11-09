@@ -294,7 +294,10 @@ export function registerAuthRoutes(app: FastifyInstance, db: Database): void {
       }
 
       const passwordHash = await hashPassword(password);
-      consumePasswordSetToken(db, found.user.id, passwordHash);
+      // Conditional write: the token may have been redeemed or expired while hashing (#1379).
+      if (!consumePasswordSetToken(db, found.user.id, token, passwordHash)) {
+        return reply.code(401).send({ error: 'This link is invalid or has expired' });
+      }
       // A password change ends every session signed in under the old credentials (#1360).
       revokeAllSessionsForUser(db, found.user.id);
       return reply.send({ ok: true });
