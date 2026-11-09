@@ -6,7 +6,7 @@
 /**
  * @module ui/session-context
  * @purpose Owns which per-account IndexedDB store is open (anonymous vs. a signed-in account's own), the sync engine's lifecycle, OIDC/password sign-in and sign-out, the one-time "adopt this device's anonymous data" prompt (#109), and which store the account preferences follow (#1066).
- * @conventions React context + provider (SessionProvider); handles offline-boot (can't tell signed-in from signed-out, falls back to the last-used store), server-side session invalidation (handleUnauthorized closes the store rather than leaving it open across accounts, per ADR 0002's cross-account data-bleed concern), and OIDC PKCE completion via oidc-pkce.js; every store that becomes active goes through `ready`, which binds the account preferences to it (#1066); adoption never carries `account` records, which reach an account only through the sign-in reconciliation.
+ * @conventions React context + provider (SessionProvider); stops sync before awaiting sign-out and binds every engine and adoption push to the signed-in account id (#1378); handles offline-boot (can't tell signed-in from signed-out, falls back to the last-used store), server-side session invalidation (handleUnauthorized closes the store rather than leaving it open across accounts, per ADR 0002's cross-account data-bleed concern), and OIDC PKCE completion via oidc-pkce.js; every store that becomes active goes through `ready`, which binds the account preferences to it (#1066); adoption never carries `account` records, which reach an account only through the sign-in reconciliation.
  * @exports removeAccountData, SessionProvider, useStoreStatus, useSyncEngine, useSession, useSessionUserOrUndefined, StoreStatus, AdoptionPrompt
  */
 import { clearNoteJournalsForDb } from './use-note-autosave.js';
@@ -94,7 +94,7 @@ async function openAccountStore(
   onUnauthorized: () => void,
 ): Promise<{ store: Store; engine: SyncEngine | undefined }> {
   const store = await openStore({ name: accountDbName(user.id) });
-  const engine = createEngine ? await createSyncEngine({ store, onUnauthorized }) : undefined;
+  const engine = createEngine ? await createSyncEngine({ store, accountId: user.id, onUnauthorized }) : undefined;
   return { store, engine };
 }
 
@@ -288,6 +288,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
           if (authUser?.id !== cachedId) return;
           const syncEngine = await createSyncEngine({
             store: openStoreNow,
+            accountId: authUser.id,
             onUnauthorized: () => {
               handleUnauthorized(authUser.id);
             },
@@ -328,6 +329,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
     const engine = createEngine
       ? await createSyncEngine({
           store: opened.store,
+          accountId: authUser.id,
           onUnauthorized: () => {
             handleUnauthorized(authUser.id);
           },
@@ -367,6 +369,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
         const store = await openStore({ name: accountDbName(orphanedId) });
         const syncEngine = await createSyncEngine({
           store,
+          accountId: authUser.id,
           onUnauthorized: () => {
             handleUnauthorized(authUser.id);
           },
@@ -428,7 +431,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
       // records are still sitting in the anonymous store, but nothing in the UI points
       // back at this flow. Leaving `pendingAdoptionRef`/`adoption` set lets the same
       // "accept" action be retried, and the caller sees the thrown error.
-      await pushRecords(outgoing);
+      await pushRecords(outgoing, pending.user.id);
       await pending.anonymousStore.setAdoptionDecision(`user:${pending.user.id}`);
       pendingAdoptionRef.current = undefined;
       setAdoption(undefined);
@@ -442,6 +445,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
   }
 
   async function signOut(): Promise<void> {
+    // Sync stops before anything is awaited (#1378): an engine left running across `logout()` could start, or finish,
+    // a request after this account's session has gone and another has taken its cookie.
+    engineRef.current?.close();
+    engineRef.current = undefined;
+    setEngine(undefined);
     // Signing out locally must not depend on the network (#335). `logout()` throws when
     // offline, and aborting here on that would leave the account signed in with its store
     // open — the opposite of what someone who just asked to sign out expects, and the one
@@ -455,7 +463,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
     }
     localStorage.removeItem(LAST_USER_KEY);
     const anonymous = await openStore();
-    engineRef.current?.close();
     // A shared device keeps no account's preferences in browser storage after sign-out (#1066, ADR 0004 section
     // 3.7); the register stays in the account's database and is bound again on the next sign-in. Nothing is copied
     // into the signed-out store: it shows its own values, or the defaults (decision Q2).
@@ -463,10 +470,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
     if (closing !== undefined && closing.dbName !== DB_NAME) forgetAccountPreferencesCache(closing.dbName);
     storeRef.current?.close();
     storeRef.current = anonymous;
-    engineRef.current = undefined;
     ready(anonymous);
     setUser(undefined);
-    setEngine(undefined);
     // Only an OIDC-derived session gets one back (#77) — a real top-level
     // navigation, not a fetch, since ending Authentik's own browser session
     // requires the browser to actually visit its end_session endpoint.

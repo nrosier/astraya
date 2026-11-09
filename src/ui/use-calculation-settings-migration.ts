@@ -109,11 +109,11 @@ export function useCalculationSettingsMigration(): void {
       const mutations = due.flatMap(({ migration }) => migration.stage(store));
       const done = (async (): Promise<void> => {
         const fresh = mutations.length === 0 ? [] : await store.seed(mutations);
-        if (!signedIn) return;
+        if (userId === undefined) return;
         const pending = ownSeeds(store);
         const known = new Set(pending.map((record) => String(record.hlc)));
         const toPush = [...pending, ...fresh.filter((record) => !known.has(String(record.hlc)))];
-        if (toPush.length > 0) await pushRecords(toPush);
+        if (toPush.length > 0) await pushRecords(toPush, userId);
       })();
       void done.then(
         () => {

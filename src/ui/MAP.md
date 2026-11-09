@@ -193,7 +193,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `route.ts` — Single source of truth for all hash routes (`export-builder` carries `person`, `section`, `view`). Deps: `domain/id`, `./chart-sections`.
 - `rulership-setting.ts` — Default rulership (modern/traditional/both, an account preference since #1066): what new people start from and person-less screens (Horary, Composite) show (#806). Deps: `./account-preferences`, `astrology/rulership`.
 - `saved-time.ts` — Formats stored interpretation UTC instant as local written-out time. Deps: `interpretation/schema` (Locale type).
-- `session-context.tsx` — Owns account + store lifecycle + auth + sync-engine + anonymous-adoption prompt; binds the account preferences to every active store and keeps them out of adoption (#1066). Deps: `store/store`, `store/account`, `sync/auth-client`, `sync/engine`, `./oidc-pkce`, `./account-preferences`.
+- `session-context.tsx` — Owns account + store lifecycle + auth + sync-engine + anonymous-adoption prompt; binds the account preferences to every active store and keeps them out of adoption (#1066); binds sync to the signed-in account and stops it before logout (#1378). Deps: `store/store`, `store/account`, `sync/auth-client`, `sync/engine`, `./oidc-pkce`, `./account-preferences`.
 - `shared.messages.ts` — Common i18n strings reused across many components. Deps: none.
 - `status.messages.ts` — en/nl for sync-status indicator. Deps: none.
 - `status.ts` — Decides sync-status label/tone/detail from sync/persistence/pending state, plus the held-back-notes line (#919). Deps: `store/persist`.

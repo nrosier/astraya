@@ -96,10 +96,14 @@ async function pushOp(
   const { clock, hlc } = tick(clockRef.current, Date.now());
   clockRef.current = clock;
   const payload = Buffer.from(JSON.stringify(body)).toString('base64');
+  // Every sync request names the account it is for (#1378); a client learns its own id from `/api/auth/me`.
+  const me = await target.inject({ method: 'GET', url: '/api/auth/me', cookies: { [SESSION_COOKIE]: sessionCookie } });
+  const accountId = me.json<{ user: { id: string } }>().user.id;
   const response = await target.inject({
     method: 'POST',
     url: '/api/ops',
     cookies: { [SESSION_COOKIE]: sessionCookie },
+    headers: { 'x-astraya-account': accountId },
     payload: { ops: [{ hlc, deviceId: clock.nodeId, opVersion: 1, payload }] },
   });
   if (response.statusCode !== 200) throw new Error(`push failed: ${response.statusCode} ${response.body}`);

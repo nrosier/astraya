@@ -14,10 +14,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { randomBytes } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
+import { DatabaseSync } from 'node:sqlite';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { createSyncEngine } from '../src/sync/engine.ts';
+import { hashPassword } from '../server/auth/passwords.ts';
+import { ACCOUNT_HEADER, createSyncEngine } from '../src/sync/engine.ts';
 import { openStore } from '../src/store/store.ts';
 import { openDatabase, allRecords } from '../src/store/db.ts';
 import { birthNoteRevision } from '../src/store/notes.ts';
@@ -29,8 +31,11 @@ const WAIT = { timeout: 5000 };
 process.env.LOG_LEVEL = 'silent';
 
 let dir: string;
+let dbPath: string;
 let app: FastifyInstance;
 let baseUrl: string;
+/** The bootstrapped account's id: every engine below syncs for it unless a test says otherwise (#1378). */
+let aliceId: string;
 let fetchCalls: { method: string; url: string }[] = [];
 let dbCounter = 0;
 const realFetch = globalThis.fetch;
@@ -40,18 +45,19 @@ function freshDbName(): string {
   return `astraya-sync-engine-test-${String(dbCounter)}`;
 }
 
-async function listenAndBootstrap(dbPath: string): Promise<{ app: FastifyInstance; baseUrl: string }> {
+async function listenAndBootstrap(dbPath: string): Promise<{ app: FastifyInstance; baseUrl: string; aliceId: string }> {
   const built = await build({ dbPath });
   await built.listen({ port: 0, host: '127.0.0.1' });
   const address = built.server.address();
   if (address === null || typeof address === 'string') throw new Error('server did not bind to a port');
   const url = `http://127.0.0.1:${String(address.port)}`;
-  await realFetch(new URL('/api/setup', url), {
+  const setup = await realFetch(new URL('/api/setup', url), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ token: BOOTSTRAP_TOKEN, username: 'alice', password: 'correct-horse-battery' }),
   });
-  return { app: built, baseUrl: url };
+  const { user } = (await setup.json()) as { user: { id: string } };
+  return { app: built, baseUrl: url, aliceId: user.id };
 }
 
 /** A cookie-jar `fetch` for one session, resolving the engine's relative paths against `baseUrl`. */
@@ -69,24 +75,89 @@ function sessionFetch(): typeof fetch {
   };
 }
 
-async function loginAs(username: string, password: string): Promise<typeof fetch> {
-  const fetchImpl = sessionFetch();
+/** Signs `fetchImpl`'s cookie jar in as `username`, replacing whichever session it held before. */
+async function logInWith(fetchImpl: typeof fetch, username: string, password: string): Promise<void> {
   const response = await fetchImpl(new URL('/api/auth/login', baseUrl), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password }),
   });
   if (!response.ok) throw new Error(`login failed with status ${String(response.status)}`);
+}
+
+async function loginAs(username: string, password: string): Promise<typeof fetch> {
+  const fetchImpl = sessionFetch();
+  await logInWith(fetchImpl, username, password);
   return fetchImpl;
+}
+
+/** A second, ordinary account, inserted directly since `/api/setup` creates only the first one (#1378). */
+async function insertUser(username: string, password: string): Promise<string> {
+  const id = randomUUID();
+  const passwordHash = await hashPassword(password);
+  const raw = new DatabaseSync(dbPath);
+  raw
+    .prepare("INSERT INTO users (id, username, password_hash, role, created_at) VALUES (?, ?, ?, 'user', ?)")
+    .run(id, username, passwordHash, new Date().toISOString());
+  raw.close();
+  return id;
+}
+
+/** Rows in one account's server log, read straight from the database so no route sits between the test and the data. */
+function serverOpCount(userId: string): number {
+  const raw = new DatabaseSync(dbPath, { readOnly: true });
+  const row = raw.prepare('SELECT COUNT(*) AS count FROM ops WHERE user_id = ?').get(userId) as { count: number };
+  raw.close();
+  return row.count;
+}
+
+/** Lets a late response settle: anything the engine would do with it happens well inside this. */
+function settle(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 500));
+}
+
+interface HeldPull {
+  release?: () => void;
+  signal?: AbortSignal | null;
+}
+
+/**
+ * Wraps `fetchImpl` so the engine's first pull reaches the real server at once but its answer is held until the test
+ * releases it: a response already on its way when the engine closes. The request goes out without the engine's abort
+ * signal, so the hold, not the abort, decides when the answer lands; the signal is kept so the test can check it fired.
+ */
+function holdFirstPull(
+  fetchImpl: typeof fetch,
+  calls: { method: string; url: string }[],
+  held: HeldPull,
+): typeof fetch {
+  let holding = true;
+  return async (input, init) => {
+    const url = new URL(input instanceof Request ? input.url : String(input), baseUrl);
+    const method = init?.method ?? 'GET';
+    calls.push({ method, url: url.pathname + url.search });
+    if (holding && method === 'GET' && url.pathname === '/api/ops') {
+      holding = false;
+      held.signal = init?.signal ?? null;
+      const response = await fetchImpl(input, { ...init, signal: null });
+      await new Promise<void>((resolve) => {
+        held.release = resolve;
+      });
+      return response;
+    }
+    return fetchImpl(input, init);
+  };
 }
 
 beforeEach(async () => {
   dir = mkdtempSync(join(tmpdir(), 'astraya-sync-engine-test-'));
+  dbPath = join(dir, 'astraya.db');
   process.env.ASTRAYA_BOOTSTRAP_TOKEN = BOOTSTRAP_TOKEN;
   process.env.ASTRAYA_ENCRYPTION_KEY = randomBytes(32).toString('base64');
-  const started = await listenAndBootstrap(join(dir, 'astraya.db'));
+  const started = await listenAndBootstrap(dbPath);
   app = started.app;
   baseUrl = started.baseUrl;
+  aliceId = started.aliceId;
   fetchCalls = [];
 });
 
@@ -103,14 +174,14 @@ describe('pushing', () => {
     globalThis.fetch = await loginAs('alice', 'correct-horse-battery');
     const store = await openStore({ name: freshDbName() });
     await store.mutate([{ entity: 'person', entityId: 'p1', field: 'displayName', value: 'Ada' }]);
-    const engine = await createSyncEngine({ store });
+    const engine = await createSyncEngine({ store, accountId: aliceId });
     try {
       await vi.waitFor(() => {
         expect(engine.status.kind).toBe('synced');
       }, WAIT);
       expect(engine.pending()).toBe(0);
 
-      const pull = await globalThis.fetch(new URL('/api/ops', baseUrl));
+      const pull = await globalThis.fetch(new URL('/api/ops', baseUrl), { headers: { [ACCOUNT_HEADER]: aliceId } });
       const { ops } = (await pull.json()) as { ops: { payload: string }[] };
       expect(ops).toHaveLength(1);
     } finally {
@@ -126,7 +197,7 @@ describe('pulling', () => {
 
     const deviceA = await openStore({ name: freshDbName() });
     await deviceA.mutate([{ entity: 'person', entityId: 'p1', field: 'displayName', value: 'Ada' }]);
-    const engineA = await createSyncEngine({ store: deviceA });
+    const engineA = await createSyncEngine({ store: deviceA, accountId: aliceId });
     await vi.waitFor(() => {
       expect(engineA.status.kind).toBe('synced');
     }, WAIT);
@@ -134,7 +205,7 @@ describe('pulling', () => {
     deviceA.close();
 
     const deviceB = await openStore({ name: freshDbName() });
-    const engineB = await createSyncEngine({ store: deviceB });
+    const engineB = await createSyncEngine({ store: deviceB, accountId: aliceId });
     try {
       await vi.waitFor(() => {
         expect(deviceB.state.people.get('p1')?.displayName).toBe('Ada');
@@ -158,7 +229,7 @@ describe('resuming', () => {
 
     const first = await openStore({ name });
     await first.mutate([{ entity: 'person', entityId: 'p1', field: 'displayName', value: 'Ada' }]);
-    const engine1 = await createSyncEngine({ store: first });
+    const engine1 = await createSyncEngine({ store: first, accountId: aliceId });
     await vi.waitFor(() => {
       expect(engine1.status.kind).toBe('synced');
     }, WAIT);
@@ -167,7 +238,7 @@ describe('resuming', () => {
 
     fetchCalls = [];
     const second = await openStore({ name });
-    const engine2 = await createSyncEngine({ store: second });
+    const engine2 = await createSyncEngine({ store: second, accountId: aliceId });
     try {
       await vi.waitFor(() => {
         expect(engine2.status.kind).toBe('synced');
@@ -186,7 +257,7 @@ describe('device-local outgoing filtering (#324)', () => {
 
     const deviceA = await openStore({ name: freshDbName() });
     await deviceA.mutate([{ entity: 'person', entityId: 'p1', field: 'displayName', value: 'Ada' }]);
-    const engineA = await createSyncEngine({ store: deviceA });
+    const engineA = await createSyncEngine({ store: deviceA, accountId: aliceId });
     await vi.waitFor(() => {
       expect(engineA.status.kind).toBe('synced');
     }, WAIT);
@@ -202,7 +273,7 @@ describe('device-local outgoing filtering (#324)', () => {
     };
 
     const deviceB = await openStore({ name: freshDbName() });
-    const engineB = await createSyncEngine({ store: deviceB });
+    const engineB = await createSyncEngine({ store: deviceB, accountId: aliceId });
     try {
       await vi.waitFor(() => {
         expect(deviceB.state.people.get('p1')?.displayName).toBe('Ada');
@@ -229,14 +300,14 @@ describe('purge propagation (#308)', () => {
     const nameA = freshDbName();
     const deviceA = await openStore({ name: nameA });
     await deviceA.mutate([{ entity: 'person', entityId: 'p1', field: 'displayName', value: 'Ada' }]);
-    const engineA = await createSyncEngine({ store: deviceA });
+    const engineA = await createSyncEngine({ store: deviceA, accountId: aliceId });
     await vi.waitFor(() => {
       expect(engineA.status.kind).toBe('synced');
     }, WAIT);
 
     const nameB = freshDbName();
     const deviceB = await openStore({ name: nameB });
-    const engineB = await createSyncEngine({ store: deviceB });
+    const engineB = await createSyncEngine({ store: deviceB, accountId: aliceId });
     try {
       await vi.waitFor(() => {
         expect(deviceB.state.people.get('p1')?.displayName).toBe('Ada');
@@ -271,7 +342,7 @@ describe('purge propagation (#308)', () => {
 
       // A fresh device, signing in for the first time after the purge, never sees the person at all.
       const deviceC = await openStore({ name: freshDbName() });
-      const engineC = await createSyncEngine({ store: deviceC });
+      const engineC = await createSyncEngine({ store: deviceC, accountId: aliceId });
       try {
         await vi.waitFor(() => {
           expect(engineC.status.kind).toBe('synced');
@@ -322,7 +393,7 @@ describe('pull resilience (#320)', () => {
     };
 
     const store = await openStore({ name: freshDbName() });
-    const engine = await createSyncEngine({ store });
+    const engine = await createSyncEngine({ store, accountId: aliceId });
     try {
       await vi.waitFor(() => {
         expect(engine.status.kind).toBe('synced');
@@ -345,7 +416,7 @@ describe('failure', () => {
     try {
       globalThis.fetch = await loginAs('alice', 'correct-horse-battery');
       const store = await openStore({ name: freshDbName() });
-      const engine = await createSyncEngine({ store });
+      const engine = await createSyncEngine({ store, accountId: aliceId });
       try {
         await vi.waitFor(() => {
           expect(engine.status.kind).toBe('failing');
@@ -372,7 +443,7 @@ describe('error classification (#106)', () => {
       throw new TypeError('fetch failed');
     };
     const store = await openStore({ name: freshDbName() });
-    const engine = await createSyncEngine({ store });
+    const engine = await createSyncEngine({ store, accountId: aliceId });
     try {
       await vi.waitFor(() => {
         expect(engine.status.kind).toBe('failing');
@@ -387,7 +458,7 @@ describe('error classification (#106)', () => {
   it('classifies a 401 as unauthorized, with a message pointing at signing in again', async () => {
     globalThis.fetch = async () => new Response(null, { status: 401 });
     const store = await openStore({ name: freshDbName() });
-    const engine = await createSyncEngine({ store });
+    const engine = await createSyncEngine({ store, accountId: aliceId });
     try {
       await vi.waitFor(() => {
         expect(engine.status.kind).toBe('failing');
@@ -404,7 +475,7 @@ describe('error classification (#106)', () => {
   it('classifies a 5xx as a server problem', async () => {
     globalThis.fetch = async () => new Response(null, { status: 503 });
     const store = await openStore({ name: freshDbName() });
-    const engine = await createSyncEngine({ store });
+    const engine = await createSyncEngine({ store, accountId: aliceId });
     try {
       await vi.waitFor(() => {
         expect(engine.status.kind).toBe('failing');
@@ -421,7 +492,7 @@ describe('error classification (#106)', () => {
   it('classifies an unreadable response body as malformed', async () => {
     globalThis.fetch = async () => new Response('not json', { status: 200 });
     const store = await openStore({ name: freshDbName() });
-    const engine = await createSyncEngine({ store });
+    const engine = await createSyncEngine({ store, accountId: aliceId });
     try {
       await vi.waitFor(() => {
         expect(engine.status.kind).toBe('failing');
@@ -436,7 +507,7 @@ describe('error classification (#106)', () => {
   it('classifies a response missing its operations array as malformed', async () => {
     globalThis.fetch = async () => new Response(JSON.stringify({}), { status: 200 });
     const store = await openStore({ name: freshDbName() });
-    const engine = await createSyncEngine({ store });
+    const engine = await createSyncEngine({ store, accountId: aliceId });
     try {
       await vi.waitFor(() => {
         expect(engine.status.kind).toBe('failing');
@@ -460,7 +531,7 @@ describe('error classification (#106)', () => {
     };
     const store = await openStore({ name: freshDbName() });
     await store.mutate([{ entity: 'person', entityId: 'p1', field: 'displayName', value: 'Ada' }]);
-    const engine = await createSyncEngine({ store });
+    const engine = await createSyncEngine({ store, accountId: aliceId });
     try {
       // No error, no retry loop: a quarantined op is still a completed push.
       await vi.waitFor(() => {
@@ -483,7 +554,7 @@ describe('error classification (#106)', () => {
     };
     const store = await openStore({ name: freshDbName() });
     await store.mutate([{ entity: 'person', entityId: 'p1', field: 'displayName', value: 'Ada' }]);
-    const engine = await createSyncEngine({ store });
+    const engine = await createSyncEngine({ store, accountId: aliceId });
     try {
       await vi.waitFor(() => {
         expect(engine.status.kind).toBe('failing');
@@ -505,7 +576,7 @@ describe('exponential backoff with jitter (#106)', () => {
     };
 
     const store = await openStore({ name: freshDbName() });
-    const engine = await createSyncEngine({ store });
+    const engine = await createSyncEngine({ store, accountId: aliceId });
     try {
       await vi.waitFor(
         () => {
@@ -537,7 +608,7 @@ describe('onUnauthorized (#106)', () => {
     globalThis.fetch = async () => new Response(null, { status: 401 });
     const store = await openStore({ name: freshDbName() });
     const onUnauthorized = vi.fn();
-    const engine = await createSyncEngine({ store, onUnauthorized });
+    const engine = await createSyncEngine({ store, accountId: aliceId, onUnauthorized });
     try {
       await vi.waitFor(() => {
         expect(onUnauthorized).toHaveBeenCalledTimes(1);
@@ -571,7 +642,7 @@ describe('partial push recovery (#106)', () => {
 
     const store = await openStore({ name: freshDbName() });
     await store.mutate([{ entity: 'person', entityId: 'p1', field: 'displayName', value: 'Ada' }]);
-    const engine = await createSyncEngine({ store });
+    const engine = await createSyncEngine({ store, accountId: aliceId });
     try {
       await vi.waitFor(
         () => {
@@ -583,7 +654,7 @@ describe('partial push recovery (#106)', () => {
 
       // The server's (user, hlc) uniqueness made the retried, identical chunk a no-op —
       // exactly one row, not two, despite the op having actually reached the server twice.
-      const pull = await loggedIn(new URL('/api/ops', baseUrl));
+      const pull = await loggedIn(new URL('/api/ops', baseUrl), { headers: { [ACCOUNT_HEADER]: aliceId } });
       const { ops } = (await pull.json()) as { ops: unknown[] };
       expect(ops).toHaveLength(1);
     } finally {
@@ -597,7 +668,7 @@ describe('local writes are never blocked by a failing sync (#106)', () => {
   it('accepts a mutate() while the engine is failing', async () => {
     globalThis.fetch = async () => new Response(null, { status: 500 });
     const store = await openStore({ name: freshDbName() });
-    const engine = await createSyncEngine({ store });
+    const engine = await createSyncEngine({ store, accountId: aliceId });
     try {
       await vi.waitFor(() => {
         expect(engine.status.kind).toBe('failing');
@@ -617,14 +688,14 @@ describe('an oversized legacy note stays out of the push queue (#919)', () => {
     const store = await openStore({ name: freshDbName() });
     await store.mutate([{ entity: 'person', entityId: 'p1', field: 'notes', value: 'a'.repeat(50_001) }]);
     await store.mutate([{ entity: 'person', entityId: 'p1', field: 'displayName', value: 'Ada' }]);
-    const engine = await createSyncEngine({ store });
+    const engine = await createSyncEngine({ store, accountId: aliceId });
     try {
       await vi.waitFor(() => {
         expect(engine.status.kind).toBe('synced');
       }, WAIT);
       expect(engine.pending()).toBe(0);
 
-      const pull = await globalThis.fetch(new URL('/api/ops', baseUrl));
+      const pull = await globalThis.fetch(new URL('/api/ops', baseUrl), { headers: { [ACCOUNT_HEADER]: aliceId } });
       const { ops } = (await pull.json()) as { ops: { payload: string }[] };
       expect(ops).toHaveLength(1);
       expect(store.outgoing().some((op) => op.field === 'notes')).toBe(true);
@@ -638,7 +709,7 @@ describe('an oversized legacy note stays out of the push queue (#919)', () => {
     globalThis.fetch = await loginAs('alice', 'correct-horse-battery');
     const store = await openStore({ name: freshDbName() });
     await store.mutate([{ entity: 'person', entityId: 'p1', field: 'notes', value: 'a'.repeat(50_001) }]);
-    const engine = await createSyncEngine({ store });
+    const engine = await createSyncEngine({ store, accountId: aliceId });
     try {
       await vi.waitFor(() => {
         expect(engine.status.kind).toBe('synced');
@@ -656,7 +727,7 @@ describe('an oversized legacy note stays out of the push queue (#919)', () => {
     globalThis.fetch = await loginAs('alice', 'correct-horse-battery');
     const store = await openStore({ name: freshDbName() });
     await store.mutate([{ entity: 'person', entityId: 'p1', field: 'notes', value: 'a short note' }]);
-    const engine = await createSyncEngine({ store });
+    const engine = await createSyncEngine({ store, accountId: aliceId });
     try {
       await vi.waitFor(() => {
         expect(engine.status.kind).toBe('synced');
@@ -681,7 +752,7 @@ describe('storage quota (#919)', () => {
     };
     const store = await openStore({ name: freshDbName() });
     await store.mutate([{ entity: 'person', entityId: 'p1', field: 'displayName', value: 'Ada' }]);
-    const engine = await createSyncEngine({ store });
+    const engine = await createSyncEngine({ store, accountId: aliceId });
     try {
       await vi.waitFor(() => {
         expect(engine.status.kind).toBe('quota');
@@ -710,7 +781,7 @@ describe('storage quota (#919)', () => {
     };
     const store = await openStore({ name: freshDbName() });
     await store.mutate([{ entity: 'person', entityId: 'p1', field: 'displayName', value: 'Ada' }]);
-    const engine = await createSyncEngine({ store });
+    const engine = await createSyncEngine({ store, accountId: aliceId });
     try {
       await vi.waitFor(() => {
         expect(engine.status.kind).toBe('quota');
@@ -747,7 +818,7 @@ describe('push batch size (#919)', () => {
       if (init?.method === 'POST' && typeof init.body === 'string') pushBodySizes.push(init.body.length);
       return loggedIn(input, init);
     };
-    const engine = await createSyncEngine({ store });
+    const engine = await createSyncEngine({ store, accountId: aliceId });
     try {
       await vi.waitFor(
         () => {
@@ -760,7 +831,7 @@ describe('push batch size (#919)', () => {
       // Every request stays under the server's 1 MiB body limit (server/index.ts).
       for (const size of pushBodySizes) expect(size).toBeLessThan(1024 * 1024);
 
-      const pull = await loggedIn(new URL('/api/ops', baseUrl));
+      const pull = await loggedIn(new URL('/api/ops', baseUrl), { headers: { [ACCOUNT_HEADER]: aliceId } });
       const { ops } = (await pull.json()) as { ops: unknown[] };
       expect(ops).toHaveLength(16);
     } finally {
@@ -789,7 +860,7 @@ describe('push batch size (#919)', () => {
       }
       return loggedIn(input, init);
     };
-    const engine = await createSyncEngine({ store });
+    const engine = await createSyncEngine({ store, accountId: aliceId });
     try {
       await vi.waitFor(() => {
         expect(engine.status.kind).toBe('synced');
@@ -809,11 +880,115 @@ describe('push batch size (#919)', () => {
     };
     const store = await openStore({ name: freshDbName() });
     await store.mutate([{ entity: 'person', entityId: 'p1', field: 'displayName', value: 'Ada' }]);
-    const engine = await createSyncEngine({ store });
+    const engine = await createSyncEngine({ store, accountId: aliceId });
     try {
       await vi.waitFor(() => {
         expect(engine.status.kind).toBe('failing');
       }, WAIT);
+      expect(engine.pending()).toBe(1);
+    } finally {
+      engine.close();
+      store.close();
+    }
+  });
+});
+
+describe('closing and account binding (#1378)', () => {
+  it('a pull answered after close writes nothing and starts no further request', async () => {
+    const jar = await loginAs('alice', 'correct-horse-battery');
+    // A peer's record already on the server, so the late pull page has something the engine could wrongly write.
+    const clock = createClock(randomNodeId());
+    const peer = tick(clock, Date.now());
+    const peerBody = { entity: 'person', entityId: 'peer', field: 'displayName', value: 'Peer' };
+    const seeded = await jar(new URL('/api/ops', baseUrl), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', [ACCOUNT_HEADER]: aliceId },
+      body: JSON.stringify({
+        ops: [
+          {
+            hlc: peer.hlc,
+            deviceId: peer.clock.nodeId,
+            opVersion: 1,
+            payload: Buffer.from(JSON.stringify(peerBody)).toString('base64'),
+          },
+        ],
+      }),
+    });
+    expect(seeded.status).toBe(200);
+
+    const calls: { method: string; url: string }[] = [];
+    const held: HeldPull = {};
+    globalThis.fetch = holdFirstPull(jar, calls, held);
+    const store = await openStore({ name: freshDbName() });
+    await store.mutate([{ entity: 'person', entityId: 'p1', field: 'displayName', value: 'Ada' }]);
+    const engine = await createSyncEngine({ store, accountId: aliceId });
+    try {
+      await vi.waitFor(() => {
+        expect(held.release).toBeDefined();
+      }, WAIT);
+      engine.close();
+      expect(held.signal?.aborted).toBe(true);
+      held.release?.();
+      await settle();
+
+      expect(calls).toEqual([{ method: 'GET', url: '/api/ops?since=0' }]);
+      expect(store.state.people.has('peer')).toBe(false);
+      expect((await store.getSyncCursor()).pulled).toBeUndefined();
+      expect(serverOpCount(aliceId)).toBe(1);
+    } finally {
+      engine.close();
+      store.close();
+    }
+  });
+
+  it('refuses a sync whose session cookie belongs to another account, and writes nothing to either', async () => {
+    const bobId = await insertUser('bob', 'another-strong-password');
+    globalThis.fetch = await loginAs('bob', 'another-strong-password');
+    const store = await openStore({ name: freshDbName() });
+    await store.mutate([{ entity: 'person', entityId: 'p1', field: 'displayName', value: 'Ada' }]);
+    const onUnauthorized = vi.fn();
+    const engine = await createSyncEngine({ store, accountId: aliceId, onUnauthorized });
+    try {
+      await vi.waitFor(() => {
+        expect(engine.status.kind).toBe('failing');
+      }, WAIT);
+      expect(engine.status.kind === 'failing' && engine.status.message).toBe(
+        'This device is now signed in to a different account.',
+      );
+      expect(onUnauthorized).toHaveBeenCalledTimes(1);
+      expect(engine.pending()).toBe(1);
+      expect(serverOpCount(bobId)).toBe(0);
+      expect(serverOpCount(aliceId)).toBe(0);
+    } finally {
+      engine.close();
+      store.close();
+    }
+  });
+
+  it('an empty pull page answered after close and an account switch writes nothing to either account', async () => {
+    const bobId = await insertUser('bob', 'another-strong-password');
+    // One browser, one cookie jar: signing in as bob replaces alice's cookie for every later request.
+    const jar = await loginAs('alice', 'correct-horse-battery');
+    const calls: { method: string; url: string }[] = [];
+    const held: HeldPull = {};
+    globalThis.fetch = holdFirstPull(jar, calls, held);
+    const store = await openStore({ name: freshDbName() });
+    await store.mutate([{ entity: 'person', entityId: 'p1', field: 'displayName', value: 'Ada' }]);
+    const engine = await createSyncEngine({ store, accountId: aliceId });
+    try {
+      await vi.waitFor(() => {
+        expect(held.release).toBeDefined();
+      }, WAIT);
+      engine.close();
+      await logInWith(jar, 'bob', 'another-strong-password');
+      // Alice's server log is empty, so the held answer is an empty page: the case where the old loop went straight on
+      // to push alice's local record under bob's cookie.
+      held.release?.();
+      await settle();
+
+      expect(calls.filter((call) => call.method === 'POST')).toEqual([]);
+      expect(serverOpCount(bobId)).toBe(0);
+      expect(serverOpCount(aliceId)).toBe(0);
       expect(engine.pending()).toBe(1);
     } finally {
       engine.close();
