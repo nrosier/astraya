@@ -637,8 +637,8 @@ test.describe('with the shared people (#799)', () => {
     );
     expect(dialFirst).toBeTruthy();
 
-    // Unpinned, a wide screen reaches the two-column state: the chart shell is wider than the 64rem
-    // general-content shell, or 68rem would be unreachable.
+    // Unpinned, a wide screen reaches the two-column state: the chart shell is at least 68rem wide,
+    // the breakpoint of the workbench container query (the general shell is 80rem, so it is reachable).
     const remPx = Number(await page.evaluate('parseFloat(getComputedStyle(document.documentElement).fontSize)'));
     const naturalWidth = Number(
       await page.evaluate("document.querySelector('.chart-workbench-shell').getBoundingClientRect().width"),
@@ -668,7 +668,8 @@ test.describe('with the shared people (#799)', () => {
     await pin(68);
     expect(await sideBySide()).toBe(true);
 
-    // The split is 7fr / 5fr (#801), tested at the widest the app really reaches: the wide shell is
+    // The two-column split is the grid's minmax(46rem, 1fr) dial track and minmax(20rem, 24rem)
+    // inspector track (#817), tested at the widest the app really reaches: the wide shell is
     // 80rem less its 1.5rem side padding, so the workbench gets 77rem. Unpin and measure that, not a
     // width the app never has.
     await page.evaluate("document.querySelector('.chart-workbench-shell').style.width = ''");

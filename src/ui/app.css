@@ -41,6 +41,8 @@
   --border-accent: var(--accent);
   --radius-md: var(--radius);
   --bg-hover: var(--surface-hover);
+  /* Modal dialog backdrop (::backdrop). */
+  --backdrop: rgb(0 0 0 / 0.45);
   /*
    * Aspect families, by the convention every printed chart uses: hard tension
    * red, harmonious flow blue, and the quintile family (quintile, biquintile,
@@ -79,7 +81,8 @@
   /* The page's own content column width — shared by `.shell` and `.person-shelf` so they
      never drift out of sync whenever this gets tuned. */
   --shell-max-width: 80rem;
-  /* Chart workbenches (#511): the 68rem two-column state needs more than the general-content shell. */
+  /* Both shell tokens are 80rem. --shell-max-width-wide is kept for the chart workbench (#511) and
+     currently equals the general shell; the 68rem two-column state is decided by the workbench's own container width. */
   --shell-max-width-wide: 80rem;
   /* The Extended settings drawer's widest width on a wide screen (#824, D-824c); full width on a phone. */
   --drawer-max-width: 42rem;
@@ -96,7 +99,7 @@
    * audit's own plan is an incremental migration, not a single rewrite); new work should prefer
    * these over a bare literal, and a feature-specific chart/SVG measurement is exempt by design.
    */
-  /* 4px spacing grid. */
+  /* 3.5px spacing grid (a 14px root; see the guide's spacing section). */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -6215,7 +6218,7 @@ svg text.chart-symbol-text-unicode {
 }
 
 .settings-card::backdrop {
-  background: rgb(0 0 0 / 0.45);
+  background: var(--backdrop);
 }
 
 .primitive-staged-dialog[data-placement='right'] {
@@ -6638,7 +6641,7 @@ svg text.chart-symbol-text-unicode {
 }
 
 .signin-card::backdrop {
-  background: rgb(0 0 0 / 0.45);
+  background: var(--backdrop);
 }
 
 .signin-card .settings-card-footer:empty {
