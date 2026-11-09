@@ -476,10 +476,15 @@ export function decodeStrictExtendedSettings(value: unknown, requireAll: boolean
  * deterministically: they simply lack the fields later versions added, which read as their
  * documented defaults — v1 had no way to carry custom points, and a pre-#585 bag still carries
  * the scattered visibility fields `parseCalculationSnapshot` folds into `objectPolicies`.
- * A missing or non-object payload is the historical "nothing was carried" case: app defaults.
+ * An absent (`undefined`) payload is the historical "nothing was carried" case: app defaults. A
+ * present top-level value that is not an object (`null`, a number, a string, an array, a boolean) is
+ * an `'invalid-field'` error, never read as defaults.
  */
 export function decodeCalculationSnapshot(value: unknown): CalculationSnapshot {
-  if (!isRecord(value)) return parseCalculationSnapshot(value);
+  if (value === undefined) return parseCalculationSnapshot(value);
+  if (!isRecord(value)) {
+    throw new SnapshotDecodeError('invalid-field', 'The snapshot is not an object.');
+  }
   const { version } = value;
   if (version !== undefined) {
     if (typeof version !== 'number' || !Number.isInteger(version) || version < 1) {
