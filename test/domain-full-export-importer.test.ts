@@ -60,7 +60,11 @@ describe('validateFullExport', () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.value.people).toHaveLength(1);
-    expect(result.value.people[0]).toMatchObject({ id: 'p-ada', displayName: 'Ada Lovelace', birth: ADA.moment });
+    expect(result.value.people[0]).toMatchObject({
+      id: 'p-ada',
+      displayName: 'Ada Lovelace',
+      birth: ADA.moment,
+    });
   });
 
   it('rejects a non-object value, and a value with the wrong format', async () => {
@@ -94,7 +98,10 @@ describe('validateFullExport', () => {
 
   it('rejects a version newer than FULL_EXPORT_VERSION, naming the direction', async () => {
     const archive = await build([ADA]);
-    const tampered = { ...(roundTripped(archive) as Record<string, unknown>), version: FULL_EXPORT_VERSION + 1 };
+    const tampered = {
+      ...(roundTripped(archive) as Record<string, unknown>),
+      version: FULL_EXPORT_VERSION + 1,
+    };
     const result = validateFullExport(tampered);
     expect(result.ok).toBe(false);
     if (result.ok) return;
@@ -118,13 +125,25 @@ describe('validateFullExport', () => {
       preferences: { settings: {}, rulership: 'modern', symbolClass: 'drawn' },
       note: '',
       people: [
-        { id: 'p-ada', displayName: 'Ada', placeLabel: 'London', timeAccuracy: 'recorded', notes: '', missing: [] },
+        {
+          id: 'p-ada',
+          displayName: 'Ada',
+          placeLabel: 'London',
+          timeAccuracy: 'recorded',
+          notes: '',
+          missing: [],
+        },
       ],
     };
     const result = validateFullExport(v1Shaped);
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(result.error).toEqual({ kind: 'wrong-version', got: 1, expected: FULL_EXPORT_VERSION, direction: 'older' });
+    expect(result.error).toEqual({
+      kind: 'wrong-version',
+      got: 1,
+      expected: FULL_EXPORT_VERSION,
+      direction: 'older',
+    });
   });
 
   it('rejects a malformed civil date with a specific path', async () => {
@@ -142,7 +161,10 @@ describe('validateFullExport', () => {
     const ok = validateFullExport(roundTripped(archive));
     expect(ok.ok).toBe(true);
     if (!ok.ok) return;
-    expect(ok.value.people[0]).toMatchObject({ sourceKind: 'collection', sourceNote: 'Astro-Databank entry' });
+    expect(ok.value.people[0]).toMatchObject({
+      sourceKind: 'collection',
+      sourceNote: 'Astro-Databank entry',
+    });
 
     const copy = roundTripped(archive) as { people: [{ sourceKind: unknown }] };
     copy.people[0].sourceKind = 'rumour';
@@ -355,7 +377,10 @@ describe('v2 files and per-person settings (#806)', () => {
     const result = validateFullExport(v2);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.value.people[0]?.calculationSettings).toMatchObject({ houseSystem: 'K', orbScalePercent: -40 });
+    expect(result.value.people[0]?.calculationSettings).toMatchObject({
+      houseSystem: 'K',
+      orbScalePercent: -40,
+    });
   });
 
   it.each([
@@ -363,7 +388,9 @@ describe('v2 files and per-person settings (#806)', () => {
     ['a non-boolean visibility flag', { declinationVisible: 'yes' }],
     ['an out-of-range orb', { antisciaMaxOrb: -5 }],
   ])('fails a v2 import whose preferences.settings has %s', async (_name, bad) => {
-    const archive = roundTripped(await build([ADA])) as { preferences: { settings: Record<string, unknown> } };
+    const archive = roundTripped(await build([ADA])) as {
+      preferences: { settings: Record<string, unknown> };
+    };
     archive.preferences.settings = { ...archive.preferences.settings, ...bad };
     const v2 = { ...archive, version: 2 };
     const result = validateFullExport(v2);
@@ -474,7 +501,10 @@ describe('per-person rulership and export v4 (#806)', () => {
 });
 
 describe('new people receive the default calculation profile (#806)', () => {
-  const defaults = { settings: { ...DEFAULT_EXTENDED_SETTINGS, houseSystem: 'K' }, rulership: 'both' as const };
+  const defaults = {
+    settings: { ...DEFAULT_EXTENDED_SETTINGS, houseSystem: 'K' },
+    rulership: 'both' as const,
+  };
   const fieldsOf = (mutations: readonly { field: string }[]): string[] => mutations.map((mutation) => mutation.field);
   const unreadableFile = async (): Promise<Parameters<typeof stageFullExportRestore>[0]> => {
     const archive = await buildFullExport({
@@ -642,7 +672,10 @@ describe('stageFullExportRestore', () => {
     };
     // The exported birth record differs (civil hour changed) but was built from a Person with
     // no override set, so the export's own birth record never carries zoneOverride/calendar.
-    const changedCivil: Person = { ...ADA, moment: { ...ADA_MOMENT, civil: { ...ADA_MOMENT.civil, hour: 8 } } };
+    const changedCivil: Person = {
+      ...ADA,
+      moment: { ...ADA_MOMENT, civil: { ...ADA_MOMENT.civil, hour: 8 } },
+    };
     const archive = await build([changedCivil]);
     const validated = validateFullExport(roundTripped(archive));
     expect(validated.ok).toBe(true);
@@ -673,6 +706,92 @@ describe('stageFullExportRestore', () => {
     const points = item?.mutations.find((mutation) => mutation.field === 'customPoints')?.value;
     expect(places).toEqual([{ id: 'place-1', label: 'Paris', latitude: 48.8566, longitude: 2.3522 }]);
     expect(points).toEqual([{ id: 'cp-1', name: 'Disabled point', formula: 'sun', enabled: false }]);
+  });
+
+  describe('life events (#1399)', () => {
+    const EVENTS = [
+      { id: 'e-2', date: '1840-05-01', time: '09:00', label: 'Moved' },
+      { id: 'e-1', date: '1835-01-02', label: 'Born sibling' },
+    ];
+
+    it('round-trips life events and stages them as a lifeEvents write', async () => {
+      const validated = validateFullExport(roundTripped(await build([{ ...ADA, lifeEvents: EVENTS }])));
+      expect(validated.ok).toBe(true);
+      if (!validated.ok) return;
+      const preview = stageFullExportRestore(validated.value, new Map());
+      const written = preview.items[0]?.mutations.find((mutation) => mutation.field === 'lifeEvents')?.value;
+      expect(written).toEqual([
+        { id: 'e-1', date: '1835-01-02', label: 'Born sibling' },
+        { id: 'e-2', date: '1840-05-01', time: '09:00', label: 'Moved' },
+      ]);
+    });
+
+    it('a v4 file without lifeEvents leaves stored events alone (open item 2)', async () => {
+      const validated = validateFullExport(roundTripped(await build([ADA])));
+      expect(validated.ok).toBe(true);
+      if (!validated.ok) return;
+      expect(validated.value.people[0]).not.toHaveProperty('lifeEvents');
+      const stored: Person = {
+        ...ADA,
+        calculationSettings: DEFAULT_EXTENDED_SETTINGS,
+        rulership: 'modern',
+        lifeEvents: EVENTS,
+      };
+      const preview = stageFullExportRestore(validated.value, new Map([['p-ada', stored]]));
+      expect(preview.items[0]?.mutations.map((mutation) => mutation.field)).not.toContain('lifeEvents');
+    });
+
+    it('writes nothing when the file list equals the stored one', async () => {
+      const validated = validateFullExport(roundTripped(await build([{ ...ADA, lifeEvents: EVENTS }])));
+      expect(validated.ok).toBe(true);
+      if (!validated.ok) return;
+      const stored: Person = {
+        ...ADA,
+        calculationSettings: DEFAULT_EXTENDED_SETTINGS,
+        rulership: 'modern',
+        lifeEvents: [...EVENTS].reverse(),
+      };
+      const preview = stageFullExportRestore(validated.value, new Map([['p-ada', stored]]));
+      expect(preview.items[0]?.mutations.map((mutation) => mutation.field)).not.toContain('lifeEvents');
+    });
+
+    it.each([
+      ['not an array', 'soon'],
+      ['a bad date', [{ id: 'x', date: '1840-02-31', label: 'Bad' }]],
+      ['an empty label', [{ id: 'x', date: '1840-02-01', label: '  ' }]],
+      [
+        'a repeated id',
+        [
+          { id: 'x', date: '1840-02-01', label: 'A' },
+          { id: 'x', date: '1840-02-02', label: 'B' },
+        ],
+      ],
+      [
+        '101 events',
+        Array.from({ length: 101 }, (_, n) => ({
+          id: `e${String(n)}`,
+          date: '1840-02-01',
+          label: 'E',
+        })),
+      ],
+    ])('rejects a lifeEvents value that is %s, naming the path', async (_name, bad) => {
+      const archive = roundTripped(await build([ADA])) as { people: Record<string, unknown>[] };
+      archive.people[0] = { ...archive.people[0], lifeEvents: bad };
+      const result = validateFullExport(archive);
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(JSON.stringify(result.error)).toContain('people[0].lifeEvents');
+    });
+
+    it('still imports a v3 file and a v2 file that carry no life events', async () => {
+      const archive = roundTripped(await build([ADA])) as Record<string, unknown>;
+      expect(validateFullExport({ ...archive, version: 3 }).ok).toBe(true);
+      expect(validateFullExport({ ...archive, version: 2 }).ok).toBe(true);
+    });
+
+    it('keeps FULL_EXPORT_VERSION at 4', () => {
+      expect(FULL_EXPORT_VERSION).toBe(4);
+    });
   });
 
   it('a person with no recorded birth time writes no birth-moment fields, for either a new or existing person', async () => {
