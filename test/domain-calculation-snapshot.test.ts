@@ -138,6 +138,18 @@ describe('parseCalculationSnapshot defends against untrusted input (#541)', () =
     }
   });
 
+  it('refuses a present top-level non-object through decodeCalculationSnapshot (#1380)', () => {
+    for (const bad of [null, 42, 'nope', [], true]) {
+      expect(() => decodeCalculationSnapshot(bad)).toThrow(SnapshotDecodeError);
+      try {
+        decodeCalculationSnapshot(bad);
+      } catch (error) {
+        expect(error).toBeInstanceOf(SnapshotDecodeError);
+        expect((error as SnapshotDecodeError).code).toBe('invalid-field');
+      }
+    }
+  });
+
   it('fills each missing field from its own default rather than rejecting the whole object', () => {
     const parsed = parseCalculationSnapshot({ settings: { houseSystem: 'W' }, rulership: 'traditional' });
     expect(parsed.settings.houseSystem).toBe('W');
@@ -336,7 +348,7 @@ describe('decodeCalculationSnapshot refuses what it would have to guess at (#717
       visible: false,
       aspectParticipant: true,
     });
-    for (const empty of [{}, undefined, null]) {
+    for (const empty of [{}, undefined]) {
       expect(decodeCalculationSnapshot(empty)).toEqual(
         buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE),
       );
