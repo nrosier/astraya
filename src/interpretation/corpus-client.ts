@@ -34,7 +34,7 @@
  * @module interpretation/corpus-client
  * @purpose Loads one locale's committed interpretation corpus chunk at runtime in the browser, layered with any admin corpus overrides and, when given, the reader's own corrections.
  * @conventions Fetches a build-generated per-locale chunk from `${BASE_URL}corpus/<locale>.json` (written by scripts/split-corpus.mjs) rather than importing the full corpus like index.ts does. Admin overrides come from `GET /api/corpus-overrides/:locale` and replace same-key entries; that fetch soft-fails to `[]` on any error so a correction is never required for a report to render. The optional user layer (#1338) is the top precedence and replaces only the text of an entry that exists.
- * @exports CORPUS_BASE_URL, UserCorpusLayer, applyUserCorrections, loadRuntimeCorpus
+ * @exports CORPUS_BASE_URL, loadCommittedCorpus, UserCorpusLayer, applyUserCorrections, loadRuntimeCorpus
  */
 import type { CorpusEntry, Locale } from './schema.js';
 
@@ -47,6 +47,11 @@ async function fetchChunk(locale: Locale, fetchImpl: typeof fetch): Promise<read
     throw new Error(`Failed to load the interpretation corpus: ${locale}.json (HTTP ${String(response.status)})`);
   }
   return (await response.json()) as readonly CorpusEntry[];
+}
+
+/** The committed (shipped) corpus for one locale, without admin overrides or the reader's own corrections. */
+export function loadCommittedCorpus(locale: Locale, fetchImpl: typeof fetch = fetch): Promise<readonly CorpusEntry[]> {
+  return fetchChunk(locale, fetchImpl);
 }
 
 async function fetchOverrides(locale: Locale, fetchImpl: typeof fetch): Promise<readonly CorpusEntry[]> {

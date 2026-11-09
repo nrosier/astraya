@@ -285,3 +285,103 @@ describe('CorpusSubmissionsSection approve and reject (#1338 slice 3)', () => {
     expect(buttons()).toHaveLength(0);
   });
 });
+
+describe('CorpusSubmissionsSection shows a word diff (#1338)', () => {
+  const row = (status: string, text: string): object => ({
+    id: 's1',
+    key: 'planet-in-sign:sun:2',
+    locale: 'en',
+    text,
+    status,
+    submitterId: 'u1',
+    submitterUsername: 'bob',
+    licenceVersion: 'v1',
+    acceptedAt: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+  });
+
+  function stubFetch(submissionRow: object, committed: string, override?: string): void {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) => {
+        if (url.includes('corpus-submissions'))
+          return Promise.resolve(new Response(JSON.stringify({ submissions: [submissionRow] })));
+        if (url.includes('/api/corpus-overrides/')) {
+          const entries = override === undefined ? [] : [{ key: 'planet-in-sign:sun:2', text: override }];
+          return Promise.resolve(new Response(JSON.stringify({ entries })));
+        }
+        if (url.endsWith('corpus/en.json')) {
+          return Promise.resolve(new Response(JSON.stringify([{ key: 'planet-in-sign:sun:2', text: committed }])));
+        }
+        return Promise.resolve(new Response(JSON.stringify({ candidates: [] })));
+      }),
+    );
+  }
+
+  async function settled(): Promise<void> {
+    await act(async () => {
+      for (let n = 0; n < 10; n++) await Promise.resolve();
+    });
+  }
+
+  it('shows both the old and the new text, with removals and additions marked by a symbol and a label', async () => {
+    stubFetch(row('pending', 'A rough sea of feeling.'), 'A calm sea of feeling.');
+    const container = await mount();
+    await settled();
+    const section = container.querySelector<HTMLElement>('section.corpus-submissions');
+    const panes = [...(section?.querySelectorAll('.text-diff') ?? [])];
+    expect(panes).toHaveLength(2);
+    // Old text complete, with the removed word marked.
+    expect(panes[0]?.textContent).toContain('calm');
+    expect(panes[0]?.textContent).toContain('sea of feeling.');
+    const removed = section?.querySelector('del.text-diff-removed');
+    expect(removed?.textContent).toContain('calm');
+    expect(removed?.textContent).toContain('Removed:');
+    expect(removed?.textContent).toContain('\u2212');
+    // New text complete, with the added word marked.
+    expect(panes[1]?.textContent).toContain('rough');
+    const added = section?.querySelector('ins.text-diff-added');
+    expect(added?.textContent).toContain('rough');
+    expect(added?.textContent).toContain('Added:');
+    expect(added?.textContent).toContain('+');
+    // Removals appear only in the old text, additions only in the new text.
+    expect(panes[0]?.querySelector('ins')).toBeNull();
+    expect(panes[1]?.querySelector('del')).toBeNull();
+    expect(section?.textContent).toContain('Current text (live now)');
+  });
+
+  it('compares a pending row with the live override, not the committed text', async () => {
+    stubFetch(row('pending', 'Override words. Plus more.'), 'Committed words.', 'Override words.');
+    const container = await mount();
+    await settled();
+    const panes = [...container.querySelectorAll('.text-diff')];
+    expect(panes[0]?.textContent).toContain('Override words.');
+    expect(panes[0]?.textContent).not.toContain('Committed');
+  });
+
+  it('compares a decided row with the shipped text', async () => {
+    stubFetch(row('approved', 'Override words.'), 'Committed words.', 'Override words.');
+    const container = await mount();
+    await settled();
+    const section = container.querySelector<HTMLElement>('section.corpus-submissions');
+    expect(section?.textContent).toContain('Text before this decision (as shipped)');
+    expect(section?.querySelector('.text-diff')?.textContent).toContain('Committed');
+  });
+
+  it('still shows the suggested text, plainly, when the current text cannot be loaded', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) =>
+        url.includes('corpus-submissions')
+          ? Promise.resolve(new Response(JSON.stringify({ submissions: [row('pending', 'Only the new text.')] })))
+          : Promise.resolve(new Response('no', { status: 500 })),
+      ),
+    );
+    const container = await mount();
+    await settled();
+    const section = container.querySelector<HTMLElement>('section.corpus-submissions');
+    expect(section?.textContent).toContain('Only the new text.');
+    expect(section?.textContent).toContain('could not be loaded');
+    expect(section?.querySelector('ins, del')).toBeNull();
+  });
+});
