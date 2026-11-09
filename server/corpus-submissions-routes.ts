@@ -31,7 +31,7 @@ import {
   markSubmissionDecided,
 } from './corpus-submissions.ts';
 import { checkPlainText, lintEntry } from '../src/interpretation/lint.ts';
-import { CORPUS } from '../src/interpretation/index.ts';
+import { getCorpus } from './interpretation/corpus.ts';
 import { validateKey, type CorpusEntry } from '../src/interpretation/schema.ts';
 import { SUBMISSION_LICENCE_VERSION } from '../src/interpretation/submission-licence.ts';
 
@@ -152,7 +152,7 @@ export function registerCorpusSubmissionRoutes(app: FastifyInstance, db: Databas
       // with neither gets the lowest tier.
       const committed =
         listCorpusOverrides(db, submission.locale).find((entry) => entry.key === submission.key) ??
-        CORPUS.find((entry) => entry.key === submission.key && entry.locale === submission.locale);
+        (await getCorpus()).find((entry) => entry.key === submission.key && entry.locale === submission.locale);
       const tier: CorpusTier = committed?.tier ?? 'nuance';
       const tags = committed?.tags ?? [];
       const problem = textProblem(submission.key, submission.locale, submission.text, tier);

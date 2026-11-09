@@ -90,7 +90,7 @@ import {
 import { isPersonId } from '../src/domain/id.ts';
 import { CORPUS_LOCALES, parsePlacementKey, validateKey, type Locale } from '../src/interpretation/schema.ts';
 import { resolvePlacementText } from '../src/interpretation/compose.ts';
-import { CORPUS } from '../src/interpretation/index.ts';
+import { getCorpus } from './interpretation/corpus.ts';
 import {
   validateChartData,
   validateRelationshipData,
@@ -523,6 +523,8 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
       }
 
       let facts: string[] = [];
+      /** Grounded mode only: resolved against the corpus after the Tier 2 config check, so a deployment without a key never loads it. */
+      let groundedPlacements: readonly NonNullable<ReturnType<typeof parsePlacementKey>>[] | undefined;
       let focusContext: FocusContext | undefined;
       let basis: ResultBasis;
       let systemInstruction: string;
@@ -555,8 +557,7 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
         }
         // Safe: `validateKey` above already confirmed every key parses.
         const parsedPlacements = placementKeys.map((key) => parsePlacementKey(key));
-        const placements = parsedPlacements as readonly NonNullable<(typeof parsedPlacements)[number]>[];
-        facts = placements.map((placement) => resolvePlacementText(placement, locale, CORPUS));
+        groundedPlacements = parsedPlacements as readonly NonNullable<(typeof parsedPlacements)[number]>[];
         systemInstruction = SYSTEM_INSTRUCTION;
         basis = { kind: 'placements', keys: placementKeys };
       } else if (mode === 'focus') {
@@ -607,6 +608,11 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
         return reply
           .code(503)
           .send({ code: 'tier2-unavailable', error: 'Tier 2 (AI-customized interpretation) is not configured' });
+      }
+
+      if (groundedPlacements !== undefined) {
+        const corpus = await getCorpus();
+        facts = groundedPlacements.map((placement) => resolvePlacementText(placement, locale, corpus));
       }
 
       const userId = authenticatedUserId(request);
