@@ -120,20 +120,27 @@ export function registerAuthRoutes(app: FastifyInstance, db: Database): void {
     const sessionId = request.cookies[SESSION_COOKIE];
     let endSessionUrl: string | undefined;
     if (sessionId) {
+      // Read first (the stored `oidc_id_token`, #77, says whether Authentik needs to be
+      // told too), but revoke before anything that touches the network: signing out must
+      // never depend on the identity provider being reachable (#1361).
       const session = getSession(db, sessionId);
-      // Built before revoking: the session row (specifically its stored
-      // `oidc_id_token`, #77) is what says whether Authentik needs to be told too.
+      revokeSession(db, sessionId);
       if (session?.oidcIdToken) {
-        const oidcConfig = loadOidcConfig();
-        const endSessionEndpoint = oidcConfig ? await getEndSessionEndpoint(oidcConfig.issuer) : undefined;
-        if (oidcConfig && endSessionEndpoint) {
-          const url = new URL(endSessionEndpoint);
-          url.searchParams.set('id_token_hint', session.oidcIdToken);
-          url.searchParams.set('post_logout_redirect_uri', oidcConfig.publicUrl);
-          endSessionUrl = url.toString();
+        try {
+          const oidcConfig = loadOidcConfig();
+          const endSessionEndpoint = oidcConfig ? await getEndSessionEndpoint(oidcConfig.issuer) : undefined;
+          if (oidcConfig && endSessionEndpoint) {
+            const url = new URL(endSessionEndpoint);
+            url.searchParams.set('id_token_hint', session.oidcIdToken);
+            url.searchParams.set('post_logout_redirect_uri', oidcConfig.publicUrl);
+            endSessionUrl = url.toString();
+          }
+        } catch (error) {
+          // Best effort: the local session is already gone. Without the URL the browser
+          // just skips ending the Authentik session.
+          app.log.warn({ err: error }, 'OIDC end-session lookup failed; signed out locally only');
         }
       }
-      revokeSession(db, sessionId);
     }
     reply.clearCookie(SESSION_COOKIE, { path: '/' });
     return reply.send({ ok: true, ...(endSessionUrl !== undefined ? { endSessionUrl } : {}) });
