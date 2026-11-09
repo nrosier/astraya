@@ -77,20 +77,20 @@ function toAdminUser(row: AdminUserRow): AdminUser {
   };
 }
 
+// #1364: last seen is `users.last_seen_at` (migration 19), stamped with each throttled session
+// touch, rather than MAX over `sessions`, so it survives the expired-session sweep.
 // #445: last-seen alone only reflects session heartbeats, not real activity — these two extra
-// LEFT JOINs (same shape as the existing `sessions` one) surface the most recent op the user
+// LEFT JOINs (pre-aggregated, see #477) surface the most recent op the user
 // actually pushed through the sync relay, and the most recent Tier 2 interpretation request
 // recorded for them, so an admin can tell a dormant account from a user who syncs/queries the AI
 // but never refreshes a session.
 // #477: each child table is pre-aggregated in its own derived table before joining, so the join
 // is always 1:1 per user instead of a sessions × ops × usage Cartesian product reduced by MAX().
 const ADMIN_USER_SELECT = `SELECT users.id, users.username, users.role, users.created_at, users.disabled_at,
-              s.last_seen_at AS last_seen_at,
+              users.last_seen_at AS last_seen_at,
               o.last_sync_at AS last_sync_at,
               u.last_ai_usage_at AS last_ai_usage_at
        FROM users
-       LEFT JOIN (SELECT user_id, MAX(last_seen_at) AS last_seen_at FROM sessions GROUP BY user_id) s
-         ON s.user_id = users.id
        LEFT JOIN (SELECT user_id, MAX(received_at) AS last_sync_at FROM ops GROUP BY user_id) o
          ON o.user_id = users.id
        LEFT JOIN (SELECT user_id, MAX(created_at) AS last_ai_usage_at FROM interpretation_usage GROUP BY user_id) u

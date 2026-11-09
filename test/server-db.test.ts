@@ -38,7 +38,7 @@ describe('server/db.ts', () => {
   it('sets PRAGMA user_version to the number of migrations applied', () => {
     const db = openDatabase(':memory:');
     const row = db.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
-    expect(row.user_version).toBe(17);
+    expect(row.user_version).toBe(19);
     db.close();
   });
 
@@ -56,7 +56,7 @@ describe('server/db.ts', () => {
       const second = openDatabase(path);
       expect(schemaOf(second)).toEqual(before);
       const row = second.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
-      expect(row.user_version).toBe(17);
+      expect(row.user_version).toBe(19);
       second.close();
     } finally {
       rmSync(dir, { recursive: true, force: true });
@@ -143,7 +143,7 @@ describe('server/db.ts', () => {
 
       const db = openDatabase(path);
       const row = db.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
-      expect(row.user_version).toBe(17);
+      expect(row.user_version).toBe(19);
 
       // The pre-existing row survived the users rebuild intact.
       const legacyUser = db.prepare('SELECT * FROM users WHERE id = ?').get('legacy-user') as
@@ -345,6 +345,9 @@ describe('server/db.ts', () => {
         ALTER TABLE interpretation_results DROP COLUMN person_id;
         -- Nor migration 17's submissions table (#1338).
         DROP TABLE corpus_submissions;
+        -- Nor migration 18's index or migration 19's column (#1364).
+        DROP INDEX sessions_expires_at;
+        ALTER TABLE users DROP COLUMN last_seen_at;
         PRAGMA user_version = 12;
       `);
       first.close();
@@ -391,6 +394,9 @@ describe('server/db.ts', () => {
         ALTER TABLE interpretation_results DROP COLUMN person_id;
         -- Nor migration 17's submissions table (#1338).
         DROP TABLE corpus_submissions;
+        -- Nor migration 18's index or migration 19's column (#1364).
+        DROP INDEX sessions_expires_at;
+        ALTER TABLE users DROP COLUMN last_seen_at;
         PRAGMA user_version = 13;
       `);
       first.close();
@@ -426,6 +432,9 @@ describe('server/db.ts', () => {
         ALTER TABLE interpretation_results DROP COLUMN person_id;
         -- Nor migration 17's submissions table (#1338).
         DROP TABLE corpus_submissions;
+        -- Nor migration 18's index or migration 19's column (#1364).
+        DROP INDEX sessions_expires_at;
+        ALTER TABLE users DROP COLUMN last_seen_at;
         INSERT INTO users (id, username, password_hash, created_at) VALUES ('u', 'owner', 'h', 'now');
         INSERT INTO interpretation_results (id, user_id, mode, locale, sections_json, key_version, iv, created_at)
           VALUES ('r', 'u', 'grounded', 'en', x'00', 1, x'00', 'now');
@@ -478,6 +487,50 @@ describe('server/db.ts', () => {
       expect(db.prepare('SELECT decided_by FROM corpus_submissions').get()).toEqual({ decided_by: null });
       db.exec("DELETE FROM users WHERE id = 'u'");
       expect(db.prepare('SELECT COUNT(*) AS n FROM corpus_submissions').get()).toEqual({ n: 0 });
+      db.close();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('migration 18 adds the sessions_expires_at index on sessions(expires_at) (#1364)', () => {
+    const db = openDatabase(':memory:');
+    const index = db
+      .prepare("SELECT tbl_name, sql FROM sqlite_master WHERE type = 'index' AND name = 'sessions_expires_at'")
+      .get() as { tbl_name: string; sql: string } | undefined;
+    expect(index?.tbl_name).toBe('sessions');
+    expect(index?.sql).toBe('CREATE INDEX sessions_expires_at ON sessions(expires_at)');
+    db.close();
+  });
+
+  it('upgrades a v17 database: adds the index and users.last_seen_at, backfilled from the latest session (#1364)', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'astraya-db-test-'));
+    const path = join(dir, 'astraya.db');
+    try {
+      // Put a current database back into its version-17 shape, with sessions in it.
+      const first = openDatabase(path);
+      first.exec(`
+        DROP INDEX sessions_expires_at;
+        ALTER TABLE users DROP COLUMN last_seen_at;
+        INSERT INTO users (id, username, password_hash, created_at)
+          VALUES ('seen', 'seen', 'h', 'now'), ('never', 'never', 'h', 'now');
+        INSERT INTO sessions (id, user_id, created_at, expires_at, last_seen_at) VALUES
+          ('s1', 'seen', 'now', '2026-01-01T00:00:00.000Z', '2025-12-01T00:00:00.000Z'),
+          ('s2', 'seen', 'now', '2026-02-01T00:00:00.000Z', '2026-01-15T00:00:00.000Z');
+        PRAGMA user_version = 17;
+      `);
+      first.close();
+
+      const db = openDatabase(path);
+      const row = db.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
+      expect(row.user_version).toBe(19);
+      expect(db.prepare('SELECT id, last_seen_at FROM users ORDER BY id').all()).toEqual([
+        { id: 'never', last_seen_at: null },
+        { id: 'seen', last_seen_at: '2026-01-15T00:00:00.000Z' },
+      ]);
+      expect(
+        db.prepare("SELECT name FROM sqlite_master WHERE type = 'index' AND name = 'sessions_expires_at'").get(),
+      ).toEqual({ name: 'sessions_expires_at' });
       db.close();
     } finally {
       rmSync(dir, { recursive: true, force: true });

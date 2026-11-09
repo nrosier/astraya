@@ -385,6 +385,22 @@ const MIGRATIONS: readonly ((db: DatabaseSync) => void)[] = [
       CREATE INDEX corpus_submissions_submitted_by ON corpus_submissions(submitted_by, status, created_at);
     `);
   },
+  // 18: an index on `sessions.expires_at` (#1364), so the periodic expired-session sweep
+  // (`sweepExpiredSessions` in `auth/sessions.ts`) is a range scan, not a full table scan. A plain
+  // index: no rebuild, no foreign-key toggle.
+  (db) => {
+    db.exec('CREATE INDEX sessions_expires_at ON sessions(expires_at);');
+  },
+  // 19: `users.last_seen_at` (#1364), so the admin user list keeps a user's last activity after the
+  // sweep deletes their expired sessions (it used to be derived as MAX over `sessions`). Nullable: a
+  // user with no session ever stays unseen. Backfilled from the sessions present at upgrade time;
+  // from here on it is written in the same throttled path as `sessions.last_seen_at`.
+  (db) => {
+    db.exec(`
+      ALTER TABLE users ADD COLUMN last_seen_at TEXT;
+      UPDATE users SET last_seen_at = (SELECT MAX(last_seen_at) FROM sessions WHERE sessions.user_id = users.id);
+    `);
+  },
 ];
 
 /** Migration steps whose table rebuild would otherwise break `REFERENCES` clauses pointing at the table being rebuilt. */

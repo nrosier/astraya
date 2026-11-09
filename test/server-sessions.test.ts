@@ -12,6 +12,9 @@ import {
   getSession,
   revokeAllSessionsForUser,
   revokeSession,
+  SWEEP_BATCH_SIZE,
+  sweepExpiredSessions,
+  TOUCH_INTERVAL_MS,
   touchSession,
 } from '../server/auth/sessions.ts';
 
@@ -86,7 +89,7 @@ describe('touchSession', () => {
   it('extends a local-account session forward by the 30-day TTL from now', () => {
     const created = createSession(db, userId);
     vi.useFakeTimers();
-    vi.setSystemTime(Date.now() + 1000);
+    vi.setSystemTime(Date.now() + TOUCH_INTERVAL_MS + 1000);
     const now = Date.now();
     touchSession(db, created.id);
     vi.useRealTimers();
@@ -102,7 +105,7 @@ describe('touchSession', () => {
   it('extends an OIDC-derived session forward by the shorter 24h TTL, not the 30-day one', () => {
     const created = createSession(db, userId, { oidcIdToken: 'raw-id-token' });
     vi.useFakeTimers();
-    vi.setSystemTime(Date.now() + 1000);
+    vi.setSystemTime(Date.now() + TOUCH_INTERVAL_MS + 1000);
     const now = Date.now();
     touchSession(db, created.id);
     vi.useRealTimers();
@@ -117,6 +120,56 @@ describe('touchSession', () => {
     expect(() => {
       touchSession(db, randomUUID());
     }).not.toThrow();
+  });
+
+  it('writes at most once within TOUCH_INTERVAL_MS, and the sliding expiry still extends after it (#1364)', () => {
+    const created = createSession(db, userId);
+    const readRow = () =>
+      db.prepare('SELECT expires_at, last_seen_at FROM sessions WHERE id = ?').get(created.id) as {
+        expires_at: string;
+        last_seen_at: string;
+      };
+    // Rows written by INSERT/UPDATE/DELETE on this connection so far: a no-op touch adds none.
+    const writes = () => (db.prepare('SELECT total_changes() AS n').get() as { n: number }).n;
+
+    vi.useFakeTimers();
+    vi.setSystemTime(Date.now() + TOUCH_INTERVAL_MS + 1000);
+    const firstTouchAt = Date.now();
+    const beforeFirst = writes();
+    touchSession(db, created.id);
+    // One session row plus the owner's users.last_seen_at.
+    expect(writes() - beforeFirst).toBe(2);
+    const afterFirst = readRow();
+    expect(new Date(afterFirst.last_seen_at).getTime()).toBe(firstTouchAt);
+    expect(new Date(afterFirst.expires_at).getTime()).toBe(firstTouchAt + SESSION_TTL_MS);
+
+    // A second request in quick succession: the conditional UPDATE matches no row.
+    vi.setSystemTime(firstTouchAt + 1000);
+    const beforeSecond = writes();
+    touchSession(db, created.id);
+    expect(writes() - beforeSecond).toBe(0);
+    expect(readRow()).toEqual(afterFirst);
+
+    // Past the interval, the sliding expiry extends again.
+    vi.setSystemTime(firstTouchAt + TOUCH_INTERVAL_MS + 1000);
+    const thirdTouchAt = Date.now();
+    touchSession(db, created.id);
+    const afterThird = readRow();
+    expect(new Date(afterThird.last_seen_at).getTime()).toBe(thirdTouchAt);
+    expect(new Date(afterThird.expires_at).getTime()).toBe(thirdTouchAt + SESSION_TTL_MS);
+    expect(new Date(afterThird.expires_at).getTime()).toBeGreaterThan(new Date(afterFirst.expires_at).getTime());
+  });
+
+  it("stamps the user's last_seen_at on a write, so it survives the session being swept (#1364)", async () => {
+    const created = createSession(db, userId);
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(Date.now() + TOUCH_INTERVAL_MS + 1000);
+    const touchedAt = new Date().toISOString();
+    touchSession(db, created.id);
+    vi.setSystemTime(Date.parse(touchedAt) + SESSION_TTL_MS + 1000);
+    await sweepExpiredSessions(db, { warn: () => undefined });
+    expect(db.prepare('SELECT COUNT(*) AS n FROM sessions').get()).toEqual({ n: 0 });
+    expect(db.prepare('SELECT last_seen_at FROM users WHERE id = ?').get(userId)).toEqual({ last_seen_at: touchedAt });
   });
 });
 
@@ -141,5 +194,73 @@ describe('revokeAllSessionsForUser', () => {
     expect(getSession(db, mine1.id)).toBeNull();
     expect(getSession(db, mine2.id)).toBeNull();
     expect(getSession(db, other.id)).not.toBeNull();
+  });
+});
+
+describe('sweepExpiredSessions', () => {
+  function insertSession(id: string, expiresAt: string, oidcIdToken: string | null = null): void {
+    db.prepare(
+      'INSERT INTO sessions (id, user_id, created_at, expires_at, last_seen_at, oidc_id_token) VALUES (?, ?, ?, ?, ?, ?)',
+    ).run(id, userId, '2026-01-01T00:00:00.000Z', expiresAt, '2026-01-01T00:00:00.000Z', oidcIdToken);
+  }
+  const ids = () => (db.prepare('SELECT id FROM sessions ORDER BY id').all() as { id: string }[]).map((r) => r.id);
+  const noLog = { warn: () => undefined };
+
+  it('deletes an aged row (and an OIDC row with its token), keeps a valid one and one expiring exactly now', async () => {
+    const now = new Date('2026-06-01T12:00:00.000Z');
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(now);
+    insertSession('aged', new Date(now.getTime() - 1).toISOString());
+    insertSession('aged-oidc', new Date(now.getTime() - 60_000).toISOString(), 'raw-id-token');
+    insertSession('exactly-now', now.toISOString());
+    insertSession('valid', new Date(now.getTime() + 60_000).toISOString());
+
+    expect(await sweepExpiredSessions(db, noLog)).toBe(2);
+    expect(ids()).toEqual(['exactly-now', 'valid']);
+    expect(db.prepare('SELECT COUNT(*) AS n FROM sessions WHERE oidc_id_token IS NOT NULL').get()).toEqual({ n: 0 });
+  });
+
+  it('ages a session created by createSession past its TTL and removes it', async () => {
+    const created = createSession(db, userId);
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(Date.now() + SESSION_TTL_MS + 1000);
+    await sweepExpiredSessions(db, noLog);
+    expect(db.prepare('SELECT id FROM sessions WHERE id = ?').get(created.id)).toBeUndefined();
+  });
+
+  it('removes more than one batch of expired rows through the batch loop', async () => {
+    const total = SWEEP_BATCH_SIZE * 2 + 7;
+    const insert = db.prepare(
+      'INSERT INTO sessions (id, user_id, created_at, expires_at, last_seen_at) VALUES (?, ?, ?, ?, ?)',
+    );
+    db.exec('BEGIN');
+    for (let i = 0; i < total; i++) {
+      insert.run(`old-${String(i)}`, userId, 'x', '2020-01-01T00:00:00.000Z', 'x');
+    }
+    db.exec('COMMIT');
+    insertSession('valid', '2999-01-01T00:00:00.000Z');
+
+    expect(await sweepExpiredSessions(db, noLog)).toBe(total);
+    expect(ids()).toEqual(['valid']);
+  });
+
+  it('never overlaps: a second call during a running sweep returns at once', async () => {
+    const insert = db.prepare(
+      'INSERT INTO sessions (id, user_id, created_at, expires_at, last_seen_at) VALUES (?, ?, ?, ?, ?)',
+    );
+    for (let i = 0; i < SWEEP_BATCH_SIZE + 1; i++) {
+      insert.run(`old-${String(i)}`, userId, 'x', '2020-01-01T00:00:00.000Z', 'x');
+    }
+    const first = sweepExpiredSessions(db, noLog);
+    expect(await sweepExpiredSessions(db, noLog)).toBe(0);
+    expect(await first).toBe(SWEEP_BATCH_SIZE + 1);
+  });
+
+  it('logs a failure with warn and never throws', async () => {
+    const warn = vi.fn();
+    const closed = openDatabase(':memory:');
+    closed.close();
+    await expect(sweepExpiredSessions(closed, { warn })).resolves.toBe(0);
+    expect(warn).toHaveBeenCalledOnce();
   });
 });
