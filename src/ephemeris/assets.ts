@@ -60,7 +60,7 @@ export const EPHEMERIS_DATA_FILES: readonly EphemerisAsset[] = [
  */
 export const FIXED_STARS_ASSET: EphemerisAsset = {
   file: 'sefstars.txt',
-  url: 'https://raw.githubusercontent.com/aloistr/swisseph/master/ephe/sefstars.txt',
+  url: 'https://raw.githubusercontent.com/aloistr/swisseph/bb65079744e63e6610ab24f188e88b27ac1965f9/ephe/sefstars.txt',
   bytes: 136_618,
   sha256: '18b0dcafbe5b7240773daba2c038a325f5b3fc4163f61e0a7f4e92abd4f517c6',
   description: 'Fixed star names, positions and proper motions',
