@@ -2,7 +2,7 @@
 
 Hand-rolled SVG rendering layer: chart wheels (single/bi-/tri-ring), aspect webs, overlays (antiscia/declination/dial90), aspect matrix, diagrams, glyphs, settings, and export support. No third-party charting library (except one adapter); CSP forbids icon fonts.
 
-- `acg-map.ts` — Astrocartography world map (AC/DC/MC/IC + local-space lines) and the same lines as data for its text equivalent (#1371). Deps: `astrology/astrocartography`, `astrology/bodies`, `domain/astrocartography`.
+- `acg-map.ts` — Astrocartography world map (AC/DC/MC/IC + local-space lines), collision-free line-name placement at phone width (#1370) and the same lines as data for its text equivalent (#1371). Deps: `astrology/astrocartography`, `astrology/bodies`, `domain/astrocartography`.
 - `antiscia-overlay.ts` — Antiscia/contra-antiscia chord overlay. Deps: `astrology/antiscia`, `./wheel`.
 - `aspect-matrix.ts` — Lower-triangular aspect staircase grid: under the wheel in the sheet and PDF export; its position and orb helpers also feed the on-screen `ui/AspectMatrixGrid`. Deps: `astrology/signs`, `./aspect-web`, `./glyphs`, `./sheet-geometry`.
 - `coastline-110m.ts` — Generated Natural Earth 1:110m coastline (public domain) as a degree-space SVG path, loaded lazily under the ACG map (#667). Deps: none.

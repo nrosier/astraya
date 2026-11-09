@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { AcgMapInput } from '../src/chart/acg-map.js';
-import { renderAcgMapSvg } from '../src/chart/acg-map.js';
+import { ACG_LABEL_PX, acgLabelPlacements, renderAcgMapSvg } from '../src/chart/acg-map.js';
 import type { AcgLine } from '../src/domain/astrocartography.js';
 import { SE } from '../src/ephemeris/generated-constants.js';
 
@@ -225,5 +225,76 @@ describe('renderAcgMapSvg coastline (#667)', () => {
       expect(Number(y)).toBeGreaterThanOrEqual(0);
       expect(Number(y)).toBeLessThanOrEqual(180);
     }
+  });
+});
+
+describe('label placement at phone width (#1370)', () => {
+  const LABELS = {
+    bodyName: (key: string) => key.charAt(0).toUpperCase() + key.slice(1),
+    kinds: { MC: 'MC', IC: 'IC', AC: 'AC', DC: 'DC' },
+    legendKinds: {
+      MC: 'MC (Midheaven)',
+      IC: 'IC (Nadir)',
+      AC: 'AC (Ascendant)',
+      DC: 'DC (Descendant)',
+      localSpace: 'Local Space',
+    },
+  };
+  const BODIES = [SE.SE_SUN, SE.SE_MOON, SE.SE_MERCURY, SE.SE_VENUS, SE.SE_MARS, SE.SE_JUPITER, SE.SE_SATURN];
+  const crowded: AcgLine[] = BODIES.flatMap((body, index): AcgLine[] => {
+    const longitude = -60 + index * 6;
+    const curve = (shift: number) => [
+      {
+        segments: Array.from({ length: 5 }, (_, step) => ({
+          latitude: 60 - step * 30,
+          longitude: longitude + shift + step,
+        })),
+      },
+    ];
+    return [
+      { kind: 'MC', body, longitude },
+      { kind: 'IC', body, longitude: longitude + 180 > 180 ? longitude - 180 : longitude + 180 },
+      { kind: 'AC', body, segments: curve(3).map((c) => c.segments) },
+      { kind: 'DC', body, segments: curve(-3).map((c) => c.segments) },
+    ];
+  });
+
+  for (const width of [320, 390, 600, 900]) {
+    it(`places no two label boxes on top of each other at ${String(width)}px, at full size`, () => {
+      const { placed } = acgLabelPlacements(baseInput({ lines: crowded }), LABELS, width, ACG_LABEL_PX);
+      const boxes = [...placed.values()];
+      expect(boxes.length).toBeGreaterThan(0);
+      for (const [i, a] of boxes.entries()) {
+        expect(a.x0).toBeGreaterThanOrEqual(0);
+        expect(a.x1).toBeLessThanOrEqual(width);
+        for (const b of boxes.slice(i + 1)) {
+          const apart = a.x1 <= b.x0 || b.x1 <= a.x0 || a.y1 <= b.y0 || b.y1 <= a.y0;
+          expect(apart, `${a.text} and ${b.text}`).toBe(true);
+        }
+      }
+    });
+  }
+
+  it('keeps the label size at the design size when drawn at phone width, and counts what it leaves off', () => {
+    const map = renderAcgMapSvg(baseInput({ lines: crowded }), {
+      width: 390,
+      labels: LABELS,
+      minLabelPx: ACG_LABEL_PX,
+    });
+    expect(map.markup).toContain('viewBox="0 0 390 ');
+    const sizes = [...map.markup.matchAll(/class="acg-label [^"]*"/g)].length;
+    expect(sizes + map.omittedLabels).toBe(crowded.length);
+    for (const [, size] of map.markup.matchAll(/font-size="([\d.]+)"/g)) {
+      expect(Number(size)).toBeGreaterThanOrEqual(ACG_LABEL_PX);
+    }
+  });
+
+  it('names every line on a sparse map, and leaves none off', () => {
+    const map = renderAcgMapSvg(baseInput({ lines: [{ kind: 'MC', body: SE.SE_SUN, longitude: 10 }] }), {
+      width: 390,
+      labels: LABELS,
+      minLabelPx: ACG_LABEL_PX,
+    });
+    expect(map.omittedLabels).toBe(0);
   });
 });
