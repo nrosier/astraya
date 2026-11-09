@@ -553,6 +553,7 @@ export async function createSyncEngine(options: SyncEngineOptions): Promise<Sync
         setStatus({
           kind: 'failing',
           since: failingSince,
+          errorKind: error instanceof SyncError ? error.kind : 'unknown',
           message: error instanceof Error ? error.message : String(error),
         });
         // Retrying an unauthorized request is pointless until something re-establishes the

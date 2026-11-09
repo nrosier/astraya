@@ -28,6 +28,7 @@ import { useSymbolClass } from './symbol-setting.js';
 import { useLocale } from './locale.js';
 import { formatCoordinate } from './format.js';
 import type { Coordinates } from '../time/types.js';
+import { failureText } from './api-error.js';
 
 interface Status {
   readonly kind: StatusKind;
@@ -89,7 +90,7 @@ export function PersonFileActions({
         setExportStatus({ kind: 'success', text: t.exported('Astraya JSON') });
       })
       .catch((error: unknown) => {
-        setExportStatus({ kind: 'error', text: error instanceof Error ? error.message : String(error) });
+        setExportStatus({ kind: 'error', text: failureText(error) });
       });
   };
   const exportCsv = (): void => {
@@ -124,7 +125,7 @@ export function PersonFileActions({
         setImportStatus(undefined);
       },
       (error: unknown) => {
-        setImportStatus({ kind: 'error', text: error instanceof Error ? error.message : String(error) });
+        setImportStatus({ kind: 'error', text: failureText(error) });
       },
     );
   };

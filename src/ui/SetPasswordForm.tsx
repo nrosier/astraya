@@ -20,6 +20,7 @@ import { sharedMessages } from './shared.messages.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { DocumentTitle } from './document-title.js';
 import { Button } from './primitives/Button.js';
+import { apiErrorText } from './api-error.js';
 
 export function SetPasswordForm(): React.JSX.Element {
   const [token] = useState(() => setPasswordToken(window.location.hash));
@@ -67,7 +68,7 @@ export function SetPasswordForm(): React.JSX.Element {
         setDone(true);
       })
       .catch((cause: unknown) => {
-        setError(cause instanceof Error ? cause.message : String(cause));
+        setError(apiErrorText(cause));
       })
       .finally(() => {
         setBusy(false);

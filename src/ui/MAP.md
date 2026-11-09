@@ -26,6 +26,8 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `AccountPanel.tsx` + `AccountPanel.messages.ts` — Staged sign-in dialog (OpenID / local, #781; #651) opened from the profile tile, account adoption, local-data removal; mounts `ProfileTile` (#964). Deps: `session-context`, `sync/auth-client`, `oidc-pkce`, `primitives/StagedDialog`, `ProfileTile`.
 - `AdminNav.tsx` + `AdminNav.messages.ts` — Admin tab strip (users/usage/corpus/candidates) in the shared `ScrollingTabRow` (#818). Deps: `./admin-nav`, `./ScrollingTabRow`, `./primitives/Select`.
 - `AdminPanel.tsx` + `AdminPanel.messages.ts` — User CRUD + AI-usage reporting, as Users and AI usage views. Deps: `sync/admin-client`, `session-context`, `admin-status`.
+- `api-error.messages.ts` — en/nl wording for every stable server error code, an HTTP-status fallback and a generic sentence (#1365). Deps: none.
+- `api-error.ts` — Turns a caught `ApiError` into translated copy by code, then status, then fallback; never shows `Error.message` (#1365). Deps: `sync/api-error`, `locale`, `api-error.messages`.
 - `admin-status.ts` — Pure 24-hour activity and usage-total helpers for the admin screens. Deps: `sync/admin-client`.
 - `App.tsx` + `App.messages.ts` — Root router + sticky header + lazy-loading boundary. Deps: `route`, `session-context`, `store-context`, `person-screens`.
 - `calculation-basis.ts` + `calculation-basis.messages.ts` — The full calculation-basis line (zodiac, house system, rulers, orbs) for page headers (#1059), for a person or an engine-defaults chart type (draconic, harmonic, relocated, synastry, composite). Deps: `astrology/houses`, `astrology/orb-profiles`, `astrology/orb-library`, `RulershipSetting.messages`, `ExtendedSettingsPanel.messages`.
@@ -202,7 +204,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `session-context.tsx` — Owns account + store lifecycle + auth + sync-engine + anonymous-adoption prompt; binds the account preferences to every active store and keeps them out of adoption (#1066); binds sync to the signed-in account and stops it before logout (#1378). Deps: `store/store`, `store/account`, `sync/auth-client`, `sync/engine`, `./oidc-pkce`, `./account-preferences`.
 - `shared.messages.ts` — Common i18n strings reused across many components. Deps: none.
 - `status.messages.ts` — en/nl for sync-status indicator. Deps: none.
-- `status.ts` — Decides sync-status label/tone/detail from sync/persistence/pending state, plus the held-back-notes line (#919). Deps: `store/persist`.
+- `status.ts` — Decides sync-status label/tone/detail from sync/persistence/pending state, plus the held-back-notes line (#919). Deps: `store/persist`, `sync/engine`.
 - `store-context.tsx` — React adapter exposing op-log store via `useSyncExternalStore`. Deps: `store/fold`, `store/store`, `./trace`.
 - `symbol-setting.ts` — Device preference for symbol class (glyphs/Unicode/text). Deps: `chart/symbol-class`.
 - `synastry-text.ts` — Resolves Synastry aspect-row interpretation text. Deps: `interpretation/compose`, `interpretation/schema`.

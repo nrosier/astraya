@@ -37,6 +37,7 @@
  */
 import { bodyById, bodyByKey } from '../astrology/bodies.js';
 import type { ChartData } from '../domain/chart-compute.js';
+import { ApiError } from '../sync/api-error.js';
 import type { SynastryData } from '../domain/synastry.js';
 import type { FocusContext } from './focus-context-schema.js';
 import type { ResultBasis, ResultKind } from './result-basis.js';
@@ -57,18 +58,14 @@ export type {
   Tier2Section,
 } from './tier2-contract.js';
 
-export class Tier2Error extends Error {
-  readonly status: number;
-  /** `'customization-rejected'` when the server's verification phase refused the custom prompt (#411). */
-  readonly code: string | undefined;
+export class Tier2Error extends ApiError {
+  // `code` (on `ApiError`) is `'customization-rejected'` when the server's verification phase refused the custom prompt (#411).
   /** The verifier's own explanation for that rejection — absent when it gave none. */
   readonly reason: string | undefined;
 
   constructor(message: string, status: number, code?: string, reason?: string) {
-    super(message);
+    super(message, status, code);
     this.name = 'Tier2Error';
-    this.status = status;
-    this.code = code;
     this.reason = reason;
   }
 }

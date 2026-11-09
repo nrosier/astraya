@@ -22,6 +22,7 @@ import { dirname, resolve } from 'node:path';
 import { readFile } from 'node:fs/promises';
 import Fastify, { type FastifyError } from 'fastify';
 import { STATUS_CODES } from 'node:http';
+import { errorCodeForStatus } from './error-codes.ts';
 import fastifyStatic from '@fastify/static';
 import fastifyCookie from '@fastify/cookie';
 import fastifyRateLimit from '@fastify/rate-limit';
@@ -128,13 +129,18 @@ export async function build(options: BuildOptions = {}) {
   app.setErrorHandler((error: FastifyError, request, reply) => {
     const status = error.statusCode ?? 500;
     if (status >= 400 && status < 500) {
-      return reply
-        .code(status)
-        .send({ statusCode: status, error: STATUS_CODES[status] ?? 'Error', message: error.message });
+      return reply.code(status).send({
+        statusCode: status,
+        code: errorCodeForStatus(status),
+        error: STATUS_CODES[status] ?? 'Error',
+        message: error.message,
+      });
     }
     request.log.error({ err: error }, 'unhandled error');
     const generic = STATUS_CODES[status] ?? 'Internal Server Error';
-    return reply.code(status).send({ statusCode: status, error: generic, message: generic });
+    return reply
+      .code(status)
+      .send({ statusCode: status, code: errorCodeForStatus(status), error: generic, message: generic });
   });
 
   const db = openDatabase(options.dbPath ?? DB_PATH);
@@ -184,7 +190,7 @@ export async function build(options: BuildOptions = {}) {
   app.addHook('onRequest', async (request, reply) => {
     const allowedHosts = publicOrigin === null ? [request.host] : [request.host, publicOrigin.host];
     if (isCrossOriginWrite({ method: request.method, origin: request.headers.origin, allowedHosts })) {
-      await reply.code(403).send({ error: 'Cross-origin request rejected' });
+      await reply.code(403).send({ code: 'cross-origin-rejected', error: 'Cross-origin request rejected' });
     }
   });
 
@@ -255,7 +261,7 @@ export async function build(options: BuildOptions = {}) {
   // SPA fallback. Routes are client-side, so an unknown path is the app's problem
   // to resolve, not a 404 — except for API paths, where a 404 is the honest answer.
   app.setNotFoundHandler(async (request, reply) => {
-    if (request.url.startsWith('/api/')) return reply.code(404).send({ error: 'Not found' });
+    if (request.url.startsWith('/api/')) return reply.code(404).send({ code: 'not-found', error: 'Not found' });
     if (oidcConfig) {
       return reply
         .type('text/html; charset=utf-8')

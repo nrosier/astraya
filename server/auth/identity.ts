@@ -179,7 +179,7 @@ export function requireUser(db: Database) {
   return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
     const user = resolveUser(db, request);
     if (!user) {
-      await reply.code(401).send({ error: 'Not authenticated' });
+      await reply.code(401).send({ code: 'not-authenticated', error: 'Not authenticated' });
       return;
     }
     request.user = user;
@@ -190,11 +190,11 @@ function requireRole(db: Database, required: Role, message: string) {
   return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
     const user = resolveUser(db, request);
     if (!user) {
-      await reply.code(401).send({ error: 'Not authenticated' });
+      await reply.code(401).send({ code: 'not-authenticated', error: 'Not authenticated' });
       return;
     }
     if (!hasRole(user.role, required)) {
-      await reply.code(403).send({ error: message });
+      await reply.code(403).send({ code: 'forbidden', error: message });
       return;
     }
     request.user = user;

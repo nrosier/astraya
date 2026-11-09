@@ -165,22 +165,29 @@ export function registerAdminRoutes(app: FastifyInstance, db: Database): void {
     { preHandler: requireSuperAdmin(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
     async (request, reply) => {
       if (loadOidcConfig()) {
-        return reply.code(409).send({ error: 'Local accounts cannot be created while OIDC is configured' });
+        return reply.code(409).send({
+          code: 'local-accounts-disabled',
+          error: 'Local accounts cannot be created while OIDC is configured',
+        });
       }
 
       const body = bodyObject(request.body);
-      if (!body) return reply.code(400).send({ error: BODY_REQUIRED_ERROR });
+      if (!body) return reply.code(400).send({ code: 'body-required', error: BODY_REQUIRED_ERROR });
       const { username, role } = body;
       if (typeof username !== 'string' || username === '') {
-        return reply.code(400).send({ error: 'username is required' });
+        return reply.code(400).send({ code: 'username-required', error: 'username is required' });
       }
       if (username.length > MAX_USERNAME_LENGTH) {
-        return reply.code(400).send({ error: `username must be at most ${String(MAX_USERNAME_LENGTH)} characters` });
+        return reply.code(400).send({
+          code: 'username-too-long',
+          error: `username must be at most ${String(MAX_USERNAME_LENGTH)} characters`,
+        });
       }
       if (role !== undefined && !isRole(role)) {
-        return reply.code(400).send({ error: `role must be one of ${ROLES.join(', ')}` });
+        return reply.code(400).send({ code: 'invalid-role', error: `role must be one of ${ROLES.join(', ')}` });
       }
-      if (getUserByUsername(db, username)) return reply.code(409).send({ error: 'Username already taken' });
+      if (getUserByUsername(db, username))
+        return reply.code(409).send({ code: 'username-taken', error: 'Username already taken' });
 
       const id = randomUUID();
       const now = new Date().toISOString();
@@ -201,7 +208,7 @@ export function registerAdminRoutes(app: FastifyInstance, db: Database): void {
     { preHandler: requireSuperAdmin(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
     async (request, reply) => {
       const user = getAdminUser(db, request.params.id);
-      if (!user) return reply.code(404).send({ error: 'No such user' });
+      if (!user) return reply.code(404).send({ code: 'no-such-user', error: 'No such user' });
       const token = mintPasswordSetToken(db, user.id);
       // A reset is for an account that may be compromised: sign every session out now (#1360).
       revokeAllSessionsForUser(db, user.id);
@@ -214,9 +221,11 @@ export function registerAdminRoutes(app: FastifyInstance, db: Database): void {
     { preHandler: requireSuperAdmin(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
     async (request, reply) => {
       const user = getAdminUser(db, request.params.id);
-      if (!user) return reply.code(404).send({ error: 'No such user' });
+      if (!user) return reply.code(404).send({ code: 'no-such-user', error: 'No such user' });
       if (isOnlyRemainingSuperAdmin(db, user.id)) {
-        return reply.code(409).send({ error: 'Cannot disable the only remaining super admin' });
+        return reply
+          .code(409)
+          .send({ code: 'last-super-admin', error: 'Cannot disable the only remaining super admin' });
       }
       db.prepare('UPDATE users SET disabled_at = ? WHERE id = ?').run(new Date().toISOString(), user.id);
       revokeAllSessionsForUser(db, user.id);
@@ -229,7 +238,7 @@ export function registerAdminRoutes(app: FastifyInstance, db: Database): void {
     { preHandler: requireSuperAdmin(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
     async (request, reply) => {
       const user = getAdminUser(db, request.params.id);
-      if (!user) return reply.code(404).send({ error: 'No such user' });
+      if (!user) return reply.code(404).send({ code: 'no-such-user', error: 'No such user' });
       db.prepare('UPDATE users SET disabled_at = NULL WHERE id = ?').run(user.id);
       return reply.send({ user: getAdminUser(db, user.id) });
     },
@@ -242,16 +251,19 @@ export function registerAdminRoutes(app: FastifyInstance, db: Database): void {
     { preHandler: requireSuperAdmin(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
     async (request, reply) => {
       const body = bodyObject(request.body);
-      if (!body) return reply.code(400).send({ error: BODY_REQUIRED_ERROR });
+      if (!body) return reply.code(400).send({ code: 'body-required', error: BODY_REQUIRED_ERROR });
       const { role } = body;
-      if (!isRole(role)) return reply.code(400).send({ error: `role must be one of ${ROLES.join(', ')}` });
+      if (!isRole(role))
+        return reply.code(400).send({ code: 'invalid-role', error: `role must be one of ${ROLES.join(', ')}` });
       const user = getAdminUser(db, request.params.id);
-      if (!user) return reply.code(404).send({ error: 'No such user' });
+      if (!user) return reply.code(404).send({ code: 'no-such-user', error: 'No such user' });
       if (user.id === actorId(request)) {
-        return reply.code(409).send({ error: 'You cannot change your own role' });
+        return reply.code(409).send({ code: 'own-role-change', error: 'You cannot change your own role' });
       }
       if (user.role === 'super_admin' && role !== 'super_admin' && isOnlyRemainingSuperAdmin(db, user.id)) {
-        return reply.code(409).send({ error: 'Cannot demote the only remaining super admin' });
+        return reply
+          .code(409)
+          .send({ code: 'last-super-admin', error: 'Cannot demote the only remaining super admin' });
       }
       db.prepare('UPDATE users SET role = ? WHERE id = ?').run(role, user.id);
       return reply.send({ user: getAdminUser(db, user.id) });
@@ -268,7 +280,7 @@ export function registerAdminRoutes(app: FastifyInstance, db: Database): void {
     { preHandler: requireSuperAdmin(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
     async (request, reply) => {
       const user = getAdminUser(db, request.params.id);
-      if (!user) return reply.code(404).send({ error: 'No such user' });
+      if (!user) return reply.code(404).send({ code: 'no-such-user', error: 'No such user' });
       const impact = previewDeletionImpact(db, user.id, loadEncryptionKey());
       return reply.send(impact);
     },
@@ -279,9 +291,11 @@ export function registerAdminRoutes(app: FastifyInstance, db: Database): void {
     { preHandler: requireSuperAdmin(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
     async (request, reply) => {
       const user = getAdminUser(db, request.params.id);
-      if (!user) return reply.code(404).send({ error: 'No such user' });
+      if (!user) return reply.code(404).send({ code: 'no-such-user', error: 'No such user' });
       if (isOnlyRemainingSuperAdmin(db, user.id)) {
-        return reply.code(409).send({ error: 'Cannot delete the only remaining super admin' });
+        return reply
+          .code(409)
+          .send({ code: 'last-super-admin', error: 'Cannot delete the only remaining super admin' });
       }
       // ON DELETE CASCADE on both sessions.user_id and ops.user_id takes care of the rest.
       db.prepare('DELETE FROM users WHERE id = ?').run(user.id);

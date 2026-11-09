@@ -37,6 +37,7 @@ import type { AuthUser } from '../src/sync/auth-client.js';
 import type { EssentialDignities } from '../src/astrology/dignities.js';
 import type { ChartData } from '../src/domain/chart-compute.js';
 import type { BodyId, BodyPosition, Degrees, HousePositions } from '../src/ephemeris/types.js';
+import { apiErrorMessages } from '../src/ui/api-error.messages.js';
 
 process.env.LOG_LEVEL = 'silent';
 
@@ -994,11 +995,12 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
     container.remove();
   });
 
-  it('shows the server’s own error message on a failed Generate call', async () => {
+  it('shows the translated message for the refusal code on a failed Generate call', async () => {
     generateResponse = () =>
-      new Response(JSON.stringify({ error: 'Daily usage limit reached for your account. Try again tomorrow.' }), {
-        status: 503,
-      });
+      new Response(
+        JSON.stringify({ code: 'user-cap', error: 'Daily usage limit reached for your account. Try again tomorrow.' }),
+        { status: 503 },
+      );
     const { container, root } = await mountSignedIn();
 
     await act(async () => {
@@ -1015,7 +1017,7 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
       expect(panelOf(container).querySelector('[role="alert"]')).not.toBeNull();
     });
     expect(panelOf(container).querySelector('[role="alert"]')?.textContent).toBe(
-      reportViewMessages.en.tier2Error('Daily usage limit reached for your account. Try again tomorrow.'),
+      reportViewMessages.en.tier2Error(apiErrorMessages.en.codes['user-cap']),
     );
     expect(panelOf(container).querySelector('.tier2-result')).toBeNull();
 

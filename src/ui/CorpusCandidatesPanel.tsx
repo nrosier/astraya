@@ -42,6 +42,7 @@ import { EmptyState } from './primitives/EmptyState.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { PageHeader } from './PageHeader.js';
 import { CorpusSubmissionsSection } from './CorpusSubmissionsSection.js';
+import { apiErrorText } from './api-error.js';
 
 /** The triage tone for a candidate: a mismatch is a warning-level fact, a match is plain (never green). */
 function triageTone(signal: CorpusCandidate['triageSignal']): BadgeTone | undefined {
@@ -85,7 +86,7 @@ export function CorpusCandidatesPanel(): React.JSX.Element {
     setCandidates(undefined);
     setLoadError(undefined);
     void load().catch((error: unknown) => {
-      if (!cancelled) setLoadError(error instanceof Error ? error.message : String(error));
+      if (!cancelled) setLoadError(apiErrorText(error));
     });
     return () => {
       cancelled = true;
@@ -132,7 +133,7 @@ export function CorpusCandidatesPanel(): React.JSX.Element {
         return load();
       })
       .catch((cause: unknown) => {
-        setDecideError(cause instanceof Error ? cause.message : String(cause));
+        setDecideError(apiErrorText(cause));
       })
       .finally(() => {
         setDeciding(false);

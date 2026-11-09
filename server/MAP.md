@@ -1,6 +1,6 @@
 # server/ — Map
 
-12 root files + 3 subdirectories. See `server/auth/MAP.md`, `server/ops/MAP.md`, `server/interpretation/MAP.md`.
+13 root files + 3 subdirectories. See `server/auth/MAP.md`, `server/ops/MAP.md`, `server/interpretation/MAP.md`.
 
 - `corpus-candidates-routes.ts` — Admin review surface for bulk-generated corpus text (#370). List/filter/import/accept/reject pending candidates (lint-checked on accept). Deps: corpus-candidates, auth/identity, src/interpretation/lint.
 - `corpus-candidates.ts` — Pending-candidate queue: CRUD, bulk-import (idempotent per key/locale/source), accept/reject (promotes to override or deletes). Deps: db, corpus-overrides.
@@ -9,6 +9,7 @@
 - `corpus-submissions-routes.ts` — User-submitted corrections (#1338): signed-in `POST /api/corpus-submissions` with per-user caps and licence acceptance, admin-only list, and admin approve (live override at once, D2) or reject (row kept, D4); no public or delete route. Deps: corpus-submissions, corpus-overrides, auth/identity, src/interpretation/lint, src/interpretation/submission-licence.
 - `corpus-submissions.ts` — Insert/count/list/get/decide data layer for the `corpus_submissions` table (history rows, never deleted). Deps: db, corpus-overrides.
 - `csp.ts` — Single CSP definition (structural truth: "shipped app never calls model provider at runtime"). Builds response-header + meta-tag strings, strips static tag once issuer set. Deps: none.
+- `error-codes.ts` — Stable machine `code` for API error bodies (#1365); status-derived fallback for errors Fastify raises itself. Deps: none.
 - `request-body.ts` — Shared JSON-body guard: a missing, null or non-object body becomes a 400 (#1362). Deps: none.
 - `profile-overlay.ts` — Serves the optional `ASTRAYA_EASTER_EGG` setting read-only for the birth-record easter egg (#697). Deps: none.
 - `csrf.ts` — CSRF defence (Origin header host check against allowed hosts, never relay on SameSite). Deps: none.

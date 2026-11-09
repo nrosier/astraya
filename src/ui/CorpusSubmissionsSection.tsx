@@ -25,6 +25,7 @@ import { Badge } from './primitives/Badge.js';
 import { Button } from './primitives/Button.js';
 import { EmptyState } from './primitives/EmptyState.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import { apiErrorText } from './api-error.js';
 
 export function CorpusSubmissionsSection(): React.JSX.Element {
   const t = useMessages(corpusSubmissionsSectionMessages);
@@ -41,7 +42,7 @@ export function CorpusSubmissionsSection(): React.JSX.Element {
         setSubmissions(loaded);
       },
       (error: unknown) => {
-        setLoadError(error instanceof Error ? error.message : String(error));
+        setLoadError(apiErrorText(error));
       },
     );
 
@@ -52,7 +53,7 @@ export function CorpusSubmissionsSection(): React.JSX.Element {
         if (!cancelled) setSubmissions(loaded);
       },
       (error: unknown) => {
-        if (!cancelled) setLoadError(error instanceof Error ? error.message : String(error));
+        if (!cancelled) setLoadError(apiErrorText(error));
       },
     );
     return () => {
@@ -69,7 +70,7 @@ export function CorpusSubmissionsSection(): React.JSX.Element {
     void (decision === 'approve' ? approveCorpusSubmission(id) : rejectCorpusSubmission(id))
       .then(() => load())
       .catch((cause: unknown) => {
-        setDecideError(cause instanceof Error ? cause.message : String(cause));
+        setDecideError(apiErrorText(cause));
         // The row may have been decided elsewhere; show the current state.
         return load();
       })

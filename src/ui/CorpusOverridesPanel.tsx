@@ -51,6 +51,7 @@ import { EmptyState } from './primitives/EmptyState.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { PageHeader } from './PageHeader.js';
 import { useRegisterExports } from './export-registry.js';
+import { apiErrorText } from './api-error.js';
 
 const PAGE_SIZE = 50;
 
@@ -130,7 +131,7 @@ export function CorpusOverridesPanel(): React.JSX.Element {
     setData(undefined);
     setLoadError(undefined);
     void load().catch((error: unknown) => {
-      if (!cancelled) setLoadError(error instanceof Error ? error.message : String(error));
+      if (!cancelled) setLoadError(apiErrorText(error));
     });
     return () => {
       cancelled = true;
@@ -233,7 +234,7 @@ export function CorpusOverridesPanel(): React.JSX.Element {
         return load();
       })
       .catch((cause: unknown) => {
-        setSaveError(cause instanceof Error ? cause.message : String(cause));
+        setSaveError(apiErrorText(cause));
       })
       .finally(() => {
         setBusyKey(undefined);
@@ -259,7 +260,7 @@ export function CorpusOverridesPanel(): React.JSX.Element {
         return load();
       })
       .catch((cause: unknown) => {
-        setSaveError(cause instanceof Error ? cause.message : String(cause));
+        setSaveError(apiErrorText(cause));
       })
       .finally(() => {
         setBusyKey(undefined);
@@ -273,7 +274,7 @@ export function CorpusOverridesPanel(): React.JSX.Element {
         downloadBlob(`astraya-corpus-overrides-${corpusLocale}.json`, blob);
       })
       .catch((cause: unknown) => {
-        setLoadError(cause instanceof Error ? cause.message : String(cause));
+        setLoadError(apiErrorText(cause));
       });
   };
 

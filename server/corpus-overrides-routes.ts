@@ -64,7 +64,7 @@ export function registerCorpusOverrideRoutes(app: FastifyInstance, db: Database)
     { config: { rateLimit: { max: 120, timeWindow: '1 minute' } } },
     async (request, reply) => {
       if (!isLocale(request.params.locale)) {
-        return reply.code(400).send({ error: `locale must be one of ${LOCALES.join(', ')}` });
+        return reply.code(400).send({ code: 'invalid-locale', error: `locale must be one of ${LOCALES.join(', ')}` });
       }
       const overrides = listCorpusOverrides(db, request.params.locale);
       return reply.send({ entries: overrides.map((override) => toCorpusEntry(override, { includeReviewer: false })) });
@@ -77,7 +77,7 @@ export function registerCorpusOverrideRoutes(app: FastifyInstance, db: Database)
     async (request, reply) => {
       const { locale } = request.query;
       if (locale !== undefined && !isLocale(locale)) {
-        return reply.code(400).send({ error: `locale must be one of ${LOCALES.join(', ')}` });
+        return reply.code(400).send({ code: 'invalid-locale', error: `locale must be one of ${LOCALES.join(', ')}` });
       }
       const overrides = listCorpusOverrides(db, locale);
       return reply.send({ overrides });
@@ -89,19 +89,27 @@ export function registerCorpusOverrideRoutes(app: FastifyInstance, db: Database)
     { preHandler: requireAdmin(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
     async (request, reply) => {
       const body = bodyObject(request.body);
-      if (!body) return reply.code(400).send({ error: BODY_REQUIRED_ERROR });
+      if (!body) return reply.code(400).send({ code: 'body-required', error: BODY_REQUIRED_ERROR });
       const { key, locale, persona, text, tier, tags } = body;
-      if (typeof key !== 'string' || key === '') return reply.code(400).send({ error: 'key is required' });
-      if (!isLocale(locale)) return reply.code(400).send({ error: `locale must be one of ${LOCALES.join(', ')}` });
+      if (typeof key !== 'string' || key === '')
+        return reply.code(400).send({ code: 'invalid-request', error: 'key is required' });
+      if (!isLocale(locale))
+        return reply.code(400).send({ code: 'invalid-locale', error: `locale must be one of ${LOCALES.join(', ')}` });
       if (persona !== undefined) {
         return reply
           .code(400)
-          .send({ error: 'persona is no longer supported: an override is a key and a language (#429)' });
+
+          .send({
+            code: 'persona-unsupported',
+            error: 'persona is no longer supported: an override is a key and a language (#429)',
+          });
       }
-      if (typeof text !== 'string' || text === '') return reply.code(400).send({ error: 'text is required' });
-      if (!isTier(tier)) return reply.code(400).send({ error: `tier must be one of ${TIERS.join(', ')}` });
+      if (typeof text !== 'string' || text === '')
+        return reply.code(400).send({ code: 'invalid-request', error: 'text is required' });
+      if (!isTier(tier))
+        return reply.code(400).send({ code: 'invalid-request', error: `tier must be one of ${TIERS.join(', ')}` });
       if (!Array.isArray(tags) || !tags.every((tag) => typeof tag === 'string')) {
-        return reply.code(400).send({ error: 'tags must be an array of strings' });
+        return reply.code(400).send({ code: 'invalid-request', error: 'tags must be an array of strings' });
       }
 
       // `lintEntry` (#354) is the same content-quality gate `tools/corpus-gen` already runs
@@ -119,9 +127,10 @@ export function registerCorpusOverrideRoutes(app: FastifyInstance, db: Database)
       };
       const lintIssues = lintEntry(candidate);
       if (lintIssues.length > 0) {
-        return reply
-          .code(400)
-          .send({ error: `Content-quality check failed: ${lintIssues.map((issue) => issue.message).join('; ')}` });
+        return reply.code(400).send({
+          code: 'content-quality-failed',
+          error: `Content-quality check failed: ${lintIssues.map((issue) => issue.message).join('; ')}`,
+        });
       }
 
       const override = upsertCorpusOverride(db, {
@@ -141,7 +150,7 @@ export function registerCorpusOverrideRoutes(app: FastifyInstance, db: Database)
     { preHandler: requireAdmin(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
     async (request, reply) => {
       const deleted = deleteCorpusOverride(db, request.params.id);
-      if (!deleted) return reply.code(404).send({ error: 'No such override' });
+      if (!deleted) return reply.code(404).send({ code: 'not-found', error: 'No such override' });
       return reply.send({ ok: true });
     },
   );
@@ -152,7 +161,7 @@ export function registerCorpusOverrideRoutes(app: FastifyInstance, db: Database)
     async (request, reply) => {
       const { locale } = request.query;
       if (locale !== undefined && !isLocale(locale)) {
-        return reply.code(400).send({ error: `locale must be one of ${LOCALES.join(', ')}` });
+        return reply.code(400).send({ code: 'invalid-locale', error: `locale must be one of ${LOCALES.join(', ')}` });
       }
       const entries = listCorpusOverrides(db, locale).map((override) => toCorpusEntry(override));
       const filename = `astraya-corpus-overrides-${locale ?? 'all'}-${new Date().toISOString().slice(0, 10)}.json`;

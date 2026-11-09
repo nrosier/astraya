@@ -25,6 +25,7 @@ import { Button } from './primitives/Button.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { SyncBadge } from './SyncBadge.js';
 import { useExclusiveOpen } from './use-exclusive-open.js';
+import { apiErrorText } from './api-error.js';
 
 const KEY = 'profile';
 
@@ -85,7 +86,7 @@ export function ProfileTile({
         onSignedOut(userId);
       })
       .catch((cause: unknown) => {
-        setError(cause instanceof Error ? cause.message : String(cause));
+        setError(apiErrorText(cause));
         setBusy(false);
       });
   };

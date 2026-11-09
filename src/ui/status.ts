@@ -21,18 +21,26 @@
 /**
  * @module ui/status
  * @purpose Decides what the sync-status indicator says and why (#101): computes a Status (tone/label/detail/action) from sync/persistence/pending/quarantine state, so the user can always tell whether their data exists anywhere but this device.
- * @conventions Pure functions taking an explicit `t` of status.messages.ts's shape rather than reading locale themselves; deliberately avoids showing "Offline" to a signed-out user and avoids "Synced" while any local change is unacknowledged; a failing sync escalates tone only after staying stale past LOUD_AFTER_MS, to avoid training users to ignore transient blips.
+ * @conventions Pure functions taking an explicit `t` of status.messages.ts's shape rather than reading locale themselves; deliberately avoids showing "Offline" to a signed-out user and avoids "Synced" while any local change is unacknowledged; a failing sync is worded by its failure kind, never by the error's own English text (#1365), and escalates tone only after staying stale past LOUD_AFTER_MS, to avoid training users to ignore transient blips.
  * @exports SyncState, StatusInput, Tone, Status, ago, describeStatus
  */
 import type { statusMessages } from './status.messages.js';
 import type { Persistence } from '../store/persist.js';
+import type { SyncErrorKind } from '../sync/engine.js';
 
 export type SyncState =
   /** Not signed in. The local store is the whole system, and that is a supported way to run. */
   | { readonly kind: 'off' }
   | { readonly kind: 'syncing' }
   | { readonly kind: 'synced'; readonly at: number }
-  | { readonly kind: 'failing'; readonly since: number; readonly message: string }
+  | {
+      readonly kind: 'failing';
+      readonly since: number;
+      /** Which failure this was; the status line words it per kind (#1365). */
+      readonly errorKind: SyncErrorKind | 'unknown';
+      /** The error's own English text. Diagnostic only: never shown, see `errorKind`. */
+      readonly message: string;
+    }
   /**
    * The server's storage quota for this account is full (#919). Not retried automatically: the
    * server will keep refusing until the account changes, so the status says so instead of
@@ -143,7 +151,7 @@ function describeSyncStatus(input: StatusInput, t: typeof statusMessages.en): St
     return {
       tone: stale ? 'warn' : 'note',
       label: stale ? t.syncFailing : t.syncRetrying,
-      detail: t.syncFailingDetail(ago(now, sync.since, t), sync.message),
+      detail: t.syncFailingDetail(ago(now, sync.since, t), t.syncFailureReason[sync.errorKind]),
       action: { href: '#/about', text: t.exportACopy },
     };
   }

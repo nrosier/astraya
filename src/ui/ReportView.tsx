@@ -92,6 +92,7 @@ import type { RulershipChoice } from '../astrology/rulership.js';
 import type { ChartData } from '../domain/chart-compute.js';
 import { NO_EXCLUSIONS, type InterpretationExclusions } from '../interpretation/rules.js';
 import { Button } from './primitives/Button.js';
+import { apiErrorText, errorDetail } from './api-error.js';
 
 type InterpretationTabKey = 'standard' | 'ai' | 'past';
 const TAB_ORDER: readonly InterpretationTabKey[] = ['standard', 'ai', 'past'];
@@ -406,7 +407,7 @@ function AiCustomizedPanel({
           setRejection({ reason: caught.reason });
           return;
         }
-        setError(caught instanceof Tier2Error ? caught.message : String(caught));
+        setError(apiErrorText(caught));
       })
       .finally(() => {
         setGenerating(false);
@@ -422,7 +423,7 @@ function AiCustomizedPanel({
         setResult(detail.sections);
       })
       .catch((caught: unknown) => {
-        setError(caught instanceof Tier2Error ? caught.message : String(caught));
+        setError(apiErrorText(caught));
       })
       .finally(() => {
         setOpenSavedId(undefined);
@@ -632,7 +633,7 @@ export function ReportView({
         if (!cancelled) setCorpus(loaded);
       })
       .catch((error: unknown) => {
-        if (!cancelled) setLoadError(error instanceof Error ? error.message : String(error));
+        if (!cancelled) setLoadError(errorDetail(error));
       });
     return () => {
       cancelled = true;

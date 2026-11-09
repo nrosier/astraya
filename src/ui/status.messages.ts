@@ -22,8 +22,18 @@ const en = {
 
   syncFailing: 'Sync failing',
   syncRetrying: 'Sync retrying',
-  syncFailingDetail: (since: string, message: string) =>
-    `Syncing has been failing since ${since}. Nothing has been lost — every change is saved on this device and will be sent when syncing recovers. ${message}`,
+  syncFailingDetail: (since: string, reason: string) =>
+    `Syncing has been failing since ${since}. Nothing has been lost — every change is saved on this device and will be sent when syncing recovers. ${reason}`,
+  syncFailureReason: {
+    offline: 'There is no network connection.',
+    unauthorized: 'Your session has expired. Sign in again to keep syncing.',
+    server: 'The server is having trouble.',
+    malformed: 'The server sent a reply this app could not read.',
+    rejected: 'The server refused a request.',
+    quota: 'This account has reached its storage limit on the server.',
+    'account-mismatch': 'This device is now signed in to a different account.',
+    unknown: 'Something unexpected went wrong.',
+  },
   exportACopy: 'Export a copy',
 
   quarantinedLabel: (n: string) => `${n} won't sync`,
@@ -75,8 +85,18 @@ const nl: typeof en = {
 
   syncFailing: 'Synchronisatie mislukt',
   syncRetrying: 'Synchronisatie opnieuw proberen',
-  syncFailingDetail: (since: string, message: string) =>
-    `Synchronisatie mislukt sinds ${since}. Er is niets verloren gegaan — elke wijziging is opgeslagen op dit apparaat en wordt verzonden zodra synchronisatie herstelt. ${message}`,
+  syncFailingDetail: (since: string, reason: string) =>
+    `Synchronisatie mislukt sinds ${since}. Er is niets verloren gegaan — elke wijziging is opgeslagen op dit apparaat en wordt verzonden zodra synchronisatie herstelt. ${reason}`,
+  syncFailureReason: {
+    offline: 'Er is geen netwerkverbinding.',
+    unauthorized: 'Je sessie is verlopen. Log opnieuw in om te blijven synchroniseren.',
+    server: 'De server heeft problemen.',
+    malformed: 'De server stuurde een antwoord dat deze app niet kon lezen.',
+    rejected: 'De server weigerde een verzoek.',
+    quota: 'Dit account heeft de opslaglimiet op de server bereikt.',
+    'account-mismatch': 'Dit apparaat is nu ingelogd bij een ander account.',
+    unknown: 'Er ging iets onverwachts mis.',
+  },
   exportACopy: 'Kopie exporteren',
 
   quarantinedLabel: (n: string) => `${n} synchroniseert niet`,
