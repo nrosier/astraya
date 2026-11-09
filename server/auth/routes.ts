@@ -135,7 +135,7 @@ export function registerAuthRoutes(app: FastifyInstance, db: Database): void {
         } catch (error) {
           // Best effort: the local session is already gone. Without the URL the browser
           // just skips ending the Authentik session.
-          app.log.warn({ error }, 'OIDC end-session lookup failed; signed out locally only');
+          app.log.warn({ err: error }, 'OIDC end-session lookup failed; signed out locally only');
         }
       }
     }
