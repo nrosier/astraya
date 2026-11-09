@@ -3,7 +3,7 @@
  */
 /**
  * @module AstrocartographyView.messages
- * @purpose English/Dutch i18n strings for the Astrocartography screen: line-type/body legends, relocation controls, and export labels.
+ * @purpose English/Dutch i18n strings for the Astrocartography screen: line-type/body legends, relocation controls, export labels, and the map's text equivalent (#1371).
  * @conventions Co-located i18n file exporting `{ en, nl }`, consumed by AstrocartographyView.tsx via `useMessages(astrocartographyViewMessages)`; `nl` is typed as `typeof en`.
  * @exports astrocartographyViewMessages
  */
@@ -43,6 +43,21 @@ const en = {
   showMeanings: 'Show meanings',
   hideMeanings: 'Hide meanings',
   error: (message: string) => `The map could not be calculated. ${message}`,
+
+  equivalentCaption: 'What the map shows',
+  equivalentBody: 'Body',
+  equivalentShownAs: 'Line or marker',
+  equivalentWhere: 'Where',
+  birthplaceMarker: 'Birthplace',
+  relocationMarker: 'Relocation place',
+  coordinates: (latitude: string, longitude: string) => `${latitude}, ${longitude}`,
+  meridianWhere: (longitude: string) => `Longitude ${longitude} at every latitude`,
+  horizonSpan: (from: string, to: string) => `${from} to ${to}`,
+  horizonWhere: (spans: string) => `Drawn over latitudes ${spans}`,
+  horizonCrossing: (latitude: string, longitude: string) => `at ${latitude}: longitude ${longitude}`,
+  localSpaceWhere: (place: string, azimuth: string, reverse: string) =>
+    `Through ${place}, azimuth ${azimuth}° and ${reverse}°`,
+  listSeparator: '; ',
 };
 
 const nl: typeof en = {
@@ -81,6 +96,21 @@ const nl: typeof en = {
   showMeanings: 'Toon betekenissen',
   hideMeanings: 'Verberg betekenissen',
   error: (message: string) => `De kaart kon niet worden berekend. ${message}`,
+
+  equivalentCaption: 'Wat de kaart toont',
+  equivalentBody: 'Hemellichaam',
+  equivalentShownAs: 'Lijn of markering',
+  equivalentWhere: 'Waar',
+  birthplaceMarker: 'Geboorteplaats',
+  relocationMarker: 'Relocatieplaats',
+  coordinates: (latitude: string, longitude: string) => `${latitude}, ${longitude}`,
+  meridianWhere: (longitude: string) => `Lengtegraad ${longitude} op elke breedtegraad`,
+  horizonSpan: (from: string, to: string) => `${from} tot ${to}`,
+  horizonWhere: (spans: string) => `Getekend over breedtegraden ${spans}`,
+  horizonCrossing: (latitude: string, longitude: string) => `op ${latitude}: lengtegraad ${longitude}`,
+  localSpaceWhere: (place: string, azimuth: string, reverse: string) =>
+    `Door ${place}, azimut ${azimuth}° en ${reverse}°`,
+  listSeparator: '; ',
 };
 
 export const astrocartographyViewMessages = { en, nl };

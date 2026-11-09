@@ -108,6 +108,32 @@ test.describe('with the shared people (#799)', () => {
     await expect(mcLines).toHaveCount(0);
   });
 
+  test('the map has a text equivalent that follows the line filters and relocation (#1371)', async () => {
+    test.setTimeout(90_000);
+    await openSharedEinstein(page);
+    await expect(page.locator('div.acg-map')).toHaveAttribute('aria-hidden', 'true');
+    const equivalent = page.getByRole('table', { name: 'What the map shows' });
+    await expect(equivalent).toBeVisible();
+    const mcRows = equivalent.getByRole('row').filter({ hasText: 'MC (Midheaven)' });
+    await expect(mcRows).toHaveCount(await page.locator('div.acg-map .acg-line-mc').count());
+    await expect(equivalent.getByRole('row').filter({ hasText: 'Birthplace' })).toHaveCount(1);
+    await expect(equivalent.getByRole('row').filter({ hasText: 'Relocation place' })).toHaveCount(0);
+
+    await openMapSettings(page);
+    const dialog = page.getByRole('dialog', { name: 'Map settings' });
+    await dialog.getByLabel('MC (Midheaven)').uncheck();
+    await dialog.getByLabel('Latitude').fill('48.85');
+    await dialog.getByLabel('Longitude').fill('2.35');
+    await applyMapSettings(page);
+    await expect(mcRows).toHaveCount(0);
+    await expect(equivalent.getByRole('row').filter({ hasText: 'Relocation place' })).toContainText('48.85°N, 2.35°E');
+
+    // Reachable by keyboard: the table's scroll frame takes focus in the normal tab order.
+    const frame = page.getByRole('region', { name: 'What the map shows' });
+    await frame.focus();
+    await expect(frame).toBeFocused();
+  });
+
   test('enabling Local Space adds lines for the checked bodies', async () => {
     test.setTimeout(60_000);
 

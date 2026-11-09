@@ -19,7 +19,7 @@
  * @module chart/acg-map
  * @purpose Renders the astrocartography (ACG) world map as a hand-rolled equirectangular SVG graticule with AC/DC/MC/IC and local-space lines.
  * @conventions Equirectangular projection: `x = (lon + 180) / 360 * width`, `y = (90 - lat) / 180 * height`, so the map is exactly twice as wide as tall; point runs are split wherever consecutive longitudes jump by more than 180° (a projection/antimeridian break, distinct from `HorizonLine.segments`'s own circumpolar breaks).
- * @exports renderAcgMapSvg; AcgMapInput, AcgMapOptions, AcgMap types.
+ * @exports renderAcgMapSvg, acgMapEntries, acgMapPlaces; AcgMapInput, AcgMapOptions, AcgMap, AcgMapEntry, AcgMapPoint, AcgMapPlaces types.
  */
 import type { LocalSpaceLine } from '../astrology/astrocartography.js';
 import { bodyById } from '../astrology/bodies.js';
@@ -114,6 +114,123 @@ function nearestToLatitude(points: readonly Point[], latitude: number): Point | 
       best === undefined || Math.abs(point.latitude - latitude) < Math.abs(best.latitude - latitude) ? point : best,
     undefined,
   );
+}
+
+/** A place on the map in degrees, as the map draws it. */
+export interface AcgMapPoint {
+  readonly latitude: number;
+  readonly longitude: number;
+}
+
+/**
+ * One line the map draws, as data rather than strokes (#1371): the accessible equivalent of the map lists these.
+ * MC/IC lines are a single meridian; AC/DC curves give the latitude span of each drawn run and the drawn point on each
+ * graticule latitude the curve reaches; a Local Space line gives the place it passes through and its two bearings.
+ */
+export type AcgMapEntry =
+  | { readonly kind: 'MC' | 'IC'; readonly body: number; readonly bodyKey: string; readonly longitude: number }
+  | {
+      readonly kind: 'AC' | 'DC';
+      readonly body: number;
+      readonly bodyKey: string;
+      /** The latitude range of each contiguous run the map draws, south to north. */
+      readonly spans: readonly { readonly from: number; readonly to: number }[];
+      /** The drawn points at the map's graticule latitudes (every 30°), where the curve reaches them. */
+      readonly crossings: readonly AcgMapPoint[];
+    }
+  | {
+      readonly kind: 'localSpace';
+      readonly body: number;
+      readonly bodyKey: string;
+      readonly origin: AcgMapPoint;
+      readonly azimuth: number;
+      readonly reverseAzimuth: number;
+    };
+
+/** The places the map marks: the birthplace always, the relocation place when one is set (#1371). */
+export interface AcgMapPlaces {
+  readonly natal: AcgMapPoint;
+  readonly relocation?: AcgMapPoint;
+}
+
+/** The graticule latitudes strictly between the poles, where an AC/DC curve's position is reported. */
+const CROSSING_LATITUDES: readonly number[] = Array.from(
+  { length: 180 / GRATICULE_STEP_DEG - 1 },
+  (_, index) => -90 + GRATICULE_STEP_DEG * (index + 1),
+);
+
+/** The drawn point of a run at `latitude`, when the run reaches it: the sampled point nearest it, within half a sample step. */
+function crossingAt(run: readonly Point[], latitude: number): Point | undefined {
+  const first = run[0];
+  const last = run[run.length - 1];
+  if (first === undefined || last === undefined) return undefined;
+  const step = run.length > 1 ? (last.latitude - first.latitude) / (run.length - 1) : 0;
+  const nearest = nearestToLatitude(run, latitude);
+  if (nearest === undefined) return undefined;
+  return Math.abs(nearest.latitude - latitude) <= Math.abs(step) / 2 ? nearest : undefined;
+}
+
+/** The entry for one AC or DC curve: the latitude span of each run it is drawn in, and its graticule crossings. */
+function horizonEntry(
+  kind: 'AC' | 'DC',
+  body: number,
+  bodyKey: string,
+  segments: readonly (readonly Point[])[],
+): AcgMapEntry {
+  const runs = segments.filter((segment) => segment.length > 0);
+  const spans = runs.flatMap((run) => {
+    const first = run[0];
+    const last = run[run.length - 1];
+    return first === undefined || last === undefined ? [] : [{ from: first.latitude, to: last.latitude }];
+  });
+  const crossings = CROSSING_LATITUDES.flatMap((latitude) =>
+    runs.flatMap((run) => {
+      const point = crossingAt(run, latitude);
+      return point === undefined ? [] : [{ latitude: point.latitude, longitude: point.longitude }];
+    }),
+  );
+  return { kind, body, bodyKey, spans, crossings };
+}
+
+/**
+ * Every line `renderAcgMapSvg` draws for `input`, in the order it draws them (#1371): the meridian and horizon lines,
+ * then the Local Space lines. Built from the same input as the map, so a list made from it cannot disagree with it.
+ */
+export function acgMapEntries(input: AcgMapInput): readonly AcgMapEntry[] {
+  const entries: AcgMapEntry[] = [];
+  for (const acgLine of input.lines) {
+    const bodyKey = bodyKeyOf(acgLine.body);
+    switch (acgLine.kind) {
+      case 'MC':
+      case 'IC':
+        entries.push({ kind: acgLine.kind, body: acgLine.body, bodyKey, longitude: acgLine.longitude });
+        break;
+      case 'AC':
+      case 'DC':
+        entries.push(horizonEntry(acgLine.kind, acgLine.body, bodyKey, acgLine.segments));
+        break;
+    }
+  }
+  for (const localSpaceLine of input.localSpaceLines) {
+    const origin = localSpaceLine.forward[0] ?? input.natalPlace;
+    entries.push({
+      kind: 'localSpace',
+      body: localSpaceLine.body,
+      bodyKey: bodyKeyOf(localSpaceLine.body),
+      origin: { latitude: origin.latitude, longitude: origin.longitude },
+      azimuth: ((localSpaceLine.azimuth % 360) + 360) % 360,
+      reverseAzimuth: (((localSpaceLine.azimuth + 180) % 360) + 360) % 360,
+    });
+  }
+  return entries;
+}
+
+/** The places `renderAcgMapSvg` marks for `input` (#1371). */
+export function acgMapPlaces(input: AcgMapInput): AcgMapPlaces {
+  const natal = { latitude: input.natalPlace.latitude, longitude: input.natalPlace.longitude };
+  return input.relocationPlace === undefined
+    ? { natal }
+    : { natal, relocation: { latitude: input.relocationPlace.latitude, longitude: input.relocationPlace.longitude } };
 }
 
 export function renderAcgMapSvg(input: AcgMapInput, options?: AcgMapOptions): AcgMap {
