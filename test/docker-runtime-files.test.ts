@@ -10,7 +10,8 @@
  * can't reach a release without its COPY line.
  *
  * What counts as runtime: any import statement except a whole-statement `import type` (erased
- * entirely). `import { type A } from './x'` is *not* erased — Node keeps `import {} from './x'`, which
+ * entirely). A dynamic `import('./x')` with a literal specifier counts too: it loads lazily, but the
+ * file must still be in the image (#1367). `import { type A } from './x'` is *not* erased — Node keeps `import {} from './x'`, which
  * still loads the module — so it counts. Comments and strings are not parsed as imports.
  */
 import { existsSync, readFileSync } from 'node:fs';
@@ -34,6 +35,10 @@ export function runtimeImports(source: string): string[] {
     // `import type { A } from` / `export type { A } from` are erased whole.
     if (/^\s*type\b/.test(clause) && (keyword === 'import' || keyword === 'export')) continue;
     specifiers.push(from);
+  }
+  // import('...') with a literal specifier loads lazily, but the file must still be in the image (#1367).
+  for (const match of withoutComments.matchAll(/\bimport\(\s*['"]([^'"]+)['"]\s*\)/g)) {
+    if (match[1]?.startsWith('.')) specifiers.push(match[1]);
   }
   return specifiers;
 }
@@ -107,6 +112,16 @@ describe('runtimeImports', () => {
       } from './g.js';
     `;
     expect(runtimeImports(source)).toEqual(['./a.js', './b.js', './c.js', './d.js', './e.js', './f.js', './g.js']);
+  });
+
+  it('sees dynamic import() with a literal relative specifier, but not a package or a comment', () => {
+    const source = `
+      const a = await import('./a.ts');
+      const b = import("../b.ts").then((m) => m.b);
+      const c = await import('node:fs');
+      // const d = await import('./commented.ts');
+    `;
+    expect(runtimeImports(source)).toEqual(['./a.ts', '../b.ts']);
   });
 
   it('ignores whole-statement type imports and exports, packages, and anything in a comment', () => {
