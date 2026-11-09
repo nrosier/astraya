@@ -31,6 +31,7 @@ import { loadOidcConfig } from './oidc.ts';
 import { revokeAllSessionsForUser } from './sessions.ts';
 import { loadEncryptionKey } from '../ops/crypto.ts';
 import { previewDeletionImpact } from '../ops/deletion-impact.ts';
+import { BODY_REQUIRED_ERROR, bodyObject } from '../request-body.ts';
 
 const PASSWORD_SET_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -166,7 +167,9 @@ export function registerAdminRoutes(app: FastifyInstance, db: Database): void {
         return reply.code(409).send({ error: 'Local accounts cannot be created while OIDC is configured' });
       }
 
-      const { username, role } = request.body;
+      const body = bodyObject(request.body);
+      if (!body) return reply.code(400).send({ error: BODY_REQUIRED_ERROR });
+      const { username, role } = body;
       if (typeof username !== 'string' || username === '') {
         return reply.code(400).send({ error: 'username is required' });
       }
@@ -237,7 +240,9 @@ export function registerAdminRoutes(app: FastifyInstance, db: Database): void {
     '/api/admin/users/:id/role',
     { preHandler: requireSuperAdmin(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
     async (request, reply) => {
-      const { role } = request.body;
+      const body = bodyObject(request.body);
+      if (!body) return reply.code(400).send({ error: BODY_REQUIRED_ERROR });
+      const { role } = body;
       if (!isRole(role)) return reply.code(400).send({ error: `role must be one of ${ROLES.join(', ')}` });
       const user = getAdminUser(db, request.params.id);
       if (!user) return reply.code(404).send({ error: 'No such user' });

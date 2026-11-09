@@ -17,6 +17,7 @@ import { requireUser, type User } from '../auth/identity.ts';
 import { decodeHlc, isHlc } from '../../src/store/hlc.ts';
 import { CURRENT_KEY_VERSION, decryptPayload, encryptPayload, loadEncryptionKey } from './crypto.ts';
 import { isEntityPurged, isPurgeMarker, parseOpBody, recordPurgeAndErase } from './purge.ts';
+import { BODY_REQUIRED_ERROR, bodyObject } from '../request-body.ts';
 
 /** An HLC this far ahead of the server's own clock is quarantined (#105, #312). */
 const MAX_CLOCK_SKEW_MS = 24 * 60 * 60 * 1000;
@@ -134,7 +135,9 @@ export function registerOpsRoutes(app: FastifyInstance, db: Database): void {
       const bindingError = accountBindingError(request, user);
       if (bindingError) return reply.code(bindingError.status).send(bindingError.body);
 
-      const ops = request.body.ops;
+      const body = bodyObject(request.body);
+      if (!body) return reply.code(400).send({ error: BODY_REQUIRED_ERROR });
+      const { ops } = body;
       if (!Array.isArray(ops) || ops.length === 0) {
         return reply.code(400).send({ error: 'ops must be a non-empty array' });
       }

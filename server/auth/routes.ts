@@ -34,6 +34,7 @@ import { clearLoginThrottle, isLoginThrottled, recordFailedLogin } from './login
 import { exchangeCode, getDiscovery, getEndSessionEndpoint, loadOidcConfig, verifyIdToken } from './oidc.ts';
 import { DUMMY_PASSWORD_HASH, hashPassword, passwordIsTooWeak, verifyPassword } from './passwords.ts';
 import { SESSION_COOKIE, createSession, getSession, revokeAllSessionsForUser, revokeSession } from './sessions.ts';
+import { BODY_REQUIRED_ERROR, bodyObject } from '../request-body.ts';
 
 /** `Secure` only makes sense once the app is actually served over HTTPS. */
 function isSecureRequest(request: { protocol: string }): boolean {
@@ -76,7 +77,9 @@ export function registerAuthRoutes(app: FastifyInstance, db: Database): void {
     '/api/auth/login',
     { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } },
     async (request, reply) => {
-      const { username, password } = request.body;
+      const body = bodyObject(request.body);
+      if (!body) return reply.code(400).send({ error: BODY_REQUIRED_ERROR });
+      const { username, password } = body;
       if (typeof username !== 'string' || typeof password !== 'string' || username === '' || password === '') {
         return reply.code(400).send({ error: 'username and password are required' });
       }
@@ -175,7 +178,9 @@ export function registerAuthRoutes(app: FastifyInstance, db: Database): void {
       const oidcConfig = loadOidcConfig();
       if (!oidcConfig) return reply.code(404).send({ error: 'Not found' });
 
-      const { code, codeVerifier, nonce } = request.body;
+      const body = bodyObject(request.body);
+      if (!body) return reply.code(400).send({ error: BODY_REQUIRED_ERROR });
+      const { code, codeVerifier, nonce } = body;
       if (typeof code !== 'string' || typeof codeVerifier !== 'string' || typeof nonce !== 'string') {
         return reply.code(400).send({ error: 'code, codeVerifier and nonce are required' });
       }
@@ -233,7 +238,9 @@ export function registerAuthRoutes(app: FastifyInstance, db: Database): void {
       // surface after the instance is already bootstrapped.
       if (superAdminExists(db)) return reply.code(404).send({ error: 'Not found' });
 
-      const { token, username, password } = request.body;
+      const body = bodyObject(request.body);
+      if (!body) return reply.code(400).send({ error: BODY_REQUIRED_ERROR });
+      const { token, username, password } = body;
       if (typeof token !== 'string' || typeof username !== 'string' || typeof password !== 'string') {
         return reply.code(400).send({ error: 'token, username and password are required' });
       }
@@ -280,7 +287,9 @@ export function registerAuthRoutes(app: FastifyInstance, db: Database): void {
     '/api/auth/set-password',
     { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } },
     async (request, reply) => {
-      const { token, password } = request.body;
+      const body = bodyObject(request.body);
+      if (!body) return reply.code(400).send({ error: BODY_REQUIRED_ERROR });
+      const { token, password } = body;
       if (typeof token !== 'string' || typeof password !== 'string' || token === '' || password === '') {
         return reply.code(400).send({ error: 'token and password are required' });
       }

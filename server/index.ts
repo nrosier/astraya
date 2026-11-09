@@ -20,7 +20,8 @@
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { readFile } from 'node:fs/promises';
-import Fastify from 'fastify';
+import Fastify, { type FastifyError } from 'fastify';
+import { STATUS_CODES } from 'node:http';
 import fastifyStatic from '@fastify/static';
 import fastifyCookie from '@fastify/cookie';
 import fastifyRateLimit from '@fastify/rate-limit';
@@ -114,6 +115,22 @@ export async function build(options: BuildOptions = {}) {
       },
     },
     trustProxy: TRUST_PROXY,
+  });
+
+  // One error boundary (#1362). Fastify's default handler sends every thrown error's message to
+  // the client. A 4xx (413 body limit, 415 media type, 429 rate limit, 400 parser) is a client
+  // fault whose message is safe and useful, so it keeps its status and message; anything else is
+  // logged in full here and answered with a generic body that carries no thrown text.
+  app.setErrorHandler((error: FastifyError, request, reply) => {
+    const status = error.statusCode ?? 500;
+    if (status >= 400 && status < 500) {
+      return reply
+        .code(status)
+        .send({ statusCode: status, error: STATUS_CODES[status] ?? 'Error', message: error.message });
+    }
+    request.log.error({ err: error }, 'unhandled error');
+    const generic = STATUS_CODES[status] ?? 'Internal Server Error';
+    return reply.code(status).send({ statusCode: status, error: generic, message: generic });
   });
 
   const db = openDatabase(options.dbPath ?? DB_PATH);
