@@ -6,6 +6,47 @@ see [docs/ops/RELEASING.md](docs/ops/RELEASING.md).
 
 ## [Unreleased]
 
+## [0.52.0] — 2026-11-09
+
+**A security-hardening release for the sync server's sign-in and session handling, plus a text alternative for the astrocartography map and a reordered person navigation. Signing in is required once more after upgrading.**
+
+### Added
+
+- **Structured geographic equivalent for the astrocartography map (#1371).** The map now has a text alternative listing the lines and where they run, so the information is not available only as a picture.
+- **Birth record is first in the person navigation (#1347).**
+
+### Changed
+
+- **The Overview's Sun, Moon and Rising card sits under the wheel with the default gap (#1345).**
+- **Security: request bodies are guarded and 5xx responses no longer include internal error text (#1362),** including the remaining write routes.
+- **Security: release and pages workflow actions are pinned to commit SHAs, and a test guards against unpinned ones (#1363).**
+- **Session handling:** expired sessions are swept on a timer and session touches are throttled (#1364).
+
+### Fixed
+
+- **Passwords and sessions (#1360):** set-password tokens and session ids are stored only as hashes, and a password reset or set-password ends the user's other sessions.
+- **A password-reset token can be redeemed once, even under concurrent requests (#1379).**
+- **Sign-out (#1361):** the server session is revoked even when OIDC discovery fails, OIDC fetches time out, and a failed server sign-out is handled in the app.
+- **Sync is bound to the expected account and stops when the account closes (#1378).**
+- **Calculation snapshots (#1380):** the strict decoder refuses malformed settings and custom points, and top-level non-object snapshots.
+- **The sidereal property is limited to major bodies, and the minor-body example is corrected (#1391).**
+- **Test and CI reliability:** ReportView correction tests wait on real state (#1338), and the required checks also run on the merge queue.
+
+### Documentation
+
+- The 2026-11-08 UI/UX, guide-compliance and repository reviews were added, and the UI audit's stale guide sample, comments and backdrop token were corrected.
+
+### Dependencies
+
+- jose 6.2.16, fake-indexeddb 6.2.8 and updated Chainguard Node base image digests.
+
+### Notes for people running their own server
+
+- Database migrations 18, 19 and 20 run on start; there is no manual step.
+- Migration 18 deletes every session (everyone signs in once more) and clears pending set-password links, because those values were stored unhashed and are not converted. An admin re-issues a link with reset-password.
+- Migration 19 adds an index on `sessions.expires_at`. Migration 20 adds `users.last_seen_at`, backfilled from existing sessions, so the admin user list keeps last activity after expired sessions are swept.
+- No new `src/` files in the Dockerfile's copy list and no new environment variables.
+
 ## [0.51.0] — 2026-11-08
 
 **Readers can correct interpretation texts and send the corrections to the admins, admins can approve them, and the chart views get several wheel and Aspects-table fixes. Incomplete: the step that bakes approved corrections into the committed corpus exists as maintainer tooling but has not been run.**
