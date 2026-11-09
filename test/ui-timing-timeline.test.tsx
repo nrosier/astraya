@@ -5,7 +5,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { describe, expect, it } from 'vitest';
 import { TIMING_TIMELINE_TRACKS, type TimingTimelineTrackEvents } from '../src/domain/timing-timeline.js';
 import { TimingTimelineGantt } from '../src/ui/TimingTimelineGantt.js';
-import { ganttFraction, ganttRows, yearTicks } from '../src/ui/timeline-gantt.js';
+import { ganttFraction, ganttRows, thinYearTicks, yearTicks } from '../src/ui/timeline-gantt.js';
 import { timelineSubjectLabel } from '../src/ui/timing-timeline-labels.js';
 
 const labels = Object.fromEntries(TIMING_TIMELINE_TRACKS.map((track) => [track, track])) as Record<
@@ -155,6 +155,26 @@ describe('the Gantt layout (#1237)', () => {
     const ticks = yearTicks(2451544, 2451544 + 365 * 2 + 2);
     expect(ticks.map((tick) => tick.year)).toEqual([2000, 2001, 2002]);
     expect(ticks[0]?.fraction).toBeGreaterThanOrEqual(0);
+  });
+  describe('thinning year ticks (#1369)', () => {
+    // Ten January firsts, 2022 to 2031, over a window that ends on the last one (the 390px case: a 213px plot).
+    const ticks = Array.from({ length: 10 }, (_, index) => ({ year: 2022 + index, fraction: index / 9 }));
+    const minSeparation = 36;
+
+    it('keeps labels at least the minimum apart on a narrow plot, and keeps the first and the range', () => {
+      const kept = thinYearTicks(ticks, 213, minSeparation);
+      expect(kept.length).toBeLessThan(ticks.length);
+      expect(kept[0]?.year).toBe(2022);
+      for (let i = 1; i < kept.length; i += 1) {
+        const gap = ((kept[i]?.fraction ?? 0) - (kept[i - 1]?.fraction ?? 0)) * 213;
+        expect(gap).toBeGreaterThanOrEqual(minSeparation);
+      }
+    });
+
+    it('keeps every tick on a wide plot, and when the plot is unmeasured', () => {
+      expect(thinYearTicks(ticks, 900, minSeparation)).toEqual(ticks);
+      expect(thinYearTicks(ticks, 0, minSeparation)).toEqual(ticks);
+    });
   });
 });
 
