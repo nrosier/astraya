@@ -33,6 +33,7 @@ import {
 import { requireAdmin } from './auth/identity.ts';
 import { lintEntry } from '../src/interpretation/lint.ts';
 import type { CorpusEntry } from '../src/interpretation/schema.ts';
+import { BODY_REQUIRED_ERROR, bodyObject } from './request-body.ts';
 
 function isLocale(value: unknown): value is Locale {
   return typeof value === 'string' && (LOCALES as readonly string[]).includes(value);
@@ -115,7 +116,9 @@ export function registerCorpusCandidateRoutes(app: FastifyInstance, db: Database
     '/api/admin/corpus-candidates/import',
     { preHandler: requireAdmin(db), config: { rateLimit: { max: 10, timeWindow: '1 minute' } } },
     async (request, reply) => {
-      const { candidates } = request.body;
+      const body = bodyObject(request.body);
+      if (!body) return reply.code(400).send({ error: BODY_REQUIRED_ERROR });
+      const { candidates } = body;
       if (!Array.isArray(candidates) || candidates.length === 0) {
         return reply.code(400).send({ error: 'candidates must be a non-empty array' });
       }
@@ -178,7 +181,9 @@ export function registerCorpusCandidateRoutes(app: FastifyInstance, db: Database
     '/api/admin/corpus-candidates',
     { preHandler: requireAdmin(db), config: { rateLimit: { max: 30, timeWindow: '1 minute' } } },
     async (request, reply) => {
-      const { ids, decision } = request.body;
+      const body = bodyObject(request.body);
+      if (!body) return reply.code(400).send({ error: BODY_REQUIRED_ERROR });
+      const { ids, decision } = body;
       if (!Array.isArray(ids) || ids.length === 0 || !ids.every((id) => typeof id === 'string')) {
         return reply.code(400).send({ error: 'ids must be a non-empty array of strings' });
       }
