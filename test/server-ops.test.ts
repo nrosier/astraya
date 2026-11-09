@@ -91,20 +91,39 @@ function makeFieldOp(entity: string, entityId: string, field: string, value: unk
   });
 }
 
-function appendOps(target: FastifyInstance, sessionId: string, ops: unknown) {
+/** Names the account a sync request is for (#1378); mirrors `ACCOUNT_HEADER` in `src/sync/engine.ts`. */
+const ACCOUNT_HEADER = 'x-astraya-account';
+
+/** The account a session belongs to, the way a client learns it: from `/api/auth/me`. */
+async function accountOf(target: FastifyInstance, sessionId: string): Promise<string> {
+  const response = await target.inject({
+    method: 'GET',
+    url: '/api/auth/me',
+    cookies: { [SESSION_COOKIE]: sessionId },
+  });
+  if (response.statusCode !== 200) return 'no-account';
+  return response.json<{ user: { id: string } }>().user.id;
+}
+
+/** `account` defaults to the session's own; pass another id, or `null` for no header at all (#1378). */
+async function appendOps(target: FastifyInstance, sessionId: string, ops: unknown, account?: string | null) {
+  const expected = account === undefined ? await accountOf(target, sessionId) : account;
   return target.inject({
     method: 'POST',
     url: '/api/ops',
     cookies: { [SESSION_COOKIE]: sessionId },
+    headers: expected === null ? {} : { [ACCOUNT_HEADER]: expected },
     payload: { ops },
   });
 }
 
-function pullOps(target: FastifyInstance, sessionId: string, since?: number) {
+async function pullOps(target: FastifyInstance, sessionId: string, since?: number, account?: string | null) {
+  const expected = account === undefined ? await accountOf(target, sessionId) : account;
   return target.inject({
     method: 'GET',
     url: since === undefined ? '/api/ops' : `/api/ops?since=${since}`,
     cookies: { [SESSION_COOKIE]: sessionId },
+    headers: expected === null ? {} : { [ACCOUNT_HEADER]: expected },
   });
 }
 
@@ -149,6 +168,38 @@ describe('POST /api/ops and GET /api/ops', () => {
 
     const alicePull = await pullOps(app, aliceSession);
     expect(alicePull.json<{ ops: unknown[] }>().ops).toHaveLength(1);
+  });
+
+  it('refuses a request bound to another account than the cookie’s, and writes nothing to either (#1378)', async () => {
+    const aliceSession = await setupAdmin(app, 'alice', 'correct-horse-battery');
+    const bobSession = await createAndLoginUser(app, 'bob', 'another-horse-battery');
+    const aliceId = await accountOf(app, aliceSession);
+
+    // Alice's client, still running after this browser signed in as Bob: Bob's cookie, Alice's account.
+    const append = await appendOps(app, bobSession, [makeOp()], aliceId);
+    expect(append.statusCode).toBe(403);
+    expect(append.json<{ code: string }>().code).toBe('account-mismatch');
+    const pull = await pullOps(app, bobSession, undefined, aliceId);
+    expect(pull.statusCode).toBe(403);
+    expect(pull.json<{ code: string }>().code).toBe('account-mismatch');
+
+    expect((await pullOps(app, bobSession)).json<{ ops: unknown[] }>().ops).toHaveLength(0);
+    expect((await pullOps(app, aliceSession)).json<{ ops: unknown[] }>().ops).toHaveLength(0);
+    const raw = new DatabaseSync(dbPath, { readOnly: true });
+    const { count } = raw.prepare('SELECT COUNT(*) AS count FROM ops').get() as { count: number };
+    raw.close();
+    expect(count).toBe(0);
+  });
+
+  it('refuses a request that names no account, and writes nothing (#1378)', async () => {
+    const sessionId = await setupAdmin(app);
+    const append = await appendOps(app, sessionId, [makeOp()], null);
+    expect(append.statusCode).toBe(400);
+    expect(append.json<{ code: string }>().code).toBe('account-required');
+    const pull = await pullOps(app, sessionId, undefined, null);
+    expect(pull.statusCode).toBe(400);
+    expect(pull.json<{ code: string }>().code).toBe('account-required');
+    expect((await pullOps(app, sessionId)).json<{ ops: unknown[] }>().ops).toHaveLength(0);
   });
 
   it('is idempotent on a retried (user, hlc) pair: same seq, no duplicate row', async () => {
@@ -301,6 +352,7 @@ describe('POST /api/ops and GET /api/ops', () => {
         method: 'GET',
         url: `/api/ops?since=${value}`,
         cookies: { [SESSION_COOKIE]: sessionId },
+        headers: { [ACCOUNT_HEADER]: await accountOf(app, sessionId) },
       });
       expect(response.statusCode, `?since=${value}`).toBe(400);
     }

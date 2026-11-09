@@ -8,7 +8,7 @@
 /**
  * @module routes
  * @purpose The op-log sync relay's HTTP surface (#102): append (`POST /api/ops`) and pull (`GET /api/ops`) against the opaque, per-user `ops` log.
- * @conventions Every op is scoped to `requireUser`'s authenticated user; the relay never interprets payload contents except for the narrow, documented purge-marker check (`purge.ts`) performed on plaintext it already holds transiently before encrypting; an op whose HLC is too far ahead of server time is quarantined rather than stored, and a batch push is transactional so a mid-batch failure leaves no partial write; the relay is disabled outright (503) rather than storing unencrypted rows when `ASTRAYA_ENCRYPTION_KEY` is unset.
+ * @conventions Every op is scoped to `requireUser`'s authenticated user; both routes require an `X-Astraya-Account` header naming the account the client means to sync and refuse a request without it (400, code `account-required`) or naming anyone else (403, code `account-mismatch`) before reading or writing a row, so a request that outlives an account switch in the same browser cannot reach the new account's log (#1378); the relay never interprets payload contents except for the narrow, documented purge-marker check (`purge.ts`) performed on plaintext it already holds transiently before encrypting; an op whose HLC is too far ahead of server time is quarantined rather than stored, and a batch push is transactional so a mid-batch failure leaves no partial write; the relay is disabled outright (503) rather than storing unencrypted rows when `ASTRAYA_ENCRYPTION_KEY` is unset.
  * @exports registerOpsRoutes
  */
 import type { FastifyInstance, FastifyRequest } from 'fastify';
@@ -77,6 +77,35 @@ function isValidOpInput(value: unknown): value is OpInput {
   );
 }
 
+/**
+ * The header a sync client names its expected account in (#1378); mirrors `ACCOUNT_HEADER` in `src/sync/engine.ts`.
+ * Fastify lower-cases incoming header names.
+ */
+const ACCOUNT_HEADER = 'x-astraya-account';
+
+/**
+ * Refuses a request that is not bound to the authenticated user (#1378). The session cookie says who is signed in
+ * now; the header says who the client was syncing for when it built the request. They differ when a sync request
+ * outlives a sign-out and sign-in as someone else in the same browser, and storing or serving rows then would mix
+ * the two accounts. Returns the reply to send, or `undefined` when the request may go ahead.
+ */
+function accountBindingError(request: FastifyRequest, user: User): { status: 400 | 403; body: object } | undefined {
+  const expected = request.headers[ACCOUNT_HEADER];
+  if (typeof expected !== 'string' || expected === '') {
+    return {
+      status: 400,
+      body: { error: 'Sync requests must name the account they are for.', code: 'account-required' },
+    };
+  }
+  if (expected !== user.id) {
+    return {
+      status: 403,
+      body: { error: 'This session belongs to a different account.', code: 'account-mismatch' },
+    };
+  }
+  return undefined;
+}
+
 /** `requireUser` is a preHandler on both routes below, so by the time a handler body runs this cannot be unset. */
 function authenticatedUser(request: FastifyRequest): User {
   if (!request.user) throw new Error('requireUser preHandler did not run before this handler.');
@@ -102,6 +131,8 @@ export function registerOpsRoutes(app: FastifyInstance, db: Database): void {
       const key = configuredKey;
       if (!key) return reply.code(503).send({ error: 'Sync is not configured on this server.' });
       const user = authenticatedUser(request);
+      const bindingError = accountBindingError(request, user);
+      if (bindingError) return reply.code(bindingError.status).send(bindingError.body);
 
       const ops = request.body.ops;
       if (!Array.isArray(ops) || ops.length === 0) {
@@ -233,6 +264,8 @@ export function registerOpsRoutes(app: FastifyInstance, db: Database): void {
       const key = configuredKey;
       if (!key) return reply.code(503).send({ error: 'Sync is not configured on this server.' });
       const user = authenticatedUser(request);
+      const bindingError = accountBindingError(request, user);
+      if (bindingError) return reply.code(bindingError.status).send(bindingError.body);
 
       // Matched against digits rather than handed straight to `Number`, which maps `''` and
       // `' '` to 0 (#336). Everywhere else that would be harmless; here 0 means "send the

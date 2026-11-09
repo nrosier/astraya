@@ -12,8 +12,8 @@
 /**
  * @module sync/engine
  * @purpose Implements the client-side sync engine: a debounced/polled push-pull loop that exchanges this device's op-log against the opaque relay in `server/ops/routes.ts`, running only while signed in.
- * @conventions Every step is safe to interrupt at any point (#103) — the sync cursor only advances after the network call that made progress has already succeeded; errors are classified into a `SyncErrorKind` (`offline`/`unauthorized`/`server`/`malformed`/`rejected`/`quota`) so the UI status can distinguish a blip from a bug; a full server quota (409, #919) stops automatic retries until the user acts, and push batches are capped by encoded bytes (halving on a 413) so a large note cannot wedge sync against the server's body limit (#919); failed runs retry with exponential backoff plus jitter (#106); only this device's own outgoing records are ever pushed, filtering out peer records just pulled and folded in (#324); a row that fails to decode during pull is skipped rather than failing the whole page, so one corrupt record can't wedge every record behind it (#320).
- * @exports SyncEngine, SyncEngineOptions, SyncErrorKind, SyncError, PUSH_BATCH_MAX_BYTES, pushRecords, createSyncEngine
+ * @conventions Every step is safe to interrupt at any point (#103) — the sync cursor only advances after the network call that made progress has already succeeded; every request names the account the engine was opened for in the `X-Astraya-Account` header (`ACCOUNT_HEADER`), so the server refuses it when the session cookie has since moved to another account (#1378); `close()` aborts the in-flight request and every awaited step re-checks that the engine is still open before it writes or starts another request, so a late response after close writes nothing (#1378); errors are classified into a `SyncErrorKind` (`offline`/`unauthorized`/`server`/`malformed`/`rejected`/`quota`) so the UI status can distinguish a blip from a bug; a full server quota (409, #919) stops automatic retries until the user acts, and push batches are capped by encoded bytes (halving on a 413) so a large note cannot wedge sync against the server's body limit (#919); failed runs retry with exponential backoff plus jitter (#106); only this device's own outgoing records are ever pushed, filtering out peer records just pulled and folded in (#324); a row that fails to decode during pull is skipped rather than failing the whole page, so one corrupt record can't wedge every record behind it (#320).
+ * @exports SyncEngine, SyncEngineOptions, SyncErrorKind, SyncError, ACCOUNT_HEADER, PUSH_BATCH_MAX_BYTES, pushRecords, createSyncEngine
  */
 import { isHlc, isNodeId, type Hlc, type NodeId } from '../store/hlc.js';
 import { countHeldBackNotes, isOversizedLegacyNoteRecord } from '../store/notes.js';
@@ -33,6 +33,13 @@ const MAX_PAGE_SIZE = 500;
  * about 200 KB for CJK text, so a batch of them is split across requests.
  */
 export const PUSH_BATCH_MAX_BYTES = 256 * 1024;
+
+/**
+ * Names the account a sync request is meant for (#1378). The relay (`server/ops/routes.ts`) refuses a request whose
+ * value is not the account the session cookie resolves to, so a request that outlives an account switch on this
+ * browser cannot write one account's records into another account's log.
+ */
+export const ACCOUNT_HEADER = 'X-Astraya-Account';
 
 /** Coalesces a burst of local edits into one push instead of one per keystroke. */
 const PUSH_DEBOUNCE_MS = 1_000;
@@ -63,6 +70,11 @@ export interface SyncEngine {
 export interface SyncEngineOptions {
   readonly store: Store;
   /**
+   * The id of the account `store` belongs to (#1378). Sent with every request, so the server refuses the request
+   * once the session cookie belongs to anyone else.
+   */
+  readonly accountId: string;
+  /**
    * The server no longer honours this device's session (#106) — retrying the same request
    * would just fail the same way again. Called at most once per distinct failure episode
    * (not on every retry), so a caller can prompt re-authentication without being flooded.
@@ -86,7 +98,12 @@ export type SyncErrorKind =
    * same way until the account changes, so no automatic retry is scheduled. Local ops are
    * untouched and wait on the device.
    */
-  | 'quota';
+  | 'quota'
+  /**
+   * The session cookie now belongs to a different account from the one this engine syncs (403, #1378). The server
+   * wrote nothing; retrying cannot help until this account signs in again.
+   */
+  | 'account-mismatch';
 
 /** Thrown by `request()` below; carries which of #106's distinct failure kinds this was. */
 export class SyncError extends Error {
@@ -182,7 +199,11 @@ async function classifyErrorResponse(response: Response): Promise<SyncError> {
       response.status,
     );
   }
-  const error = typeof body === 'object' && body !== null ? (body as Record<string, unknown>).error : undefined;
+  const fields = typeof body === 'object' && body !== null ? (body as Record<string, unknown>) : {};
+  if (response.status === 403 && fields.code === 'account-mismatch') {
+    return new SyncError('account-mismatch', 'This device is now signed in to a different account.', 403);
+  }
+  const error = fields.error;
   return new SyncError(
     'rejected',
     typeof error === 'string' ? error : `Request rejected with status ${String(response.status)}.`,
@@ -190,11 +211,23 @@ async function classifyErrorResponse(response: Response): Promise<SyncError> {
   );
 }
 
+/** Which account a request is for, and the signal that cancels it when its engine closes (#1378). */
+interface RequestScope {
+  readonly accountId: string;
+  readonly signal?: AbortSignal;
+}
+
 /** Every network call funnels through here so `fetch` throwing and a non-2xx response are classified alike (#106). */
-async function request(path: string, init?: RequestInit): Promise<Response> {
+async function request(path: string, scope: RequestScope, init: RequestInit = {}): Promise<Response> {
+  const headers = new Headers(init.headers);
+  headers.set(ACCOUNT_HEADER, scope.accountId);
   let response: Response;
   try {
-    response = await fetch(path, init);
+    response = await fetch(path, {
+      ...init,
+      headers,
+      ...(scope.signal === undefined ? {} : { signal: scope.signal }),
+    });
   } catch {
     throw new SyncError('offline', 'No network connection.');
   }
@@ -237,8 +270,8 @@ function takeBatch(wires: readonly OpWire[], start: number, budgetBytes: number)
   return { ops, bytes };
 }
 
-async function postOps(ops: readonly OpWire[]): Promise<PushResult> {
-  const response = await request('/api/ops', {
+async function postOps(ops: readonly OpWire[], scope: RequestScope): Promise<PushResult> {
+  const response = await request('/api/ops', scope, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ops }),
@@ -257,8 +290,8 @@ async function postOps(ops: readonly OpWire[]): Promise<PushResult> {
   return { seqs, skipped };
 }
 
-async function getOps(since: number): Promise<readonly PullRow[]> {
-  const response = await request(`/api/ops?since=${String(since)}`);
+async function getOps(since: number, scope: RequestScope): Promise<readonly PullRow[]> {
+  const response = await request(`/api/ops?since=${String(since)}`, scope);
   let body: unknown;
   try {
     body = await response.json();
@@ -273,21 +306,25 @@ async function getOps(since: number): Promise<readonly PullRow[]> {
 /**
  * A one-off push outside any engine's cursor — used only by adoption (#109) to send a
  * device's entire anonymous log to the server under the new session's cookie, before the
- * per-account store and its own engine exist yet.
+ * per-account store and its own engine exist yet. `accountId` is the account the records are
+ * meant for: the server refuses the push if the cookie belongs to anyone else (#1378).
  */
-export async function pushRecords(records: readonly OpRecord[]): Promise<void> {
+export async function pushRecords(records: readonly OpRecord[], accountId: string): Promise<void> {
   // Over-limit legacy notes stay local, as in the engine's own push (#919). Adoption pushes a whole anonymous log,
   // so without this filter one such note would be refused and wedge every op queued behind it.
   const wires = records.filter((op) => !isOversizedLegacyNoteRecord(op)).map(toWire);
   for (let start = 0; start < wires.length;) {
     const { ops } = takeBatch(wires, start, PUSH_BATCH_MAX_BYTES);
-    await postOps(ops);
+    await postOps(ops, { accountId });
     start += ops.length;
   }
 }
 
 export async function createSyncEngine(options: SyncEngineOptions): Promise<SyncEngine> {
-  const { store, onUnauthorized } = options;
+  const { store, accountId, onUnauthorized } = options;
+  // Cancels whatever request is in flight when the engine closes (#1378).
+  const abort = new AbortController();
+  const scope: RequestScope = { accountId, signal: abort.signal };
   trace('sync', 'createSyncEngine: called', { deviceId: store.deviceId, people: store.state.people.size });
   // Read once at creation, same shape as `openStore` reading state off disk. Reassigned as
   // pushing/pulling makes progress; never read back from the store mid-run, so a run's own
@@ -312,6 +349,15 @@ export async function createSyncEngine(options: SyncEngineOptions): Promise<Sync
   const listeners = new Set<() => void>();
   let closed = false;
   let running = false;
+  /**
+   * Called after every awaited step and before every request (#1378): a response that arrives after `close()` must
+   * not write to the store, move the cursor or start another request, and an aborted request is not always the last
+   * await in flight. Throws rather than returns so no caller can carry on by mistake; `runSync` ignores any error
+   * once closed.
+   */
+  function assertOpen(): void {
+    if (closed) throw new Error('the sync engine was closed');
+  }
   // `trigger()` can set this while `runSync()` below is mid-`await` on `pull`/`push` — that
   // is the actual mechanism by which a concurrent trigger causes the current run to loop
   // again rather than starting a second, overlapping one. TypeScript's control-flow analysis
@@ -393,7 +439,9 @@ export async function createSyncEngine(options: SyncEngineOptions): Promise<Sync
 
   async function pull(): Promise<void> {
     for (;;) {
-      const rows = await getOps(cursor.pulled ?? 0);
+      assertOpen();
+      const rows = await getOps(cursor.pulled ?? 0, scope);
+      assertOpen();
       if (rows.length === 0) return;
       // Decoded one row at a time (#320): a single corrupted stored row throwing out of a
       // bulk `.map(fromWire)` would throw out of `pull()` entirely, which never advances
@@ -412,6 +460,7 @@ export async function createSyncEngine(options: SyncEngineOptions): Promise<Sync
       trace('sync', 'pull: page fetched, calling store.receive', { deviceId: store.deviceId, decoded: decoded.length });
       await store.receive(decoded);
       trace('sync', 'pull: store.receive resolved', { deviceId: store.deviceId });
+      assertOpen();
       // Persisted only once `receive` has resolved — itself durable-before-return — so a
       // crash here just re-pulls the same page next time, which `receive`'s HLC dedupe makes
       // a harmless no-op rather than a duplicate.
@@ -419,12 +468,14 @@ export async function createSyncEngine(options: SyncEngineOptions): Promise<Sync
       if (lastRow === undefined) return;
       cursor = { ...cursor, pulled: lastRow.seq };
       await store.setSyncCursor(cursor);
+      assertOpen();
       if (rows.length < MAX_PAGE_SIZE) return;
     }
   }
 
   async function push(): Promise<void> {
     for (;;) {
+      assertOpen();
       // Quarantined HLCs are already behind `cursor.pushed` once their batch is handled
       // below, since a batch advances the cursor past its own last record regardless of
       // what got skipped inside it — this filter is a second, belt-and-suspenders guard
@@ -437,7 +488,7 @@ export async function createSyncEngine(options: SyncEngineOptions): Promise<Sync
       const chunk = takeBatch(outgoing, 0, pushBudgetBytes);
       let skipped: readonly Hlc[];
       try {
-        ({ skipped } = await postOps(chunk.ops));
+        ({ skipped } = await postOps(chunk.ops, scope));
       } catch (error) {
         // The server's body limit refused this batch (#919). Nothing was accepted, so the cursor
         // has not moved: halve the batch and resend. Only a single op the server cannot take is
@@ -448,6 +499,7 @@ export async function createSyncEngine(options: SyncEngineOptions): Promise<Sync
         }
         throw error;
       }
+      assertOpen();
       // The chunk's own last record, not `store.head()`: a local edit could land mid-push and
       // move the head past what this chunk actually sent.
       const lastWire = chunk.ops[chunk.ops.length - 1];
@@ -459,6 +511,7 @@ export async function createSyncEngine(options: SyncEngineOptions): Promise<Sync
         ...(quarantined.size > 0 ? { quarantined: [...quarantined] } : {}),
       };
       await store.setSyncCursor(cursor);
+      assertOpen();
     }
   }
 
@@ -469,6 +522,8 @@ export async function createSyncEngine(options: SyncEngineOptions): Promise<Sync
       do {
         rerunRequested = false;
         await pull();
+        // The gap the review found (#1378): a pull that resolved after close would otherwise go straight on to push.
+        assertOpen();
         await push();
       } while (consumeRerunRequest() && !closed);
       if (!closed) {
@@ -503,7 +558,13 @@ export async function createSyncEngine(options: SyncEngineOptions): Promise<Sync
         // Retrying an unauthorized request is pointless until something re-establishes the
         // session — surfaced once per episode so a caller (session-context) can react, e.g. by
         // re-checking identity, without being called again on every backoff tick below.
-        if (error instanceof SyncError && error.kind === 'unauthorized' && !unauthorizedNotified) {
+        // A cookie that now belongs to another account (#1378) is the same episode from the caller's side: this
+        // account's session is gone from this browser.
+        if (
+          error instanceof SyncError &&
+          (error.kind === 'unauthorized' || error.kind === 'account-mismatch') &&
+          !unauthorizedNotified
+        ) {
           unauthorizedNotified = true;
           onUnauthorized?.();
         }
@@ -554,6 +615,7 @@ export async function createSyncEngine(options: SyncEngineOptions): Promise<Sync
     },
     close() {
       closed = true;
+      abort.abort();
       if (debounceTimer !== undefined) clearTimeout(debounceTimer);
       clearScheduledRetry();
       clearInterval(interval);

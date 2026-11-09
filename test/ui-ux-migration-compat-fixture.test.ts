@@ -124,20 +124,24 @@ describe('UI/UX migration Phase 0 — persisted person-data compatibility fixtur
     let dir: string;
     let app: FastifyInstance;
     let baseUrl: string;
+    let aliceId: string;
     const realFetch = globalThis.fetch;
 
-    async function listenAndBootstrap(dbPath: string): Promise<{ app: FastifyInstance; baseUrl: string }> {
+    async function listenAndBootstrap(
+      dbPath: string,
+    ): Promise<{ app: FastifyInstance; baseUrl: string; aliceId: string }> {
       const built = await build({ dbPath });
       await built.listen({ port: 0, host: '127.0.0.1' });
       const address = built.server.address();
       if (address === null || typeof address === 'string') throw new Error('server did not bind to a port');
       const url = `http://127.0.0.1:${String(address.port)}`;
-      await realFetch(new URL('/api/setup', url), {
+      const setup = await realFetch(new URL('/api/setup', url), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: BOOTSTRAP_TOKEN, username: 'alice', password: 'correct-horse-battery' }),
       });
-      return { app: built, baseUrl: url };
+      const { user } = (await setup.json()) as { user: { id: string } };
+      return { app: built, baseUrl: url, aliceId: user.id };
     }
 
     function sessionFetch(): typeof fetch {
@@ -171,6 +175,7 @@ describe('UI/UX migration Phase 0 — persisted person-data compatibility fixtur
       const started = await listenAndBootstrap(join(dir, 'astraya.db'));
       app = started.app;
       baseUrl = started.baseUrl;
+      aliceId = started.aliceId;
     });
 
     afterEach(async () => {
@@ -186,7 +191,7 @@ describe('UI/UX migration Phase 0 — persisted person-data compatibility fixtur
 
       const deviceA = await openStore({ name: freshDbName() });
       await seedFixture(deviceA);
-      const engineA = await createSyncEngine({ store: deviceA });
+      const engineA = await createSyncEngine({ store: deviceA, accountId: aliceId });
       await vi.waitFor(() => {
         expect(engineA.status.kind).toBe('synced');
       }, WAIT);
@@ -194,7 +199,7 @@ describe('UI/UX migration Phase 0 — persisted person-data compatibility fixtur
       deviceA.close();
 
       const deviceB = await openStore({ name: freshDbName() });
-      const engineB = await createSyncEngine({ store: deviceB });
+      const engineB = await createSyncEngine({ store: deviceB, accountId: aliceId });
       try {
         await vi.waitFor(() => {
           expect(deviceB.state.people.get(COMPLETE_ID)?.displayName).toBe('Ada Fixture');
