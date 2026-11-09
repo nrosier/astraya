@@ -423,6 +423,36 @@ describe('signing out while offline (#335)', () => {
       unmount(root, container);
     }
   });
+
+  it('signs out locally when the server answers logout with a non-2xx (#1361)', async () => {
+    const { container, root } = mount();
+    try {
+      await vi.waitFor(() => {
+        expect(latest?.status.kind).toBe('ready');
+      }, WAIT);
+      await act(async () => {
+        await latest?.signIn('alice', 'correct-horse-battery');
+      });
+      await vi.waitFor(() => {
+        expect(latest?.user?.username).toBe('alice');
+      }, WAIT);
+
+      // The server is reachable but refuses or fails the sign-out (a proxy 502, a 500). `logout()`
+      // rejects with AuthError, and the caller must treat that as "the server was not told".
+      globalThis.fetch = () => Promise.resolve(new Response('{"error":"boom"}', { status: 502 }));
+      await act(async () => {
+        await latest?.signOut();
+      });
+
+      await vi.waitFor(() => {
+        expect(latest?.user).toBeUndefined();
+      }, WAIT);
+      expect(latest?.engine).toBeUndefined();
+      expect(localStorage.getItem(LAST_USER_KEY)).toBeNull();
+    } finally {
+      unmount(root, container);
+    }
+  });
 });
 
 describe('offline at boot', () => {
