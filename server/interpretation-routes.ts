@@ -102,6 +102,7 @@ import { bodyById } from '../src/astrology/bodies.ts';
 import { aspectByKey } from '../src/astrology/aspects.ts';
 import { signOf, degreesInSign } from '../src/astrology/signs.ts';
 import { houseOf } from '../src/astrology/emphasis.ts';
+import { BODY_REQUIRED_ERROR, bodyObject } from './request-body.ts';
 
 function isLocale(value: unknown): value is Locale {
   return typeof value === 'string' && (CORPUS_LOCALES as readonly string[]).includes(value);
@@ -462,7 +463,9 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
       },
     },
     async (request, reply) => {
-      const { mode: rawMode, placementKeys, chartData, relationshipData, customPrompt, locale } = request.body;
+      const body = bodyObject(request.body);
+      if (!body) return reply.code(400).send({ error: BODY_REQUIRED_ERROR });
+      const { mode: rawMode, placementKeys, chartData, relationshipData, customPrompt, locale } = body;
 
       // A missing `mode` defaults to `'grounded'` — this route's original, only behavior — so
       // this isn't a breaking change for any caller that predates freeform mode.
@@ -504,7 +507,7 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
       if (!isLocale(locale)) {
         return reply.code(400).send({ error: `locale must be one of ${CORPUS_LOCALES.join(', ')}` });
       }
-      const { personId } = request.body;
+      const { personId } = body;
       if (personId === undefined) {
         return reply.code(400).send({ error: 'personId is required: the person this interpretation is for' });
       }
@@ -546,7 +549,7 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
         systemInstruction = SYSTEM_INSTRUCTION;
         basis = { kind: 'placements', keys: placementKeys };
       } else if (mode === 'focus') {
-        const validated = validateFocusContext(request.body.focusContext);
+        const validated = validateFocusContext(body.focusContext);
         if ('errors' in validated) {
           return reply.code(400).send({ error: `focusContext is invalid: ${validated.errors.join('; ')}` });
         }
@@ -558,10 +561,10 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
         if ('errors' in validated) {
           return reply.code(400).send({ error: `chartData is invalid: ${validated.errors.join('; ')}` });
         }
-        if (request.body.chartKind !== undefined && !isChartKind(request.body.chartKind)) {
+        if (body.chartKind !== undefined && !isChartKind(body.chartKind)) {
           return reply.code(400).send({ error: "chartKind must be 'natal' or 'composite'" });
         }
-        chartKind = isChartKind(request.body.chartKind) ? request.body.chartKind : 'natal';
+        chartKind = isChartKind(body.chartKind) ? body.chartKind : 'natal';
         facts = buildFreeformFacts(validated.chartData);
         systemInstruction = FREEFORM_SYSTEM_INSTRUCTION;
         basis = { kind: 'whole-chart' };

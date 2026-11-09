@@ -33,6 +33,7 @@ import {
 import { requireAdmin } from './auth/identity.ts';
 import { lintEntry } from '../src/interpretation/lint.ts';
 import type { CorpusEntry } from '../src/interpretation/schema.ts';
+import { BODY_REQUIRED_ERROR, bodyObject } from './request-body.ts';
 
 function isLocale(value: unknown): value is Locale {
   return typeof value === 'string' && (LOCALES as readonly string[]).includes(value);
@@ -87,7 +88,9 @@ export function registerCorpusOverrideRoutes(app: FastifyInstance, db: Database)
     '/api/admin/corpus-overrides',
     { preHandler: requireAdmin(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
     async (request, reply) => {
-      const { key, locale, persona, text, tier, tags } = request.body;
+      const body = bodyObject(request.body);
+      if (!body) return reply.code(400).send({ error: BODY_REQUIRED_ERROR });
+      const { key, locale, persona, text, tier, tags } = body;
       if (typeof key !== 'string' || key === '') return reply.code(400).send({ error: 'key is required' });
       if (!isLocale(locale)) return reply.code(400).send({ error: `locale must be one of ${LOCALES.join(', ')}` });
       if (persona !== undefined) {
