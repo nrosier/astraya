@@ -12,6 +12,7 @@ import { createServer, type Server, type Socket } from 'node:net';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { createHash } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import { type FastifyInstance } from 'fastify';
 import { generateKeyPair } from 'jose';
@@ -153,6 +154,29 @@ describe('POST /api/auth/oidc/callback', () => {
     });
     expect(me.statusCode).toBe(200);
     expect(me.json<{ user: { username: string } }>().user.username).toBe('alice');
+  });
+
+  it('stores sha256 of the cookie as the sessions row id, never the cookie itself (#1360)', async () => {
+    const idToken = await fakeAuthentik.mintIdToken({
+      sub: 'authentik-subject-hash-at-rest',
+      nonce: 'n',
+      preferred_username: 'hashed',
+    });
+    fakeAuthentik.registerCode('code-hashed', { idToken });
+    const response = await callback({ code: 'code-hashed', codeVerifier: 'v', nonce: 'n' });
+    expect(response.statusCode).toBe(200);
+    const cookie = String(response.cookies.find((c) => c.name === SESSION_COOKIE)?.value);
+    const hashed = createHash('sha256').update(cookie).digest('hex');
+    const raw = new DatabaseSync(dbPath);
+    try {
+      const rows = raw
+        .prepare('SELECT id FROM sessions WHERE user_id = (SELECT id FROM users WHERE username = ?)')
+        .all('hashed') as { id: string }[];
+      expect(rows).toEqual([{ id: hashed }]);
+      expect(rows[0]?.id).not.toBe(cookie);
+    } finally {
+      raw.close();
+    }
   });
 
   it('falls back to the name claim when preferred_username is absent', async () => {
@@ -525,6 +549,16 @@ describe('POST /api/auth/logout with an OIDC-derived session', () => {
     const signInResponse = await callback({ code: 'code-fay', codeVerifier: 'v', nonce: 'n' });
     const cookie = signInResponse.cookies.find((c) => c.name === SESSION_COOKIE);
     const sessionId = String(cookie?.value);
+    const before = new DatabaseSync(dbPath);
+    try {
+      expect(
+        before
+          .prepare('SELECT COUNT(*) AS n FROM sessions WHERE user_id = (SELECT id FROM users WHERE username = ?)')
+          .get('fay'),
+      ).toEqual({ n: 1 });
+    } finally {
+      before.close();
+    }
 
     // A new, unreachable issuer misses the per-issuer discovery cache, so the
     // end-session lookup really has to fail.
@@ -542,7 +576,18 @@ describe('POST /api/auth/logout with an OIDC-derived session', () => {
     expect(cleared?.expires === undefined ? 0 : cleared.expires.getTime()).toBeLessThanOrEqual(Date.now());
     const raw = new DatabaseSync(dbPath);
     try {
-      expect(raw.prepare('SELECT COUNT(*) AS n FROM sessions WHERE id = ?').get(sessionId)).toEqual({ n: 0 });
+      // Counted by user_id and by the stored hash: the raw cookie is never a row id (#1360), so a
+      // count by the raw value would be 0 even if logout had failed to revoke anything.
+      expect(
+        raw
+          .prepare('SELECT COUNT(*) AS n FROM sessions WHERE user_id = (SELECT id FROM users WHERE username = ?)')
+          .get('fay'),
+      ).toEqual({ n: 0 });
+      expect(
+        raw
+          .prepare('SELECT COUNT(*) AS n FROM sessions WHERE id = ?')
+          .get(createHash('sha256').update(sessionId).digest('hex')),
+      ).toEqual({ n: 0 });
     } finally {
       raw.close();
     }

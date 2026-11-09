@@ -38,8 +38,50 @@ describe('server/db.ts', () => {
   it('sets PRAGMA user_version to the number of migrations applied', () => {
     const db = openDatabase(':memory:');
     const row = db.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
-    expect(row.user_version).toBe(17);
+    expect(row.user_version).toBe(18);
     db.close();
+  });
+
+  it('upgrading a v17 database deletes every session and clears pending set-password tokens (#1360)', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'astraya-db-test-'));
+    const path = join(dir, 'astraya.db');
+    try {
+      // Migration 18 changes no schema, so a fully migrated file rolled back to user_version 17 is a v17 database.
+      const setup = openDatabase(path);
+      const now = new Date().toISOString();
+      const later = new Date(Date.now() + 3_600_000).toISOString();
+      setup
+        .prepare('INSERT INTO users (id, username, password_hash, created_at) VALUES (?, ?, ?, ?)')
+        .run('live-user', 'live', 'hash', now);
+      setup
+        .prepare(
+          'INSERT INTO users (id, username, password_hash, created_at, password_set_token, password_set_token_expires_at) VALUES (?, ?, NULL, ?, ?, ?)',
+        )
+        .run('pending-user', 'pending', now, 'raw-pending-token', later);
+      setup
+        .prepare('INSERT INTO sessions (id, user_id, created_at, expires_at, last_seen_at) VALUES (?, ?, ?, ?, ?)')
+        .run('raw-live-session', 'live-user', now, later, now);
+      setup.exec('PRAGMA user_version = 17');
+      setup.close();
+
+      const db = openDatabase(path);
+      try {
+        const version = db.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
+        expect(version.user_version).toBe(18);
+        expect(db.prepare('SELECT COUNT(*) AS n FROM sessions').get()).toEqual({ n: 0 });
+        expect(
+          db
+            .prepare('SELECT password_set_token, password_set_token_expires_at FROM users WHERE id = ?')
+            .get('pending-user'),
+        ).toEqual({ password_set_token: null, password_set_token_expires_at: null });
+        // The accounts themselves survive.
+        expect(db.prepare('SELECT COUNT(*) AS n FROM users').get()).toEqual({ n: 2 });
+      } finally {
+        db.close();
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   it('is idempotent: reopening an already-migrated file runs no migration twice', () => {
@@ -56,7 +98,7 @@ describe('server/db.ts', () => {
       const second = openDatabase(path);
       expect(schemaOf(second)).toEqual(before);
       const row = second.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
-      expect(row.user_version).toBe(17);
+      expect(row.user_version).toBe(18);
       second.close();
     } finally {
       rmSync(dir, { recursive: true, force: true });
@@ -143,7 +185,7 @@ describe('server/db.ts', () => {
 
       const db = openDatabase(path);
       const row = db.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
-      expect(row.user_version).toBe(17);
+      expect(row.user_version).toBe(18);
 
       // The pre-existing row survived the users rebuild intact.
       const legacyUser = db.prepare('SELECT * FROM users WHERE id = ?').get('legacy-user') as

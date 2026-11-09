@@ -12,7 +12,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import type { FastifyInstance } from 'fastify';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { build } from '../server/index.ts';
 import { clearLoginThrottle } from '../server/auth/login-throttle.ts';
 import { hashPassword } from '../server/auth/passwords.ts';
@@ -277,7 +277,68 @@ describe('POST /api/auth/login and GET /api/auth/me', () => {
   });
 });
 
+function sha256(value: string): string {
+  return createHash('sha256').update(value).digest('hex');
+}
+
+function sessionCountForUser(username: string): number {
+  const raw = new DatabaseSync(dbPath);
+  try {
+    const row = raw
+      .prepare('SELECT COUNT(*) AS n FROM sessions WHERE user_id = (SELECT id FROM users WHERE username = ?)')
+      .get(username) as { n: number };
+    return row.n;
+  } finally {
+    raw.close();
+  }
+}
+
+describe('session ids at rest after a local login (#1360)', () => {
+  it('stores sha256 of the cookie as the sessions row id, never the cookie itself', async () => {
+    await setupAdmin('admin', 'correct-horse-battery');
+    const login = await app.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      payload: { username: 'admin', password: 'correct-horse-battery' },
+    });
+    expect(login.statusCode).toBe(200);
+    const cookie = String(login.cookies.find((c) => c.name === SESSION_COOKIE)?.value);
+    const raw = new DatabaseSync(dbPath);
+    try {
+      expect(raw.prepare('SELECT COUNT(*) AS n FROM sessions WHERE id = ?').get(sha256(cookie))).toEqual({ n: 1 });
+      expect(raw.prepare('SELECT COUNT(*) AS n FROM sessions WHERE id = ?').get(cookie)).toEqual({ n: 0 });
+      const ids = (raw.prepare('SELECT id FROM sessions').all() as { id: string }[]).map((r) => r.id);
+      expect(ids).toContain(sha256(cookie));
+      expect(ids).not.toContain(cookie);
+    } finally {
+      raw.close();
+    }
+  });
+});
+
 describe('POST /api/auth/logout', () => {
+  it('removes exactly the signed-out session row, counted by user_id (#1360)', async () => {
+    await setupAdmin('admin', 'correct-horse-battery');
+    const login = await app.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      payload: { username: 'admin', password: 'correct-horse-battery' },
+    });
+    const cookie = String(login.cookies.find((c) => c.name === SESSION_COOKIE)?.value);
+    // The setup session and the login session.
+    expect(sessionCountForUser('admin')).toBe(2);
+
+    const logout = await app.inject({ method: 'POST', url: '/api/auth/logout', cookies: { [SESSION_COOKIE]: cookie } });
+    expect(logout.statusCode).toBe(200);
+    expect(sessionCountForUser('admin')).toBe(1);
+    const raw = new DatabaseSync(dbPath);
+    try {
+      expect(raw.prepare('SELECT COUNT(*) AS n FROM sessions WHERE id = ?').get(sha256(cookie))).toEqual({ n: 0 });
+    } finally {
+      raw.close();
+    }
+  });
+
   it('revokes the session, so /api/auth/me is 401 afterward', async () => {
     await setupAdmin('admin', 'correct-horse-battery');
     const login = await app.inject({

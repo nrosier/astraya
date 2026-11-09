@@ -105,7 +105,7 @@ export function registerAuthRoutes(app: FastifyInstance, db: Database): void {
       clearLoginThrottle(username);
       const user = promoteLocalUserIfAllowlisted(db, credentials.user, username);
       const session = createSession(db, user.id);
-      reply.setCookie(SESSION_COOKIE, session.id, {
+      reply.setCookie(SESSION_COOKIE, session.cookieValue, {
         httpOnly: true,
         sameSite: 'lax',
         secure: isSecureRequest(request),
@@ -222,7 +222,7 @@ export function registerAuthRoutes(app: FastifyInstance, db: Database): void {
         request.log[groupCheck.level]({ ...groupCheck.fields, role: user.role }, groupCheck.message);
 
         const session = createSession(db, user.id, { oidcIdToken: idToken });
-        reply.setCookie(SESSION_COOKIE, session.id, {
+        reply.setCookie(SESSION_COOKIE, session.cookieValue, {
           httpOnly: true,
           sameSite: 'lax',
           secure: isSecureRequest(request),
@@ -274,7 +274,7 @@ export function registerAuthRoutes(app: FastifyInstance, db: Database): void {
       announceBootstrap(db, app.log);
 
       const session = createSession(db, id);
-      reply.setCookie(SESSION_COOKIE, session.id, {
+      reply.setCookie(SESSION_COOKIE, session.cookieValue, {
         httpOnly: true,
         sameSite: 'lax',
         secure: isSecureRequest(request),
