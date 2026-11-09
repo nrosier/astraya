@@ -61,15 +61,16 @@ export async function login(username: string, password: string): Promise<AuthUse
 }
 
 /**
- * `POST /api/auth/logout`. The server never rejects it — there is no session left to
- * reject it with — but the `fetch` itself still throws when offline, which the caller must
- * treat as "the server wasn't told", not as "sign-out failed" (#335). Returns
+ * `POST /api/auth/logout`. The server does not reject it for lack of a session, but the `fetch` itself still throws when offline, which the caller must
+ * treat as "the server wasn't told", not as "sign-out failed" (#335). A non-2xx answer
+ * (a proxy 502, a 500) means the same thing, so it throws an `AuthError` too (#1361). Returns
  * `endSessionUrl` when the ended session was OIDC-derived and
  * Authentik advertises RP-initiated logout (#77) — the caller must navigate there
  * (a `fetch` can't end Authentik's own browser session), never treat it as optional.
  */
 export async function logout(): Promise<{ endSessionUrl?: string }> {
   const response = await fetch('/api/auth/logout', { method: 'POST' });
+  if (!response.ok) throw new AuthError(await errorMessage(response), response.status);
   const body = (await response.json().catch(() => ({}))) as { endSessionUrl?: string };
   return body.endSessionUrl === undefined ? {} : { endSessionUrl: body.endSessionUrl };
 }

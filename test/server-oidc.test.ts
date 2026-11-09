@@ -7,7 +7,8 @@
  * real listening port, since `server/auth/oidc.ts` makes real outbound `fetch()`
  * calls to it.
  */
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createServer, type Server, type Socket } from 'node:net';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -15,6 +16,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { type FastifyInstance } from 'fastify';
 import { generateKeyPair } from 'jose';
 import { build } from '../server/index.ts';
+import { OIDC_FETCH_TIMEOUT_MS } from '../server/auth/oidc.ts';
 import { startFakeAuthentik, type FakeAuthentik } from './fake-authentik.ts';
 
 process.env.LOG_LEVEL = 'silent';
@@ -79,6 +81,38 @@ describe('GET /api/auth/oidc/config', () => {
       rmSync(dir2, { recursive: true, force: true });
     }
   });
+
+  it('gives up on a discovery endpoint that never answers instead of hanging (#1361)', async () => {
+    // A TCP listener that accepts the connection and never writes a byte.
+    const sockets = new Set<Socket>();
+    const hanging: Server = createServer((socket) => {
+      sockets.add(socket);
+    });
+    await new Promise<void>((resolve) => hanging.listen(0, 'localhost', resolve));
+    const address = hanging.address();
+    if (address === null || typeof address === 'string') throw new Error('hanging server did not bind');
+    process.env.ASTRAYA_OIDC_ISSUER = `http://localhost:${String(address.port)}`;
+    // The production bound is 10s; keep the real signal wiring but shorten the wait.
+    const requested: number[] = [];
+    const realTimeout = AbortSignal.timeout.bind(AbortSignal);
+    const spy = vi.spyOn(AbortSignal, 'timeout').mockImplementation((ms) => {
+      requested.push(ms);
+      return realTimeout(100);
+    });
+    try {
+      const response = await app.inject({ method: 'GET', url: '/api/auth/oidc/config' });
+      expect(response.json()).toEqual({ enabled: false });
+      expect(requested).toContain(OIDC_FETCH_TIMEOUT_MS);
+    } finally {
+      spy.mockRestore();
+      for (const socket of sockets) socket.destroy();
+      await new Promise<void>((resolve) =>
+        hanging.close(() => {
+          resolve();
+        }),
+      );
+    }
+  }, 5000);
 
   it('reports disabled when no issuer is configured', async () => {
     delete process.env.ASTRAYA_OIDC_ISSUER;
@@ -479,5 +513,38 @@ describe('POST /api/auth/logout with an OIDC-derived session', () => {
       cookies: { [SESSION_COOKIE]: String(cookie?.value) },
     });
     expect(logoutResponse.json()).toEqual({ ok: true });
+  });
+
+  it('still revokes the session and clears the cookie when OIDC discovery fails (#1361)', async () => {
+    const idToken = await fakeAuthentik.mintIdToken({
+      sub: 'authentik-subject-10',
+      nonce: 'n',
+      preferred_username: 'fay',
+    });
+    fakeAuthentik.registerCode('code-fay', { idToken });
+    const signInResponse = await callback({ code: 'code-fay', codeVerifier: 'v', nonce: 'n' });
+    const cookie = signInResponse.cookies.find((c) => c.name === SESSION_COOKIE);
+    const sessionId = String(cookie?.value);
+
+    // A new, unreachable issuer misses the per-issuer discovery cache, so the
+    // end-session lookup really has to fail.
+    process.env.ASTRAYA_OIDC_ISSUER = 'http://localhost:1';
+    const logoutResponse = await app.inject({
+      method: 'POST',
+      url: '/api/auth/logout',
+      cookies: { [SESSION_COOKIE]: sessionId },
+    });
+
+    expect(logoutResponse.statusCode).toBe(200);
+    expect(logoutResponse.json()).toEqual({ ok: true });
+    const cleared = logoutResponse.cookies.find((c) => c.name === SESSION_COOKIE);
+    expect(cleared?.value).toBe('');
+    expect(cleared?.expires === undefined ? 0 : cleared.expires.getTime()).toBeLessThanOrEqual(Date.now());
+    const raw = new DatabaseSync(dbPath);
+    try {
+      expect(raw.prepare('SELECT COUNT(*) AS n FROM sessions WHERE id = ?').get(sessionId)).toEqual({ n: 0 });
+    } finally {
+      raw.close();
+    }
   });
 });

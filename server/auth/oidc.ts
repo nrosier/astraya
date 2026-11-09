@@ -13,7 +13,7 @@
  * @module oidc
  * @purpose Authentik/OIDC integration: discovery, server-side authorization-code-to-token exchange, and ID token verification — the browser never sees an access, ID, or refresh token.
  * @conventions Uses `jose` for signature verification, JWKS rotation, and clock-skew tolerance rather than a hand-rolled JWT check; `loadOidcConfig` returns `null` only for a genuinely unset issuer and throws on any other malformed configuration, since that is a deployment mistake, not a disabled state; discovery documents and JWKS are cached per issuer for the life of the process.
- * @exports OidcConfig, loadOidcConfig, getDiscovery, exchangeCode, VerifiedIdToken, verifyIdToken, getEndSessionEndpoint
+ * @exports OIDC_FETCH_TIMEOUT_MS, OidcConfig, loadOidcConfig, getDiscovery, exchangeCode, VerifiedIdToken, verifyIdToken, getEndSessionEndpoint
  */
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 
@@ -25,6 +25,17 @@ export interface OidcConfig {
   /** Which ID-token claim carries the group list (#292's admin auto-promotion). Defaults to `groups`. */
   readonly adminGroupClaim: string;
 }
+
+/**
+ * Upper bound on every outbound request to the identity provider (discovery and
+ * token exchange, #1361). Without one, an issuer that accepts the connection and
+ * never answers leaves the request, and anything awaiting it (the sign-in config
+ * route, the callback), hanging until the socket gives up on its own, minutes
+ * later. 10s is well above a healthy Authentik round trip (tens of milliseconds
+ * on a LAN, about a second across the internet with a cold TLS handshake) while
+ * still failing fast enough that a person waiting on the sign-in page sees an error.
+ */
+export const OIDC_FETCH_TIMEOUT_MS = 10_000;
 
 interface DiscoveryDocument {
   readonly authorization_endpoint: string;
@@ -77,7 +88,9 @@ let cachedDiscovery: { readonly issuer: string; readonly promise: Promise<Discov
 let cachedJwks: { readonly issuer: string; readonly jwks: ReturnType<typeof createRemoteJWKSet> } | undefined;
 
 async function fetchDiscovery(issuer: string): Promise<DiscoveryDocument> {
-  const response = await fetch(`${issuer}/.well-known/openid-configuration`);
+  const response = await fetch(`${issuer}/.well-known/openid-configuration`, {
+    signal: AbortSignal.timeout(OIDC_FETCH_TIMEOUT_MS),
+  });
   if (!response.ok) {
     throw new Error(`OIDC discovery failed for ${issuer}: HTTP ${response.status}`);
   }
@@ -123,6 +136,7 @@ export async function exchangeCode(params: ExchangeCodeParams): Promise<{ readon
   const discovery = await getDiscovery(params.config.issuer);
   const response = await fetch(discovery.token_endpoint, {
     method: 'POST',
+    signal: AbortSignal.timeout(OIDC_FETCH_TIMEOUT_MS),
     headers: { 'content-type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       grant_type: 'authorization_code',

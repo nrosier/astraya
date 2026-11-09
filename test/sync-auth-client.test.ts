@@ -119,6 +119,12 @@ describe('logout', () => {
     await expect(logout()).resolves.toEqual({});
   });
 
+  it('rejects on a non-2xx response, so the caller knows the server was not told (#1361)', async () => {
+    const stubbed: typeof fetch = () => Promise.resolve(new Response('{"error":"boom"}', { status: 502 }));
+    globalThis.fetch = stubbed;
+    await expect(logout()).rejects.toMatchObject({ name: 'AuthError', status: 502 });
+  });
+
   it('resolves with no endSessionUrl when nobody was signed in', async () => {
     await expect(logout()).resolves.toEqual({});
   });
