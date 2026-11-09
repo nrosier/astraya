@@ -33,7 +33,7 @@ import {
 import { clearLoginThrottle, isLoginThrottled, recordFailedLogin } from './login-throttle.ts';
 import { exchangeCode, getDiscovery, getEndSessionEndpoint, loadOidcConfig, verifyIdToken } from './oidc.ts';
 import { DUMMY_PASSWORD_HASH, hashPassword, passwordIsTooWeak, verifyPassword } from './passwords.ts';
-import { SESSION_COOKIE, createSession, getSession, revokeSession } from './sessions.ts';
+import { SESSION_COOKIE, createSession, getSession, revokeAllSessionsForUser, revokeSession } from './sessions.ts';
 
 /** `Secure` only makes sense once the app is actually served over HTTPS. */
 function isSecureRequest(request: { protocol: string }): boolean {
@@ -295,6 +295,8 @@ export function registerAuthRoutes(app: FastifyInstance, db: Database): void {
 
       const passwordHash = await hashPassword(password);
       consumePasswordSetToken(db, found.user.id, passwordHash);
+      // A password change ends every session signed in under the old credentials (#1360).
+      revokeAllSessionsForUser(db, found.user.id);
       return reply.send({ ok: true });
     },
   );

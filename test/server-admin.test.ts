@@ -324,30 +324,134 @@ describe('POST /api/admin/users', () => {
 });
 
 describe('POST /api/admin/users/:id/reset-password', () => {
-  it('mints a fresh link without touching the account until the link is used', async () => {
+  async function findUserId(adminCookie: string, username: string): Promise<string> {
+    const users = (
+      await app.inject({ method: 'GET', url: '/api/admin/users', cookies: { [SESSION_COOKIE]: adminCookie } })
+    ).json<{ users: { id: string; username: string }[] }>().users;
+    const found = users.find((u) => u.username === username);
+    if (!found) throw new Error(`${username} not found`);
+    return found.id;
+  }
+
+  it('revokes every existing session of the user at once (#1360)', async () => {
     const adminCookie = await setupAdmin(app);
     const bobCookie = await createAndLoginUser(app, 'bob', 'original-password');
-    const bob = (
-      await app.inject({ method: 'GET', url: '/api/admin/users', cookies: { [SESSION_COOKIE]: adminCookie } })
-    )
-      .json<{ users: { id: string; username: string }[] }>()
-      .users.find((u) => u.username === 'bob');
-    if (!bob) throw new Error('bob not found');
+    const bobSecondCookie = (
+      await app.inject({
+        method: 'POST',
+        url: '/api/auth/login',
+        payload: { username: 'bob', password: 'original-password' },
+      })
+    ).cookies.find((c) => c.name === SESSION_COOKIE)?.value;
+    if (!bobSecondCookie) throw new Error('second login did not set a session cookie');
+    const bobId = await findUserId(adminCookie, 'bob');
 
     const reset = await app.inject({
       method: 'POST',
-      url: `/api/admin/users/${bob.id}/reset-password`,
+      url: `/api/admin/users/${bobId}/reset-password`,
       cookies: { [SESSION_COOKIE]: adminCookie },
     });
     expect(reset.statusCode).toBe(200);
 
-    // The old password still works until the new link is actually followed.
-    const stillWorks = await app.inject({
+    for (const cookie of [bobCookie, bobSecondCookie]) {
+      const me = await app.inject({ method: 'GET', url: '/api/auth/me', cookies: { [SESSION_COOKIE]: cookie } });
+      expect(me.statusCode).toBe(401);
+    }
+    // The admin's own session is untouched.
+    const adminMe = await app.inject({
       method: 'GET',
       url: '/api/auth/me',
-      cookies: { [SESSION_COOKIE]: bobCookie },
+      cookies: { [SESSION_COOKIE]: adminCookie },
     });
-    expect(stillWorks.statusCode).toBe(200);
+    expect(adminMe.statusCode).toBe(200);
+  });
+
+  it('keeps the new session the user signs in with after following the link (#1360)', async () => {
+    const adminCookie = await setupAdmin(app);
+    await createAndLoginUser(app, 'bob', 'original-password');
+    const bobId = await findUserId(adminCookie, 'bob');
+
+    const reset = await app.inject({
+      method: 'POST',
+      url: `/api/admin/users/${bobId}/reset-password`,
+      cookies: { [SESSION_COOKIE]: adminCookie },
+    });
+    const token = extractSetPasswordToken(reset.json<{ setPasswordUrl: string }>().setPasswordUrl);
+    const setPassword = await app.inject({
+      method: 'POST',
+      url: '/api/auth/set-password',
+      payload: { token, password: 'a-brand-new-password' },
+    });
+    expect(setPassword.statusCode).toBe(200);
+
+    const login = await app.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      payload: { username: 'bob', password: 'a-brand-new-password' },
+    });
+    expect(login.statusCode).toBe(200);
+    const newCookie = login.cookies.find((c) => c.name === SESSION_COOKIE)?.value;
+    const me = await app.inject({ method: 'GET', url: '/api/auth/me', cookies: { [SESSION_COOKIE]: newCookie ?? '' } });
+    expect(me.statusCode).toBe(200);
+  });
+});
+
+describe('POST /api/auth/set-password session revocation (#1360)', () => {
+  it('ends a session created before the password change, and a later sign-in still works', async () => {
+    const adminCookie = await setupAdmin(app);
+    const create = await app.inject({
+      method: 'POST',
+      url: '/api/admin/users',
+      cookies: { [SESSION_COOKIE]: adminCookie },
+      payload: { username: 'carol' },
+    });
+    const token = extractSetPasswordToken(create.json<{ setPasswordUrl: string }>().setPasswordUrl);
+
+    // A session that exists before the password is set (inserted directly: the
+    // account has no password, so it cannot sign in yet).
+    const carolId = create.json<{ user: { id: string } }>().user.id;
+    const staleSession = randomBytes(32).toString('hex');
+    const raw = new DatabaseSync(dbPath);
+    const now = new Date();
+    raw
+      .prepare('INSERT INTO sessions (id, user_id, created_at, expires_at, last_seen_at) VALUES (?, ?, ?, ?, ?)')
+      .run(
+        staleSession,
+        carolId,
+        now.toISOString(),
+        new Date(now.getTime() + 3_600_000).toISOString(),
+        now.toISOString(),
+      );
+    raw.close();
+    const before = await app.inject({
+      method: 'GET',
+      url: '/api/auth/me',
+      cookies: { [SESSION_COOKIE]: staleSession },
+    });
+    expect(before.statusCode).toBe(200);
+
+    const setPassword = await app.inject({
+      method: 'POST',
+      url: '/api/auth/set-password',
+      payload: { token, password: 'a-brand-new-password' },
+    });
+    expect(setPassword.statusCode).toBe(200);
+
+    const after = await app.inject({
+      method: 'GET',
+      url: '/api/auth/me',
+      cookies: { [SESSION_COOKIE]: staleSession },
+    });
+    expect(after.statusCode).toBe(401);
+
+    const login = await app.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      payload: { username: 'carol', password: 'a-brand-new-password' },
+    });
+    const fresh = login.cookies.find((c) => c.name === SESSION_COOKIE)?.value;
+    const me = await app.inject({ method: 'GET', url: '/api/auth/me', cookies: { [SESSION_COOKIE]: fresh ?? '' } });
+    expect(me.statusCode).toBe(200);
   });
 });
 
