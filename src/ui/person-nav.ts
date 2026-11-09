@@ -38,15 +38,17 @@ export interface PersonTab {
 // Labels are translated, so they live in `PersonNav.messages.ts`, looked up by `key`,
 // rather than here — this module has no access to the current locale.
 export const PERSON_TABS: readonly PersonTab[] = [
-  // The canonical Overview destination (#506/#509): a complete person's landing tab. Still
-  // reachable before every other tab, same as birth-record, since both are the two places a
-  // person can land regardless of completeness (activeTabKey/isTabEnabled below).
+  // Birth record is first (#1347, owner decision): it is always enabled, so it is the one place a
+  // person can always be opened, whatever their completeness. Overview follows, then the rest.
+  { key: 'birth-record', buildHref: (id) => routeHref({ kind: 'person', personId: id }) },
+  // The canonical Overview destination (#506/#509): second, and like birth-record still reachable
+  // before every other tab, since both are the two places a person can land regardless of
+  // completeness (activeTabKey/isTabEnabled below).
   { key: 'overview', buildHref: (id) => routeHref({ kind: 'person-overview', personId: id }) },
-  // The consultation dashboard (#563): second in the workspace, right after Overview — both are
+  // The consultation dashboard (#563): third in the workspace, right after Overview — both are
   // aggregation/landing screens, but unlike Overview it needs a complete birth moment
   // (isTabEnabled below), since it has nothing to show without one.
   { key: 'consultation', buildHref: (id) => routeHref({ kind: 'consultation', personId: id }) },
-  { key: 'birth-record', buildHref: (id) => routeHref({ kind: 'person', personId: id }) },
   { key: 'chart', buildHref: (id) => routeHref({ kind: 'chart', personId: id }) },
   { key: 'report', buildHref: (id) => routeHref({ kind: 'report', personId: id }) },
   { key: 'timing-timeline', buildHref: (id) => routeHref({ kind: 'timing-timeline', personId: id }) },

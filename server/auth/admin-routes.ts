@@ -199,6 +199,8 @@ export function registerAdminRoutes(app: FastifyInstance, db: Database): void {
       const user = getAdminUser(db, request.params.id);
       if (!user) return reply.code(404).send({ error: 'No such user' });
       const token = mintPasswordSetToken(db, user.id);
+      // A reset is for an account that may be compromised: sign every session out now (#1360).
+      revokeAllSessionsForUser(db, user.id);
       return reply.send({ user, setPasswordUrl: setPasswordUrl(token) });
     },
   );
