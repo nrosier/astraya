@@ -41,7 +41,7 @@ import { isStationWindowK } from '../astrology/planetary-condition.js';
 import type { Zodiac } from '../ephemeris/types.js';
 import type { JsonValue } from '../store/ops.js';
 import { STAR_SEARCH_LIMIT } from '../ephemeris/star-catalogue.js';
-import { readFixedStars, type ChosenFixedStar, type CustomPointDefinition } from './person.js';
+import { readCustomPoints, readFixedStars, type ChosenFixedStar, type CustomPointDefinition } from './person.js';
 
 /**
  * 2 (#582): adds `customPoints`. 3 (#585): the eleven scattered point-visibility/`aspectsTo*`
@@ -507,6 +507,15 @@ export function decodeCalculationSnapshot(value: unknown): CalculationSnapshot {
       );
     }
     if (stars.length > MAX_SNAPSHOT_FIXED_STARS) throw fixedStarCapError(stars.length);
+  }
+  if (value.customPoints !== undefined && readCustomPoints(value.customPoints) === undefined) {
+    throw new SnapshotDecodeError(
+      'invalid-field',
+      'The snapshot carries custom points this app cannot read (customPoints).',
+    );
+  }
+  if (value.settings !== undefined && !isRecord(value.settings)) {
+    throw new SnapshotDecodeError('invalid-field', 'The snapshot settings are not an object (settings).');
   }
   if (isRecord(value.settings)) {
     const problems = invalidSettingFields(value.settings);

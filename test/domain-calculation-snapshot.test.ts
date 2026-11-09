@@ -583,3 +583,42 @@ describe('chosen fixed stars in the snapshot (#860)', () => {
     expect(parseCalculationSnapshot(bad).fixedStars).toEqual([]);
   });
 });
+
+describe('decodeCalculationSnapshot refuses malformed settings and custom points (#1380)', () => {
+  const validPoint = { id: 'p1', name: 'Mid', formula: 'Sun + Moon' };
+  const codeOf = (payload: unknown): string | undefined => {
+    try {
+      decodeCalculationSnapshot(payload);
+    } catch (error) {
+      return error instanceof SnapshotDecodeError ? error.code : 'other';
+    }
+    return undefined;
+  };
+
+  it.each([
+    ['a string', 'oops'],
+    ['an array', []],
+    ['a number', 7],
+  ])('refuses settings that are %s', (_n, settings) => {
+    expect(codeOf({ version: 4, settings, rulership: 'modern' })).toBe('invalid-field');
+  });
+
+  it.each([
+    ['not an array', 'nope'],
+    ['an entry of the wrong shape', [{ id: 1, name: 'x', formula: 'Sun' }]],
+    ['an entry that is not an object', ['Sun']],
+  ])('refuses customPoints that are %s', (_n, customPoints) => {
+    expect(codeOf({ version: 4, settings: {}, rulership: 'modern', customPoints })).toBe('invalid-field');
+  });
+
+  it('still migrates a historical snapshot with settings and customPoints absent to the defaults', () => {
+    const decoded = decodeCalculationSnapshot({ version: 1 });
+    expect(decoded.settings).toEqual(DEFAULT_EXTENDED_SETTINGS);
+    expect(decoded.customPoints).toEqual([]);
+  });
+
+  it('round-trips a valid snapshot with a valid custom point unchanged', () => {
+    const snapshot = buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE, [validPoint]);
+    expect(decodeCalculationSnapshot(calculationSnapshotToJson(snapshot))).toEqual(snapshot);
+  });
+});
