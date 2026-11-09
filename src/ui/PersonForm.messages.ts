@@ -93,6 +93,26 @@ const en = {
   statusUnsavedTooltip: 'You have unsaved changes',
   fillFieldsHint: 'Fill in the fields marked above to save.',
 
+  lifeEventsHeading: 'Life events',
+  lifeEventsHint: 'Dated events in this life. A time is local time at the birth place.',
+  lifeEventDateLabel: 'Date',
+  lifeEventTimeLabel: 'Time',
+  lifeEventLabelLabel: 'What happened',
+  lifeEventAdd: 'Add event',
+  lifeEventRemove: 'Remove',
+  lifeEventUntitled: 'untitled event',
+  lifeEventRemoveLabel: (label: string) => `Remove life event: ${label}`,
+  lifeEventsCount: (count: number, max: number) => `${String(count)} of ${String(max)} events`,
+  lifeEventsAtCap: (max: number) => `You can store at most ${String(max)} events. Remove one to add another.`,
+  lifeEventDateRequired: 'Enter the date of the event.',
+  lifeEventDateInvalid: 'Enter a real date as YYYY-MM-DD.',
+  lifeEventLabelRequired: 'Say what happened.',
+  lifeEventLabelTooLong: (max: number) => `Use at most ${String(max)} characters.`,
+  lifeEventsFixHint: 'Fix the life events marked above to save.',
+  lifeEventsUnreadable: 'The saved life events for this person cannot be read.',
+  lifeEventsUnreadableDetail:
+    'They are left as they are and cannot be edited here, so saving the birth record will not overwrite them.',
+
   deleteHeading: 'Danger zone',
   deleteHint:
     'Deleting hides this person and their charts. Nothing is really removed, so it can be undone from the people list.',
@@ -186,6 +206,27 @@ const nl: typeof en = {
   statusUnsavedLabel: 'Status: niet-opgeslagen wijzigingen',
   statusUnsavedTooltip: 'Je hebt niet-opgeslagen wijzigingen',
   fillFieldsHint: 'Vul de hierboven gemarkeerde velden in om op te slaan.',
+
+  lifeEventsHeading: 'Levensgebeurtenissen',
+  lifeEventsHint: 'Gedateerde gebeurtenissen in dit leven. Een tijd is lokale tijd op de geboorteplaats.',
+  lifeEventDateLabel: 'Datum',
+  lifeEventTimeLabel: 'Tijd',
+  lifeEventLabelLabel: 'Wat er gebeurde',
+  lifeEventAdd: 'Gebeurtenis toevoegen',
+  lifeEventRemove: 'Verwijderen',
+  lifeEventUntitled: 'naamloze gebeurtenis',
+  lifeEventRemoveLabel: (label: string) => `Levensgebeurtenis verwijderen: ${label}`,
+  lifeEventsCount: (count: number, max: number) => `${String(count)} van ${String(max)} gebeurtenissen`,
+  lifeEventsAtCap: (max: number) =>
+    `Je kunt maximaal ${String(max)} gebeurtenissen bewaren. Verwijder er een om een andere toe te voegen.`,
+  lifeEventDateRequired: 'Vul de datum van de gebeurtenis in.',
+  lifeEventDateInvalid: 'Vul een echte datum in als JJJJ-MM-DD.',
+  lifeEventLabelRequired: 'Vul in wat er gebeurde.',
+  lifeEventLabelTooLong: (max: number) => `Gebruik hoogstens ${String(max)} tekens.`,
+  lifeEventsFixHint: 'Herstel de hierboven gemarkeerde levensgebeurtenissen om op te slaan.',
+  lifeEventsUnreadable: 'De bewaarde levensgebeurtenissen van deze persoon kunnen niet worden gelezen.',
+  lifeEventsUnreadableDetail:
+    'Ze blijven zoals ze zijn en kunnen hier niet worden bewerkt, dus opslaan van de geboortegegevens overschrijft ze niet.',
 
   deleteHeading: 'Gevarenzone',
   deleteHint:
