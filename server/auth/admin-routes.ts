@@ -28,6 +28,7 @@ import type { Database } from '../db.ts';
 import { getUserByUsername, requireAdmin, requireSuperAdmin, roleFields } from './identity.ts';
 import { isRole, ROLES, type Role } from './roles.ts';
 import { loadOidcConfig } from './oidc.ts';
+import { hashBearerToken } from './token-hash.ts';
 import { revokeAllSessionsForUser } from './sessions.ts';
 import { loadEncryptionKey } from '../ops/crypto.ts';
 import { previewDeletionImpact } from '../ops/deletion-impact.ts';
@@ -123,7 +124,7 @@ function mintPasswordSetToken(db: Database, userId: string): string {
   const token = randomBytes(48).toString('base64url');
   const expiresAt = new Date(Date.now() + PASSWORD_SET_TOKEN_TTL_MS).toISOString();
   db.prepare('UPDATE users SET password_set_token = ?, password_set_token_expires_at = ? WHERE id = ?').run(
-    token,
+    hashBearerToken(token),
     expiresAt,
     userId,
   );

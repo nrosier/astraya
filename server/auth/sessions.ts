@@ -5,17 +5,19 @@
  * disabling a user, a sign-out — takes effect on the very next request. A
  * stateless JWT can't do that without a revocation list, at which point it's a
  * session table with extra steps. So the cookie carries only a random id; every
- * other fact about the session lives here.
+ * other fact about the session lives here. Only a SHA-256 hash of that id is stored,
+ * so a database read cannot be replayed as a cookie.
  */
 
 /**
  * @module sessions
  * @purpose Server-side session storage: the cookie carries only a random session id, and the `sessions` row is the real source of truth, so revocation (disabling a user, signing out) takes effect on the very next request.
- * @conventions Sliding expiry, not a fixed calendar expiry: `touchSession` extends it on each authenticated request; an OIDC-derived session gets a shorter TTL (`OIDC_SESSION_TTL_MS`) than a local one, since an upstream Authentik-side disable is otherwise invisible to Astraya once the token exchange is done.
- * @exports SESSION_COOKIE, Session, CreateSessionOptions, createSession, getSession, touchSession, revokeSession, revokeAllSessionsForUser
+ * @conventions The `sessions.id` column holds `hashBearerToken(cookie)`, never the raw cookie value: `createSession` returns the raw value as `cookieValue` (the only place it exists) and `getSession`/`touchSession`/`revokeSession` take the raw cookie and hash it internally, with no fallback that also tries the raw value. Sliding expiry, not a fixed calendar expiry: `touchSession` extends it on each authenticated request; an OIDC-derived session gets a shorter TTL (`OIDC_SESSION_TTL_MS`) than a local one, since an upstream Authentik-side disable is otherwise invisible to Astraya once the token exchange is done.
+ * @exports SESSION_COOKIE, Session, CreatedSession, CreateSessionOptions, createSession, getSession, touchSession, revokeSession, revokeAllSessionsForUser
  */
 import { randomUUID } from 'node:crypto';
 import type { Database } from '../db.ts';
+import { hashBearerToken } from './token-hash.ts';
 
 export const SESSION_COOKIE = 'astraya_session';
 
@@ -53,8 +55,14 @@ export interface CreateSessionOptions {
   readonly oidcIdToken?: string;
 }
 
-export function createSession(db: Database, userId: string, options: CreateSessionOptions = {}): Session {
-  const id = randomUUID();
+/** A new session plus the raw cookie value, which exists only here and in the Set-Cookie header. */
+export interface CreatedSession extends Session {
+  readonly cookieValue: string;
+}
+
+export function createSession(db: Database, userId: string, options: CreateSessionOptions = {}): CreatedSession {
+  const cookieValue = randomUUID();
+  const id = hashBearerToken(cookieValue);
   const now = new Date().toISOString();
   const ttl = options.oidcIdToken !== undefined ? OIDC_SESSION_TTL_MS : SESSION_TTL_MS;
   const expiresAt = new Date(Date.now() + ttl).toISOString();
@@ -62,7 +70,7 @@ export function createSession(db: Database, userId: string, options: CreateSessi
   db.prepare(
     'INSERT INTO sessions (id, user_id, created_at, expires_at, last_seen_at, oidc_id_token) VALUES (?, ?, ?, ?, ?, ?)',
   ).run(id, userId, now, expiresAt, now, oidcIdToken);
-  return { id, userId, expiresAt, oidcIdToken };
+  return { id, userId, expiresAt, oidcIdToken, cookieValue };
 }
 
 /**
@@ -71,16 +79,18 @@ export function createSession(db: Database, userId: string, options: CreateSessi
  * function's job, and a read path that also writes is a read path that can fail
  * for reasons unrelated to reading.
  */
-export function getSession(db: Database, sessionId: string): Session | null {
-  const row = db.prepare('SELECT id, user_id, expires_at, oidc_id_token FROM sessions WHERE id = ?').get(sessionId) as
-    SessionRow | undefined;
+export function getSession(db: Database, cookieValue: string): Session | null {
+  const row = db
+    .prepare('SELECT id, user_id, expires_at, oidc_id_token FROM sessions WHERE id = ?')
+    .get(hashBearerToken(cookieValue)) as SessionRow | undefined;
   if (!row) return null;
   if (new Date(row.expires_at).getTime() < Date.now()) return null;
   return { id: row.id, userId: row.user_id, expiresAt: row.expires_at, oidcIdToken: row.oidc_id_token };
 }
 
 /** Extends the sliding expiry window and records activity. Call once per authenticated request. */
-export function touchSession(db: Database, sessionId: string): void {
+export function touchSession(db: Database, cookieValue: string): void {
+  const sessionId = hashBearerToken(cookieValue);
   const row = db.prepare('SELECT oidc_id_token FROM sessions WHERE id = ?').get(sessionId) as
     { readonly oidc_id_token: string | null } | undefined;
   if (!row) return;
@@ -90,8 +100,8 @@ export function touchSession(db: Database, sessionId: string): void {
   db.prepare('UPDATE sessions SET last_seen_at = ?, expires_at = ? WHERE id = ?').run(now, expiresAt, sessionId);
 }
 
-export function revokeSession(db: Database, sessionId: string): void {
-  db.prepare('DELETE FROM sessions WHERE id = ?').run(sessionId);
+export function revokeSession(db: Database, cookieValue: string): void {
+  db.prepare('DELETE FROM sessions WHERE id = ?').run(hashBearerToken(cookieValue));
 }
 
 /** Used when disabling a user: existing sessions must die immediately, not merely block re-login. */

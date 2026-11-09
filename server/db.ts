@@ -14,7 +14,7 @@
 /**
  * @module db
  * @purpose Owns and migrates the sync server's own SQLite database (`users`, `sessions`, `ops`, plus the narrow admin-curated exceptions to ADR 0002's "opaque relay" rule).
- * @conventions Migrations are an ordered, append-only array run inside `PRAGMA user_version`-gated transactions — never edit a past migration in place, only append a new one; a table rebuild needed to change a `REFERENCES` clause (SQLite has no `ALTER COLUMN`) must be added to `REQUIRES_FOREIGN_KEYS_OFF` so foreign keys are toggled off only around that step, and is checked with `PRAGMA foreign_key_check` before committing.
+ * @conventions Migrations are an ordered, append-only array run inside `PRAGMA user_version`-gated transactions — never edit a past migration in place, only append a new one; a table rebuild needed to change a `REFERENCES` clause (SQLite has no `ALTER COLUMN`) must be added to `REQUIRES_FOREIGN_KEYS_OFF` so foreign keys are toggled off only around that step, and is checked with `PRAGMA foreign_key_check` before committing. Bearer secrets (`sessions.id`, `users.password_set_token`) are stored only as SHA-256 hex from migration 18 on; a migration that changes how a secret is stored clears the old rows rather than converting them.
  * @exports Database, openDatabase
  */
 import { DatabaseSync } from 'node:sqlite';
@@ -383,6 +383,17 @@ const MIGRATIONS: readonly ((db: DatabaseSync) => void)[] = [
       );
       CREATE INDEX corpus_submissions_status ON corpus_submissions(status);
       CREATE INDEX corpus_submissions_submitted_by ON corpus_submissions(submitted_by, status, created_at);
+    `);
+  },
+  // 18: set-password tokens and session ids are stored as SHA-256 hex (#1360), so a database read
+  // (backup, SQL injection, a leaked file) no longer yields a usable credential. Same columns, no table
+  // rebuild. Existing rows hold the raw values and are never hashed in place: every session is deleted
+  // (everyone signs in once more) and every pending set-password link is cleared (an admin re-issues it
+  // with reset-password), per the owner's decision on #1360.
+  (db) => {
+    db.exec(`
+      DELETE FROM sessions;
+      UPDATE users SET password_set_token = NULL, password_set_token_expires_at = NULL WHERE password_set_token IS NOT NULL;
     `);
   },
 ];
