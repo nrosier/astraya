@@ -9,7 +9,10 @@
  * @conventions Shown only on the admin screen; loads `GET /api/corpus-submissions` on mount and again after each decision; Approve and Reject on a pending row each ask for a confirmation first (approve publishes at once); the submitter name is shown to admins here and nowhere public; wording from `CorpusSubmissionsSection.messages.ts`; reuses `Badge`, `Button`, `StatusMessage`, `EmptyState` and the corpus card classes.
  * @exports CorpusSubmissionsSection
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { diffWords, type DiffSegment } from '../domain/text-diff.js';
+import { loadCommittedCorpus, loadRuntimeCorpus } from '../interpretation/corpus-client.js';
+import type { CorpusEntry, Locale } from '../interpretation/schema.js';
 import {
   approveCorpusSubmission,
   listCorpusSubmissions,
@@ -26,6 +29,55 @@ import { Button } from './primitives/Button.js';
 import { EmptyState } from './primitives/EmptyState.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { apiErrorText } from './api-error.js';
+
+type OldTexts = ReadonlyMap<string, string> | 'unavailable';
+
+/** Key-to-text for one locale, or `'unavailable'` when the corpus could not be read. */
+async function textsFor(load: Promise<readonly CorpusEntry[]>): Promise<OldTexts> {
+  try {
+    const entries = await load;
+    return new Map(entries.map((entry) => [entry.key, entry.text]));
+  } catch {
+    return 'unavailable';
+  }
+}
+
+interface DiffSideProps {
+  readonly segments: readonly DiffSegment[];
+  readonly side: 'old' | 'new';
+  readonly removedMarker: string;
+  readonly addedMarker: string;
+}
+
+/** One side of the diff: all of its words, with its changed words marked by a symbol, a hidden label and a colour. */
+function DiffSide({ segments, side, removedMarker, addedMarker }: DiffSideProps): React.JSX.Element {
+  return (
+    <p className="corpus-entry-text text-diff">
+      {segments.map((segment, index) => {
+        if (segment.kind === 'same') return <span key={index}>{segment.text} </span>;
+        if (side === 'old' && segment.kind === 'removed') {
+          return (
+            <del key={index} className="text-diff-removed">
+              <span className="sr-only">{removedMarker}</span>
+              <span aria-hidden="true">&minus; </span>
+              {segment.text}
+            </del>
+          );
+        }
+        if (side === 'new' && segment.kind === 'added') {
+          return (
+            <ins key={index} className="text-diff-added">
+              <span className="sr-only">{addedMarker}</span>
+              <span aria-hidden="true">+ </span>
+              {segment.text}
+            </ins>
+          );
+        }
+        return null;
+      })}
+    </p>
+  );
+}
 
 export function CorpusSubmissionsSection(): React.JSX.Element {
   const t = useMessages(corpusSubmissionsSectionMessages);
@@ -79,6 +131,29 @@ export function CorpusSubmissionsSection(): React.JSX.Element {
       });
   };
 
+  // The text each submission is compared with: the live text for a pending one, the shipped text for a decided one
+  // (an approved override would otherwise equal the suggestion).
+  const [liveTexts, setLiveTexts] = useState<Partial<Record<Locale, OldTexts>>>({});
+  const [shippedTexts, setShippedTexts] = useState<Partial<Record<Locale, OldTexts>>>({});
+  const neededLocales = useMemo(
+    () => [...new Set((submissions ?? []).map((submission) => submission.locale))],
+    [submissions],
+  );
+  useEffect(() => {
+    let cancelled = false;
+    for (const locale of neededLocales) {
+      void textsFor(loadRuntimeCorpus(locale)).then((texts) => {
+        if (!cancelled) setLiveTexts((previous) => ({ ...previous, [locale]: texts }));
+      });
+      void textsFor(loadCommittedCorpus(locale)).then((texts) => {
+        if (!cancelled) setShippedTexts((previous) => ({ ...previous, [locale]: texts }));
+      });
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [neededLocales]);
+
   const statusText = (status: CorpusSubmission['status']): string =>
     status === 'pending' ? t.statusPending : status === 'approved' ? t.statusApproved : t.statusRejected;
 
@@ -114,10 +189,10 @@ export function CorpusSubmissionsSection(): React.JSX.Element {
                       <span className="entry-meaning">{labelForKey(submission.key, uiLocale)}</span>
                     </p>
                   )}
-                  <div className="corpus-candidate-text">
-                    <h3 className="corpus-pane-title">{t.textLabel}</h3>
-                    <p className="corpus-entry-text">{submission.text}</p>
-                  </div>
+                  <SubmissionDiff
+                    submission={submission}
+                    oldTexts={(submission.status === 'pending' ? liveTexts : shippedTexts)[submission.locale]}
+                  />
                   <p className="hint">
                     {t.submitter(submission.submitterUsername ?? t.unknownUser)}{' '}
                     {t.submittedOn(formatTimestamp(submission.createdAt))} &middot;{' '}
@@ -188,5 +263,40 @@ export function CorpusSubmissionsSection(): React.JSX.Element {
           </>
         ))}
     </section>
+  );
+}
+
+interface SubmissionDiffProps {
+  readonly submission: CorpusSubmission;
+  readonly oldTexts: OldTexts | undefined;
+}
+
+/** The current text above the suggested text, each with its changed words marked (stacked, not side by side: texts can be long). */
+function SubmissionDiff({ submission, oldTexts }: SubmissionDiffProps): React.JSX.Element {
+  const t = useMessages(corpusSubmissionsSectionMessages);
+  const oldText = oldTexts === undefined || oldTexts === 'unavailable' ? undefined : oldTexts.get(submission.key);
+  const segments = useMemo(() => diffWords(oldText ?? '', submission.text), [oldText, submission.text]);
+  const oldTitle = submission.status === 'pending' ? t.oldTextLive : t.oldTextShipped;
+  const unchanged = oldText !== undefined && segments.every((segment) => segment.kind === 'same');
+  return (
+    <div className="corpus-candidate-text">
+      {oldTexts === undefined ? null : oldText === undefined ? (
+        <p className="hint">{oldTexts === 'unavailable' ? t.oldTextUnavailable : t.noOldEntry}</p>
+      ) : (
+        <>
+          <h3 className="corpus-pane-title">{oldTitle}</h3>
+          <DiffSide segments={segments} side="old" removedMarker={t.removedMarker} addedMarker={t.addedMarker} />
+        </>
+      )}
+      <h3 className="corpus-pane-title">{oldText === undefined ? t.textLabel : t.newTextLabel}</h3>
+      <DiffSide
+        segments={oldText === undefined ? [{ kind: 'same', text: submission.text }] : segments}
+        side="new"
+        removedMarker={t.removedMarker}
+        addedMarker={t.addedMarker}
+      />
+      {oldText !== undefined && !unchanged && <p className="hint">{t.diffLegend}</p>}
+      {unchanged && <p className="hint">{t.unchangedNote}</p>}
+    </div>
   );
 }
