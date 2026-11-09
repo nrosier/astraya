@@ -14,8 +14,8 @@
 /**
  * @module index
  * @purpose Astraya's Fastify app factory and process entry point: serves the built single-page app and, additively, local-account sign-in and the operation sync relay.
- * @conventions Never participates in chart calculation — the server stores accounts and an opaque operation log only (ADR 0002); the cross-origin-write check (`csrf.ts`) and the CSP/security-header hooks are registered before every route, including the static handler, so no route can be added that bypasses them; `trustProxy` is read from `ASTRAYA_TRUST_PROXY` and defaults to trusting nothing.
- * @exports build, BuildOptions
+ * @conventions Never participates in chart calculation — the server stores accounts and an opaque operation log only (ADR 0002); the cross-origin-write check (`csrf.ts`) and the CSP/security-header hooks are registered before every route, including the static handler, so no route can be added that bypasses them; `trustProxy` is read from `ASTRAYA_TRUST_PROXY` and defaults to trusting nothing; each `build()` owns an unref'd hourly expired-session sweep (`auth/sessions.ts`), cleared in `onClose` before the database closes.
+ * @exports build, BuildOptions, SESSION_SWEEP_INTERVAL_MS
  */
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
@@ -29,6 +29,7 @@ import { buildCsp, stripCspMeta } from './csp.ts';
 import { isCrossOriginWrite } from './csrf.ts';
 import { openDatabase } from './db.ts';
 import { registerAuthRoutes } from './auth/routes.ts';
+import { sweepExpiredSessions } from './auth/sessions.ts';
 import { registerAdminRoutes } from './auth/admin-routes.ts';
 import { loadOidcConfig } from './auth/oidc.ts';
 import { adminGroupStartupNotice } from './auth/admin-promotion.ts';
@@ -86,6 +87,9 @@ const NO_CACHE = 'no-cache';
  */
 const HSTS = 'max-age=15552000; includeSubDomains';
 
+/** How often `build()` sweeps expired sessions from the database (#1364). */
+export const SESSION_SWEEP_INTERVAL_MS = 60 * 60 * 1000;
+
 export interface BuildOptions {
   /** Overrides `ASTRAYA_DB_PATH`. Tests pass `:memory:` so nothing touches disk. */
   readonly dbPath?: string;
@@ -134,7 +138,14 @@ export async function build(options: BuildOptions = {}) {
   });
 
   const db = openDatabase(options.dbPath ?? DB_PATH);
+  // #1364: expired sessions (and an OIDC row's stored ID token) are deleted hourly. Owned by this
+  // app instance, not module scope, so each `build()` gets its own timer and `close()` stops it.
+  // unref: cleanup must never be the reason the process stays alive.
+  const sessionSweep = setInterval(() => {
+    void sweepExpiredSessions(db, app.log);
+  }, SESSION_SWEEP_INTERVAL_MS).unref();
   app.addHook('onClose', () => {
+    clearInterval(sessionSweep);
     db.close();
   });
 
