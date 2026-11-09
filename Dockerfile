@@ -24,13 +24,13 @@
 # The musl build is kept as Dockerfile.alpine for reference; it is not built by CI.
 
 # ---- dependencies (cached on the lockfile alone) ----------------------------
-FROM --platform=$BUILDPLATFORM cgr.dev/chainguard/node:latest-dev@sha256:bfbc9be493e9df627998b62048cbf2e349f6b7c76af5ad3f72d064f1dbcb986c AS deps
+FROM --platform=$BUILDPLATFORM cgr.dev/chainguard/node:latest-dev@sha256:81d77836dacab0c421ab4fbbf1cc2ffe56f9bc64793c1b077bbc1a30d61e1c05 AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
 # ---- build ------------------------------------------------------------------
-FROM --platform=$BUILDPLATFORM cgr.dev/chainguard/node:latest-dev@sha256:bfbc9be493e9df627998b62048cbf2e349f6b7c76af5ad3f72d064f1dbcb986c AS build
+FROM --platform=$BUILDPLATFORM cgr.dev/chainguard/node:latest-dev@sha256:81d77836dacab0c421ab4fbbf1cc2ffe56f9bc64793c1b077bbc1a30d61e1c05 AS build
 WORKDIR /app
 # --chown throughout: the default runtime-dev user (65532, "node") has to own
 # what it builds — a plain COPY lands as root, and tsc/ephe:sync/corpus:split
@@ -56,7 +56,7 @@ RUN npm run corpus:split
 RUN npm run build
 
 # ---- runtime dependencies ---------------------------------------------------
-FROM cgr.dev/chainguard/node:latest-dev@sha256:bfbc9be493e9df627998b62048cbf2e349f6b7c76af5ad3f72d064f1dbcb986c AS runtime-deps
+FROM cgr.dev/chainguard/node:latest-dev@sha256:81d77836dacab0c421ab4fbbf1cc2ffe56f9bc64793c1b077bbc1a30d61e1c05 AS runtime-deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
