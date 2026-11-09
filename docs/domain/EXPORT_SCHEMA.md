@@ -48,6 +48,7 @@ interface ExportedPerson {
   calculationSettings?: ExtendedSettings; // #806 (v3) — this person's own chart settings, which their charts below were computed with; absent in v2 files
   rulership?: 'modern' | 'traditional' | 'both'; // #806 (v4) — this person's own planetary rulers, which their charts below were computed with; absent in v2 and v3 files
   relocationPlaces?: RelocationPlace[]; // #587 — named alternate places (#559), absent if none are saved
+  lifeEvents?: LifeEvent[]; // #1399 — dated life events { id, date, time?, label }, date-then-time order, at most 100; absent if none
   fixedStars?: ChosenFixedStar[]; // #860 — chosen catalogue fixed stars, absent if none are saved
   customPoints?: CustomPointDefinition[]; // #587 — custom formula points (#566), absent if none are saved
   natalChart?: ExportedChart; // absent if birth is incomplete, or chartError explains a failure
@@ -188,6 +189,11 @@ JSON Schema file does enumerate them structurally.
   (each note's revisions, keyed by note id); both additive, so the version stays v4. An older reader ignores them and still
   sees the head text in `notes`. A restore writes only the revisions the store does not already hold, through the note
   mutation path, and never writes the legacy `person.notes` register.
+  #1399 added optional `ExportedPerson.lifeEvents` (dated life events, written in date-then-time order and only when
+  the person has some); additive, so there is no version bump and the export stays v4. An older importer ignores the
+  field. The importer rejects a present but malformed list (more than 100 events, a repeated id, a bad date or time,
+  an empty or over-long label) as malformed at `people[n].lifeEvents`; a file without the field leaves the stored
+  events alone, and a list that equals the stored one writes nothing.
 
 #1194 added the optional top-level `research` block (saved event-search queries, pins and
 their annotations); additive, so the version stays v4. An older reader ignores it. Only live items are exported: a
