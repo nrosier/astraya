@@ -13,6 +13,26 @@ import { build } from '../server/index.ts';
 import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
 import { createPerson, gotoAndSettle } from './support.ts';
 
+/**
+ * The page's overlay decision, as a deterministic signal instead of a sleep (#1368): the one
+ * `GET /api/profile-overlay` response the birth-record screen waits on per page load, then two animation frames so the
+ * in-page digest check (`checkFeatureFlag`) and the overlay's canvas set-up have run. Start watching BEFORE the
+ * navigation that triggers the request. The positive control below shows this same wait is enough to see the overlay.
+ */
+const watchOverlayDecision = (page: Page): Promise<unknown> =>
+  page.waitForResponse((response) => new URL(response.url()).pathname === '/api/profile-overlay' && response.ok());
+
+async function overlayDecided(page: Page, decision: Promise<unknown>): Promise<void> {
+  await decision;
+  await page.evaluate(
+    'new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(() => done(undefined))))',
+  );
+}
+
+/** The overlay canvases in the page right now, read once with no retrying, so the wait alone decides the result. */
+const overlaysNow = async (page: Page): Promise<number> =>
+  Number(await page.evaluate("document.querySelectorAll('canvas.profile-overlay').length"));
+
 const sha256 = (text: string): string => createHash('sha256').update(text).digest('hex');
 
 let dir: string;
@@ -56,6 +76,7 @@ test('a matching person’s birth record shows the overlay, and it removes itsel
 
 test('nothing runs when the reader asks for reduced motion', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
+  const decision = watchOverlayDecision(page);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await createPerson(page, {
     name: 'Jo Example',
@@ -65,8 +86,25 @@ test('nothing runs when the reader asks for reduced motion', async ({ page }) =>
     longitude: '4.90',
   });
   await page.getByRole('link', { name: 'Birth record', exact: true }).click();
-  await page.waitForTimeout(1_500);
+  await overlayDecided(page, decision);
+  expect(await overlaysNow(page)).toBe(0);
   await expect(page.locator('canvas.profile-overlay')).toHaveCount(0);
+});
+
+test('positive control: the same wait sees the overlay for a matching person', async ({ page }) => {
+  test.setTimeout(60_000);
+  const decision = watchOverlayDecision(page);
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, {
+    name: 'Jo Example',
+    date: '2001-02-03',
+    time: '12:00:00',
+    latitude: '52.37',
+    longitude: '4.90',
+  });
+  await page.getByRole('link', { name: 'Birth record', exact: true }).click();
+  await overlayDecided(page, decision);
+  expect(await overlaysNow(page)).toBe(1);
 });
 
 test.describe('with the shared people (#799)', () => {
@@ -84,9 +122,11 @@ test.describe('with the shared people (#799)', () => {
   });
 
   test('another person’s birth record does not', async () => {
+    const decision = watchOverlayDecision(page);
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await page.getByRole('link', { name: 'Birth record', exact: true }).click();
-    await page.waitForTimeout(1_500);
+    await overlayDecided(page, decision);
+    expect(await overlaysNow(page)).toBe(0);
     await expect(page.locator('canvas.profile-overlay')).toHaveCount(0);
   });
 });
