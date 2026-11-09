@@ -9,17 +9,13 @@
  * @exports SubmissionError, submitCorpusCorrection
  */
 import type { Locale } from '../interpretation/schema.js';
+import { ApiError, readErrorBody } from './api-error.js';
 import { SUBMISSION_LICENCE_VERSION } from '../interpretation/submission-licence.js';
 
-export class SubmissionError extends Error {
-  readonly status: number;
-  readonly code: string | undefined;
-
+export class SubmissionError extends ApiError {
   constructor(message: string, status: number, code: string | undefined) {
-    super(message);
+    super(message, status, code);
     this.name = 'SubmissionError';
-    this.status = status;
-    this.code = code;
   }
 }
 
@@ -44,14 +40,6 @@ export async function submitCorpusCorrection(params: {
     }),
   });
   if (response.ok) return;
-  let code: string | undefined;
-  let message = `Request failed with status ${String(response.status)}`;
-  try {
-    const body = (await response.json()) as { code?: unknown; error?: unknown };
-    if (typeof body.code === 'string') code = body.code;
-    if (typeof body.error === 'string') message = body.error;
-  } catch {
-    /* keep the generic message */
-  }
+  const { message, code } = await readErrorBody(response);
   throw new SubmissionError(message, response.status, code);
 }

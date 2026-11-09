@@ -78,17 +78,20 @@ export function registerAuthRoutes(app: FastifyInstance, db: Database): void {
     { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } },
     async (request, reply) => {
       const body = bodyObject(request.body);
-      if (!body) return reply.code(400).send({ error: BODY_REQUIRED_ERROR });
+      if (!body) return reply.code(400).send({ code: 'body-required', error: BODY_REQUIRED_ERROR });
       const { username, password } = body;
       if (typeof username !== 'string' || typeof password !== 'string' || username === '' || password === '') {
-        return reply.code(400).send({ error: 'username and password are required' });
+        return reply.code(400).send({ code: 'missing-fields', error: 'username and password are required' });
       }
       if (username.length > MAX_USERNAME_LENGTH) {
-        return reply.code(400).send({ error: `username must be at most ${String(MAX_USERNAME_LENGTH)} characters` });
+        return reply.code(400).send({
+          code: 'username-too-long',
+          error: `username must be at most ${String(MAX_USERNAME_LENGTH)} characters`,
+        });
       }
 
       if (isLoginThrottled(username)) {
-        return reply.code(429).send({ error: 'Too many attempts. Try again later.' });
+        return reply.code(429).send({ code: 'rate-limited', error: 'Too many attempts. Try again later.' });
       }
 
       const credentials = getUserCredentialsByUsername(db, username);
@@ -99,7 +102,7 @@ export function registerAuthRoutes(app: FastifyInstance, db: Database): void {
 
       if (!credentials || !valid || credentials.user.disabledAt !== null) {
         recordFailedLogin(username);
-        return reply.code(401).send({ error: 'Invalid username or password' });
+        return reply.code(401).send({ code: 'invalid-credentials', error: 'Invalid username or password' });
       }
 
       clearLoginThrottle(username);
@@ -148,7 +151,7 @@ export function registerAuthRoutes(app: FastifyInstance, db: Database): void {
 
   app.get('/api/auth/me', async (request, reply) => {
     const user = resolveUser(db, request);
-    if (!user) return reply.code(401).send({ error: 'Not authenticated' });
+    if (!user) return reply.code(401).send({ code: 'not-authenticated', error: 'Not authenticated' });
     return reply.send({ user });
   });
 
@@ -183,13 +186,13 @@ export function registerAuthRoutes(app: FastifyInstance, db: Database): void {
     { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } },
     async (request, reply) => {
       const oidcConfig = loadOidcConfig();
-      if (!oidcConfig) return reply.code(404).send({ error: 'Not found' });
+      if (!oidcConfig) return reply.code(404).send({ code: 'not-found', error: 'Not found' });
 
       const body = bodyObject(request.body);
-      if (!body) return reply.code(400).send({ error: BODY_REQUIRED_ERROR });
+      if (!body) return reply.code(400).send({ code: 'body-required', error: BODY_REQUIRED_ERROR });
       const { code, codeVerifier, nonce } = body;
       if (typeof code !== 'string' || typeof codeVerifier !== 'string' || typeof nonce !== 'string') {
-        return reply.code(400).send({ error: 'code, codeVerifier and nonce are required' });
+        return reply.code(400).send({ code: 'missing-fields', error: 'code, codeVerifier and nonce are required' });
       }
 
       let claims: Awaited<ReturnType<typeof verifyIdToken>>;
@@ -197,7 +200,7 @@ export function registerAuthRoutes(app: FastifyInstance, db: Database): void {
         const { idToken } = await exchangeCode({ config: oidcConfig, code, codeVerifier });
         claims = await verifyIdToken(oidcConfig, idToken);
         if (claims.nonce !== nonce) {
-          return await reply.code(401).send({ error: 'OIDC sign-in failed' });
+          return await reply.code(401).send({ code: 'oidc-sign-in-failed', error: 'OIDC sign-in failed' });
         }
 
         let user = getUserByOidcIdentity(db, oidcConfig.issuer, claims.subject);
@@ -207,12 +210,14 @@ export function registerAuthRoutes(app: FastifyInstance, db: Database): void {
           // OIDC identity — is rejected rather than silently linked: that would let
           // one Authentik user claim another account by username coincidence.
           if (getUserByUsername(db, username)) {
-            return await reply.code(409).send({ error: 'An account with this username already exists' });
+            return await reply
+              .code(409)
+              .send({ code: 'username-taken', error: 'An account with this username already exists' });
           }
           user = createOidcUser(db, { id: randomUUID(), username, issuer: oidcConfig.issuer, subject: claims.subject });
         }
         if (user.disabledAt !== null) {
-          return await reply.code(401).send({ error: 'OIDC sign-in failed' });
+          return await reply.code(401).send({ code: 'oidc-sign-in-failed', error: 'OIDC sign-in failed' });
         }
 
         // Every callback, not just JIT provisioning: group membership can change on
@@ -232,7 +237,7 @@ export function registerAuthRoutes(app: FastifyInstance, db: Database): void {
         return await reply.send({ user });
       } catch (error) {
         app.log.warn({ error }, 'OIDC callback failed');
-        return reply.code(401).send({ error: 'OIDC sign-in failed' });
+        return reply.code(401).send({ code: 'oidc-sign-in-failed', error: 'OIDC sign-in failed' });
       }
     },
   );
@@ -243,24 +248,29 @@ export function registerAuthRoutes(app: FastifyInstance, db: Database): void {
     async (request, reply) => {
       // 404, not 403: a 403 would confirm the route exists as an ongoing attack
       // surface after the instance is already bootstrapped.
-      if (superAdminExists(db)) return reply.code(404).send({ error: 'Not found' });
+      if (superAdminExists(db)) return reply.code(404).send({ code: 'not-found', error: 'Not found' });
 
       const body = bodyObject(request.body);
-      if (!body) return reply.code(400).send({ error: BODY_REQUIRED_ERROR });
+      if (!body) return reply.code(400).send({ code: 'body-required', error: BODY_REQUIRED_ERROR });
       const { token, username, password } = body;
       if (typeof token !== 'string' || typeof username !== 'string' || typeof password !== 'string') {
-        return reply.code(400).send({ error: 'token, username and password are required' });
+        return reply.code(400).send({ code: 'missing-fields', error: 'token, username and password are required' });
       }
 
       const tokenError = checkBootstrapToken(token);
-      if (tokenError) return reply.code(401).send({ error: tokenError });
+      if (tokenError) return reply.code(401).send({ code: `setup-token-${tokenError}`, error: tokenError });
 
-      if (username === '') return reply.code(400).send({ error: 'username is required' });
+      if (username === '') return reply.code(400).send({ code: 'username-required', error: 'username is required' });
       if (username.length > MAX_USERNAME_LENGTH) {
-        return reply.code(400).send({ error: `username must be at most ${String(MAX_USERNAME_LENGTH)} characters` });
+        return reply.code(400).send({
+          code: 'username-too-long',
+          error: `username must be at most ${String(MAX_USERNAME_LENGTH)} characters`,
+        });
       }
-      if (getUserByUsername(db, username)) return reply.code(409).send({ error: 'Username already taken' });
-      if (passwordIsTooWeak(password, username)) return reply.code(400).send({ error: 'Password is too weak' });
+      if (getUserByUsername(db, username))
+        return reply.code(409).send({ code: 'username-taken', error: 'Username already taken' });
+      if (passwordIsTooWeak(password, username))
+        return reply.code(400).send({ code: 'password-too-weak', error: 'Password is too weak' });
 
       const passwordHash = await hashPassword(password);
       const id = randomUUID();
@@ -295,24 +305,24 @@ export function registerAuthRoutes(app: FastifyInstance, db: Database): void {
     { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } },
     async (request, reply) => {
       const body = bodyObject(request.body);
-      if (!body) return reply.code(400).send({ error: BODY_REQUIRED_ERROR });
+      if (!body) return reply.code(400).send({ code: 'body-required', error: BODY_REQUIRED_ERROR });
       const { token, password } = body;
       if (typeof token !== 'string' || typeof password !== 'string' || token === '' || password === '') {
-        return reply.code(400).send({ error: 'token and password are required' });
+        return reply.code(400).send({ code: 'missing-fields', error: 'token and password are required' });
       }
 
       const found = getUserByPasswordSetToken(db, token);
       if (!found || (found.expiresAt !== null && new Date(found.expiresAt).getTime() < Date.now())) {
-        return reply.code(401).send({ error: 'This link is invalid or has expired' });
+        return reply.code(401).send({ code: 'link-invalid', error: 'This link is invalid or has expired' });
       }
       if (passwordIsTooWeak(password, found.user.username)) {
-        return reply.code(400).send({ error: 'Password is too weak' });
+        return reply.code(400).send({ code: 'password-too-weak', error: 'Password is too weak' });
       }
 
       const passwordHash = await hashPassword(password);
       // Conditional write: the token may have been redeemed or expired while hashing (#1379).
       if (!consumePasswordSetToken(db, found.user.id, token, passwordHash)) {
-        return reply.code(401).send({ error: 'This link is invalid or has expired' });
+        return reply.code(401).send({ code: 'link-invalid', error: 'This link is invalid or has expired' });
       }
       // A password change ends every session signed in under the old credentials (#1360).
       revokeAllSessionsForUser(db, found.user.id);

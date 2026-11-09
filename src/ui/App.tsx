@@ -33,6 +33,7 @@ import { WorkspaceShell } from './WorkspaceShell.js';
 import type { Route } from './route.js';
 import { BackLink } from './BackLink.js';
 import { trackNavigation } from './nav-history.js';
+import { failureText } from './api-error.js';
 
 /**
  * The screens that are not on the path to first paint, behind dynamic `import()`s (#338).
@@ -255,7 +256,7 @@ function AppShell(): React.JSX.Element {
       .catch((error: unknown) => {
         // Shown rather than logged. A silent ephemeris failure is precisely the
         // bug class this project is built to avoid.
-        if (!effect.cancelled) setVersionError(error instanceof Error ? error.message : String(error));
+        if (!effect.cancelled) setVersionError(failureText(error));
       });
 
     return () => {

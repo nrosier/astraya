@@ -50,6 +50,7 @@ import type { OidcConfig, Role } from '../sync/auth-client.js';
 import { useSessionUserOrUndefined } from './session-context.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { PageHeader } from './PageHeader.js';
+import { apiErrorText } from './api-error.js';
 
 const ROLE_ORDER: readonly Role[] = ['user', 'admin', 'super_admin'];
 
@@ -100,7 +101,7 @@ function CreateUserForm({ create }: { create: (username: string, role: Role) => 
         setRole('user');
       })
       .catch((cause: unknown) => {
-        setError(cause instanceof Error ? cause.message : String(cause));
+        setError(apiErrorText(cause));
       })
       .finally(() => {
         setBusy(false);
@@ -153,7 +154,7 @@ export function AdminPanel(): React.JSX.Element {
 
   useEffect(() => {
     void refresh().catch((cause: unknown) => {
-      setError(cause instanceof Error ? cause.message : String(cause));
+      setError(apiErrorText(cause));
     });
     void getOidcConfig()
       .then(setOidcConfig)
@@ -167,7 +168,7 @@ export function AdminPanel(): React.JSX.Element {
     void action()
       .then(() => refresh())
       .catch((cause: unknown) => {
-        setError(cause instanceof Error ? cause.message : String(cause));
+        setError(apiErrorText(cause));
       })
       .finally(() => {
         setBusyUserId(undefined);
@@ -204,7 +205,7 @@ export function AdminPanel(): React.JSX.Element {
         setPendingDelete({ user, impact });
       })
       .catch((cause: unknown) => {
-        setError(cause instanceof Error ? cause.message : String(cause));
+        setError(apiErrorText(cause));
       })
       .finally(() => {
         setBusyUserId(undefined);
@@ -410,7 +411,7 @@ export function AdminUsagePanel(): React.JSX.Element {
     void getInterpretationUsage()
       .then(setUsage)
       .catch((cause: unknown) => {
-        setError(cause instanceof Error ? cause.message : String(cause));
+        setError(apiErrorText(cause));
       });
   }, []);
 

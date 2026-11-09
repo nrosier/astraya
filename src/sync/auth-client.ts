@@ -7,9 +7,11 @@
 /**
  * @module sync/auth-client
  * @purpose Provides the client-side authentication calls — login, logout, session check, OIDC config/callback, password set/bootstrap — each a thin wrapper over the matching server route.
- * @conventions One function per route, mirroring `server/auth/routes.ts`/`server/auth/roles.ts`/`server/auth/identity.ts`/`server/auth/oidc.ts`/`server/auth/bootstrap.ts` exactly; nothing here interprets a response beyond its own shape — the server is the sole authority on who is signed in; failures throw `AuthError` carrying the server's own message, except `me()` where a 401 is treated as the expected "not signed in" outcome rather than an error.
+ * @conventions One function per route, mirroring `server/auth/routes.ts`/`server/auth/roles.ts`/`server/auth/identity.ts`/`server/auth/oidc.ts`/`server/auth/bootstrap.ts` exactly; nothing here interprets a response beyond its own shape — the server is the sole authority on who is signed in; failures throw `AuthError` carrying the server's message and stable `code` (#1365), except `me()` where a 401 is treated as the expected "not signed in" outcome rather than an error.
  * @exports Role, AuthUser, AuthError, login, logout, me, OidcConfig, getOidcConfig, setPassword, setup, exchangeOidcCode
  */
+
+import { ApiError, readErrorBody } from './api-error.js';
 
 /** Mirrors `server/auth/roles.ts`'s `Role`: a user, an admin (everything but account management) or a super admin (everything). */
 export type Role = 'user' | 'admin' | 'super_admin';
@@ -27,25 +29,17 @@ export interface AuthUser {
   readonly disabledAt: string | null;
 }
 
-/** Thrown for a request the server actively rejected (bad credentials, rate limit, ...). */
-export class AuthError extends Error {
-  readonly status: number;
-
-  constructor(message: string, status: number) {
-    super(message);
+/** Thrown for a request the server actively rejected (bad credentials, rate limit, ...); carries the server's stable `code` (#1365). */
+export class AuthError extends ApiError {
+  constructor(message: string, status: number, code?: string) {
+    super(message, status, code);
     this.name = 'AuthError';
-    this.status = status;
   }
 }
 
-async function errorMessage(response: Response): Promise<string> {
-  try {
-    const body = (await response.json()) as { error?: unknown };
-    if (typeof body.error === 'string') return body.error;
-  } catch {
-    /* fall through to the generic message below */
-  }
-  return `Request failed with status ${String(response.status)}`;
+async function authFailure(response: Response): Promise<AuthError> {
+  const { message, code } = await readErrorBody(response);
+  return new AuthError(message, response.status, code);
 }
 
 /** `POST /api/auth/login`. Throws `AuthError` on 400/401/429 with the server's own message. */
@@ -55,7 +49,7 @@ export async function login(username: string, password: string): Promise<AuthUse
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password }),
   });
-  if (!response.ok) throw new AuthError(await errorMessage(response), response.status);
+  if (!response.ok) throw await authFailure(response);
   const { user } = (await response.json()) as { user: AuthUser };
   return user;
 }
@@ -70,7 +64,7 @@ export async function login(username: string, password: string): Promise<AuthUse
  */
 export async function logout(): Promise<{ endSessionUrl?: string }> {
   const response = await fetch('/api/auth/logout', { method: 'POST' });
-  if (!response.ok) throw new AuthError(await errorMessage(response), response.status);
+  if (!response.ok) throw await authFailure(response);
   const body = (await response.json().catch(() => ({}))) as { endSessionUrl?: string };
   return body.endSessionUrl === undefined ? {} : { endSessionUrl: body.endSessionUrl };
 }
@@ -83,7 +77,7 @@ export async function logout(): Promise<{ endSessionUrl?: string }> {
 export async function me(): Promise<AuthUser | undefined> {
   const response = await fetch('/api/auth/me');
   if (response.status === 401) return undefined;
-  if (!response.ok) throw new AuthError(await errorMessage(response), response.status);
+  if (!response.ok) throw await authFailure(response);
   const { user } = (await response.json()) as { user: AuthUser };
   return user;
 }
@@ -105,7 +99,7 @@ export type OidcConfig =
 
 export async function getOidcConfig(): Promise<OidcConfig> {
   const response = await fetch('/api/auth/oidc/config');
-  if (!response.ok) throw new AuthError(await errorMessage(response), response.status);
+  if (!response.ok) throw await authFailure(response);
   return (await response.json()) as OidcConfig;
 }
 
@@ -125,7 +119,7 @@ export async function setPassword(token: string, password: string): Promise<void
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ token, password }),
   });
-  if (!response.ok) throw new AuthError(await errorMessage(response), response.status);
+  if (!response.ok) throw await authFailure(response);
 }
 
 /**
@@ -140,7 +134,7 @@ export async function setup(token: string, username: string, password: string): 
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ token, username, password }),
   });
-  if (!response.ok) throw new AuthError(await errorMessage(response), response.status);
+  if (!response.ok) throw await authFailure(response);
   const { user } = (await response.json()) as { user: AuthUser };
   return user;
 }
@@ -155,7 +149,7 @@ export async function exchangeOidcCode(params: {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(params),
   });
-  if (!response.ok) throw new AuthError(await errorMessage(response), response.status);
+  if (!response.ok) throw await authFailure(response);
   const { user } = (await response.json()) as { user: AuthUser };
   return user;
 }

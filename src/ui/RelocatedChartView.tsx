@@ -49,6 +49,7 @@ import { orbsOf } from '../chart/extended-settings.js';
 import { useStableBy, useStableMoment } from './use-stable-moment.js';
 import { PageHeader } from './PageHeader.js';
 import { Button } from './primitives/Button.js';
+import { errorDetail } from './api-error.js';
 
 type Load =
   | { readonly kind: 'idle' }
@@ -146,7 +147,7 @@ export function RelocatedChartView({
         setSelectedLocationId(id);
       })
       .catch((cause: unknown) => {
-        setLocationError(cause instanceof Error ? cause.message : String(cause));
+        setLocationError(errorDetail(cause));
       });
   };
 
@@ -173,7 +174,7 @@ export function RelocatedChartView({
         if (selectedLocationId === id) setSelectedLocationId('');
       })
       .catch((cause: unknown) => {
-        setLocationError(cause instanceof Error ? cause.message : String(cause));
+        setLocationError(errorDetail(cause));
       });
   };
 
@@ -227,8 +228,7 @@ export function RelocatedChartView({
         });
         if (!effect.cancelled) setLoad({ kind: 'ready', data });
       } catch (error) {
-        if (!effect.cancelled)
-          setLoad({ kind: 'error', message: error instanceof Error ? error.message : String(error) });
+        if (!effect.cancelled) setLoad({ kind: 'error', message: errorDetail(error) });
       }
     })();
 

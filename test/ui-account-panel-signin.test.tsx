@@ -27,6 +27,8 @@ vi.mock('../src/ui/oidc-pkce.ts', () => ({
 }));
 
 import { AccountPanel } from '../src/ui/AccountPanel.js';
+import { AuthError } from '../src/sync/auth-client.js';
+import { apiErrorMessages } from '../src/ui/api-error.messages.js';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -180,7 +182,7 @@ describe('sign-in panel with single sign-on configured (staged, #781)', () => {
   });
 
   it('clears a sign-in error when switching stages', async () => {
-    signIn.mockRejectedValue(new Error('Wrong password'));
+    signIn.mockRejectedValue(new AuthError('Wrong password', 401, 'invalid-credentials'));
     const container = await mount(SSO);
     await openPanel(container);
     await toLocal(container);
@@ -190,10 +192,12 @@ describe('sign-in panel with single sign-on configured (staged, #781)', () => {
       await Promise.resolve();
     });
     await click(container.querySelector<HTMLButtonElement>('button[type="submit"]') ?? undefined);
-    expect(container.textContent).toContain('Wrong password');
+    expect(container.textContent).toContain(apiErrorMessages.en.codes['invalid-credentials']);
+    // The server's own English text is never the copy (#1365).
+    expect(container.textContent).not.toContain('Wrong password');
     await click(button(container, /Sign in with OpenID/));
     await toLocal(container);
-    expect(container.textContent).not.toContain('Wrong password');
+    expect(container.textContent).not.toContain(apiErrorMessages.en.codes['invalid-credentials']);
   });
 
   it('starts the redirect to the authorization endpoint with the PKCE fields', async () => {

@@ -85,6 +85,7 @@ import { useSymbolClass } from './symbol-setting.js';
 import { PageHeader } from './PageHeader.js';
 import { PreferencesRow } from './PreferencesRow.js';
 import { useRegisterExports } from './export-registry.js';
+import { failureText } from './api-error.js';
 
 interface ExportStatus {
   readonly kind: 'busy' | 'done' | 'error';
@@ -281,7 +282,7 @@ export function PreferencesView({
         setStatus({ kind: 'done', text: t.restoreReadyToReview });
       })
       .catch((error: unknown) => {
-        setStatus({ kind: 'error', text: error instanceof Error ? error.message : String(error) });
+        setStatus({ kind: 'error', text: failureText(error) });
       });
   };
 

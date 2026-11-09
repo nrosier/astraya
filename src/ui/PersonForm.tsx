@@ -46,6 +46,7 @@ import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
 import { PersonFileActions } from './PersonFileActions.js';
 import { checkFeatureFlag, initProfileOverlay, loadOverlayConfig } from './profile-overlay.js';
+import { errorDetail } from './api-error.js';
 
 function accuracyOptions(t: typeof personFormMessages.en): Record<TimeAccuracy, string> {
   return {
@@ -189,7 +190,7 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
         // store holds the draft, `dirty` is false and the header reads Saved again.
       })
       .catch((cause: unknown) => {
-        setSaveError(cause instanceof Error ? cause.message : String(cause));
+        setSaveError(errorDetail(cause));
       })
       .finally(() => {
         setSaving(false);
@@ -202,7 +203,7 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
         window.location.hash = '#/people';
       },
       (cause: unknown) => {
-        setSaveError(cause instanceof Error ? cause.message : String(cause));
+        setSaveError(errorDetail(cause));
       },
     );
   };

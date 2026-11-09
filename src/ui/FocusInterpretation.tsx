@@ -21,7 +21,6 @@ import {
   generateTier2Interpretation,
   getSavedInterpretation,
   listSavedInterpretations,
-  Tier2Error,
   type SavedInterpretationSummary,
   type Tier2Section,
 } from '../interpretation/tier2-client.js';
@@ -35,6 +34,7 @@ import { useMessages } from './messages.js';
 import { basisLabel } from './result-basis-label.js';
 import { formatSavedTime } from './saved-time.js';
 import { useSessionUserOrUndefined } from './session-context.js';
+import { apiErrorText } from './api-error.js';
 
 export function FocusInterpretation({
   context,
@@ -97,7 +97,7 @@ export function FocusInterpretation({
         setListVersion((version) => version + 1);
       })
       .catch((caught: unknown) => {
-        setError(caught instanceof Tier2Error ? caught.message : String(caught));
+        setError(apiErrorText(caught));
       })
       .finally(() => {
         setGenerating(false);
@@ -112,7 +112,7 @@ export function FocusInterpretation({
         setSections(detail.sections);
       })
       .catch((caught: unknown) => {
-        setError(caught instanceof Tier2Error ? caught.message : String(caught));
+        setError(apiErrorText(caught));
       })
       .finally(() => {
         setOpeningId(undefined);

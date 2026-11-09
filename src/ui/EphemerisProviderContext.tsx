@@ -23,6 +23,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { WorkerEphemerisProvider } from '../ephemeris/client.js';
 import type { EphemerisProvider } from '../ephemeris/types.js';
+import { failureText } from './api-error.js';
 
 export interface EphemerisProviderState {
   /** `undefined` until the worker has initialized, or if it never will. */
@@ -46,7 +47,7 @@ export function EphemerisProviderProvider({ children }: { children: ReactNode })
       })
       .catch((error: unknown) => {
         if (!effect.cancelled) {
-          setState({ provider: undefined, error: error instanceof Error ? error.message : String(error) });
+          setState({ provider: undefined, error: failureText(error) });
         }
       });
     return () => {

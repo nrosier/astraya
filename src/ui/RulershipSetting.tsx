@@ -16,6 +16,7 @@ import { useMessages } from './messages.js';
 import { ChoiceGroup } from './primitives/ChoiceGroup.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { rulershipSettingMessages } from './RulershipSetting.messages.js';
+import { errorDetail } from './api-error.js';
 
 export function RulershipSetting({
   value,
@@ -32,7 +33,7 @@ export function RulershipSetting({
     const outcome = onChange(choice);
     if (outcome !== undefined) {
       outcome.catch((cause: unknown) => {
-        setError(cause instanceof Error ? cause.message : String(cause));
+        setError(errorDetail(cause));
       });
     }
   };

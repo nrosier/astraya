@@ -7,11 +7,12 @@
 /**
  * @module sync/admin-client
  * @purpose Provides thin `fetch()` wrappers for every admin-only server route — user management, corpus overrides, corpus candidate triage, and interpretation usage/cost reporting.
- * @conventions One function per route, each mirroring its server-side route file's shape exactly (noted in-line per section: `server/auth/admin-routes.ts`, `server/corpus-overrides.ts`, `server/corpus-candidates.ts`, `server/interpretation/usage.ts`); every call funnels through a shared `call()` helper that throws `AdminError` with the server's own error message on a non-2xx response.
+ * @conventions One function per route, each mirroring its server-side route file's shape exactly (noted in-line per section: `server/auth/admin-routes.ts`, `server/corpus-overrides.ts`, `server/corpus-candidates.ts`, `server/interpretation/usage.ts`); every call funnels through a shared `call()` helper that throws `AdminError` with the server's error message and stable `code` (#1365) on a non-2xx response.
  * @exports AdminUser, DeletionImpact, AdminError, listUsers, createUser, resetPassword, disableUser, enableUser, setUserRole, getDeletionImpact, deleteUser, CorpusOverride, UpsertCorpusOverrideParams, listCorpusOverrides, upsertCorpusOverride, deleteCorpusOverride, exportCorpusOverrides, CandidateSource, TriageSignal, CandidateStatus, CorpusCandidate, listCorpusCandidates, DecideCorpusCandidatesResult, decideCorpusCandidates, CorpusSubmission, listCorpusSubmissions, approveCorpusSubmission, rejectCorpusSubmission, InterpretationUsageSummary, InterpretationUsageReport, getInterpretationUsage
  */
 import type { CorpusTier, Locale } from '../interpretation/schema.js';
 import type { Role } from './auth-client.js';
+import { ApiError, readErrorBody } from './api-error.js';
 
 /** Mirrors `server/auth/admin-routes.ts`'s `AdminUser` shape. */
 export interface AdminUser {
@@ -35,29 +36,21 @@ export type DeletionImpact =
   | { readonly kind: 'approximate'; readonly opRows: number };
 
 /** Thrown for a request the server actively rejected (not an admin, last-admin guard, ...). */
-export class AdminError extends Error {
-  readonly status: number;
-
-  constructor(message: string, status: number) {
-    super(message);
+export class AdminError extends ApiError {
+  constructor(message: string, status: number, code?: string) {
+    super(message, status, code);
     this.name = 'AdminError';
-    this.status = status;
   }
 }
 
-async function errorMessage(response: Response): Promise<string> {
-  try {
-    const body = (await response.json()) as { error?: unknown };
-    if (typeof body.error === 'string') return body.error;
-  } catch {
-    /* fall through to the generic message below */
-  }
-  return `Request failed with status ${String(response.status)}`;
+async function adminFailure(response: Response): Promise<AdminError> {
+  const { message, code } = await readErrorBody(response);
+  return new AdminError(message, response.status, code);
 }
 
 async function call<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, init);
-  if (!response.ok) throw new AdminError(await errorMessage(response), response.status);
+  if (!response.ok) throw await adminFailure(response);
   return (await response.json()) as T;
 }
 
@@ -152,7 +145,7 @@ export async function deleteCorpusOverride(id: string): Promise<void> {
 export async function exportCorpusOverrides(locale?: Locale): Promise<Blob> {
   const query = locale !== undefined ? `?locale=${locale}` : '';
   const response = await fetch(`/api/admin/corpus-overrides/export${query}`);
-  if (!response.ok) throw new AdminError(await errorMessage(response), response.status);
+  if (!response.ok) throw await adminFailure(response);
   return response.blob();
 }
 

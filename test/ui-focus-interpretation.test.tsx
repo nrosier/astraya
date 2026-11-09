@@ -9,6 +9,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FocusContext } from '../src/interpretation/focus-context.js';
 import { setLocale } from '../src/ui/locale.js';
+import { apiErrorMessages } from '../src/ui/api-error.messages.js';
 
 let signedIn = true;
 // One stable object, as the real session context gives: a new one per render would re-run every effect keyed on it.
@@ -256,10 +257,12 @@ describe('FocusInterpretation (#424)', () => {
     expect(button().disabled).toBe(true);
   });
 
-  it('shows the server’s message when the request is refused or fails', async () => {
+  it('shows the translated message for the refusal code, not the server text', async () => {
     fetchMock = vi.fn(() =>
       Promise.resolve(
-        new Response(JSON.stringify({ error: 'Daily usage limit reached for your account.' }), { status: 503 }),
+        new Response(JSON.stringify({ code: 'user-cap', error: 'Daily usage limit reached for your account.' }), {
+          status: 503,
+        }),
       ),
     );
     globalThis.fetch = fetchMock as unknown as typeof fetch;
@@ -268,7 +271,7 @@ describe('FocusInterpretation (#424)', () => {
     await generate();
     await vi.waitFor(() => {
       expect(box().querySelector('[role="alert"]')?.textContent).toBe(
-        'Could not generate: Daily usage limit reached for your account.',
+        `Could not generate: ${apiErrorMessages.en.codes['user-cap']}`,
       );
     });
     expect(box().querySelector('.tier2-result')).toBeNull();

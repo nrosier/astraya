@@ -464,14 +464,16 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
     },
     async (request, reply) => {
       const body = bodyObject(request.body);
-      if (!body) return reply.code(400).send({ error: BODY_REQUIRED_ERROR });
+      if (!body) return reply.code(400).send({ code: 'body-required', error: BODY_REQUIRED_ERROR });
       const { mode: rawMode, placementKeys, chartData, relationshipData, customPrompt, locale } = body;
 
       // A missing `mode` defaults to `'grounded'` — this route's original, only behavior — so
       // this isn't a breaking change for any caller that predates freeform mode.
       const requested = rawMode === undefined ? 'grounded' : isRequestedMode(rawMode) ? rawMode : undefined;
       if (requested === undefined) {
-        return reply.code(400).send({ error: "mode must be 'grounded', 'freeform', 'focus' or 'relationship'" });
+        return reply
+          .code(400)
+          .send({ code: 'invalid-request', error: "mode must be 'grounded', 'freeform', 'focus' or 'relationship'" });
       }
       // `'synthesis'` is an older client's spelling of `'freeform'` with no instruction.
       const mode: Mode = requested === 'synthesis' ? 'freeform' : requested;
@@ -479,16 +481,16 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
       if (mode === 'focus' && customPrompt !== undefined) {
         // A fixed task with no reader-written text: there is nothing for the verifier to judge, so an
         // instruction is refused rather than silently ignored or let through unchecked.
-        return reply.code(400).send({ error: "customPrompt is not accepted in 'focus' mode" });
+        return reply.code(400).send({ code: 'invalid-request', error: "customPrompt is not accepted in 'focus' mode" });
       }
       if (customPrompt !== undefined && typeof customPrompt !== 'string') {
-        return reply.code(400).send({ error: 'customPrompt must be a string' });
+        return reply.code(400).send({ code: 'invalid-request', error: 'customPrompt must be a string' });
       }
       // Grounded mode restyles per an instruction, so it needs one; the AI-written mode takes an
       // optional one — an empty or missing instruction means "a balanced reading of the whole
       // chart", with nothing to check or verify.
       if (mode === 'grounded' && customPrompt === undefined) {
-        return reply.code(400).send({ error: 'customPrompt must be a string' });
+        return reply.code(400).send({ code: 'invalid-request', error: 'customPrompt must be a string' });
       }
       const instruction: string | undefined =
         mode === 'grounded'
@@ -499,20 +501,25 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
       if (instruction !== undefined) {
         const guardrailIssues = checkCustomPrompt(instruction);
         if (guardrailIssues.length > 0) {
-          return reply
-            .code(400)
-            .send({ error: `customPrompt failed: ${guardrailIssues.map((issue) => issue.message).join('; ')}` });
+          return reply.code(400).send({
+            code: 'prompt-guardrail',
+            error: `customPrompt failed: ${guardrailIssues.map((issue) => issue.message).join('; ')}`,
+          });
         }
       }
       if (!isLocale(locale)) {
-        return reply.code(400).send({ error: `locale must be one of ${CORPUS_LOCALES.join(', ')}` });
+        return reply
+          .code(400)
+          .send({ code: 'invalid-locale', error: `locale must be one of ${CORPUS_LOCALES.join(', ')}` });
       }
       const { personId } = body;
       if (personId === undefined) {
-        return reply.code(400).send({ error: 'personId is required: the person this interpretation is for' });
+        return reply
+          .code(400)
+          .send({ code: 'invalid-request', error: 'personId is required: the person this interpretation is for' });
       }
       if (!isPersonId(personId)) {
-        return reply.code(400).send({ error: 'personId must be a person id' });
+        return reply.code(400).send({ code: 'invalid-request', error: 'personId must be a person id' });
       }
 
       let facts: string[] = [];
@@ -523,13 +530,16 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
       let chartKind: ChartKind = 'natal';
       if (mode === 'grounded') {
         if (!Array.isArray(placementKeys) || placementKeys.length === 0) {
-          return reply.code(400).send({ error: 'placementKeys must be a non-empty array' });
+          return reply.code(400).send({ code: 'invalid-request', error: 'placementKeys must be a non-empty array' });
         }
         if (placementKeys.length > MAX_PLACEMENT_KEYS) {
-          return reply.code(400).send({ error: `placementKeys must not exceed ${String(MAX_PLACEMENT_KEYS)} entries` });
+          return reply.code(400).send({
+            code: 'invalid-request',
+            error: `placementKeys must not exceed ${String(MAX_PLACEMENT_KEYS)} entries`,
+          });
         }
         if (!placementKeys.every((key) => typeof key === 'string')) {
-          return reply.code(400).send({ error: 'placementKeys must all be strings' });
+          return reply.code(400).send({ code: 'invalid-request', error: 'placementKeys must all be strings' });
         }
         // `validateKey` re-derives each placement and checks its body/aspect is in the closed
         // reference set and its sign/house/pattern is in range — not just that the key parses
@@ -538,9 +548,10 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
         // entirely via a field that check never inspects.
         const keyErrors = placementKeys.flatMap((key) => validateKey(key));
         if (keyErrors.length > 0) {
-          return reply
-            .code(400)
-            .send({ error: `placementKeys must all be well-formed placement keys: ${keyErrors.join('; ')}` });
+          return reply.code(400).send({
+            code: 'invalid-placement-keys',
+            error: `placementKeys must all be well-formed placement keys: ${keyErrors.join('; ')}`,
+          });
         }
         // Safe: `validateKey` above already confirmed every key parses.
         const parsedPlacements = placementKeys.map((key) => parsePlacementKey(key));
@@ -551,7 +562,9 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
       } else if (mode === 'focus') {
         const validated = validateFocusContext(body.focusContext);
         if ('errors' in validated) {
-          return reply.code(400).send({ error: `focusContext is invalid: ${validated.errors.join('; ')}` });
+          return reply
+            .code(400)
+            .send({ code: 'invalid-request', error: `focusContext is invalid: ${validated.errors.join('; ')}` });
         }
         focusContext = validated.context;
         systemInstruction = FOCUS_SYSTEM_INSTRUCTION;
@@ -559,10 +572,12 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
       } else if (mode === 'freeform') {
         const validated = validateChartData(chartData);
         if ('errors' in validated) {
-          return reply.code(400).send({ error: `chartData is invalid: ${validated.errors.join('; ')}` });
+          return reply
+            .code(400)
+            .send({ code: 'invalid-request', error: `chartData is invalid: ${validated.errors.join('; ')}` });
         }
         if (body.chartKind !== undefined && !isChartKind(body.chartKind)) {
-          return reply.code(400).send({ error: "chartKind must be 'natal' or 'composite'" });
+          return reply.code(400).send({ code: 'invalid-request', error: "chartKind must be 'natal' or 'composite'" });
         }
         chartKind = isChartKind(body.chartKind) ? body.chartKind : 'natal';
         facts = buildFreeformFacts(validated.chartData);
@@ -571,7 +586,9 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
       } else {
         const validated = validateRelationshipData(relationshipData);
         if ('errors' in validated) {
-          return reply.code(400).send({ error: `relationshipData is invalid: ${validated.errors.join('; ')}` });
+          return reply
+            .code(400)
+            .send({ code: 'invalid-request', error: `relationshipData is invalid: ${validated.errors.join('; ')}` });
         }
         facts = buildRelationshipFacts(validated.relationshipData);
         systemInstruction = RELATIONSHIP_SYSTEM_INSTRUCTION;
@@ -587,7 +604,9 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
         request.log.warn(
           'Tier 2 request rejected: ASTRAYA_INTERPRETATION_API_KEY is not set (GEMINI_API_KEY does not count — it is a separate, build-time-only credential for corpus generation).',
         );
-        return reply.code(503).send({ error: 'Tier 2 (AI-customized interpretation) is not configured' });
+        return reply
+          .code(503)
+          .send({ code: 'tier2-unavailable', error: 'Tier 2 (AI-customized interpretation) is not configured' });
       }
 
       const userId = authenticatedUserId(request);
@@ -599,6 +618,7 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
       // than one read before any provider call was made.
       const capRejectionReply = (rejection: { readonly reason: 'user-cap' | 'total-cap' }) =>
         reply.code(503).send({
+          code: rejection.reason === 'user-cap' ? 'user-cap' : 'total-cap',
           error:
             rejection.reason === 'user-cap'
               ? 'Daily usage limit reached for your account. Try again tomorrow.'
@@ -626,7 +646,10 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
         } catch (error) {
           releaseReservation(db, verificationReservation.reservationId);
           request.log.error(error, 'Tier 2 custom-prompt verification call failed');
-          return reply.code(502).send({ error: 'Your instruction could not be verified right now. Try again later.' });
+          return reply.code(502).send({
+            code: 'verification-unavailable',
+            error: 'Your instruction could not be verified right now. Try again later.',
+          });
         }
         // The verification call costs tokens whatever its verdict, so it counts toward both caps.
         const verificationOutcome = reconcileReservation(db, verificationReservation, {
@@ -670,7 +693,10 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
       } catch (error) {
         releaseReservation(db, generationReservation.reservationId);
         request.log.error(error, 'Tier 2 model call failed');
-        return reply.code(502).send({ error: 'The AI-customized interpretation could not be generated right now.' });
+        return reply.code(502).send({
+          code: 'generation-failed',
+          error: 'The AI-customized interpretation could not be generated right now.',
+        });
       }
 
       // The model's own label for this request (#423): untrusted, so validated, and dropped (`null`)
@@ -715,17 +741,20 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
       const userId = authenticatedUserId(request);
       const { personId, unlinked, locale } = request.query;
       if ((personId === undefined) === (unlinked === undefined)) {
-        return reply.code(400).send({ error: 'Pass exactly one of personId or unlinked=1' });
+        return reply.code(400).send({ code: 'invalid-request', error: 'Pass exactly one of personId or unlinked=1' });
       }
       if (!isLocale(locale)) {
-        return reply.code(400).send({ error: `locale must be one of ${CORPUS_LOCALES.join(', ')}` });
+        return reply
+          .code(400)
+          .send({ code: 'invalid-locale', error: `locale must be one of ${CORPUS_LOCALES.join(', ')}` });
       }
       let filter: ResultsFilter;
       if (personId !== undefined) {
-        if (!isPersonId(personId)) return reply.code(400).send({ error: 'personId must be a person id' });
+        if (!isPersonId(personId))
+          return reply.code(400).send({ code: 'invalid-request', error: 'personId must be a person id' });
         filter = { personId };
       } else {
-        if (unlinked !== '1') return reply.code(400).send({ error: 'unlinked must be 1' });
+        if (unlinked !== '1') return reply.code(400).send({ code: 'invalid-request', error: 'unlinked must be 1' });
         filter = { unlinked: true };
       }
       return reply.send({
@@ -742,10 +771,12 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
       const userId = authenticatedUserId(request);
       const key = loadEncryptionKey();
       if (!key) {
-        return reply.code(503).send({ error: 'Saved interpretations are not available on this server.' });
+        return reply
+          .code(503)
+          .send({ code: 'saved-unavailable', error: 'Saved interpretations are not available on this server.' });
       }
       const found = getInterpretationResult(db, userId, request.params.id, key);
-      if (!found) return reply.code(404).send({ error: 'No saved interpretation with that id.' });
+      if (!found) return reply.code(404).send({ code: 'not-found', error: 'No saved interpretation with that id.' });
       return reply.send(found);
     },
   );
@@ -759,7 +790,7 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
     async (request, reply) => {
       const userId = authenticatedUserId(request);
       if (!deleteInterpretationResult(db, userId, request.params.id)) {
-        return reply.code(404).send({ error: 'No saved interpretation with that id.' });
+        return reply.code(404).send({ code: 'not-found', error: 'No saved interpretation with that id.' });
       }
       return reply.send({ ok: true });
     },

@@ -30,6 +30,7 @@ import { EmptyState } from './primitives/EmptyState.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import { clearNoteJournalsForPerson } from './use-note-autosave.js';
+import { errorDetail } from './api-error.js';
 
 export function People(): React.JSX.Element {
   const store = useStore();
@@ -62,7 +63,7 @@ export function People(): React.JSX.Element {
         window.location.hash = personHref(id);
       })
       .catch((cause: unknown) => {
-        setError(cause instanceof Error ? cause.message : String(cause));
+        setError(errorDetail(cause));
       })
       .finally(() => {
         setBusy(false);
@@ -71,7 +72,7 @@ export function People(): React.JSX.Element {
 
   const restore = (id: string): void => {
     void store.restore('person', id).catch((cause: unknown) => {
-      setError(cause instanceof Error ? cause.message : String(cause));
+      setError(errorDetail(cause));
     });
   };
 
@@ -88,7 +89,7 @@ export function People(): React.JSX.Element {
         if (typeof localStorage !== 'undefined') clearNoteJournalsForPerson(localStorage, store.dbName, id, rootIds);
       })
       .catch((cause: unknown) => {
-        setError(cause instanceof Error ? cause.message : String(cause));
+        setError(errorDetail(cause));
       });
   };
 

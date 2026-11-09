@@ -95,10 +95,12 @@ export function registerCorpusCandidateRoutes(app: FastifyInstance, db: Database
     async (request, reply) => {
       const { locale, status } = request.query;
       if (locale !== undefined && !isLocale(locale)) {
-        return reply.code(400).send({ error: `locale must be one of ${LOCALES.join(', ')}` });
+        return reply.code(400).send({ code: 'invalid-locale', error: `locale must be one of ${LOCALES.join(', ')}` });
       }
       if (status !== undefined && !isStatus(status)) {
-        return reply.code(400).send({ error: `status must be one of ${CANDIDATE_STATUSES.join(', ')}` });
+        return reply
+          .code(400)
+          .send({ code: 'invalid-request', error: `status must be one of ${CANDIDATE_STATUSES.join(', ')}` });
       }
       const candidates = listCorpusCandidates(db, {
         ...(locale !== undefined ? { locale } : {}),
@@ -117,13 +119,15 @@ export function registerCorpusCandidateRoutes(app: FastifyInstance, db: Database
     { preHandler: requireAdmin(db), config: { rateLimit: { max: 10, timeWindow: '1 minute' } } },
     async (request, reply) => {
       const body = bodyObject(request.body);
-      if (!body) return reply.code(400).send({ error: BODY_REQUIRED_ERROR });
+      if (!body) return reply.code(400).send({ code: 'body-required', error: BODY_REQUIRED_ERROR });
       const { candidates } = body;
       if (!Array.isArray(candidates) || candidates.length === 0) {
-        return reply.code(400).send({ error: 'candidates must be a non-empty array' });
+        return reply.code(400).send({ code: 'invalid-request', error: 'candidates must be a non-empty array' });
       }
       if (candidates.length > MAX_IMPORT_BATCH) {
-        return reply.code(400).send({ error: `candidates must not exceed ${String(MAX_IMPORT_BATCH)} entries` });
+        return reply
+          .code(400)
+          .send({ code: 'invalid-request', error: `candidates must not exceed ${String(MAX_IMPORT_BATCH)} entries` });
       }
 
       const validated: {
@@ -141,24 +145,35 @@ export function registerCorpusCandidateRoutes(app: FastifyInstance, db: Database
         const entry = raw as ImportBodyEntry;
         const { key, locale, persona, text, tier, tags, source, triageSignal, triageScore } = entry;
         const at = (message: string): string => `candidates[${String(index)}]: ${message}`;
-        if (typeof key !== 'string' || key === '') return reply.code(400).send({ error: at('key is required') });
+        if (typeof key !== 'string' || key === '')
+          return reply.code(400).send({ code: 'invalid-request', error: at('key is required') });
         if (!isLocale(locale))
-          return reply.code(400).send({ error: at(`locale must be one of ${LOCALES.join(', ')}`) });
+          return reply
+            .code(400)
+            .send({ code: 'invalid-locale', error: at(`locale must be one of ${LOCALES.join(', ')}`) });
         if (persona !== undefined) {
-          return reply.code(400).send({ error: at('persona is no longer supported (#429)') });
+          return reply.code(400).send({ code: 'invalid-request', error: at('persona is no longer supported (#429)') });
         }
-        if (typeof text !== 'string' || text === '') return reply.code(400).send({ error: at('text is required') });
-        if (!isTier(tier)) return reply.code(400).send({ error: at(`tier must be one of ${TIERS.join(', ')}`) });
+        if (typeof text !== 'string' || text === '')
+          return reply.code(400).send({ code: 'invalid-request', error: at('text is required') });
+        if (!isTier(tier))
+          return reply
+            .code(400)
+            .send({ code: 'invalid-request', error: at(`tier must be one of ${TIERS.join(', ')}`) });
         if (!Array.isArray(tags) || !tags.every((tag) => typeof tag === 'string')) {
-          return reply.code(400).send({ error: at('tags must be an array of strings') });
+          return reply.code(400).send({ code: 'invalid-request', error: at('tags must be an array of strings') });
         }
         if (!isSource(source))
-          return reply.code(400).send({ error: at(`source must be one of ${CANDIDATE_SOURCES.join(', ')}`) });
+          return reply
+            .code(400)
+            .send({ code: 'invalid-request', error: at(`source must be one of ${CANDIDATE_SOURCES.join(', ')}`) });
         if (triageSignal !== undefined && !isTriageSignal(triageSignal)) {
-          return reply.code(400).send({ error: at(`triageSignal must be one of ${TRIAGE_SIGNALS.join(', ')}`) });
+          return reply
+            .code(400)
+            .send({ code: 'invalid-request', error: at(`triageSignal must be one of ${TRIAGE_SIGNALS.join(', ')}`) });
         }
         if (triageScore !== undefined && typeof triageScore !== 'number') {
-          return reply.code(400).send({ error: at('triageScore must be a number') });
+          return reply.code(400).send({ code: 'invalid-request', error: at('triageScore must be a number') });
         }
         validated.push({
           key,
@@ -182,16 +197,18 @@ export function registerCorpusCandidateRoutes(app: FastifyInstance, db: Database
     { preHandler: requireAdmin(db), config: { rateLimit: { max: 30, timeWindow: '1 minute' } } },
     async (request, reply) => {
       const body = bodyObject(request.body);
-      if (!body) return reply.code(400).send({ error: BODY_REQUIRED_ERROR });
+      if (!body) return reply.code(400).send({ code: 'body-required', error: BODY_REQUIRED_ERROR });
       const { ids, decision } = body;
       if (!Array.isArray(ids) || ids.length === 0 || !ids.every((id) => typeof id === 'string')) {
-        return reply.code(400).send({ error: 'ids must be a non-empty array of strings' });
+        return reply.code(400).send({ code: 'invalid-request', error: 'ids must be a non-empty array of strings' });
       }
       if (ids.length > MAX_DECIDE_BATCH) {
-        return reply.code(400).send({ error: `ids must not exceed ${String(MAX_DECIDE_BATCH)} entries` });
+        return reply
+          .code(400)
+          .send({ code: 'invalid-request', error: `ids must not exceed ${String(MAX_DECIDE_BATCH)} entries` });
       }
       if (decision !== 'accept' && decision !== 'reject') {
-        return reply.code(400).send({ error: "decision must be 'accept' or 'reject'" });
+        return reply.code(400).send({ code: 'invalid-request', error: "decision must be 'accept' or 'reject'" });
       }
 
       // Same content-quality gate `corpus-overrides-routes.ts`'s upsert route already runs on
@@ -216,6 +233,7 @@ export function registerCorpusCandidateRoutes(app: FastifyInstance, db: Database
           const lintIssues = lintEntry(draft);
           if (lintIssues.length > 0) {
             return reply.code(400).send({
+              code: 'content-quality-failed',
               error: `Content-quality check failed for candidate ${candidate.key}: ${lintIssues.map((issue) => issue.message).join('; ')}`,
             });
           }

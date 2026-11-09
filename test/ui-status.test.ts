@@ -98,14 +98,19 @@ describe('failing sync', () => {
   it('stays quiet about a failure seconds old', () => {
     // A lid closing or a tunnel produces failures lasting seconds. Escalating those would
     // train the user to ignore the indicator, which is the only way it can really fail.
-    const sync: SyncState = { kind: 'failing', since: NOW - 30_000, message: 'Network error.' };
+    const sync: SyncState = { kind: 'failing', since: NOW - 30_000, errorKind: 'offline', message: 'Network error.' };
     const shown = status({ sync });
     expect(shown.tone).toBe('note');
     expect(shown.label).toBe('Sync retrying');
   });
 
   it('escalates once it has been failing for a while', () => {
-    const sync: SyncState = { kind: 'failing', since: NOW - 90 * MINUTE, message: 'Network error.' };
+    const sync: SyncState = {
+      kind: 'failing',
+      since: NOW - 90 * MINUTE,
+      errorKind: 'offline',
+      message: 'Network error.',
+    };
     const shown = status({ sync });
     expect(shown.tone).toBe('warn');
     expect(shown.label).toBe('Sync failing');
@@ -115,10 +120,52 @@ describe('failing sync', () => {
   it('says nothing has been lost, and carries the reason', () => {
     // The user's question on seeing this is "have I lost anything", and the answer is no.
     // The underlying message is included because "sync failed" alone is unactionable.
-    const sync: SyncState = { kind: 'failing', since: NOW - 20 * MINUTE, message: 'Certificate expired.' };
+    const sync: SyncState = {
+      kind: 'failing',
+      since: NOW - 20 * MINUTE,
+      errorKind: 'unauthorized',
+      message: 'Certificate expired.',
+    };
     const shown = status({ sync });
     expect(shown.detail).toContain('Nothing has been lost');
-    expect(shown.detail).toContain('Certificate expired.');
+    expect(shown.detail).toContain(statusMessages.en.syncFailureReason.unauthorized);
+    // The error's own English text is diagnostic only (#1365).
+    expect(shown.detail).not.toContain('Certificate expired.');
+  });
+});
+
+describe('every sync failure kind has an en and nl reason (#1365)', () => {
+  const KINDS = [
+    'offline',
+    'unauthorized',
+    'server',
+    'malformed',
+    'rejected',
+    'quota',
+    'account-mismatch',
+    'unknown',
+  ] as const;
+
+  it.each(KINDS)('%s is worded in both locales, differently, and the error text is never shown', (errorKind) => {
+    const sync: SyncState = {
+      kind: 'failing',
+      since: NOW - 20 * MINUTE,
+      errorKind,
+      message: 'RAW ENGLISH FROM THE ENGINE',
+    };
+    const en = describeStatus(
+      { online: true, persistence: PERSISTED, pending: 0, quarantined: 0, heldBack: 0, sync, now: NOW },
+      statusMessages.en,
+    );
+    const nl = describeStatus(
+      { online: true, persistence: PERSISTED, pending: 0, quarantined: 0, heldBack: 0, sync, now: NOW },
+      statusMessages.nl,
+    );
+    expect(en.detail).toContain(statusMessages.en.syncFailureReason[errorKind]);
+    expect(nl.detail).toContain(statusMessages.nl.syncFailureReason[errorKind]);
+    expect(statusMessages.nl.syncFailureReason[errorKind]).not.toBe(statusMessages.en.syncFailureReason[errorKind]);
+    expect(en.detail).not.toContain('RAW ENGLISH');
+    expect(nl.detail).not.toContain('RAW ENGLISH');
   });
 });
 
@@ -151,7 +198,12 @@ describe('quarantined ops (#312)', () => {
   });
 
   it('outranks a failing sync too, since that failure is transient and this is not', () => {
-    const sync: SyncState = { kind: 'failing', since: NOW - 90 * MINUTE, message: 'Network error.' };
+    const sync: SyncState = {
+      kind: 'failing',
+      since: NOW - 90 * MINUTE,
+      errorKind: 'offline',
+      message: 'Network error.',
+    };
     const shown = status({ sync, quarantined: 1 });
     expect(shown.label).not.toBe('Sync failing');
     expect(shown.tone).toBe('warn');

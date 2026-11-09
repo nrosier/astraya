@@ -22,6 +22,7 @@ import { sharedMessages } from './shared.messages.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { PageHeader } from './PageHeader.js';
 import { Button } from './primitives/Button.js';
+import { apiErrorText } from './api-error.js';
 
 export function SetupForm(): React.JSX.Element {
   const { setup } = useSession();
@@ -58,7 +59,7 @@ export function SetupForm(): React.JSX.Element {
         window.location.hash = '#/people';
       })
       .catch((cause: unknown) => {
-        setError(cause instanceof Error ? cause.message : String(cause));
+        setError(apiErrorText(cause));
       })
       .finally(() => {
         setBusy(false);

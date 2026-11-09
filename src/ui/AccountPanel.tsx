@@ -33,6 +33,7 @@ import { IS_DEMO_MODE } from '../demo-mode.js';
 import type { OidcConfig } from '../sync/auth-client.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { ProfileTile } from './ProfileTile.js';
+import { apiErrorText } from './api-error.js';
 
 function changes(count: number, t: typeof accountPanelMessages.en): string {
   return count === 1 ? t.oneChange : t.changesCount(String(count));
@@ -53,7 +54,7 @@ function AdoptionPanel({
     setBusy(true);
     setError(undefined);
     void resolveAdoption(accept).catch((cause: unknown) => {
-      setError(cause instanceof Error ? cause.message : String(cause));
+      setError(apiErrorText(cause));
       setBusy(false);
     });
   };
@@ -159,7 +160,7 @@ function OidcSignIn({
       document.body.append(form);
       form.submit();
     })().catch((cause: unknown) => {
-      setError(cause instanceof Error ? cause.message : String(cause));
+      setError(apiErrorText(cause));
       setBusy(false);
     });
   };
@@ -245,7 +246,7 @@ function SignInForm({
         close();
       })
       .catch((cause: unknown) => {
-        setError(cause instanceof Error ? cause.message : String(cause));
+        setError(apiErrorText(cause));
       })
       .finally(() => {
         setBusy(false);
@@ -339,7 +340,7 @@ function RemoveAccountData({ userId, onRemoved }: { userId: string; onRemoved: (
     void removeAccountData(userId)
       .then(onRemoved)
       .catch((cause: unknown) => {
-        setError(cause instanceof Error ? cause.message : String(cause));
+        setError(apiErrorText(cause));
         setBusy(false);
       });
   };

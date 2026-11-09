@@ -130,22 +130,25 @@ export function registerOpsRoutes(app: FastifyInstance, db: Database): void {
       // Never a silent no-op: a disabled relay says so, rather than accepting a
       // write it would have to leave unencrypted.
       const key = configuredKey;
-      if (!key) return reply.code(503).send({ error: 'Sync is not configured on this server.' });
+      if (!key)
+        return reply.code(503).send({ code: 'sync-not-configured', error: 'Sync is not configured on this server.' });
       const user = authenticatedUser(request);
       const bindingError = accountBindingError(request, user);
       if (bindingError) return reply.code(bindingError.status).send(bindingError.body);
 
       const body = bodyObject(request.body);
-      if (!body) return reply.code(400).send({ error: BODY_REQUIRED_ERROR });
+      if (!body) return reply.code(400).send({ code: 'body-required', error: BODY_REQUIRED_ERROR });
       const { ops } = body;
       if (!Array.isArray(ops) || ops.length === 0) {
-        return reply.code(400).send({ error: 'ops must be a non-empty array' });
+        return reply.code(400).send({ code: 'invalid-request', error: 'ops must be a non-empty array' });
       }
       if (ops.length > MAX_BATCH_SIZE) {
-        return reply.code(400).send({ error: `ops batch too large (max ${MAX_BATCH_SIZE})` });
+        return reply.code(400).send({ code: 'batch-too-large', error: `ops batch too large (max ${MAX_BATCH_SIZE})` });
       }
       if (!ops.every(isValidOpInput)) {
-        return reply.code(400).send({ error: 'Each op needs hlc, deviceId, opVersion and payload' });
+        return reply
+          .code(400)
+          .send({ code: 'invalid-request', error: 'Each op needs hlc, deviceId, opVersion and payload' });
       }
 
       // An op this far ahead of the server's own clock is never stored — the client's clock
@@ -175,7 +178,9 @@ export function registerOpsRoutes(app: FastifyInstance, db: Database): void {
         count: number;
       };
       if (existingCount + accepted.length > MAX_OPS_PER_USER) {
-        return reply.code(409).send({ error: `Storage quota exceeded (${String(MAX_OPS_PER_USER)} ops).` });
+        return reply
+          .code(409)
+          .send({ code: 'quota-exceeded', error: `Storage quota exceeded (${String(MAX_OPS_PER_USER)} ops).` });
       }
 
       const insert = db.prepare(
@@ -265,7 +270,8 @@ export function registerOpsRoutes(app: FastifyInstance, db: Database): void {
     { preHandler: requireUser(db), config: { rateLimit: { max: 120, timeWindow: '1 minute' } } },
     async (request, reply) => {
       const key = configuredKey;
-      if (!key) return reply.code(503).send({ error: 'Sync is not configured on this server.' });
+      if (!key)
+        return reply.code(503).send({ code: 'sync-not-configured', error: 'Sync is not configured on this server.' });
       const user = authenticatedUser(request);
       const bindingError = accountBindingError(request, user);
       if (bindingError) return reply.code(bindingError.status).send(bindingError.body);
@@ -276,11 +282,11 @@ export function registerOpsRoutes(app: FastifyInstance, db: Database): void {
       // would silently re-download every operation it already has instead of being told.
       const raw = request.query.since ?? '0';
       if (!/^\d+$/.test(raw)) {
-        return reply.code(400).send({ error: 'since must be a non-negative integer' });
+        return reply.code(400).send({ code: 'invalid-request', error: 'since must be a non-negative integer' });
       }
       const since = Number(raw);
       if (!Number.isSafeInteger(since)) {
-        return reply.code(400).send({ error: 'since must be a non-negative integer' });
+        return reply.code(400).send({ code: 'invalid-request', error: 'since must be a non-negative integer' });
       }
 
       const rows = db

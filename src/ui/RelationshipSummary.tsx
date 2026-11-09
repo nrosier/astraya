@@ -37,7 +37,6 @@ import {
   generateTier2Interpretation,
   getSavedInterpretation,
   listSavedInterpretations,
-  Tier2Error,
   toTier2RelationshipPayload,
   type SavedInterpretationSummary,
   type Tier2Section,
@@ -49,6 +48,7 @@ import { relationshipSummaryMessages } from './RelationshipSummary.messages.js';
 import { basisLabel } from './result-basis-label.js';
 import { formatSavedTime } from './saved-time.js';
 import { useSessionUserOrUndefined } from './session-context.js';
+import { apiErrorText } from './api-error.js';
 
 const bodyKeyOf = (id: number): string => bodyById(id)?.key ?? String(id);
 
@@ -167,7 +167,7 @@ export function RelationshipSummary({
           .catch(() => undefined);
       })
       .catch((caught: unknown) => {
-        setError(caught instanceof Tier2Error ? caught.message : String(caught));
+        setError(apiErrorText(caught));
       })
       .finally(() => {
         setGenerating(false);
@@ -182,7 +182,7 @@ export function RelationshipSummary({
         setSections(detail.sections);
       })
       .catch((caught: unknown) => {
-        setError(caught instanceof Tier2Error ? caught.message : String(caught));
+        setError(apiErrorText(caught));
       })
       .finally(() => {
         setOpeningId(undefined);

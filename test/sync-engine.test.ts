@@ -422,6 +422,7 @@ describe('failure', () => {
           expect(engine.status.kind).toBe('failing');
         }, WAIT);
         expect(engine.status.kind === 'failing' && engine.status.message.length > 0).toBe(true);
+        expect(engine.status.kind === 'failing' && engine.status.errorKind).toBe('server');
       } finally {
         engine.close();
         store.close();

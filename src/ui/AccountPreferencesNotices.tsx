@@ -36,6 +36,7 @@ import { ChoiceGroup } from './primitives/ChoiceGroup.js';
 import { Notice } from './primitives/Notice.js';
 import { StagedDialog } from './primitives/StagedDialog.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import { errorDetail } from './api-error.js';
 
 type Messages = typeof accountPreferencesNoticesMessages.en;
 
@@ -94,7 +95,7 @@ function ReconcileDialog({ prompt }: { readonly prompt: AccountReconcilePrompt }
     prompt
       .resolve(prompt.proposals.map((proposal) => ({ field: proposal.field, use: use(proposal) })))
       .catch((cause: unknown) => {
-        setError(cause instanceof Error ? cause.message : String(cause));
+        setError(errorDetail(cause));
         setBusy(false);
       });
   };

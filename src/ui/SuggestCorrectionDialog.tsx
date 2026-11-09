@@ -19,6 +19,7 @@ import { Checkbox } from './primitives/Checkbox.js';
 import { StagedDialog } from './primitives/StagedDialog.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { TextAreaField } from './primitives/TextAreaField.js';
+import { apiErrorText } from './api-error.js';
 
 export function SuggestCorrectionDialog({
   target,
@@ -70,7 +71,7 @@ export function SuggestCorrectionDialog({
         setBusy(false);
         if (cause instanceof SubmissionError && cause.code === 'pending-limit') setError(t.pendingLimit);
         else if (cause instanceof SubmissionError && cause.code === 'daily-limit') setError(t.dailyLimit);
-        else setError(t.submitFailed(cause instanceof Error ? cause.message : String(cause)));
+        else setError(t.submitFailed(apiErrorText(cause)));
       },
     );
   };

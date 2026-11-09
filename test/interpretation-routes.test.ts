@@ -724,7 +724,10 @@ describe('POST /api/interpretation/generate', () => {
     it('rejects an unknown mode, and says which exist', async () => {
       const response = await generateWith({ mode: 'oracle', chartData: VALID_CHART_DATA, locale: 'en' });
       expect(response.statusCode).toBe(400);
-      expect(response.json()).toEqual({ error: "mode must be 'grounded', 'freeform', 'focus' or 'relationship'" });
+      expect(response.json()).toEqual({
+        code: 'invalid-request',
+        error: "mode must be 'grounded', 'freeform', 'focus' or 'relationship'",
+      });
     });
   });
 
@@ -1823,7 +1826,7 @@ describe('saved interpretation results (#392)', () => {
       cookies: { [SESSION_COOKIE]: bobCookie },
     });
     expect(response.statusCode).toBe(404);
-    expect(response.json()).toEqual({ error: 'No saved interpretation with that id.' });
+    expect(response.json()).toEqual({ code: 'not-found', error: 'No saved interpretation with that id.' });
 
     const stillThere = await app.inject({
       method: 'GET',
