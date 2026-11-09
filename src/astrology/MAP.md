@@ -14,6 +14,7 @@ Pure astrological calculation (no DOM/React): bodies, aspects, houses, dignities
 - `calculation-scheme.ts` — Named traditional scheme bundles (Hellenistic/Medieval Arabic/Renaissance-Lilly): bounds table + orb profile as one coherent choice (#549). Deps: `bounds`, `orb-profiles`.
 - `decans.ts` — Decan/face rulership for essential-dignity. Deps: `bodies`, `dignities`, `signs`.
 - `declinations.ts` — Equatorial contacts (parallels/contraparallels + out-of-bounds). Deps: ephemeris types only.
+- `derived-points.ts` — Part of Fortune and Part of Spirit (#511), the calculated non-body points the corpus describes; carry a sign and house, no motion or aspects. Server runtime dependency. Deps: none.
 - `dignities.ts` — Base essential-dignity tables (rulership, exaltation, detriment, fall, traditional/modern). Deps: `bodies`, `signs`.
 - `dispositors.ts` — Dispositor-chain + mutual-reception analysis. Deps: `rulership`, `signs`.
 - `draconic.ts` — Draconic chart (re-measure from natal North Node). Deps: ephemeris types only.
