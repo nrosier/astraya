@@ -12,6 +12,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { openStore, type Store } from '../src/store/store.js';
 import { personFormMessages } from '../src/ui/PersonForm.messages.js';
+import { LIFE_EVENTS_MAX, type LifeEvent } from '../src/domain/life-events.js';
 import { personFileActionsMessages } from '../src/ui/PersonFileActions.messages.js';
 
 vi.mock('../src/ui/EphemerisProviderContext.js', () => ({
@@ -20,6 +21,7 @@ vi.mock('../src/ui/EphemerisProviderContext.js', () => ({
 
 const { PersonForm } = await import('../src/ui/PersonForm.js');
 const { StoreProvider } = await import('../src/ui/store-context.js');
+const { setLocale } = await import('../src/ui/locale.js');
 
 const t = personFormMessages.en;
 const tFiles = personFileActionsMessages.en;
@@ -88,6 +90,7 @@ describe('PersonForm card layout (#795)', () => {
       'birth-record-card--identity',
       'birth-record-card--location',
       'birth-record-card--notes',
+      'birth-record-card--life-events',
       'birth-record-card--timezone',
       'birth-record-card--files',
       'birth-record-card--replace',
@@ -221,5 +224,205 @@ describe('birth record card styling uses tokens only (#795)', () => {
   it('draws the card border with the hairline token', () => {
     const cardRule = blocks.find((block) => block.selector.trim() === '.birth-record-card');
     expect(cardRule?.body).toMatch(/var\(--border-hairline\)/);
+  });
+});
+
+describe('Life events card (#1399, slice S3)', () => {
+  const tl = personFormMessages;
+
+  function lifeCard(): HTMLElement {
+    return card('life-events');
+  }
+  function rowEls(): HTMLElement[] {
+    return [...lifeCard().querySelectorAll<HTMLElement>('.life-events-row')];
+  }
+  function rowAt(index: number): HTMLElement {
+    const row = rowEls()[index];
+    if (row === undefined) throw new Error('test fixture bug: no row ' + String(index));
+    return row;
+  }
+  function addButton(): HTMLButtonElement {
+    const button = lifeCard().querySelector<HTMLButtonElement>('button.life-events-add');
+    if (button === null) throw new Error('test fixture bug: no Add event button');
+    return button;
+  }
+  function saveBtn(): HTMLButtonElement {
+    const button = container?.querySelector<HTMLButtonElement>('.page-header-row .birth-record-save button');
+    if (button === null || button === undefined) throw new Error('no Save button');
+    return button;
+  }
+  function typeInto(input: HTMLInputElement, value: string): void {
+    act(() => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(input, value);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+  }
+  function fields(row: HTMLElement): { date: HTMLInputElement; time: HTMLInputElement; label: HTMLInputElement } {
+    const date = row.querySelector<HTMLInputElement>('input[type="date"]');
+    const time = row.querySelector<HTMLInputElement>('input[type="time"]');
+    const label = row.querySelector<HTMLInputElement>('input[type="text"]');
+    if (date === null || time === null || label === null) throw new Error('test fixture bug: row inputs');
+    return { date, time, label };
+  }
+  function clickAdd(): void {
+    act(() => {
+      addButton().click();
+    });
+  }
+  async function clickSave(): Promise<void> {
+    await act(async () => {
+      saveBtn().click();
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    });
+  }
+  function fill(row: HTMLElement, date: string, label: string, time = ''): void {
+    const inputs = fields(row);
+    typeInto(inputs.date, date);
+    typeInto(inputs.label, label);
+    if (time !== '') typeInto(inputs.time, time);
+  }
+  function storedEvents(): readonly LifeEvent[] | undefined {
+    return store.state.people.get('ada')?.lifeEvents;
+  }
+
+  afterEach(() => {
+    act(() => {
+      setLocale('en');
+    });
+  });
+
+  it('adds, edits and deletes events through the page Save, and they survive a reload', async () => {
+    expect(rowEls()).toHaveLength(0);
+    expect(lifeCard().textContent).toContain(t.lifeEventsCount(0, 100));
+    clickAdd();
+    fill(rowAt(0), '2001-05-04', 'Moved abroad', '09:30');
+    expect(saveBtn().disabled).toBe(false);
+    await clickSave();
+    expect(storedEvents()).toEqual([
+      { id: expect.any(String) as string, date: '2001-05-04', time: '09:30', label: 'Moved abroad' },
+    ]);
+
+    // Edit: change the label and drop the time.
+    const edited = rowAt(0);
+    typeInto(fields(edited).label, 'Moved to Lisbon');
+    typeInto(fields(edited).time, '');
+    await clickSave();
+    expect(storedEvents()).toEqual([
+      { id: expect.any(String) as string, date: '2001-05-04', label: 'Moved to Lisbon' },
+    ]);
+
+    // A second event, then a reload of the store from the same database.
+    clickAdd();
+    fill(rowAt(1), '1999-01-02', 'Graduated');
+    await clickSave();
+    const reopened = await openStore({ name: `astraya-person-form-layout-${String(counter)}` });
+    try {
+      expect(reopened.state.people.get('ada')?.lifeEvents?.map((event) => event.label)).toEqual([
+        'Graduated',
+        'Moved to Lisbon',
+      ]);
+    } finally {
+      reopened.close();
+    }
+
+    // Delete the first row shown; the page Save writes the removal.
+    const removeButton = rowEls()[0]?.querySelector<HTMLButtonElement>('.life-events-remove');
+    act(() => {
+      removeButton?.click();
+    });
+    await clickSave();
+    expect(storedEvents()?.map((event) => event.label)).toEqual(['Moved to Lisbon']);
+  });
+
+  it('shows rows in date, then time order, untimed events after timed ones on the same day', async () => {
+    await act(async () => {
+      await store.mutate([
+        {
+          entity: 'person',
+          entityId: 'ada',
+          field: 'lifeEvents',
+          value: [
+            { id: 'a', date: '2010-01-01', label: 'untimed' },
+            { id: 'b', date: '2010-01-01', time: '08:00', label: 'timed' },
+            { id: 'c', date: '2005-06-06', label: 'earlier' },
+          ],
+        },
+      ]);
+    });
+    expect(rowEls().map((row) => fields(row).label.value)).toEqual(['earlier', 'timed', 'untimed']);
+  });
+
+  it('refuses the 101st event, disabled with a visible count and the reason', async () => {
+    const events = Array.from({ length: LIFE_EVENTS_MAX - 1 }, (_, index) => ({
+      id: `e${String(index)}`,
+      date: '2000-01-01',
+      label: `Event ${String(index)}`,
+    }));
+    await act(async () => {
+      await store.mutate([{ entity: 'person', entityId: 'ada', field: 'lifeEvents', value: events }]);
+    });
+    expect(lifeCard().textContent).toContain(t.lifeEventsCount(99, 100));
+    expect(addButton().disabled).toBe(false);
+    clickAdd();
+    expect(rowEls()).toHaveLength(100);
+    expect(lifeCard().textContent).toContain(t.lifeEventsCount(100, 100));
+    expect(addButton().disabled).toBe(true);
+    expect(lifeCard().textContent).toContain(t.lifeEventsAtCap(100));
+    const reason = lifeCard().querySelector(`#${addButton().getAttribute('aria-describedby') ?? 'none'}`);
+    expect(reason?.textContent).toBe(t.lifeEventsAtCap(100));
+    act(() => {
+      addButton().click();
+    });
+    expect(rowEls()).toHaveLength(100);
+  });
+
+  for (const locale of ['en', 'nl'] as const) {
+    it(`shows an error for invalid input and blocks Save (${locale})`, () => {
+      act(() => {
+        setLocale(locale);
+      });
+      const tt = tl[locale];
+      clickAdd();
+      const row = rowAt(0);
+      typeInto(fields(row).label, 'x'.repeat(5));
+      // Date missing: error beside the field, Save blocked with the reason beside it.
+      expect(row.textContent).toContain(tt.lifeEventDateRequired);
+      expect(row.querySelector('input[type="date"]')?.getAttribute('aria-invalid')).toBe('true');
+      expect(saveBtn().disabled).toBe(true);
+      expect(container?.textContent).toContain(tt.lifeEventsFixHint);
+      typeInto(fields(row).date, '2001-05-04');
+      typeInto(fields(row).label, '   ');
+      expect(row.textContent).toContain(tt.lifeEventLabelRequired);
+      expect(saveBtn().disabled).toBe(true);
+    });
+  }
+
+  it('shows the warning for an unreadable list, offers no editor, and does not overwrite it', async () => {
+    const broken = [{ id: 'a', date: '2001-02-30', label: 'impossible date' }];
+    await act(async () => {
+      await store.mutate([{ entity: 'person', entityId: 'ada', field: 'lifeEvents', value: broken }]);
+    });
+    expect(store.state.people.get('ada')?.lifeEventsUnreadable).toBe(true);
+    expect(lifeCard().textContent).toContain(t.lifeEventsUnreadable);
+    expect(lifeCard().textContent).toContain(t.lifeEventsUnreadableDetail);
+    expect(lifeCard().querySelector('.life-events-row')).toBeNull();
+    expect(lifeCard().querySelector('button.life-events-add')).toBeNull();
+
+    // A save of another field leaves the unreadable register untouched.
+    const nameInput = card('identity').querySelector<HTMLInputElement>('input');
+    if (nameInput === null) throw new Error('test fixture bug: no name input');
+    typeInto(nameInput, 'Ada King');
+    await clickSave();
+    expect(store.state.people.get('ada')?.displayName).toBe('Ada King');
+    expect(store.state.people.get('ada')?.lifeEventsUnreadable).toBe(true);
+    const sent = JSON.stringify(store.outgoing());
+    expect(sent).toContain('impossible date');
+    expect(sent.match(/"field":"lifeEvents"/g)).toHaveLength(1);
+  });
+
+  it('has an en/nl pair for every life events string', () => {
+    const keys = (catalogue: object): string[] => Object.keys(catalogue).filter((key) => key.startsWith('lifeEvent'));
+    expect(keys(personFormMessages.nl)).toEqual(keys(personFormMessages.en));
+    expect(keys(personFormMessages.en).length).toBeGreaterThan(10);
   });
 });

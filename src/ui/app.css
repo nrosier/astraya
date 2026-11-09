@@ -1478,6 +1478,44 @@ footer {
   grid-column: 1 / -1;
 }
 
+.life-events-list {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Date, optional time and label on one row; the remove button sits on the row's last line. Narrow: one column. */
+.life-events-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  padding-bottom: var(--space-4);
+  border-bottom: var(--border-hairline) solid var(--line);
+}
+
+.life-events-row:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.life-events-row > :nth-child(3) {
+  grid-column: 1 / -1;
+}
+
+.life-events-row .life-events-remove {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+.life-events-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
 .birth-record-source {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
