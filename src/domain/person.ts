@@ -35,6 +35,7 @@ import {
   decodeStrictExtendedSettings,
   SnapshotDecodeError,
 } from './calculation-snapshot.js';
+import { readLifeEvents, type LifeEvent } from './life-events.js';
 import type { Mutation } from '../store/oplog.js';
 import type { JsonValue } from '../store/ops.js';
 import type { BirthMomentInput, Calendar, CivilDateTime, Coordinates } from '../time/types.js';
@@ -163,6 +164,13 @@ export interface Person {
    * chart from settings nobody chose.
    */
   readonly calculationSettingsUnreadable?: boolean | undefined;
+  /**
+   * Dated life events (#1399), read atomically; absent when none were saved and when the register is unreadable
+   * (see `lifeEventsUnreadable`), never filled with a partial list.
+   */
+  readonly lifeEvents?: readonly LifeEvent[] | undefined;
+  /** True when a `lifeEvents` register exists but cannot be read (invalid row, over the cap, repeated id). */
+  readonly lifeEventsUnreadable?: boolean | undefined;
   /** Field names that are required for a chart and are missing or unreadable. */
   readonly missing: readonly string[];
 }
@@ -186,6 +194,7 @@ export const PERSON_FIELDS = [
   'calculationSettings',
   'rulership',
   'fixedStars',
+  'lifeEvents',
 ] as const;
 
 function isRecordValue(value: unknown): value is Record<string, unknown> {
@@ -471,6 +480,8 @@ export function buildPerson(id: string, fields: ReadonlyMap<string, unknown>): P
   const fixedStars = readFixedStars(fields.get('fixedStars'));
   const calculation = readCalculationSettings(fields.get('calculationSettings'));
   const ruler = readRulership(fields.get('rulership'));
+  const lifeEventsValue = fields.get('lifeEvents');
+  const lifeEvents = readLifeEvents(lifeEventsValue);
   const sourceKind = readBirthSourceKind(fields.get('sourceKind'));
   const sourceNote = readText(fields.get('sourceNote'));
 
@@ -510,6 +521,8 @@ export function buildPerson(id: string, fields: ReadonlyMap<string, unknown>): P
     ...(calculation?.kind === 'unreadable' || ruler?.kind === 'unreadable'
       ? { calculationSettingsUnreadable: true }
       : {}),
+    ...(lifeEvents === undefined ? {} : { lifeEvents }),
+    ...(lifeEvents === undefined && lifeEventsValue !== undefined ? { lifeEventsUnreadable: true } : {}),
     missing,
   };
 }

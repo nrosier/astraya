@@ -319,3 +319,21 @@ describe('values stored before the 200-character cap (#1288)', () => {
     expect(readText(emojiName)).toBe(emojiName);
   });
 });
+
+describe('the per-person lifeEvents register (#1399)', () => {
+  const events = [{ id: 'a', date: '2020-02-29', time: '07:05', label: 'Moved' }];
+
+  it('reads a valid register and registers the field', () => {
+    const person = buildPerson('p', new Map([['lifeEvents', events]]));
+    expect(PERSON_FIELDS).toContain('lifeEvents');
+    expect(person.lifeEvents).toEqual(events);
+    expect(person.lifeEventsUnreadable).toBeUndefined();
+  });
+
+  it('leaves the field absent and sets only its own flag when the register is unreadable', () => {
+    const person = buildPerson('p', new Map([['lifeEvents', [{ id: 'a', date: '2023-02-30', label: 'x' }]]]));
+    expect('lifeEvents' in person).toBe(false);
+    expect(person.lifeEventsUnreadable).toBe(true);
+    expect(person.calculationSettingsUnreadable).toBeUndefined();
+  });
+});
