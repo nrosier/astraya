@@ -1557,7 +1557,9 @@ describe('ReportView: a reader’s own correction of an entry (#1338)', () => {
   const COMMITTED_TEXT = 'The committed reading of the Sun in Aries is a steady, warm drive to begin things.';
   const OWN_TEXT = 'My own reading of the Sun in Aries is a quiet courage that shows up when it is needed.';
   const open: Store[] = [];
+  const mounted: { root: Root; container: HTMLElement }[] = [];
   let counter = 0;
+  const WAIT = { timeout: 5000, interval: 10 };
 
   beforeEach(async () => {
     localStorage.clear();
@@ -1588,6 +1590,14 @@ describe('ReportView: a reader’s own correction of an entry (#1338)', () => {
   });
 
   afterEach(() => {
+    // Remove every rendered tree (and any dialog it left) even when the test failed.
+    for (const { root, container } of mounted.splice(0)) {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    }
+    for (const dialog of Array.from(document.querySelectorAll('dialog'))) dialog.remove();
     vi.unstubAllGlobals();
     for (const store of open.splice(0)) store.close();
   });
@@ -1599,6 +1609,7 @@ describe('ReportView: a reader’s own correction of an entry (#1338)', () => {
     const container = document.createElement('div');
     document.body.append(container);
     const root = createRoot(container);
+    mounted.push({ root, container });
     await act(async () => {
       root.render(
         <StoreProvider store={store}>
@@ -1624,7 +1635,7 @@ describe('ReportView: a reader’s own correction of an entry (#1338)', () => {
   };
 
   it('saving a correction shows it on the entry with an indicator; reset restores the committed text', async () => {
-    const { container, root, store } = await mountWithStore();
+    const { container, store } = await mountWithStore();
     expect(shownTexts(container).some((text) => text.includes(COMMITTED_TEXT))).toBe(true);
     expect(container.textContent).not.toContain(reportCorrectionBadge());
 
@@ -1644,8 +1655,13 @@ describe('ReportView: a reader’s own correction of an entry (#1338)', () => {
     );
     await act(async () => {
       (saveButton as HTMLButtonElement).click();
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await vi.waitFor(() => {
+        expect(store.state.corrections.size).toBe(1);
+      }, WAIT);
     });
+    await vi.waitFor(() => {
+      expect(shownTexts(container).some((text) => text.includes(OWN_TEXT))).toBe(true);
+    }, WAIT);
 
     expect(store.state.corrections.size).toBe(1);
     expect(shownTexts(container).some((text) => text.includes(OWN_TEXT))).toBe(true);
@@ -1661,21 +1677,21 @@ describe('ReportView: a reader’s own correction of an entry (#1338)', () => {
     );
     await act(async () => {
       (resetButton as HTMLButtonElement).click();
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await vi.waitFor(() => {
+        expect(store.state.corrections.size).toBe(0);
+      }, WAIT);
     });
+    await vi.waitFor(() => {
+      expect(shownTexts(container).some((text) => text.includes(COMMITTED_TEXT))).toBe(true);
+    }, WAIT);
 
     expect(store.state.corrections.size).toBe(0);
     expect(shownTexts(container).some((text) => text.includes(COMMITTED_TEXT))).toBe(true);
     expect(container.textContent).not.toContain(reportCorrectionBadge());
-
-    act(() => {
-      root.unmount();
-    });
-    container.remove();
   });
 
   it('refuses text with HTML before any write and keeps the committed text', async () => {
-    const { container, root, store } = await mountWithStore();
+    const { container, store } = await mountWithStore();
     await act(async () => {
       editButtonFor(container, COMMITTED_TEXT).click();
       await Promise.resolve();
@@ -1692,18 +1708,15 @@ describe('ReportView: a reader’s own correction of an entry (#1338)', () => {
     );
     await act(async () => {
       (saveButton as HTMLButtonElement).click();
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await vi.waitFor(() => {
+        expect(document.querySelector('dialog')?.textContent).toContain(corpusCorrectionMessages.en.markup);
+      }, WAIT);
     });
 
     expect(store.state.corrections.size).toBe(0);
     expect(store.outgoing(undefined)).toEqual([]);
     expect(document.querySelector('dialog')?.textContent).toContain(corpusCorrectionMessages.en.markup);
     expect(shownTexts(container).some((text) => text.includes(COMMITTED_TEXT))).toBe(true);
-
-    act(() => {
-      root.unmount();
-    });
-    container.remove();
   });
 });
 
