@@ -135,21 +135,21 @@ The Wheel view uses a responsive workbench. Below a `68rem` content container, t
 - Switching chart type preserves the current chart view when it exists. Missing concepts such as houses receive an inline explanation in the affected view.
 - Keep the combined chart-sheet renderer for exports, where a complete printable artifact is useful. Compose separate dial, aspect-matrix, emphasis, and degree-strip renderers on screen from the same computed data.
 
-The visualization layout must opt into the wide data shell; the current `64rem` general-content cap would otherwise make the two-column state unreachable. Implement the layout in CSS rather than measuring it in JavaScript:
+The visualization layout must opt into the wide data shell; the general-content shell is `80rem` (`--shell-max-width`), so the two-column state is decided by the workbench's own container width. Implement the layout in CSS rather than measuring it in JavaScript:
 
 ```css
-.chart-workbench {
+.chart-workbench-shell {
   container: chart-workbench / inline-size;
 }
 
-.chart-workbench__layout {
+.chart-workbench {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 2rem;
 }
 
 @container chart-workbench (min-width: 68rem) {
-  .chart-workbench__layout {
+  .chart-workbench {
     grid-template-columns: minmax(46rem, 1fr) minmax(20rem, 24rem);
   }
 }

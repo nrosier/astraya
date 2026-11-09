@@ -7,9 +7,10 @@
  * Reads the exact same `export-registry.tsx` context the header's old global Export menu read:
  * a screen that calls `useRegisterExports` does not need to change at all for its exports to show
  * up here instead of (now: as well as) that global menu — moving them is a matter of which
- * component reads the registry, not a new registration mechanism. `ChartView.tsx` is the only
- * screen that registers anything today; `AppNav.tsx`'s "This page" section was removed in the
- * same change that introduced this component, so a chart's exports now live only here.
+ * component reads the registry, not a new registration mechanism. Current registrars include
+ * `PreferencesView.tsx`, `EventSearchView.tsx`, `CorpusOverridesPanel.tsx` and `SortableTable.tsx`;
+ * `AppNav.tsx`'s "This page" section was removed in the same change that introduced this
+ * component, so a screen's exports now live only here.
  *
  * Deliberately not reusing `.app-nav-menu`/`.app-nav-group` (the header rail's dropdown classes):
  * those carry a `min-width: 64rem` override that opens the popup sideways, written for a narrow
@@ -63,7 +64,7 @@ export function PageHeader({
   readonly title: string;
   /** A glossary term the title names: the title text itself opens that term's definition (#901). */
   readonly titleTerm?: GlossaryTermId | undefined;
-  /** One sentence under the title saying what the page is for (#966). Omitted by every existing page. */
+  /** One sentence under the title saying what the page is for (#966). Set by some pages (e.g. AstrocartographyView, PdfExportBuilder, PreferencesView); omitted by the rest. */
   readonly subtitle?: string | undefined;
   /** A compact calculation-basis line, e.g. "Tropical · Placidus · Modern rulers". */
   readonly basis?: string | undefined;
