@@ -171,7 +171,7 @@ export function ChartOverlaySettingsPanel({
         open={open}
         heading={t.trigger}
         closeLabel={t.closeLabel}
-        dialogClassName="chart-overlay-drawer"
+        dialogClassName="chart-overlay-drawer drawer-fit"
         placement="right"
         onDiscard={close}
         returnFocusTo={triggerRef}
