@@ -18,12 +18,12 @@
  */
 import { GlossaryText } from './GlossaryText.js';
 import { personHref } from './route.js';
-import { DateField } from './primitives/DateField.js';
+import { DateAnimationBar } from './DateAnimationBar.js';
+import { useAsOfDate } from './use-as-of-date.js';
 import { LifeEventPicker } from './LifeEventPicker.js';
 import { Select } from './primitives/Select.js';
 import { signDegreeColumn } from './position-column.js';
 import { Tooltip } from './primitives/Tooltip.js';
-import { Button } from './primitives/Button.js';
 import { useEffect, useMemo, useState } from 'react';
 import { bodyById } from '../astrology/bodies.js';
 import type { ProgressedMcMethod } from '../astrology/progressions.js';
@@ -35,7 +35,7 @@ import { houseOf } from '../astrology/emphasis.js';
 import { computeMinorProgression, type MinorProgressionData } from '../domain/minor-progression.js';
 import { computeSecondaryProgression, type SecondaryProgressionData } from '../domain/secondary-progression.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
-import { formatFixed, formatOrb, todayInputValue } from './format.js';
+import { formatFixed, formatOrb } from './format.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { PersonNotFound } from './PersonNotFound.js';
@@ -167,7 +167,7 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
   const [locale] = useLocale();
   const [technique, setTechnique] = useState<Technique>('secondary');
   const [mcMethod, setMcMethod] = useState<ProgressedMcMethod>('naibod');
-  const [asOf, setAsOf] = useState(todayInputValue);
+  const [asOf, setAsOf] = useAsOfDate();
   const timingT = useMessages(timingBasisMessages);
   // Progressions are calculated with the engine defaults plus the technique and MC method chosen below.
   const baseBasis = useCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE, undefined, {
@@ -280,22 +280,15 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
         basis={basisLine}
         basisEditHref={null}
       >
-        {/* The as-of date, Now and Export sit in the heading row, to the right (#1235, owner review 2026-11-07). */}
-        <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
+        {/* The life-event picker and Export sit in the heading row, to the right (#1235, owner review 2026-11-07); the date, stepping and Now are in the bar below (#1400). */}
         <LifeEventPicker
           events={person.lifeEvents}
           onPick={(event) => {
             setAsOf(event.date);
           }}
         />
-        <Button
-          onClick={() => {
-            setAsOf(todayInputValue());
-          }}
-        >
-          {t.nowLabel}
-        </Button>
       </PageHeader>
+      <DateAnimationBar date={asOf} onDateChange={setAsOf} />
       <div className="timing-toolbar">
         <Select
           label={t.techniqueLabel}

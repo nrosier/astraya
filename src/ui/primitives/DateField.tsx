@@ -29,6 +29,8 @@ export interface DateFieldProps {
   readonly min?: string | undefined;
   readonly max?: string | undefined;
   readonly disabled?: boolean | undefined;
+  /** The label stays for assistive technology but is not drawn, e.g. a date inside a control bar (#1400). */
+  readonly hideLabel?: boolean | undefined;
 }
 
 export function DateField({
@@ -41,10 +43,11 @@ export function DateField({
   min,
   max,
   disabled,
+  hideLabel,
 }: DateFieldProps): React.JSX.Element {
   const ids = useFieldIds(help !== undefined, error !== undefined);
   return (
-    <Field label={label} ids={ids} help={help} error={error} optional={optional}>
+    <Field label={label} ids={ids} help={help} error={error} optional={optional} hideLabel={hideLabel}>
       <input
         id={ids.inputId}
         type="date"

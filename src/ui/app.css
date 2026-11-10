@@ -9033,3 +9033,100 @@ a.quiet,
 .chart-diagnostics {
   margin-bottom: var(--space-3);
 }
+
+/* The date and animation bar (#1400, round-3 mockup approved 2026-11-10): one slim media-player bar above the wheel and
+   tables. 75px on desktop with --control-height controls, so touch targets never shrink; on a phone it grows to fit
+   its rows, with the slider on a row of its own. Tokens only. */
+.date-animation-bar-wrap {
+  margin-bottom: var(--space-4);
+}
+
+.date-animation-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  min-height: 75px;
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+@media (min-width: 52rem) {
+  .date-animation-bar {
+    flex-wrap: nowrap;
+    height: 75px;
+  }
+}
+
+.date-animation-bar .primitive-field,
+.date-animation-bar .primitive-choice-field {
+  margin-bottom: 0;
+}
+
+.date-animation-bar .primitive-choice-group-segmented .primitive-choice {
+  min-height: var(--control-height);
+}
+
+.date-animation-bar .date-animation-play,
+.date-animation-bar .date-animation-step {
+  min-width: var(--control-height);
+  padding: 0;
+}
+
+.date-animation-bar .date-animation-play {
+  border-radius: 50%;
+  width: var(--control-height);
+}
+
+.date-animation-scrub {
+  flex: 1 1 12rem;
+  min-width: 8rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.date-animation-scrub input[type='range'] {
+  width: 100%;
+  height: var(--control-height);
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.date-animation-ticks {
+  display: flex;
+  justify-content: space-between;
+  margin-top: calc(-1 * var(--space-2));
+  font-size: var(--text-xs);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.date-animation-bar .date-animation-now {
+  border-radius: 999px;
+  border-color: var(--accent);
+  background: transparent;
+}
+
+.date-animation-bar input:focus-visible,
+.date-animation-bar select:focus-visible,
+.date-animation-bar button:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Phone: the slider takes its own full-width row; Now follows at the end. */
+@media (max-width: 51.99rem) {
+  .date-animation-scrub {
+    flex-basis: 100%;
+    order: 9;
+  }
+
+  .date-animation-bar .date-animation-now {
+    order: 10;
+    margin-left: auto;
+  }
+}
