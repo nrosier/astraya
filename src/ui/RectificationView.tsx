@@ -19,6 +19,7 @@ import { formatFixed, formatOrb } from './format.js';
 import { Button } from './primitives/Button.js';
 import { Disclosure } from './primitives/Disclosure.js';
 import { DateField } from './primitives/DateField.js';
+import { apiErrorText } from './api-error.js';
 import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
 import { TimeField } from './primitives/TimeField.js';
@@ -159,7 +160,7 @@ export function RectificationView(): React.JSX.Element {
     if (!lifeEventsChanged(filled, chosenPerson.lifeEvents ?? [])) return;
     setSaveError(undefined);
     const fail = (cause: unknown): void => {
-      setSaveError(cause instanceof Error ? cause.message : String(cause));
+      setSaveError(apiErrorText(cause));
     };
     try {
       store.mutate([lifeEventsMutation(chosenPerson.id, rowsToEvents(filled))]).catch(fail);
