@@ -9130,3 +9130,19 @@ a.quiet,
     margin-left: auto;
   }
 }
+
+/* The life-event picker with its category filter (#1439): the select over a collapsed filter. */
+.life-event-picker {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.life-event-picker-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  padding: 0;
+  border: none;
+}

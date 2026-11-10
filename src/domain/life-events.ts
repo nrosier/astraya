@@ -13,7 +13,7 @@
  * @module life-events
  * @purpose Defines the `LifeEvent` type, the atomic reader and write guard for a person's `lifeEvents` register, and the owner-chosen ordering.
  * @conventions Pure and DOM-free; a list is read atomically, so one invalid row, a list over the cap, a repeated id or an impossible calendar date or an unknown category makes the whole list unreadable (undefined), never a repaired partial list; dates are checked against the proleptic Gregorian calendar and are not Julian-aware; the write guard throws on exactly what the reader rejects; the list is ordered by date, then time, with untimed events after timed ones on the same day, then by id.
- * @exports LifeEvent, LifeEventCategory, LIFE_EVENT_CATEGORIES, isLifeEventCategory, LIFE_EVENTS_MAX, LIFE_EVENT_LABEL_MAX_CHARACTERS, LIFE_EVENT_ID_MAX_CHARACTERS, readLifeEvents, lifeEventsMutation, sortLifeEvents, LifeEventPickerOption, lifeEventPickerOptions
+ * @exports LifeEvent, LifeEventCategory, LIFE_EVENT_CATEGORIES, isLifeEventCategory, LIFE_EVENTS_MAX, LIFE_EVENT_LABEL_MAX_CHARACTERS, LIFE_EVENT_ID_MAX_CHARACTERS, readLifeEvents, lifeEventsMutation, sortLifeEvents, LifeEventPickerOption, lifeEventPickerOptions, filterLifeEventsByCategories
  */
 import type { Mutation } from '../store/oplog.js';
 import type { JsonValue } from '../store/ops.js';
@@ -190,4 +190,17 @@ export function lifeEventPickerOptions(events: readonly LifeEvent[]): readonly L
     label: event.label,
     ...(event.category === undefined ? {} : { category: event.category }),
   }));
+}
+
+/**
+ * The events in one of the given categories (#1439). `undefined` means every category and keeps every event,
+ * including those without a category; a set narrows to the events whose category is in it, so an event without a
+ * category is left out once the choice is narrowed.
+ */
+export function filterLifeEventsByCategories(
+  events: readonly LifeEvent[],
+  categories: ReadonlySet<LifeEventCategory> | undefined,
+): readonly LifeEvent[] {
+  if (categories === undefined) return events;
+  return events.filter((event) => event.category !== undefined && categories.has(event.category));
 }
