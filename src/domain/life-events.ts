@@ -13,7 +13,7 @@
  * @module life-events
  * @purpose Defines the `LifeEvent` type, the atomic reader and write guard for a person's `lifeEvents` register, and the owner-chosen ordering.
  * @conventions Pure and DOM-free; a list is read atomically, so one invalid row, a list over the cap, a repeated id or an impossible calendar date makes the whole list unreadable (undefined), never a repaired partial list; dates are checked against the proleptic Gregorian calendar and are not Julian-aware; the write guard throws on exactly what the reader rejects; the list is ordered by date, then time, with untimed events after timed ones on the same day, then by id.
- * @exports LifeEvent, LIFE_EVENTS_MAX, LIFE_EVENT_LABEL_MAX_CHARACTERS, LIFE_EVENT_ID_MAX_CHARACTERS, readLifeEvents, lifeEventsMutation, sortLifeEvents
+ * @exports LifeEvent, LIFE_EVENTS_MAX, LIFE_EVENT_LABEL_MAX_CHARACTERS, LIFE_EVENT_ID_MAX_CHARACTERS, readLifeEvents, lifeEventsMutation, sortLifeEvents, LifeEventPickerOption, lifeEventPickerOptions
  */
 import type { Mutation } from '../store/oplog.js';
 import type { JsonValue } from '../store/ops.js';
@@ -138,4 +138,26 @@ export function sortLifeEvents(events: readonly LifeEvent[]): readonly LifeEvent
     }
     return compareText(a.id, b.id);
   });
+}
+
+/** One stored event offered as a date to pick (#1399, slice S5). */
+export interface LifeEventPickerOption {
+  /** The event's id, unique within the person's list. */
+  readonly id: string;
+  /** The date to set, `YYYY-MM-DD`. */
+  readonly isoDate: string;
+  /** The date as shown, `YYYY-MM-DD` with ` HH:MM` appended when the event has a time. */
+  readonly dateLabel: string;
+  /** The event's own label. */
+  readonly label: string;
+}
+
+/** The events as picker options, in {@link sortLifeEvents} order (untimed after timed on the same day). */
+export function lifeEventPickerOptions(events: readonly LifeEvent[]): readonly LifeEventPickerOption[] {
+  return sortLifeEvents(events).map((event) => ({
+    id: event.id,
+    isoDate: event.date,
+    dateLabel: event.time === undefined ? event.date : `${event.date} ${event.time}`,
+    label: event.label,
+  }));
 }

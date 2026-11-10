@@ -19,6 +19,7 @@
 import { GlossaryText } from './GlossaryText.js';
 import { personHref } from './route.js';
 import { DateField } from './primitives/DateField.js';
+import { LifeEventPicker } from './LifeEventPicker.js';
 import { Select } from './primitives/Select.js';
 import { signDegreeColumn } from './position-column.js';
 import { Tooltip } from './primitives/Tooltip.js';
@@ -281,6 +282,12 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
       >
         {/* The as-of date, Now and Export sit in the heading row, to the right (#1235, owner review 2026-11-07). */}
         <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
+        <LifeEventPicker
+          events={person.lifeEvents}
+          onPick={(event) => {
+            setAsOf(event.date);
+          }}
+        />
         <Button
           onClick={() => {
             setAsOf(todayInputValue());

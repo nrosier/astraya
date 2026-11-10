@@ -16,6 +16,7 @@
  * @exports SolarArcView; positionRows, positionColumns, contactColumns, toContactRow, formatExactDate, ContactRow (reused by pdf-export-plan.ts)
  */
 import { DateField } from './primitives/DateField.js';
+import { LifeEventPicker } from './LifeEventPicker.js';
 import { signDegreeColumn } from './position-column.js';
 import { Tooltip } from './primitives/Tooltip.js';
 import { Button } from './primitives/Button.js';
@@ -295,6 +296,12 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
       >
         {/* The as-of date and Now sit in the header, to the right (#1234); Export stays in the page header (#887). */}
         <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
+        <LifeEventPicker
+          events={person.lifeEvents}
+          onPick={(event) => {
+            setAsOf(event.date);
+          }}
+        />
         <Button
           onClick={() => {
             setAsOf(todayInputValue());
