@@ -6,8 +6,10 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  LIFE_EVENT_CATEGORIES,
   LIFE_EVENT_LABEL_MAX_CHARACTERS,
   LIFE_EVENTS_MAX,
+  lifeEventPickerOptions,
   lifeEventsMutation,
   readLifeEvents,
   sortLifeEvents,
@@ -138,6 +140,42 @@ describe('lifeEventsMutation', () => {
     ['a bad time', [event('a', '2020-01-01', { time: '25:00' })]],
   ])('throws for %s', (_name, events) => {
     expect(() => lifeEventsMutation('p-1', events)).toThrow(/Life events are not valid/);
+  });
+});
+
+describe('categories (#1439)', () => {
+  it('reads an event with a known category and one without (old stored events stay valid)', () => {
+    const read = readLifeEvents([
+      { id: 'a', date: '2020-01-01', label: 'Wed', category: 'marriage' },
+      { id: 'b', date: '2020-01-02', label: 'Old' },
+    ]);
+    expect(read?.[0]?.category).toBe('marriage');
+    expect(read?.[1]).toEqual({ id: 'b', date: '2020-01-02', label: 'Old' });
+    expect(read?.[1] && 'category' in read[1]).toBe(false);
+  });
+
+  it('rejects the whole list for an unknown or non-string category', () => {
+    expect(readLifeEvents([{ id: 'a', date: '2020-01-01', label: 'x', category: 'holiday' }])).toBeUndefined();
+    expect(readLifeEvents([{ id: 'a', date: '2020-01-01', label: 'x', category: 3 }])).toBeUndefined();
+  });
+
+  it('writes the category and round-trips every category through the mutation', () => {
+    const events = LIFE_EVENT_CATEGORIES.map((category, index) =>
+      event(`c${String(index)}`, '2020-05-17', { category }),
+    );
+    const mutation = lifeEventsMutation('p1', [...events, event('none')]);
+    const back = readLifeEvents(mutation.value);
+    expect(back).toEqual([...events, event('none')]);
+  });
+
+  it('refuses to write an unknown category', () => {
+    expect(() =>
+      lifeEventsMutation('p1', [{ id: 'a', date: '2020-01-01', label: 'x', category: 'nope' as 'other' }]),
+    ).toThrow();
+  });
+
+  it('carries the category onto picker options', () => {
+    expect(lifeEventPickerOptions([event('a', '2020-01-01', { category: 'career' })])[0]?.category).toBe('career');
   });
 });
 

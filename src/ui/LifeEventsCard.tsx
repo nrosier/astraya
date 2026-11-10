@@ -1,146 +1,99 @@
 /**
- * The Life events card on the birth record (#1399, slice S3): dated events of one person, edited with the page Save.
+ * The Life events card on the birth record (#1399, reshaped in #1439): a read-only summary and the way into the
+ * management drawer.
  */
 /**
  * @module LifeEventsCard
- * @purpose Card of date, optional time and label rows with add and remove, a visible count against the 100-event cap, and the unreadable-list warning.
- * @conventions Controlled: the parent holds the rows and writes them through `lifeEventsMutation` on the page Save; rows keep their place while one is being edited and are put in date-then-time order when focus leaves the row; the add control is disabled at the cap with the reason beside it; an unreadable stored list shows a warning and no editor, so it is never overwritten; errors show for a row once it has content or has been left, through the shared fields.
- * @exports LifeEventsCard
+ * @purpose Compact summary of a person's life events: a Manage (n) button, a read-only preview of the most recent few, the count against the 100-event cap, and the button that opens the management drawer.
+ * @conventions Holds no input fields and writes nothing itself; the drawer writes through the person operation log; the Manage (n) button in the header and the primary button open the drawer, and focus returns to the button that opened it; the preview shows the latest 5 events by date, newest first; an unreadable stored list shows a warning and no buttons, so it is never overwritten; empty state is one line and the same button.
+ * @exports LifeEventsCard, LIFE_EVENTS_PREVIEW_MAX
  */
-import { useId, useState } from 'react';
-import { LIFE_EVENT_LABEL_MAX_CHARACTERS, LIFE_EVENTS_MAX, sortLifeEvents } from '../domain/life-events.js';
+import { useId, useRef, useState } from 'react';
+import { LIFE_EVENTS_MAX, sortLifeEvents, type LifeEvent } from '../domain/life-events.js';
+import { LifeEventsDrawer } from './LifeEventsDrawer.js';
+import { lifeEventsCardMessages } from './LifeEventsCard.messages.js';
 import { useMessages } from './messages.js';
 import { personFormMessages } from './PersonForm.messages.js';
-import { rowsToEvents, validateLifeEventRows, type LifeEventRow } from './life-events-draft.js';
 import { Button } from './primitives/Button.js';
-import { DateField } from './primitives/DateField.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
-import { TextField } from './primitives/TextField.js';
-import { TimeField } from './primitives/TimeField.js';
+
+/** The most events the card previews. */
+export const LIFE_EVENTS_PREVIEW_MAX = 5;
 
 export interface LifeEventsCardProps {
-  readonly rows: readonly LifeEventRow[];
-  readonly onChange: (rows: readonly LifeEventRow[]) => void;
+  readonly personId: string;
+  readonly personName: string;
+  readonly events: readonly LifeEvent[];
   /** The stored list exists but cannot be read; nothing is editable and the stored value is left alone. */
   readonly unreadable: boolean;
 }
 
-export function LifeEventsCard({ rows, onChange, unreadable }: LifeEventsCardProps): React.JSX.Element {
-  const t = useMessages(personFormMessages);
+export function LifeEventsCard({ personId, personName, events, unreadable }: LifeEventsCardProps): React.JSX.Element {
+  const t = useMessages(lifeEventsCardMessages);
+  const tPerson = useMessages(personFormMessages);
   const headingId = useId();
-  const reasonId = useId();
-  const [touched, setTouched] = useState<ReadonlySet<string>>(new Set());
-  const errors = validateLifeEventRows(rows, t);
-  const atCap = rows.length >= LIFE_EVENTS_MAX;
-
-  const update = (id: string, patch: Partial<LifeEventRow>): void => {
-    onChange(rows.map((row) => (row.id === id ? { ...row, ...patch } : row)));
-  };
-  const add = (): void => {
-    if (atCap) return;
-    onChange([...rows, { id: crypto.randomUUID(), date: '', time: '', label: '' }]);
-  };
-  const remove = (id: string): void => {
-    onChange(rows.filter((row) => row.id !== id));
-  };
-  /** Leaving a row marks it as visited and puts the list in date-then-time order. */
-  const leave = (id: string, event: React.FocusEvent<HTMLElement>): void => {
-    if (event.relatedTarget instanceof Node && event.currentTarget.contains(event.relatedTarget)) return;
-    setTouched((previous) => new Set(previous).add(id));
-    const valid = rows.every((row) => !errors.has(row.id));
-    if (valid) {
-      const order = sortLifeEvents(rowsToEvents(rows)).map((entry) => entry.id);
-      if (order.some((rowId, index) => rows[index]?.id !== rowId)) {
-        onChange(order.flatMap((rowId) => rows.filter((row) => row.id === rowId)));
-      }
-    }
-  };
+  // Whichever control opened the drawer gets focus back.
+  const opener = useRef<HTMLElement | null>(null);
+  const [open, setOpen] = useState(false);
+  const preview = sortLifeEvents(events).slice(-LIFE_EVENTS_PREVIEW_MAX).reverse();
 
   return (
     <section className="birth-record-card birth-record-card--life-events" aria-labelledby={headingId}>
-      <h3 id={headingId}>{t.lifeEventsHeading}</h3>
       {unreadable ? (
-        <StatusMessage kind="partial" detail={t.lifeEventsUnreadableDetail}>
-          {t.lifeEventsUnreadable}
-        </StatusMessage>
+        <>
+          <h3 id={headingId}>{tPerson.lifeEventsHeading}</h3>
+          <StatusMessage kind="partial" detail={tPerson.lifeEventsUnreadableDetail}>
+            {tPerson.lifeEventsUnreadable}
+          </StatusMessage>
+        </>
       ) : (
         <>
-          <p className="hint">{t.lifeEventsHint}</p>
-          {rows.length > 0 && (
-            <ul className="life-events-list">
-              {rows.map((row) => {
-                const rowErrors = errors.get(row.id);
-                const show = touched.has(row.id) || row.date !== '' || row.label !== '';
-                return (
-                  <li
-                    key={row.id}
-                    className="life-events-row"
-                    onBlur={(event) => {
-                      leave(row.id, event);
-                    }}
-                  >
-                    <DateField
-                      label={t.lifeEventDateLabel}
-                      value={row.date}
-                      error={show ? rowErrors?.date : undefined}
-                      onChange={(value) => {
-                        update(row.id, { date: value });
-                      }}
-                    />
-                    <TimeField
-                      label={t.lifeEventTimeLabel}
-                      optional
-                      step={60}
-                      value={row.time}
-                      onChange={(value) => {
-                        update(row.id, { time: value });
-                      }}
-                    />
-                    <TextField
-                      label={t.lifeEventLabelLabel}
-                      value={row.label}
-                      error={show ? rowErrors?.label : undefined}
-                      inputProps={{ maxLength: LIFE_EVENT_LABEL_MAX_CHARACTERS }}
-                      onChange={(value) => {
-                        update(row.id, { label: value });
-                      }}
-                    />
-                    <Button
-                      type="button"
-                      variant="quiet"
-                      className="life-events-remove"
-                      aria-label={t.lifeEventRemoveLabel(
-                        row.label.trim() === '' ? t.lifeEventUntitled : row.label.trim(),
-                      )}
-                      onClick={() => {
-                        remove(row.id);
-                      }}
-                    >
-                      {t.lifeEventRemove}
-                    </Button>
-                  </li>
-                );
-              })}
+          <div className="life-events-card-header">
+            <h3 id={headingId}>{tPerson.lifeEventsHeading}</h3>
+            <Button
+              size="compact"
+              onClick={(event) => {
+                opener.current = event.currentTarget;
+                setOpen(true);
+              }}
+            >
+              {t.manage(events.length)}
+            </Button>
+          </div>
+          {preview.length === 0 ? (
+            <p className="muted">{t.empty}</p>
+          ) : (
+            <ul className="life-events-preview" aria-label={t.previewLabel}>
+              {preview.map((event) => (
+                <li key={event.id}>
+                  <span className="life-events-preview-date">{event.date}</span>
+                  <span className="life-events-preview-label">{event.label}</span>
+                </li>
+              ))}
             </ul>
           )}
           <div className="life-events-footer">
+            {events.length > 0 && <span className="muted">{t.showing(events.length, LIFE_EVENTS_MAX)}</span>}
             <Button
-              type="button"
-              variant="quiet"
-              className="life-events-add"
-              disabled={atCap}
-              aria-describedby={atCap ? reasonId : undefined}
-              onClick={add}
+              variant="primary"
+              onClick={(event) => {
+                opener.current = event.currentTarget;
+                setOpen(true);
+              }}
             >
-              {t.lifeEventAdd}
+              {t.manageButton}
             </Button>
-            <span className="muted life-events-count">{t.lifeEventsCount(rows.length, LIFE_EVENTS_MAX)}</span>
-            {atCap && (
-              <span id={reasonId} className="hint">
-                {t.lifeEventsAtCap(LIFE_EVENTS_MAX)}
-              </span>
-            )}
           </div>
+          <LifeEventsDrawer
+            open={open}
+            personId={personId}
+            personName={personName}
+            events={events}
+            returnFocusTo={opener}
+            onClose={() => {
+              setOpen(false);
+            }}
+          />
         </>
       )}
     </section>

@@ -21,6 +21,8 @@ export interface TextFieldProps {
   readonly placeholder?: string | undefined;
   readonly size?: ButtonSize;
   readonly disabled?: boolean | undefined;
+  /** The label stays for assistive technology but is not drawn, e.g. a field inside a table cell (#1439). */
+  readonly hideLabel?: boolean | undefined;
   readonly autoComplete?: string | undefined;
   /** The on-screen keyboard to offer, e.g. `numeric` for a year typed as text. */
   /** For a caller that moves focus into the field, e.g. when a panel opens. */
@@ -42,6 +44,7 @@ export function TextField({
   placeholder,
   size = 'standard',
   disabled,
+  hideLabel,
   autoComplete,
   inputMode,
   inputRef,
@@ -49,7 +52,7 @@ export function TextField({
 }: TextFieldProps): React.JSX.Element {
   const ids = useFieldIds(help !== undefined, error !== undefined);
   return (
-    <Field label={label} ids={ids} help={help} error={error} unit={unit} optional={optional}>
+    <Field label={label} ids={ids} help={help} error={error} unit={unit} optional={optional} hideLabel={hideLabel}>
       <input
         {...inputProps}
         id={ids.inputId}
