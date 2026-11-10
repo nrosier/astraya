@@ -7,7 +7,7 @@
  */
 const en = {
   heading: 'Birth-Time Rectification',
-  hint: 'For a birth date and place with an uncertain time: test candidate times against dated life events. For each candidate the Ascendant and Midheaven are worked out, and the events are checked for solar-arc and slow-planet transit contacts to them.',
+  hint: 'For a birth date and place with an uncertain time: test candidate times against dated life events. For each candidate the Ascendant and Midheaven are worked out, and the events are checked for solar-arc and slow-body transit contacts to them. The scoring method’s citation is pending.',
   caveat:
     'This narrows the choice; it does not prove a time. The score adds up coincidences, some of which are chance, so look at how much better the top times score than the average (the “lift”) — a time that explains the events no better than average has explained nothing. Give it several well-dated events that mattered.',
   searchHeading: 'Birth details',
@@ -67,13 +67,42 @@ const en = {
     `Solar arc: directed ${moving} ${aspect} natal ${natal} (${orb})`,
   transitContact: (moving: string, aspect: string, natal: string, orb: string) =>
     `Transit: ${moving} ${aspect} natal ${natal} (${orb})`,
+  includeEvent: (n: number) => `Include event ${String(n)}`,
+  includedCount: (included: number, total: number) =>
+    `${String(included)} of ${String(total)} events included. The scores update when you include or exclude an event.`,
+  noEventsIncluded: 'No event is included. Include at least one event to score the candidate times.',
+  verdictColumn: 'Reading',
+  spike: 'Above chance',
+  noBetterThanChance: 'Explains the events no better than chance',
+  methodHeading: 'Method and its limits',
+  methodBody:
+    'Each candidate time gives an Ascendant, Midheaven, Descendant and Imum Coeli. For every included event, one point is added for each Solar Arc contact (a directed angle on a natal planet, or a directed planet on a natal angle) and each transit contact (Jupiter, Saturn, Uranus, Neptune, Pluto or the mean lunar node on a natal angle) that is a conjunction, square or opposition. The orb is the existing transit orb of the body involved. All contacts count equally. The lift is a candidate’s score divided by the average score of all candidates tested; only a lift above 1.0 is marked as above chance.',
+  methodLimits:
+    'Limits: the result is an estimate, not a measurement. Some contacts are chance, and a wide window or few events leaves the field flat. Huber’s rectification article supports rectifying against dated events accurate to within a month, with at least five dates for a margin of up to 30 minutes and at least ten for up to two hours. It does not support this Solar Arc and transit scoring, which is a convention of this tool.',
+  citationPending: 'Scoring method: citation pending',
+  timesHeading: 'Reported and rectified time',
+  reportedTimeLabel: 'Reported time',
+  reportedTimeNone: 'Choose a person to see the reported time.',
+  rectifiedTimeLabel: 'Rectified time (estimate)',
+  rectifiedTimeNone: 'None saved',
+  rectifiedTimeValue: (time: string) => `${time} (estimate)`,
+  rectifiedSourceLabel: 'Source note',
+  reportedNeverChanged:
+    'The reported time is never changed. A rectified time is stored beside it, with its source note.',
+  promoteButton: 'Promote to rectified time',
+  promoteBlocked: {
+    citation: 'Methodology citation pending',
+    noPerson: 'Choose a stored person to save a rectified time on.',
+    noSpike: 'No candidate explains the events better than chance.',
+  },
+  promoteReasonPrefix: 'Unavailable:',
   rectificationLink: 'Birth-time rectification',
   unnamedPerson: 'Unnamed',
 };
 
 const nl: typeof en = {
   heading: 'Geboortetijd-rectificatie',
-  hint: 'Voor een geboortedatum en -plaats met een onzekere tijd: toets kandidaat-tijden aan gedateerde levensgebeurtenissen. Voor elke kandidaat worden de Ascendant en Midheaven berekend en worden de gebeurtenissen gecontroleerd op solar-arc- en transitcontacten van trage planeten ermee.',
+  hint: 'Voor een geboortedatum en -plaats met een onzekere tijd: toets kandidaat-tijden aan gedateerde levensgebeurtenissen. Voor elke kandidaat worden de Ascendant en Midheaven berekend en worden de gebeurtenissen gecontroleerd op solar-arc- en transitcontacten van trage lichamen ermee. De bronvermelding van de scoremethode volgt.',
   caveat:
     'Dit beperkt de keuze; het bewijst geen tijd. De score telt toevalligheden op, waarvan sommige puur toeval zijn, dus kijk hoeveel beter de beste tijden scoren dan het gemiddelde (de “lift”) — een tijd die de gebeurtenissen niet beter verklaart dan gemiddeld, verklaart niets. Geef meerdere goed gedateerde gebeurtenissen die ertoe deden.',
   searchHeading: 'Geboortegegevens',
@@ -133,6 +162,36 @@ const nl: typeof en = {
     `Solar arc: gedirigeerde ${moving} ${aspect} natale ${natal} (${orb})`,
   transitContact: (moving: string, aspect: string, natal: string, orb: string) =>
     `Transit: ${moving} ${aspect} natale ${natal} (${orb})`,
+  includeEvent: (n: number) => `Gebeurtenis ${String(n)} meenemen`,
+  includedCount: (included: number, total: number) =>
+    `${String(included)} van ${String(total)} gebeurtenissen meegenomen. De scores worden bijgewerkt zodra u een gebeurtenis meeneemt of uitsluit.`,
+  noEventsIncluded:
+    'Geen gebeurtenis is meegenomen. Neem minstens één gebeurtenis mee om de kandidaat-tijden te scoren.',
+  verdictColumn: 'Beoordeling',
+  spike: 'Boven toeval',
+  noBetterThanChance: 'Verklaart de gebeurtenissen niet beter dan toeval',
+  methodHeading: 'Methode en de grenzen ervan',
+  methodBody:
+    'Elke kandidaat-tijd geeft een Ascendant, Midheaven, Descendant en Imum Coeli. Voor elke meegenomen gebeurtenis komt er één punt bij voor elk solar-arc-contact (een gedirigeerde hoek op een natale planeet, of een gedirigeerde planeet op een natale hoek) en elk transitcontact (Jupiter, Saturnus, Uranus, Neptunus, Pluto of de gemiddelde maansknoop op een natale hoek) dat een conjunctie, kwadraat of oppositie is. De orb is de bestaande transitorb van het betrokken lichaam. Alle contacten tellen even zwaar. De lift is de score van een kandidaat gedeeld door de gemiddelde score van alle getoetste kandidaten; alleen een lift boven 1,0 wordt als boven toeval gemarkeerd.',
+  methodLimits:
+    'Grenzen: het resultaat is een schatting, geen meting. Sommige contacten zijn toeval, en een breed venster of weinig gebeurtenissen laat het veld vlak. Hubers rectificatie-artikel ondersteunt rectificatie aan de hand van gedateerde gebeurtenissen die op een maand nauwkeurig zijn, met minstens vijf data voor een marge tot 30 minuten en minstens tien tot twee uur. Het ondersteunt deze solar-arc- en transitscore niet; die is een afspraak van deze tool.',
+  citationPending: 'Scoremethode: bronvermelding volgt',
+  timesHeading: 'Opgegeven en gerectificeerde tijd',
+  reportedTimeLabel: 'Opgegeven tijd',
+  reportedTimeNone: 'Kies een persoon om de opgegeven tijd te zien.',
+  rectifiedTimeLabel: 'Gerectificeerde tijd (schatting)',
+  rectifiedTimeNone: 'Geen bewaard',
+  rectifiedTimeValue: (time: string) => `${time} (schatting)`,
+  rectifiedSourceLabel: 'Bronnotitie',
+  reportedNeverChanged:
+    'De opgegeven tijd wordt nooit gewijzigd. Een gerectificeerde tijd wordt ernaast bewaard, met zijn bronnotitie.',
+  promoteButton: 'Bevorderen tot gerectificeerde tijd',
+  promoteBlocked: {
+    citation: 'Methodologische bronvermelding volgt',
+    noPerson: 'Kies een bewaarde persoon om een gerectificeerde tijd bij te bewaren.',
+    noSpike: 'Geen enkele kandidaat verklaart de gebeurtenissen beter dan toeval.',
+  },
+  promoteReasonPrefix: 'Niet beschikbaar:',
   rectificationLink: 'Geboortetijd-rectificatie',
   unnamedPerson: 'Naamloos',
 };
