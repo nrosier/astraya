@@ -9034,7 +9034,7 @@ a.quiet,
   margin-bottom: var(--space-3);
 }
 
-/* The date and animation bar (#1400, round-3 mockup approved 2026-11-10): one slim media-player bar above the wheel and
+/* The date and animation bar (issue 1400, round-3 mockup approved 2026-11-10): one slim media-player bar above the wheel and
    tables. 75px on desktop with --control-height controls, so touch targets never shrink; on a phone it grows to fit
    its rows, with the slider on a row of its own. Tokens only. */
 .date-animation-bar-wrap {
