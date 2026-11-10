@@ -28,7 +28,7 @@ import {
 import { deriveExportFilename } from '../domain/export-filename.js';
 import { SIGNS } from '../astrology/signs.js';
 import { APP_VERSION } from '../version.js';
-import type { PdfParagraphGroupPlan, PdfPlan } from './pdf-export-plan.js';
+import type { PdfParagraphGroupPlan, PdfPlan, PdfTablePlan } from './pdf-export-plan.js';
 import { flowLines, startBlock, type PageFlowArea } from './pdf-page-flow.js';
 import { fitSvgOnPage } from './pdf-svg-fit.js';
 import { normalizeSvgForPdf } from './pdf-svg-normalize.js';
@@ -256,6 +256,52 @@ export async function renderPdfPlan(plan: PdfPlan): Promise<{ blob: Blob; filena
   doc.text(pdfSafeText(doc, plan.contentsHeading), SIDE_MARGIN, 20);
   font('normal', BODY_SIZE);
 
+  /** Draws one captioned table from `y` and returns the next free y; the same for chart sections and the life events. */
+  const drawTable = (table: PdfTablePlan, startY: number): number => {
+    let y = startY;
+    // The caption and the table's header and first rows stay on one page (#665).
+    y = keepTogether(doc, y, TABLE_LEAD);
+    font('bold', 11);
+    doc.text(pdfSafeText(doc, table.caption), SIDE_MARGIN, y);
+    font('normal', BODY_SIZE);
+    y += 2;
+    let finalY = y;
+    // Numbers line up at the end, as on screen; the header in the accent colour, rows lightly striped; an aspect's
+    // name tinted by its family, always beside the name, never instead of it (#655).
+    const aspects = table.aspects;
+    autoTable(doc, {
+      head: [table.head.map((cell) => pdfSafeText(doc, cell))],
+      body: table.body.map((row) => row.map((cell) => pdfSafeText(doc, cell))),
+      startY: y,
+      margin: { left: SIDE_MARGIN, right: SIDE_MARGIN },
+      styles: { fontSize: 8, font: family(doc), textColor: [...INK], lineColor: [...RULE] },
+      headStyles: { fillColor: [...ACCENT], textColor: [255, 255, 255], fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [...TINT] },
+      columnStyles: Object.fromEntries(table.align.map((align, index) => [index, { halign: ALIGN[align] ?? 'left' }])),
+      didParseCell: (data) => {
+        // A header sits over its column: right-aligned over numbers too.
+        if (data.section === 'head')
+          data.cell.styles.halign = ALIGN[table.align[data.column.index] ?? 'start'] ?? 'left';
+        if (aspects === undefined || data.section !== 'body' || data.column.index !== aspects.column) return;
+        const tone = ASPECT_TONE[aspects.keys[data.row.index] ?? ''];
+        if (tone !== undefined) data.cell.styles.textColor = [...tone];
+      },
+      didDrawPage: (data) => {
+        finalY = data.cursor?.y ?? finalY;
+      },
+    });
+    y = finalY + 2;
+    // A limit of what the table covers (#725), as the screen prints it under the same table.
+    if (table.note !== undefined) {
+      font('normal', 8, MUTED);
+      y = wrapAndPrint(doc, table.note, SIDE_MARGIN, y + 3, contentWidth, 4);
+      font('normal', BODY_SIZE);
+      y += 2;
+    }
+    y += 6;
+    return y;
+  };
+
   const tocEntries: { heading: string; page: number }[] = [];
 
   for (const section of plan.sections) {
@@ -309,6 +355,7 @@ export async function renderPdfPlan(plan: PdfPlan): Promise<{ blob: Blob; filena
         y = wrapAndPrint(doc, section.map.note, SIDE_MARGIN, y, contentWidth, 3.6);
         font('normal', BODY_SIZE);
       }
+      if (section.lifeEvents !== undefined) y = drawTable(section.lifeEvents, y + 6);
     } else if (section.kind === 'text') {
       // How far below its first baseline a paragraph's second line of text is: a label, or a heading
       // above it, is never the last thing on a page (#665).
@@ -406,50 +453,7 @@ export async function renderPdfPlan(plan: PdfPlan): Promise<{ blob: Blob; filena
           svgEl.remove();
         }
       }
-      for (const table of section.tables) {
-        // The caption and the table's header and first rows stay on one page (#665).
-        y = keepTogether(doc, y, TABLE_LEAD);
-        font('bold', 11);
-        doc.text(pdfSafeText(doc, table.caption), SIDE_MARGIN, y);
-        font('normal', BODY_SIZE);
-        y += 2;
-        let finalY = y;
-        // Numbers line up at the end, as on screen; the header in the accent colour, rows lightly striped; an aspect's
-        // name tinted by its family, always beside the name, never instead of it (#655).
-        const aspects = table.aspects;
-        autoTable(doc, {
-          head: [table.head.map((cell) => pdfSafeText(doc, cell))],
-          body: table.body.map((row) => row.map((cell) => pdfSafeText(doc, cell))),
-          startY: y,
-          margin: { left: SIDE_MARGIN, right: SIDE_MARGIN },
-          styles: { fontSize: 8, font: family(doc), textColor: [...INK], lineColor: [...RULE] },
-          headStyles: { fillColor: [...ACCENT], textColor: [255, 255, 255], fontStyle: 'bold' },
-          alternateRowStyles: { fillColor: [...TINT] },
-          columnStyles: Object.fromEntries(
-            table.align.map((align, index) => [index, { halign: ALIGN[align] ?? 'left' }]),
-          ),
-          didParseCell: (data) => {
-            // A header sits over its column: right-aligned over numbers too.
-            if (data.section === 'head')
-              data.cell.styles.halign = ALIGN[table.align[data.column.index] ?? 'start'] ?? 'left';
-            if (aspects === undefined || data.section !== 'body' || data.column.index !== aspects.column) return;
-            const tone = ASPECT_TONE[aspects.keys[data.row.index] ?? ''];
-            if (tone !== undefined) data.cell.styles.textColor = [...tone];
-          },
-          didDrawPage: (data) => {
-            finalY = data.cursor?.y ?? finalY;
-          },
-        });
-        y = finalY + 2;
-        // A limit of what the table covers (#725), as the screen prints it under the same table.
-        if (table.note !== undefined) {
-          font('normal', 8, MUTED);
-          y = wrapAndPrint(doc, table.note, SIDE_MARGIN, y + 3, contentWidth, 4);
-          font('normal', BODY_SIZE);
-          y += 2;
-        }
-        y += 6;
-      }
+      for (const table of section.tables) y = drawTable(table, y);
     }
   }
 

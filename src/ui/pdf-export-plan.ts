@@ -110,6 +110,7 @@ import {
   type PdfSynastrySectionOptions,
   type PdfTransitsSectionOptions,
 } from '../domain/pdf-export-sections.js';
+import { sortLifeEvents } from '../domain/life-events.js';
 import type { Person } from '../domain/person.js';
 import { computeSynastry, rankedSynastryAspects } from '../domain/synastry.js';
 import { renderChartSheetSvg } from '../chart/chart-sheet.js';
@@ -268,6 +269,8 @@ export interface PdfFieldsSectionPlan {
   readonly fields: readonly { readonly label: string; readonly value: string }[];
   /** The birth record's regional map (#711), drawn locally; the same width as the fields panel. */
   readonly map?: { readonly markup: string; readonly width: number; readonly height: number; readonly note: string };
+  /** The person's life events (#1399), after the fields and the map; absent when the person has none. */
+  readonly lifeEvents?: PdfTablePlan;
 }
 
 export type PdfSectionPlan = PdfChartSectionPlan | PdfTextSectionPlan | PdfFieldsSectionPlan;
@@ -365,6 +368,23 @@ function birthFieldsPlan(person: Person, locale: Locale, t: typeof pdfExportMess
   return { kind: 'fields', heading: t.birthRecordLabel, fields };
 }
 
+/**
+ * The life events table (#1399): date, time (blank when untimed) and label, in the order `sortLifeEvents` gives.
+ * Dates and times print as stored: civil time at the birth place, so the person's offset override is not applied.
+ * Nothing when the person has no events (or an unreadable register), so no empty table is printed.
+ */
+function lifeEventsTablePlan(person: Person, t: typeof pdfExportMessages.en): PdfTablePlan | undefined {
+  const events = person.lifeEvents;
+  if (events === undefined || events.length === 0) return undefined;
+  const sorted = sortLifeEvents(events);
+  return {
+    caption: t.lifeEventsLabel,
+    head: [t.dateLabel, t.lifeEventTimeLabel, t.lifeEventLabelLabel],
+    body: sorted.map((event) => [event.date, event.time ?? '', event.label]),
+    align: ['start', 'start', 'start'],
+  };
+}
+
 /** The light palette the PDF prints in (`app.css` light theme), for the birth-place map. */
 const MAP_COLORS = {
   sea: '#e6e3f1',
@@ -383,9 +403,12 @@ async function birthRecordPlan(
   locale: Locale,
   t: typeof pdfExportMessages.en,
 ): Promise<PdfFieldsSectionPlan> {
+  const lifeEvents = lifeEventsTablePlan(person, t);
   const record = birthFieldsPlan(person, locale, t);
+  const withEvents = (section: PdfFieldsSectionPlan): PdfFieldsSectionPlan =>
+    lifeEvents === undefined ? section : { ...section, lifeEvents };
   const coordinates = person.moment?.coordinates;
-  if (coordinates === undefined) return record;
+  if (coordinates === undefined) return withEvents(record);
   const [{ birthMapSvg }, data] = await Promise.all([
     import('../chart/birth-map.js'),
     import('../chart/pdf-map-data.js'),
@@ -397,7 +420,7 @@ async function birthRecordPlan(
     { width: 680, height: 300 },
     MAP_COLORS,
   );
-  return { ...record, map: { ...map, note: t.mapSource } };
+  return withEvents({ ...record, map: { ...map, note: t.mapSource } });
 }
 
 /** One aspect pair of the matrix view, as a table row (#915). */
