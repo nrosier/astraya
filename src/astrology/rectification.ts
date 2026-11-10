@@ -1,5 +1,5 @@
 /**
- * Birth-time rectification (#408): narrowing an uncertain birth time by testing candidate times
+ * Birth-time rectification (#408, #1445): narrowing an uncertain birth time by testing candidate times
  * against the dates of known life events.
  *
  * The idea is the one every rectification starts from: the Ascendant and Midheaven move through
@@ -9,23 +9,28 @@
  * alignments for each candidate and ranks the candidates by the count.
  *
  * **It narrows; it does not prove.** A rectified time is a better-supported guess, never a
- * measurement: the score is a sum of coincidences, some of which are chance, so each result also
+ * measurement: the score is a count of coincidences, some of which are chance, so each result also
  * carries its `lift` over the average candidate — a time that scores only like the average has
  * explained nothing. The screen says so too.
  *
- * Sources disagree on which techniques count as evidence and how to weight them, so the convention
- * used is stated rather than hidden:
+ * **Citation pending.** The scoring method below (Solar Arc directed angles and slow-planet transits
+ * to the angles) has no verified published source yet (#1445). The only verified source is Huber's
+ * rectification article, and it supports only the principle of rectifying against dated events
+ * (dates accurate to within a month; at least five dates for a margin up to 30 minutes, ten up to two
+ * hours); its own method is the apex/prime point, not this one. The convention is stated, not hidden:
  *
- * - **Solar-arc directions** (weight 2, the technique most rectifiers trust for timing): the
- *   secondary-progressed Sun's arc since birth, applied to a point, carries it forward about a
- *   degree a year. A contact counts when a directed angle (Ascendant or Midheaven) falls on a
- *   natal planet, or a directed planet on a natal angle, by conjunction, square or opposition
- *   (`SOLAR_ARC_ORB_DEG`, a degree: roughly a year either side of exact).
- * - **Transits to the angles** (weight 1): Jupiter, Saturn, Uranus, Neptune or Pluto — the slow
- *   planets, whose contact lasts long enough to line up with a dated event — conjunct, square or
- *   opposite the natal Ascendant or Midheaven within `TRANSIT_ORB_DEG`.
- * - A contact scores its technique's weight scaled by how close it is: full at exact, nothing at the
- *   orb. Every event counts equally; the user chooses which events to supply.
+ * - **Solar-arc directions**: the secondary-progressed Sun's arc since birth, applied to a point,
+ *   carries it forward about a degree a year. A contact counts when a directed angle (Ascendant or
+ *   Midheaven) falls on a natal planet, or a directed planet on a natal angle, by conjunction,
+ *   square or opposition. An opposition to the Ascendant or Midheaven is a contact with the
+ *   Descendant or Imum Coeli.
+ * - **Transits to the angles**: Jupiter, Saturn, Uranus, Neptune, Pluto and the mean lunar node —
+ *   the slow bodies, whose contact lasts long enough to line up with a dated event — conjunct,
+ *   square or opposite the natal Ascendant or Midheaven.
+ * - **Orb** (owner decision, #1445): the existing transit orb of the body involved (`orbLimitFor` on
+ *   the daily transit preset of `transit-importance.ts`); no orb is invented here.
+ * - **Weight** (owner decision, #1445): equal. Every contact adds one point to the candidate's raw
+ *   score. Every event counts equally; the user chooses which events to include.
  *
  * Planets are taken at the candidate's own birth moment, so the Moon — which moves a degree every
  * two hours — also helps tell candidates apart, in the directed and natal roles alike.
@@ -33,18 +38,28 @@
 
 /**
  * @module Rectification
- * @purpose Narrows an uncertain birth time by scoring candidate birth moments against dated life events using solar-arc and transit contacts to the angles.
- * @conventions Solar-arc contacts (weight 2) and transits from the five slow planets (weight 1) to the Ascendant/Midheaven are scored via contactPoints (full at exact, zero at the orb — SOLAR_ARC_ORB_DEG/TRANSIT_ORB_DEG, both 1°); results report a `lift` over the mean candidate score, since a flat field means the technique explained nothing; capped at MAX_RECTIFICATION_CANDIDATES.
- * @exports SOLAR_ARC_ORB_DEG, TRANSIT_ORB_DEG, SOLAR_ARC_WEIGHT, TRANSIT_WEIGHT, contactOrb, contactPoints, scoreCandidate, MAX_RECTIFICATION_CANDIDATES, rectify
+ * @purpose Narrows an uncertain birth time by scoring candidate birth moments against dated life events using solar-arc and slow-body transit contacts to the angles.
+ * @conventions Scoring method citation pending (#1445). Each contact (conjunction, square or opposition) adds one point; its orb is the body's existing transit orb (`orbLimitFor` on the daily transit preset), so none is new; transits come from Jupiter to Pluto and the mean lunar node; results report a `lift` over the mean candidate score via `rectification-lift.ts`; contacts keep their event index so a subset of events can be re-scored without a new search; capped at MAX_RECTIFICATION_CANDIDATES.
+ * @exports POINTS_PER_CONTACT, contactOrbLimit, contactOrb, scoreCandidate, MAX_RECTIFICATION_CANDIDATES, rectify
  */
 import { bodyByKey } from './bodies.js';
 import { ageInYears } from './progressions.js';
+import { liftOf, windowAverage } from './rectification-lift.js';
+import { orbLimitFor, transitPreset } from './transit-importance.js';
 import type { BodyId, Degrees, EphemerisProvider, GeoPosition, HouseSystem, JulianDayUT } from '../ephemeris/types.js';
 
-export const SOLAR_ARC_ORB_DEG = 1;
-export const TRANSIT_ORB_DEG = 1;
-export const SOLAR_ARC_WEIGHT = 2;
-export const TRANSIT_WEIGHT = 1;
+/** Equal weight (owner decision, #1445): every contact adds this one point to the raw score. */
+export const POINTS_PER_CONTACT = 1;
+
+/** The daily transit rule set, whose per-body orbs the contacts use (no orb of this tool's own). */
+const TRANSIT_ORB_RULES = transitPreset('important', { everyBodyKey: [], context: 'daily' });
+
+/** The orb limit for a contact involving this body: its existing transit orb. */
+export function contactOrbLimit(bodyKey: string): Degrees {
+  return orbLimitFor(TRANSIT_ORB_RULES, bodyKey);
+}
+
+const ANGLE_KEYS: readonly string[] = ['asc', 'mc'];
 
 const DEFAULT_HOUSE_SYSTEM: HouseSystem = 'P';
 
@@ -57,8 +72,8 @@ const CONTACT_ANGLES: readonly { readonly key: 'conjunction' | 'square' | 'oppos
 
 /** Bodies that are directed and received: the luminaries and the planets. */
 const CHART_BODY_KEYS = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'];
-/** The slow planets whose transits to the angles count. */
-const SLOW_TRANSIT_KEYS = ['jupiter', 'saturn', 'uranus', 'neptune', 'pluto'];
+/** The slow bodies whose transits to the angles count: Jupiter to Pluto and the mean lunar node. */
+const SLOW_TRANSIT_KEYS = ['jupiter', 'saturn', 'uranus', 'neptune', 'pluto', 'meanNode'];
 
 export type RectificationTechnique = 'solar-arc' | 'transit';
 
@@ -78,7 +93,6 @@ export interface RectificationContact {
   readonly aspect: 'conjunction' | 'square' | 'opposition';
   /** Distance from exact, in degrees. */
   readonly orb: Degrees;
-  readonly points: number;
 }
 
 export interface CandidateScore {
@@ -114,29 +128,26 @@ export function contactOrb(
   return orb <= maxOrb ? orb : undefined;
 }
 
-/** A contact's points: its technique's weight at exact, falling in a straight line to nothing at the orb. */
-export function contactPoints(orb: Degrees, maxOrb: Degrees, weight: number): number {
-  return weight * (1 - orb / maxOrb);
-}
-
 interface Point {
   readonly key: string;
   readonly longitude: Degrees;
 }
 
-/** Every contact between `moving` points and `natal` points that falls within `maxOrb`. */
+/**
+ * Every contact between `moving` points and `natal` points that falls within the orb of the body involved (the
+ * moving or the natal point, whichever is not an angle).
+ */
 function contactsBetween(
   eventIndex: number,
   technique: RectificationTechnique,
   moving: readonly Point[],
   natal: readonly Point[],
-  maxOrb: Degrees,
-  weight: number,
 ): readonly RectificationContact[] {
   const contacts: RectificationContact[] = [];
   for (const mover of moving) {
     for (const target of natal) {
       if (mover.key === target.key) continue;
+      const maxOrb = contactOrbLimit(ANGLE_KEYS.includes(mover.key) ? target.key : mover.key);
       for (const { key, angle } of CONTACT_ANGLES) {
         const orb = contactOrb(mover.longitude, target.longitude, angle, maxOrb);
         if (orb === undefined) continue;
@@ -147,7 +158,6 @@ function contactsBetween(
           natal: target.key,
           aspect: key,
           orb,
-          points: contactPoints(orb, maxOrb, weight),
         });
       }
     }
@@ -206,8 +216,8 @@ export async function scoreCandidate(
     const directedAngles = natalAngles.map((angle) => ({ key: angle.key, longitude: norm360(angle.longitude + arc) }));
     const directedBodies = natalBodies.map((body) => ({ key: body.key, longitude: norm360(body.longitude + arc) }));
     contacts.push(
-      ...contactsBetween(eventIndex, 'solar-arc', directedAngles, natalBodies, SOLAR_ARC_ORB_DEG, SOLAR_ARC_WEIGHT),
-      ...contactsBetween(eventIndex, 'solar-arc', directedBodies, natalAngles, SOLAR_ARC_ORB_DEG, SOLAR_ARC_WEIGHT),
+      ...contactsBetween(eventIndex, 'solar-arc', directedAngles, natalBodies),
+      ...contactsBetween(eventIndex, 'solar-arc', directedBodies, natalAngles),
     );
 
     const transits = await provider.positions(
@@ -218,7 +228,7 @@ export async function scoreCandidate(
       key: body.key,
       longitude: transits[index]?.longitude ?? Number.NaN,
     }));
-    contacts.push(...contactsBetween(eventIndex, 'transit', transiting, natalAngles, TRANSIT_ORB_DEG, TRANSIT_WEIGHT));
+    contacts.push(...contactsBetween(eventIndex, 'transit', transiting, natalAngles));
   }
 
   return {
@@ -226,7 +236,7 @@ export async function scoreCandidate(
     ascendant: houses.ascendant,
     midheaven: houses.midheaven,
     contacts,
-    score: contacts.reduce((total, contact) => total + contact.points, 0),
+    score: contacts.length * POINTS_PER_CONTACT,
   };
 }
 
@@ -259,8 +269,8 @@ export async function rectify(
   }
   const scored: CandidateScore[] = [];
   for (const jd of candidateJds) scored.push(await scoreCandidate(provider, place, jd, events, options));
-  const mean = scored.reduce((total, candidate) => total + candidate.score, 0) / scored.length;
+  const mean = windowAverage(scored.map((candidate) => candidate.score));
   return scored
-    .map((candidate) => ({ ...candidate, lift: mean > 0 ? candidate.score / mean : 0 }))
+    .map((candidate) => ({ ...candidate, lift: liftOf(candidate.score, mean) }))
     .sort((a, b) => b.score - a.score || a.jd - b.jd);
 }

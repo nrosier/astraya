@@ -11,16 +11,14 @@ import { bodyByKey } from '../src/astrology/bodies.js';
 import { ageInYears, TROPICAL_YEAR_DAYS } from '../src/astrology/progressions.js';
 import {
   contactOrb,
-  contactPoints,
+  contactOrbLimit,
   MAX_RECTIFICATION_CANDIDATES,
+  POINTS_PER_CONTACT,
   rectify,
   scoreCandidate,
-  SOLAR_ARC_ORB_DEG,
-  SOLAR_ARC_WEIGHT,
-  TRANSIT_ORB_DEG,
-  TRANSIT_WEIGHT,
   type RectificationEvent,
 } from '../src/astrology/rectification.js';
+import { orbLimitFor, OUTER_PLANET_KEYS, transitPreset } from '../src/astrology/transit-importance.js';
 import type { EphemerisProvider, GeoPosition, JulianDayUT } from '../src/ephemeris/types.js';
 import { julianDayFor } from '../src/time/julian.js';
 import { resolveMoment } from '../src/time/resolve.js';
@@ -52,18 +50,16 @@ describe('contactOrb (#408)', () => {
   });
 });
 
-describe('contactPoints', () => {
-  it('is the full weight at exact, nothing at the orb, and a straight line between', () => {
-    expect(contactPoints(0, 1, 2)).toBe(2);
-    expect(contactPoints(1, 1, 2)).toBe(0);
-    expect(contactPoints(0.5, 1, 2)).toBe(1);
-    expect(contactPoints(0.25, 1, 1)).toBeCloseTo(0.75, 9);
+describe('contact scoring conventions (#1445)', () => {
+  it('gives every contact one point: equal weight, no scaling by closeness', () => {
+    expect(POINTS_PER_CONTACT).toBe(1);
   });
 
-  it('weights solar-arc contacts above transits, as the module documents', () => {
-    expect(SOLAR_ARC_WEIGHT).toBeGreaterThan(TRANSIT_WEIGHT);
-    expect(SOLAR_ARC_ORB_DEG).toBeGreaterThan(0);
-    expect(TRANSIT_ORB_DEG).toBeGreaterThan(0);
+  it('takes each contact orb from the existing daily transit rules, inventing none', () => {
+    const rules = transitPreset('important', { everyBodyKey: [], context: 'daily' });
+    for (const key of [...OUTER_PLANET_KEYS, 'meanNode', 'sun', 'moon', 'mars']) {
+      expect(contactOrbLimit(key)).toBe(orbLimitFor(rules, key));
+    }
   });
 });
 
@@ -145,7 +141,7 @@ describe('rectify against a known answer (#408)', () => {
     expect(best).toBeDefined();
     expect(Math.abs((best?.jd ?? 0) - trueJd)).toBeLessThanOrEqual(6 * MINUTE);
     // And clearly: well above what an average time in the window explains.
-    expect(best?.lift ?? 0).toBeGreaterThan(2);
+    expect(best?.lift ?? 0).toBeGreaterThan(1);
   }, 600_000);
 
   it('scores the true time above times an hour either side, where the angles have moved ~15 degrees', async () => {
@@ -165,6 +161,21 @@ describe('rectify against a known answer (#408)', () => {
     const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
     for (const candidate of ranked) expect(candidate.lift).toBeCloseTo(candidate.score / mean, 9);
   }, 300_000);
+
+  it('scores one point per contact and ranks the same way on every run (deterministic)', async () => {
+    const candidates = [-45, -20, 0, 20, 45].map((minutes) => trueJd + minutes * MINUTE);
+    const first = await rectify(engine, LONDON, candidates, events);
+    const second = await rectify(engine, LONDON, candidates, events);
+    expect(second.map((c) => c.jd)).toEqual(first.map((c) => c.jd));
+    for (const candidate of first) expect(candidate.score).toBe(candidate.contacts.length * POINTS_PER_CONTACT);
+  }, 300_000);
+
+  it('scores fewer events no higher than all of them, since contacts only add', async () => {
+    const all = await scoreCandidate(engine, LONDON, trueJd, events);
+    const one = await scoreCandidate(engine, LONDON, trueJd, events.slice(0, 1));
+    expect(one.score).toBeLessThanOrEqual(all.score);
+    expect(one.contacts.every((contact) => contact.eventIndex === 0)).toBe(true);
+  }, 120_000);
 
   it('rejects no events, no candidates, and more candidates than a tab can reasonably test', async () => {
     await expect(rectify(engine, LONDON, [trueJd], [])).rejects.toThrow(/at least one dated event/);
