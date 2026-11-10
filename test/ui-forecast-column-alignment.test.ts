@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * #1357/#1358 — Forecast daily tables: the Orb column and the exact-today first column are left-aligned
  * (`align: 'start'`), and the exact-today date column may wrap so "... UT" is never cut off. Asserted on the
