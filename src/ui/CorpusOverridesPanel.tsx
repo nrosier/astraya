@@ -22,7 +22,6 @@
  * @conventions Reuses `loadRuntimeCorpus` (the same function ReportView uses) so the admin sees the corpus already merged with existing corrections; the corpus-language selector is local state, independent from the app's own `useLocale()`. Text comes from co-located `CorpusOverridesPanel.messages.ts` via `useMessages()`.
  * @exports CorpusOverridesPanel
  */
-import { Checkbox } from './primitives/Checkbox.js';
 import { StagedDialog } from './primitives/StagedDialog.js';
 import { Select } from './primitives/Select.js';
 import { TextAreaField } from './primitives/TextAreaField.js';
@@ -369,7 +368,17 @@ export function CorpusOverridesPanel(): React.JSX.Element {
                 if (isLocale(value)) setCorpusLocale(value);
               }}
             />
-            <Checkbox label={t.overriddenOnlyLabel} checked={overriddenOnly} onChange={setOverriddenOnly} switchStyle />
+            <Select
+              label={t.overriddenOnlyLabel}
+              value={overriddenOnly ? 'yes' : 'no'}
+              options={[
+                { value: 'no', label: t.overriddenOnlyNo },
+                { value: 'yes', label: t.overriddenOnlyYes },
+              ]}
+              onChange={(value) => {
+                setOverriddenOnly(value === 'yes');
+              }}
+            />
           </div>
           <div className="corpus-toolbar-row">
             <Select
@@ -417,7 +426,7 @@ export function CorpusOverridesPanel(): React.JSX.Element {
           heading={editing === undefined ? t.editorHeading : labelForKey(editing.key, uiLocale)}
           closeLabel={t.closeEditorLabel}
           placement="right"
-          dialogClassName="settings-card corpus-editor"
+          dialogClassName="settings-card corpus-editor drawer-fit"
           onDiscard={cancelEdit}
           returnFocusTo={editTriggerRef}
           footer={
