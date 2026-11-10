@@ -74,6 +74,8 @@ const { AstrocartographyView } = await import('../src/ui/AstrocartographyView.js
 const { DEFAULT_MAP_SETTINGS } = await import('../src/ui/map-settings.js');
 const { TRADITIONAL_ACG_BODY_IDS } = await import('../src/domain/astrocartography.js');
 const { SE } = await import('../src/ephemeris/generated-constants.js');
+const { bodyById } = await import('../src/astrology/bodies.js');
+const { bodyDisplayName } = await import('../src/ui/astro-names.messages.js');
 
 let mounted: { container: HTMLElement; root: Root } | undefined;
 
@@ -164,6 +166,17 @@ describe('the Astrocartography text equivalent (#1371)', () => {
     expect(listed.filter((row) => row[1] === 'MC (Midheaven)')).toHaveLength(drawnMc);
     expect(listed).toHaveLength(TRADITIONAL_ACG_BODY_IDS.length * 4 + 1);
     expect(listed.at(-1)).toEqual(['—', 'Birthplace', '41.18°N, 84.73°W']);
+  });
+
+  it('lists every visible line in full, whether or not its name fits on the map (#1370)', async () => {
+    const container = await mount();
+    const listed = rows(container);
+    const full = ['MC (Midheaven)', 'IC (Nadir)', 'AC (Ascendant)', 'DC (Descendant)'];
+    for (const body of TRADITIONAL_ACG_BODY_IDS) {
+      const name = bodyDisplayName(bodyById(body)?.key ?? '', 'en');
+      for (const kind of full) expect(listed.some((row) => row[0] === name && row[1] === kind)).toBe(true);
+    }
+    expect(listed.filter((row) => full.includes(row[1] ?? ''))).toHaveLength(TRADITIONAL_ACG_BODY_IDS.length * 4);
   });
 
   it('drops rows for a line type or body turned off in Map settings', async () => {
