@@ -729,9 +729,9 @@ a:hover {
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  /* Outline only: this global rule must not reshape focused elements that have their own radius (#1357). */
+  outline: 2px solid var(--color-focus);
   outline-offset: 2px;
-  border-radius: var(--radius-sm);
 }
 
 /* Engine status. The dot breathes while loading, because a stalled ephemeris
@@ -1875,7 +1875,7 @@ button:hover:not(:disabled) {
 }
 
 button:focus-visible {
-  outline: 2px solid color-mix(in oklab, var(--accent) 55%, transparent);
+  outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }
 
@@ -1926,7 +1926,7 @@ a.quiet:hover {
 }
 
 a.quiet:focus-visible {
-  outline: 2px solid color-mix(in oklab, var(--accent) 55%, transparent);
+  outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }
 
@@ -1983,7 +1983,7 @@ label.stacked textarea {
 
 label.stacked textarea:focus-visible {
   border-color: var(--accent);
-  outline: 2px solid color-mix(in oklab, var(--accent) 55%, transparent);
+  outline: 2px solid var(--color-focus);
 }
 
 /*
@@ -2257,8 +2257,8 @@ label.stacked textarea:focus-visible {
 }
 
 .profile-popover-action:disabled {
-  opacity: 0.6;
-  cursor: default;
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .profile-popover-row {
@@ -6843,7 +6843,7 @@ a.primitive-button-primary {
 }
 
 .primitive-button-primary:disabled {
-  opacity: 0.5;
+  opacity: 0.55;
   cursor: not-allowed;
 }
 
@@ -6923,8 +6923,8 @@ button.primitive-button-compact {
 .primitive-field input:disabled,
 .primitive-field select:disabled,
 .primitive-field textarea:disabled {
-  opacity: 0.6;
-  cursor: default;
+  opacity: 0.55;
+  cursor: not-allowed;
   background: var(--surface);
 }
 
@@ -6939,7 +6939,7 @@ button.primitive-button-compact {
 .primitive-field select:focus-visible,
 .primitive-field textarea:focus-visible {
   border-color: var(--accent);
-  outline: 2px solid color-mix(in oklab, var(--accent) 55%, transparent);
+  outline: 2px solid var(--color-focus);
   outline-offset: 0;
 }
 
@@ -7300,7 +7300,7 @@ button.primitive-button-compact {
 }
 
 .page-header-basis-edit:focus-visible {
-  outline: 2px solid color-mix(in oklab, var(--accent) 55%, transparent);
+  outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }
 
