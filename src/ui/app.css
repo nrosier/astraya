@@ -6928,6 +6928,13 @@ button.primitive-button-compact {
   background: var(--surface);
 }
 
+/* Placeholder text is secondary copy: --muted clears WCAG AA 4.5:1 on the field surface in both themes (#1358). */
+.primitive-field input::placeholder,
+.primitive-field textarea::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
 .primitive-field input:not([type='checkbox']):not([type='radio']):focus-visible,
 .primitive-field select:focus-visible,
 .primitive-field textarea:focus-visible {
