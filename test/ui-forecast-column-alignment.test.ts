@@ -16,11 +16,16 @@ function columnByKey<T>(columns: readonly TableColumn<T>[], key: string): TableC
   return column;
 }
 
+/** The row type a column list was built for, read from the factory's return type. */
+type RowOf<C> = C extends readonly TableColumn<infer Row>[] ? Row : never;
+type ContactRow = RowOf<ReturnType<typeof contactColumns>>;
+type ExactEventRow = RowOf<ReturnType<typeof exactEventColumns>>;
+
 describe('forecast daily table alignment (#1357/#1358)', () => {
   it('left-aligns the Orb column even though its values are all numbers', () => {
-    const rows = [
-      { key: 'a', sentence: 's', orb: 1.25, applying: true },
-      { key: 'b', sentence: 's', orb: 0.5, applying: false },
+    const rows: ContactRow[] = [
+      { key: 'a', sentence: 's', transiting: 'Sun', aspect: 'conjunction', natal: 'Moon', orb: 1.25, applying: true },
+      { key: 'b', sentence: 's', transiting: 'Sun', aspect: 'trine', natal: 'Mars', orb: 0.5, applying: false },
     ];
     const orb = columnByKey(contactColumns(t), 'orb');
     expect(orb.align).toBe('start');
@@ -28,7 +33,9 @@ describe('forecast daily table alignment (#1357/#1358)', () => {
   });
 
   it('left-aligns the exact-today date column and lets its text wrap', () => {
-    const rows = [{ key: 'a', jd: 2460000.5, date: '2023-02-25 00:00 UT', sentence: 's', retrograde: false }];
+    const rows: ExactEventRow[] = [
+      { key: 'a', jd: 2460000.5, date: '2023-02-25 00:00 UT', sentence: 's', retrograde: false },
+    ];
     const date = columnByKey(exactEventColumns(t), 'jd');
     expect(date.align).toBe('start');
     expect(date.wrapText).toBe(true);
