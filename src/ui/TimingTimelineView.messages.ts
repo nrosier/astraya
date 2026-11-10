@@ -40,6 +40,12 @@ const en = {
       'A profected year runs from one birthday to the next, at the local time of birth; its months are twelve equal parts of that year.',
   } as Partial<Record<string, string>>,
   range: (start: string, end: string) => `${start} to ${end}`,
+  /** An orb window (#1401): enters the orb, is exact, leaves the orb. */
+  orbWindow: (entry: string, exact: string, exit: string) =>
+    `enters the orb ${entry}, exact ${exact}, leaves the orb ${exit}`,
+  /** Which pass through the point a transit is (#1401), counting direct and retrograde passes in date order. */
+  passOf: (number: number, count: number) => `pass ${String(number)} of ${String(count)}`,
+  passShort: (number: number, count: number) => `${String(number)}/${String(count)}`,
   releasing: (lot: string, sign: string, ruler: string) => `From ${lot}: ${sign}, ruled by ${ruler}`,
   releasingLevel2: (lot: string, sign: string, ruler: string) => `From ${lot}, L2: ${sign}, ruled by ${ruler}`,
   /** The lots keep their English names in Dutch, like the Part of Fortune elsewhere (no vetted Dutch terms). */
@@ -105,6 +111,9 @@ const nl = {
       'Een geprofecteerd jaar loopt van verjaardag tot verjaardag, op de lokale geboortetijd; de maanden zijn twaalf gelijke delen van dat jaar.',
   },
   range: (start, end) => `${start} tot ${end}`,
+  orbWindow: (entry, exact, exit) => `komt in de orb ${entry}, exact ${exact}, verlaat de orb ${exit}`,
+  passOf: (number, count) => `passage ${String(number)} van ${String(count)}`,
+  passShort: (number, count) => `${String(number)}/${String(count)}`,
   releasing: (lot, sign, ruler) => `Vanaf ${lot}: ${sign}, met als heerser ${ruler}`,
   releasingLevel2: (lot, sign, ruler) => `Vanaf ${lot}, L2: ${sign}, met als heerser ${ruler}`,
   lots: { fortune: 'Fortune', spirit: 'Spirit' },

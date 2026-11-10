@@ -3,7 +3,11 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { describe, expect, it } from 'vitest';
-import { TIMING_TIMELINE_TRACKS, type TimingTimelineTrackEvents } from '../src/domain/timing-timeline.js';
+import {
+  TIMING_TIMELINE_TRACKS,
+  type TimingTimelineEvent,
+  type TimingTimelineTrackEvents,
+} from '../src/domain/timing-timeline.js';
 import { TimingTimelineGantt } from '../src/ui/TimingTimelineGantt.js';
 import { ganttFraction, ganttRows, thinYearTicks, yearTicks } from '../src/ui/timeline-gantt.js';
 import { timelineSubjectLabel } from '../src/ui/timing-timeline-labels.js';
@@ -68,6 +72,7 @@ describe('the timing timeline Gantt (#554, #1237)', () => {
             trackLabels={labels}
             rowLabel={(track, count) => `${track}: ${String(count)}`}
             describe={(event) => timelineSubjectLabel(event.subject, 'en')}
+            passLabel={(number, count) => `${String(number)}/${String(count)}`}
             targetTitle="Centre date"
           />,
         );
@@ -82,6 +87,51 @@ describe('the timing timeline Gantt (#554, #1237)', () => {
       // 30 of 100 days: the bar spans a third of the 1000-unit axis, and the target line sits in the middle.
       expect(container.querySelector('.gantt-bar')?.getAttribute('width')).toBe('300');
       expect(container.querySelector('.gantt-target')?.getAttribute('x1')).toBe('500');
+    } finally {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    }
+  });
+});
+
+describe('an orb window on the Gantt (#1401)', () => {
+  it('draws the window as a bar, marks the exact date inside it and labels the pass number', () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root: Root = createRoot(container);
+    const event: TimingTimelineEvent = {
+      kind: 'periodic-transit',
+      startJd: 20,
+      endJd: 80,
+      exactJd: 40,
+      pass: { number: 2, count: 3 },
+      subject: { kind: 'aspect', from: 'pluto', aspect: 'conjunction', to: 'saturn' },
+      sourceModule: 'domain/periodic-transit',
+    };
+    try {
+      act(() => {
+        root.render(
+          <TimingTimelineGantt
+            rows={ganttRows([{ track: 'periodic-transit', events: [event] }], 0, 100)}
+            fromJd={0}
+            toJd={100}
+            targetJd={50}
+            label="axis"
+            trackLabels={labels}
+            rowLabel={(track, count) => `${track}: ${String(count)}`}
+            describe={(e) => timelineSubjectLabel(e.subject, 'en')}
+            passLabel={(number, count) => `${String(number)}/${String(count)}`}
+            targetTitle="Centre date"
+          />,
+        );
+      });
+      // 20 to 80 of 100 days: a bar from 200 and 600 wide, with the exact date at 40 of 100.
+      expect(container.querySelector('.gantt-bar')?.getAttribute('x')).toBe('200');
+      expect(Number(container.querySelector('.gantt-bar')?.getAttribute('width'))).toBeCloseTo(600, 6);
+      expect(container.querySelector('.gantt-exact')?.getAttribute('x1')).toBe('400');
+      expect(container.querySelector('.gantt-pass')?.textContent).toBe('2/3');
     } finally {
       act(() => {
         root.unmount();

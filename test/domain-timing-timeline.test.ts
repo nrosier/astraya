@@ -6,7 +6,11 @@
  * itself only comes from a real houses call.
  */
 import { describe, expect, it } from 'vitest';
-import { ASPECTS } from '../src/astrology/aspects.js';
+import { ASPECTS, DEFAULT_ORB_CONFIG, orbFor } from '../src/astrology/aspects.js';
+import { bodyByKey } from '../src/astrology/bodies.js';
+import { findExactTransitAspects } from '../src/astrology/transit-events.js';
+import { computeChartData } from '../src/domain/chart-compute.js';
+import { computeTransitOrbWindows } from '../src/domain/transit-orb-windows.js';
 import { firdariaPeriods } from '../src/astrology/firdaria.js';
 import { zodiacalReleasingPeriods, zodiacalReleasingSubperiods } from '../src/astrology/zodiacal-releasing.js';
 import { computeProfections } from '../src/domain/profections.js';
@@ -204,5 +208,64 @@ describe('the bodies filter (#1260)', () => {
     expect(shows(aspect('meanLilith', 'venus'))).toEqual([true, false, true]);
     expect(shows(at({ kind: 'station', body: 'vesta', direction: 'retrograde' }))).toEqual([true, false, true]);
     expect(shows(at({ kind: 'station', body: 'mars', direction: 'direct' }))).toEqual([true, true, false]);
+  });
+});
+
+describe('transit orb windows and pass numbers (#1401)', () => {
+  // Transiting Pluto conjunct the natal Saturn of the fixed chart above: three exact passes in 2020 (direct 2020-01, retrograde 2020-05, direct 2020-10).
+  async function plutoOverSaturn() {
+    const engine = await getEngine();
+    const natal = await computeChartData(NATAL, engine, {});
+    const saturn = bodyByKey('saturn');
+    const pluto = bodyByKey('pluto');
+    if (saturn === undefined || pluto === undefined) throw new Error('unreachable: bodies exist');
+    const natalLongitude = natal.positions.find((position) => position.body === saturn.id)?.longitude ?? 0;
+    const from = await engine.julianDayFromUtc(2019, 1, 1, 12, 0, 0);
+    const to = await engine.julianDayFromUtc(2022, 1, 1, 12, 0, 0);
+    const events = await findExactTransitAspects(engine, [pluto.id], new Map([[saturn.id, natalLongitude]]), from, to);
+    return { engine, events: events.filter((event) => event.aspect.key === 'conjunction'), pluto, saturn };
+  }
+
+  it('gives all three passes the same window and numbers them in date order, direct and retrograde', async () => {
+    const { engine, events } = await plutoOverSaturn();
+    expect(events.map((event) => event.retrograde)).toEqual([false, true, false]);
+    const windows = await computeTransitOrbWindows(engine, events);
+    const infos = events.map((event) => windows.get(event));
+    expect(infos.map((info) => info?.pass)).toEqual([
+      { number: 1, count: 3 },
+      { number: 2, count: 3 },
+      { number: 3, count: 3 },
+    ]);
+    const first = infos[0]?.window;
+    expect(first).toBeDefined();
+    for (const info of infos) expect(info?.window).toEqual(first);
+    expect(first?.entryJd).toBeLessThan(events[0]?.jd ?? 0);
+    expect(first?.exitJd).toBeGreaterThan(events[2]?.jd ?? 0);
+  });
+
+  it('measures the window with the orb Astraya already applies to the aspect, on the real positions', async () => {
+    const { engine, events, pluto } = await plutoOverSaturn();
+    const first = events[0];
+    if (first === undefined) throw new Error('expected a first pass');
+    const window = (await computeTransitOrbWindows(engine, events)).get(first)?.window;
+    expect(window?.orb).toBe(orbFor('conjunction', 'planet', 'planet', DEFAULT_ORB_CONFIG));
+    const exactLongitude = (await engine.position(events[0]?.jd ?? 0, pluto.id)).longitude;
+    const gapAt = async (jd: number): Promise<number> => {
+      const longitude = (await engine.position(jd, pluto.id)).longitude;
+      return Math.abs(((((longitude - exactLongitude + 540) % 360) + 360) % 360) - 180);
+    };
+    // At the entry and exit dates the body is exactly one orb from the point; a day inside either one it is within it.
+    expect(await gapAt(window?.entryJd ?? 0)).toBeCloseTo(window?.orb ?? 0, 3);
+    expect(await gapAt(window?.exitJd ?? 0)).toBeCloseTo(window?.orb ?? 0, 3);
+    expect(await gapAt((window?.entryJd ?? 0) + 1)).toBeLessThan(window?.orb ?? 0);
+    expect(await gapAt((window?.exitJd ?? 0) - 1)).toBeLessThan(window?.orb ?? 0);
+  });
+
+  it('numbers a pass from the whole window even when only that pass is listed', async () => {
+    const { engine, events } = await plutoOverSaturn();
+    const second = events[1];
+    if (second === undefined) throw new Error('expected a second pass');
+    const info = (await computeTransitOrbWindows(engine, [second])).get(second);
+    expect(info?.pass).toEqual({ number: 2, count: 3 });
   });
 });

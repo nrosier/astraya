@@ -1,7 +1,7 @@
 /**
  * @module ui/timeline-gantt
  * @purpose Pure layout for the timing timeline's Gantt chart (#1237): where each event's bar sits on the shared date axis, which events are points, and where the year ticks and the target date fall.
- * @conventions Positions are fractions of the axis (0 at the window's start, 1 at its end), so the chart scales to any width and holds no pixel sizes. An event with no end, or the same end as its start, is a point. A bar is clamped to the window, so one that starts before or ends after it still shows. Nothing here calculates astrology: it only places the normalised `TimingTimelineEvent` records the table also lists.
+ * @conventions Positions are fractions of the axis (0 at the window's start, 1 at its end), so the chart scales to any width and holds no pixel sizes. An event with no end, or the same end as its start, is a point. A bar is clamped to the window, so one that starts before or ends after it still shows. An orb window (an event with an exact date, #1401) is a bar with the exact date marked inside it. Nothing here calculates astrology: it only places the normalised `TimingTimelineEvent` records the table also lists.
  * @exports GanttMark, GanttRow, YearTick, ganttFraction, ganttRows, yearTicks, thinYearTicks
  */
 import type { JulianDayUT } from '../ephemeris/types.js';
@@ -17,6 +17,8 @@ export interface GanttMark {
   /** A level-2 subperiod (zodiacal releasing), drawn as a thinner bar beneath the level-1 period. */
   readonly sub: boolean;
   readonly event: TimingTimelineEvent;
+  /** Where the exact date falls inside a bar that is an orb window (#1401). */
+  readonly exact?: number;
 }
 
 export interface GanttRow {
@@ -48,6 +50,7 @@ export function ganttRows(
         point: event.endJd === undefined || event.endJd === event.startJd,
         sub: event.subject.kind === 'releasing' && event.subject.level === 2,
         event,
+        ...(event.exactJd === undefined ? {} : { exact: ganttFraction(event.exactJd, fromJd, toJd) }),
       };
     }),
   }));

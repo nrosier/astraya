@@ -26,6 +26,7 @@ import type { SecondaryProgressionData } from './secondary-progression.js';
 import type { SolarArcDirectionsData } from './solar-arc-directions.js';
 import type { TransitData } from './transit.js';
 import type { PeriodicTransitForecast } from './periodic-transit.js';
+import type { TransitOrbWindowInfo, TransitPass } from './transit-orb-windows.js';
 
 /** The lot zodiacal releasing starts from (#680): Fortune for the body and life, Spirit for action and career. */
 export type ReleasingLot = 'fortune' | 'spirit';
@@ -60,6 +61,10 @@ export interface TimingTimelineEvent {
   readonly subject: TimelineSubject;
   /** Which module computed this event, for a timeline UI to group/color/filter by technique. */
   readonly sourceModule: string;
+  /** For a transit with an orb window (#1401): the exact date inside `startJd`..`endJd`, which are the orb entry and exit. */
+  readonly exactJd?: JulianDayUT;
+  /** For a transit that passes its point more than once inside one orb window (#1401): this pass's place, 1-based, in date order. */
+  readonly pass?: TransitPass;
 }
 
 /** The stable tracks rendered on the shared timing axis, ordered from long periods to short contacts. */
@@ -273,19 +278,31 @@ export function transitToTimelineEvents(data: TransitData, targetJd: JulianDayUT
   return contactsToTimelineEvents('transit', 'domain/transit', data.contacts, targetJd);
 }
 
-function exactTransitEvents(events: readonly TransitAspectEvent[]): readonly TimingTimelineEvent[] {
-  return events.map((event) => ({
-    kind: 'periodic-transit',
-    startJd: event.jd,
-    endJd: event.jd,
-    subject: {
-      kind: 'aspect',
-      from: bodyKeyOf(event.transitingBody),
-      aspect: event.aspect.key,
-      to: bodyKeyOf(event.natalBody),
-    },
-    sourceModule: 'domain/periodic-transit',
-  }));
+/**
+ * An exact transit as an event. With its orb window (#1401) the event spans orb entry to orb exit, carries the exact date
+ * and, when the body passes the point more than once in that window, the pass number; without one it is a point.
+ */
+function exactTransitEvents(
+  events: readonly TransitAspectEvent[],
+  windows: ReadonlyMap<TransitAspectEvent, TransitOrbWindowInfo>,
+): readonly TimingTimelineEvent[] {
+  return events.map((event) => {
+    const info = windows.get(event);
+    return {
+      kind: 'periodic-transit',
+      startJd: info?.window.entryJd ?? event.jd,
+      endJd: info?.window.exitJd ?? event.jd,
+      subject: {
+        kind: 'aspect',
+        from: bodyKeyOf(event.transitingBody),
+        aspect: event.aspect.key,
+        to: bodyKeyOf(event.natalBody),
+      },
+      sourceModule: 'domain/periodic-transit',
+      ...(info === undefined ? {} : { exactJd: event.jd }),
+      ...(info === undefined || info.pass.count < 2 ? {} : { pass: info.pass }),
+    };
+  });
 }
 
 function stationEvents(events: readonly StationEvent[]): readonly TimingTimelineEvent[] {
@@ -308,16 +325,22 @@ function returnEvent(jd: JulianDayUT, which: TimelineReturn): TimingTimelineEven
   };
 }
 
-/** Exact transit and station events from the daily, weekly, and monthly forecast tiers. */
-export function periodicTransitToTimelineEvents(data: PeriodicTransitForecast): readonly TimingTimelineEvent[] {
+/**
+ * Exact transit and station events from the daily, weekly, and monthly forecast tiers. `windows` (from
+ * `computeTransitOrbWindows`, #1401) gives each exact transit its orb entry, exit and pass number.
+ */
+export function periodicTransitToTimelineEvents(
+  data: PeriodicTransitForecast,
+  windows: ReadonlyMap<TransitAspectEvent, TransitOrbWindowInfo> = new Map(),
+): readonly TimingTimelineEvent[] {
   return [
     returnEvent(data.yearly.solarReturn.returnJd, 'solar-return'),
     returnEvent(data.yearly.demibirthday.demibirthdayJd, 'demibirthday'),
     returnEvent(data.monthly.progressedLunarReturn.returnJd, 'progressed-lunar-return'),
     ...data.weekly.lunarReturns.returns.map((entry) => returnEvent(entry.returnJd, 'lunar-return')),
-    ...exactTransitEvents(data.daily.exactToday),
+    ...exactTransitEvents(data.daily.exactToday, windows),
     ...stationEvents(data.daily.stationsToday),
-    ...exactTransitEvents(data.weekly.events),
-    ...exactTransitEvents(data.monthly.events),
+    ...exactTransitEvents(data.weekly.events, windows),
+    ...exactTransitEvents(data.monthly.events, windows),
   ];
 }
