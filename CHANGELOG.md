@@ -6,6 +6,41 @@ see [docs/ops/RELEASING.md](docs/ops/RELEASING.md).
 
 ## [Unreleased]
 
+## [0.53.0] — 2026-11-10
+
+**Life events become part of a person's record and drive the timing tools, the transit and progression screens gain a date and animation bar, and progressions use the mean tropical year.**
+
+### Added
+
+- **Life events (#1399).** A person's birth record has a life events editor; events travel with the full export and importer, are guarded against oversized syncs, appear as a table in the PDF birth record, and are read and saved by rectification. Progressions, solar arc and returns offer them as date pickers.
+- **Date and animation control bar on the transit and progression screens (#1400).**
+- **Orb entry and exit windows and pass numbers on the timing timeline (#1401).**
+- **Davison relationship chart (#1406),** with a great-circle default and a book-arithmetic option.
+- **Submitted corrections are shown as a word diff in the admin review (#1338).**
+
+### Changed
+
+- **Progressions use the mean tropical year (365.2422 days) instead of the Gregorian year (#1403),** and the UI states the progression conventions. Progressed positions can differ slightly from earlier versions, growing with age.
+- **The interpretation corpus loads on first Tier 2 use (#1367),** not at start.
+- **Forecast orb and exact columns are left-aligned and the exact date stays visible (#1357/#1358);** the chart overlay settings drawer is capped to fit its content.
+- **Controls share one disabled opacity and one full focus ring (#1357),** placeholders use the muted colour, compact fields keep the standard height on coarse pointers (#1358), and a textarea in a stacked label uses the shared field (#1355).
+- **Type-scale tokens and a monospace token replace near-token font sizes (#1352/#1353/#1359).**
+- **Spacing, the yes/no override control and the drawer height were adjusted after owner review (#1345/#1347/#1335).**
+
+### Fixed
+
+- **Composite house cusps stay in zodiacal order when the base cusps are nearly opposite (#1402).**
+- **Astrocartography labels are decluttered at phone width (#1370),** and the timeline shows fewer year ticks at narrow widths (#1369).
+- **Server and sync errors have stable codes so they translate (#1365),** and life-event save failures show translated text rather than raw error text.
+
+### Documentation
+
+- The Solar Fire manual and the Davison Synastry book are indexed in the references, along with the progression conventions file.
+
+### Notes for people running their own server
+
+- No database migration, no new environment variables and no new `src/` files in the Dockerfile's copy list.
+
 ## [0.52.0] — 2026-11-09
 
 **A security-hardening release for the sync server's sign-in and session handling, plus a text alternative for the astrocartography map and a reordered person navigation. Signing in is required once more after upgrading.**
