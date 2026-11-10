@@ -12,11 +12,28 @@
 /**
  * @module life-events
  * @purpose Defines the `LifeEvent` type, the atomic reader and write guard for a person's `lifeEvents` register, and the owner-chosen ordering.
- * @conventions Pure and DOM-free; a list is read atomically, so one invalid row, a list over the cap, a repeated id or an impossible calendar date makes the whole list unreadable (undefined), never a repaired partial list; dates are checked against the proleptic Gregorian calendar and are not Julian-aware; the write guard throws on exactly what the reader rejects; the list is ordered by date, then time, with untimed events after timed ones on the same day, then by id.
- * @exports LifeEvent, LIFE_EVENTS_MAX, LIFE_EVENT_LABEL_MAX_CHARACTERS, LIFE_EVENT_ID_MAX_CHARACTERS, readLifeEvents, lifeEventsMutation, sortLifeEvents, LifeEventPickerOption, lifeEventPickerOptions
+ * @conventions Pure and DOM-free; a list is read atomically, so one invalid row, a list over the cap, a repeated id or an impossible calendar date or an unknown category makes the whole list unreadable (undefined), never a repaired partial list; dates are checked against the proleptic Gregorian calendar and are not Julian-aware; the write guard throws on exactly what the reader rejects; the list is ordered by date, then time, with untimed events after timed ones on the same day, then by id.
+ * @exports LifeEvent, LifeEventCategory, LIFE_EVENT_CATEGORIES, isLifeEventCategory, LIFE_EVENTS_MAX, LIFE_EVENT_LABEL_MAX_CHARACTERS, LIFE_EVENT_ID_MAX_CHARACTERS, readLifeEvents, lifeEventsMutation, sortLifeEvents, LifeEventPickerOption, lifeEventPickerOptions
  */
 import type { Mutation } from '../store/oplog.js';
 import type { JsonValue } from '../store/ops.js';
+
+/** The fixed category list (owner decision, 2026-11-10, #1439). */
+export const LIFE_EVENT_CATEGORIES = [
+  'marriage',
+  'career',
+  'relocation',
+  'health',
+  'bereavement',
+  'financial',
+  'other',
+] as const;
+
+export type LifeEventCategory = (typeof LIFE_EVENT_CATEGORIES)[number];
+
+export function isLifeEventCategory(value: unknown): value is LifeEventCategory {
+  return typeof value === 'string' && (LIFE_EVENT_CATEGORIES as readonly string[]).includes(value);
+}
 
 /** One dated event in a person's life. */
 export interface LifeEvent {
@@ -28,6 +45,8 @@ export interface LifeEvent {
   readonly time?: string | undefined;
   /** Reader-facing description, 1 to {@link LIFE_EVENT_LABEL_MAX_CHARACTERS} code points after trimming. */
   readonly label: string;
+  /** Optional category from {@link LIFE_EVENT_CATEGORIES}; absent on events stored before #1439. */
+  readonly category?: LifeEventCategory | undefined;
 }
 
 /**
@@ -65,14 +84,21 @@ function isCalendarDate(text: string): boolean {
 
 function readLifeEvent(candidate: unknown): LifeEvent | undefined {
   if (!isRecordValue(candidate)) return undefined;
-  const { id, date, time, label } = candidate;
+  const { id, date, time, label, category } = candidate;
   if (typeof id !== 'string' || id.length === 0 || id.length > LIFE_EVENT_ID_MAX_CHARACTERS) return undefined;
   if (typeof date !== 'string' || !isCalendarDate(date)) return undefined;
   if (time !== undefined && (typeof time !== 'string' || !TIME_PATTERN.test(time))) return undefined;
+  if (category !== undefined && !isLifeEventCategory(category)) return undefined;
   if (typeof label !== 'string') return undefined;
   const trimmed = label.trim();
   if (trimmed === '' || Array.from(trimmed).length > LIFE_EVENT_LABEL_MAX_CHARACTERS) return undefined;
-  return { id, date, ...(time === undefined ? {} : { time }), label: trimmed };
+  return {
+    id,
+    date,
+    ...(time === undefined ? {} : { time }),
+    label: trimmed,
+    ...(category === undefined ? {} : { category }),
+  };
 }
 
 /**
@@ -114,6 +140,7 @@ export function lifeEventsMutation(personId: string, events: readonly LifeEvent[
       date: event.date,
       ...(event.time === undefined ? {} : { time: event.time }),
       label: event.label,
+      ...(event.category === undefined ? {} : { category: event.category }),
     })) satisfies JsonValue,
   };
 }
@@ -150,6 +177,8 @@ export interface LifeEventPickerOption {
   readonly dateLabel: string;
   /** The event's own label. */
   readonly label: string;
+  /** The event's category, when it has one. */
+  readonly category?: LifeEventCategory | undefined;
 }
 
 /** The events as picker options, in {@link sortLifeEvents} order (untimed after timed on the same day). */
@@ -159,5 +188,6 @@ export function lifeEventPickerOptions(events: readonly LifeEvent[]): readonly L
     isoDate: event.date,
     dateLabel: event.time === undefined ? event.date : `${event.date} ${event.time}`,
     label: event.label,
+    ...(event.category === undefined ? {} : { category: event.category }),
   }));
 }
