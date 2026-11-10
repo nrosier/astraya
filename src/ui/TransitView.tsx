@@ -57,6 +57,7 @@ import { BiWheelSelectionPanel } from './BiWheelSelectionPanel.js';
 import { biWheelSelectionPanelMessages } from './BiWheelSelectionPanel.messages.js';
 import { resolveBiWheelSelection } from './bi-wheel-selection.js';
 import { useWheelIsolation } from './wheel-interaction.js';
+import { PatchedWheel } from './wheel-morph.js';
 import {
   chartRulerKeysOf,
   filterTransits,
@@ -379,10 +380,10 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
             />
 
             <p className="hint chart-wheel-hint">{wheelT.hint}</p>
-            <div
+            <PatchedWheel
               ref={wheelRef}
               className="chart-wheel chart-wheel-interactive"
-              dangerouslySetInnerHTML={{ __html: wheelMarkup }}
+              markup={wheelMarkup}
               onClick={handleWheelClick}
               onKeyDown={handleWheelKeyDown}
             />
