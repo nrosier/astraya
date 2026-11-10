@@ -17,15 +17,7 @@
 import { useEffect, useId, useState } from 'react';
 import { draftFrom, draftToMutations, timeToHhMm, validateDraft, type Draft } from '../domain/person-form.js';
 import { personFormValidationMessages } from '../domain/person-form.messages.js';
-import { lifeEventsMutation } from '../domain/life-events.js';
 import { LifeEventsCard } from './LifeEventsCard.js';
-import {
-  lifeEventsChanged,
-  rowsFromEvents,
-  rowsToEvents,
-  validateLifeEventRows,
-  type LifeEventRow,
-} from './life-events-draft.js';
 import { formatOffset, resolveMoment } from '../time/resolve.js';
 import { hrefFor } from './feature-registry.js';
 import { Button } from './primitives/Button.js';
@@ -133,8 +125,6 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
   // edit while this form is open is not silently hidden behind a mount-time snapshot.
   const opened = person === undefined ? undefined : draftFrom(person);
   const [draft, setDraft] = useState<Draft | undefined>(undefined);
-  // The Life events rows (#1399), held beside the draft; undefined until the first edit so they track the store too.
-  const [lifeRowsDraft, setLifeRowsDraft] = useState<readonly LifeEventRow[] | undefined>(undefined);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string>();
 
@@ -170,17 +160,11 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
   const resolved = moment === undefined ? undefined : resolveMoment(moment);
   // Dirty means the same as a save would write: a whitespace-only edit that normalises back to the stored value is
   // not a change. A draft that does not validate cannot be diffed into mutations, so any field difference counts.
-  const storedLifeEvents = person.lifeEvents ?? [];
-  const lifeRows = lifeRowsDraft ?? rowsFromEvents(storedLifeEvents);
-  const lifeEventsInvalid = validateLifeEventRows(lifeRows, t).size > 0;
-  // An unreadable stored list is never edited or rewritten, so it cannot make the record dirty.
-  const lifeEventsDirty = person.lifeEventsUnreadable !== true && lifeEventsChanged(lifeRows, storedLifeEvents);
   const dirty =
-    (opened !== undefined &&
-      (moment === undefined
-        ? (Object.keys(current) as (keyof Draft)[]).some((field) => current[field] !== opened[field])
-        : draftToMutations(personId, current, opened, validationT).length > 0)) ||
-    lifeEventsDirty;
+    opened !== undefined &&
+    (moment === undefined
+      ? (Object.keys(current) as (keyof Draft)[]).some((field) => current[field] !== opened[field])
+      : draftToMutations(personId, current, opened, validationT).length > 0);
 
   // `onPick` below needs to update latitude and longitude together: two separate `set` calls in
   // the same handler would both close over this render's `current` and the second would clobber
@@ -194,22 +178,16 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
   };
 
   const save = (): void => {
-    if (opened === undefined || moment === undefined || lifeEventsInvalid) return;
-    const mutations = [
-      ...draftToMutations(personId, current, opened, validationT),
-      ...(lifeEventsDirty ? [lifeEventsMutation(personId, rowsToEvents(lifeRows))] : []),
-    ];
+    if (opened === undefined || moment === undefined) return;
+    const mutations = draftToMutations(personId, current, opened, validationT);
     if (mutations.length === 0) return;
     setSaving(true);
     setSaveError(undefined);
     void store
       .mutate(mutations)
-      .then(() => {
-        // The draft is deliberately not reset to the stored person here. The store's state is
-        // already the authority, and re-deriving the draft would fight the user's cursor. Once the
-        // store holds the draft, `dirty` is false and the header reads Saved again.
-        setLifeRowsDraft(undefined);
-      })
+      // The draft is deliberately not reset to the stored person on success. The store's state is
+      // already the authority, and re-deriving the draft would fight the user's cursor. Once the
+      // store holds the draft, `dirty` is false and the header reads Saved again.
       .catch((cause: unknown) => {
         setSaveError(errorDetail(cause));
       })
@@ -241,11 +219,10 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
           <Button
             variant={dirty ? 'primary' : 'quiet'}
             onClick={save}
-            disabled={saving || !dirty || moment === undefined || lifeEventsInvalid}
+            disabled={saving || !dirty || moment === undefined}
           >
             {saving ? t.saving : dirty ? t.saveButton : t.savedButton}
           </Button>
-          {moment !== undefined && lifeEventsInvalid && <span className="muted">{t.lifeEventsFixHint}</span>}
           {moment === undefined && (
             <span className="muted">
               {/* Why the button is disabled, next to the button. A disabled control with no
@@ -457,9 +434,10 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
           </section>
 
           <LifeEventsCard
-            rows={lifeRows}
+            personId={personId}
+            personName={person.displayName ?? ''}
+            events={person.lifeEvents ?? []}
             unreadable={person.lifeEventsUnreadable === true}
-            onChange={setLifeRowsDraft}
           />
 
           <section className="birth-record-card birth-record-card--timezone" aria-label={t.timezoneDetailsTitle}>
@@ -546,7 +524,6 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
             accuracyLabels={accuracyOptions(t)}
             onReplaced={() => {
               setDraft(undefined);
-              setLifeRowsDraft(undefined);
             }}
           />
 

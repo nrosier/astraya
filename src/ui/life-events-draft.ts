@@ -6,10 +6,12 @@
  * @module life-events-draft
  * @purpose Row draft type, conversion to and from `LifeEvent`, per-row validation and the dirty comparison for the birth record's Life events card.
  * @conventions Pure and DOM-free; rows are strings as typed (an empty time means no time); validation reuses `readLifeEvents` for the calendar check so the editor refuses exactly what the store would; error text comes from the caller's catalogue, never from here; the displayed order is `sortLifeEvents`'s.
- * @exports LifeEventRow, rowsFromEvents, rowsToEvents, validateLifeEventRows, lifeEventsChanged, LifeEventRowErrors
+ * @exports LifeEventRow, LifeEventView, LIFE_EVENT_NO_CATEGORY, viewLifeEvents, rowsFromEvents, rowsToEvents, validateLifeEventRows, lifeEventsChanged, LifeEventRowErrors
  */
 import {
   LIFE_EVENT_LABEL_MAX_CHARACTERS,
+  isLifeEventCategory,
+  type LifeEventCategory,
   readLifeEvents,
   sortLifeEvents,
   type LifeEvent,
@@ -22,6 +24,8 @@ export interface LifeEventRow {
   readonly date: string;
   readonly time: string;
   readonly label: string;
+  /** The category, when the event has one (#1439); rows that do not touch it carry it through unchanged. */
+  readonly category?: LifeEventCategory | undefined;
 }
 
 export interface LifeEventRowErrors {
@@ -36,6 +40,7 @@ export function rowsFromEvents(events: readonly LifeEvent[]): readonly LifeEvent
     date: event.date,
     time: event.time ?? '',
     label: event.label,
+    ...(event.category === undefined ? {} : { category: event.category }),
   }));
 }
 
@@ -47,6 +52,7 @@ export function rowsToEvents(rows: readonly LifeEventRow[]): readonly LifeEvent[
       date: row.date,
       ...(row.time === '' ? {} : { time: row.time }),
       label: row.label.trim(),
+      ...(row.category === undefined ? {} : { category: row.category }),
     })),
   );
 }
@@ -90,8 +96,34 @@ export function lifeEventsChanged(rows: readonly LifeEventRow[], stored: readonl
         old.id !== event.id ||
         old.date !== event.date ||
         old.time !== event.time ||
-        old.label !== event.label
+        old.label !== event.label ||
+        old.category !== event.category
       );
     })
   );
+}
+
+/** The drawer's category filter value for events that have no category. */
+export const LIFE_EVENT_NO_CATEGORY = 'none';
+
+/** What the drawer's toolbar asks for: `category` is '' for all, `none` for uncategorised, or a category. */
+export interface LifeEventView {
+  readonly search: string;
+  readonly category: '' | typeof LIFE_EVENT_NO_CATEGORY | LifeEventCategory;
+  readonly direction: 'asc' | 'desc';
+}
+
+/**
+ * The events the drawer table shows: filtered by a case-insensitive match on the description and by category, then in
+ * date order (`sortLifeEvents`'s, reversed for descending).
+ */
+export function viewLifeEvents(events: readonly LifeEvent[], view: LifeEventView): readonly LifeEvent[] {
+  const needle = view.search.trim().toLocaleLowerCase();
+  const kept = sortLifeEvents(events).filter((event) => {
+    if (needle !== '' && !event.label.toLocaleLowerCase().includes(needle)) return false;
+    if (view.category === '') return true;
+    if (view.category === LIFE_EVENT_NO_CATEGORY) return event.category === undefined;
+    return isLifeEventCategory(view.category) && event.category === view.category;
+  });
+  return view.direction === 'asc' ? kept : [...kept].reverse();
 }
