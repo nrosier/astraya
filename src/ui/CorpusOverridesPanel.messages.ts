@@ -23,6 +23,8 @@ const en = {
   tagLabel: 'Tag',
   allTags: 'All tags',
   overriddenOnlyLabel: 'Overridden only',
+  overriddenOnlyYes: 'Yes',
+  overriddenOnlyNo: 'No',
 
   loadingCorpus: 'Loading corpus…',
   couldNotLoad: (message: string) => `Could not load the corpus: ${message}`,
@@ -80,6 +82,8 @@ const nl: typeof en = {
   tagLabel: 'Label',
   allTags: 'Alle labels',
   overriddenOnlyLabel: 'Alleen gecorrigeerd',
+  overriddenOnlyYes: 'Ja',
+  overriddenOnlyNo: 'Nee',
 
   loadingCorpus: 'Corpus laden…',
   couldNotLoad: (message: string) => `Kan het corpus niet laden: ${message}`,

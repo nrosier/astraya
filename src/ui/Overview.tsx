@@ -163,80 +163,83 @@ export function Overview({ personId }: { readonly personId: string }): React.JSX
       <PageHeader title={t.heading(person.displayName || t.personFallback)} basis={basisLine} />
 
       <div className="overview-grid">
-        <section className="overview-card" aria-labelledby="overview-health-heading">
-          <h2 id="overview-health-heading">{t.healthHeading}</h2>
-          <p className="overview-summary">{summary(person, locale)}</p>
-          {health.length === 0 ? (
-            <p className="hint">{t.healthClear}</p>
-          ) : (
-            <ul className="overview-health">
-              {health.map((item) => (
-                <li key={item.what}>
-                  <span>{healthText(t, item)}</span>{' '}
-                  <a className="standalone-link" href={birthRecordFixHref(personId, item.focus)}>
-                    {t.healthFix[item.focus]}
-                  </a>
-                </li>
-              ))}
-            </ul>
+        <div className="overview-column">
+          <section className="overview-card" aria-labelledby="overview-health-heading">
+            <h2 id="overview-health-heading">{t.healthHeading}</h2>
+            <p className="overview-summary">{summary(person, locale)}</p>
+            {health.length === 0 ? (
+              <p className="hint">{t.healthClear}</p>
+            ) : (
+              <ul className="overview-health">
+                {health.map((item) => (
+                  <li key={item.what}>
+                    <span>{healthText(t, item)}</span>{' '}
+                    <a className="standalone-link" href={birthRecordFixHref(personId, item.focus)}>
+                      {t.healthFix[item.focus]}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {now !== undefined && (
+            <section className="overview-card" aria-labelledby="overview-now-heading">
+              <h2 id="overview-now-heading">{t.nowHeading}</h2>
+              <p className="overview-now">
+                <a className="standalone-link" href={hrefFor('consultation', { personId })}>
+                  {t.nowLine(
+                    signDisplayName(now.sign, locale),
+                    ordinal(now.house, locale),
+                    bodyDisplayName(now.lord, locale),
+                  )}
+                </a>
+              </p>
+            </section>
           )}
-        </section>
 
-        {person.moment !== undefined && (
-          <OverviewWheel
-            moment={personMoment ?? person.moment}
-            settings={personSettings}
-            rulership={rulership}
-            name={person.displayName || t.personFallback}
-            href={hrefFor('chart', { personId })}
-            heading={t.wheelHeading}
-            label={t.openChart}
-          />
-        )}
-
-        {now !== undefined && (
-          <section className="overview-card" aria-labelledby="overview-now-heading">
-            <h2 id="overview-now-heading">{t.nowHeading}</h2>
-            <p className="overview-now">
-              <a className="standalone-link" href={hrefFor('consultation', { personId })}>
-                {t.nowLine(
-                  signDisplayName(now.sign, locale),
-                  ordinal(now.house, locale),
-                  bodyDisplayName(now.lord, locale),
-                )}
-              </a>
-            </p>
-          </section>
-        )}
-
-        {resume.length > 0 && (
-          <section className="overview-card" aria-labelledby="overview-resume-heading">
-            <h2 id="overview-resume-heading">{t.resumeHeading}</h2>
+          <section className="overview-card" aria-labelledby="overview-next-heading">
+            <h2 id="overview-next-heading">{t.nextActionsHeading}</h2>
+            {!hasBirthMoment && <p className="hint">{t.completeBirthRecordFirst}</p>}
             <ul className="overview-actions">
-              {resume.map((item) => (
-                <li key={item.key}>
-                  <a href={item.href}>{item.label}</a>
+              {actions.map((action) => (
+                <li key={action.key}>
+                  {action.alwaysEnabled || hasBirthMoment ? (
+                    <a href={action.href}>{action.label}</a>
+                  ) : (
+                    <span className="hint">{action.label}</span>
+                  )}
                 </li>
               ))}
             </ul>
           </section>
-        )}
 
-        <section className="overview-card" aria-labelledby="overview-next-heading">
-          <h2 id="overview-next-heading">{t.nextActionsHeading}</h2>
-          {!hasBirthMoment && <p className="hint">{t.completeBirthRecordFirst}</p>}
-          <ul className="overview-actions">
-            {actions.map((action) => (
-              <li key={action.key}>
-                {action.alwaysEnabled || hasBirthMoment ? (
-                  <a href={action.href}>{action.label}</a>
-                ) : (
-                  <span className="hint">{action.label}</span>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
+          {resume.length > 0 && (
+            <section className="overview-card" aria-labelledby="overview-resume-heading">
+              <h2 id="overview-resume-heading">{t.resumeHeading}</h2>
+              <ul className="overview-actions">
+                {resume.map((item) => (
+                  <li key={item.key}>
+                    <a href={item.href}>{item.label}</a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </div>
+        <div className="overview-column">
+          {person.moment !== undefined && (
+            <OverviewWheel
+              moment={personMoment ?? person.moment}
+              settings={personSettings}
+              rulership={rulership}
+              name={person.displayName || t.personFallback}
+              href={hrefFor('chart', { personId })}
+              heading={t.wheelHeading}
+              label={t.openChart}
+            />
+          )}
+        </div>
       </div>
     </main>
   );
