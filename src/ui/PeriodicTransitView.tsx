@@ -156,7 +156,13 @@ export function contactRows(aspects: readonly Aspect[], locale: Locale): readonl
 export function contactColumns(t: typeof periodicTransitViewMessages.en): readonly TableColumn<ContactRow>[] {
   return [
     { key: 'sentence', label: t.forecastLabel, valueOf: (row) => row.sentence },
-    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => formatOrb(row.orb) },
+    {
+      key: 'orb',
+      label: t.orbLabel,
+      valueOf: (row) => row.orb,
+      render: (row) => formatOrb(row.orb),
+      align: 'start',
+    },
     {
       key: 'applying',
       label: t.applyingLabel,
@@ -202,7 +208,14 @@ export function exactEventRows(
 /** Exported for `pdf-export-plan.ts` (#441): reused as-is for the PDF export's Forecast section. */
 export function exactEventColumns(t: typeof periodicTransitViewMessages.en): readonly TableColumn<ExactEventRow>[] {
   return [
-    { key: 'jd', label: t.exactLabel, valueOf: (row) => row.jd, render: (row) => row.date },
+    {
+      key: 'jd',
+      label: t.exactLabel,
+      valueOf: (row) => row.jd,
+      render: (row) => row.date,
+      align: 'start',
+      wrapText: true,
+    },
     { key: 'sentence', label: t.forecastLabel, valueOf: (row) => row.sentence },
   ];
 }
