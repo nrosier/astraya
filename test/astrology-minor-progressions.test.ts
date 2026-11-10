@@ -1,4 +1,6 @@
+// #1403: these tests built the target date from a literal 365.2425; the year constant is now 365.2422, so they use TROPICAL_YEAR_DAYS (old 365.2425, new 365.2422) and the expected values are unchanged.
 import { describe, expect, it } from 'vitest';
+import { TROPICAL_YEAR_DAYS } from '../src/astrology/progressions.js';
 import {
   SYNODIC_MONTH_DAYS,
   ageInSynodicMonths,
@@ -31,13 +33,13 @@ describe('minorProgressedJulianDay (#48)', () => {
 
   it('minor: the day offset equals the age in years, converted to lunar months', () => {
     const natalJd = 2440000;
-    const targetJd = natalJd + 365.2425 * 3; // 3 years of real time
+    const targetJd = natalJd + TROPICAL_YEAR_DAYS * 3; // 3 years of real time
     expect(minorProgressedJulianDay('minor', natalJd, targetJd)).toBeCloseTo(natalJd + 3 * SYNODIC_MONTH_DAYS, 6);
   });
 
   it('gives tertiary and minor different progressed days for the same target, since the substitutions differ', () => {
     const natalJd = 2440000;
-    const targetJd = natalJd + 365.2425 * 5;
+    const targetJd = natalJd + TROPICAL_YEAR_DAYS * 5;
     const tertiary = minorProgressedJulianDay('tertiary', natalJd, targetJd);
     const minor = minorProgressedJulianDay('minor', natalJd, targetJd);
     expect(Math.abs(tertiary - minor)).toBeGreaterThan(1);

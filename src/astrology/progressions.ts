@@ -48,8 +48,14 @@ import type {
 
 export type ProgressedMcMethod = 'quotidian' | 'naibod' | 'solarArc';
 
-/** The mean tropical year, in days — the standard day-for-year divisor. */
-export const TROPICAL_YEAR_DAYS = 365.2425;
+/**
+ * The mean tropical year, in days — the day-for-year divisor. 365.2422 is the
+ * mean tropical year (Meeus, Astronomical Algorithms, 2nd ed., ch. 10: 365.242189
+ * days at J2000, rounded to four decimals; the Sun's mean longitude rate).
+ * Until #1403 this was 365.2425, the Gregorian calendar mean, which is not the
+ * tropical year; the difference is about 6 seconds of progressed time at age 80.
+ */
+export const TROPICAL_YEAR_DAYS = 365.2422;
 
 /** The mean Sun's daily motion, in degrees — Naibod's key. */
 export const NAIBOD_DAILY_MOTION: Degrees = 360 / TROPICAL_YEAR_DAYS;

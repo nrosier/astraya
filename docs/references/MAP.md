@@ -6,6 +6,7 @@ Reference archive for the astrology corpus. Copyrighted extracted text stays loc
 - `SCHEMA.md` — Record format of `sources.json`: fields, id convention, status values. Deps: `sources.json`, `test/docs-references-integrity.test.ts`.
 - `orb-conventions.references.json` — Lilly's 1647 orb table, combustion bands, fortitudes and horary considerations with locators (#590). Deps: `src/astrology/orb-profiles.ts`, `test/astrology-cited-orb-presets.test.ts`.
 - `derived-points.references.json` — Curated Part of Fortune and Part of Spirit passages with source and locator (#517). Deps: `tools/corpus-gen/classical-texts/derived-point.rules.json`, `test/docs-references.test.ts`.
+- `progression-conventions.references.json` — Source of the progression year constant (mean tropical year 365.2422) and the old Gregorian value, with the Naibod key (#1403). Deps: `src/astrology/progressions.ts`, `test/progression-year-constant.test.ts`.
 - `aaf-chunks.references.json` — AAF'97 chunk and field grammar with section numbers (#591). Deps: `src/domain/aaf.ts`.
 - `sources.json` — Tracked citation index of 45 source records (metadata, sha256, status; no copyrighted text). Placidus, Valens, the Yemen verification CSV and Lilly book 2 are status `missing` and are never reconstructed. Deps: `test/docs-references-integrity.test.ts`.
 - `sources/` — Local, gitignored originals in `pdf/`, `apa/` and `ocr/`; exists only on the Mac checkout holding the sources. Deps: `sources.json`.
