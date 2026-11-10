@@ -9,6 +9,12 @@ const en = {
   label: 'Life event',
   placeholder: 'Pick a life event…',
   option: (dateLabel: string, label: string) => `${dateLabel} — ${label}`,
+  filterTitle: 'Filter by category',
+  filterShow: 'Show',
+  filterHide: 'Hide',
+  filterSummary: (shown: number, total: number) => `${String(shown)} of ${String(total)} events`,
+  filterAll: 'All categories',
+  filterEmpty: 'No life events in the chosen categories.',
   returnError: (message: string) => `The return at this event could not be found: ${message}`,
 };
 
@@ -16,6 +22,12 @@ const nl: typeof en = {
   label: 'Levensgebeurtenis',
   placeholder: 'Kies een levensgebeurtenis…',
   option: (dateLabel: string, label: string) => `${dateLabel} — ${label}`,
+  filterTitle: 'Filter op categorie',
+  filterShow: 'Tonen',
+  filterHide: 'Verbergen',
+  filterSummary: (shown: number, total: number) => `${String(shown)} van ${String(total)} gebeurtenissen`,
+  filterAll: 'Alle categorieën',
+  filterEmpty: 'Geen levensgebeurtenissen in de gekozen categorieën.',
   returnError: (message: string) => `De terugkeer bij deze gebeurtenis kon niet worden gevonden: ${message}`,
 };
 

@@ -23,7 +23,8 @@
  * @exports TransitView, contactColumns
  */
 
-import { DateField } from './primitives/DateField.js';
+import { DateAnimationBar } from './DateAnimationBar.js';
+import { useAsOfDate } from './use-as-of-date.js';
 import { GlossaryText } from './GlossaryText.js';
 import { personHref } from './route.js';
 import { houseSystemLabel, rulershipLabel, zodiacLabel } from './ChartView.js';
@@ -49,13 +50,14 @@ import { renderMultiWheelSvg, type CrossRingAspects } from '../chart/multi-wheel
 import { findVoidOfCourseMoon, type VoidOfCourseMoon } from '../astrology/void-of-course.js';
 import { voidOfCourseSentence } from './void-of-course-text.js';
 import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
-import { formatOrb, formatTimestamp, todayInputValue } from './format.js';
+import { formatOrb, formatTimestamp } from './format.js';
 import { buildFocusObjectContext } from '../interpretation/focus-context.js';
 import { FocusInterpretation } from './FocusInterpretation.js';
 import { BiWheelSelectionPanel } from './BiWheelSelectionPanel.js';
 import { biWheelSelectionPanelMessages } from './BiWheelSelectionPanel.messages.js';
 import { resolveBiWheelSelection } from './bi-wheel-selection.js';
 import { useWheelIsolation } from './wheel-interaction.js';
+import { PatchedWheel } from './wheel-morph.js';
 import {
   chartRulerKeysOf,
   filterTransits,
@@ -129,7 +131,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
   const personMoment = useStableMoment(person?.moment);
   const t = useMessages(transitViewMessages);
   const [locale] = useLocale();
-  const [asOf, setAsOf] = useState(todayInputValue);
+  const [asOf, setAsOf, setPlayback] = useAsOfDate();
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   // The orbs are the device's Extended settings (#590): transits use the same orbs as the natal chart.
@@ -224,6 +226,9 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
         : [],
     [load, filter, rules],
   );
+
+  // Rebuilt only when the contacts change, so an unrelated render (a playback step's state) hands the table the same rows.
+  const contactRows = useMemo(() => crossAspectRows(shownContacts), [shownContacts]);
 
   const wheelMarkup = useMemo(() => {
     if (load.kind !== 'ready') return undefined;
@@ -340,8 +345,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
         titleTerm="transit"
         basis={basisLine}
       >
-        {/* The as-of date, the transit filter button and Export sit in the heading row, to the right (#1227, owner review 2026-11-07). */}
-        <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
+        {/* The transit filter button and Export sit in the heading row, to the right (#1227, owner review 2026-11-07); the date has its own bar below (#1400). */}
         {load.kind === 'ready' && wheelMarkup !== undefined && (
           <TransitFilterButton
             filter={filter}
@@ -352,6 +356,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
           />
         )}
       </PageHeader>
+      <DateAnimationBar date={asOf} onDateChange={setAsOf} onPlayingChange={setPlayback} />
       <p className="hint">
         <GlossaryText text={t.hint(person.displayName || t.thisPerson)} />
       </p>
@@ -375,10 +380,10 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
             />
 
             <p className="hint chart-wheel-hint">{wheelT.hint}</p>
-            <div
+            <PatchedWheel
               ref={wheelRef}
               className="chart-wheel chart-wheel-interactive"
-              dangerouslySetInnerHTML={{ __html: wheelMarkup }}
+              markup={wheelMarkup}
               onClick={handleWheelClick}
               onKeyDown={handleWheelKeyDown}
             />
@@ -407,7 +412,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
               caption={t.contactsCaption}
               headingLevel={2}
               columns={contactColumns(t, locale)}
-              rows={crossAspectRows(shownContacts)}
+              rows={contactRows}
               getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
               downloadFilename={deriveExportFilename(person.displayName, 'transit-contacts', 'csv')}
             />

@@ -117,6 +117,58 @@ describe('buildPdfPlan', () => {
     expect(section.fields.some((f) => f.value === 'Recorded (certificate or hospital record)')).toBe(true);
   }, 30_000);
 
+  describe('life events table (#1399)', () => {
+    const withEvents = (lifeEvents: Person['lifeEvents'], provider: PdfPlanContext['provider']): PdfPlanContext => ({
+      person: { ...ADA, lifeEvents },
+      provider,
+      settings: DEFAULT_EXTENDED_SETTINGS,
+      rulership: DEFAULT_RULERSHIP_CHOICE,
+      locale: 'en',
+      corpusFetch,
+    });
+    const selection: PdfSelection = { personId: ADA.id, ...EMPTY_SELECTION, birthRecord: true };
+
+    it('lists events by date, then time, untimed after timed on the same day, after the map', async () => {
+      const context = withEvents(
+        [
+          { id: 'e1', date: '1835-07-08', label: 'Married' },
+          { id: 'e2', date: '1833-06-05', label: 'Met Babbage' },
+          { id: 'e3', date: '1835-07-08', time: '15:30', label: 'Afternoon' },
+          { id: 'e4', date: '1835-07-08', time: '09:00', label: 'Morning' },
+        ],
+        await getEngine(),
+      );
+      const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
+      const [section] = plan.sections;
+      if (section?.kind !== 'fields') throw new Error('expected a fields section');
+      expect(section.map).toBeDefined();
+      expect(Object.keys(section)).toEqual(['kind', 'heading', 'fields', 'map', 'lifeEvents']);
+      expect(section.lifeEvents?.caption).toBe('Life events');
+      expect(section.lifeEvents?.head).toEqual(['Date', 'Time', 'Label']);
+      expect(section.lifeEvents?.body).toEqual([
+        ['1833-06-05', '', 'Met Babbage'],
+        ['1835-07-08', '09:00', 'Morning'],
+        ['1835-07-08', '15:30', 'Afternoon'],
+        ['1835-07-08', '', 'Married'],
+      ]);
+    }, 30_000);
+
+    it('omits the table when there are no events', async () => {
+      const provider = await getEngine();
+      for (const lifeEvents of [undefined, []] as const) {
+        const plan = await buildPdfPlan(
+          selection,
+          { ...withEvents(lifeEvents, provider) },
+          chartViewMessages.en,
+          pdfExportMessages.en,
+        );
+        const [section] = plan.sections;
+        if (section?.kind !== 'fields') throw new Error('expected a fields section');
+        expect(section.lifeEvents).toBeUndefined();
+      }
+    }, 30_000);
+  });
+
   it('builds a natal chart section with a wheel and the requested tables, in sign with reality', async () => {
     const provider = await getEngine();
     const selection: PdfSelection = {

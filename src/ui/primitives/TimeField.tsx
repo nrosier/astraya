@@ -20,6 +20,8 @@ export interface TimeFieldProps {
   /** Seconds between steps; `1` shows and accepts seconds. */
   readonly step?: number | undefined;
   readonly disabled?: boolean | undefined;
+  /** The label stays for assistive technology but is not drawn, e.g. a time inside a table cell (#1439). */
+  readonly hideLabel?: boolean | undefined;
   /** Another element's id that also describes this field, e.g. the reason it is disabled. */
   readonly extraDescribedBy?: string | undefined;
 }
@@ -33,11 +35,12 @@ export function TimeField({
   optional,
   step,
   disabled,
+  hideLabel,
   extraDescribedBy,
 }: TimeFieldProps): React.JSX.Element {
   const ids = useFieldIds(help !== undefined, error !== undefined, extraDescribedBy);
   return (
-    <Field label={label} ids={ids} help={help} error={error} optional={optional}>
+    <Field label={label} ids={ids} help={help} error={error} optional={optional} hideLabel={hideLabel}>
       <input
         id={ids.inputId}
         type="time"
