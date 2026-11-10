@@ -1,3 +1,4 @@
+// #1403: these tests built the target date from a literal 365.2425; the year constant is now 365.2422, so they use TROPICAL_YEAR_DAYS (old 365.2425, new 365.2422) and the expected values are unchanged.
 /**
  * Integration tests for computeSecondaryProgression (#46).
  *
@@ -7,7 +8,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { angularSeparation } from '../src/astrology/aspects.js';
-import { NAIBOD_DAILY_MOTION } from '../src/astrology/progressions.js';
+import { NAIBOD_DAILY_MOTION, TROPICAL_YEAR_DAYS } from '../src/astrology/progressions.js';
 import { computeSecondaryProgression } from '../src/domain/secondary-progression.js';
 import { julianDayFor } from '../src/time/julian.js';
 import { resolveMoment } from '../src/time/resolve.js';
@@ -26,7 +27,7 @@ describe('computeSecondaryProgression (#46)', () => {
   it('progresses bodies by day-for-year: 30 years of age is 30 days of ephemeris motion', async () => {
     const engine = await getEngine();
     const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
-    const targetJd = natalJd + 365.2425 * 30;
+    const targetJd = natalJd + TROPICAL_YEAR_DAYS * 30;
 
     const progressed = await computeSecondaryProgression(NATAL, targetJd, engine);
     expect(progressed.ageInYears).toBeCloseTo(30, 6);
@@ -44,7 +45,7 @@ describe('computeSecondaryProgression (#46)', () => {
   it('shifts naibod houses by the mean solar rate times age, regardless of the true sun', async () => {
     const engine = await getEngine();
     const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
-    const targetJd = natalJd + 365.2425 * 10; // 10 years of age
+    const targetJd = natalJd + TROPICAL_YEAR_DAYS * 10; // 10 years of age
 
     const natalHouses = await engine.houses(natalJd, NATAL_PLACE, 'P');
     const progressed = await computeSecondaryProgression(NATAL, targetJd, engine, { mcMethod: 'naibod' });
@@ -56,7 +57,7 @@ describe('computeSecondaryProgression (#46)', () => {
   it('gives solarArc a different midheaven than naibod, since the true and mean sun rates differ', async () => {
     const engine = await getEngine();
     const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
-    const targetJd = natalJd + 365.2425 * 10;
+    const targetJd = natalJd + TROPICAL_YEAR_DAYS * 10;
 
     const naibod = await computeSecondaryProgression(NATAL, targetJd, engine, { mcMethod: 'naibod' });
     const solarArc = await computeSecondaryProgression(NATAL, targetJd, engine, { mcMethod: 'solarArc' });
@@ -67,7 +68,7 @@ describe('computeSecondaryProgression (#46)', () => {
   it('gives quotidian a markedly different ascendant than the symbolic methods over a decade', async () => {
     const engine = await getEngine();
     const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
-    const targetJd = natalJd + 365.2425 * 10;
+    const targetJd = natalJd + TROPICAL_YEAR_DAYS * 10;
 
     const naibod = await computeSecondaryProgression(NATAL, targetJd, engine, { mcMethod: 'naibod' });
     const quotidian = await computeSecondaryProgression(NATAL, targetJd, engine, { mcMethod: 'quotidian' });
@@ -88,7 +89,7 @@ describe('computeSecondaryProgression (#46)', () => {
   it('finds contacts between the progressed positions and the fixed natal chart (#51)', async () => {
     const engine = await getEngine();
     const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
-    const targetJd = natalJd + 365.2425 * 30;
+    const targetJd = natalJd + TROPICAL_YEAR_DAYS * 30;
 
     const progressed = await computeSecondaryProgression(NATAL, targetJd, engine);
     const natal = await computeSecondaryProgression(NATAL, natalJd, engine);
@@ -107,7 +108,7 @@ describe('computeSecondaryProgression (#46)', () => {
   it('narrows to fewer contacts with a tighter orb config (#51)', async () => {
     const engine = await getEngine();
     const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
-    const targetJd = natalJd + 365.2425 * 30;
+    const targetJd = natalJd + TROPICAL_YEAR_DAYS * 30;
 
     const wide = await computeSecondaryProgression(NATAL, targetJd, engine);
     const tight = await computeSecondaryProgression(NATAL, targetJd, engine, {

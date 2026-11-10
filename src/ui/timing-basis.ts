@@ -11,20 +11,21 @@ import type { timingBasisMessages } from './timing-basis.messages.js';
 
 export type TimingBasisWords = (typeof timingBasisMessages)['en'];
 
-/** The progression technique, and for secondary progressions the MC method the view is set to. */
+/** The progression technique, the MC method (secondary only) and the angle method in use. */
 export function progressionBasisItems(
   technique: 'secondary' | 'tertiary' | 'minor',
   mcMethod: ProgressedMcMethod,
   t: TimingBasisWords,
 ): readonly string[] {
+  // Tertiary and minor recompute bodies and houses at the progressed moment, i.e. the quotidian angle method.
   return technique === 'secondary'
-    ? [t.technique.secondary, t.mcMethod(t.mcMethods[mcMethod])]
-    : [t.technique[technique]];
+    ? [t.technique.secondary, t.mcMethod(t.mcMethods[mcMethod]), t.angleMethods[mcMethod]]
+    : [t.technique[technique], t.angleMethods.quotidian];
 }
 
-/** Solar arc directions use one key: the Sun's own progressed arc. */
+/** Solar arc directions use one key, the Sun's own progressed arc, and direct longitude only. */
 export function solarArcBasisItems(t: TimingBasisWords): readonly string[] {
-  return [t.solarArc];
+  return [t.solarArc, t.solarArcLongitude];
 }
 
 /** The primary-direction time key, semi-arc method and the fixed ±1° window of arc the view is set to. */

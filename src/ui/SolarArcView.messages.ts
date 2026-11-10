@@ -19,6 +19,7 @@ const en = {
 
   heading: (name: string) => `${name}’s Solar Arc Directions`,
   hint: 'Every natal body and angle is shifted by the same arc — the distance the Sun itself has moved since birth, in symbolic (a-day-for-a-year) time. Unlike a progressed chart, nothing here depends on a progressed Moon or planetary speed.',
+  declinationNote: 'Longitude only: declination is not directed.',
   asOfLabel: 'As of',
   nowLabel: 'Now',
   hintInfoLabel: 'About solar arc directions',
@@ -60,6 +61,7 @@ const nl: typeof en = {
 
   heading: (name: string) => `Solar arc-directies van ${name}`,
   hint: 'Elk natal hemellichaam en elke hoek wordt verschoven met dezelfde boog — de afstand die de Zon zelf heeft afgelegd sinds de geboorte, in symbolische (een-dag-voor-een-jaar) tijd. In tegenstelling tot een progressieve horoscoop hangt hier niets af van een progressieve Maan of planetaire snelheid.',
+  declinationNote: 'Alleen lengte: de declinatie wordt niet gedirigeerd.',
   asOfLabel: 'Vanaf',
   nowLabel: 'Nu',
   hintInfoLabel: 'Over zonneboogdirecties',
