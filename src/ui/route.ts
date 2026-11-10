@@ -32,7 +32,7 @@
  * @module ui/route
  * @purpose Pure hash-route parsing and construction for every screen in the app, on the one canonical scheme, plus one-time-token query extraction (set-password, setup).
  * @conventions Pure and separate from components so it is tested without a DOM; hash routing since the built app is static files with no server rewrite rule; ids are validated with domain/id.js's isPersonId rather than accepted as any string; an unknown, obsolete or malformed hash falls back to Home with no redirect or alias; `parseRoute(routeHref(r))` round-trips for every route.
- * @exports Route, ExportBuilderSection, PreferencesSection, PREFERENCES_SECTIONS, parseRoute, routeHref, chartHref, personHref, routeShowsBackLink, setPasswordToken, setupToken
+ * @exports Route, ExportBuilderSection, PreferencesSection, PREFERENCES_SECTIONS, parseRoute, routeHref, chartHref, hashDate, hashWithDate, personHref, routeShowsBackLink, setPasswordToken, setupToken
  */
 import { isPersonId } from '../domain/id.js';
 import { chartViewFromHash, isChartType, isChartView, type ChartType, type ChartViewKind } from './chart-sections.js';
@@ -401,6 +401,19 @@ function chartDateParam(value: string | null): string | undefined {
   return probe.getUTCFullYear() === year && probe.getUTCMonth() === month - 1 && probe.getUTCDate() === day
     ? value
     : undefined;
+}
+
+/** The `?date=YYYY-MM-DD` of a hash (#1400), or undefined when it is absent or not a real calendar day. */
+export function hashDate(hash: string): string | undefined {
+  return chartDateParam(new URLSearchParams(hash.split('?')[1] ?? '').get('date'));
+}
+
+/** `hash` with its `date` query value set to `date` (#1400), the path and every other query value kept. */
+export function hashWithDate(hash: string, date: string): string {
+  const [path = '', queryString = ''] = hash.split('?');
+  const query = new URLSearchParams(queryString);
+  query.set('date', date);
+  return `${path}?${query.toString()}`;
 }
 
 /** The hash of a person's birth record (Edit birth record). */
