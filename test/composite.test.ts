@@ -121,3 +121,37 @@ describe('computeComposite (#169)', () => {
     expect(withExtras.composite.aspects.length).toBeGreaterThan(withoutExtras.composite.aspects.length);
   });
 });
+
+describe('computeComposite house order with nearly opposite base cusps (#1402)', () => {
+  // Same instant at antipodal places: chart B's angles sit within a few degrees of chart A's
+  // opposite angles, so each cusp pair is nearly 180 degrees apart.
+  const OPPOSITE_A: BirthMomentInput = {
+    civil: { year: 1990, month: 6, day: 15, hour: 12, minute: 0, second: 0 },
+    coordinates: { latitude: 40, longitude: 10 },
+    offsetOverrideMinutes: 0,
+  };
+  const OPPOSITE_B: BirthMomentInput = {
+    civil: { year: 1990, month: 6, day: 15, hour: 12, minute: 0, second: 0 },
+    coordinates: { latitude: -39, longitude: -170 },
+    offsetOverrideMinutes: 0,
+  };
+
+  it('keeps the twelve composite cusps in zodiacal order', async () => {
+    const engine = await getEngine();
+    const { chartA, chartB, composite } = await computeComposite(OPPOSITE_A, OPPOSITE_B, engine);
+    const cusps = composite.houses.cusps.slice(1, 13);
+    const forward = (from: number, to: number): number => (((to - from) % 360) + 360) % 360;
+
+    // Fixture sanity: the base cusps really are nearly opposite.
+    const gap = forward(chartA.houses.cusps[1] ?? 0, chartB.houses.cusps[1] ?? 0);
+    expect(Math.abs(gap - 180)).toBeLessThan(15);
+
+    // Each cusp lies forward of the previous one and the twelve arcs close the circle once.
+    let total = 0;
+    cusps.forEach((cusp, index) => {
+      const next = cusps[(index + 1) % 12] ?? cusp;
+      total += forward(cusp, next);
+    });
+    expect(total).toBeCloseTo(360, 6);
+  });
+});

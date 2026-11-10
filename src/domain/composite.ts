@@ -10,7 +10,16 @@
  * and every other angle is the near-arc midpoint of the corresponding angle in each natal
  * chart's own `HousePositions` — arithmetic only, no ephemeris call, in the same shape
  * `progressions.ts`'s `shiftHouses` already uses to build a new `HousePositions` by
- * transforming an existing one rather than recomputing from a Julian day. The time/space-midpoint
+ * transforming an existing one rather than recomputing from a Julian day.
+ *
+ * Anchored cusps (#1402): when the two charts' cusps are nearly opposite, independent short-arc
+ * midpoints can jump to either side of the circle and the composite houses run backwards. In
+ * that case (and only then — a composite whose independent midpoints are already in zodiacal
+ * order is untouched) the composite is anchored on the 1st or 10th cusp, whichever pair is
+ * farther from exactly opposite; the anchor is that pair's near-arc midpoint, and every other
+ * cusp is the anchor plus the average of its two forward offsets from the anchor cusp in each
+ * chart. Forward offsets increase through the houses, so their average does too. Source: Solar
+ * Fire Deluxe v6 manual, pp. 255-256 (owner decision recorded on #1402). The time/space-midpoint
  * "Davison" method — averaging the two birth moments and places into one real moment and asking
  * the ephemeris for its houses — is a different technique and lives in `davison.ts` (#1406);
  * there is no single Julian day here to hand `provider.houses`.
@@ -23,7 +32,7 @@
 /**
  * @module composite
  * @purpose Computes a composite (midpoint) chart — a synthetic third chart derived from two people's natal charts — distinct from synastry's comparison of two existing charts (#169).
- * @conventions Every body's position is the near-arc midpoint (`midpointOf`, Ebertin's convention: half the shorter arc, not the naive average); houses use the "midpoint of cusps" method, since there is no single real Julian day to ask the ephemeris for houses (the Davison time/space-midpoint chart is `davison.ts`, #1406); the composite's own aspects/dignities/sect/parts are computed fresh via the single-chart engine.
+ * @conventions Every body's position is the near-arc midpoint (`midpointOf`, Ebertin's convention: half the shorter arc, not the naive average); houses use the "midpoint of cusps" method (anchored on the 1st/10th cusp when that would put cusps out of zodiacal order, Solar Fire manual pp. 255-256, #1402), since there is no single real Julian day to ask the ephemeris for houses (the Davison time/space-midpoint chart is `davison.ts`, #1406); the composite's own aspects/dignities/sect/parts are computed fresh via the single-chart engine.
  * @exports computeComposite, CompositeData
  */
 import { DEFAULT_ORB_CONFIG, findAspects, subjectsFrom, type Aspect } from '../astrology/aspects.js';
@@ -39,7 +48,7 @@ import {
   type ChartCalculationOptions,
   type ChartData,
 } from './chart-compute.js';
-import type { BodyId, BodyPosition, EphemerisProvider, HousePositions } from '../ephemeris/types.js';
+import type { BodyId, BodyPosition, Degrees, EphemerisProvider, HousePositions } from '../ephemeris/types.js';
 import type { BirthMomentInput } from '../time/types.js';
 
 function categoryOf(body: BodyId): BodyCategory {
@@ -48,13 +57,52 @@ function categoryOf(body: BodyId): BodyCategory {
   return definition.category;
 }
 
+const TOLERANCE = 1e-9;
+
+function forwardArc(from: Degrees, to: Degrees): Degrees {
+  return (((to - from) % 360) + 360) % 360;
+}
+
+/** True when cusps 1..12 each follow the previous one forward and wrap the circle exactly once. */
+function cuspsInZodiacalOrder(cusps: readonly Degrees[]): boolean {
+  let total = 0;
+  for (let index = 1; index <= 12; index += 1) {
+    const cusp = cusps[index];
+    const next = cusps[index === 12 ? 1 : index + 1];
+    if (cusp === undefined || next === undefined) return true;
+    total += forwardArc(cusp, next);
+  }
+  return Math.abs(total - 360) < TOLERANCE;
+}
+
+/** Cusps anchored on the 1st or 10th cusp pair (the one farther from opposite) — see this module's doc comment. */
+function anchoredCusps(a: readonly Degrees[], b: readonly Degrees[], fallback: readonly Degrees[]): readonly Degrees[] {
+  const distanceFromOpposite = (index: number): number => {
+    const x = a[index];
+    const y = b[index];
+    return x === undefined || y === undefined ? 0 : Math.abs(forwardArc(x, y) - 180);
+  };
+  const anchorIndex = distanceFromOpposite(10) > distanceFromOpposite(1) ? 10 : 1;
+  const anchorA = a[anchorIndex];
+  const anchorB = b[anchorIndex];
+  if (anchorA === undefined || anchorB === undefined) return fallback;
+  const anchor = midpointOf(anchorA, anchorB);
+  return fallback.map((cusp, index) => {
+    const cuspA = a[index];
+    const cuspB = b[index];
+    if (index === 0 || cuspA === undefined || cuspB === undefined) return cusp;
+    return (anchor + (forwardArc(anchorA, cuspA) + forwardArc(anchorB, cuspB)) / 2) % 360;
+  });
+}
+
 /** Near-arc midpoint of every corresponding field in two `HousePositions` — see this module's doc comment. */
 function midpointHouses(a: HousePositions, b: HousePositions): HousePositions {
+  const independent = a.cusps.map((cusp, index) => {
+    const other = b.cusps[index];
+    return other === undefined ? cusp : midpointOf(cusp, other);
+  });
   return {
-    cusps: a.cusps.map((cusp, index) => {
-      const other = b.cusps[index];
-      return other === undefined ? cusp : midpointOf(cusp, other);
-    }),
+    cusps: cuspsInZodiacalOrder(independent) ? independent : anchoredCusps(a.cusps, b.cusps, independent),
     ascendant: midpointOf(a.ascendant, b.ascendant),
     midheaven: midpointOf(a.midheaven, b.midheaven),
     armc: midpointOf(a.armc, b.armc),
