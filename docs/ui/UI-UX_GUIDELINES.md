@@ -498,6 +498,8 @@ A tool page (a screen that takes inputs and returns results, such as Planetary c
 ## 11. Use the design system rather than local styling
 
 - Use the spacing, type, semantic-color, radius, elevation, and motion tokens in `app.css`.
+- **Type scale (#1353).** The major-second scale in `:root` is `--text-xs` 0.79rem, `--text-sm` 0.889rem, `--text-base` 1rem, `--text-lg` 1.125rem, `--text-xl` 1.266rem and `--text-2xl` 1.424rem. Three further sizes have their own tokens, so no literal is needed for them: `--text-2xs` 0.75rem, `--text-caption` 0.85rem and `--text-md` 1.05rem.
+- **Monospace (#1359).** `--font-mono` (`ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`) is the only monospace family in `app.css`. It applies to `code` and `pre`. No other rule hard-codes a monospace family; tabular figures use `font-variant-numeric` on the inherited family.
 - Keep layout spacing on the `--space-*` token scale unless visualization geometry requires a specialized value. The root font size is 14px (`app.css:339`, `font-size: 87.5%`), so the tokens resolve to 3.5, 7, 10.5, 14, 21, 28 and 42px (`--space-1` to `--space-12`, `app.css:98-104`). That scale is the grid; it is a 3.5px grid, not a 4px one.
 - Use semantic state tokens for danger, warning, success, info, and focus. Astrology colors do not double as UI state colors.
 - Use shared Button, Notice, Field, TextField, DateField, NumberField, Select, Checkbox, Radio, ChoiceGroup, OptionCards, FilterSummary, Disclosure, SelectionInspector, StatusMessage, EmptyState, DataTable, and settings-dialog primitives as they become available.

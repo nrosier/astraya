@@ -118,13 +118,19 @@
   --field-padding-x: var(--space-3);
 
   /* Major-second type scale. */
+  --text-2xs: 0.75rem;
+  --text-caption: 0.85rem;
   --text-xs: 0.79rem;
   --text-sm: 0.889rem;
+  --text-md: 1.05rem;
   --text-base: 1rem;
   --text-lg: 1.125rem;
   --text-xl: 1.266rem;
   --text-2xl: 1.424rem;
   --text-display: clamp(2rem, 1.6rem + 1.5vw, 2.5rem);
+
+  /* Monospace family for inline code and preformatted text (#1359). */
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   --leading-tight: 1.2;
   --leading-body: 1.6;
@@ -286,7 +292,7 @@
 
 .app-header-brand {
   color: var(--fg);
-  font-size: 1.05rem;
+  font-size: var(--text-md);
   font-weight: 700;
   letter-spacing: 0.01em;
   text-decoration: none;
@@ -1006,7 +1012,7 @@ footer {
 .timing-card .data-table-head h2,
 .timing-card .data-table-head h3 {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: var(--text-md);
   font-weight: 620;
 }
 
@@ -1799,7 +1805,12 @@ code {
   padding: 0.1em 0.35em;
   border-radius: 0.25rem;
   background: color-mix(in oklab, var(--fg) 8%, transparent);
+  font-family: var(--font-mono);
   font-size: 0.875em;
+}
+
+pre {
+  font-family: var(--font-mono);
 }
 
 /* Rendered Markdown: the changelog. Headings here are document structure, so they
@@ -2011,7 +2022,7 @@ label.stacked {
 
 .people .name {
   display: block;
-  font-size: 1.05rem;
+  font-size: var(--text-md);
   font-weight: 600;
 }
 
@@ -2071,7 +2082,7 @@ label.stacked {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  font-size: 0.75rem;
+  font-size: var(--text-2xs);
   color: var(--muted);
 }
 
@@ -2975,7 +2986,7 @@ label.stacked {
 .app-nav-menu-heading {
   margin: var(--space-2) var(--space-3) 0.1rem;
   color: var(--muted);
-  font-size: 0.75rem;
+  font-size: var(--text-2xs);
   font-weight: 650;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -3394,7 +3405,7 @@ label.stacked {
 
 .report-body-heading {
   margin: 0 0 var(--space-1);
-  font-size: 1.05rem;
+  font-size: var(--text-md);
   font-weight: 650;
   color: var(--accent);
 }
@@ -3435,7 +3446,7 @@ label.stacked {
 }
 
 .sabian-label {
-  font-size: 0.75rem;
+  font-size: var(--text-2xs);
   font-weight: 650;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -3453,7 +3464,7 @@ label.stacked {
 .sabian-insight-tag {
   display: block;
   margin-bottom: var(--space-1);
-  font-size: 0.75rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--accent);
@@ -3688,7 +3699,7 @@ dl.primitive-stat-list {
 
 .chart-isolation-group h5 {
   margin: var(--space-3) 0 var(--space-1);
-  font-size: 0.85rem;
+  font-size: var(--text-caption);
   color: var(--muted);
 }
 
@@ -3986,39 +3997,39 @@ dl.metric-cards {
 .chart-multiwheel .chart-house-number,
 .chart-sheet .chart-house-number {
   fill: var(--muted);
-  font-size: 0.85rem;
+  font-size: var(--text-caption);
 }
 
 .chart-multiwheel .chart-degree-label,
 .chart-sheet .chart-degree-label {
   fill: var(--fg);
-  font-size: 0.85rem;
+  font-size: var(--text-caption);
 }
 
 .chart-multiwheel .chart-minute-label,
 .chart-sheet .chart-minute-label {
   fill: var(--muted);
-  font-size: 0.75rem;
+  font-size: var(--text-2xs);
 }
 
 .chart-multiwheel .chart-retrograde,
 .chart-sheet .chart-retrograde {
   fill: var(--aspect-hard);
-  font-size: 0.75rem;
+  font-size: var(--text-2xs);
   font-weight: 700;
 }
 
 .chart-multiwheel .chart-axis-label,
 .chart-sheet .chart-axis-label {
   fill: var(--accent);
-  font-size: 0.75rem;
+  font-size: var(--text-2xs);
   font-weight: 700;
 }
 
 .chart-multiwheel .chart-axis-degree,
 .chart-sheet .chart-axis-degree {
   fill: var(--fg);
-  font-size: 0.75rem;
+  font-size: var(--text-2xs);
 }
 
 .chart-body-tick {
@@ -4170,7 +4181,7 @@ svg text.chart-symbol-text-unicode {
 }
 
 .table-symbol-text {
-  font-size: 0.75rem;
+  font-size: var(--text-2xs);
   font-weight: 650;
   letter-spacing: 0.02em;
   color: var(--muted);
@@ -4367,7 +4378,7 @@ svg text.chart-symbol-text-unicode {
 .chart-dial90 .dial90-tick-label,
 .chart-dial90 .dial90-midpoint-hit-label {
   fill: var(--muted);
-  font-size: 0.75rem;
+  font-size: var(--text-2xs);
 }
 
 .chart-dial90 .dial90-midpoint-hit {
@@ -4589,13 +4600,13 @@ svg text.chart-symbol-text-unicode {
 .chart-matrix-view .chart-sheet .chart-matrix-label,
 .chart-matrix-view .chart-sheet .chart-panel-heading,
 .chart-matrix-view .chart-sheet .chart-emphasis-total {
-  font-size: 0.85rem;
+  font-size: var(--text-caption);
 }
 
 /* The orb and its a/s marker share a cell with the aspect symbol, so they stay a step smaller. */
 .chart-matrix-view .chart-sheet .chart-matrix-orb,
 .chart-matrix-view .chart-sheet .chart-matrix-direction {
-  font-size: 0.75rem;
+  font-size: var(--text-2xs);
 }
 
 .chart-matrix-pair {
@@ -4642,7 +4653,7 @@ svg text.chart-symbol-text-unicode {
 
 .chart-sheet .chart-matrix-orb,
 .chart-sheet .chart-matrix-direction {
-  font-size: 0.75rem;
+  font-size: var(--text-2xs);
 }
 
 .chart-matrix-diagonal {
@@ -5259,7 +5270,7 @@ svg text.chart-symbol-text-unicode {
   display: block;
   margin-bottom: var(--space-2);
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: var(--text-caption);
 }
 .focus-interpretation h4 {
   margin: var(--space-3) 0 var(--space-1);
@@ -5299,7 +5310,7 @@ svg text.chart-symbol-text-unicode {
   display: block;
   margin: var(--space-2) 0;
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: var(--text-caption);
 }
 
 /* A contact's valence (#422), the same three-way split the wheel's own aspect-line colours
@@ -5353,7 +5364,7 @@ svg text.chart-symbol-text-unicode {
 .entry-key {
   color: var(--muted);
   font-family: inherit;
-  font-size: 0.75rem;
+  font-size: var(--text-2xs);
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
@@ -5410,7 +5421,7 @@ svg text.chart-symbol-text-unicode {
 
 .entry-details dt {
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: var(--text-caption);
 }
 
 .entry-details dd {
@@ -6538,7 +6549,7 @@ svg text.chart-symbol-text-unicode {
 
 .settings-card-tag {
   margin: 0 0 var(--space-2);
-  font-size: 0.85rem;
+  font-size: var(--text-caption);
 }
 
 .settings-card-indent {
@@ -7451,7 +7462,7 @@ button.primitive-button-compact {
 .page-header-export-group-heading {
   margin: var(--space-2) var(--space-3) 0.1rem;
   color: var(--muted);
-  font-size: 0.75rem;
+  font-size: var(--text-2xs);
   font-weight: 650;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -8219,7 +8230,7 @@ button.mgrid-pair:focus-visible {
   display: inline-flex;
   flex-direction: column;
   line-height: 1.05;
-  font-size: 0.75rem;
+  font-size: var(--text-2xs);
   color: var(--fg);
 }
 
@@ -8280,7 +8291,7 @@ button.mgrid-pair:focus-visible {
   min-height: var(--target-min);
   padding: 0;
   border: 0;
-  font-size: 0.75rem;
+  font-size: var(--text-2xs);
   font-weight: 600;
   line-height: 1;
   vertical-align: middle;
@@ -8927,7 +8938,7 @@ a.quiet,
 
 .gantt-axis {
   height: 1.25rem;
-  font-size: 0.75rem;
+  font-size: var(--text-2xs);
   color: var(--muted);
 }
 
@@ -8943,7 +8954,7 @@ a.quiet,
 }
 
 .gantt-label {
-  font-size: 0.85rem;
+  font-size: var(--text-caption);
   font-weight: 550;
   overflow-wrap: anywhere;
 }
