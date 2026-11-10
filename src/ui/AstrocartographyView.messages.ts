@@ -44,6 +44,8 @@ const en = {
   hideMeanings: 'Hide meanings',
   error: (message: string) => `The map could not be calculated. ${message}`,
 
+  omittedLabels: (count: number) =>
+    `${String(count)} ${count === 1 ? 'line name is' : 'line names are'} left off the map so the names stay readable and do not overlap. The list below names every line.`,
   equivalentCaption: 'What the map shows',
   equivalentBody: 'Body',
   equivalentShownAs: 'Line or marker',
@@ -97,6 +99,8 @@ const nl: typeof en = {
   hideMeanings: 'Verberg betekenissen',
   error: (message: string) => `De kaart kon niet worden berekend. ${message}`,
 
+  omittedLabels: (count: number) =>
+    `${String(count)} ${count === 1 ? 'lijnnaam staat' : 'lijnnamen staan'} niet op de kaart, zodat de namen leesbaar blijven en niet overlappen. De lijst hieronder noemt elke lijn.`,
   equivalentCaption: 'Wat de kaart toont',
   equivalentBody: 'Hemellichaam',
   equivalentShownAs: 'Lijn of markering',

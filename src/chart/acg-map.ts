@@ -19,7 +19,7 @@
  * @module chart/acg-map
  * @purpose Renders the astrocartography (ACG) world map as a hand-rolled equirectangular SVG graticule with AC/DC/MC/IC and local-space lines.
  * @conventions Equirectangular projection: `x = (lon + 180) / 360 * width`, `y = (90 - lat) / 180 * height`, so the map is exactly twice as wide as tall; point runs are split wherever consecutive longitudes jump by more than 180° (a projection/antimeridian break, distinct from `HorizonLine.segments`'s own circumpolar breaks).
- * @exports renderAcgMapSvg, acgMapEntries, acgMapPlaces; AcgMapInput, AcgMapOptions, AcgMap, AcgMapEntry, AcgMapPoint, AcgMapPlaces types.
+ * @exports renderAcgMapSvg, acgLabelPlacements, ACG_MAP_WIDTH, ACG_LABEL_PX, acgMapEntries, acgMapPlaces; AcgMapInput, AcgMapOptions, AcgMap, AcgMapEntry, AcgMapPoint, AcgMapPlaces types.
  */
 import type { LocalSpaceLine } from '../astrology/astrocartography.js';
 import { bodyById } from '../astrology/bodies.js';
@@ -28,6 +28,9 @@ import type { GeoPosition } from '../ephemeris/types.js';
 import { circle, escapeXml, line, polyline, text } from './svg-primitives.js';
 
 const DEFAULT_WIDTH = 900;
+
+/** The width the map is designed at; narrower on-screen, the view draws it at its real pixel width (#1370). */
+export const ACG_MAP_WIDTH = DEFAULT_WIDTH;
 const GRATICULE_STEP_DEG = 30;
 
 export interface AcgMapInput {
@@ -64,13 +67,24 @@ export interface AcgMapOptions {
    * dash pattern with its line type (#667), so the map reads on its own: on screen, downloaded, or in the PDF.
    */
   readonly labels?: AcgMapLabels;
+  /**
+   * Smallest label size in rendered px (#1370). Set, the on-screen view passes the container's real pixel width as
+   * `width` so the viewBox is not scaled down, and label text never drops below this size; the legend then wraps
+   * into as many columns as fit. Unset (PDF/export), sizes stay `width / 75` and the legend keeps six columns.
+   */
+  readonly minLabelPx?: number;
 }
 
 export interface AcgMap {
   readonly markup: string;
   readonly width: number;
   readonly height: number;
+  /** Lines whose name did not fit on the map without covering another name (#1370); the text list names every line. */
+  readonly omittedLabels: number;
 }
+
+/** The label size, in px, the map is designed around: `width / 75` at the default map width (12). */
+export const ACG_LABEL_PX = ACG_MAP_WIDTH / 75;
 
 interface Point {
   readonly latitude: number;
@@ -233,35 +247,165 @@ export function acgMapPlaces(input: AcgMapInput): AcgMapPlaces {
     : { natal, relocation: { latitude: input.relocationPlace.latitude, longitude: input.relocationPlace.longitude } };
 }
 
+/** Average glyph width as a share of the font size for the 600-weight label text; deliberately on the wide side. */
+const LABEL_CHAR_EM = 0.62;
+/** Clearance kept around each label box, covering the 3px halo stroke. */
+const LABEL_PAD = 2;
+
+/** The box a label occupies, in map units. */
+export interface AcgLabelBox {
+  readonly x0: number;
+  readonly y0: number;
+  readonly x1: number;
+  readonly y1: number;
+}
+
+/** One line's name as placed on the map (#1370). */
+export interface AcgLabelPlacement extends AcgLabelBox {
+  readonly bodyKey: string;
+  readonly kind: 'MC' | 'IC' | 'AC' | 'DC';
+  readonly text: string;
+  readonly x: number;
+  readonly y: number;
+  readonly anchor: 'start' | 'end';
+}
+
+function boxesOverlap(a: AcgLabelBox, b: AcgLabelBox): boolean {
+  return a.x0 < b.x1 + LABEL_PAD && b.x0 < a.x1 + LABEL_PAD && a.y0 < b.y1 + LABEL_PAD && b.y0 < a.y1 + LABEL_PAD;
+}
+
+function labelBox(x: number, y: number, anchor: 'start' | 'end', chars: number, fontSize: number): AcgLabelBox {
+  const w = chars * LABEL_CHAR_EM * fontSize;
+  return {
+    x0: anchor === 'start' ? x : x - w,
+    x1: anchor === 'start' ? x + w : x,
+    y0: y - fontSize * 0.8,
+    y1: y + fontSize * 0.25,
+  };
+}
+
+interface LabelCandidate {
+  readonly x: number;
+  readonly y: number;
+  readonly anchor: 'start' | 'end';
+}
+
+/** Both sides of a point, the side with room first. */
+function sides(x: number, y: number, width: number): LabelCandidate[] {
+  const right: LabelCandidate = { x: x + 3, y, anchor: 'start' };
+  const left: LabelCandidate = { x: x - 3, y, anchor: 'end' };
+  return x > width - width / 8 ? [left, right] : [right, left];
+}
+
+/** Latitudes an AC/DC curve may be named at: the preferred one first, then the rest in turn. */
+function horizonLatitudes(preferred: number): number[] {
+  const others = [0, 30, -30, 50, -50, 15, -15, 40, -40, 60, -60, 5, -5, 25, -25, 45, -45].filter(
+    (latitude) => latitude !== preferred,
+  );
+  return [preferred, ...others];
+}
+
+/**
+ * Where each line's name goes, without any two names covering one another (#1370). Names are placed in drawing order;
+ * each takes the first spot, from a list of candidates along its own line, that is inside the map and clear of every
+ * name and place marker already placed. A line with no clear spot goes unnamed and is counted: the text list names it.
+ */
+export function acgLabelPlacements(
+  input: AcgMapInput,
+  labels: AcgMapLabels,
+  width: number,
+  fontSize: number,
+): { readonly placed: ReadonlyMap<AcgLine, AcgLabelPlacement>; readonly omitted: number } {
+  const mapHeight = width / 2;
+  const project = (point: Point): { x: number; y: number } => ({
+    x: ((point.longitude + 180) / 360) * width,
+    y: ((90 - point.latitude) / 180) * mapHeight,
+  });
+  const taken: AcgLabelBox[] = [
+    input.natalPlace,
+    ...(input.relocationPlace === undefined ? [] : [input.relocationPlace]),
+  ].map((place) => {
+    const at = project(place);
+    return { x0: at.x - 5, y0: at.y - 5, x1: at.x + 5, y1: at.y + 5 };
+  });
+  const rows = Math.max(LABEL_ROWS, Math.floor((mapHeight * 0.4) / (fontSize * 1.2)));
+  const meridians = input.lines
+    .flatMap((acgLine) => (acgLine.kind === 'MC' || acgLine.kind === 'IC' ? [acgLine] : []))
+    .sort((a, b) => a.longitude - b.longitude);
+  const meridianRow = new Map(meridians.map((acgLine, index) => [acgLine, index % LABEL_ROWS]));
+  const horizonPoints = (acgLine: AcgLine): readonly Point[] =>
+    acgLine.kind === 'AC' || acgLine.kind === 'DC' ? acgLine.segments.flat() : [];
+  const horizons = input.lines
+    .filter((acgLine) => acgLine.kind === 'AC' || acgLine.kind === 'DC')
+    .map((acgLine) => ({ acgLine, x: nearestToLatitude(horizonPoints(acgLine), 0)?.longitude ?? 0 }))
+    .sort((a, b) => a.x - b.x);
+  const horizonLatitude = new Map(
+    horizons.map(({ acgLine }, index) => [
+      acgLine,
+      HORIZON_LABEL_LATITUDES[index % HORIZON_LABEL_LATITUDES.length] ?? 0,
+    ]),
+  );
+
+  const placed = new Map<AcgLine, AcgLabelPlacement>();
+  let omitted = 0;
+  for (const acgLine of input.lines) {
+    const bodyKey = bodyKeyOf(acgLine.body);
+    const content = `${labels.bodyName(bodyKey)} ${labels.kinds[acgLine.kind]}`;
+    const candidates: LabelCandidate[] = [];
+    if (acgLine.kind === 'MC' || acgLine.kind === 'IC') {
+      const x = project({ latitude: 0, longitude: acgLine.longitude }).x;
+      const first = meridianRow.get(acgLine) ?? 0;
+      const order = [first, ...Array.from({ length: rows }, (_, row) => row).filter((row) => row !== first)];
+      for (const row of order) {
+        // MC names along the top edge, IC names along the bottom.
+        const y = acgLine.kind === 'MC' ? fontSize * (1.2 + row * 1.2) : mapHeight - fontSize * (0.5 + row * 1.2);
+        candidates.push(...sides(x, y, width));
+      }
+    } else {
+      const points = horizonPoints(acgLine);
+      const seen = new Set<Point>();
+      for (const latitude of horizonLatitudes(horizonLatitude.get(acgLine) ?? 0)) {
+        const nearest = nearestToLatitude(points, latitude);
+        if (nearest === undefined || seen.has(nearest) || Math.abs(nearest.latitude - latitude) > 5) continue;
+        seen.add(nearest);
+        const at = project(nearest);
+        candidates.push(...sides(at.x, at.y - fontSize * 0.4, width));
+      }
+    }
+    const chars = content.length;
+    const fit = candidates.find((candidate) => {
+      const box = labelBox(candidate.x, candidate.y, candidate.anchor, chars, fontSize);
+      return (
+        box.x0 >= 0 &&
+        box.x1 <= width &&
+        box.y0 >= 0 &&
+        box.y1 <= mapHeight &&
+        !taken.some((other) => boxesOverlap(box, other))
+      );
+    });
+    if (fit === undefined) {
+      omitted += 1;
+      continue;
+    }
+    const box = labelBox(fit.x, fit.y, fit.anchor, chars, fontSize);
+    taken.push(box);
+    placed.set(acgLine, { ...box, bodyKey, kind: acgLine.kind, text: content, ...fit });
+  }
+  return { placed, omitted };
+}
+
 export function renderAcgMapSvg(input: AcgMapInput, options?: AcgMapOptions): AcgMap {
   const width = options?.width ?? DEFAULT_WIDTH;
   const mapHeight = width / 2;
   const labels = options?.labels;
-  const fontSize = width / 75;
+  const fontSize = Math.max(width / 75, options?.minLabelPx ?? 0);
   const project = (point: Point): { x: number; y: number } => ({
     x: ((point.longitude + 180) / 360) * width,
     y: ((90 - point.latitude) / 180) * mapHeight,
   });
 
   const parts: string[] = [];
-  const lineLabels: string[] = [];
-  /** A line's name on the map, kept inside it: anchored at its end when it would run off the right edge. */
-  const label = (x: number, y: number, bodyKey: string, kind: 'MC' | 'IC' | 'AC' | 'DC'): void => {
-    if (labels === undefined) return;
-    const content = escapeXml(`${labels.bodyName(bodyKey)} ${labels.kinds[kind]}`);
-    const nearRightEdge = x > width - width / 8;
-    lineLabels.push(
-      text(
-        nearRightEdge ? x - 3 : x + 3,
-        y,
-        nearRightEdge ? 'end' : 'start',
-        `acg-label acg-label-${bodyKey}`,
-        content,
-        fontSize,
-      ),
-    );
-  };
-
+  const plan = labels === undefined ? undefined : acgLabelPlacements(input, labels, width, fontSize);
   for (let latitude = -90; latitude <= 90; latitude += GRATICULE_STEP_DEG) {
     const y = project({ latitude, longitude: 0 }).y;
     parts.push(line(0, y, width, y, 'acg-graticule'));
@@ -279,25 +423,6 @@ export function renderAcgMapSvg(input: AcgMapInput, options?: AcgMapOptions): Ac
     );
   }
 
-  // MC and IC labels step through a few rows, in order across the map, so neighbouring lines keep apart.
-  const meridians = input.lines
-    .flatMap((acgLine) => (acgLine.kind === 'MC' || acgLine.kind === 'IC' ? [acgLine] : []))
-    .sort((a, b) => a.longitude - b.longitude);
-  const meridianRow = new Map(meridians.map((acgLine, index) => [acgLine, index % LABEL_ROWS]));
-  // AC and DC curves, in order of where they cross the equator, each named at the next latitude in turn.
-  const horizonPoints = (acgLine: (typeof input.lines)[number]): readonly Point[] =>
-    acgLine.kind === 'AC' || acgLine.kind === 'DC' ? acgLine.segments.flat() : [];
-  const horizons = input.lines
-    .filter((acgLine) => acgLine.kind === 'AC' || acgLine.kind === 'DC')
-    .map((acgLine) => ({ acgLine, x: nearestToLatitude(horizonPoints(acgLine), 0)?.longitude ?? 0 }))
-    .sort((a, b) => a.x - b.x);
-  const horizonLatitude = new Map(
-    horizons.map(({ acgLine }, index) => [
-      acgLine,
-      HORIZON_LABEL_LATITUDES[index % HORIZON_LABEL_LATITUDES.length] ?? 0,
-    ]),
-  );
-
   for (const acgLine of input.lines) {
     const key = bodyKeyOf(acgLine.body);
     switch (acgLine.kind) {
@@ -306,14 +431,6 @@ export function renderAcgMapSvg(input: AcgMapInput, options?: AcgMapOptions): Ac
         const kindClass = acgLine.kind === 'MC' ? 'acg-line-mc' : 'acg-line-ic';
         const x = project({ latitude: 0, longitude: acgLine.longitude }).x;
         parts.push(line(x, 0, x, mapHeight, `${kindClass} ${kindClass}-${key}`));
-        const row = meridianRow.get(acgLine) ?? 0;
-        // MC names along the top edge, IC names along the bottom.
-        label(
-          x,
-          acgLine.kind === 'MC' ? fontSize * (1.2 + row * 1.2) : mapHeight - fontSize * (0.5 + row * 1.2),
-          key,
-          acgLine.kind,
-        );
         break;
       }
       case 'AC':
@@ -321,12 +438,6 @@ export function renderAcgMapSvg(input: AcgMapInput, options?: AcgMapOptions): Ac
         const kindClass = acgLine.kind === 'AC' ? 'acg-line-ac' : 'acg-line-dc';
         const runs = acgLine.segments.flatMap((segment) => splitAtAntimeridian(segment));
         for (const run of runs) parts.push(polyline(run.map(project), `${kindClass} ${kindClass}-${key}`));
-        // Named at its turn's latitude, clear of the MC and IC names along the edges.
-        const nearest = nearestToLatitude(runs.flat(), horizonLatitude.get(acgLine) ?? 0);
-        if (nearest !== undefined) {
-          const at = project(nearest);
-          label(at.x, at.y - fontSize * 0.4, key, acgLine.kind);
-        }
         break;
       }
     }
@@ -348,9 +459,23 @@ export function renderAcgMapSvg(input: AcgMapInput, options?: AcgMapOptions): Ac
     const relocationPoint = project(input.relocationPlace);
     parts.push(circle(relocationPoint.x, relocationPoint.y, 5, 'acg-marker-relocation'));
   }
-  parts.push(...lineLabels);
+  for (const placement of plan?.placed.values() ?? []) {
+    parts.push(
+      text(
+        placement.x,
+        placement.y,
+        placement.anchor,
+        `acg-label acg-label-${placement.bodyKey}`,
+        escapeXml(placement.text),
+        fontSize,
+      ),
+    );
+  }
 
-  const legend = labels === undefined ? undefined : legendBand(input, labels, width, mapHeight, fontSize);
+  const legend =
+    labels === undefined
+      ? undefined
+      : legendBand(input, labels, width, mapHeight, fontSize, options?.minLabelPx !== undefined);
   if (legend !== undefined) parts.push(legend.markup);
   const height = mapHeight + (legend?.height ?? 0);
 
@@ -358,7 +483,7 @@ export function renderAcgMapSvg(input: AcgMapInput, options?: AcgMapOptions): Ac
   const markup =
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" ` +
     `${size} class="acg-map">${parts.join('')}</svg>`;
-  return { markup, width, height };
+  return { markup, width, height, omittedLabels: plan?.omitted ?? 0 };
 }
 
 /**
@@ -371,15 +496,26 @@ function legendBand(
   width: number,
   top: number,
   fontSize: number,
+  fitColumns: boolean,
 ): { readonly markup: string; readonly height: number } {
   const rowHeight = fontSize * 1.8;
-  const columnWidth = width / 6;
-  const sample = fontSize * 2.4;
+  const sampleWidth = fontSize * 2.4;
+  const names = [
+    ...Object.values(labels.legendKinds),
+    ...[...input.lines, ...input.localSpaceLines].map((entry) => labels.bodyName(bodyKeyOf(entry.body))),
+  ];
+  const longest = Math.max(...names.map((name) => name.length));
+  // On a narrow map (#1370) the legend wraps into as many columns as its longest name leaves room for.
+  const columns = fitColumns
+    ? Math.max(1, Math.min(6, Math.floor(width / (sampleWidth + fontSize * 1.5 + longest * LABEL_CHAR_EM * fontSize))))
+    : 6;
+  const columnWidth = width / columns;
+  const sample = sampleWidth;
   const parts: string[] = [];
   let row = 0;
   let column = 0;
   const item = (strokeClass: string, name: string): void => {
-    if (column === 6) {
+    if (column === columns) {
       column = 0;
       row += 1;
     }
