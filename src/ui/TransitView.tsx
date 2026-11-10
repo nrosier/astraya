@@ -130,7 +130,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
   const personMoment = useStableMoment(person?.moment);
   const t = useMessages(transitViewMessages);
   const [locale] = useLocale();
-  const [asOf, setAsOf] = useAsOfDate();
+  const [asOf, setAsOf, setPlayback] = useAsOfDate();
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   // The orbs are the device's Extended settings (#590): transits use the same orbs as the natal chart.
@@ -225,6 +225,9 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
         : [],
     [load, filter, rules],
   );
+
+  // Rebuilt only when the contacts change, so an unrelated render (a playback step's state) hands the table the same rows.
+  const contactRows = useMemo(() => crossAspectRows(shownContacts), [shownContacts]);
 
   const wheelMarkup = useMemo(() => {
     if (load.kind !== 'ready') return undefined;
@@ -352,7 +355,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
           />
         )}
       </PageHeader>
-      <DateAnimationBar date={asOf} onDateChange={setAsOf} />
+      <DateAnimationBar date={asOf} onDateChange={setAsOf} onPlayingChange={setPlayback} />
       <p className="hint">
         <GlossaryText text={t.hint(person.displayName || t.thisPerson)} />
       </p>
@@ -408,7 +411,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
               caption={t.contactsCaption}
               headingLevel={2}
               columns={contactColumns(t, locale)}
-              rows={crossAspectRows(shownContacts)}
+              rows={contactRows}
               getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
               downloadFilename={deriveExportFilename(person.displayName, 'transit-contacts', 'csv')}
             />

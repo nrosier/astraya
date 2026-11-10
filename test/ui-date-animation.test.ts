@@ -10,6 +10,7 @@ import {
   dayNumber,
   isoFromDayNumber,
   playbackPlan,
+  dueTicks,
   sliderSpan,
   stepsPerSecond,
 } from '../src/ui/date-animation.ts';
@@ -105,5 +106,23 @@ describe('?date= in the URL', () => {
 
   it('leaves the route itself unchanged (the screen still parses as Transits)', () => {
     expect(parseRoute(hashWithDate(base, '2027-03-04'))).toEqual(parseRoute(base));
+  });
+});
+
+describe('the frame loop tick schedule (#1440)', () => {
+  it("steps only once a whole interval has elapsed, and counts a late frame's missed ticks", () => {
+    expect(dueTicks(15, 1000 / 60)).toBe(0);
+    expect(dueTicks(1000 / 60, 1000 / 60)).toBe(1);
+    expect(dueTicks(2500, 1000)).toBe(2);
+    expect(dueTicks(-5, 1000)).toBe(0);
+    expect(dueTicks(Number.NaN, 1000)).toBe(0);
+  });
+
+  it('keeps the rates of 0.5x to 30x: steps per second equals the speed', () => {
+    for (const speed of PLAYBACK_SPEEDS) {
+      const { tickMs, stepsPerTick } = playbackPlan(speed);
+      expect((1000 / tickMs) * stepsPerTick).toBeCloseTo(speed);
+      expect(dueTicks(2000, tickMs) * stepsPerTick).toBeCloseTo(2 * speed, 5);
+    }
   });
 });

@@ -4,9 +4,9 @@
  */
 /**
  * @module ui/date-animation
- * @purpose Interval x speed to steps per second, the 60-ticks-per-second throttle, calendar date stepping by day, month or year, and the slider's day numbers.
+ * @purpose Interval x speed to steps per second, the 60-ticks-per-second throttle, the frame-loop tick count, calendar date stepping by day, month or year, and the slider's day numbers.
  * @conventions Dates are `YYYY-MM-DD` strings (the date input's own value), calculated in UTC so a time zone never shifts a civil day. Stepping by month or year clamps to the last day of a shorter month (31 Jan + 1 month = 28/29 Feb). Speed multiplies the active interval: at Month, 1x is one month per second. A result outside years 1 to 9999 leaves the date unchanged.
- * @exports StepInterval, STEP_INTERVALS, PlaybackSpeed, PLAYBACK_SPEEDS, DEFAULT_SPEED, DEFAULT_INTERVAL, MAX_TICKS_PER_SECOND, stepsPerSecond, playbackPlan, advanceDate, dayNumber, isoFromDayNumber, sliderSpan
+ * @exports StepInterval, STEP_INTERVALS, PlaybackSpeed, PLAYBACK_SPEEDS, DEFAULT_SPEED, DEFAULT_INTERVAL, MAX_TICKS_PER_SECOND, stepsPerSecond, playbackPlan, dueTicks, MAX_CATCH_UP_MS, advanceDate, dayNumber, isoFromDayNumber, sliderSpan
  */
 
 export type StepInterval = 'day' | 'month' | 'year';
@@ -31,6 +31,19 @@ export function playbackPlan(speed: number): { readonly tickMs: number; readonly
   const rate = stepsPerSecond(speed);
   const ticksPerSecond = Math.min(rate, MAX_TICKS_PER_SECOND);
   return { tickMs: 1000 / ticksPerSecond, stepsPerTick: rate / ticksPerSecond };
+}
+
+/** How far past one tick a gap (a hidden tab, a stalled frame) may run before playback catches up on it; a longer one restarts the clock instead of jumping. */
+export const MAX_CATCH_UP_MS = 1000;
+
+/**
+ * How many playback ticks of `tickMs` have elapsed in `elapsedMs`, for a loop that runs once per display frame (#1440).
+ * Zero until a whole interval has passed; the caller advances its clock by `ticks * tickMs` so no time is lost.
+ */
+export function dueTicks(elapsedMs: number, tickMs: number): number {
+  if (!(tickMs > 0) || !(elapsedMs >= tickMs * (1 - 1e-9))) return 0;
+  // The small epsilon keeps 2000 ms at a 33.33.. ms tick from rounding down to 59 on float error.
+  return Math.floor(elapsedMs / tickMs + 1e-9);
 }
 
 const DAY_MS = 86_400_000;

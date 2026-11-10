@@ -8,10 +8,10 @@
 /**
  * @module ui/DateAnimationBar
  * @purpose Date stepper and animation control bar: play/pause, back, Day/Month/Year interval, date, forward, speed, slider and Now.
- * @conventions Controlled by `date`/`onDateChange` (YYYY-MM-DD); playback always starts paused, whatever the motion preference, and only a press of Play advances it; arithmetic lives in date-animation.ts; Space and the arrow keys act from anywhere except inside an input, select or text area (where they keep their native meaning); tokens only, no new colours or spacing.
+ * @conventions Controlled by `date`/`onDateChange` (YYYY-MM-DD) and reports play/pause through `onPlayingChange` so the URL is written only when playback stops (#1440); playback runs on requestAnimationFrame and steps only when the interval has elapsed; the range input is uncontrolled, its value set through a ref, and starting a drag pauses playback; playback always starts paused, whatever the motion preference, and only a press of Play advances it; arithmetic lives in date-animation.ts; Space and the arrow keys act from anywhere except inside an input, select or text area (where they keep their native meaning); tokens only, no new colours or spacing.
  * @exports DateAnimationBar
  */
-import { useEffect, useEffectEvent, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from 'react';
 import { Button } from './primitives/Button.js';
 import { ChoiceGroup } from './primitives/ChoiceGroup.js';
 import { DateField } from './primitives/DateField.js';
@@ -22,8 +22,10 @@ import {
   DEFAULT_SPEED,
   PLAYBACK_SPEEDS,
   STEP_INTERVALS,
+  MAX_CATCH_UP_MS,
   advanceDate,
   dayNumber,
+  dueTicks,
   isoFromDayNumber,
   playbackPlan,
   sliderSpan,
@@ -50,9 +52,12 @@ function keepsNativeKeys(target: EventTarget | null, key: string): boolean {
 export function DateAnimationBar({
   date,
   onDateChange,
+  onPlayingChange,
 }: {
   readonly date: string;
   readonly onDateChange: (date: string) => void;
+  /** Called with true when playback starts and false when it pauses or stops. */
+  readonly onPlayingChange?: (playing: boolean) => void;
 }): React.JSX.Element {
   const t = useMessages(dateAnimationBarMessages);
   const [locale] = useLocale();
@@ -84,14 +89,36 @@ export function DateAnimationBar({
     stepBy(steps);
   });
 
+  const reportPlaying = useEffectEvent((value: boolean): void => {
+    onPlayingChange?.(value);
+  });
+  useEffect(() => {
+    reportPlaying(playing);
+  }, [playing]);
+
+  // One requestAnimationFrame per display frame; the date steps only when the step interval has elapsed.
   useEffect(() => {
     if (!playing) return undefined;
     const { tickMs, stepsPerTick } = playbackPlan(speed);
-    const timer = window.setInterval(() => {
-      stepFromEffect(Math.max(1, Math.round(stepsPerTick)));
-    }, tickMs);
+    const stepsEach = Math.max(1, Math.round(stepsPerTick));
+    let last = performance.now();
+    let frame = 0;
+    const loop = (now: number): void => {
+      const elapsed = now - last;
+      if (elapsed > tickMs + MAX_CATCH_UP_MS) {
+        last = now;
+      } else {
+        const ticks = dueTicks(elapsed, tickMs);
+        if (ticks > 0) {
+          last += ticks * tickMs;
+          stepFromEffect(stepsEach * ticks);
+        }
+      }
+      frame = requestAnimationFrame(loop);
+    };
+    frame = requestAnimationFrame(loop);
     return () => {
-      window.clearInterval(timer);
+      cancelAnimationFrame(frame);
     };
   }, [playing, speed]);
 
@@ -120,6 +147,13 @@ export function DateAnimationBar({
   const current = dayNumber(date);
   const span = sliderSpan(centerYear);
   if (current !== undefined && (current < span.min || current > span.max)) setCenterYear(centerYearOf(date));
+
+  // The slider is uncontrolled: its value is set through this ref, so a playback step never makes React rewrite it.
+  const sliderRef = useRef<HTMLInputElement>(null);
+  const sliderValue = current === undefined ? span.min : Math.min(Math.max(current, span.min), span.max);
+  useLayoutEffect(() => {
+    if (sliderRef.current !== null) sliderRef.current.value = String(sliderValue);
+  }, [sliderValue, span.min, span.max]);
 
   const intervalName = t.intervalNames[interval];
   return (
@@ -179,11 +213,15 @@ export function DateAnimationBar({
         />
         <div className="date-animation-scrub">
           <input
+            ref={sliderRef}
             type="range"
             min={span.min}
             max={span.max}
             step={1}
-            value={current === undefined ? span.min : Math.min(Math.max(current, span.min), span.max)}
+            defaultValue={sliderValue}
+            onPointerDown={() => {
+              setPlaying(false);
+            }}
             disabled={!valid}
             aria-label={t.sliderLabel}
             aria-valuetext={
@@ -195,6 +233,8 @@ export function DateAnimationBar({
                 : undefined
             }
             onChange={(event) => {
+              // A drag (or a key on the slider) pauses playback; only Play resumes it.
+              setPlaying(false);
               const days = Number(event.target.value);
               if (Number.isFinite(days)) {
                 latestDate.current = isoFromDayNumber(days);
