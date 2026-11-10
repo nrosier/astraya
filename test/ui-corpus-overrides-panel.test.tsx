@@ -6,6 +6,8 @@
  * stub is stateful (a small in-memory `overrides` array) so a save/reset
  * round-trip is visible the same way it would be against the real server.
  */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -650,14 +652,76 @@ describe('CorpusOverridesPanel export and drawer editor (#1335)', () => {
     expect(container.querySelector('.corpus-toolbar-end')).toBeNull();
   });
 
-  it('puts the filters on two rows, with Overridden only as a switch', async () => {
+  it('puts the filters on two rows, with Overridden only as a Yes/No select beside the language select', async () => {
     const container = await mountPanel();
     const rows = container.querySelectorAll('.corpus-toolbar > .corpus-toolbar-row');
     expect(rows).toHaveLength(2);
     expect(rows[0]?.querySelector('input[type="text"]')).not.toBeNull();
-    expect(rows[0]?.querySelectorAll('select')).toHaveLength(1);
-    expect(rows[0]?.querySelector('input[role="switch"]')).not.toBeNull();
+    expect(rows[0]?.querySelectorAll('select')).toHaveLength(2);
+    expect(rows[0]?.querySelector('input[role="switch"]')).toBeNull();
     expect(rows[1]?.querySelectorAll('select')).toHaveLength(3);
+  });
+
+  it('offers Overridden only as a yes/no select built like the language select (same primitive, same size, same row)', async () => {
+    const container = await mountPanel();
+    const m = corpusOverridesPanelMessages.en;
+    const row = container.querySelector('.corpus-toolbar > .corpus-toolbar-row');
+    const selects = Array.from(row?.querySelectorAll('select') ?? []);
+    const labelled = (text: string): HTMLSelectElement | undefined =>
+      selects.find((select) => select.labels?.[0]?.textContent.includes(text));
+    const language = labelled(m.corpusLocaleLabel);
+    const overridden = labelled(m.overriddenOnlyLabel);
+    expect(language).toBeDefined();
+    expect(overridden).toBeDefined();
+    // Yes and No are the only options; the default is No (show every entry).
+    expect(Array.from(overridden?.options ?? []).map((o) => o.textContent)).toEqual([
+      m.overriddenOnlyNo,
+      m.overriddenOnlyYes,
+    ]);
+    expect(overridden?.value).toBe('no');
+    // Same primitive and size: neither carries the compact class, and both sit in the one flex row, bottom-aligned.
+    expect(overridden?.className).toBe(language?.className);
+    expect(overridden?.closest('.primitive-field')?.className).toBe(language?.closest('.primitive-field')?.className);
+    expect(overridden?.closest('.corpus-toolbar-row')).toBe(language?.closest('.corpus-toolbar-row'));
+    // No rule gives one of the two a height of its own.
+    const css = readFileSync(join(import.meta.dirname, '..', 'src', 'ui', 'app.css'), 'utf8').replace(
+      /\/\*[\s\S]*?\*\//g,
+      '',
+    );
+    const toolbarRule = /\.corpus-toolbar-row\s*\{([^}]*)\}/.exec(css);
+    expect(toolbarRule?.[1]).toMatch(/align-items:\s*flex-end/);
+  });
+
+  it('filters to overridden entries when Overridden only is set to Yes', async () => {
+    const container = await mountPanel();
+    const m = corpusOverridesPanelMessages.en;
+    const select = Array.from(container.querySelectorAll('select')).find((el) =>
+      el.labels?.[0]?.textContent.includes(m.overriddenOnlyLabel),
+    );
+    const before = tableRows(container).length;
+    await act(async () => {
+      if (select === undefined) throw new Error('no Overridden only select');
+      select.value = 'yes';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+      await Promise.resolve();
+    });
+    expect(tableRows(container).length).toBeLessThanOrEqual(before);
+    expect(tableRows(container).every((row) => row.textContent.includes(m.overriddenStatus))).toBe(true);
+  });
+
+  it('sizes the drawers to their content with a maximum height, not the full viewport height (#1335, #1338)', () => {
+    const css = readFileSync(join(import.meta.dirname, '..', 'src', 'ui', 'app.css'), 'utf8').replace(
+      /\/\*[\s\S]*?\*\//g,
+      '',
+    );
+    const rule = /\.primitive-staged-dialog\[data-placement='right'\]\.drawer-fit\s*\{([^}]*)\}/.exec(css);
+    expect(rule?.[1]).toMatch(/height:\s*fit-content/);
+    expect(rule?.[1]).toMatch(/max-height:\s*calc\(100dvh - 2 \* var\(--space-8\)\)/);
+    expect(rule?.[1]).not.toMatch(/(?<!max-)height:\s*100dvh/);
+    for (const file of ['CorpusOverridesPanel.tsx', 'CorpusCorrectionEditor.tsx', 'SuggestCorrectionDialog.tsx']) {
+      const source = readFileSync(join(import.meta.dirname, '..', 'src', 'ui', file), 'utf8');
+      expect(source, file).toMatch(/dialogClassName="[^"]*drawer-fit/);
+    }
   });
 
   it('opens the edit drawer without reflowing the list', async () => {
