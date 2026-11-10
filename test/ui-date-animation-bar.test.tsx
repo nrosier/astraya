@@ -3,7 +3,7 @@
  * #1400: the date and animation bar. Stepping, the interval, the slider, Now and playback all report through the one
  * `onDateChange` the screen already uses for a typed date; reduced motion starts paused; Space and the arrows work.
  */
-import { act, useState } from 'react';
+import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DateAnimationBar } from '../src/ui/DateAnimationBar.js';
@@ -17,11 +17,13 @@ let root: Root | undefined;
 let container: HTMLElement;
 const seen: string[] = [];
 
-function Harness({ start }: { start: string }): React.JSX.Element {
-  const [date, setDate] = useState(start);
+/** The bar wired as the screens wire it: the as-of date lives in the URL through `useAsOfDate`. */
+function Harness(): React.JSX.Element {
+  const [date, setDate, setPlayback] = useAsOfDate();
   return (
     <DateAnimationBar
       date={date}
+      onPlayingChange={setPlayback}
       onDateChange={(next) => {
         seen.push(next);
         setDate(next);
@@ -31,11 +33,12 @@ function Harness({ start }: { start: string }): React.JSX.Element {
 }
 
 function mount(start = '2026-11-10'): void {
+  window.history.replaceState(null, '', `#/people/x/timing/transits?date=${start}`);
   container = document.createElement('div');
   document.body.append(container);
   root = createRoot(container);
   act(() => {
-    root?.render(<Harness start={start} />);
+    root?.render(<Harness />);
   });
 }
 
@@ -132,12 +135,12 @@ describe('playback and keyboard', () => {
     expect(seen).toEqual([]);
     click(button(t.play));
     act(() => {
-      vi.advanceTimersByTime(3000);
+      vi.advanceTimersByTime(3050);
     });
     expect(dateValue()).toBe('2026-11-13');
     click(button(t.pause));
     act(() => {
-      vi.advanceTimersByTime(3000);
+      vi.advanceTimersByTime(3050);
     });
     expect(dateValue()).toBe('2026-11-13');
   });
@@ -167,7 +170,7 @@ describe('playback and keyboard', () => {
     expect(seen).toEqual([]);
     click(button(t.play));
     act(() => {
-      vi.advanceTimersByTime(1000);
+      vi.advanceTimersByTime(1050);
     });
     expect(seen).toEqual(['2026-11-11']);
   });
@@ -191,6 +194,80 @@ describe('playback and keyboard', () => {
       input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
     });
     expect(seen).toEqual([]);
+  });
+});
+
+describe('playback does not write the URL, and a drag pauses it (#1440)', () => {
+  it('writes no hash per tick, only once on pause, and a reopen shows the URL date', () => {
+    mount();
+    const spy = vi.spyOn(window.history, 'replaceState');
+    click(button(t.play));
+    act(() => {
+      vi.advanceTimersByTime(5050);
+    });
+    expect(dateValue()).toBe('2026-11-15');
+    expect(spy).not.toHaveBeenCalled();
+    expect(window.location.hash).toContain('date=2026-11-10');
+    click(button(t.pause));
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(window.location.hash).toContain('date=2026-11-15');
+    // Reload during playback: the URL still names the date it started from.
+    click(button(t.play));
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+    expect(window.location.hash).toContain('date=2026-11-15');
+    act(() => {
+      root?.unmount();
+    });
+    document.body.replaceChildren();
+    const reopened = document.createElement('div');
+    document.body.append(reopened);
+    root = createRoot(reopened);
+    container = reopened;
+    act(() => {
+      root?.render(<Harness />);
+    });
+    expect(dateValue()).toBe('2026-11-15');
+  });
+
+  it('dragging the slider pauses playback, and only Play resumes it', () => {
+    mount();
+    click(button(t.play));
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+    const slider = find('input[type="range"]', HTMLInputElement);
+    act(() => {
+      slider.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    });
+    expect(button(t.play).getAttribute('aria-pressed')).toBe('false');
+    setNative(slider, String(Number(slider.value) + 40), 'input');
+    const dragged = dateValue();
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+    expect(dateValue()).toBe(dragged);
+    expect(find('input[type="range"]', HTMLInputElement).value).toBe(slider.value);
+    click(button(t.play));
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(dateValue()).not.toBe(dragged);
+  });
+
+  it('keeps the slider in step with the date while playing', () => {
+    mount();
+    const slider = find('input[type="range"]', HTMLInputElement);
+    const before = Number(slider.value);
+    click(button(t.play));
+    act(() => {
+      vi.advanceTimersByTime(3050);
+    });
+    expect(Number(slider.value)).toBe(before + 3);
   });
 });
 

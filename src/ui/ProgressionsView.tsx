@@ -167,7 +167,7 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
   const [locale] = useLocale();
   const [technique, setTechnique] = useState<Technique>('secondary');
   const [mcMethod, setMcMethod] = useState<ProgressedMcMethod>('naibod');
-  const [asOf, setAsOf] = useAsOfDate();
+  const [asOf, setAsOf, setPlayback] = useAsOfDate();
   const timingT = useMessages(timingBasisMessages);
   // Progressions are calculated with the engine defaults plus the technique and MC method chosen below.
   const baseBasis = useCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE, undefined, {
@@ -288,7 +288,7 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
           }}
         />
       </PageHeader>
-      <DateAnimationBar date={asOf} onDateChange={setAsOf} />
+      <DateAnimationBar date={asOf} onDateChange={setAsOf} onPlayingChange={setPlayback} />
       <div className="timing-toolbar">
         <Select
           label={t.techniqueLabel}
