@@ -8959,6 +8959,10 @@ a.quiet,
   overflow-wrap: anywhere;
 }
 
+.gantt-plotbox {
+  position: relative;
+}
+
 .gantt-plot {
   display: block;
   width: 100%;
@@ -8987,6 +8991,22 @@ a.quiet,
   stroke: var(--accent);
   stroke-width: 2;
   vector-effect: non-scaling-stroke;
+}
+
+.gantt-exact {
+  stroke: var(--fg);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+/* The pass number of an orb window, beside its exact mark; HTML so the text is not stretched with the plot. */
+.gantt-pass {
+  position: absolute;
+  top: 50%;
+  transform: translate(var(--space-1), -50%);
+  font-size: var(--text-2xs);
+  color: var(--fg);
+  pointer-events: none;
 }
 
 .gantt-target {

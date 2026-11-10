@@ -14,6 +14,7 @@ import { computeSecondaryProgression } from '../domain/secondary-progression.js'
 import { computeSolarArcDirections } from '../domain/solar-arc-directions.js';
 import { computeTransit } from '../domain/transit.js';
 import { computePeriodicTransitForecast } from '../domain/periodic-transit.js';
+import { computeTransitOrbWindows } from '../domain/transit-orb-windows.js';
 import {
   firdariaPeriodsToTimelineEvents,
   periodicTransitToTimelineEvents,
@@ -132,6 +133,12 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
             provider,
           ),
         ]);
+        // Each exact transit's orb entry, exit and pass number (#1401), across the tiers (the weekly tier's events repeat in the monthly one).
+        const windows = await computeTransitOrbWindows(provider, [
+          ...forecast.daily.exactToday,
+          ...forecast.weekly.events,
+          ...forecast.monthly.events,
+        ]);
         // Released from both lots (#680): Fortune for the body and life, Spirit for action and career.
         const fromFortune = zodiacalReleasingPeriods(natal.partOfFortune, natalJd, 18);
         const fromSpirit = zodiacalReleasingPeriods(natal.partOfSpirit, natalJd, 18);
@@ -146,7 +153,7 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
           ...secondaryProgressionToTimelineEvents(progressions, targetJd),
           ...solarArcToTimelineEvents(solarArc),
           ...transitToTimelineEvents(transit, targetJd),
-          ...periodicTransitToTimelineEvents(forecast),
+          ...periodicTransitToTimelineEvents(forecast, windows),
         ];
         if (!effect.cancelled) setLoad({ kind: 'ready', events, centreJd: targetJd });
       } catch (error) {
@@ -175,6 +182,17 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
         : [],
     [load, fromJd, toJd, hidden, bodyGroup],
   );
+  const describeEvent = (event: TimingTimelineEvent): string => {
+    const name = timelineSubjectLabel(event.subject, locale);
+    const pass = event.pass === undefined ? '' : ` (${t.passOf(event.pass.number, event.pass.count)})`;
+    if (event.exactJd !== undefined && event.endJd !== undefined)
+      return `${name}${pass}: ${t.orbWindow(dateLabel(event.startJd), dateLabel(event.exactJd), dateLabel(event.endJd))}`;
+    return `${name}: ${
+      event.endJd === undefined || event.endJd === event.startJd
+        ? dateLabel(event.startJd)
+        : t.range(dateLabel(event.startJd), dateLabel(event.endJd))
+    }`;
+  };
   const rows = useMemo<readonly EventRow[]>(() => {
     const needle = query.trim().toLowerCase();
     const all = tracks.flatMap(({ track, events }) =>
@@ -183,7 +201,9 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
         return {
           key: `${track}-${event.kind}-${String(event.startJd)}-${String(index)}`,
           track: t.tracks[track],
-          event: timelineSubjectLabel(event.subject, locale),
+          event:
+            timelineSubjectLabel(event.subject, locale) +
+            (event.pass === undefined ? '' : ` (${t.passOf(event.pass.number, event.pass.count)})`),
           start: dateLabel(event.startJd),
           end: end === undefined ? '' : dateLabel(end),
           startJd: event.startJd,
@@ -274,13 +294,8 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
                 label={t.axis(dateLabel(fromJd), dateLabel(toJd))}
                 trackLabels={t.tracks}
                 rowLabel={t.rowLabel}
-                describe={(event) =>
-                  `${timelineSubjectLabel(event.subject, locale)}: ${
-                    event.endJd === undefined || event.endJd === event.startJd
-                      ? dateLabel(event.startJd)
-                      : t.range(dateLabel(event.startJd), dateLabel(event.endJd))
-                  }`
-                }
+                describe={describeEvent}
+                passLabel={t.passShort}
                 targetTitle={t.targetLine(dateLabel(load.centreJd))}
               />
               <p className="hint">{t.targetLine(dateLabel(load.centreJd))}</p>
