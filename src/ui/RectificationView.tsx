@@ -11,7 +11,7 @@
 /**
  * @module RectificationView
  * @purpose Birth-time rectification screen: tests candidate birth times for a known date/place against dated life events and ranks them by solar-arc/transit contact score.
- * @conventions Not person-scoped (optional pre-fill from a stored person); uses RectificationView.messages.ts for en/nl text via useMessages(). Laid out as a tool page (#1065): birth-details form and life-events panel side by side, candidate results full width below (`.tool-layout`).
+ * @conventions Optional pre-fill from a stored person; for a chosen person the life events are read from and written back to that person's `lifeEvents` register (#1399) on leaving a row, on add and on remove, and an unreadable stored list is shown as a warning and never overwritten; with no person the events stay local; uses RectificationView.messages.ts for en/nl text via useMessages(). Laid out as a tool page (#1065): birth-details form and life-events panel side by side, candidate results full width below (`.tool-layout`).
  * @exports RectificationView
  */
 import { GlossaryText } from './GlossaryText.js';
@@ -40,7 +40,16 @@ import {
 } from './rectification.js';
 import { rectificationViewMessages } from './RectificationView.messages.js';
 import { SortableTable, csvExportTable, useCsvExports } from './SortableTable.js';
-import { useStoreState } from './store-context.js';
+import { useStore, useStoreState } from './store-context.js';
+import { LIFE_EVENTS_MAX, lifeEventsMutation } from '../domain/life-events.js';
+import { personFormMessages } from './PersonForm.messages.js';
+import {
+  lifeEventsChanged,
+  rowsFromEvents,
+  rowsToEvents,
+  validateLifeEventRows,
+  type LifeEventRow,
+} from './life-events-draft.js';
 import type { TableColumn } from './table-sort.js';
 import type { Locale } from '../interpretation/schema.js';
 import { Notice } from './primitives/Notice.js';
@@ -65,6 +74,10 @@ type Result =
     }
   | { readonly kind: 'error'; readonly message: string };
 
+function blankEvent(): LifeEventRow {
+  return { id: crypto.randomUUID(), date: '', time: '', label: '' };
+}
+
 /** `Aquarius 19°24'` for a longitude, rounded to the minute. */
 function signPosition(longitude: number, locale: Locale): string {
   const totalMinutes = Math.round((((longitude % 360) + 360) % 360) * 60) % (360 * 60);
@@ -79,6 +92,8 @@ export function RectificationView(): React.JSX.Element {
   const basisLine = useCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE);
   const [locale] = useLocale();
   const state = useStoreState();
+  const store = useStore();
+  const tPerson = useMessages(personFormMessages);
   const { provider } = useEphemerisProvider();
   const people = useMemo(() => ordered(state.people), [state.people]);
 
@@ -92,7 +107,9 @@ export function RectificationView(): React.JSX.Element {
   });
   const [zone, setZone] = useState<{ zoneOverride?: string; offsetOverrideMinutes?: number }>({});
   const [stepMinutes, setStepMinutes] = useState(5);
-  const [events, setEvents] = useState<readonly EventField[]>([{ date: '', label: '' }]);
+  // Rows keep the stored event's id and time so that saving back to the person (#1399) never drops either.
+  const [events, setEvents] = useState<readonly LifeEventRow[]>([blankEvent()]);
+  const [saveError, setSaveError] = useState<string>();
   const [fieldError, setFieldError] = useState<RectificationFieldError>();
   const [result, setResult] = useState<Result>({ kind: 'idle' });
   const runId = useRef(0);
@@ -103,6 +120,13 @@ export function RectificationView(): React.JSX.Element {
 
   const choosePerson = (id: string): void => {
     setPersonId(id);
+    setSaveError(undefined);
+    const chosen = id === '' ? undefined : state.people.get(id);
+    if (chosen !== undefined) {
+      // Only the events are filled from the person; an unreadable stored list is not shown as events.
+      const stored = chosen.lifeEventsUnreadable === true ? [] : rowsFromEvents(chosen.lifeEvents ?? []);
+      setEvents(stored.length === 0 ? [blankEvent()] : stored);
+    }
     const moment = id === '' ? undefined : state.people.get(id)?.moment;
     if (moment === undefined) {
       setZone({});
@@ -120,7 +144,37 @@ export function RectificationView(): React.JSX.Element {
     });
   };
 
-  const updateEvent = (index: number, patch: Partial<EventField>): void => {
+  const chosenPerson = personId === '' ? undefined : state.people.get(personId);
+  const eventsUnreadable = chosenPerson?.lifeEventsUnreadable === true;
+
+  /**
+   * Writes the rows back to the chosen person through the same person operation the birth record uses (#1399). Rows
+   * with neither a date nor a description are blanks and are left out; if any other row is incomplete nothing is
+   * written yet. An unreadable stored list is never overwritten.
+   */
+  const saveEvents = (rows: readonly LifeEventRow[]): void => {
+    if (chosenPerson === undefined || eventsUnreadable) return;
+    const filled = rows.filter((row) => row.date !== '' || row.label.trim() !== '');
+    if (validateLifeEventRows(filled, tPerson).size > 0) return;
+    if (!lifeEventsChanged(filled, chosenPerson.lifeEvents ?? [])) return;
+    setSaveError(undefined);
+    const fail = (cause: unknown): void => {
+      setSaveError(cause instanceof Error ? cause.message : String(cause));
+    };
+    try {
+      store.mutate([lifeEventsMutation(chosenPerson.id, rowsToEvents(filled))]).catch(fail);
+    } catch (cause) {
+      fail(cause);
+    }
+  };
+
+  /** Adding and removing a row write at once; editing a row writes when focus leaves it. */
+  const changeEvents = (next: readonly LifeEventRow[]): void => {
+    setEvents(next);
+    saveEvents(next);
+  };
+
+  const updateEvent = (index: number, patch: Partial<LifeEventRow>): void => {
     setEvents((current) => current.map((event, i) => (i === index ? { ...event, ...patch } : event)));
   };
 
@@ -317,9 +371,25 @@ export function RectificationView(): React.JSX.Element {
           <fieldset className="field-group">
             <legend>{t.eventsLegend}</legend>
             <p className="hint">{t.eventsHint}</p>
+            {chosenPerson !== undefined && !eventsUnreadable && <p className="hint">{t.eventsSavedHint}</p>}
+            {eventsUnreadable && (
+              <StatusMessage kind="partial" detail={t.eventsUnreadableDetail}>
+                {tPerson.lifeEventsUnreadable}
+              </StatusMessage>
+            )}
+            {saveError !== undefined && <StatusMessage kind="error">{t.eventsSaveError(saveError)}</StatusMessage>}
             <ul className="rectification-events">
               {events.map((event, index) => (
-                <li key={index} className="tool-field-row">
+                <li
+                  key={event.id}
+                  className="tool-field-row"
+                  onBlur={(focus) => {
+                    // Typing stays local; the person record is written once focus leaves the row, not per keystroke.
+                    if (focus.relatedTarget instanceof Node && focus.currentTarget.contains(focus.relatedTarget))
+                      return;
+                    saveEvents(events);
+                  }}
+                >
                   <DateField
                     label={t.eventDateLabel(index + 1)}
                     value={event.date}
@@ -335,12 +405,13 @@ export function RectificationView(): React.JSX.Element {
                       updateEvent(index, { label: value });
                     }}
                   />
-                  {events.length > 1 && (
+                  {(events.length > 1 || (chosenPerson !== undefined && (event.date !== '' || event.label !== ''))) && (
                     <Button
                       type="button"
                       variant="quiet"
                       onClick={() => {
-                        setEvents((current) => current.filter((_, i) => i !== index));
+                        const rest = events.filter((_, i) => i !== index);
+                        changeEvents(rest.length === 0 ? [blankEvent()] : rest);
                       }}
                     >
                       {t.removeEvent(index + 1)}
@@ -352,8 +423,9 @@ export function RectificationView(): React.JSX.Element {
             <Button
               type="button"
               variant="quiet"
+              disabled={chosenPerson !== undefined && !eventsUnreadable && events.length >= LIFE_EVENTS_MAX}
               onClick={() => {
-                setEvents((current) => [...current, { date: '', label: '' }]);
+                changeEvents([...events, blankEvent()]);
               }}
             >
               {t.addEvent}

@@ -27,6 +27,10 @@ const en = {
   eventDateLabel: (n: number) => `Event ${String(n)} date`,
   eventLabelLabel: (n: number) => `Event ${String(n)} description`,
   eventLabelPlaceholder: 'e.g. moved abroad',
+  eventsSavedHint: 'Changes to these events are saved on the chosen person.',
+  eventsUnreadableDetail:
+    'Events you enter here are used for this search only. The saved list is left as it is and is not overwritten.',
+  eventsSaveError: (message: string) => `The events could not be saved on the person. ${message}`,
   addEvent: 'Add an event',
   removeEvent: (n: number) => `Remove event ${String(n)}`,
   findButton: 'Test candidate times',
@@ -89,6 +93,10 @@ const nl: typeof en = {
   eventDateLabel: (n: number) => `Datum van gebeurtenis ${String(n)}`,
   eventLabelLabel: (n: number) => `Omschrijving van gebeurtenis ${String(n)}`,
   eventLabelPlaceholder: 'bijv. naar het buitenland verhuisd',
+  eventsSavedHint: 'Wijzigingen in deze gebeurtenissen worden bij de gekozen persoon bewaard.',
+  eventsUnreadableDetail:
+    'Gebeurtenissen die u hier invoert gelden alleen voor deze zoekopdracht. De bewaarde lijst blijft zoals ze is en wordt niet overschreven.',
+  eventsSaveError: (message: string) => `De gebeurtenissen konden niet bij de persoon worden bewaard. ${message}`,
   addEvent: 'Gebeurtenis toevoegen',
   removeEvent: (n: number) => `Gebeurtenis ${String(n)} verwijderen`,
   findButton: 'Kandidaat-tijden toetsen',
