@@ -35,7 +35,8 @@ One level above `src/astrology/`: composes pure astrological calculations into s
 - `horary-judgment.ts` — Horary significators, perfection/reception, prohibition, and relative-motion timing estimates (#552). Deps: `astrology/dignities`, `astrology/horary`, `astrology/reception`, `astrology/emphasis`, `./chart-compute`.
 - `house-overlays.ts` — Synastry house overlays (which houses each person's bodies fall in, both directions). Deps: `astrology/emphasis`, `./synastry`, `./chart-compute`.
 - `id.ts` — Local-first CSPRNG-backed prefixed base32 id generation (people/charts/note revisions/saved queries). Deps: Web Crypto API only.
-- `life-events.ts` — A person's dated life events (#1399): the type, the 100-event atomic reader and write guard, and the date-then-time order. Deps: `store/oplog`, `store/ops` (JsonValue).
+- `life-events.ts` — A person's dated life events (#1399): the type, the 100-event atomic reader and write guard, and the date-then-time order, and the picker options (S5). Deps: `store/oplog`, `store/ops` (JsonValue).
+- `life-event-return.ts` — The solar or lunar return in force at a life event (#1399): last return at or before it. Deps: `./lunar-returns`, `./solar-return`, `./return-chart`, `./life-events`, `time/julian`, `time/resolve`.
 - `lunar-returns.ts` — Lunar returns (every Moon-to-natal-longitude each cycle). Deps: `astrology/solar-lunar-returns`, `astrology/aspects`, `ephemeris/generated-constants`.
 - `minor-progression.ts` — Tertiary/minor progressions (day-for-lunar-month / lunar-month-for-year). Deps: `astrology/minor-progressions`, `astrology/progressions`, `astrology/aspects`.
 - `pdf-export-sections.ts` — PDF export builder content (selectable chart types/tables/sections + presets); view-only tables (`PDF_VIEW_TABLES`, `VIEW_TABLES`) that only a chart page's link adds, and `chartSectionForView` (#915). Deps: `ui/chart-sections` (ChartType, ChartViewKind).

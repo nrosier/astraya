@@ -15,6 +15,10 @@
 import { ChoiceGroup } from './primitives/ChoiceGroup.js';
 import { GlossaryText } from './GlossaryText.js';
 import { DateField } from './primitives/DateField.js';
+import { LifeEventPicker } from './LifeEventPicker.js';
+import { lifeEventPickerMessages } from './LifeEventPicker.messages.js';
+import { returnInForceAtEvent } from '../domain/life-event-return.js';
+import type { LifeEvent } from '../domain/life-events.js';
 import { NumberField } from './primitives/NumberField.js';
 import { useEffect, useMemo, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
@@ -114,6 +118,8 @@ export function ReturnView({
   // The person's chosen fixed stars (#860), as the natal chart reads them.
   const fixedStars = useStableBy(person?.fixedStars, (stars) => JSON.stringify(stars ?? []));
   const t = useMessages(returnViewMessages);
+  const pickerT = useMessages(lifeEventPickerMessages);
+  const [pickError, setPickError] = useState<string | undefined>(undefined);
   const [locale] = useLocale();
   const {
     settings: settings,
@@ -202,6 +208,21 @@ export function ReturnView({
     settings,
     fixedStars,
   ]);
+
+  // Picking a life event selects the return in force at it: the last return at or before the event (#1399).
+  const pickEvent = (event: LifeEvent): void => {
+    if (personMoment === undefined || provider === undefined) return;
+    setPickError(undefined);
+    returnInForceAtEvent(kind, event, personMoment, provider).then(
+      (found) => {
+        if (solar) setYear(String(found.year));
+        else setFromDate(found.utcDate);
+      },
+      (error: unknown) => {
+        setPickError(pickerT.returnError(error instanceof Error ? error.message : String(error)));
+      },
+    );
+  };
 
   const baseLabel = solar ? t.solarLabel(year) : t.lunarLabel;
   const label =
@@ -330,7 +351,9 @@ export function ReturnView({
         ) : (
           <DateField label={t.fromDateLabel} value={fromDate} onChange={setFromDate} />
         )}
+        <LifeEventPicker events={person.lifeEvents} onPick={pickEvent} />
       </div>
+      {pickError !== undefined && <StatusMessage kind="error">{pickError}</StatusMessage>}
       {!inputValid && <StatusMessage kind="error">{solar ? t.invalidYear : t.invalidDate}</StatusMessage>}
 
       <fieldset className="field-group">
