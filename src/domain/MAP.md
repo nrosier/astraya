@@ -17,7 +17,7 @@ One level above `src/astrology/`: composes pure astrological calculations into s
 - `degree-parts.ts` — Splits a longitude into sign/degree/minute/second; kept apart so eager `ui/format` avoids loading `chart-tables`. Deps: `astrology/signs`.
 - `chart-tables.ts` — Converts chart data into UI table/wheel/sheet rows. Deps: `astrology/almuten`, `astrology/antiscia`, `astrology/declinations`, `astrology/dispositors`, `astrology/fixed-stars`, `astrology/jones-shapes`, `astrology/signs`, `./chart-compute`.
 - `chart.ts` — Persisted "chart" entity (distinct from computed ChartData): person ref, kind, label, settings. Deps: `store/ops`, `./id`.
-- `composite.ts` — Composite chart (synthetic midpoint + fresh aspect/dignity/sect/parts). Deps: `astrology/aspects`, `astrology/midpoints`, `astrology/rulership`, `astrology/sect`, `astrology/arabic-parts`, `./chart-compute`.
+- `composite.ts` — Composite chart (synthetic midpoint, anchored cusps when base cusps are nearly opposite, + fresh aspect/dignity/sect/parts). Deps: `astrology/aspects`, `astrology/midpoints`, `astrology/rulership`, `astrology/sect`, `astrology/arabic-parts`, `./chart-compute`.
 - `custom-point.ts` — Resolves/evaluates safe user formulas and detects duplicate built-in points (#566). Deps: `astrology/bodies`, `astrology/formula-parser`, `./chart-compute`.
 - `davison.ts` — Davison relationship chart (#1406): real chart at the Local-Mean-Time midpoint of two births and a great-circle (default) or book arithmetic place midpoint. Deps: `./chart-compute`, `time/julian`, `time/resolve`, `time/zones`.
 - `demibirthday.ts` — Demibirthday timing (Sun opposes natal longitude each year). Deps: `astrology/aspects`, `astrology/planetary-returns`, `ephemeris/generated-constants`.
