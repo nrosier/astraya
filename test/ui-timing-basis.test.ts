@@ -12,20 +12,36 @@ describe('timing basis items (#1059)', () => {
 
   it('appends items after the shared line with the same separator', () => {
     expect(withBasisItems(LINE, ...progressionBasisItems('tertiary', 'naibod', timingBasisMessages.en))).toBe(
-      `${LINE} · Tertiary progression`,
+      `${LINE} · Tertiary progression · angles recomputed at the progressed moment`,
     );
     expect(withBasisItems(LINE)).toBe(LINE);
   });
 
   it('names the technique and, for secondary only, the MC method', () => {
-    expect(progressionBasisItems('secondary', 'naibod', en)).toEqual(['Secondary progression', 'Naibod MC']);
-    expect(progressionBasisItems('secondary', 'solarArc', en)).toEqual(['Secondary progression', 'Solar arc MC']);
-    expect(progressionBasisItems('tertiary', 'naibod', en)).toEqual(['Tertiary progression']);
-    expect(progressionBasisItems('minor', 'quotidian', nl)).toEqual(['Minorprogressie']);
+    expect(progressionBasisItems('secondary', 'naibod', en)).toEqual([
+      'Secondary progression',
+      'Naibod MC',
+      'angles shifted by the Naibod arc, in longitude',
+    ]);
+    expect(progressionBasisItems('secondary', 'solarArc', en)).toEqual([
+      'Secondary progression',
+      'Solar arc MC',
+      'angles shifted by the solar arc, in longitude',
+    ]);
+    expect(progressionBasisItems('tertiary', 'naibod', en)).toEqual([
+      'Tertiary progression',
+      'angles recomputed at the progressed moment',
+    ]);
+    expect(progressionBasisItems('minor', 'quotidian', nl)).toEqual([
+      'Minorprogressie',
+      'hoeken herberekend op het progressieve moment',
+    ]);
+    expect(progressionBasisItems('secondary', 'naibod', nl)[2]).toBe('hoeken verschoven met de Naibod-boog, in lengte');
   });
 
   it('names the solar-arc key', () => {
-    expect(solarArcBasisItems(en)).toEqual(['Solar arc (the Sun’s progressed arc)']);
+    expect(solarArcBasisItems(en)).toEqual(['Solar arc (the Sun’s progressed arc)', 'directed in longitude only']);
+    expect(solarArcBasisItems(nl)[1]).toBe('alleen in lengte gedirigeerd');
     expect(solarArcBasisItems(nl)[0]).toContain('Zonneboog');
   });
 

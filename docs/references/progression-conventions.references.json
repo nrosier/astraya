@@ -1,0 +1,28 @@
+{
+  "$comment": "Progression conventions for issue #1403. Constants and citations only; no corpus text.",
+  "schema_version": 1,
+  "compiled": "2026-11-10",
+  "constants": [
+    {
+      "id": "progression-year-days",
+      "value": 365.2422,
+      "unit": "days",
+      "label": "mean tropical year",
+      "replaces": {
+        "value": 365.2425,
+        "label": "Gregorian calendar mean year, wrongly labelled the mean tropical year"
+      },
+      "difference_at_age_80": "about 5.7 seconds of progressed time",
+      "source": "Jean Meeus, Astronomical Algorithms, 2nd ed., ch. 10: mean tropical year 365.242189 days at J2000, rounded to four decimals",
+      "decision": "Owner decision 2026-11-09 on issue #1403",
+      "used_by": ["src/astrology/progressions.ts", "test/progression-year-constant.test.ts"]
+    },
+    {
+      "id": "naibod-key",
+      "value": "360 / progression-year-days",
+      "unit": "degrees per day of age",
+      "source": "Naibod's key, the mean Sun's daily motion; Astraya derives it from the progression year",
+      "used_by": ["src/astrology/progressions.ts"]
+    }
+  ]
+}

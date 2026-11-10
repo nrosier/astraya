@@ -77,13 +77,15 @@ data/
 docs/mockups/
 
 # Reference material is local only, never pushed. Only the index/format docs and the
-# three JSON data files that the test suite reads, plus sources.json, are tracked (#864).
+# JSON data files that the test suite reads (orb-conventions, derived-points, aaf-chunks,
+# progression-conventions), plus sources.json, are tracked (#864, #1403).
 docs/references/*
 !docs/references/MAP.md
 !docs/references/SCHEMA.md
 !docs/references/orb-conventions.references.json
 !docs/references/derived-points.references.json
 !docs/references/aaf-chunks.references.json
+!docs/references/progression-conventions.references.json
 !docs/references/sources.json
 
 # Playwright MCP screenshots left in the repo root during manual checks.

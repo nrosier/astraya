@@ -5519,7 +5519,7 @@ svg text.chart-symbol-text-unicode {
   border-color: transparent;
 }
 
-/* Filter bar (#1335): two rows. Row 1 is the wide search, corpus language and the Overridden-only switch; row 2 is category, tier and tag. */
+/* Filter bar (#1335): two rows. Row 1 is the wide search, corpus language and the Overridden-only Yes/No select; row 2 is category, tier and tag. */
 .corpus-toolbar {
   display: flex;
   flex-direction: column;
@@ -5589,12 +5589,11 @@ svg text.chart-symbol-text-unicode {
   }
 }
 
-/* The drawer editor (#1335): identity read-only, the text area takes the free height, tags as chips. */
+/* The drawer editor (#1335): identity read-only, the text area as tall as its rows need (the drawer caps and scrolls), tags as chips. */
 .corpus-editor-form {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  min-height: 100%;
 }
 
 .corpus-editor-identity {
@@ -5628,7 +5627,6 @@ svg text.chart-symbol-text-unicode {
 
 .corpus-editor-text textarea {
   flex: 1 1 auto;
-  min-height: 40dvh;
   width: 100%;
   line-height: var(--leading-body);
   resize: vertical;
@@ -6285,6 +6283,26 @@ svg text.chart-symbol-text-unicode {
   border-width: 0 0 0 1px;
   border-radius: 0;
   box-shadow: var(--shadow-popover);
+}
+
+/*
+ * A right-anchored drawer that sizes to its content (owner visual review 2026-11-10, #1335 and #1338: "does the drawer
+ * need to span the entire height? cap at what is actually needed"). The height is the content's, capped one --space-8
+ * short of the viewport at the top and the bottom; the body scrolls inside the cap and the footer stays pinned. The
+ * Extended settings, Overlays and Map drawers keep the full-height default.
+ */
+.primitive-staged-dialog[data-placement='right'].drawer-fit {
+  /* fit-content, not auto: a modal dialog is absolutely positioned with all four insets 0, so `auto` stretches it to the cap. */
+  height: fit-content;
+  max-height: calc(100dvh - 2 * var(--space-8));
+  margin: auto 0 auto auto;
+  border-width: 1px;
+  border-radius: var(--radius);
+}
+
+/* The body's `flex: 1` (a zero basis) would stretch an auto-height card to its cap; here it takes its content size and shrinks to scroll. */
+.primitive-staged-dialog[data-placement='right'].drawer-fit > [class~='settings-card-body'] {
+  flex: 1 1 auto;
 }
 
 /*
@@ -8834,24 +8852,18 @@ a.quiet,
   font-size: var(--text-lg);
 }
 
-.overview-card--wheel {
-  /* The wheel sits beside the birth data on a wide page, in one row (issue 1345). */
-  grid-column: 2;
-  grid-row: 1;
+/* Each column stacks its cards with the same --space-4 gap as the grid, so no card is pushed down by a row in the other
+   column (owner visual review 2026-11-10: birth data, Now, Next, Continue on the left; the wheel, then Sun, Moon and
+   Rising on the right). An empty column takes no room. */
+.overview-column {
+  display: grid;
+  align-content: start;
+  gap: var(--space-4);
+  min-width: 0;
 }
 
-/* Sun, Moon and Rising sit under the wheel, in the same column (owner visual review 2026-11-07). */
-.overview-card--placements {
-  grid-column: 2;
-  grid-row: 2;
-}
-
-@media (max-width: 51.99rem) {
-  .overview-card--wheel,
-  .overview-card--placements {
-    grid-column: auto;
-    grid-row: auto;
-  }
+.overview-column:empty {
+  display: none;
 }
 
 .overview-placements {

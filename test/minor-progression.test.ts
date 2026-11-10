@@ -1,3 +1,4 @@
+// #1403: these tests built the target date from a literal 365.2425; the year constant is now 365.2422, so they use TROPICAL_YEAR_DAYS (old 365.2425, new 365.2422) and the expected values are unchanged.
 /**
  * Integration tests for computeMinorProgression (#48).
  *
@@ -9,6 +10,7 @@
 import { describe, expect, it } from 'vitest';
 import { angularSeparation } from '../src/astrology/aspects.js';
 import { SYNODIC_MONTH_DAYS } from '../src/astrology/minor-progressions.js';
+import { TROPICAL_YEAR_DAYS } from '../src/astrology/progressions.js';
 import { computeMinorProgression } from '../src/domain/minor-progression.js';
 import { julianDayFor } from '../src/time/julian.js';
 import { resolveMoment } from '../src/time/resolve.js';
@@ -37,7 +39,7 @@ describe('computeMinorProgression (#48)', () => {
   it('minor: one year of real time progresses the sky by one lunar month', async () => {
     const engine = await getEngine();
     const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
-    const targetJd = natalJd + 365.2425 * 4; // 4 years of real time
+    const targetJd = natalJd + TROPICAL_YEAR_DAYS * 4; // 4 years of real time
 
     const progressed = await computeMinorProgression('minor', NATAL, targetJd, engine);
     expect(progressed.method).toBe('minor');
@@ -48,7 +50,7 @@ describe('computeMinorProgression (#48)', () => {
   it('gives tertiary and minor visibly different charts for the same target date', async () => {
     const engine = await getEngine();
     const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
-    const targetJd = natalJd + 365.2425 * 20;
+    const targetJd = natalJd + TROPICAL_YEAR_DAYS * 20;
 
     const tertiary = await computeMinorProgression('tertiary', NATAL, targetJd, engine);
     const minor = await computeMinorProgression('minor', NATAL, targetJd, engine);
@@ -65,7 +67,7 @@ describe('computeMinorProgression (#48)', () => {
   it('reports the same real chronological age regardless of method', async () => {
     const engine = await getEngine();
     const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
-    const targetJd = natalJd + 365.2425 * 12.5;
+    const targetJd = natalJd + TROPICAL_YEAR_DAYS * 12.5;
 
     const tertiary = await computeMinorProgression('tertiary', NATAL, targetJd, engine);
     const minor = await computeMinorProgression('minor', NATAL, targetJd, engine);
@@ -77,7 +79,7 @@ describe('computeMinorProgression (#48)', () => {
   it('finds contacts between the progressed positions and the fixed natal chart (#51)', async () => {
     const engine = await getEngine();
     const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
-    const targetJd = natalJd + 365.2425 * 20;
+    const targetJd = natalJd + TROPICAL_YEAR_DAYS * 20;
 
     const progressed = await computeMinorProgression('minor', NATAL, targetJd, engine);
     const natal = await computeMinorProgression('minor', NATAL, natalJd, engine);
@@ -96,7 +98,7 @@ describe('computeMinorProgression (#48)', () => {
   it('narrows to fewer contacts with a tighter orb config (#51)', async () => {
     const engine = await getEngine();
     const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
-    const targetJd = natalJd + 365.2425 * 20;
+    const targetJd = natalJd + TROPICAL_YEAR_DAYS * 20;
 
     const wide = await computeMinorProgression('minor', NATAL, targetJd, engine);
     const tight = await computeMinorProgression('minor', NATAL, targetJd, engine, {

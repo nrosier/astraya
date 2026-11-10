@@ -318,6 +318,7 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
               )}
             </p>
             <p className="hint">{t.arcLine(formatFixed(load.data.arc, 2))}</p>
+            <p className="hint">{t.declinationNote}</p>
 
             {/* The shared timing layout (#1234): contacts left, positions right, one column below 52rem. */}
             <div className="timing-layout">
