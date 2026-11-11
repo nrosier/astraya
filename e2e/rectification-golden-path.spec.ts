@@ -1,7 +1,7 @@
 /**
  * The golden path for birth-time rectification (#408): from a stored person, test every five
  * minutes of a birth day against events that are exact solar-arc contacts for the person's true
- * birth time (08:20), and the true time must come out at the top, with a lift well above average.
+ * birth time (08:20), and the true time must come out among the top three of the day's candidates, with a lift well above average.
  * Also: a bad field is reported inline, and the screen has no automatic accessibility violations.
  *
  * The four event dates are the ones the engine-level test derives for this birth moment (a
@@ -71,10 +71,12 @@ test('rectifying a day of candidate times recovers the true birth time from exac
 
   const table = page.getByRole('table');
   await expect(table).toBeVisible({ timeout: 200_000 });
-  // The best candidate is the true time, and clearly above the day's average.
-  const best = table.getByRole('row').nth(1);
-  await expect(best).toContainText('08:20');
-  const lift = Number((await best.getByRole('cell').nth(4).innerText()).replace(/[^\d.]/g, ''));
+  // The true time is one of the three best of the day's 288 candidates (owner decision, #1445), and clearly above the day's average.
+  const topThree = [1, 2, 3].map((index) => table.getByRole('row').nth(index));
+  const texts = await Promise.all(topThree.map((row) => row.innerText()));
+  const trueRow = topThree[texts.findIndex((text) => text.includes('08:20'))];
+  expect(trueRow, 'the true time 08:20 is among the top three candidates').toBeDefined();
+  const lift = Number((await trueRow?.getByRole('cell').nth(4).innerText())?.replace(/[^\d.]/g, ''));
   expect(lift).toBeGreaterThan(2);
   await expect(page.getByText(/288 candidate times tested/)).toBeVisible();
   // The evidence behind the top times is listed, and the caveat is on the screen.
