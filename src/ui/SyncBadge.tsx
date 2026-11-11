@@ -146,9 +146,9 @@ export function SyncBadge({ initial }: { readonly initial?: string }): React.JSX
         }
       }}
     >
-      <button
+      <Button
         ref={triggerRef}
-        type="button"
+        variant="plain"
         className="syncbadge-trigger"
         aria-label={status.label}
         aria-expanded={open}
@@ -164,7 +164,7 @@ export function SyncBadge({ initial }: { readonly initial?: string }): React.JSX
           </span>
         )}
         <span className="syncbadge-dot" data-state={sync.kind === 'synced' ? 'synced' : 'local'} aria-hidden="true" />
-      </button>
+      </Button>
       {open && (
         <div id={POPOVER_ID} className="syncbadge-popover" role="status" aria-label={status.label}>
           <p className="syncbadge-title">{status.label}</p>

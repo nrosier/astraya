@@ -16,6 +16,7 @@
  * @exports PersonSwitcher
  */
 import { useEffect, useId, useRef, useState } from 'react';
+import { Button } from './primitives/Button.js';
 import { TextField } from './primitives/TextField.js';
 import { featureFor, hrefFor } from './feature-registry.js';
 import { useMessages } from './messages.js';
@@ -71,8 +72,8 @@ export function PersonSwitcher({
         dropdown.onGroupBlur(GROUP_KEY, event);
       }}
     >
-      <button
-        type="button"
+      <Button
+        variant="plain"
         ref={dropdown.buttonRef(GROUP_KEY)}
         className="app-nav-person person-switcher-trigger"
         aria-haspopup="true"
@@ -85,7 +86,7 @@ export function PersonSwitcher({
         }}
       >
         {name}
-      </button>
+      </Button>
       {isOpen && (
         <div id={popupId} className="person-switcher-popup" role="dialog" aria-label={t.popupLabel}>
           <TextField
