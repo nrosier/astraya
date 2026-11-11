@@ -9,7 +9,7 @@
 /**
  * @module RectificationLift
  * @purpose Pure lift, window-average and event-subset re-scoring helpers for birth-time rectification candidates.
- * @conventions Scores are contact counts (one point each), so a window of equal scores has an exact average of that score and a lift of exactly 1; an empty window or an average of zero gives lift 0, never NaN or Infinity; a candidate is a spike only when its lift is strictly above 1; re-scoring counts the contacts of the included events, so toggling an event needs no new search; ties rank by earlier Julian day.
+ * @conventions Scores are sums of each contact's closeness-scaled points (equal weight, #1445); a window of equal scores has a lift of 1; an empty window or an average of zero gives lift 0, never NaN or Infinity; a candidate is a spike only when its lift is strictly above 1; re-scoring sums the points of the included events' contacts, so toggling an event needs no new search; ties rank by earlier Julian day.
  * @exports CHANCE_LIFT, windowAverage, liftOf, isSpike, rescoreForEvents, RescoredCandidate
  */
 
@@ -34,17 +34,17 @@ export function isSpike(lift: number): boolean {
 
 interface ScoredCandidate {
   readonly jd: number;
-  readonly contacts: readonly { readonly eventIndex: number }[];
+  readonly contacts: readonly { readonly eventIndex: number; readonly points: number }[];
 }
 
 export type RescoredCandidate<T extends ScoredCandidate> = T & {
-  /** Contacts of the included events only. */
+  /** Points of the included events' contacts only. */
   readonly score: number;
   readonly lift: number;
 };
 
 /**
- * Re-scores every candidate counting only the contacts of the included events (by index into the events the
+ * Re-scores every candidate summing only the points of the included events' contacts (by index into the events the
  * search was run with), and ranks them best first by score, then earlier time. Lift is over the average of the
  * re-scored window.
  */
@@ -52,8 +52,11 @@ export function rescoreForEvents<T extends ScoredCandidate>(
   candidates: readonly T[],
   includedEventIndexes: ReadonlySet<number>,
 ): readonly RescoredCandidate<T>[] {
-  const scores = candidates.map(
-    (candidate) => candidate.contacts.filter((contact) => includedEventIndexes.has(contact.eventIndex)).length,
+  const scores = candidates.map((candidate) =>
+    candidate.contacts.reduce(
+      (total, contact) => (includedEventIndexes.has(contact.eventIndex) ? total + contact.points : total),
+      0,
+    ),
   );
   const average = windowAverage(scores);
   return candidates

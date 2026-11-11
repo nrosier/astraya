@@ -49,11 +49,11 @@ describe('rescoreForEvents', () => {
     jd,
     score: 99,
     lift: 99,
-    contacts: eventIndexes.map((eventIndex) => ({ eventIndex })),
+    contacts: eventIndexes.map((eventIndex) => ({ eventIndex, points: 1 })),
   });
   const candidates = [candidate(1, [0, 0, 1]), candidate(2, [1, 1, 1]), candidate(3, [0])];
 
-  it('counts one point per contact of the included events only, and ranks best first', () => {
+  it('sums the points of the included events’ contacts only, and ranks best first', () => {
     const all = rescoreForEvents(candidates, new Set([0, 1]));
     expect(all.map((c) => [c.jd, c.score])).toEqual([
       [1, 3],
@@ -73,6 +73,20 @@ describe('rescoreForEvents', () => {
     expect(onlySecond[0]?.jd).toBe(2);
     expect(onlySecond[0]?.lift).toBeCloseTo(3 / (4 / 3), 9);
     expect(isSpike(onlySecond[0]?.lift ?? 0)).toBe(true);
+  });
+
+  it('sums closeness-scaled points, so one exact contact outscores two loose ones', () => {
+    const exact = { jd: 1, score: 0, lift: 0, contacts: [{ eventIndex: 0, points: 1 }] };
+    const loose = {
+      jd: 2,
+      score: 0,
+      lift: 0,
+      contacts: [
+        { eventIndex: 0, points: 0.3 },
+        { eventIndex: 0, points: 0.2 },
+      ],
+    };
+    expect(rescoreForEvents([loose, exact], new Set([0])).map((c) => c.jd)).toEqual([1, 2]);
   });
 
   it('gives lift 0 to every candidate when no event is included', () => {

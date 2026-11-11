@@ -309,7 +309,7 @@ export function RectificationView(): React.JSX.Element {
         valueOf: (row) => row.midheaven,
         render: (row) => signPosition(row.midheaven, locale),
       },
-      { key: 'score', label: t.scoreColumn, valueOf: (row) => row.score, render: (row) => String(row.score) },
+      { key: 'score', label: t.scoreColumn, valueOf: (row) => row.score, render: (row) => formatFixed(row.score, 2) },
       { key: 'lift', label: t.liftColumn, valueOf: (row) => row.lift, render: (row) => `×${formatFixed(row.lift, 1)}` },
       {
         key: 'verdict',
@@ -584,12 +584,14 @@ export function RectificationView(): React.JSX.Element {
             {top.slice(0, DETAILED).map((candidate) => (
               <div key={candidate.jd} className="rectification-detail">
                 <Disclosure
-                  title={t.detailsSummary(candidate.localTime, String(candidate.score))}
-                  summary={t.contactCount(candidate.score)}
+                  title={t.detailsSummary(candidate.localTime, formatFixed(candidate.score, 2))}
+                  summary={t.contactCount(
+                    candidate.contacts.filter((contact) => includedIndexes.has(contact.eventIndex)).length,
+                  )}
                   showLabel={t.showDetails}
                   hideLabel={t.hideDetails}
                 >
-                  {candidate.score === 0 ? (
+                  {!candidate.contacts.some((contact) => includedIndexes.has(contact.eventIndex)) ? (
                     <p className="hint">
                       <GlossaryText text={t.noContacts} />
                     </p>

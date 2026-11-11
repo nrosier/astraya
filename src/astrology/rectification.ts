@@ -29,8 +29,11 @@
  *   square or opposite the natal Ascendant or Midheaven.
  * - **Orb** (owner decision, #1445): the existing transit orb of the body involved (`orbLimitFor` on
  *   the daily transit preset of `transit-importance.ts`); no orb is invented here.
- * - **Weight** (owner decision, #1445): equal. Every contact adds one point to the candidate's raw
- *   score. Every event counts equally; the user chooses which events to include.
+ * - **Weight** (owner decision, #1445, revised 2026-11-11): equal across contact types, scaled by
+ *   closeness. A contact adds `1 − orb / limit`: 1 at exact, falling in a straight line to 0 at its
+ *   orb limit, and a contact outside the orb adds nothing. This is the same orb multiplier the transit
+ *   importance score uses (`transit-importance.ts`), so the fall-off is not a new number either.
+ *   Every event counts equally; the user chooses which events to include.
  *
  * Planets are taken at the candidate's own birth moment, so the Moon — which moves a degree every
  * two hours — also helps tell candidates apart, in the directed and natal roles alike.
@@ -39,17 +42,14 @@
 /**
  * @module Rectification
  * @purpose Narrows an uncertain birth time by scoring candidate birth moments against dated life events using solar-arc and slow-body transit contacts to the angles.
- * @conventions Scoring method citation pending (#1445). Each contact (conjunction, square or opposition) adds one point; its orb is the body's existing transit orb (`orbLimitFor` on the daily transit preset), so none is new; transits come from Jupiter to Pluto and the mean lunar node; results report a `lift` over the mean candidate score via `rectification-lift.ts`; contacts keep their event index so a subset of events can be re-scored without a new search; capped at MAX_RECTIFICATION_CANDIDATES.
- * @exports POINTS_PER_CONTACT, contactOrbLimit, contactOrb, scoreCandidate, MAX_RECTIFICATION_CANDIDATES, rectify
+ * @conventions Scoring method citation pending (#1445). Each contact (conjunction, square or opposition) adds an equal-weight, closeness-scaled score (`contactPoints`: 1 − orb/limit, the transit importance orb multiplier; nothing outside the orb, no type weights); its orb is the body's existing transit orb (`orbLimitFor` on the daily transit preset), so none is new; transits come from Jupiter to Pluto and the mean lunar node; results report a `lift` over the mean candidate score via `rectification-lift.ts`; contacts keep their event index so a subset of events can be re-scored without a new search; capped at MAX_RECTIFICATION_CANDIDATES.
+ * @exports contactOrbLimit, contactOrb, contactPoints, scoreCandidate, MAX_RECTIFICATION_CANDIDATES, rectify
  */
 import { bodyByKey } from './bodies.js';
 import { ageInYears } from './progressions.js';
 import { liftOf, windowAverage } from './rectification-lift.js';
 import { orbLimitFor, transitPreset } from './transit-importance.js';
 import type { BodyId, Degrees, EphemerisProvider, GeoPosition, HouseSystem, JulianDayUT } from '../ephemeris/types.js';
-
-/** Equal weight (owner decision, #1445): every contact adds this one point to the raw score. */
-export const POINTS_PER_CONTACT = 1;
 
 /** The daily transit rule set, whose per-body orbs the contacts use (no orb of this tool's own). */
 const TRANSIT_ORB_RULES = transitPreset('important', { everyBodyKey: [], context: 'daily' });
@@ -93,6 +93,10 @@ export interface RectificationContact {
   readonly aspect: 'conjunction' | 'square' | 'opposition';
   /** Distance from exact, in degrees. */
   readonly orb: Degrees;
+  /** The orb limit this contact was admitted under (the body's transit orb). */
+  readonly orbLimit: Degrees;
+  /** What the contact adds to the raw score: {@link contactPoints} of its orb and limit. */
+  readonly points: number;
 }
 
 export interface CandidateScore {
@@ -128,6 +132,16 @@ export function contactOrb(
   return orb <= maxOrb ? orb : undefined;
 }
 
+/**
+ * What one contact adds (owner decision, #1445): equal weight for every contact type, scaled by closeness, 1 at
+ * exact and falling in a straight line to 0 at the orb limit; nothing outside the orb. The fall-off is the transit
+ * importance orb multiplier (`transit-importance.ts`).
+ */
+export function contactPoints(orb: Degrees, orbLimit: Degrees): number {
+  if (!(orbLimit > 0) || orb > orbLimit) return 0;
+  return Math.max(0, 1 - orb / orbLimit);
+}
+
 interface Point {
   readonly key: string;
   readonly longitude: Degrees;
@@ -158,6 +172,8 @@ function contactsBetween(
           natal: target.key,
           aspect: key,
           orb,
+          orbLimit: maxOrb,
+          points: contactPoints(orb, maxOrb),
         });
       }
     }
@@ -236,7 +252,7 @@ export async function scoreCandidate(
     ascendant: houses.ascendant,
     midheaven: houses.midheaven,
     contacts,
-    score: contacts.length * POINTS_PER_CONTACT,
+    score: contacts.reduce((total, contact) => total + contact.points, 0),
   };
 }
 

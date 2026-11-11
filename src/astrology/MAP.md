@@ -45,7 +45,7 @@ Pure astrological calculation (no DOM/React): bodies, aspects, houses, dignities
 - `progressions.ts` — Secondary progressions (day-for-year, quotidian/naibod/solarArc MC). Deps: `ephemeris/types`.
 - `reception.ts` — Essential-dignity reception across all five dignity types, including mutual and mixed reception (#548). Deps: `rulership`, `dignities`, `triplicity`, `bounds`, `decans`, `signs`, `sect`.
 - `rectification-lift.ts` — Rectification lift (#1445): window average, lift over it, the above-1.0 spike rule, and re-scoring for a chosen event subset. Deps: none.
-- `rectification.ts` — Birth-time rectification (one point per solar-arc/slow-body transit contact to the angles, existing transit orbs; citation pending, #1445). Deps: `bodies`, `progressions`, `transit-importance`, `./rectification-lift`.
+- `rectification.ts` — Birth-time rectification (equal-weight, closeness-scaled score per solar-arc/slow-body transit contact to the angles, existing transit orbs; citation pending, #1445). Deps: `bodies`, `progressions`, `transit-importance`, `./rectification-lift`.
 - `rulership.ts` — Single place for "who rules this sign" (modern/traditional/both), essential dignities. Deps: `dignities`, `signs`.
 - `sect.ts` — Sect (day/night) + Sun-proximity (oriental/occidental/cazimi/combust/under-beams). Deps: `aspects`.
 - `sign-ingress.ts` — Exact sign-ingress instant finder, sample-then-bisect (#562). Deps: `signs`, `ephemeris/types`.

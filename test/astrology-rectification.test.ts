@@ -13,7 +13,7 @@ import {
   contactOrb,
   contactOrbLimit,
   MAX_RECTIFICATION_CANDIDATES,
-  POINTS_PER_CONTACT,
+  contactPoints,
   rectify,
   scoreCandidate,
   type RectificationEvent,
@@ -51,8 +51,18 @@ describe('contactOrb (#408)', () => {
 });
 
 describe('contact scoring conventions (#1445)', () => {
-  it('gives every contact one point: equal weight, no scaling by closeness', () => {
-    expect(POINTS_PER_CONTACT).toBe(1);
+  it('scores a contact 1 at exact, falling in a straight line to 0 at its orb limit, and 0 outside it', () => {
+    expect(contactPoints(0, 1.5)).toBe(1);
+    expect(contactPoints(0.75, 1.5)).toBeCloseTo(0.5, 9);
+    expect(contactPoints(1.5, 1.5)).toBe(0);
+    expect(contactPoints(1.6, 1.5)).toBe(0);
+  });
+
+  it('uses the same curve for every contact type and body: no type weights', () => {
+    for (const key of ['jupiter', 'meanNode', 'moon', 'sun']) {
+      const limit = contactOrbLimit(key);
+      expect(contactPoints(limit / 4, limit)).toBeCloseTo(0.75, 9);
+    }
   });
 
   it('takes each contact orb from the existing daily transit rules, inventing none', () => {
@@ -141,7 +151,7 @@ describe('rectify against a known answer (#408)', () => {
     expect(best).toBeDefined();
     expect(Math.abs((best?.jd ?? 0) - trueJd)).toBeLessThanOrEqual(6 * MINUTE);
     // And clearly: well above what an average time in the window explains.
-    expect(best?.lift ?? 0).toBeGreaterThan(1);
+    expect(best?.lift ?? 0).toBeGreaterThan(2);
   }, 600_000);
 
   it('scores the true time above times an hour either side, where the angles have moved ~15 degrees', async () => {
@@ -162,12 +172,17 @@ describe('rectify against a known answer (#408)', () => {
     for (const candidate of ranked) expect(candidate.lift).toBeCloseTo(candidate.score / mean, 9);
   }, 300_000);
 
-  it('scores one point per contact and ranks the same way on every run (deterministic)', async () => {
+  it('sums each contact’s closeness-scaled points and ranks the same way on every run (deterministic)', async () => {
     const candidates = [-45, -20, 0, 20, 45].map((minutes) => trueJd + minutes * MINUTE);
     const first = await rectify(engine, LONDON, candidates, events);
     const second = await rectify(engine, LONDON, candidates, events);
     expect(second.map((c) => c.jd)).toEqual(first.map((c) => c.jd));
-    for (const candidate of first) expect(candidate.score).toBe(candidate.contacts.length * POINTS_PER_CONTACT);
+    for (const candidate of first) {
+      expect(candidate.score).toBeCloseTo(
+        candidate.contacts.reduce((total, contact) => total + contactPoints(contact.orb, contact.orbLimit), 0),
+        9,
+      );
+    }
   }, 300_000);
 
   it('scores fewer events no higher than all of them, since contacts only add', async () => {
