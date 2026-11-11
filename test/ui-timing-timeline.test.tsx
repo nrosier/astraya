@@ -136,7 +136,10 @@ describe('an orb window on the Gantt (#1401)', () => {
       expect(Number(container.querySelector('.gantt-bar')?.getAttribute('x'))).toBeCloseTo(200, 0);
       expect(Number(container.querySelector('.gantt-bar')?.getAttribute('width'))).toBeCloseTo(600, 0);
       expect(container.querySelector('.gantt-exact')?.getAttribute('x1')).toBe('400');
-      expect(container.querySelector('.gantt-pass')?.textContent).toBe('2/3');
+      // Owner decision (2026-11-11, #1442): a forecast row with a band draws no pass labels; the pass number is in the bar's title.
+      expect(container.querySelector('.gantt-pass')).toBeNull();
+      // The bar's own title carries the pass (the view passes its pass-aware describe; here the title is the event's subject).
+      expect(container.querySelector('.gantt-bar title')).not.toBeNull();
     } finally {
       act(() => {
         root.unmount();
@@ -305,6 +308,60 @@ describe('forecast band (#1442)', () => {
       expect(band?.querySelector('title')?.textContent).toBe('3 forecast transits');
       expect(container.querySelector('.gantt-stack-count')).toBeNull();
       expect(container.querySelector('.gantt-stack-list')).toBeNull();
+    } finally {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    }
+  });
+});
+
+describe('forecast band replaces the per-transit marks (owner review, round 11, #1442)', () => {
+  it('draws no pass labels in a row that has a forecast band, and keeps the transit bars', () => {
+    const exact = (jd: number, body: string) =>
+      ({
+        kind: 'periodic-transit',
+        startJd: jd - 2,
+        endJd: jd + 2,
+        exactJd: jd,
+        pass: { number: 1, count: 2 },
+        subject: { kind: 'aspect', from: body, aspect: 'conjunction', to: 'sun' },
+        sourceModule: 'fixture',
+      }) as unknown as TimingTimelineEvent;
+    const row = [
+      {
+        track: 'periodic-transit' as const,
+        events: [exact(50, 'moon'), exact(50.001, 'venus'), exact(50.002, 'mars')],
+      },
+    ];
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root: Root = createRoot(container);
+    try {
+      act(() => {
+        root.render(
+          <TimingTimelineGantt
+            rows={ganttRows(row, 0, 100)}
+            fromJd={0}
+            toJd={100}
+            targetJd={50}
+            label="band only"
+            trackLabels={labels}
+            rowLabel={(track, count) => `${track}: ${String(count)}`}
+            describe={(event) => timelineSubjectLabel(event.subject, 'en')}
+            barLabel={(event) => timelineSubjectLabel(event.subject, 'en')}
+            passLabel={(number, count) => `${String(number)}/${String(count)}`}
+            bandLabel={(count) => `${String(count)} forecast transits`}
+            targetTitle="Centre date"
+          />,
+        );
+      });
+      expect(container.querySelector('rect.gantt-band')).not.toBeNull();
+      // The pass labels are the dark smudge (owner review, round 11): none is drawn in a band row.
+      expect(container.querySelectorAll('.gantt-pass')).toHaveLength(0);
+      // The transits keep their bars and exact marks, which the #1401 orb windows require.
+      expect(container.querySelectorAll('.gantt-bar').length).toBeGreaterThan(0);
     } finally {
       act(() => {
         root.unmount();

@@ -106,6 +106,9 @@ export function TimingTimelineGantt({
       </div>
       {rows.map((row) => {
         const band = forecastBand(row.marks);
+        // With a band, the forecast transits are drawn as that one band, so their own bars, labels and exact lines are not
+        // drawn (owner review, round 11, #1442: their pass labels piled into a dark smudge). The table lists every transit.
+        const drawn = row.marks;
         return (
           <div
             key={row.track}
@@ -131,7 +134,7 @@ export function TimingTimelineGantt({
                     y2={HEIGHT}
                   />
                 ))}
-                {row.marks.map((mark) => {
+                {drawn.map((mark) => {
                   const dimmed = hoveredKey !== undefined && hoveredKey !== mark.key;
                   const state = [
                     dimmed ? 'gantt-dim' : undefined,
@@ -191,7 +194,7 @@ export function TimingTimelineGantt({
                     </g>
                   );
                 })}
-                {row.marks.map((mark) =>
+                {drawn.map((mark) =>
                   mark.exact === undefined ? null : (
                     <line
                       key={`${mark.key}-exact`}
@@ -221,7 +224,7 @@ export function TimingTimelineGantt({
               </svg>
               {(() => {
                 const shown = visibleBarLabels(
-                  row.marks.map((mark) => ({
+                  drawn.map((mark) => ({
                     mark,
                     text: barLabel(mark.event),
                     ...(mark.exact !== undefined && mark.event.pass !== undefined
@@ -231,7 +234,7 @@ export function TimingTimelineGantt({
                   plot.width,
                   plot.fontPx,
                 );
-                return row.marks.map((mark) => {
+                return drawn.map((mark) => {
                   // A dimmed bar draws no label; it returns when the bar is hovered (owner decision on #1442).
                   const dimmed = hoveredKey !== undefined && hoveredKey !== mark.key;
                   return dimmed || !shown.has(mark.key) ? null : (
@@ -249,18 +252,19 @@ export function TimingTimelineGantt({
                   );
                 });
               })()}
-              {row.marks.map((mark) =>
-                mark.exact === undefined || mark.event.pass === undefined ? null : (
-                  <span
-                    key={mark.key}
-                    className="gantt-pass"
-                    style={{ left: `${String(mark.exact * 100)}%` }}
-                    aria-hidden="true"
-                  >
-                    {passLabel(mark.event.pass.number, mark.event.pass.count)}
-                  </span>
-                ),
-              )}
+              {band === undefined &&
+                drawn.map((mark) =>
+                  mark.exact === undefined || mark.event.pass === undefined ? null : (
+                    <span
+                      key={mark.key}
+                      className="gantt-pass"
+                      style={{ left: `${String(mark.exact * 100)}%` }}
+                      aria-hidden="true"
+                    >
+                      {passLabel(mark.event.pass.number, mark.event.pass.count)}
+                    </span>
+                  ),
+                )}
             </div>
           </div>
         );
