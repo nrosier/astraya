@@ -21,7 +21,10 @@ Semantic versioning, with three rules:
 - **Major (`x.0.0`) — major changes.** Reserved for changes that alter the app as a
   whole. None is foreseen. The major number does not move until one is decided.
 
-The version of a release is set by what it contains, not by a milestone. The table
+The highest change in a release sets its number. A release that contains a new
+feature and fixes is a minor release. A release with only fixes is a patch release.
+Only a major change makes a major release. The version is set by what the release
+contains, not by a milestone. The table
 below records which milestone each early release marked; it is history, not a plan.
 
 | Milestone                             | Release  | Marks                                                    |

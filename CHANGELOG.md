@@ -3,7 +3,8 @@
 All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/): a minor release (`0.x.0`) adds features,
 a patch release (`0.x.y`) fixes existing ones, and a major release is reserved for
-major changes. See [docs/ops/RELEASING.md](docs/ops/RELEASING.md).
+major changes. The highest change in a release sets its number: a release with a new
+feature and fixes is a minor release. See [docs/ops/RELEASING.md](docs/ops/RELEASING.md).
 
 ## [Unreleased]
 
