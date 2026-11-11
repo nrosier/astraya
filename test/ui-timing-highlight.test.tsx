@@ -64,7 +64,7 @@ function Harness({ log }: { log: string[] }): React.JSX.Element {
         describe={() => 'event'}
         barLabel={() => 'Label'}
         passLabel={() => ''}
-        stackedLabel={(count) => `${String(count)} exact`}
+        bandLabel={(count) => `${String(count)} exact`}
         targetTitle="Centre"
         hoveredKey={hovered}
         selectedKey={selected}

@@ -2,7 +2,7 @@
  * @module ui/timeline-gantt
  * @purpose Pure layout for the timing timeline's Gantt chart (#1237): where each event's bar sits on the shared date axis, which events are points, and where the year ticks and the target date fall.
  * @conventions Positions are fractions of the axis (0 at the window's start, 1 at its end), so the chart scales to any width and holds no pixel sizes. An event with no end, or the same end as its start, is a point. A bar is clamped to the window, so one that starts before or ends after it still shows. An orb window (an event with an exact date, #1401) is a bar with the exact date marked inside it. Nothing here calculates astrology: it only places the normalised `TimingTimelineEvent` records the table also lists.
- * @exports GanttMark, GanttRow, YearTick, stackSameDayExacts, STACK_TOLERANCE, MARKER_MERGE_DISTANCE, techniqueColorVar, barLabelFits, visibleBarLabels, BAR_GAP_PX, barSpan, ganttFraction, ganttRows, yearTicks, thinYearTicks
+ * @exports GanttMark, GanttRow, YearTick, ForecastBand, forecastBand, techniqueColorVar, barLabelFits, visibleBarLabels, BAR_GAP_PX, barSpan, ganttFraction, ganttRows, yearTicks, thinYearTicks
  */
 import type { JulianDayUT } from '../ephemeris/types.js';
 import type { TimingTimelineEvent, TimingTimelineTrack, TimingTimelineTrackEvents } from '../domain/timing-timeline.js';
@@ -19,13 +19,6 @@ export interface GanttMark {
   readonly event: TimingTimelineEvent;
   /** Where the exact date falls inside a bar that is an orb window (#1401). */
   readonly exact?: number;
-  /**
-   * How many events share this exact day in the row (owner review, #1442): the exact mark is drawn once with this count
-   * instead of stacking one mark per event. 1 when the event stands alone.
-   */
-  readonly stackCount?: number;
-  /** Every event that shares the exact day with this mark, so the count can be explained on hover. */
-  readonly stacked?: readonly TimingTimelineEvent[];
 }
 
 export interface GanttRow {
@@ -142,68 +135,41 @@ export function ganttRows(
 ): readonly GanttRow[] {
   return tracks.map(({ track, events }) => ({
     track,
-    marks: stackSameDayExacts(
-      events.map((event, index) => {
-        const start = ganttFraction(event.startJd, fromJd, toJd);
-        const end = ganttFraction(event.endJd ?? event.startJd, fromJd, toJd);
-        return {
-          key: `${track}-${event.kind}-${String(event.startJd)}-${String(index)}`,
-          start,
-          end,
-          point: event.endJd === undefined || event.endJd === event.startJd,
-          sub: event.subject.kind === 'releasing' && event.subject.level === 2,
-          event,
-          ...(event.exactJd === undefined ? {} : { exact: ganttFraction(event.exactJd, fromJd, toJd) }),
-        };
-      }),
-    ),
+    marks: events.map((event, index) => {
+      const start = ganttFraction(event.startJd, fromJd, toJd);
+      const end = ganttFraction(event.endJd ?? event.startJd, fromJd, toJd);
+      return {
+        key: `${track}-${event.kind}-${String(event.startJd)}-${String(index)}`,
+        start,
+        end,
+        point: event.endJd === undefined || event.endJd === event.startJd,
+        sub: event.subject.kind === 'releasing' && event.subject.level === 2,
+        event,
+        ...(event.exactJd === undefined ? {} : { exact: ganttFraction(event.exactJd, fromJd, toJd) }),
+      };
+    }),
   }));
 }
 
 /**
- * Exact marks that would draw on top of each other are drawn once, with a count (owner review, #1442). Two exacts stack
- * when their lines fall within `STACK_TOLERANCE` of the axis (a fraction of the width), which is what the eye reads as one
- * dark mark. The first mark in each cluster (in row order) keeps the line and carries the count and every event in it.
+ * The forecast's exact transits in one row become a single band (owner decision and architect design, #1442): the band
+ * spans their combined dates and is labelled with how many there are, so no per-transit marker sits on the centre line.
+ * The table beside the chart lists every transit.
  */
-export const STACK_TOLERANCE = 0.001;
+export interface ForecastBand {
+  readonly start: number;
+  readonly end: number;
+  readonly count: number;
+}
 
-/**
- * How close two stacks can sit before their count markers would overlap on screen, as a fraction of the axis. A marker is
- * about 24 CSS pixels wide on a plot of roughly 740 pixels, so stacks within this distance are merged into one marker
- * (owner review, round 8, #1442: several overlapping buttons on one stripe).
- */
-export const MARKER_MERGE_DISTANCE = 0.03;
-
-export function stackSameDayExacts(marks: readonly GanttMark[]): readonly GanttMark[] {
-  // Cluster the exact marks by position: a mark joins the first cluster whose anchor is within the tolerance.
-  const anchors: { at: number; members: GanttMark[] }[] = [];
-  for (const mark of marks) {
-    if (mark.exact === undefined) continue;
-    const cluster = anchors.find((anchor) => Math.abs(anchor.at - (mark.exact ?? 0)) <= STACK_TOLERANCE);
-    if (cluster === undefined) anchors.push({ at: mark.exact, members: [mark] });
-    else cluster.members.push(mark);
-  }
-  // Merge clusters whose markers would sit on top of each other on screen, so one visible spot is one marker.
-  anchors.sort((a, b) => a.at - b.at);
-  const merged: { at: number; members: GanttMark[] }[] = [];
-  for (const anchor of anchors) {
-    const last = merged[merged.length - 1];
-    if (last !== undefined && anchor.at - last.at <= MARKER_MERGE_DISTANCE) {
-      last.members.push(...anchor.members);
-    } else {
-      merged.push({ at: anchor.at, members: [...anchor.members] });
-    }
-  }
-  anchors.length = 0;
-  anchors.push(...merged);
-  const clusterOf = new Map<GanttMark, { at: number; members: GanttMark[] }>();
-  for (const anchor of anchors) for (const member of anchor.members) clusterOf.set(member, anchor);
-  return marks.map((mark) => {
-    const cluster = clusterOf.get(mark);
-    if (cluster === undefined) return mark;
-    const stacked = cluster.members.map((member) => member.event);
-    return { ...mark, stackCount: cluster.members.length, stacked };
-  });
+export function forecastBand(marks: readonly GanttMark[]): ForecastBand | undefined {
+  const exacts = marks.filter((mark) => mark.event.kind === 'periodic-transit');
+  if (exacts.length === 0) return undefined;
+  return {
+    start: Math.min(...exacts.map((mark) => mark.start)),
+    end: Math.max(...exacts.map((mark) => mark.end)),
+    count: exacts.length,
+  };
 }
 
 /** The first of January of every year inside the window, with its year, for the axis labels. */

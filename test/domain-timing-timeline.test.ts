@@ -11,6 +11,9 @@ import { bodyByKey } from '../src/astrology/bodies.js';
 import { findExactTransitAspects } from '../src/astrology/transit-events.js';
 import { computeChartData } from '../src/domain/chart-compute.js';
 import { computeTransitOrbWindows } from '../src/domain/transit-orb-windows.js';
+import { periodicTransitToTimelineEvents } from '../src/domain/timing-timeline.js';
+import type { TransitAspectEvent } from '../src/astrology/transit-events.js';
+import type { PeriodicTransitForecast } from '../src/domain/periodic-transit.js';
 import { firdariaPeriods } from '../src/astrology/firdaria.js';
 import { zodiacalReleasingPeriods, zodiacalReleasingSubperiods } from '../src/astrology/zodiacal-releasing.js';
 import { computeProfections } from '../src/domain/profections.js';
@@ -267,5 +270,30 @@ describe('transit orb windows and pass numbers (#1401)', () => {
     if (second === undefined) throw new Error('expected a second pass');
     const info = (await computeTransitOrbWindows(engine, [second])).get(second);
     expect(info?.pass).toEqual({ number: 2, count: 3 });
+  });
+});
+
+describe('forecast exact transits are listed once (owner decision, #1442)', () => {
+  it('lists an exact transit once when the daily and weekly tiers both list it, and keeps a different transit', () => {
+    const exact = (jd: number, body: number) =>
+      ({
+        kind: 'periodic-transit',
+        startJd: jd - 2,
+        endJd: jd + 2,
+        exactJd: jd,
+        jd,
+        transitingBody: body,
+        natalBody: 'sun',
+        aspect: { key: 'trine', name: 'Trine', angle: 120, family: 'major' },
+      }) as unknown as TransitAspectEvent;
+    // The app computes each tier separately: the same exact transit arrives as equal objects in two tiers.
+    const forecast = {
+      daily: { exactToday: [exact(2461000.5, 1)], stationsToday: [] },
+      weekly: { events: [exact(2461000.5, 1), exact(2461000.5, 2)], lunarReturns: { returns: [] } },
+      monthly: { events: [], progressedLunarReturn: { returnJd: 0 } },
+      yearly: { solarReturn: { returnJd: 0 }, demibirthday: { demibirthdayJd: 0 } },
+    } as unknown as PeriodicTransitForecast;
+    const exacts = periodicTransitToTimelineEvents(forecast).filter((event) => event.kind === 'periodic-transit');
+    expect(exacts).toHaveLength(2);
   });
 });

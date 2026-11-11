@@ -9151,11 +9151,6 @@ a.quiet,
   position: relative;
 }
 
-/* A row with a stacked marker reserves a strip above its bars for it, so the marker stays inside its own row (owner review, #1442). */
-.gantt-plotbox:has(.gantt-stack) {
-  padding-top: 1.25rem;
-}
-
 .gantt-plot {
   display: block;
   width: 100%;
@@ -9187,6 +9182,13 @@ a.quiet,
 }
 
 /* The exact-date mark is a light tone, so it does not read as a black smudge where it crosses a dark bar (owner review, #1442). */
+/* The forecast band (architect design, #1442): one band across the forecast dates in its row, with its count as text. */
+.gantt-band {
+  fill: var(--tech, var(--accent));
+  fill-opacity: 0.85;
+  stroke: none;
+}
+
 .gantt-exact {
   stroke: var(--muted);
   stroke-width: 2;
@@ -9245,62 +9247,6 @@ a.quiet,
   line-height: 1;
   white-space: nowrap;
   pointer-events: none;
-}
-
-/* The pass number of an orb window, beside its exact mark; HTML so the text is not stretched with the plot. */
-/* The count of same-day exacts drawn over their shared mark (owner review, #1442). */
-/* Stacked exacts (owner review, #1442): a focusable count that opens a list of the transits it covers on hover or focus. */
-.gantt-stack {
-  position: absolute;
-  top: 0;
-  transform: translate(-50%, 0);
-  z-index: 2;
-  /* A fixed footprint, so the marker stays put when its list opens beneath it. */
-  height: 1.25rem;
-  display: flex;
-  align-items: center;
-}
-
-.gantt-stack-list {
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  min-width: 14rem;
-  margin: 0 0 var(--space-1);
-  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-6);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--fg);
-  font-size: var(--text-2xs);
-  line-height: 1.4;
-  list-style: disc;
-}
-
-.gantt-stack-list li + li {
-  margin-top: var(--space-1);
-}
-
-.gantt-stack-count {
-  position: absolute;
-  top: 0;
-  transform: translate(-50%, -100%);
-  padding: 0 var(--space-1);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--fg);
-  font-size: var(--text-2xs);
-  font-weight: 600;
-  line-height: 1.3;
-  font-variant-numeric: tabular-nums;
-  pointer-events: auto;
-  cursor: help;
-  font: inherit;
-  font-size: var(--text-2xs);
-  font-weight: 600;
-  line-height: 1.3;
 }
 
 .gantt-pass {

@@ -74,7 +74,7 @@ describe('the timing timeline Gantt (#554, #1237)', () => {
             describe={(event) => timelineSubjectLabel(event.subject, 'en')}
             barLabel={(event) => timelineSubjectLabel(event.subject, 'en')}
             passLabel={(number, count) => `${String(number)}/${String(count)}`}
-            stackedLabel={(count) => `${String(count)} exact`}
+            bandLabel={(count) => `${String(count)} exact`}
             targetTitle="Centre date"
           />,
         );
@@ -127,7 +127,7 @@ describe('an orb window on the Gantt (#1401)', () => {
             describe={(e) => timelineSubjectLabel(e.subject, 'en')}
             barLabel={(e) => timelineSubjectLabel(e.subject, 'en')}
             passLabel={(number, count) => `${String(number)}/${String(count)}`}
-            stackedLabel={(count) => `${String(count)} exact`}
+            bandLabel={(count) => `${String(count)} exact`}
             targetTitle="Centre date"
           />,
         );
@@ -261,8 +261,8 @@ describe('timelineSubjectLabel (#674)', () => {
   });
 });
 
-describe('stacked exact transits (#1442)', () => {
-  it('shows one counted marker per stack, and opening it lists every transit in the stack as a bullet', () => {
+describe('forecast band (#1442)', () => {
+  it('draws the forecast transits in a row as one band with its text label, and no per-transit marker list', () => {
     const exact = (jd: number, body: string) =>
       ({
         kind: 'periodic-transit',
@@ -289,27 +289,22 @@ describe('stacked exact transits (#1442)', () => {
             fromJd={0}
             toJd={100}
             targetJd={50}
-            label="stack"
+            label="band"
             trackLabels={labels}
             rowLabel={(track, count) => `${track}: ${String(count)}`}
             describe={(event) => timelineSubjectLabel(event.subject, 'en')}
             barLabel={(event) => timelineSubjectLabel(event.subject, 'en')}
             passLabel={(number, count) => `${String(number)}/${String(count)}`}
-            stackedLabel={(count) => `${String(count)} exact transits`}
+            bandLabel={(count) => `${String(count)} forecast transits`}
             targetTitle="Centre date"
           />,
         );
       });
-      const marker = container.querySelector<HTMLButtonElement>('.gantt-stack-count');
-      expect(marker).not.toBeNull();
-      expect(marker?.textContent).toBe('3');
+      const band = container.querySelector('rect.gantt-band');
+      expect(band).not.toBeNull();
+      expect(band?.querySelector('title')?.textContent).toBe('3 forecast transits');
+      expect(container.querySelector('.gantt-stack-count')).toBeNull();
       expect(container.querySelector('.gantt-stack-list')).toBeNull();
-      act(() => {
-        marker?.focus();
-      });
-      const items = container.querySelectorAll('.gantt-stack-list li');
-      expect(items).toHaveLength(3);
-      expect(container.querySelector('.gantt-stack-list')?.tagName).toBe('UL');
     } finally {
       act(() => {
         root.unmount();

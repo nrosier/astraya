@@ -45,30 +45,20 @@ describe('visibleBarLabels', () => {
   });
 });
 
-describe('stackSameDayExacts (owner review, #1442)', () => {
-  it('draws exacts that sit within the tolerance as one mark with a count, and keeps a distant exact separate', async () => {
-    const { stackSameDayExacts } = await import('../src/ui/timeline-gantt.js');
-    const mark = (key: string, exact: number) =>
+describe('forecastBand (#1442)', () => {
+  it('spans the forecast transits in a row as one band with their count, and is absent when there are none', async () => {
+    const { forecastBand } = await import('../src/ui/timeline-gantt.js');
+    const transit = (start: number, end: number) =>
       ({
-        key,
-        start: 0.4,
-        end: 0.6,
+        key: `t${String(start)}`,
+        start,
+        end,
         point: false,
         sub: false,
-        exact,
-        event: {
-          exactJd: 2461000 + exact,
-          startJd: 2460999,
-          endJd: 2461001,
-          kind: 'periodic-transit',
-          subject: { kind: 'aspect' },
-        },
+        event: { kind: 'periodic-transit', startJd: 0, subject: { kind: 'aspect' } },
       }) as unknown as GanttMark;
-    // Three exacts within a fraction of a pixel of one another, and one far away on the axis.
-    const stacked = stackSameDayExacts([mark('a', 0.5), mark('b', 0.5003), mark('c', 0.5006), mark('d', 0.9)]);
-    expect(stacked).toHaveLength(4);
-    expect(stacked[0]?.stackCount).toBe(3);
-    expect(stacked[0]?.stacked).toHaveLength(3);
-    expect(stacked[3]?.stackCount).toBe(1);
+    const band = forecastBand([transit(0.2, 0.3), transit(0.25, 0.4), transit(0.6, 0.7)]);
+    expect(band).toEqual({ start: 0.2, end: 0.7, count: 3 });
+    expect(forecastBand([])).toBeUndefined();
   });
 });

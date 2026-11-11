@@ -6,11 +6,12 @@
  */
 import type { JulianDayUT } from '../ephemeris/types.js';
 import type { TimingTimelineEvent, TimingTimelineTrack } from '../domain/timing-timeline.js';
-import { useId, useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import {
   BAR_GAP_PX,
   barSpan,
   visibleBarLabels,
+  forecastBand,
   ganttFraction,
   techniqueColorVar,
   thinYearTicks,
@@ -41,8 +42,8 @@ export interface TimingTimelineGanttProps {
   readonly barLabel: (event: TimingTimelineEvent) => string;
   /** A pass number as the short label beside an orb window's exact mark, e.g. "2/3". */
   readonly passLabel: (number: number, count: number) => string;
-  /** The accessible label of a stacked-exacts marker, given how many transits it covers (#1442). */
-  readonly stackedLabel: (count: number) => string;
+  /** The accessible label of the forecast band, given how many transits it covers (#1442). */
+  readonly bandLabel: (count: number) => string;
   /** The target date in words, for the line's title. */
   readonly targetTitle: string;
   /** The event the pointer or focus is on (a bar or its table row), or `undefined` (#1442). The other bars dim to 20%. */
@@ -51,63 +52,6 @@ export interface TimingTimelineGanttProps {
   readonly selectedKey?: string | undefined;
   readonly onHover?: ((key: string | undefined) => void) | undefined;
   readonly onSelect?: ((key: string) => void) | undefined;
-}
-
-/**
- * A marker for exact transits that draw on one spot (owner review, #1442): a focusable count that opens a bullet list of
- * every event in the stack on hover or keyboard focus. Escape or leaving the marker closes it.
- */
-function StackedExacts({
-  count,
-  left,
-  items,
-  label,
-}: {
-  readonly count: number;
-  readonly left: number;
-  readonly items: readonly string[];
-  readonly label: string;
-}): React.JSX.Element {
-  const [open, setOpen] = useState(false);
-  const id = useId();
-  return (
-    <span
-      className="gantt-stack"
-      style={{ left: `${String(left)}%` }}
-      onPointerEnter={() => {
-        setOpen(true);
-      }}
-      onPointerLeave={() => {
-        setOpen(false);
-      }}
-    >
-      <button
-        type="button"
-        className="gantt-stack-count"
-        aria-label={label}
-        aria-expanded={open}
-        aria-controls={open ? id : undefined}
-        onFocus={() => {
-          setOpen(true);
-        }}
-        onBlur={() => {
-          setOpen(false);
-        }}
-        onKeyDown={(event) => {
-          if (event.key === 'Escape') setOpen(false);
-        }}
-      >
-        {count}
-      </button>
-      {open && (
-        <ul id={id} className="gantt-stack-list">
-          {items.map((item, index) => (
-            <li key={`${String(index)}-${item}`}>{item}</li>
-          ))}
-        </ul>
-      )}
-    </span>
-  );
 }
 
 export function TimingTimelineGantt({
@@ -121,7 +65,7 @@ export function TimingTimelineGantt({
   describe,
   barLabel,
   passLabel,
-  stackedLabel,
+  bandLabel,
   targetTitle,
   hoveredKey,
   selectedKey,
@@ -160,165 +104,167 @@ export function TimingTimelineGantt({
           ))}
         </span>
       </div>
-      {rows.map((row) => (
-        <div
-          key={row.track}
-          className="gantt-row"
-          style={{ '--tech': techniqueColorVar(row.track) } as React.CSSProperties}
-        >
-          <span className="gantt-label">{trackLabels[row.track]}</span>
-          <div className="gantt-plotbox">
-            <svg
-              className="gantt-plot"
-              viewBox={`0 0 ${String(WIDTH)} ${String(HEIGHT)}`}
-              preserveAspectRatio="none"
-              role="img"
-              aria-label={rowLabel(trackLabels[row.track], row.marks.length)}
-            >
-              {ticks.map((tick) => (
-                <line
-                  key={tick.year}
-                  className="gantt-grid"
-                  x1={tick.fraction * WIDTH}
-                  x2={tick.fraction * WIDTH}
-                  y1={0}
-                  y2={HEIGHT}
-                />
-              ))}
-              {row.marks.map((mark) => {
-                const dimmed = hoveredKey !== undefined && hoveredKey !== mark.key;
-                const state = [
-                  dimmed ? 'gantt-dim' : undefined,
-                  hoveredKey === mark.key ? 'gantt-hovered' : undefined,
-                  selectedKey === mark.key ? 'gantt-selected' : undefined,
-                ]
-                  .filter((value) => value !== undefined)
-                  .join(' ');
-                // A bar is a mouse target only: the table beside it is the keyboard route to the same event (hover on
-                // focus, Enter or Space to select), so a long chart does not become hundreds of tab stops.
-                return (
-                  <g
-                    key={mark.key}
-                    className={state === '' ? undefined : state}
-                    data-mark-key={mark.key}
-                    onMouseEnter={() => {
-                      onHover?.(mark.key);
-                    }}
-                    onMouseLeave={() => {
-                      onHover?.(undefined);
-                    }}
-                    onClick={() => {
-                      onSelect?.(mark.key);
-                    }}
-                  >
-                    {mark.point ? (
-                      <>
-                        {/* A wider invisible line, so a 2px tick is easy to point at. */}
-                        <line
-                          className="gantt-hit"
-                          x1={mark.start * WIDTH}
-                          x2={mark.start * WIDTH}
-                          y1={0}
-                          y2={HEIGHT}
-                        />
-                        <line
-                          className="gantt-point"
-                          x1={mark.start * WIDTH}
-                          x2={mark.start * WIDTH}
-                          y1={4}
-                          y2={HEIGHT - 4}
+      {rows.map((row) => {
+        const band = forecastBand(row.marks);
+        return (
+          <div
+            key={row.track}
+            className="gantt-row"
+            style={{ '--tech': techniqueColorVar(row.track) } as React.CSSProperties}
+          >
+            <span className="gantt-label">{trackLabels[row.track]}</span>
+            <div className="gantt-plotbox">
+              <svg
+                className="gantt-plot"
+                viewBox={`0 0 ${String(WIDTH)} ${String(HEIGHT)}`}
+                preserveAspectRatio="none"
+                role="img"
+                aria-label={rowLabel(trackLabels[row.track], row.marks.length)}
+              >
+                {ticks.map((tick) => (
+                  <line
+                    key={tick.year}
+                    className="gantt-grid"
+                    x1={tick.fraction * WIDTH}
+                    x2={tick.fraction * WIDTH}
+                    y1={0}
+                    y2={HEIGHT}
+                  />
+                ))}
+                {row.marks.map((mark) => {
+                  const dimmed = hoveredKey !== undefined && hoveredKey !== mark.key;
+                  const state = [
+                    dimmed ? 'gantt-dim' : undefined,
+                    hoveredKey === mark.key ? 'gantt-hovered' : undefined,
+                    selectedKey === mark.key ? 'gantt-selected' : undefined,
+                  ]
+                    .filter((value) => value !== undefined)
+                    .join(' ');
+                  // A bar is a mouse target only: the table beside it is the keyboard route to the same event (hover on
+                  // focus, Enter or Space to select), so a long chart does not become hundreds of tab stops.
+                  return (
+                    <g
+                      key={mark.key}
+                      className={state === '' ? undefined : state}
+                      data-mark-key={mark.key}
+                      onMouseEnter={() => {
+                        onHover?.(mark.key);
+                      }}
+                      onMouseLeave={() => {
+                        onHover?.(undefined);
+                      }}
+                      onClick={() => {
+                        onSelect?.(mark.key);
+                      }}
+                    >
+                      {mark.point ? (
+                        <>
+                          {/* A wider invisible line, so a 2px tick is easy to point at. */}
+                          <line
+                            className="gantt-hit"
+                            x1={mark.start * WIDTH}
+                            x2={mark.start * WIDTH}
+                            y1={0}
+                            y2={HEIGHT}
+                          />
+                          <line
+                            className="gantt-point"
+                            x1={mark.start * WIDTH}
+                            x2={mark.start * WIDTH}
+                            y1={4}
+                            y2={HEIGHT - 4}
+                          >
+                            <title>{describe(mark.event)}</title>
+                          </line>
+                        </>
+                      ) : (
+                        <rect
+                          className={mark.sub ? 'gantt-bar gantt-bar-sub' : 'gantt-bar'}
+                          {...barSpan(mark.start, mark.end, WIDTH, plotInnerPx, BAR_GAP_PX, MIN_BAR)}
+                          y={mark.sub ? 15 : 3}
+                          height={mark.sub ? 6 : 18}
+                          rx={2}
                         >
                           <title>{describe(mark.event)}</title>
-                        </line>
-                      </>
-                    ) : (
-                      <rect
-                        className={mark.sub ? 'gantt-bar gantt-bar-sub' : 'gantt-bar'}
-                        {...barSpan(mark.start, mark.end, WIDTH, plotInnerPx, BAR_GAP_PX, MIN_BAR)}
-                        y={mark.sub ? 15 : 3}
-                        height={mark.sub ? 6 : 18}
-                        rx={2}
-                      >
-                        <title>{describe(mark.event)}</title>
-                      </rect>
-                    )}
-                  </g>
+                        </rect>
+                      )}
+                    </g>
+                  );
+                })}
+                {row.marks.map((mark) =>
+                  mark.exact === undefined ? null : (
+                    <line
+                      key={`${mark.key}-exact`}
+                      className="gantt-exact"
+                      x1={mark.exact * WIDTH}
+                      x2={mark.exact * WIDTH}
+                      y1={3}
+                      y2={HEIGHT - 3}
+                    />
+                  ),
+                )}
+                {band !== undefined && (
+                  <rect
+                    className="gantt-band"
+                    x={band.start * WIDTH}
+                    y={HEIGHT / 2 - 4}
+                    width={Math.max(3, (band.end - band.start) * WIDTH)}
+                    height={8}
+                    rx={2}
+                  >
+                    <title>{bandLabel(band.count)}</title>
+                  </rect>
+                )}
+                <line className="gantt-target" x1={target} x2={target} y1={0} y2={HEIGHT}>
+                  <title>{targetTitle}</title>
+                </line>
+              </svg>
+              {(() => {
+                const shown = visibleBarLabels(
+                  row.marks.map((mark) => ({
+                    mark,
+                    text: barLabel(mark.event),
+                    ...(mark.exact !== undefined && mark.event.pass !== undefined
+                      ? { passText: passLabel(mark.event.pass.number, mark.event.pass.count) }
+                      : {}),
+                  })),
+                  plot.width,
+                  plot.fontPx,
                 );
-              })}
-              {/* One exact line per stacked group: a shared exact day is drawn once, with its count (owner review, #1442). */}
+                return row.marks.map((mark) => {
+                  // A dimmed bar draws no label; it returns when the bar is hovered (owner decision on #1442).
+                  const dimmed = hoveredKey !== undefined && hoveredKey !== mark.key;
+                  return dimmed || !shown.has(mark.key) ? null : (
+                    <span
+                      key={`${mark.key}-label`}
+                      className="gantt-bar-label"
+                      style={{
+                        left: `${String(mark.start * 100)}%`,
+                        width: `${String((mark.end - mark.start) * 100)}%`,
+                      }}
+                      aria-hidden="true"
+                    >
+                      {barLabel(mark.event)}
+                    </span>
+                  );
+                });
+              })()}
               {row.marks.map((mark) =>
-                mark.exact === undefined || (mark.stacked !== undefined && mark.stacked[0] !== mark.event) ? null : (
-                  <line
-                    key={`${mark.key}-exact`}
-                    className="gantt-exact"
-                    x1={mark.exact * WIDTH}
-                    x2={mark.exact * WIDTH}
-                    y1={3}
-                    y2={HEIGHT - 3}
-                  />
-                ),
-              )}
-              <line className="gantt-target" x1={target} x2={target} y1={0} y2={HEIGHT}>
-                <title>{targetTitle}</title>
-              </line>
-            </svg>
-            {(() => {
-              const shown = visibleBarLabels(
-                row.marks.map((mark) => ({
-                  mark,
-                  text: barLabel(mark.event),
-                  ...(mark.exact !== undefined && mark.event.pass !== undefined
-                    ? { passText: passLabel(mark.event.pass.number, mark.event.pass.count) }
-                    : {}),
-                })),
-                plot.width,
-                plot.fontPx,
-              );
-              return row.marks.map((mark) => {
-                // A dimmed bar draws no label; it returns when the bar is hovered (owner decision on #1442).
-                const dimmed = hoveredKey !== undefined && hoveredKey !== mark.key;
-                return dimmed || !shown.has(mark.key) ? null : (
+                mark.exact === undefined || mark.event.pass === undefined ? null : (
                   <span
-                    key={`${mark.key}-label`}
-                    className="gantt-bar-label"
-                    style={{ left: `${String(mark.start * 100)}%`, width: `${String((mark.end - mark.start) * 100)}%` }}
+                    key={mark.key}
+                    className="gantt-pass"
+                    style={{ left: `${String(mark.exact * 100)}%` }}
                     aria-hidden="true"
                   >
-                    {barLabel(mark.event)}
+                    {passLabel(mark.event.pass.number, mark.event.pass.count)}
                   </span>
-                );
-              });
-            })()}
-            {row.marks.map((mark) =>
-              mark.exact === undefined || mark.event.pass === undefined ? null : (
-                <span
-                  key={mark.key}
-                  className="gantt-pass"
-                  style={{ left: `${String(mark.exact * 100)}%` }}
-                  aria-hidden="true"
-                >
-                  {passLabel(mark.event.pass.number, mark.event.pass.count)}
-                </span>
-              ),
-            )}
-            {/* Several exacts that draw on one spot share one mark, labelled once with their count (owner review, #1442). */}
-            {row.marks.map((mark) =>
-              mark.exact === undefined ||
-              mark.stackCount === undefined ||
-              mark.stackCount < 2 ||
-              mark.stacked?.[0] !== mark.event ? null : (
-                <StackedExacts
-                  key={`${mark.key}-count`}
-                  count={mark.stackCount}
-                  left={mark.exact * 100}
-                  items={(mark.stacked ?? []).map((event) => describe(event))}
-                  label={stackedLabel(mark.stackCount)}
-                />
-              ),
-            )}
+                ),
+              )}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
