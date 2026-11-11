@@ -7,7 +7,7 @@
 /**
  * @module ui/wheel-morph
  * @purpose Keyed in-place DOM patching of generated wheel markup, and the `PatchedWheel` component that uses it instead of `dangerouslySetInnerHTML`, so a playback step updates attributes rather than re-creating the wheel.
- * @conventions The markup is app-generated (never user-supplied), the same trust boundary as the `dangerouslySetInnerHTML` it replaces. Children are matched by tag plus the wheel's own identity attributes (class, data-body, data-ring, data-sign, data-house, data-aspect-*), then by order among equals; unmatched old nodes are removed and new ones inserted. Output is identical to a fresh `innerHTML` of the same markup. Positions are never recomputed here.
+ * @conventions The markup is app-generated (never user-supplied), the same trust boundary as the `dangerouslySetInnerHTML` it replaces. Children are matched by tag plus the wheel's own identity attributes (class, data-body, data-ring, data-sign, data-house, data-aspect-*), then by order among equals, then once more without the class (a state class such as applying or separating changes by attribute); unmatched old nodes are removed and new ones inserted. Output is identical to a fresh `innerHTML` of the same markup. Positions are never recomputed here.
  * @exports morphMarkup, PatchedWheel
  */
 import { useLayoutEffect, useRef } from 'react';
@@ -30,9 +30,11 @@ const IDENTITY_ATTRIBUTES = [
 ] as const;
 
 /** The key a child is matched on: its tag and the attributes that say which wheel element it is. */
-function keyOf(node: Node): string {
+function keyOf(node: Node, withClass = true): string {
   if (!(node instanceof Element)) return `#${String(node.nodeType)}`;
-  const parts = IDENTITY_ATTRIBUTES.map((name) => node.getAttribute(name) ?? '');
+  const parts = IDENTITY_ATTRIBUTES.map((name) =>
+    name === 'class' && !withClass ? '' : (node.getAttribute(name) ?? ''),
+  );
   return `${node.tagName}|${parts.join('|')}`;
 }
 
@@ -45,18 +47,38 @@ function syncAttributes(from: Element, to: Element): void {
   }
 }
 
-/** Makes the children of `current` equal those of `next`, reusing `current`'s nodes wherever a child's key matches. */
-function morphChildren(current: Node, next: Node): void {
+/** Groups `nodes` by `key`, keeping their order within each group. */
+function poolOf(nodes: readonly Node[], key: (node: Node) => string): Map<string, Node[]> {
   const pool = new Map<string, Node[]>();
-  for (const child of [...current.childNodes]) {
-    const key = keyOf(child);
-    const list = pool.get(key);
-    if (list === undefined) pool.set(key, [child]);
-    else list.push(child);
+  for (const node of nodes) {
+    const list = pool.get(key(node));
+    if (list === undefined) pool.set(key(node), [node]);
+    else list.push(node);
   }
+  return pool;
+}
+
+/**
+ * Makes the children of `current` equal those of `next`, reusing `current`'s nodes wherever a child's key matches.
+ * A second pass matches what is left without the class, so an aspect line turning from applying to separating, or a
+ * glyph gaining a state class, keeps its node and changes by attribute.
+ */
+function morphChildren(current: Node, next: Node): void {
+  const wantedNodes = [...next.childNodes];
+  const strict = poolOf([...current.childNodes], (node) => keyOf(node));
+  const matches = wantedNodes.map((wanted) => strict.get(keyOf(wanted))?.shift());
+  const unused = [...strict.values()].flat();
+  const loose = poolOf(unused, (node) => keyOf(node, false));
+  wantedNodes.forEach((wanted, index) => {
+    if (matches[index] !== undefined || !(wanted instanceof Element)) return;
+    const reused = loose.get(keyOf(wanted, false))?.shift();
+    if (reused !== undefined) matches[index] = reused;
+  });
+  const kept = new Set(matches);
+
   let cursor: Node | null = current.firstChild;
-  for (const wanted of [...next.childNodes]) {
-    const reused = pool.get(keyOf(wanted))?.shift();
+  wantedNodes.forEach((wanted, index) => {
+    const reused = matches[index];
     let placed: Node;
     if (reused === undefined) {
       placed = wanted;
@@ -69,15 +91,15 @@ function morphChildren(current: Node, next: Node): void {
         reused.nodeValue = wanted.nodeValue;
       }
     }
+    // Skip over old nodes that are about to be removed, so a kept node is not moved just to pass them.
+    while (cursor !== null && cursor !== placed && !kept.has(cursor)) cursor = cursor.nextSibling;
     if (placed === cursor) {
       cursor = cursor.nextSibling;
     } else {
       current.insertBefore(placed, cursor);
     }
-  }
-  for (const leftovers of pool.values()) {
-    for (const node of leftovers) node.parentNode?.removeChild(node);
-  }
+  });
+  for (const node of unused) if (!kept.has(node)) node.parentNode?.removeChild(node);
 }
 
 /** Patches `container` so it holds `markup`, keeping every node whose key still matches. */

@@ -13,7 +13,7 @@
 /**
  * @module ProgressionsView
  * @purpose Secondary, tertiary and minor progressions screen for one person, as of a chosen date, with progressed positions and progressed-to-natal contacts.
- * @conventions Gated for unknown birth time the same way ProfectionsView.tsx/ChartView.tsx are; uses ProgressionsView.messages.ts for en/nl text via useMessages().
+ * @conventions Gated for unknown birth time the same way ProfectionsView.tsx/ChartView.tsx are; uses ProgressionsView.messages.ts for en/nl text via useMessages(). A recalculation keeps the earlier result on screen (aria-busy) so playback never unmounts the tables (#1440).
  * @exports ProgressionsView; positionRows, positionColumns, contactColumns, mcMethodLabel (reused by pdf-export-plan.ts)
  */
 import { GlossaryText } from './GlossaryText.js';
@@ -176,6 +176,8 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
   const basisLine = withBasisItems(baseBasis, ...progressionBasisItems(technique, mcMethod, timingT));
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
+  // True while the next date calculates and the earlier result stays on screen (#1440), so a playback step does not unmount the tables.
+  const [refreshing, setRefreshing] = useState(false);
 
   const targetDate = useMemo(() => {
     const [year, month, day] = asOf.split('-').map(Number);
@@ -186,7 +188,7 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
     if (personMoment === undefined || provider === undefined || targetDate === undefined) return undefined;
     const moment = personMoment;
     const effect = { cancelled: false };
-    setLoad({ kind: 'loading' });
+    setRefreshing(true);
 
     void (async () => {
       try {
@@ -196,10 +198,15 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
           technique === 'secondary'
             ? await computeSecondaryProgression(moment, targetJd, provider, { mcMethod })
             : await computeMinorProgression(technique, moment, targetJd, provider);
-        if (!effect.cancelled) setLoad({ kind: 'ready', data });
+        if (!effect.cancelled) {
+          setLoad({ kind: 'ready', data });
+          setRefreshing(false);
+        }
       } catch (error) {
-        if (!effect.cancelled)
+        if (!effect.cancelled) {
           setLoad({ kind: 'error', message: error instanceof Error ? error.message : String(error) });
+          setRefreshing(false);
+        }
       }
     })();
 
@@ -319,7 +326,7 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
       </div>
 
       {/* The result region: busy while the progressions (re)calculate, as the Astrocartography map is. */}
-      <div aria-busy={load.kind === 'loading'}>
+      <div aria-busy={load.kind === 'loading' || refreshing}>
         {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
         {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
