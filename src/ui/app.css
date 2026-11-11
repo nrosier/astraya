@@ -5721,7 +5721,7 @@ svg text.chart-symbol-text-unicode {
   }
 }
 
-/* The drawer editor (#1335): identity read-only, the text area as tall as its rows need (the drawer caps and scrolls), tags as chips. */
+/* The drawer editor (#1335): identity read-only, the text area as tall as its rows need (the drawer fits its content, caps at the viewport and scrolls), tags as chips. */
 .corpus-editor-form {
   display: flex;
   flex-direction: column;
@@ -5745,20 +5745,7 @@ svg text.chart-symbol-text-unicode {
   overflow-wrap: anywhere;
 }
 
-.corpus-editor-text {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-}
-
-.corpus-editor-text .primitive-field {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-}
-
 .corpus-editor-text textarea {
-  flex: 1 1 auto;
   width: 100%;
   line-height: var(--leading-body);
   resize: vertical;
