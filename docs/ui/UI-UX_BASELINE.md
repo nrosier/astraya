@@ -1,6 +1,6 @@
 # UI behaviour baseline
 
-The end-to-end suite pins 188 behaviours across 81 specs (Playwright, against the built `dist/`).
+The end-to-end suite pins 132 behaviours across 59 specs (Playwright, against the built `dist/`).
 This is the behaviour any redesign must keep, or change on purpose with the test changed in the same commit.
 Each line is a test title, so the record is the tests; regenerate with `node scripts/generate-ui-baseline.mjs`.
 Persisted person data is the compatibility boundary (docs/ui/UI-UX_IMPLEMENTATION_PLAN.md §4); routes and UI are not.
@@ -31,7 +31,7 @@ Persisted person data is the compatibility boundary (docs/ui/UI-UX_IMPLEMENTATIO
 
 - choosing a tab opens that sub-view and keeps the section entry current
 - a chosen section tab survives a reload of the same route (#882)
-- Tools: every tool tab is reachable from the keyboard (#882, #1139)
+- Tools: every tool tab is reachable with Tab and Enter (#882)
 - the section tab row has no automatically detectable accessibility violations
 
 ## Inputs: the birth record and place
@@ -51,7 +51,6 @@ Persisted person data is the compatibility boundary (docs/ui/UI-UX_IMPLEMENTATIO
 ### `e2e/chart-overlay-golden-path.spec.ts`
 
 - a natal, transit, and progressed triwheel is independently configurable (#558)
-- a consultation preset sets the layers and orbs on demand, and No preset restores them (#1190)
 
 ### `e2e/composite-golden-path.spec.ts`
 
@@ -115,7 +114,6 @@ Persisted person data is the compatibility boundary (docs/ui/UI-UX_IMPLEMENTATIO
 - changing the "as of" date recalculates the forecast
 - the planetary-return picker computes a return for the chosen body (#398)
 - a person with an unknown birth time is told a forecast needs one
-- at 390 wide the period choice is a labelled Select, not the tab row (#1227)
 
 ### `e2e/person-form-time-order.spec.ts`
 
@@ -152,15 +150,7 @@ Persisted person data is the compatibility boundary (docs/ui/UI-UX_IMPLEMENTATIO
 
 ## Chart workspace and selection
 
-### `e2e/chart-overlay-modal-phone.spec.ts`
-
-- Overlay settings is modal on a phone: focus stays inside and returns to Chart actions on every close (#1080)
-
 ### `e2e/chart-selection-overhang-screens.spec.ts`
-
-### `e2e/chart-type-selector-keyboard.spec.ts`
-
-- Tab reaches chart type, aspects shown and consultation preset in order, each with a visible focus ring (#1224)
 
 ### `e2e/chart-type-selector-layout.spec.ts`
 
@@ -197,14 +187,13 @@ Persisted person data is the compatibility boundary (docs/ui/UI-UX_IMPLEMENTATIO
 
 ### `e2e/accessibility.spec.ts`
 
-- the bare landing page (the empty home) has no automatically detectable accessibility violations
+- the bare landing page redirects to the people list with no automatically detectable accessibility violations
 - a gated chart-type tab renders as a genuinely disabled control (#234)
 - the empty People list has no automatically detectable accessibility violations
 - the AI-Customized Generate button renders as a genuinely disabled control with an accessible reason (#360)
 - the admin screen has no automatically detectable accessibility violations (#357)
 - the corpus-overrides admin screen has no automatically detectable accessibility violations (#357)
 - the corpus-overrides table wraps its text instead of scrolling sideways, at desktop and phone width (#428)
-- a sub-view page at phone width has no axe region violations, so the sub-view select sits in a landmark (#1050)
 
 ### `e2e/admin-roles.spec.ts`
 
@@ -224,7 +213,6 @@ Persisted person data is the compatibility boundary (docs/ui/UI-UX_IMPLEMENTATIO
 - Motion and Density are device preferences: applied at once, kept across a reload, and compact never shrinks touch targets (#510)
 - the rulers choice changed here is the same one chart screens read, and survives a reload
 - exporting everything and the people CSV both produce real downloads
-- Appearance is a compact two-column page: every setting above the fold at 1280x800, tooltips by keyboard, stacked below 1024px (#1185)
 
 ## Other
 
@@ -233,15 +221,10 @@ Persisted person data is the compatibility boundary (docs/ui/UI-UX_IMPLEMENTATIO
 - exports people as AAF records that follow the specification’s #A93 and #B93 forms
 - imports an AAF file from another program as a reviewed restore, and adds the person only on confirm
 
-### `e2e/admin-nav-inset.spec.ts`
-
-- the Admin sections label and select are inset inside the card at 390px and unchanged at 1280px (#1188)
-
 ### `e2e/back-link.spec.ts`
 
 - opened fresh, Documents has no back link and its one heading is the builder
-- opened directly, a screen has no back link at all (#1225)
-- the bare #/ stays on #/ and Back never loops (#1058)
+- Back from the people list never lands on the bare #/ redirect
 
 ### `e2e/document-titles.spec.ts`
 
@@ -251,56 +234,21 @@ Persisted person data is the compatibility boundary (docs/ui/UI-UX_IMPLEMENTATIO
 
 - the event search downloads its results as a valid .ics file
 
-### `e2e/first-use.spec.ts`
-
-- with nobody stored, People offers the next step and an import that leads to the restore on Preferences
-- once a person exists the first-use state is gone, and their saved birth record says what to do next
-
 ### `e2e/fixed-star-picker.spec.ts`
 
 - search Regulus, add it, Apply: the chart checks the chosen star (#803)
 
-### `e2e/heading-order.spec.ts`
-
-### `e2e/home-route.spec.ts`
-
-- with nobody stored, #/ shows the first-use empty state and stays on #/
-- with people but none viewed, #/ shows the picker; choosing one shows their timeline
-- on #/ with a last-viewed person, the person section links are in the sidebar (#965)
-- a stored id that no longer exists falls back to the picker
-- after viewing a person, #/ shows their timeline, survives reload, and Back does not loop
-
 ### `e2e/interpretation-config.spec.ts`
-
-### `e2e/journey-1-selection-meanings.spec.ts`
-
-- a sign, body, cusp, house and aspect each show their meaning in the Selection card at once
-
-### `e2e/journey-2-override-vs-default.spec.ts`
-
-- a chart override applied to one chart is kept apart from a calculation default saved for new people
 
 ### `e2e/journey-3-directions-filter.spec.ts`
 
 - the Primary Directions time key can be changed to Ptolemy and the arc for the age follows it
 - the transit filter narrows the list of transits, and choosing All restores them
-- a target date entered on Primary Directions sets the age, and a date before birth is refused in words
-
-### `e2e/journey-4-acg-settings.spec.ts`
-
-- map settings can be configured and cancelled without effect, then applied together in one pass
-
-### `e2e/journey-5-line-meanings.spec.ts`
-
-- each line meaning is a labelled, counted, collapsed button that expands from the keyboard
 
 ### `e2e/journey-6-recovery.spec.ts`
 
 - a filter that matches no transits shows the empty state, and Clear filters restores them
 - a latitude outside -90 to 90 shows a clear message, and correcting it clears the message
-- incomplete data: Save stays off with a reason beside it, and filling the missing fields turns it on
-- offline: a network-only action says it needs a connection, keeps manual entry, and recovers when back online
-- calculation failure: Primary Directions at a birthplace beyond the polar circle explains why, and correcting the place recovers
 
 ### `e2e/note-save-states.spec.ts`
 
@@ -322,48 +270,17 @@ Persisted person data is the compatibility boundary (docs/ui/UI-UX_IMPLEMENTATIO
 - a rule set on the card changes the transit contacts too (#590)
 - own orb rules on the natal chart change its aspects, name themselves in the settings button, and survive a profile reset
 
-### `e2e/overview-launchpad.spec.ts`
-
-- lists what is uncertain in the birth data, and the fix link puts the cursor in that field
-- flags a missing birth-data source, and the fix link puts the cursor in the source field (#1262)
-- offers no resume section until a chart is opened, then continues there
-- shows one "now" line that links to Consultation
-- puts Sun, Moon and Rising in a card under the natal wheel, in the same column (#1173)
-- on Transits the text above the wheel runs as wide as the wheel (#1225)
-- lists the account saved searches under Continue where you left off, and opens one into Event search (#1261)
-- offers comparing with another person once there are two people, and goes to the relationship screen
-
 ### `e2e/person-file.spec.ts`
-
-### `e2e/pins.spec.ts`
-
-- pin a result, keep it across a reload, unpin with Undo (#1061)
-
-### `e2e/primary-directions-significator-update.spec.ts`
-
-- changing a significator dims/undims the bi-wheel, and the result region never shows a second, stale show/hide cycle
 
 ### `e2e/profile-easter-egg.spec.ts`
 
 - a matching person’s birth record shows the overlay, and it removes itself
 - nothing runs when the reader asks for reduced motion
-- positive control: the same wait sees the overlay for a matching person
-
-### `e2e/research-export.spec.ts`
-
-- export everything, then restore into an empty profile (#1194)
 
 ### `e2e/saved-interpretations-person.spec.ts`
 
 - the PDF builder’s picker lists only the selected person’s results, and switching person changes the list (#768)
 - the Past tab shows the selected person’s results and a separate Not linked to a person section (#768)
-
-### `e2e/saved-queries.spec.ts`
-
-- save, reload, reopen, delete with Undo, and erase a saved event-search query (#1061)
-- an over-long name is refused before it is saved (#1061)
-
-### `e2e/scroll-cue-edges-1229.spec.ts`
 
 ### `e2e/shared-people-state.spec.ts`
 
@@ -381,34 +298,6 @@ Persisted person data is the compatibility boundary (docs/ui/UI-UX_IMPLEMENTATIO
 - a backdrop press closes the dialog
 - the password toggle switches the field between password and text, and its label flips
 
-### `e2e/sticky-table-header.spec.ts`
-
-- a tall table keeps its header row at the top of the scroll frame while scrolling (#1065)
-
-### `e2e/subview-nav.spec.ts`
-
-- every person section has its h1, a Tabs bar with the open sub-view selected, and an h2 for the screen (#1175)
-- person section tabs: arrow, Home and End move between sub-views at their unchanged routes, with a visible focus ring (#1175)
-- every Tools page has a Tools h1, a Tabs bar with the tool open, and its own name as a section heading (#1139)
-- Tools tabs: arrow, Home and End move between tools at their unchanged routes, with a visible focus ring (#1139)
-
-### `e2e/table-column-resize.spec.ts`
-
-- a column resizes by keyboard and by drag, and sorting still works (#1301)
-- Reset appears beside Copy/Download CSV only once a column is resized, and restores the default widths (#1301)
-- the Consultation transit table (ConsultationTransitTable) resizes and resets too (#1301)
-- the resize handle is hidden on a coarse (touch) pointer, which keeps the sideways scroll instead (#1301)
-
-### `e2e/timing-timeline.spec.ts`
-
-- shows every technique as a row of the chart, with the centre date marked, and the same events in the table
-- cards on the timing pages are one default gap apart, whatever sits between them (#1236, #1237)
-- the bodies filter keeps events without a body and splits the rest between major planets and asteroids (#1260)
-- searches the events, and the technique filter takes a technique out of the chart and the table
-- the 10Y range widens the axis, and Now returns the centre date to today
-
-### `e2e/tool-basis-lines.spec.ts`
-
 ### `e2e/tool-page-layout.spec.ts`
 
 ### `e2e/touch-targets.spec.ts`
@@ -420,15 +309,7 @@ Persisted person data is the compatibility boundary (docs/ui/UI-UX_IMPLEMENTATIO
 ### `e2e/viewport-matrix.spec.ts`
 
 - multi-card grids span the page content width at every bottom-edge viewport (#895)
-- opening a card in a multi-card row leaves the neighbouring column its own height (#1231)
 - horary side-by-side cards keep the shorter at least 90% of the taller (#895)
 - consultation side-by-side columns keep the owner-accepted floor (#895)
 - birth record side-by-side columns keep the shorter at least 90% of the taller (#895)
-- solar arc timing-layout columns keep the shorter at least 90% of the taller (#1234)
-- progressions timing-layout columns keep the shorter at least 90% of the taller (#1235)
-- profections timing-layout pair is measured and reported, exempt from the 90% rule (#1236)
 - the horary astrological parameters card spans the full form width at 1280×800
-
-### `e2e/visual-review.spec.ts`
-
-- capture the screens of the visual review
