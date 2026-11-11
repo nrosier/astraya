@@ -12,13 +12,14 @@ import { ageInYears, TROPICAL_YEAR_DAYS } from '../src/astrology/progressions.js
 import {
   contactOrb,
   contactOrbLimit,
+  RECTIFICATION_ORB_LIMIT,
   MAX_RECTIFICATION_CANDIDATES,
   contactPoints,
   rectify,
   scoreCandidate,
   type RectificationEvent,
 } from '../src/astrology/rectification.js';
-import { orbLimitFor, OUTER_PLANET_KEYS, transitPreset } from '../src/astrology/transit-importance.js';
+import { OUTER_PLANET_KEYS } from '../src/astrology/transit-importance.js';
 import type { EphemerisProvider, GeoPosition, JulianDayUT } from '../src/ephemeris/types.js';
 import { julianDayFor } from '../src/time/julian.js';
 import { resolveMoment } from '../src/time/resolve.js';
@@ -65,11 +66,13 @@ describe('contact scoring conventions (#1445)', () => {
     }
   });
 
-  it('takes each contact orb from the existing daily transit rules, inventing none', () => {
-    const rules = transitPreset('important', { everyBodyKey: [], context: 'daily' });
+  it('uses one 3 degree limit for every contact, from Tebbs (Complete Book of Chart Rectification)', () => {
     for (const key of [...OUTER_PLANET_KEYS, 'meanNode', 'sun', 'moon', 'mars']) {
-      expect(contactOrbLimit(key)).toBe(orbLimitFor(rules, key));
+      expect(contactOrbLimit(key)).toBe(RECTIFICATION_ORB_LIMIT);
     }
+    expect(RECTIFICATION_ORB_LIMIT).toBe(3);
+    expect(contactPoints(0, RECTIFICATION_ORB_LIMIT)).toBe(1);
+    expect(contactPoints(RECTIFICATION_ORB_LIMIT, RECTIFICATION_ORB_LIMIT)).toBe(0);
   });
 });
 
