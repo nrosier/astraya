@@ -8,7 +8,7 @@ import type { JulianDayUT } from '../ephemeris/types.js';
 import type { TimingTimelineEvent, TimingTimelineTrack } from '../domain/timing-timeline.js';
 import { useLayoutEffect, useRef, useState } from 'react';
 import {
-  barLabelFits,
+  visibleBarLabels,
   ganttFraction,
   techniqueColorVar,
   thinYearTicks,
@@ -198,22 +198,33 @@ export function TimingTimelineGantt({
                 <title>{targetTitle}</title>
               </line>
             </svg>
-            {row.marks.map((mark) => {
-              const text = barLabel(mark.event);
-              const widthPx = (mark.end - mark.start) * plot.width;
-              // A dimmed bar draws no label; it returns when the bar is hovered (owner decision on #1442).
-              const dimmed = hoveredKey !== undefined && hoveredKey !== mark.key;
-              return dimmed || mark.point || mark.sub || !barLabelFits(text, widthPx, plot.fontPx) ? null : (
-                <span
-                  key={`${mark.key}-label`}
-                  className="gantt-bar-label"
-                  style={{ left: `${String(mark.start * 100)}%`, width: `${String((mark.end - mark.start) * 100)}%` }}
-                  aria-hidden="true"
-                >
-                  {text}
-                </span>
+            {(() => {
+              const shown = visibleBarLabels(
+                row.marks.map((mark) => ({
+                  mark,
+                  text: barLabel(mark.event),
+                  ...(mark.exact !== undefined && mark.event.pass !== undefined
+                    ? { passText: passLabel(mark.event.pass.number, mark.event.pass.count) }
+                    : {}),
+                })),
+                plot.width,
+                plot.fontPx,
               );
-            })}
+              return row.marks.map((mark) => {
+                // A dimmed bar draws no label; it returns when the bar is hovered (owner decision on #1442).
+                const dimmed = hoveredKey !== undefined && hoveredKey !== mark.key;
+                return dimmed || !shown.has(mark.key) ? null : (
+                  <span
+                    key={`${mark.key}-label`}
+                    className="gantt-bar-label"
+                    style={{ left: `${String(mark.start * 100)}%`, width: `${String((mark.end - mark.start) * 100)}%` }}
+                    aria-hidden="true"
+                  >
+                    {barLabel(mark.event)}
+                  </span>
+                );
+              });
+            })()}
             {row.marks.map((mark) =>
               mark.exact === undefined || mark.event.pass === undefined ? null : (
                 <span
