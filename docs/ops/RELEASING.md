@@ -1,18 +1,28 @@
 # Releasing
 
-**Policy: every milestone ends in a release.** A milestone is not finished when its
-last issue is closed — it is finished when a tagged, versioned release exists and
-the running app reports that version on its About page.
+**Policy: every feature release is tagged and published.** A feature is not
+released until a tagged, versioned release exists and the running app reports that
+version on its About page.
 
 The reason is that Astraya's correctness claims are only meaningful about a
 specific build. "The golden-chart gate is green" means nothing without a version to
 attach it to, and the AGPL obliges us to offer users the source _for the instance
 they are using_. Releasing per milestone keeps those anchored.
 
-## Version plan
+## Version numbering
 
-Pre-1.0 while the app is incomplete; 1.0.0 when M9 ships and it is genuinely
-usable end to end.
+Semantic versioning, with three rules:
+
+- **Minor (`0.x.0`) — feature releases.** A release that adds a feature, a screen
+  or a capability. The minor number moves up and the patch number returns to 0.
+- **Patch (`0.x.y`) — fixes to existing features.** A release that corrects
+  behaviour already shipped, without adding a feature. A wrong chart is a patch
+  release, not something to hold for a feature release.
+- **Major (`x.0.0`) — major changes.** Reserved for changes that alter the app as a
+  whole. None is foreseen. The major number does not move until one is decided.
+
+The version of a release is set by what it contains, not by a milestone. The table
+below records which milestone each early release marked; it is history, not a plan.
 
 | Milestone                             | Release  | Marks                                                    |
 | ------------------------------------- | -------- | -------------------------------------------------------- |
@@ -27,9 +37,10 @@ usable end to end.
 | M8 Accounts, sync & export            | `v0.9.0` | Multi-device sync, sharing, export                       |
 | M9 Polish & launch                    | `v1.0.0` | Accessible, fast, tested, deployed                       |
 
-A milestone that has to ship incomplete gets a minor bump and an honest changelog
+A release that ships a feature incomplete gets a minor bump and an honest changelog
 entry saying what is missing. Patch releases happen whenever a correctness bug is
-fixed, without waiting for a milestone — a wrong chart is not something to sit on.
+fixed, without waiting for a feature release — a wrong chart is not something to sit
+on.
 
 ## Checklist
 

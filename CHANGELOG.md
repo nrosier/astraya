@@ -1,8 +1,9 @@
 # Changelog
 
 All notable changes to Astraya are recorded here. Versions follow
-[semantic versioning](https://semver.org/), and every milestone ends in a release —
-see [docs/ops/RELEASING.md](docs/ops/RELEASING.md).
+[semantic versioning](https://semver.org/): a minor release (`0.x.0`) adds features,
+a patch release (`0.x.y`) fixes existing ones, and a major release is reserved for
+major changes. See [docs/ops/RELEASING.md](docs/ops/RELEASING.md).
 
 ## [Unreleased]
 

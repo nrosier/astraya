@@ -23,7 +23,7 @@ Use the existing `release-shipped-files-check` skill for the actual Dockerfile/`
 
 The `release-engineer` agent owns the end-to-end procedure; the pieces worth knowing before you're mid-release:
 
-1. **Versioning is milestone-driven** (`docs/RELEASING.md`'s M0–M9 → v0.1.0–v1.0.0 table), not calendar- or commit-count-driven. A milestone landing is a minor bump; work in between is a patch — check which applies before assuming "patch."
+1. **Versioning follows the change, not a milestone** (`docs/ops/RELEASING.md`, "Version numbering"). A release that adds a feature is a minor bump (`0.x.0`); a release that only fixes existing features is a patch (`0.x.y`); a major bump (`x.0.0`) is reserved for major changes and none is foreseen. Decide which applies from the commits before assuming "patch."
 2. **Four files, every release**: `package.json` (`version`), `package-lock.json` (**two** occurrences — top-level and `packages[""].version`, anchor by context not line count), `CHANGELOG.md` (seeded by `npm run changelog:draft`, then hand-reviewed — the script drops chore/test/ci/build commits and needs a human ruling on style/revert commits), `README.md` (the badge **and** the `## Status` section's hard-coded version string in prose — routinely forgotten because nothing else names it).
 3. **`npm run docker:smoke` must pass before the tag is pushed**, not after. If Docker isn't running, stop — don't tag without it.
 4. **The tag triggers three separate workflows** (`release.yml`, `docker.yml`, `pages.yml`) — confirm all three went green for that tag, not just the first one.
