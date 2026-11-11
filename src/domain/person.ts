@@ -36,6 +36,7 @@ import {
   SnapshotDecodeError,
 } from './calculation-snapshot.js';
 import { readLifeEvents, type LifeEvent } from './life-events.js';
+import { readRectifiedTime, type RectifiedTime } from './rectified-time.js';
 import type { Mutation } from '../store/oplog.js';
 import type { JsonValue } from '../store/ops.js';
 import type { BirthMomentInput, Calendar, CivilDateTime, Coordinates } from '../time/types.js';
@@ -171,6 +172,11 @@ export interface Person {
   readonly lifeEvents?: readonly LifeEvent[] | undefined;
   /** True when a `lifeEvents` register exists but cannot be read (invalid row, over the cap, repeated id). */
   readonly lifeEventsUnreadable?: boolean | undefined;
+  /**
+   * The rectified birth time (#1445), an estimate kept beside the reported time (`moment.civil`), which promotion never
+   * changes. Absent when none was saved or when the register is unreadable.
+   */
+  readonly rectifiedTime?: RectifiedTime | undefined;
   /** Field names that are required for a chart and are missing or unreadable. */
   readonly missing: readonly string[];
 }
@@ -195,6 +201,7 @@ export const PERSON_FIELDS = [
   'rulership',
   'fixedStars',
   'lifeEvents',
+  'rectifiedTime',
 ] as const;
 
 function isRecordValue(value: unknown): value is Record<string, unknown> {
@@ -482,6 +489,7 @@ export function buildPerson(id: string, fields: ReadonlyMap<string, unknown>): P
   const ruler = readRulership(fields.get('rulership'));
   const lifeEventsValue = fields.get('lifeEvents');
   const lifeEvents = readLifeEvents(lifeEventsValue);
+  const rectifiedTime = readRectifiedTime(fields.get('rectifiedTime'));
   const sourceKind = readBirthSourceKind(fields.get('sourceKind'));
   const sourceNote = readText(fields.get('sourceNote'));
 
@@ -523,6 +531,7 @@ export function buildPerson(id: string, fields: ReadonlyMap<string, unknown>): P
       : {}),
     ...(lifeEvents === undefined ? {} : { lifeEvents }),
     ...(lifeEvents === undefined && lifeEventsValue !== undefined ? { lifeEventsUnreadable: true } : {}),
+    ...(rectifiedTime === undefined ? {} : { rectifiedTime }),
     missing,
   };
 }

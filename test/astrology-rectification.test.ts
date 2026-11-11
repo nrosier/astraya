@@ -11,16 +11,14 @@ import { bodyByKey } from '../src/astrology/bodies.js';
 import { ageInYears, TROPICAL_YEAR_DAYS } from '../src/astrology/progressions.js';
 import {
   contactOrb,
-  contactPoints,
+  contactOrbLimit,
   MAX_RECTIFICATION_CANDIDATES,
+  contactPoints,
   rectify,
   scoreCandidate,
-  SOLAR_ARC_ORB_DEG,
-  SOLAR_ARC_WEIGHT,
-  TRANSIT_ORB_DEG,
-  TRANSIT_WEIGHT,
   type RectificationEvent,
 } from '../src/astrology/rectification.js';
+import { orbLimitFor, OUTER_PLANET_KEYS, transitPreset } from '../src/astrology/transit-importance.js';
 import type { EphemerisProvider, GeoPosition, JulianDayUT } from '../src/ephemeris/types.js';
 import { julianDayFor } from '../src/time/julian.js';
 import { resolveMoment } from '../src/time/resolve.js';
@@ -52,18 +50,26 @@ describe('contactOrb (#408)', () => {
   });
 });
 
-describe('contactPoints', () => {
-  it('is the full weight at exact, nothing at the orb, and a straight line between', () => {
-    expect(contactPoints(0, 1, 2)).toBe(2);
-    expect(contactPoints(1, 1, 2)).toBe(0);
-    expect(contactPoints(0.5, 1, 2)).toBe(1);
-    expect(contactPoints(0.25, 1, 1)).toBeCloseTo(0.75, 9);
+describe('contact scoring conventions (#1445)', () => {
+  it('scores a contact 1 at exact, falling in a straight line to 0 at its orb limit, and 0 outside it', () => {
+    expect(contactPoints(0, 1.5)).toBe(1);
+    expect(contactPoints(0.75, 1.5)).toBeCloseTo(0.5, 9);
+    expect(contactPoints(1.5, 1.5)).toBe(0);
+    expect(contactPoints(1.6, 1.5)).toBe(0);
   });
 
-  it('weights solar-arc contacts above transits, as the module documents', () => {
-    expect(SOLAR_ARC_WEIGHT).toBeGreaterThan(TRANSIT_WEIGHT);
-    expect(SOLAR_ARC_ORB_DEG).toBeGreaterThan(0);
-    expect(TRANSIT_ORB_DEG).toBeGreaterThan(0);
+  it('uses the same curve for every contact type and body: no type weights', () => {
+    for (const key of ['jupiter', 'meanNode', 'moon', 'sun']) {
+      const limit = contactOrbLimit(key);
+      expect(contactPoints(limit / 4, limit)).toBeCloseTo(0.75, 9);
+    }
+  });
+
+  it('takes each contact orb from the existing daily transit rules, inventing none', () => {
+    const rules = transitPreset('important', { everyBodyKey: [], context: 'daily' });
+    for (const key of [...OUTER_PLANET_KEYS, 'meanNode', 'sun', 'moon', 'mars']) {
+      expect(contactOrbLimit(key)).toBe(orbLimitFor(rules, key));
+    }
   });
 });
 
@@ -165,6 +171,26 @@ describe('rectify against a known answer (#408)', () => {
     const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
     for (const candidate of ranked) expect(candidate.lift).toBeCloseTo(candidate.score / mean, 9);
   }, 300_000);
+
+  it('sums each contact’s closeness-scaled points and ranks the same way on every run (deterministic)', async () => {
+    const candidates = [-45, -20, 0, 20, 45].map((minutes) => trueJd + minutes * MINUTE);
+    const first = await rectify(engine, LONDON, candidates, events);
+    const second = await rectify(engine, LONDON, candidates, events);
+    expect(second.map((c) => c.jd)).toEqual(first.map((c) => c.jd));
+    for (const candidate of first) {
+      expect(candidate.score).toBeCloseTo(
+        candidate.contacts.reduce((total, contact) => total + contactPoints(contact.orb, contact.orbLimit), 0),
+        9,
+      );
+    }
+  }, 300_000);
+
+  it('scores fewer events no higher than all of them, since contacts only add', async () => {
+    const all = await scoreCandidate(engine, LONDON, trueJd, events);
+    const one = await scoreCandidate(engine, LONDON, trueJd, events.slice(0, 1));
+    expect(one.score).toBeLessThanOrEqual(all.score);
+    expect(one.contacts.every((contact) => contact.eventIndex === 0)).toBe(true);
+  }, 120_000);
 
   it('rejects no events, no candidates, and more candidates than a tab can reasonably test', async () => {
     await expect(rectify(engine, LONDON, [trueJd], [])).rejects.toThrow(/at least one dated event/);

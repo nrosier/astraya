@@ -10,13 +10,16 @@
  */
 /**
  * @module RectificationView
- * @purpose Birth-time rectification screen: tests candidate birth times for a known date/place against dated life events and ranks them by solar-arc/transit contact score.
- * @conventions Optional pre-fill from a stored person; for a chosen person the life events are read from and written back to that person's `lifeEvents` register (#1399) on leaving a row, on add and on remove, and an unreadable stored list is shown as a warning and never overwritten; with no person the events stay local; uses RectificationView.messages.ts for en/nl text via useMessages(). Laid out as a tool page (#1065): birth-details form and life-events panel side by side, candidate results full width below (`.tool-layout`).
+ * @purpose Birth-time rectification screen: tests candidate birth times for a known date/place against dated life events and ranks them by lift of the solar-arc/transit contact count over the window average.
+ * @conventions Scoring method citation pending (#1445), stated on the page with the method and its limits; each event has an include toggle (all on by default, kept in component state for the session) that re-scores the tested candidates without a new search; only a lift above 1.0 is highlighted, others read "explains the events no better than chance"; shows the reported time (never changed) and the optional rectified time, labelled an estimate, with its source note; "Promote to rectified time" writes `rectifiedTimeMutation` through the person operation log and is disabled with a stated reason (methodology citation pending while `RECTIFICATION_CITATION_RECORDED` is false). Optional pre-fill from a stored person; for a chosen person the life events are read from and written back to that person's `lifeEvents` register (#1399) on leaving a row, on add and on remove, and an unreadable stored list is shown as a warning and never overwritten; with no person the events stay local; uses RectificationView.messages.ts for en/nl text via useMessages(). Laid out as a tool page (#1065): birth-details form and life-events panel side by side, candidate results full width below (`.tool-layout`).
  * @exports RectificationView
  */
 import { GlossaryText } from './GlossaryText.js';
 import { formatFixed, formatOrb } from './format.js';
+import { Badge } from './primitives/Badge.js';
 import { Button } from './primitives/Button.js';
+import { Checkbox } from './primitives/Checkbox.js';
+import { StatList } from './primitives/StatList.js';
 import { Disclosure } from './primitives/Disclosure.js';
 import { DateField } from './primitives/DateField.js';
 import { apiErrorText } from './api-error.js';
@@ -26,6 +29,13 @@ import { TimeField } from './primitives/TimeField.js';
 import { useMemo, useRef, useState } from 'react';
 import { SIGNS } from '../astrology/signs.js';
 import { runRectification, type TimedCandidate } from '../domain/rectification.js';
+import { isSpike, rescoreForEvents, type RescoredCandidate } from '../astrology/rectification-lift.js';
+import {
+  promotionBlock,
+  RECTIFICATION_CITATION_RECORDED,
+  rectifiedTimeMutation,
+  rectifiedTimeNote,
+} from '../domain/rectified-time.js';
 import { BirthPlaceSearch } from './BirthPlaceSearch.js';
 import { aspectDisplayName, bodyDisplayName, signDisplayName } from './astro-names.messages.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
@@ -72,6 +82,8 @@ type Result =
       readonly candidates: readonly TimedCandidate[];
       readonly tested: number;
       readonly events: readonly EventField[];
+      /** The id of the row each searched event came from, so a toggle maps to the event's contacts. */
+      readonly eventIds: readonly string[];
     }
   | { readonly kind: 'error'; readonly message: string };
 
@@ -111,6 +123,9 @@ export function RectificationView(): React.JSX.Element {
   // Rows keep the stored event's id and time so that saving back to the person (#1399) never drops either.
   const [events, setEvents] = useState<readonly LifeEventRow[]>([blankEvent()]);
   const [saveError, setSaveError] = useState<string>();
+  // Events left out of the score, by row id: empty means every event is included (the default). Kept for the session only.
+  const [excluded, setExcluded] = useState<ReadonlySet<string>>(new Set());
+  const [promoteError, setPromoteError] = useState<string>();
   const [fieldError, setFieldError] = useState<RectificationFieldError>();
   const [result, setResult] = useState<Result>({ kind: 'idle' });
   const runId = useRef(0);
@@ -202,7 +217,13 @@ export function RectificationView(): React.JSX.Element {
         }
         const candidates = await runRectification(provider, { ...parsed.request, events: eventJds });
         if (id === runId.current) {
-          setResult({ kind: 'ready', candidates, tested: candidates.length, events: parsed.events });
+          setResult({
+            kind: 'ready',
+            candidates,
+            tested: candidates.length,
+            events: parsed.events,
+            eventIds: events.filter((row) => row.date.trim() !== '').map((row) => row.id),
+          });
         }
       } catch (error) {
         if (id === runId.current) {
@@ -224,7 +245,52 @@ export function RectificationView(): React.JSX.Element {
     }
   };
 
-  const top = result.kind === 'ready' ? result.candidates.slice(0, SHOWN) : [];
+  // The included events re-score the candidates already tested: toggling an event needs no new search.
+  const includedIndexes = useMemo(() => {
+    const indexes = new Set<number>();
+    if (result.kind === 'ready') {
+      for (const [index, id] of result.eventIds.entries()) if (!excluded.has(id)) indexes.add(index);
+    }
+    return indexes;
+  }, [result, excluded]);
+  const rescored = useMemo<readonly RescoredCandidate<TimedCandidate>[]>(
+    () => (result.kind === 'ready' ? rescoreForEvents(result.candidates, includedIndexes) : []),
+    [result, includedIndexes],
+  );
+  const top = rescored.slice(0, SHOWN);
+  const best = rescored[0];
+  // Gated (#1445): disabled with "methodology citation pending" until a citation for the scoring is recorded.
+  const block = promotionBlock({
+    citationRecorded: RECTIFICATION_CITATION_RECORDED,
+    hasPerson: chosenPerson !== undefined,
+    topLift: best?.lift,
+  });
+
+  const promote = (): void => {
+    if (block !== undefined || chosenPerson === undefined || best === undefined) return;
+    setPromoteError(undefined);
+    const fail = (cause: unknown): void => {
+      setPromoteError(apiErrorText(cause));
+    };
+    try {
+      store
+        .mutate([
+          rectifiedTimeMutation(chosenPerson.id, {
+            time: best.localTime,
+            note: rectifiedTimeNote(formatFixed(best.lift, 1)),
+          }),
+        ])
+        .catch(fail);
+    } catch (cause) {
+      fail(cause);
+    }
+  };
+
+  const reportedCivil = chosenPerson?.moment?.civil;
+  const reportedTime =
+    reportedCivil === undefined
+      ? undefined
+      : `${String(reportedCivil.hour).padStart(2, '0')}:${String(reportedCivil.minute).padStart(2, '0')}`;
 
   const columns = useMemo<readonly TableColumn<TimedCandidate>[]>(
     () => [
@@ -245,7 +311,18 @@ export function RectificationView(): React.JSX.Element {
       },
       { key: 'score', label: t.scoreColumn, valueOf: (row) => row.score, render: (row) => formatFixed(row.score, 2) },
       { key: 'lift', label: t.liftColumn, valueOf: (row) => row.lift, render: (row) => `×${formatFixed(row.lift, 1)}` },
-      { key: 'contacts', label: t.contactsColumn, valueOf: (row) => row.contacts.length },
+      {
+        key: 'verdict',
+        label: t.verdictColumn,
+        valueOf: (row) => (isSpike(row.lift) ? t.spike : t.noBetterThanChance),
+        // Only a lift above 1.0 is highlighted; the text always says it, so colour is never the only carrier.
+        renderCell: (row) =>
+          isSpike(row.lift) ? (
+            <Badge tone="success">{t.spike}</Badge>
+          ) : (
+            <span className="hint">{t.noBetterThanChance}</span>
+          ),
+      },
     ],
     [t, locale],
   );
@@ -274,6 +351,14 @@ export function RectificationView(): React.JSX.Element {
       <Notice>
         <GlossaryText text={t.caveat} />
       </Notice>
+      <section className="tool-card" aria-labelledby="rectification-method-heading">
+        <h2 id="rectification-method-heading">{t.methodHeading}</h2>
+        <p>
+          <Badge tone="warning">{t.citationPending}</Badge>
+        </p>
+        <p className="hint">{t.methodBody}</p>
+        <p className="hint">{t.methodLimits}</p>
+      </section>
 
       <div className="tool-layout">
         <section className="tool-card tool-form" aria-labelledby="rectification-search-heading">
@@ -391,6 +476,18 @@ export function RectificationView(): React.JSX.Element {
                     saveEvents(events);
                   }}
                 >
+                  <Checkbox
+                    label={t.includeEvent(index + 1)}
+                    checked={!excluded.has(event.id)}
+                    onChange={(checked) => {
+                      setExcluded((current) => {
+                        const next = new Set(current);
+                        if (checked) next.delete(event.id);
+                        else next.add(event.id);
+                        return next;
+                      });
+                    }}
+                  />
                   <DateField
                     label={t.eventDateLabel(index + 1)}
                     value={event.date}
@@ -432,6 +529,37 @@ export function RectificationView(): React.JSX.Element {
               {t.addEvent}
             </Button>
           </fieldset>
+          <h3>{t.timesHeading}</h3>
+          <StatList
+            items={[
+              { label: t.reportedTimeLabel, value: reportedTime ?? t.reportedTimeNone },
+              {
+                label: t.rectifiedTimeLabel,
+                value:
+                  chosenPerson?.rectifiedTime === undefined
+                    ? t.rectifiedTimeNone
+                    : `${t.rectifiedTimeValue(chosenPerson.rectifiedTime.time)} — ${chosenPerson.rectifiedTime.note}`,
+              },
+            ]}
+          />
+          <p className="hint">{t.reportedNeverChanged}</p>
+          <div className="tool-actions">
+            <Button
+              type="button"
+              variant="primary"
+              disabled={block !== undefined}
+              aria-describedby={block === undefined ? undefined : 'rectification-promote-reason'}
+              onClick={promote}
+            >
+              {t.promoteButton}
+            </Button>
+          </div>
+          {block !== undefined && (
+            <p className="hint" id="rectification-promote-reason">
+              {t.promoteReasonPrefix} {t.promoteBlocked[block]}
+            </p>
+          )}
+          {promoteError !== undefined && <StatusMessage kind="error">{promoteError}</StatusMessage>}
         </section>
       </div>
 
@@ -442,29 +570,35 @@ export function RectificationView(): React.JSX.Element {
         {result.kind === 'ready' && (
           <>
             <p>{t.summary(result.tested, top.length)}</p>
+            <p className="hint">{t.includedCount(includedIndexes.size, result.events.length)}</p>
+            {includedIndexes.size === 0 && <StatusMessage kind="partial">{t.noEventsIncluded}</StatusMessage>}
             <SortableTable
               caption={t.tableCaption}
               columns={columns}
               rows={top}
               getRowKey={(row) => String(row.jd)}
               downloadFilename="rectification-candidates.csv"
+              selectedRowKey={best !== undefined && isSpike(best.lift) ? String(best.jd) : undefined}
             />
             <h2>{t.detailsHeading}</h2>
             {top.slice(0, DETAILED).map((candidate) => (
               <div key={candidate.jd} className="rectification-detail">
                 <Disclosure
                   title={t.detailsSummary(candidate.localTime, formatFixed(candidate.score, 2))}
-                  summary={t.contactCount(candidate.contacts.length)}
+                  summary={t.contactCount(
+                    candidate.contacts.filter((contact) => includedIndexes.has(contact.eventIndex)).length,
+                  )}
                   showLabel={t.showDetails}
                   hideLabel={t.hideDetails}
                 >
-                  {candidate.contacts.length === 0 ? (
+                  {!candidate.contacts.some((contact) => includedIndexes.has(contact.eventIndex)) ? (
                     <p className="hint">
                       <GlossaryText text={t.noContacts} />
                     </p>
                   ) : (
                     <ul>
                       {result.events.map((event, eventIndex) => {
+                        if (!includedIndexes.has(eventIndex)) return null;
                         const forEvent = candidate.contacts.filter((contact) => contact.eventIndex === eventIndex);
                         if (forEvent.length === 0) return null;
                         return (
