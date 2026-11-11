@@ -227,5 +227,6 @@ export function renderCycleTimeSeriesSvg(
     }
   }
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${fmt(width)} ${fmt(height)}" width="${fmt(width)}" height="${fmt(height)}" class="cycle-diagram cycle-time-series">${parts.join('')}</svg>`;
+  // Fluid: the drawing scales to the card's width and keeps its proportions, so a wide card is filled, not left empty (#1404 review).
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${fmt(width)} ${fmt(height)}" width="100%" height="auto" preserveAspectRatio="xMidYMid meet" class="cycle-diagram cycle-time-series">${parts.join('')}</svg>`;
 }

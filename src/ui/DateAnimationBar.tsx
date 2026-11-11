@@ -53,12 +53,19 @@ export function DateAnimationBar({
   date,
   onDateChange,
   onPlayingChange,
+  mode = 'full',
 }: {
   readonly date: string;
   readonly onDateChange: (date: string) => void;
   /** Called with true when playback starts and false when it pauses or stops. */
   readonly onPlayingChange?: (playing: boolean) => void;
+  /**
+   * `'full'` is the player (Transits): play, speed, slider and the stepper. `'date'` is a date selector with its
+   * steps only, for a screen that does not animate (Progressions, owner review 2026-11-11, #1442).
+   */
+  readonly mode?: 'full' | 'date';
 }): React.JSX.Element {
+  const playable = mode === 'full';
   const t = useMessages(dateAnimationBarMessages);
   const [locale] = useLocale();
   const [interval, setInterval_] = useState<StepInterval>(DEFAULT_INTERVAL);
@@ -159,17 +166,19 @@ export function DateAnimationBar({
   return (
     <div className="date-animation-bar-wrap">
       <div className="date-animation-bar" role="group" aria-label={t.groupLabel}>
-        <Button
-          variant="primary"
-          className="date-animation-play"
-          aria-pressed={playing}
-          aria-label={playing ? t.pause : t.play}
-          onClick={() => {
-            setPlaying((value) => !value);
-          }}
-        >
-          <span aria-hidden="true">{playing ? '❚❚' : '▶'}</span>
-        </Button>
+        {playable && (
+          <Button
+            variant="primary"
+            className="date-animation-play"
+            aria-pressed={playing}
+            aria-label={playing ? t.pause : t.play}
+            onClick={() => {
+              setPlaying((value) => !value);
+            }}
+          >
+            <span aria-hidden="true">{playing ? '❚❚' : '▶'}</span>
+          </Button>
+        )}
         <Button
           className="date-animation-step"
           aria-label={t.stepBack(intervalName)}
@@ -201,53 +210,61 @@ export function DateAnimationBar({
         >
           <span aria-hidden="true">▶</span>
         </Button>
-        <Select
-          hideLabel
-          label={t.speedLabel}
-          value={String(speed)}
-          options={PLAYBACK_SPEEDS.map((value) => ({ value: String(value), label: `${String(value)}x` }))}
-          onChange={(value) => {
-            const next = PLAYBACK_SPEEDS.find((candidate) => String(candidate) === value);
-            if (next !== undefined) setSpeed(next);
-          }}
-        />
-        <div className="date-animation-scrub">
-          <input
-            ref={sliderRef}
-            type="range"
-            min={span.min}
-            max={span.max}
-            step={1}
-            defaultValue={sliderValue}
-            onPointerDown={() => {
-              setPlaying(false);
-            }}
-            disabled={!valid}
-            aria-label={t.sliderLabel}
-            aria-valuetext={
-              valid
-                ? formatCivilDate(
-                    { year: Number(date.slice(0, 4)), month: Number(date.slice(5, 7)), day: Number(date.slice(8, 10)) },
-                    locale,
-                  )
-                : undefined
-            }
-            onChange={(event) => {
-              // A drag (or a key on the slider) pauses playback; only Play resumes it.
-              setPlaying(false);
-              const days = Number(event.target.value);
-              if (Number.isFinite(days)) {
-                latestDate.current = isoFromDayNumber(days);
-                onDateChange(latestDate.current);
-              }
+        {playable && (
+          <Select
+            hideLabel
+            label={t.speedLabel}
+            value={String(speed)}
+            options={PLAYBACK_SPEEDS.map((value) => ({ value: String(value), label: `${String(value)}x` }))}
+            onChange={(value) => {
+              const next = PLAYBACK_SPEEDS.find((candidate) => String(candidate) === value);
+              if (next !== undefined) setSpeed(next);
             }}
           />
-          <div className="date-animation-ticks" aria-hidden="true">
-            <span>{centerYear - 5}</span>
-            <span>{centerYear}</span>
-            <span>{centerYear + 5}</span>
+        )}
+        {playable && (
+          <div className="date-animation-scrub">
+            <input
+              ref={sliderRef}
+              type="range"
+              min={span.min}
+              max={span.max}
+              step={1}
+              defaultValue={sliderValue}
+              onPointerDown={() => {
+                setPlaying(false);
+              }}
+              disabled={!valid}
+              aria-label={t.sliderLabel}
+              aria-valuetext={
+                valid
+                  ? formatCivilDate(
+                      {
+                        year: Number(date.slice(0, 4)),
+                        month: Number(date.slice(5, 7)),
+                        day: Number(date.slice(8, 10)),
+                      },
+                      locale,
+                    )
+                  : undefined
+              }
+              onChange={(event) => {
+                // A drag (or a key on the slider) pauses playback; only Play resumes it.
+                setPlaying(false);
+                const days = Number(event.target.value);
+                if (Number.isFinite(days)) {
+                  latestDate.current = isoFromDayNumber(days);
+                  onDateChange(latestDate.current);
+                }
+              }}
+            />
+            <div className="date-animation-ticks" aria-hidden="true">
+              <span>{centerYear - 5}</span>
+              <span>{centerYear}</span>
+              <span>{centerYear + 5}</span>
+            </div>
           </div>
-        </div>
+        )}
         <Button
           className="date-animation-now"
           onClick={() => {

@@ -127,7 +127,9 @@ test('capture the screens of the visual review', async ({ browser }) => {
 
   await openNatalChart(page);
   await page.locator('button.extended-settings-trigger').click();
-  await page.locator('dialog.settings-card').waitFor();
+  // Wait for the drawer to be open and visible, not just attached: the shot must show the settings, not the page behind.
+  await page.locator('dialog.settings-card[open]').waitFor({ state: 'visible' });
+  await page.waitForTimeout(600);
   await shoot(page, '16-extended-settings-advanced-closed');
 
   // #1229: the Consultation transit tables, without a card opened.

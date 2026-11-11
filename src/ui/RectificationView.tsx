@@ -19,8 +19,8 @@ import { formatFixed, formatOrb } from './format.js';
 import { Badge } from './primitives/Badge.js';
 import { Button } from './primitives/Button.js';
 import { Checkbox } from './primitives/Checkbox.js';
-import { StatList } from './primitives/StatList.js';
 import { Disclosure } from './primitives/Disclosure.js';
+import { StatList } from './primitives/StatList.js';
 import { DateField } from './primitives/DateField.js';
 import { apiErrorText } from './api-error.js';
 import { Select } from './primitives/Select.js';
@@ -356,8 +356,11 @@ export function RectificationView(): React.JSX.Element {
         <p>
           <Badge tone="warning">{t.citationPending}</Badge>
         </p>
-        <p className="hint">{t.methodBody}</p>
-        <p className="hint">{t.methodLimits}</p>
+        {/* The method and its limits are collapsed until the reader opens them (owner review, #1445). */}
+        <Disclosure title={t.methodHeading} showLabel={t.showMethod} hideLabel={t.hideMethod}>
+          <p className="hint">{t.methodBody}</p>
+          <p className="hint">{t.methodLimits}</p>
+        </Disclosure>
       </section>
 
       <div className="tool-layout">

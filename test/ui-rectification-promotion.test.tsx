@@ -90,13 +90,23 @@ afterEach(() => {
 });
 
 describe('Rectification method note (#1445)', () => {
-  it('states the method, its limits and that the scoring citation is pending', async () => {
+  it('shows the heading and the pending citation at once, with the method and its limits in a closed disclosure', async () => {
     await mount();
     const text = container?.textContent ?? '';
+    // Always visible: the heading and the citation status.
     expect(text).toContain(t.methodHeading);
-    expect(text).toContain(t.methodBody);
-    expect(text).toContain(t.methodLimits);
     expect(text).toContain(t.citationPending);
+    // Collapsed by default (owner review, #1445): the explanation is in the page but not open.
+    const trigger = container?.querySelector('.primitive-disclosure-trigger');
+    expect(trigger).not.toBeNull();
+    expect(trigger?.getAttribute('aria-expanded')).toBe('false');
+    expect(container?.querySelector('.primitive-disclosure.open')).toBeNull();
+    // Opening it reveals the method and its limits.
+    (trigger as HTMLButtonElement).click();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const open = container?.querySelector('.primitive-disclosure.open');
+    expect(open?.textContent).toContain(t.methodBody);
+    expect(open?.textContent).toContain(t.methodLimits);
   });
 });
 

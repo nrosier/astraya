@@ -75,6 +75,8 @@ const en = {
   spike: 'Above chance',
   noBetterThanChance: 'Explains the events no better than chance',
   methodHeading: 'Method and its limits',
+  showMethod: 'Show the method and its limits',
+  hideMethod: 'Hide the method and its limits',
   methodBody:
     'Each candidate time gives an Ascendant, Midheaven, Descendant and Imum Coeli. For every included event, a score is added for each Solar Arc contact (a directed angle on a natal planet, or a directed planet on a natal angle) and each transit contact (Jupiter, Saturn, Uranus, Neptune, Pluto or the mean lunar node on a natal angle) that is a conjunction, square or opposition. The orb is the existing transit orb of the body involved. All contact types count equally, and each contact counts in full when exact and less the looser it is, down to nothing at the edge of its orb. The lift is a candidate’s score divided by the average score of all candidates tested; only a lift above 1.0 is marked as above chance.',
   methodLimits:
@@ -171,6 +173,8 @@ const nl: typeof en = {
   spike: 'Boven toeval',
   noBetterThanChance: 'Verklaart de gebeurtenissen niet beter dan toeval',
   methodHeading: 'Methode en de grenzen ervan',
+  showMethod: 'Methode en grenzen tonen',
+  hideMethod: 'Methode en grenzen verbergen',
   methodBody:
     'Elke kandidaat-tijd geeft een Ascendant, Midheaven, Descendant en Imum Coeli. Voor elke meegenomen gebeurtenis komt er een score bij voor elk solar-arc-contact (een gedirigeerde hoek op een natale planeet, of een gedirigeerde planeet op een natale hoek) en elk transitcontact (Jupiter, Saturnus, Uranus, Neptunus, Pluto of de gemiddelde maansknoop op een natale hoek) dat een conjunctie, kwadraat of oppositie is. De orb is de bestaande transitorb van het betrokken lichaam. Alle soorten contact tellen even zwaar, en elk contact telt volledig als het exact is en minder naarmate het ruimer is, tot niets aan de rand van zijn orb. De lift is de score van een kandidaat gedeeld door de gemiddelde score van alle getoetste kandidaten; alleen een lift boven 1,0 wordt als boven toeval gemarkeerd.',
   methodLimits:

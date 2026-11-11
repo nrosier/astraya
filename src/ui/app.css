@@ -9169,8 +9169,9 @@ a.quiet,
   vector-effect: non-scaling-stroke;
 }
 
+/* The exact-date mark is a light tone, so it does not read as a black smudge where it crosses a dark bar (owner review, #1442). */
 .gantt-exact {
-  stroke: var(--fg);
+  stroke: var(--muted);
   stroke-width: 2;
   vector-effect: non-scaling-stroke;
 }
@@ -9239,10 +9240,12 @@ a.quiet,
   pointer-events: none;
 }
 
+/* The centre-date line is the top layer. A thin background halo sits under it, so it stays readable over a bar (#1442). */
 .gantt-target {
   stroke: var(--solar);
   stroke-width: 2;
   vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 1px var(--bg));
 }
 
 @media (max-width: 40rem) {
