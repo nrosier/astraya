@@ -7398,10 +7398,12 @@ button.primitive-button-compact {
   gap: var(--space-4);
 }
 
+/* Page titles use the declared display token (#1348, G-04), not the global h1 clamp. */
 .page-header-row h1 {
   margin: 0;
   flex: 1 1 auto;
   min-width: 0;
+  font-size: var(--text-display);
 }
 
 /* Solar and lunar return headers (#1140): one token step smaller, so the longest one ("Name's Lunar Return") plus the

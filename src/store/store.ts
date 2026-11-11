@@ -56,6 +56,7 @@ import {
 } from './annotations.js';
 import { PIN_ENTITY, PinRefusedError, assertPinMutation, pinAnnotationPointer, pinErasedRevision } from './pins.js';
 import { CORRECTION_ENTITY, CorrectionRefusedError, assertCorrectionMutation } from './corpus-corrections.js';
+import { assertChartSearchMutation } from './chart-searches.js';
 import { assertSavedQueryMutation } from './saved-queries.js';
 import { append, appendAt, emptyLog, latest, purgeEntity, receiveRecords, since } from './oplog.js';
 import { MAX_COUNTER, createClock, encodeHlc, isNodeId, randomNodeId, receive } from './hlc.js';
@@ -385,6 +386,7 @@ export async function openStore(options: StoreOptions = {}): Promise<Store> {
       for (const mutation of mutations) {
         assertNoteMutation(mutation);
         assertSavedQueryMutation(mutation);
+        assertChartSearchMutation(mutation);
         assertPinMutation(mutation);
         assertAnnotationMutation(mutation);
         assertAnnotationNotErased(mutation, state.erased.annotations);

@@ -12,7 +12,7 @@
  * @module return-chart
  * @purpose Presents a solar or lunar return as a complete chart in its own right for the Charts page, built from `computeSolarReturn`/`computeLunarReturns` plus `computeChartDataAtJd`.
  * @conventions The place defaults to the birthplace; `chartContacts` filters the return's natal contacts down to exactly the bodies the chart itself displays (one Lilith/Node model, Chiron/Lilith/Nodes only when `aspectsTo` allows), so the contacts table never disagrees with the rendered chart.
- * @exports computeSolarReturnChart, computeLunarReturnChart, ReturnChartData, ReturnChartOptions, LUNAR_RETURN_SEARCH_DAYS
+ * @exports computeSolarReturnChart, computeLunarReturnChart, ReturnChartData, ReturnChartOptions, LUNAR_RETURN_SEARCH_DAYS, ReturnNotFoundError
  */
 import type { Aspect } from '../astrology/aspects.js';
 import type { BirthMomentInput } from '../time/types.js';
@@ -28,6 +28,14 @@ import { computeSolarReturn } from './solar-return.js';
 
 /** A lunar return is found within this many days of the chosen date: the Moon returns every ~27.3 days. */
 export const LUNAR_RETURN_SEARCH_DAYS = 29;
+
+/**
+ * No return exists in the searched window. A `RangeError` (so existing catchers still work) that callers can tell
+ * apart from an engine failure with `instanceof`.
+ */
+export class ReturnNotFoundError extends RangeError {
+  override readonly name = 'ReturnNotFoundError';
+}
 
 export interface ReturnChartOptions extends ChartCalculationOptions {
   /** Where the return is cast; the birthplace when omitted. */
@@ -95,7 +103,7 @@ export async function computeLunarReturnChart(
     ...(options.includePholus === true ? { includePholus: true } : {}),
   });
   const first = found.returns[0];
-  if (first === undefined) throw new RangeError('No lunar return was found in this period.');
+  if (first === undefined) throw new ReturnNotFoundError('No lunar return was found in this period.');
   const chart = await computeChartDataAtJd(first.returnJd, first.place, provider, options);
   return {
     returnJd: first.returnJd,
