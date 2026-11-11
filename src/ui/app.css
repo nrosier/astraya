@@ -8479,12 +8479,19 @@ button.mgrid-pair:focus-visible {
    raised as a flex item: aligned to the top of the title, then lifted, the way a superscript sits in text. */
 .page-header-title > .primitive-tooltip-superscript {
   align-self: flex-start;
-  margin-top: -0.2em;
+  margin-top: 0;
+  /* The touch target hangs below the title, so the title row keeps its height and the mark's top lines up with the heading. */
+  margin-block-end: calc(-1 * var(--target-min));
 }
 
 .page-header-title > .primitive-tooltip-superscript .primitive-tooltip-trigger {
+  align-items: start;
   font-size: var(--text-2xs);
   line-height: 1;
+}
+
+.page-header-title > .primitive-tooltip-superscript .primitive-tooltip-trigger::before {
+  inset-block-start: calc(var(--text-2xs) / 2);
 }
 
 .primitive-tooltip-icon .primitive-tooltip-trigger::before {
