@@ -3518,10 +3518,18 @@ label.stacked {
   font-weight: 650;
 }
 
+/* One shared base for the small labels (issue 1356): the badge, the corpus tag chip, the Sabian key-insight tag and the settings card tag share size and line height. Each class below keeps its own colour and layout. */
+.primitive-badge,
+.corpus-tag-chip,
+.sabian-insight-tag,
+.settings-card-tag {
+  font-size: var(--text-xs);
+  line-height: 1.4;
+}
+
 .sabian-insight-tag {
   display: block;
   margin-bottom: var(--space-1);
-  font-size: var(--text-2xs);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--accent);
@@ -3698,7 +3706,6 @@ label.stacked {
   border-radius: 999px;
   background: var(--surface-hover);
   color: var(--fg);
-  font-size: var(--text-xs);
 }
 
 .primitive-badge[data-tone='warning'] {
@@ -3719,16 +3726,6 @@ label.stacked {
 .primitive-badge[data-tone='accent'] {
   border-color: color-mix(in oklab, var(--accent) 35%, var(--line));
   background: color-mix(in oklab, var(--accent) 9%, transparent);
-}
-
-.primitive-badge[data-tone='soft'] {
-  border-color: color-mix(in oklab, var(--aspect-soft) 35%, var(--line));
-  background: color-mix(in oklab, var(--aspect-soft) 9%, transparent);
-}
-
-.primitive-badge[data-tone='hard'] {
-  border-color: color-mix(in oklab, var(--aspect-hard) 35%, var(--line));
-  background: color-mix(in oklab, var(--aspect-hard) 9%, transparent);
 }
 
 /* A technique's cell in the events table (issue 1442): the shared Badge with the technique name, a dot and an edge in the colour the chart's bars use. */
@@ -5743,7 +5740,6 @@ svg text.chart-symbol-text-unicode {
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--surface-hover);
-  font-size: var(--text-sm);
 }
 
 .corpus-tag-chip button {
@@ -6648,7 +6644,6 @@ svg text.chart-symbol-text-unicode {
 
 .settings-card-tag {
   margin: 0 0 var(--space-2);
-  font-size: var(--text-caption);
 }
 
 .settings-card-indent {

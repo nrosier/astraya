@@ -12,8 +12,6 @@ const TOKENS: Record<BadgeTone, string> = {
   success: '--color-success',
   danger: '--color-danger',
   accent: '--accent',
-  soft: '--aspect-soft',
-  hard: '--aspect-hard',
 };
 
 describe('Badge tone (#826)', () => {
