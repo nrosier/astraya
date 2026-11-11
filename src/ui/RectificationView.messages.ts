@@ -8,6 +8,7 @@
 const en = {
   heading: 'Birth-Time Rectification',
   hint: 'For a birth date and place with an uncertain time: test candidate times against dated life events. For each candidate the Ascendant and Midheaven are worked out, and the events are checked for solar-arc and slow-body transit contacts to them. The scoring method’s citation is pending.',
+  hintTooltipLabel: 'About this page',
   caveat:
     'This narrows the choice; it does not prove a time. The score adds up coincidences, some of which are chance, so look at how much better the top times score than the average (the “lift”) — a time that explains the events no better than average has explained nothing. Give it several well-dated events that mattered.',
   searchHeading: 'Birth details',
@@ -75,6 +76,8 @@ const en = {
   spike: 'Above chance',
   noBetterThanChance: 'Explains the events no better than chance',
   methodHeading: 'Method and its limits',
+  showMethod: 'Show the method and its limits',
+  hideMethod: 'Hide the method and its limits',
   methodBody:
     'Each candidate time gives an Ascendant, Midheaven, Descendant and Imum Coeli. For every included event, a score is added for each Solar Arc contact (a directed angle on a natal planet, or a directed planet on a natal angle) and each transit contact (Jupiter, Saturn, Uranus, Neptune, Pluto or the mean lunar node on a natal angle) that is a conjunction, square or opposition. The orb is the existing transit orb of the body involved. All contact types count equally, and each contact counts in full when exact and less the looser it is, down to nothing at the edge of its orb. The lift is a candidate’s score divided by the average score of all candidates tested; only a lift above 1.0 is marked as above chance.',
   methodLimits:
@@ -103,6 +106,7 @@ const en = {
 const nl: typeof en = {
   heading: 'Geboortetijd-rectificatie',
   hint: 'Voor een geboortedatum en -plaats met een onzekere tijd: toets kandidaat-tijden aan gedateerde levensgebeurtenissen. Voor elke kandidaat worden de Ascendant en Midheaven berekend en worden de gebeurtenissen gecontroleerd op solar-arc- en transitcontacten van trage lichamen ermee. De bronvermelding van de scoremethode volgt.',
+  hintTooltipLabel: 'Over deze pagina',
   caveat:
     'Dit beperkt de keuze; het bewijst geen tijd. De score telt toevalligheden op, waarvan sommige puur toeval zijn, dus kijk hoeveel beter de beste tijden scoren dan het gemiddelde (de “lift”) — een tijd die de gebeurtenissen niet beter verklaart dan gemiddeld, verklaart niets. Geef meerdere goed gedateerde gebeurtenissen die ertoe deden.',
   searchHeading: 'Geboortegegevens',
@@ -171,6 +175,8 @@ const nl: typeof en = {
   spike: 'Boven toeval',
   noBetterThanChance: 'Verklaart de gebeurtenissen niet beter dan toeval',
   methodHeading: 'Methode en de grenzen ervan',
+  showMethod: 'Methode en grenzen tonen',
+  hideMethod: 'Methode en grenzen verbergen',
   methodBody:
     'Elke kandidaat-tijd geeft een Ascendant, Midheaven, Descendant en Imum Coeli. Voor elke meegenomen gebeurtenis komt er een score bij voor elk solar-arc-contact (een gedirigeerde hoek op een natale planeet, of een gedirigeerde planeet op een natale hoek) en elk transitcontact (Jupiter, Saturnus, Uranus, Neptunus, Pluto of de gemiddelde maansknoop op een natale hoek) dat een conjunctie, kwadraat of oppositie is. De orb is de bestaande transitorb van het betrokken lichaam. Alle soorten contact tellen even zwaar, en elk contact telt volledig als het exact is en minder naarmate het ruimer is, tot niets aan de rand van zijn orb. De lift is de score van een kandidaat gedeeld door de gemiddelde score van alle getoetste kandidaten; alleen een lift boven 1,0 wordt als boven toeval gemarkeerd.',
   methodLimits:

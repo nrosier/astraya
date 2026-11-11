@@ -167,7 +167,7 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
   const [locale] = useLocale();
   const [technique, setTechnique] = useState<Technique>('secondary');
   const [mcMethod, setMcMethod] = useState<ProgressedMcMethod>('naibod');
-  const [asOf, setAsOf, setPlayback] = useAsOfDate();
+  const [asOf, setAsOf] = useAsOfDate();
   const timingT = useMessages(timingBasisMessages);
   // Progressions are calculated with the engine defaults plus the technique and MC method chosen below.
   const baseBasis = useCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE, undefined, {
@@ -295,7 +295,8 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
           }}
         />
       </PageHeader>
-      <DateAnimationBar date={asOf} onDateChange={setAsOf} onPlayingChange={setPlayback} />
+      {/* A date selector with its steps only: Progressions does not animate (owner review 2026-11-11, #1442). */}
+      <DateAnimationBar date={asOf} onDateChange={setAsOf} mode="date" />
       <div className="progressions-controls">
         <Select
           label={t.techniqueLabel}

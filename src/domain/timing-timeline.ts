@@ -338,9 +338,27 @@ export function periodicTransitToTimelineEvents(
     returnEvent(data.yearly.demibirthday.demibirthdayJd, 'demibirthday'),
     returnEvent(data.monthly.progressedLunarReturn.returnJd, 'progressed-lunar-return'),
     ...data.weekly.lunarReturns.returns.map((entry) => returnEvent(entry.returnJd, 'lunar-return')),
-    ...exactTransitEvents(data.daily.exactToday, windows),
+    ...exactTransitEvents(
+      uniqueExactTransits([data.daily.exactToday, data.weekly.events, data.monthly.events]),
+      windows,
+    ),
     ...stationEvents(data.daily.stationsToday),
-    ...exactTransitEvents(data.weekly.events, windows),
-    ...exactTransitEvents(data.monthly.events, windows),
   ];
+}
+
+/**
+ * The exact transits across the forecast tiers, each once (owner decision, #1442): the weekly and monthly lists repeat
+ * the daily exacts, so an exact transit is identified by its transiting body, natal body, aspect and exact minute, and the
+ * first tier to list it keeps it.
+ */
+export function uniqueExactTransits(tiers: readonly (readonly TransitAspectEvent[])[]): readonly TransitAspectEvent[] {
+  const seen = new Set<string>();
+  const out: TransitAspectEvent[] = [];
+  for (const event of tiers.flat()) {
+    const key = `${String(event.transitingBody)}|${String(event.natalBody)}|${event.aspect.key}|${String(Math.round(event.jd * 1440))}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(event);
+  }
+  return out;
 }

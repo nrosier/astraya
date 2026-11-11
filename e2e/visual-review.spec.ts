@@ -127,8 +127,24 @@ test('capture the screens of the visual review', async ({ browser }) => {
 
   await openNatalChart(page);
   await page.locator('button.extended-settings-trigger').click();
-  await page.locator('dialog.settings-card').waitFor();
-  await shoot(page, '16-extended-settings-advanced-closed');
+  // Wait for the drawer to be open and visible, not just attached: the shot must show the settings, not the page behind.
+  // The drawer is the card with the 'Extended settings' heading; wait for that text to be on screen.
+  await page.getByRole('heading', { name: 'Extended settings', exact: true }).waitFor({ state: 'visible' });
+  // A resize closes the drawer, so reopen it before each shot: shoot() resizes between sizes (see shoot()).
+  const reopenExtended = async (): Promise<void> => {
+    const heading = page.getByRole('heading', { name: 'Extended settings', exact: true });
+    if (await heading.isVisible()) return;
+    // At phone width the trigger sits in the Chart actions sheet, as the overlay step handles it.
+    const actions = page.getByRole('button', { name: 'Chart actions', exact: true });
+    if (await actions.isVisible()) await actions.click();
+    await page.locator('button.extended-settings-trigger:visible').first().click();
+    await heading.waitFor({ state: 'visible' });
+    await page.waitForTimeout(400);
+  };
+  await shoot(page, '16-extended-settings-advanced-closed', reopenExtended);
+  // Close the drawer so the page behind it is reachable for the next steps.
+  await page.keyboard.press('Escape');
+  await page.getByRole('heading', { name: 'Extended settings', exact: true }).waitFor({ state: 'hidden' });
 
   // #1229: the Consultation transit tables, without a card opened.
   await page.getByRole('link', { name: 'Consultation', exact: true }).first().click();
@@ -186,6 +202,18 @@ test('capture the screens of the visual review', async ({ browser }) => {
   await page.getByRole('link', { name: 'Overview', exact: true }).first().click();
   await page.getByRole('link', { name: /^Saved search:/ }).waitFor({ timeout: 60_000 });
   await shoot(page, '23-overview-saved-search');
+
+  // #1404: the graphic ephemeris tool (classical seven, one-year default).
+  await gotoAndSettle(page, `${baseUrl}/#/explore/graphic-ephemeris`);
+  await page.getByRole('heading', { level: 1 }).first().waitFor();
+  await page.waitForTimeout(800);
+  await shoot(page, '24-graphic-ephemeris');
+
+  // #1445: the rectification screen (the method and its limits sit in a closed disclosure).
+  await gotoAndSettle(page, `${baseUrl}/#/explore/rectification`);
+  await page.getByRole('heading', { level: 1 }).first().waitFor();
+  await page.waitForTimeout(800);
+  await shoot(page, '25-rectification');
 
   await app.close();
 });

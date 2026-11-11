@@ -23,7 +23,6 @@ import {
   graphicEphemerisCsv,
   graphicEphemerisCsvFilename,
   GRAPHIC_EPHEMERIS_CLASSICAL_KEYS,
-  GRAPHIC_EPHEMERIS_OUTER_KEYS,
   isoFromDay,
   MAX_SPAN_DAYS,
   orderedBodyKeys,
@@ -42,6 +41,7 @@ import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { PageHeader } from './PageHeader.js';
 import { Button } from './primitives/Button.js';
+import { Tooltip } from './primitives/Tooltip.js';
 import { Checkbox } from './primitives/Checkbox.js';
 import { DateField } from './primitives/DateField.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
@@ -205,10 +205,15 @@ export function GraphicEphemerisView(): React.JSX.Element {
             run();
           }}
         >
-          <h2 id="graphic-ephemeris-settings-heading">{t.settingsHeading}</h2>
+          <h2 id="graphic-ephemeris-settings-heading">
+            {t.settingsHeading}
+            <Tooltip text={t.rangeHelp} label={t.rangeTooltipLabel} className="primitive-tooltip-icon">
+              ?
+            </Tooltip>
+          </h2>
           <div className="tool-field-row">
             <DateField label={t.startLabel} value={start} onChange={setStart} />
-            <DateField label={t.endLabel} value={end} onChange={setEnd} help={t.rangeHelp} />
+            <DateField label={t.endLabel} value={end} onChange={setEnd} />
           </div>
           <fieldset className="primitive-choice-field">
             <legend className="primitive-field-label">{t.classicalLegend}</legend>
@@ -224,22 +229,6 @@ export function GraphicEphemerisView(): React.JSX.Element {
                 />
               ))}
             </div>
-          </fieldset>
-          <fieldset className="primitive-choice-field">
-            <legend className="primitive-field-label">{t.outerLegend}</legend>
-            <div className="primitive-choice-group">
-              {GRAPHIC_EPHEMERIS_OUTER_KEYS.map((key) => (
-                <Checkbox
-                  key={key}
-                  label={nameOf(key)}
-                  checked={selected.has(key)}
-                  onChange={(on) => {
-                    toggle(key, on);
-                  }}
-                />
-              ))}
-            </div>
-            <p className="hint">{t.bodiesHelp}</p>
           </fieldset>
           {validation !== undefined && <StatusMessage kind="error">{validation}</StatusMessage>}
           <div className="tool-actions">

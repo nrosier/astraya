@@ -44,3 +44,21 @@ describe('visibleBarLabels', () => {
     expect([...shown]).toEqual(['a']);
   });
 });
+
+describe('forecastBand (#1442)', () => {
+  it('spans the forecast transits in a row as one band with their count, and is absent when there are none', async () => {
+    const { forecastBand } = await import('../src/ui/timeline-gantt.js');
+    const transit = (start: number, end: number) =>
+      ({
+        key: `t${String(start)}`,
+        start,
+        end,
+        point: false,
+        sub: false,
+        event: { kind: 'periodic-transit', startJd: 0, subject: { kind: 'aspect' } },
+      }) as unknown as GanttMark;
+    const band = forecastBand([transit(0.2, 0.3), transit(0.25, 0.4), transit(0.6, 0.7)]);
+    expect(band).toEqual({ start: 0.2, end: 0.7, count: 3 });
+    expect(forecastBand([])).toBeUndefined();
+  });
+});

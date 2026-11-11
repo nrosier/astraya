@@ -90,13 +90,23 @@ afterEach(() => {
 });
 
 describe('Rectification method note (#1445)', () => {
-  it('states the method, its limits and that the scoring citation is pending', async () => {
+  it('shows one method dropdown, with the citation status and the method inside it (#1445)', async () => {
     await mount();
     const text = container?.textContent ?? '';
+    // The dropdown is the only method control: its title is visible, and the separate heading is gone.
     expect(text).toContain(t.methodHeading);
-    expect(text).toContain(t.methodBody);
-    expect(text).toContain(t.methodLimits);
-    expect(text).toContain(t.citationPending);
+    const trigger = container?.querySelector('.primitive-disclosure-trigger');
+    expect(trigger).not.toBeNull();
+    // Closed by default (owner review, #1445): the citation status and the method are inside, not shown.
+    expect(trigger?.getAttribute('aria-expanded')).toBe('false');
+    expect(container?.querySelector('.primitive-disclosure.open')).toBeNull();
+    // Opening it reveals the citation status, the method and its limits.
+    (trigger as HTMLButtonElement).click();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const open = container?.querySelector('.primitive-disclosure.open');
+    expect(open?.textContent).toContain(t.citationPending);
+    expect(open?.textContent).toContain(t.methodBody);
+    expect(open?.textContent).toContain(t.methodLimits);
   });
 });
 
