@@ -295,6 +295,7 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
                 trackLabels={t.tracks}
                 rowLabel={t.rowLabel}
                 describe={describeEvent}
+                barLabel={(event) => timelineSubjectLabel(event.subject, locale)}
                 passLabel={t.passShort}
                 targetTitle={t.targetLine(dateLabel(load.centreJd))}
               />

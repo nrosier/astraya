@@ -1,13 +1,20 @@
 /**
  * @module ui/TimingTimelineGantt
  * @purpose The timing timeline's Gantt chart (#1237): one labelled row per technique over the shared date axis, a bar for each period, a tick for each point event, an orb window as a bar with its exact date marked and its pass number labelled (#1401), and a vertical line at the target date.
- * @conventions Drawn as one small SVG per row (viewBox 0 0 1000 24, stretched to the row's width, strokes non-scaling) beside an HTML label, so the track names and the year labels stay readable at any width. Colours are tokens only: bars in the accent, the target date in the solar colour. The chart is a picture of the events the table below it lists, so each row is an image with a name that counts its events and each bar carries a title; the table is the text equivalent. No calculation: positions come from `timeline-gantt.ts`.
+ * @conventions Drawn as one small SVG per row (viewBox 0 0 1000 24, stretched to the row's width, strokes non-scaling) beside an HTML label, so the track names and the year labels stay readable at any width. Colours are tokens only: each row carries its technique colour as `--tech` (#1442), the target date is in the solar colour. A bar's white label is HTML laid over the stretched SVG, drawn only when the bar is wide enough and clipped to it. The chart is a picture of the events the table below it lists, so each row is an image with a name that counts its events and each bar carries a title; the table is the text equivalent. No calculation: positions come from `timeline-gantt.ts`.
  * @exports TimingTimelineGantt
  */
 import type { JulianDayUT } from '../ephemeris/types.js';
 import type { TimingTimelineEvent, TimingTimelineTrack } from '../domain/timing-timeline.js';
 import { useLayoutEffect, useRef, useState } from 'react';
-import { ganttFraction, thinYearTicks, yearTicks, type GanttRow } from './timeline-gantt.js';
+import {
+  barLabelFits,
+  ganttFraction,
+  techniqueColorVar,
+  thinYearTicks,
+  yearTicks,
+  type GanttRow,
+} from './timeline-gantt.js';
 
 /** Neighbouring year labels keep at least this many label font sizes between their centres (a four-digit year is about 2.4 wide, so 3 leaves a gap). */
 const TICK_SEPARATION_EM = 3;
@@ -28,6 +35,8 @@ export interface TimingTimelineGanttProps {
   readonly rowLabel: (track: string, count: number) => string;
   /** One event in words with its dates, for the bar's title. */
   readonly describe: (event: TimingTimelineEvent) => string;
+  /** The short name drawn inside a wide bar, e.g. "From Fortune: Leo, ruled by Sun". */
+  readonly barLabel: (event: TimingTimelineEvent) => string;
   /** A pass number as the short label beside an orb window's exact mark, e.g. "2/3". */
   readonly passLabel: (number: number, count: number) => string;
   /** The target date in words, for the line's title. */
@@ -43,6 +52,7 @@ export function TimingTimelineGantt({
   trackLabels,
   rowLabel,
   describe,
+  barLabel,
   passLabel,
   targetTitle,
 }: TimingTimelineGanttProps): React.JSX.Element {
@@ -77,7 +87,11 @@ export function TimingTimelineGantt({
         </span>
       </div>
       {rows.map((row) => (
-        <div key={row.track} className="gantt-row">
+        <div
+          key={row.track}
+          className="gantt-row"
+          style={{ '--tech': techniqueColorVar(row.track) } as React.CSSProperties}
+        >
           <span className="gantt-label">{trackLabels[row.track]}</span>
           <div className="gantt-plotbox">
             <svg
@@ -139,6 +153,20 @@ export function TimingTimelineGantt({
                 <title>{targetTitle}</title>
               </line>
             </svg>
+            {row.marks.map((mark) => {
+              const text = barLabel(mark.event);
+              const widthPx = (mark.end - mark.start) * plot.width;
+              return mark.point || mark.sub || !barLabelFits(text, widthPx, plot.fontPx) ? null : (
+                <span
+                  key={`${mark.key}-label`}
+                  className="gantt-bar-label"
+                  style={{ left: `${String(mark.start * 100)}%`, width: `${String((mark.end - mark.start) * 100)}%` }}
+                  aria-hidden="true"
+                >
+                  {text}
+                </span>
+              );
+            })}
             {row.marks.map((mark) =>
               mark.exact === undefined || mark.event.pass === undefined ? null : (
                 <span

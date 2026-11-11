@@ -56,6 +56,14 @@
   --element-earth: #6fd08a;
   --element-air: #f2c14e;
   --element-water: #6aa8ff;
+  /* One colour per timing technique (#1442), on the Gantt bar and the table badge; each reaches 3:1 on --surface. */
+  --color-tech-zr: #facc15;
+  --color-tech-firdaria: #2dd4bf;
+  --color-tech-profection: #34d399;
+  --color-tech-pd: #a855f7;
+  --color-tech-sec: #fb7185;
+  --color-tech-sa: #fb923c;
+  --color-tech-transit: #38bdf8;
   /* Attention accent: warnings, and the sun in anything we draw. */
   --solar: #f2b75e;
   /*
@@ -179,6 +187,14 @@
     --element-earth: #2e7d32;
     --element-air: #b7791f;
     --element-water: #1d4ed8;
+    /* One colour per timing technique (#1442), on the Gantt bar and the table badge; each reaches 3:1 on --surface. */
+    --color-tech-zr: #a88704;
+    --color-tech-firdaria: #209c8d;
+    --color-tech-profection: #229d70;
+    --color-tech-pd: #a855f7;
+    --color-tech-sec: #fa4963;
+    --color-tech-sa: #e16805;
+    --color-tech-transit: #0794d2;
 
     --glow-a: rgb(124 92 255 / 8%);
     --glow-b: rgb(242 183 94 / 7%);
@@ -218,6 +234,14 @@
   --element-earth: #6fd08a;
   --element-air: #f2c14e;
   --element-water: #6aa8ff;
+  /* One colour per timing technique (#1442), on the Gantt bar and the table badge; each reaches 3:1 on --surface. */
+  --color-tech-zr: #facc15;
+  --color-tech-firdaria: #2dd4bf;
+  --color-tech-profection: #34d399;
+  --color-tech-pd: #a855f7;
+  --color-tech-sec: #fb7185;
+  --color-tech-sa: #fb923c;
+  --color-tech-transit: #38bdf8;
 
   --glow-a: rgb(124 92 255 / 18%);
   --glow-b: rgb(242 183 94 / 8%);
@@ -244,6 +268,14 @@
   --element-earth: #2e7d32;
   --element-air: #b7791f;
   --element-water: #1d4ed8;
+  /* One colour per timing technique (#1442), on the Gantt bar and the table badge; each reaches 3:1 on --surface. */
+  --color-tech-zr: #a88704;
+  --color-tech-firdaria: #209c8d;
+  --color-tech-profection: #229d70;
+  --color-tech-pd: #a855f7;
+  --color-tech-sec: #fa4963;
+  --color-tech-sa: #e16805;
+  --color-tech-transit: #0794d2;
 
   --glow-a: rgb(124 92 255 / 8%);
   --glow-b: rgb(242 183 94 / 7%);
@@ -8930,7 +8962,7 @@ a.quiet,
 
 /*
  * The timing timeline's Gantt chart (issue 1237): an HTML label beside a stretched SVG per track, so the names and the year
- * labels stay readable at any width. Colours are tokens: bars in the accent, the centre date in the solar colour.
+ * labels stay readable at any width. Colours are tokens: each row's technique colour (`--tech`, #1442), the centre date in the solar colour.
  */
 .gantt {
   display: grid;
@@ -8990,8 +9022,8 @@ a.quiet,
 }
 
 .gantt-bar {
-  fill: var(--accent);
-  fill-opacity: 0.75;
+  fill: var(--tech, var(--accent));
+  fill-opacity: 0.85;
 }
 
 .gantt-bar-sub {
@@ -8999,7 +9031,7 @@ a.quiet,
 }
 
 .gantt-point {
-  stroke: var(--accent);
+  stroke: var(--tech, var(--accent));
   stroke-width: 2;
   vector-effect: non-scaling-stroke;
 }
@@ -9008,6 +9040,21 @@ a.quiet,
   stroke: var(--fg);
   stroke-width: 2;
   vector-effect: non-scaling-stroke;
+}
+
+/* A bar's name in white (#1442), laid over the bar and clipped to it; only drawn when the bar is wide enough to hold it. */
+.gantt-bar-label {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  box-sizing: border-box;
+  padding: 0 var(--space-2);
+  overflow: hidden;
+  color: white;
+  font-size: var(--text-2xs);
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 /* The pass number of an orb window, beside its exact mark; HTML so the text is not stretched with the plot. */
