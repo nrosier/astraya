@@ -41,6 +41,12 @@ export interface TimingTimelineGanttProps {
   readonly passLabel: (number: number, count: number) => string;
   /** The target date in words, for the line's title. */
   readonly targetTitle: string;
+  /** The event the pointer or focus is on (a bar or its table row), or `undefined` (#1442). The other bars dim to 20%. */
+  readonly hoveredKey?: string | undefined;
+  /** The selected event; its bar is ringed. */
+  readonly selectedKey?: string | undefined;
+  readonly onHover?: ((key: string | undefined) => void) | undefined;
+  readonly onSelect?: ((key: string) => void) | undefined;
 }
 
 export function TimingTimelineGantt({
@@ -55,6 +61,10 @@ export function TimingTimelineGantt({
   barLabel,
   passLabel,
   targetTitle,
+  hoveredKey,
+  selectedKey,
+  onHover,
+  onSelect,
 }: TimingTimelineGanttProps): React.JSX.Element {
   const scaleRef = useRef<HTMLSpanElement>(null);
   const [plot, setPlot] = useState({ width: 0, fontPx: 12 });
@@ -111,32 +121,67 @@ export function TimingTimelineGantt({
                   y2={HEIGHT}
                 />
               ))}
-              {row.marks.map((mark) =>
-                mark.point ? (
-                  <line
+              {row.marks.map((mark) => {
+                const dimmed = hoveredKey !== undefined && hoveredKey !== mark.key;
+                const state = [
+                  dimmed ? 'gantt-dim' : undefined,
+                  hoveredKey === mark.key ? 'gantt-hovered' : undefined,
+                  selectedKey === mark.key ? 'gantt-selected' : undefined,
+                ]
+                  .filter((value) => value !== undefined)
+                  .join(' ');
+                // A bar is a mouse target only: the table beside it is the keyboard route to the same event (hover on
+                // focus, Enter or Space to select), so a long chart does not become hundreds of tab stops.
+                return (
+                  <g
                     key={mark.key}
-                    className="gantt-point"
-                    x1={mark.start * WIDTH}
-                    x2={mark.start * WIDTH}
-                    y1={4}
-                    y2={HEIGHT - 4}
+                    className={state === '' ? undefined : state}
+                    data-mark-key={mark.key}
+                    onMouseEnter={() => {
+                      onHover?.(mark.key);
+                    }}
+                    onMouseLeave={() => {
+                      onHover?.(undefined);
+                    }}
+                    onClick={() => {
+                      onSelect?.(mark.key);
+                    }}
                   >
-                    <title>{describe(mark.event)}</title>
-                  </line>
-                ) : (
-                  <rect
-                    key={mark.key}
-                    className={mark.sub ? 'gantt-bar gantt-bar-sub' : 'gantt-bar'}
-                    x={mark.start * WIDTH}
-                    width={Math.max((mark.end - mark.start) * WIDTH, MIN_BAR)}
-                    y={mark.sub ? 15 : 3}
-                    height={mark.sub ? 6 : 18}
-                    rx={2}
-                  >
-                    <title>{describe(mark.event)}</title>
-                  </rect>
-                ),
-              )}
+                    {mark.point ? (
+                      <>
+                        {/* A wider invisible line, so a 2px tick is easy to point at. */}
+                        <line
+                          className="gantt-hit"
+                          x1={mark.start * WIDTH}
+                          x2={mark.start * WIDTH}
+                          y1={0}
+                          y2={HEIGHT}
+                        />
+                        <line
+                          className="gantt-point"
+                          x1={mark.start * WIDTH}
+                          x2={mark.start * WIDTH}
+                          y1={4}
+                          y2={HEIGHT - 4}
+                        >
+                          <title>{describe(mark.event)}</title>
+                        </line>
+                      </>
+                    ) : (
+                      <rect
+                        className={mark.sub ? 'gantt-bar gantt-bar-sub' : 'gantt-bar'}
+                        x={mark.start * WIDTH}
+                        width={Math.max((mark.end - mark.start) * WIDTH, MIN_BAR)}
+                        y={mark.sub ? 15 : 3}
+                        height={mark.sub ? 6 : 18}
+                        rx={2}
+                      >
+                        <title>{describe(mark.event)}</title>
+                      </rect>
+                    )}
+                  </g>
+                );
+              })}
               {row.marks.map((mark) =>
                 mark.exact === undefined ? null : (
                   <line
@@ -156,7 +201,9 @@ export function TimingTimelineGantt({
             {row.marks.map((mark) => {
               const text = barLabel(mark.event);
               const widthPx = (mark.end - mark.start) * plot.width;
-              return mark.point || mark.sub || !barLabelFits(text, widthPx, plot.fontPx) ? null : (
+              // A dimmed bar draws no label; it returns when the bar is hovered (owner decision on #1442).
+              const dimmed = hoveredKey !== undefined && hoveredKey !== mark.key;
+              return dimmed || mark.point || mark.sub || !barLabelFits(text, widthPx, plot.fontPx) ? null : (
                 <span
                   key={`${mark.key}-label`}
                   className="gantt-bar-label"

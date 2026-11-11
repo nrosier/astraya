@@ -4,7 +4,7 @@
  * @conventions Keeps each calculation in its domain module and displays normalized TimingTimelineEvent records only; all visible labels use the co-located message catalogue.
  * @exports TimingTimelineView
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { firdariaPeriods } from '../astrology/firdaria.js';
 import { zodiacalReleasingPeriods, zodiacalReleasingSubperiods } from '../astrology/zodiacal-releasing.js';
 import { computeChartData } from '../domain/chart-compute.js';
@@ -108,6 +108,13 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
   const [bodyGroup, setBodyGroup] = useState<TimelineBodyGroup>('all');
   const [hidden, setHidden] = useState<ReadonlySet<TimingTimelineTrack>>(new Set());
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
+  // One event shared by the chart and the table (#1442): the one under the pointer or focus, and the one chosen.
+  const [hoveredKey, setHoveredKey] = useState<string>();
+  const [selectedKey, setSelectedKey] = useState<string>();
+  const chartRef = useRef<HTMLElement>(null);
+  const tableRef = useRef<HTMLElement>(null);
+  // Where the selection came from: a bar brings its row into view, a row brings its bar.
+  const selectionFrom = useRef<'chart' | 'table'>('chart');
   const target = useMemo(() => {
     const [year, month, day] = asOf.split('-').map(Number);
     return year === undefined || month === undefined || day === undefined ? undefined : { year, month, day };
@@ -233,6 +240,26 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
     { key: 'start', label: t.columnStart, valueOf: (row) => row.startJd, render: (row) => row.start },
     { key: 'end', label: t.columnEnd, valueOf: (row) => row.end },
   ];
+  // A new result or filter can drop the selected or hovered event.
+  useEffect(() => {
+    const present = new Set(rows.map((row) => row.key));
+    setSelectedKey((key) => (key !== undefined && present.has(key) ? key : undefined));
+    setHoveredKey((key) => (key !== undefined && present.has(key) ? key : undefined));
+  }, [rows]);
+  // Selecting brings the other side's element into view: `nearest`, so nothing moves when it is already visible. The whole
+  // date range is always drawn, so a row's bar is inside the axis; only the page may need to scroll to it.
+  useEffect(() => {
+    if (selectedKey === undefined) return;
+    const from = selectionFrom.current;
+    const root = from === 'chart' ? tableRef.current : chartRef.current;
+    const attribute = from === 'chart' ? 'data-row-key' : 'data-mark-key';
+    const target = Array.from(root?.querySelectorAll(`[${attribute}]`) ?? []).find(
+      (candidate) => candidate.getAttribute(attribute) === selectedKey,
+    );
+    const reduceMotion =
+      typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    target?.scrollIntoView?.({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest' });
+  }, [selectedKey]);
   useCsvExports(
     person === undefined || load.kind !== 'ready'
       ? undefined
@@ -298,7 +325,7 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
         {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
         {load.kind === 'ready' && (
           <>
-            <section className="timing-card">
+            <section className="timing-card" ref={chartRef}>
               <TimingTimelineGantt
                 rows={ganttRows(tracks, fromJd, toJd)}
                 fromJd={fromJd}
@@ -311,6 +338,13 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
                 barLabel={(event) => timelineSubjectLabel(event.subject, locale)}
                 passLabel={t.passShort}
                 targetTitle={t.targetLine(dateLabel(load.centreJd))}
+                hoveredKey={hoveredKey}
+                selectedKey={selectedKey}
+                onHover={setHoveredKey}
+                onSelect={(key) => {
+                  selectionFrom.current = 'chart';
+                  setSelectedKey(key);
+                }}
               />
               <p className="hint">{t.targetLine(dateLabel(load.centreJd))}</p>
             </section>
@@ -318,7 +352,7 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
             {/* The event table on the left, the technique filter on the right (#1237, the shared timing layout). */}
             <div className="timing-layout">
               <div className="timing-layout-main">
-                <section className="timing-card">
+                <section className="timing-card" ref={tableRef}>
                   <TextField label={t.searchLabel} value={query} onChange={setQuery} />
                   {rows.length === 0 ? (
                     <p className="hint">{query.trim() === '' ? t.noEvents : t.noMatches}</p>
@@ -329,6 +363,16 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
                       columns={columns}
                       rows={rows}
                       getRowKey={(row) => row.key}
+                      selectedRowKey={selectedKey}
+                      linking={{
+                        hoveredKey,
+                        onHover: setHoveredKey,
+                        onSelect: (key) => {
+                          selectionFrom.current = 'table';
+                          setSelectedKey(key);
+                        },
+                        tint: (row) => techniqueColorVar(row.trackKey),
+                      }}
                       downloadFilename={deriveExportFilename(person.displayName, 'timing-timeline', 'csv')}
                     />
                   )}

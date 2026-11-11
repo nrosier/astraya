@@ -5451,6 +5451,28 @@ svg text.chart-symbol-text-unicode {
 .cycle-diagram .cycle-selected .cycle-point-label {
   font-weight: 700;
 }
+.data-table-row-linked {
+  cursor: pointer;
+}
+
+/* The row of the hovered event: a subtle background and an edge in its technique colour (#1442). */
+.data-table-row-hovered {
+  background: var(--surface-hover);
+  box-shadow: inset 3px 0 0 var(--tech, var(--accent));
+}
+
+/* The selected linked row wears the focus ring. */
+.data-table-row-linked.data-table-row-selected {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+  box-shadow: inset 3px 0 0 var(--tech, var(--accent));
+}
+
+.data-table-row-linked:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
 .data-table-row-selected {
   background: color-mix(in oklab, var(--accent) 14%, transparent);
   box-shadow: inset 3px 0 0 var(--accent);
@@ -9060,6 +9082,45 @@ a.quiet,
   stroke: var(--fg);
   stroke-width: 2;
   vector-effect: non-scaling-stroke;
+}
+
+/* Two-way highlighting (#1442): the event under the pointer or focus keeps full opacity and the others dim to 20%. */
+.gantt-dim {
+  opacity: 0.2;
+}
+
+.gantt-hovered .gantt-bar {
+  fill-opacity: 1;
+  stroke: var(--fg);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.gantt-hovered .gantt-point {
+  stroke-width: 3;
+}
+
+.gantt-selected .gantt-bar {
+  stroke: var(--color-focus);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.gantt-selected.gantt-hovered .gantt-bar {
+  stroke: var(--fg);
+}
+
+.gantt-bar,
+.gantt-point {
+  cursor: pointer;
+}
+
+/* A wide, invisible stroke so a thin tick is easy to hit. */
+.gantt-hit {
+  stroke: transparent;
+  stroke-width: 12;
+  vector-effect: non-scaling-stroke;
+  cursor: pointer;
 }
 
 /* A bar's name in white (#1442), laid over the bar and clipped to it; only drawn when the bar is wide enough to hold it. */
