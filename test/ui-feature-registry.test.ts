@@ -125,6 +125,7 @@ const ROUTE_KIND_STATUS: Readonly<Record<Route['kind'], 'feature' | 'not a featu
   'export-builder': 'feature',
   preferences: 'not a feature',
   cycles: 'feature',
+  'graphic-ephemeris': 'feature',
   'event-search': 'feature',
   eclipses: 'feature',
   horary: 'feature',

@@ -56,6 +56,15 @@
   --element-earth: #6fd08a;
   --element-air: #f2c14e;
   --element-water: #6aa8ff;
+  /* Graphic ephemeris series (#1404): the data-viz categorical slots 1-8 in fixed order, dark steps. */
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #008300;
+  --series-7: #9085e9;
+  --series-8: #e66767;
   /* One colour per timing technique (issue 1442), on the Gantt bar and the table badge; each reaches 3:1 on --surface. */
   --color-tech-zr: #facc15;
   --color-tech-firdaria: #2dd4bf;
@@ -194,6 +203,15 @@
     --element-earth: #2e7d32;
     --element-air: #b7791f;
     --element-water: #1d4ed8;
+    /* Graphic ephemeris series (#1404): the data-viz categorical slots 1-8 in fixed order, light steps. */
+    --series-1: #2a78d6;
+    --series-2: #eb6834;
+    --series-3: #1baf7a;
+    --series-4: #eda100;
+    --series-5: #e87ba4;
+    --series-6: #008300;
+    --series-7: #6250d6;
+    --series-8: #e34948;
     --color-danger: #c4252d;
     --color-warning: #9a5b00;
     --color-success: #1a7a3a;
@@ -245,6 +263,15 @@
   --element-earth: #6fd08a;
   --element-air: #f2c14e;
   --element-water: #6aa8ff;
+  /* Graphic ephemeris series (#1404): the data-viz categorical slots 1-8 in fixed order, dark steps. */
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #008300;
+  --series-7: #9085e9;
+  --series-8: #e66767;
   --color-danger: #f2555f;
   --color-warning: #e8a020;
   --color-success: #3ec46d;
@@ -283,6 +310,15 @@
   --element-earth: #2e7d32;
   --element-air: #b7791f;
   --element-water: #1d4ed8;
+  /* Graphic ephemeris series (#1404): the data-viz categorical slots 1-8 in fixed order, light steps. */
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --series-5: #e87ba4;
+  --series-6: #008300;
+  --series-7: #6250d6;
+  --series-8: #e34948;
   --color-danger: #c4252d;
   --color-warning: #9a5b00;
   --color-success: #1a7a3a;
@@ -9533,4 +9569,103 @@ a.quiet,
   .life-events-quick > :first-child {
     grid-column: 1 / -1;
   }
+}
+
+/* Graphic ephemeris (#1404): the cycle diagram unrolled against time. One colour per body from the data-viz
+   categorical slots, in fixed order; the three outer bodies reuse a slot with a dash so that colour is never the only
+   cue (the glyph at each line's end is the direct label). */
+.cycle-series {
+  fill: none;
+  stroke-width: 1.75;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.cycle-series-sun {
+  stroke: var(--series-1);
+}
+.cycle-series-moon {
+  stroke: var(--series-2);
+  stroke-width: 1;
+}
+.cycle-series-mercury {
+  stroke: var(--series-3);
+}
+.cycle-series-venus {
+  stroke: var(--series-4);
+}
+.cycle-series-mars {
+  stroke: var(--series-5);
+}
+.cycle-series-jupiter {
+  stroke: var(--series-6);
+}
+.cycle-series-saturn {
+  stroke: var(--series-7);
+}
+.cycle-series-uranus {
+  stroke: var(--series-8);
+}
+.cycle-series-neptune {
+  stroke: var(--series-1);
+  stroke-dasharray: 6 3;
+}
+.cycle-series-pluto {
+  stroke: var(--series-2);
+  stroke-dasharray: 6 3;
+}
+.cycle-series-glyph path,
+.cycle-series-glyph text {
+  stroke: currentColor;
+  fill: none;
+  color: var(--fg);
+}
+.cycle-time-grid {
+  opacity: 0.5;
+}
+.graphic-ephemeris-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.graphic-ephemeris-swatch {
+  display: inline-block;
+  width: var(--space-6);
+  height: 0;
+  margin-inline-end: var(--space-2);
+  vertical-align: middle;
+  border-top: 3px solid var(--series-1);
+}
+.graphic-ephemeris-swatch-moon {
+  border-top-color: var(--series-2);
+}
+.graphic-ephemeris-swatch-mercury {
+  border-top-color: var(--series-3);
+}
+.graphic-ephemeris-swatch-venus {
+  border-top-color: var(--series-4);
+}
+.graphic-ephemeris-swatch-mars {
+  border-top-color: var(--series-5);
+}
+.graphic-ephemeris-swatch-jupiter {
+  border-top-color: var(--series-6);
+}
+.graphic-ephemeris-swatch-saturn {
+  border-top-color: var(--series-7);
+}
+.graphic-ephemeris-swatch-uranus {
+  border-top-color: var(--series-8);
+}
+.graphic-ephemeris-swatch-neptune {
+  border-top-style: dashed;
+}
+.graphic-ephemeris-swatch-pluto {
+  border-top-color: var(--series-2);
+  border-top-style: dashed;
+}
+.graphic-ephemeris-plot {
+  overflow-x: auto;
 }

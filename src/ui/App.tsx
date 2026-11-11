@@ -72,6 +72,9 @@ const RectificationView = lazy(async () => ({ default: (await import('./Rectific
 const ElectionalView = lazy(async () => ({ default: (await import('./ElectionalView.js')).ElectionalView }));
 const HoraryView = lazy(async () => ({ default: (await import('./HoraryView.js')).HoraryView }));
 const EclipsesView = lazy(async () => ({ default: (await import('./EclipsesView.js')).EclipsesView }));
+const GraphicEphemerisView = lazy(async () => ({
+  default: (await import('./GraphicEphemerisView.js')).GraphicEphemerisView,
+}));
 const CyclesView = lazy(async () => ({ default: (await import('./CyclesView.js')).CyclesView }));
 const EventSearchView = lazy(async () => ({ default: (await import('./EventSearchView.js')).EventSearchView }));
 const PdfExportBuilder = lazy(async () => ({ default: (await import('./PdfExportBuilder.js')).PdfExportBuilder }));
@@ -390,6 +393,7 @@ function renderScreen(parsed: Route, seVersion: string | undefined): React.JSX.E
   if (parsed.kind === 'changelog') return <Changelog />;
   if (parsed.kind === 'shared') return <SharedChartView />;
   if (parsed.kind === 'cycles') return <CyclesView />;
+  if (parsed.kind === 'graphic-ephemeris') return <GraphicEphemerisView />;
   if (parsed.kind === 'event-search') return <EventSearchView />;
   if (parsed.kind === 'horary') return <HoraryView view={parsed.view} />;
   if (parsed.kind === 'electional') return <ElectionalView />;

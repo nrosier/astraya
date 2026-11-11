@@ -14,13 +14,13 @@
 /**
  * @module chart/cycle-diagram
  * @purpose Draws a planetary cycle (e.g. Venus/Sun inferior conjunctions, Jupiter/Saturn great conjunctions) as its successive exact-aspect points joined in sequence around the zodiac, revealing the cycle's geometric pattern (star, stepped rotation, etc).
- * @conventions Fixed orientation `{ orientation: 'aries-up', sweep: 'counterclockwise' }` via the shared `wheelAngle`/`pointOnCircle`; points within `LABEL_CROWD_DEG` of an earlier point are pushed one ring further inward so labels don't overprint; a `selectedId` dims every point/segment except the selected point and the segment arriving at it, matching the wheel's own click-to-isolate convention.
- * @exports renderCycleDiagramSvg; CyclePoint type.
+ * @conventions The time-series variant (#1404, the graphic ephemeris) unrolls the same zodiac ring into a rectangle: the same `SIGNS` bands, sign glyphs, boundary/ring classes and `renderGlyph`, with the date along x and longitude up y (0° Aries at the bottom); a series is broken wherever it wraps through 0°/360° so no stroke crosses the plot. Fixed orientation `{ orientation: 'aries-up', sweep: 'counterclockwise' }` via the shared `wheelAngle`/`pointOnCircle`; points within `LABEL_CROWD_DEG` of an earlier point are pushed one ring further inward so labels don't overprint; a `selectedId` dims every point/segment except the selected point and the segment arriving at it, matching the wheel's own click-to-isolate convention.
+ * @exports renderCycleDiagramSvg, renderCycleTimeSeriesSvg; CyclePoint, CycleTimeSeries, CycleTimeTick types.
  */
 import { SIGNS } from '../astrology/signs.js';
 import type { Degrees } from '../ephemeris/types.js';
-import { renderGlyph, signGlyph } from './glyphs.js';
-import { baselineOffset, circle, escapeXml, fmt, line, text } from './svg-primitives.js';
+import { bodyGlyph, renderGlyph, signGlyph } from './glyphs.js';
+import { baselineOffset, circle, escapeXml, fmt, line, polyline, rect, text } from './svg-primitives.js';
 import { pointOnCircle, wheelAngle } from './wheel.js';
 
 export interface CyclePoint {
@@ -129,4 +129,103 @@ export function renderCycleDiagramSvg(points: readonly CyclePoint[], size = 380,
   parts.push(...group);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${fmt(size)} ${fmt(size)}" width="${fmt(size)}" height="${fmt(size)}" class="cycle-diagram">${parts.join('')}</svg>`;
+}
+
+/** One body's path through time: `at` runs 0 (range start) to 1 (range end). */
+export interface CycleTimeSeries {
+  readonly key: string;
+  readonly points: readonly { readonly at: number; readonly longitude: Degrees }[];
+}
+
+/** A date mark on the x axis: `at` runs 0 to 1, `label` is already formatted for the reader's locale. */
+export interface CycleTimeTick {
+  readonly at: number;
+  readonly label: string;
+}
+
+const TIME_MARGIN = { left: 34, right: 30, top: 10, bottom: 24 } as const;
+
+/**
+ * The cycle diagram's zodiac laid out against time (#1404): twelve sign bands up the left, a date axis along the
+ * bottom, one polyline per body (class `cycle-series cycle-series-<key>`, colour in CSS) with the body's glyph at its
+ * end so identity is never colour alone. Glyphs at the end are spread apart so they do not overprint.
+ */
+export function renderCycleTimeSeriesSvg(
+  series: readonly CycleTimeSeries[],
+  ticks: readonly CycleTimeTick[],
+  width = 760,
+  height = 420,
+): string {
+  const left = TIME_MARGIN.left;
+  const top = TIME_MARGIN.top;
+  const plotWidth = width - left - TIME_MARGIN.right;
+  const plotHeight = height - top - TIME_MARGIN.bottom;
+  const xOf = (at: number): number => left + at * plotWidth;
+  // 0° at the bottom, 360° at the top.
+  const yOf = (longitude: Degrees): number => top + plotHeight - (longitude / 360) * plotHeight;
+  const parts: string[] = [rect(left, top, plotWidth, plotHeight, 'cycle-ring')];
+
+  for (const sign of SIGNS) {
+    const boundary = yOf(sign.index * 30);
+    if (sign.index > 0) parts.push(line(left, boundary, left + plotWidth, boundary, 'cycle-sign-boundary'));
+    const definition = signGlyph(sign.name);
+    if (definition) {
+      parts.push(
+        renderGlyph(
+          definition,
+          left / 2,
+          yOf(sign.index * 30 + 15),
+          plotHeight * 0.045,
+          `chart-sign-glyph chart-sign-glyph-${sign.name.toLowerCase()} chart-sign-element-${sign.element}`,
+        ),
+      );
+    }
+  }
+
+  for (const tick of ticks) {
+    const x = xOf(tick.at);
+    parts.push(line(x, top, x, top + plotHeight, 'cycle-sign-boundary cycle-time-grid'));
+    parts.push(text(x, top + plotHeight + 15, 'middle', 'cycle-point-label', escapeXml(tick.label), 11));
+  }
+
+  const ends: { key: string; y: number }[] = [];
+  for (const one of series) {
+    // Break the path wherever it wraps through Aries, so the stroke does not cross the whole plot.
+    const runs: { x: number; y: number }[][] = [];
+    let run: { x: number; y: number }[] = [];
+    let previous: Degrees | undefined;
+    for (const point of one.points) {
+      if (previous !== undefined && Math.abs(point.longitude - previous) > 180) {
+        runs.push(run);
+        run = [];
+      }
+      run.push({ x: xOf(point.at), y: yOf(point.longitude) });
+      previous = point.longitude;
+    }
+    runs.push(run);
+    for (const points of runs) {
+      if (points.length > 1) parts.push(polyline(points, `cycle-series cycle-series-${one.key}`));
+    }
+    const last = one.points[one.points.length - 1];
+    if (last) ends.push({ key: one.key, y: yOf(last.longitude) });
+  }
+
+  // Direct labels: the body's glyph just right of the plot, pushed apart where the lines end close together.
+  const gap = 15;
+  ends.sort((a, b) => a.y - b.y);
+  for (let i = 1; i < ends.length; i++) {
+    const before = ends[i - 1];
+    const here = ends[i];
+    if (before && here && here.y - before.y < gap) here.y = before.y + gap;
+  }
+  for (const end of ends) {
+    const definition = bodyGlyph(end.key);
+    if (definition) {
+      parts.push(
+        renderGlyph(definition, left + plotWidth + 15, end.y, 13, `cycle-series-glyph cycle-series-glyph-${end.key}`),
+      );
+    }
+  }
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${fmt(width)} ${fmt(height)}" width="${fmt(width)}" height="${fmt(height)}" class="cycle-diagram cycle-time-series">${parts.join('')}</svg>`;
 }
