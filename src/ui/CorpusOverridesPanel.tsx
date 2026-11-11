@@ -23,6 +23,7 @@
  * @exports CorpusOverridesPanel
  */
 import { StagedDialog } from './primitives/StagedDialog.js';
+import { ChoiceGroup } from './primitives/ChoiceGroup.js';
 import { Select } from './primitives/Select.js';
 import { TextAreaField } from './primitives/TextAreaField.js';
 import { TextField } from './primitives/TextField.js';
@@ -368,8 +369,10 @@ export function CorpusOverridesPanel(): React.JSX.Element {
                 if (isLocale(value)) setCorpusLocale(value);
               }}
             />
-            <Select
+            <ChoiceGroup
               label={t.overriddenOnlyLabel}
+              segmented
+              showLabel
               value={overriddenOnly ? 'yes' : 'no'}
               options={[
                 { value: 'no', label: t.overriddenOnlyNo },
@@ -426,7 +429,7 @@ export function CorpusOverridesPanel(): React.JSX.Element {
           heading={editing === undefined ? t.editorHeading : labelForKey(editing.key, uiLocale)}
           closeLabel={t.closeEditorLabel}
           placement="right"
-          dialogClassName="settings-card corpus-editor drawer-fit"
+          dialogClassName="settings-card drawer-fit"
           onDiscard={cancelEdit}
           returnFocusTo={editTriggerRef}
           footer={
