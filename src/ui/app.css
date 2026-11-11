@@ -8459,18 +8459,6 @@ button.mgrid-pair:focus-visible {
 }
 
 /* A standalone help icon: the button is a full target; the small ring is drawn inside it. */
-/* A superscript help mark beside a heading (owner review, round 9, #1445): small and raised, the touch target kept. */
-.primitive-tooltip-superscript {
-  vertical-align: super;
-  line-height: 0;
-}
-
-.primitive-tooltip-superscript .primitive-tooltip-trigger {
-  font-size: var(--text-2xs);
-  line-height: 1;
-  vertical-align: super;
-}
-
 .primitive-tooltip-icon .primitive-tooltip-trigger {
   position: relative;
   display: inline-grid;
@@ -8483,6 +8471,19 @@ button.mgrid-pair:focus-visible {
   font-weight: 600;
   line-height: 1;
   vertical-align: middle;
+}
+
+/* A superscript help mark beside a heading (owner review, round 9, #1445). Placed after the icon rule, which sets
+   vertical-align: middle, so the superscript wins at equal specificity. */
+.primitive-tooltip-superscript {
+  vertical-align: super;
+  line-height: 0;
+}
+
+.primitive-tooltip-superscript .primitive-tooltip-trigger {
+  vertical-align: super;
+  font-size: var(--text-2xs);
+  line-height: 1;
 }
 
 .primitive-tooltip-icon .primitive-tooltip-trigger::before {
