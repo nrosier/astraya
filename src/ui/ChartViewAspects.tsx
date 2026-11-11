@@ -2,8 +2,9 @@
  * @module ChartViewAspects
  * @purpose Renders the Aspects chart view tables (aspects, antiscia, declinations, midpoints) and their columns.
  * @conventions Moved out of ChartView.tsx (#817); the aspects table shows Applying as a dot plus label and the family as muted text on screen only (#815), while `render` stays plain text for copy, CSV and the PDF; takes the chart data and message bundle as arguments and never imports ChartView. The fixed-stars table moved to ChartViewPlacements (#815).
- * @exports AspectState, AspectContactFilter, filterAspectRowsByContactFilter, aspectColumns, declinationColumns, antisciaColumns, midpointTreeColumns, allMidpointsColumns, renderAspectsTable
+ * @exports AspectState, AspectContactFilter, isContactFilterActive, EmptyFilterNote, filterAspectRowsByContactFilter, aspectColumns, declinationColumns, antisciaColumns, midpointTreeColumns, allMidpointsColumns, renderAspectsTable
  */
+import { StatusMessage } from './primitives/StatusMessage.js';
 import { formatOrb } from './format.js';
 import { aspectHarmonicFamily } from '../astrology/aspects.js';
 import {
@@ -232,6 +233,19 @@ export interface AspectContactFilter {
   readonly suppressMinorNatal?: boolean | undefined;
 }
 
+/** True when the families, orb caps or the preset's major-only switch can remove contacts. */
+export function isContactFilterActive(filter: AspectContactFilter | undefined): boolean {
+  return (
+    filter !== undefined &&
+    (filter.families.size > 0 || filter.orbCaps !== undefined || filter.suppressMinorNatal === true)
+  );
+}
+
+/** The empty-state note (#1333) shown in place of the Aspects table or the matrix grid when the filters leave no contacts. */
+export function EmptyFilterNote({ text }: { readonly text: string }): React.JSX.Element {
+  return <StatusMessage kind="empty">{text}</StatusMessage>;
+}
+
 /** Keeps the rows the wheel and the aspect matrix still show: the same `isContactShown` test, then the preset's major-only switch. */
 export function filterAspectRowsByContactFilter(
   rows: readonly AspectRow[],
@@ -260,10 +274,12 @@ export function renderAspectsTable(
   aspectHarmonicFamilyFilter?: number,
   contactFilter?: AspectContactFilter,
 ): React.ReactNode {
-  const rows = filterAspectRowsByContactFilter(
-    filterAspectRowsByHarmonicFamily(aspectRows(data, pointVisibility), aspectHarmonicFamilyFilter),
-    contactFilter,
+  const unfilteredRows = filterAspectRowsByHarmonicFamily(
+    aspectRows(data, pointVisibility),
+    aspectHarmonicFamilyFilter,
   );
+  const rows = filterAspectRowsByContactFilter(unfilteredRows, contactFilter);
+  const emptyByFilter = rows.length === 0 && unfilteredRows.length > 0 && isContactFilterActive(contactFilter);
   const declinationRows = declinationContactRows(data);
   const antiscionRows = antisciaRows(data);
   const midpointTreeHitRows =
@@ -271,21 +287,25 @@ export function renderAspectsTable(
   const allMidpointRows = pointVisibility.midpointsVisible === true ? allMidpointsRows(data) : [];
   return (
     <>
-      <SortableTable
-        caption={t.aspectsCaption}
-        captionTerm="aspect"
-        columns={aspectColumns(t, locale, selection)}
-        rows={rows}
-        getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
-        selectedRowKey={(() => {
-          const chosen =
-            selection?.selectedKey === undefined
-              ? undefined
-              : rows.find((row) => aspectSelectionKey(row) === selection.selectedKey);
-          return chosen === undefined ? undefined : `${chosen.bodyAKey}-${chosen.aspect}-${chosen.bodyBKey}`;
-        })()}
-        downloadFilename={deriveExportFilename(displayName, 'aspects', 'csv')}
-      />
+      {emptyByFilter ? (
+        <EmptyFilterNote text={t.emptyFilterNote} />
+      ) : (
+        <SortableTable
+          caption={t.aspectsCaption}
+          captionTerm="aspect"
+          columns={aspectColumns(t, locale, selection)}
+          rows={rows}
+          getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
+          selectedRowKey={(() => {
+            const chosen =
+              selection?.selectedKey === undefined
+                ? undefined
+                : rows.find((row) => aspectSelectionKey(row) === selection.selectedKey);
+            return chosen === undefined ? undefined : `${chosen.bodyAKey}-${chosen.aspect}-${chosen.bodyBKey}`;
+          })()}
+          downloadFilename={deriveExportFilename(displayName, 'aspects', 'csv')}
+        />
+      )}
       {antiscionRows.length > 0 && (
         <SortableTable
           caption={t.antisciaCaption}

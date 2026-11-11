@@ -232,6 +232,8 @@ const en = {
   matrixNameLabel: 'Name',
   matrixFormulaLink: 'Custom formula points: open them in Extended settings',
   compareFormulaLink: 'Custom formula points: open them in Extended settings (Bodies & orbs)',
+  emptyFilterNote:
+    'No aspect contacts to show: the chart type, the chosen aspects or the preset filter them all out. Change one of them to see contacts again.',
   matrixHint:
     'Each cell is the aspect between the body named on its row and the one in its column. The aspect symbol is followed by the orb in degrees, and by a for applying or s for separating; cells are tinted by aspect family.',
   placementsViewLabel: 'Placements',
@@ -584,6 +586,8 @@ const nl: typeof en = {
   matrixNameLabel: 'Naam',
   matrixFormulaLink: 'Aangepaste formulepunten: open ze in Uitgebreide instellingen',
   compareFormulaLink: 'Aangepaste formulepunten: open ze in Uitgebreide instellingen (Hemellichamen en orbs)',
+  emptyFilterNote:
+    'Geen aspectcontacten om te tonen: het grafiektype, de gekozen aspecten of de preset filteren ze allemaal weg. Pas een van deze aan om weer contacten te zien.',
   matrixHint:
     'Elke cel is het aspect tussen het hemellichaam van de rij en dat van de kolom. Het aspectsymbool wordt gevolgd door de orb in graden en door a voor toenemend of s voor afnemend; cellen zijn gekleurd per aspectfamilie.',
   placementsViewLabel: 'Plaatsingen',
