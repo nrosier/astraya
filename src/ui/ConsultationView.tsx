@@ -668,7 +668,7 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
                             : ordinal(load.year.progressedMoon.house, locale),
                         )}
                       </span>
-                      <Badge tone="soft">{chartT.lunarPhaseLabels[load.year.progressedMoon.phase]}</Badge>
+                      <Badge tone="accent">{chartT.lunarPhaseLabels[load.year.progressedMoon.phase]}</Badge>
                     </li>
                     <li>
                       <span className="consultation-lord-key">{t.solarReturns}</span>
