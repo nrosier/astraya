@@ -1193,5 +1193,25 @@
     "provisional": true,
     "used_by": [],
     "notes": "Title from file name; author not on the first pages. OCR text layer added (ocrmypdf, skip-text)."
+  },
+  {
+    "id": "carter-symbolic-directions-in-modern-astrology-undated",
+    "title": "Symbolic Directions in Modern Astrology",
+    "author": "Charles E. O. Carter",
+    "year": null,
+    "edition": "London: W. Foulsham & Co. Printed edition year not confirmed on the pages checked. Received as a PDF, 94 pages, scanned (OCR'd).",
+    "licence": "Copyright status unconfirmed; treated as copyrighted, text kept local only.",
+    "access_route": "Local file docs/references/sources/pdf/carter-symbolic-directions-in-modern-astrology-undated.pdf",
+    "original_name": "2015.128260.Symbolic-Directions-In-Modern-Astrology.pdf",
+    "processed_path": "docs/references/sources/pdf/carter-symbolic-directions-in-modern-astrology-undated.pdf",
+    "sha256": "53df7c7590d20a9892218a39a7063b609bf91ba23b1f98f6b72c081180445148",
+    "text_path": "docs/references/text/carter-symbolic-directions-in-modern-astrology-undated.txt",
+    "pages_path": null,
+    "page_count": 94,
+    "status": "extracted",
+    "copyrighted": true,
+    "provisional": true,
+    "used_by": [],
+    "notes": "Title page confirmed by OCR. Passages used for rectification are on PDF pages 8, 15 and 26 (PDF page numbers; printed page numbers not confirmed). Supports the event-dating and directions-to-events principle; does not give the 1 degree Solar Arc orb or the closeness curve used in code."
   }
 ]
