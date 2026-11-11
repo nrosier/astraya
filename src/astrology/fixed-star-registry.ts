@@ -8,7 +8,7 @@
 /**
  * @module FixedStarRegistry
  * @purpose The baseline fixed-star table from al-Fārisī's Zīj al-Muẓaffarī (Yemen, 13th century), as printed; data plus a longitude helper.
- * @conventions Positions are as printed; no value is corrected. Bracketed or missing values are kept as printed, not inferred. The 1.0° default orb is an Astraya convention, not cited.
+ * @conventions Positions are as printed; no value is corrected. Bracketed or missing values are kept as printed, not inferred. The 1.0° default orb is an Astraya convention, not cited (#869: kept as a convention; no indexed text gives 1 degree, and Avelar p.177 gives a magnitude scale as an alternative).
  * @exports RegistryStar, YEMEN_FIXED_STARS, YEMEN_STAR_AUTHORITY, FIXED_STAR_ORB_CONVENTION, registryLongitude, yemenStarLongitudes, normaliseStarQuery, searchYemenStars
  */
 import type { Degrees } from '../ephemeris/types.js';

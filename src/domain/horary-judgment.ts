@@ -16,6 +16,7 @@
  * Prohibition uses relative-motion estimates when positions are supplied. Frustration is reported
  * when a significator changes sign before that estimate can perfect; refranation is reported when
  * a supplied station forecast turns a significator retrograde/direct before perfection.
+ * TODO (#798): frustration is currently the sign-change rule; the decided target is Lilly's rule (a third planet joining first), pending a calculation change.
  */
 /**
  * @module domain/horary-judgment
