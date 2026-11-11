@@ -20,6 +20,7 @@ import { type GlossaryTermId } from './astro-glossary.messages.js';
 import { GlossaryTerm } from './GlossaryTerm.js';
 import { useRegisterExports } from './export-registry.js';
 import { useMessages } from './messages.js';
+import { Button } from './primitives/Button.js';
 import { Tooltip } from './primitives/Tooltip.js';
 import { sortableTableMessages } from './SortableTable.messages.js';
 import { dragColumnWidth, keyboardColumnWidth, MAX_COLUMN_WIDTH, MIN_COLUMN_WIDTH } from './table-column-width.js';
@@ -215,18 +216,18 @@ export function SortableTable<T>({
           <div className="data-table-actions">
             {downloadFilename !== undefined && (
               <>
-                <button type="button" className="quiet" onClick={copy}>
+                <Button variant="quiet" onClick={copy}>
                   {copied ? t.copied : t.copy}
-                </button>
-                <button type="button" className="quiet" onClick={download}>
+                </Button>
+                <Button variant="quiet" onClick={download}>
                   {t.downloadCsv}
-                </button>
+                </Button>
               </>
             )}
             {resized && (
-              <button type="button" className="quiet" onClick={resetWidths}>
+              <Button variant="quiet" onClick={resetWidths}>
                 {t.resetWidths}
-              </button>
+              </Button>
             )}
           </div>
         )}
@@ -270,8 +271,8 @@ export function SortableTable<T>({
                       {column.sortable === false ? (
                         <span className="data-table-label">{column.label}</span>
                       ) : (
-                        <button
-                          type="button"
+                        <Button
+                          variant="plain"
                           onClick={() => {
                             setSort((current) => toggleSort(current, column.key));
                           }}
@@ -280,7 +281,7 @@ export function SortableTable<T>({
                           {sort?.column === column.key && (
                             <span aria-hidden="true">{sort.direction === 'asc' ? ' ▲' : ' ▼'}</span>
                           )}
-                        </button>
+                        </Button>
                       )}
                       {typeof column.labelHelp === 'string' && (
                         <GlossaryTerm

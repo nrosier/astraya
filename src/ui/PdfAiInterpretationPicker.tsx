@@ -9,6 +9,7 @@ import { listSavedInterpretations, type SavedInterpretationSummary } from '../in
 import type { Locale } from '../interpretation/schema.js';
 import { useMessages } from './messages.js';
 import { pdfExportMessages } from './pdf-export.messages.js';
+import { Button } from './primitives/Button.js';
 import { Checkbox } from './primitives/Checkbox.js';
 import { StagedDialog } from './primitives/StagedDialog.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
@@ -169,9 +170,9 @@ export function PdfAiInterpretationPicker({
         onDiscard={closeModal}
         returnFocusTo={triggerRef}
         footer={
-          <button type="button" onClick={closeModal}>
+          <Button variant="plain" onClick={closeModal}>
             {t.interpretationSavedClose}
-          </button>
+          </Button>
         }
       >
         {state.status === 'loading' && <StatusMessage kind="loading">{t.interpretationSavedLoading}</StatusMessage>}

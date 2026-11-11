@@ -17,6 +17,7 @@
  * @conventions Present on every screen; uses PwaStatus.messages.ts for en/nl text via useMessages().
  * @exports PwaStatus
  */
+import { Button } from './primitives/Button.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { formatFixed } from './format.js';
 import { useSyncExternalStore } from 'react';
@@ -40,7 +41,10 @@ export function PwaStatus(): React.JSX.Element | null {
     <div className="pwastatus">
       {update.kind === 'available' && (
         <p className="pwastatus-update" role="status">
-          {t.updateReady} <button onClick={applyUpdate}>{t.reloadToUpdate}</button>
+          {t.updateReady}{' '}
+          <Button variant="plain" onClick={applyUpdate}>
+            {t.reloadToUpdate}
+          </Button>
         </p>
       )}
       {warm.kind === 'warming' && (
