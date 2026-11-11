@@ -31,10 +31,11 @@ import {
   type SearchScope,
   type SearchSubject,
 } from '../src/domain/chart-search.js';
-import { asOfJulianDay, buildSearchSubject } from '../src/domain/chart-search-timing.js';
+import { asOfJulianDay, buildSearchSubject, orUndefinedWhenNotFound } from '../src/domain/chart-search-timing.js';
 import { returnInForceAtJd } from '../src/domain/life-event-return.js';
 import { computeLunarReturns } from '../src/domain/lunar-returns.js';
 import { computeSecondaryProgression } from '../src/domain/secondary-progression.js';
+import { ReturnNotFoundError } from '../src/domain/return-chart.js';
 import { computeSolarReturn } from '../src/domain/solar-return.js';
 import type { EphemerisProvider, JulianDayUT } from '../src/ephemeris/types.js';
 import { julianDayFor } from '../src/time/julian.js';
@@ -349,4 +350,46 @@ describe('condition cap (answer 10)', () => {
     };
     expect(validateSearch(over)).toBe('too-many-conditions');
   });
+});
+
+describe('a return that cannot be found (answer 12)', () => {
+  // The real engine always finds a Moon return inside the 29-day window (the Moon's period is about 27.3 days),
+  // so the not-found case cannot be reached with a real date and no stub. These tests cover the typed branch
+  // directly and do not claim an end-to-end not-found run.
+  it('a ReturnNotFoundError becomes an absent scope, which the evaluator reports as timing-unavailable', async () => {
+    const missing = await orUndefinedWhenNotFound<number>(() => Promise.reject(new ReturnNotFoundError('none')));
+    expect(missing).toBeUndefined();
+    const subject = await subjectFor(['transit'], natalJd + 12000);
+    expect(subject.lunarReturn).toBeUndefined();
+    const lunar = evaluateCondition({ kind: 'sign', scope: 'lunarReturn', body: SUN, sign: 0 }, subject);
+    expect(lunar.outcome).toBe('not-evaluable');
+    expect(lunar.reason).toBe('timing-unavailable');
+    expect(evaluateCondition({ kind: 'sign', scope: 'natal', body: SUN, sign: 99 }, subject).outcome).toBe(
+      'not-matched',
+    );
+    expect(evaluateCondition({ kind: 'sign', scope: 'transit', body: SUN, sign: 99 }, subject).outcome).toBe(
+      'not-matched',
+    );
+  }, 120_000);
+
+  it('a plain RangeError or Error is not swallowed', async () => {
+    await expect(orUndefinedWhenNotFound(() => Promise.reject(new RangeError('bad input')))).rejects.toThrow(
+      'bad input',
+    );
+    await expect(orUndefinedWhenNotFound(() => Promise.reject(new Error('engine failure')))).rejects.toThrow(
+      'engine failure',
+    );
+  });
+
+  it('a genuine provider failure still propagates out of buildSearchSubject', async () => {
+    const broken: EphemerisProvider = Object.assign(Object.create(engine) as EphemerisProvider, {
+      nextMoonCrossing: () => Promise.reject(new Error('engine failure')),
+    });
+    await expect(
+      buildSearchSubject(
+        { natalMoment: NATAL, birthTimeKnown: true, settings: {}, asOfJd: natalJd + 12000, scopes: ['lunarReturn'] },
+        broken,
+      ),
+    ).rejects.toThrow('engine failure');
+  }, 120_000);
 });

@@ -12,7 +12,7 @@ import { resolveMoment } from '../time/resolve.js';
 import type { EphemerisProvider, JulianDayUT, Zodiac } from '../ephemeris/types.js';
 import type { BirthMomentInput } from '../time/types.js';
 import type { LifeEvent } from './life-events.js';
-import { LUNAR_RETURN_SEARCH_DAYS } from './return-chart.js';
+import { LUNAR_RETURN_SEARCH_DAYS, ReturnNotFoundError } from './return-chart.js';
 import { computeLunarReturns } from './lunar-returns.js';
 import { computeSolarReturn } from './solar-return.js';
 
@@ -54,7 +54,7 @@ function describe(returnJd: JulianDayUT): ReturnInForce {
 
 /**
  * The return of `kind` in force at the Julian day `atJd`, for a person born at `birth`. `zodiac` is the person's
- * zodiac (tropical when absent): a sidereal return falls at a different moment. Throws a RangeError when none is found.
+ * zodiac (tropical when absent): a sidereal return falls at a different moment. Throws a `ReturnNotFoundError` (a RangeError) when none is found.
  */
 export async function returnInForceAtJd(
   kind: 'solar-return' | 'lunar-return',
@@ -67,7 +67,7 @@ export async function returnInForceAtJd(
   if (kind === 'lunar-return') {
     const found = await computeLunarReturns(birth, atJd - LUNAR_RETURN_SEARCH_DAYS, atJd, provider, options);
     const last = found.returns.at(-1);
-    if (last === undefined) throw new RangeError('No lunar return was found before this date.');
+    if (last === undefined) throw new ReturnNotFoundError('No lunar return was found before this date.');
     return describe(last.returnJd);
   }
   const year = civilFromJulianDay(atJd).year;

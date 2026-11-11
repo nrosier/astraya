@@ -2,7 +2,7 @@
  * @module chart-search-timing
  * @purpose Builds the `SearchSubject` a chart search needs for each timing scope (#1405): the natal chart, the sky at an as-of date read against it (transit), the secondary progression, and the solar and lunar return in force at that date.
  * @conventions Pure over the `EphemerisProvider` parameter; no store, UI or sweph-wasm access. Only the scopes asked for are computed. Every compute call receives the person's own `SearchTimingSettings` (house system, zodiac, rulership, orbs, bodies; answer 15), so a search matches the person's chart and can differ from the Transit and Progressions screens, which use engine defaults; this is a recorded known gap. The as-of date becomes a Julian day with `provider.julianDayFromUtc(y, m, d, 12, 0, 0)`, noon UTC, the conversion the Transit and Progressions screens use; this is the chosen rule for the "today, local timezone" default (answer 6): the caller passes the user's local calendar date and it is read as that date at noon UTC. Transit: `computeTransit` (contacts already use `orbConfigForContext('transit', ...)`), plus every transiting body to the natal Ascendant and Midheaven with `matchPointAspect` under that same transit orb config (answer 11, no invented orb); the natal angle is a fixed point (speed 0). Progression: `computeSecondaryProgression` with the person's `mcMethod`; its positions, progressed houses and contacts are used as they come, never rebuilt into a `ChartData` from the real sky, and the progressed houses are carried for display only (house conditions read the natal cusps, answer 14); progression contacts use the person's own orbs (natal context). Returns: `returnInForceAtJd` (last return at or before the as-of date; a solar date before that year's return falls back to the previous year, answers 3 and 7) then `computeSolarReturnChart` or `computeLunarReturnChart` for that return, cast at the birth place with the person's settings and zodiac. Angle contacts are empty when the birth time is unknown or the houses have no solution.
- * @exports asOfJulianDay, SearchTimingSettings, SearchTimingInput, buildSearchSubject
+ * @exports asOfJulianDay, orUndefinedWhenNotFound, SearchTimingSettings, SearchTimingInput, buildSearchSubject
  */
 import { matchPointAspect, DEFAULT_ORB_CONFIG } from '../astrology/aspects.js';
 import { bodyById } from '../astrology/bodies.js';
@@ -18,7 +18,7 @@ import {
   type ChartData,
 } from './chart-compute.js';
 import { returnInForceAtJd } from './life-event-return.js';
-import { computeLunarReturnChart, computeSolarReturnChart } from './return-chart.js';
+import { computeLunarReturnChart, computeSolarReturnChart, ReturnNotFoundError } from './return-chart.js';
 import { SEARCH_SCOPES, type SearchScope, type SearchSubject, type TimingReference } from './chart-search.js';
 import { computeSecondaryProgression } from './secondary-progression.js';
 import { computeTransit } from './transit.js';
@@ -103,10 +103,21 @@ function progressionOptions(settings: SearchTimingSettings): Parameters<typeof c
   };
 }
 
+/** The result of `build`, or undefined when it fails with `ReturnNotFoundError`; every other error propagates. */
+export async function orUndefinedWhenNotFound<T>(build: () => Promise<T>): Promise<T | undefined> {
+  try {
+    return await build();
+  } catch (error) {
+    if (error instanceof ReturnNotFoundError) return undefined;
+    throw error;
+  }
+}
+
 /**
  * The subject for one person: the natal chart plus a reference for each requested scope. A scope not requested
- * leaves its field absent, which the evaluator reports as not-evaluable (`timing-unavailable`). Compute failures
- * (including a return that cannot be found) propagate.
+ * leaves its field absent, which the evaluator reports as not-evaluable (`timing-unavailable`). A return that cannot be
+ * found (`ReturnNotFoundError`) leaves only that scope's field absent, so the evaluator reports `timing-unavailable`
+ * for that scope (answer 12); the other scopes are still built. Any other failure, a genuine engine error, propagates.
  */
 export async function buildSearchSubject(
   input: SearchTimingInput,
@@ -148,14 +159,18 @@ export async function buildSearchSubject(
   const returnOptions = { ...settings, place: place(natalMoment) };
   let solarReturn: ChartData | undefined;
   if (wanted.has('solarReturn')) {
-    const inForce = await returnInForceAtJd('solar-return', asOfJd, natalMoment, provider, settings.zodiac);
-    solarReturn = (await computeSolarReturnChart(natalMoment, inForce.year, provider, returnOptions)).chart;
+    solarReturn = await orUndefinedWhenNotFound(async () => {
+      const inForce = await returnInForceAtJd('solar-return', asOfJd, natalMoment, provider, settings.zodiac);
+      return (await computeSolarReturnChart(natalMoment, inForce.year, provider, returnOptions)).chart;
+    });
   }
   let lunarReturn: ChartData | undefined;
   if (wanted.has('lunarReturn')) {
-    const inForce = await returnInForceAtJd('lunar-return', asOfJd, natalMoment, provider, settings.zodiac);
-    // The chart search starts just before the return so the first return found is the one in force.
-    lunarReturn = (await computeLunarReturnChart(natalMoment, inForce.returnJd - 0.5, provider, returnOptions)).chart;
+    lunarReturn = await orUndefinedWhenNotFound(async () => {
+      const inForce = await returnInForceAtJd('lunar-return', asOfJd, natalMoment, provider, settings.zodiac);
+      // The chart search starts just before the return so the first return found is the one in force.
+      return (await computeLunarReturnChart(natalMoment, inForce.returnJd - 0.5, provider, returnOptions)).chart;
+    });
   }
 
   return {
