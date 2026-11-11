@@ -19,7 +19,7 @@
 /**
  * @module TransitView
  * @purpose Transit bi-wheel screen for one saved person against a chosen date: natal chart on the inner ring, transiting positions on the outer ring, with filtered cross-chart contacts and void-of-course Moon.
- * @conventions Calls renderMultiWheelSvg directly, bypassing the single-chart AstroChartWheel wrapper, same as SynastryView.tsx; uses TransitView.messages.ts for en/nl text via useMessages(). Carries its own PrintProvenance footer (#564) labelled with engine defaults, since computeTransit doesn't yet take a user-configurable calculation snapshot.
+ * @conventions Calls renderMultiWheelSvg directly, bypassing the single-chart AstroChartWheel wrapper, same as SynastryView.tsx; uses TransitView.messages.ts for en/nl text via useMessages(). Carries its own PrintProvenance footer (#564) labelled with engine defaults, since computeTransit doesn't yet take a user-configurable calculation snapshot. A recalculation keeps the earlier result on screen (aria-busy) so playback never unmounts the wheel or table (#1440).
  * @exports TransitView, contactColumns
  */
 
@@ -134,6 +134,8 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
   const [asOf, setAsOf, setPlayback] = useAsOfDate();
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
+  // True while the next date calculates and the earlier result stays on screen (#1440): swapping the result for a loading message would unmount the wheel and tables on every playback step.
+  const [refreshing, setRefreshing] = useState(false);
   // The orbs are the device's Extended settings (#590): transits use the same orbs as the natal chart.
   // Everything else stays at the engine defaults, as this screen's footer says.
   const {
@@ -170,7 +172,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
       return undefined;
     const moment = personMoment;
     const effect = { cancelled: false };
-    setLoad({ kind: 'loading' });
+    setRefreshing(true);
 
     void (async () => {
       try {
@@ -190,10 +192,15 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
         );
         // Secondary to the wheel: if the Moon search fails, the screen still shows the transit.
         const voidOfCourse = await findVoidOfCourseMoon(provider, targetJd).catch(() => undefined);
-        if (!effect.cancelled) setLoad({ kind: 'ready', data, voidOfCourse, artifact });
+        if (!effect.cancelled) {
+          setLoad({ kind: 'ready', data, voidOfCourse, artifact });
+          setRefreshing(false);
+        }
       } catch (error) {
-        if (!effect.cancelled)
+        if (!effect.cancelled) {
           setLoad({ kind: 'error', message: error instanceof Error ? error.message : String(error) });
+          setRefreshing(false);
+        }
       }
     })();
 
@@ -229,6 +236,8 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
 
   // Rebuilt only when the contacts change, so an unrelated render (a playback step's state) hands the table the same rows.
   const contactRows = useMemo(() => crossAspectRows(shownContacts), [shownContacts]);
+
+  const contactTableColumns = useMemo(() => contactColumns(t, locale), [t, locale]);
 
   const wheelMarkup = useMemo(() => {
     if (load.kind !== 'ready') return undefined;
@@ -362,7 +371,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
       </p>
 
       {/* The result region: busy while the transit (re)calculates, as the Astrocartography map is. */}
-      <div aria-busy={load.kind === 'loading'}>
+      <div aria-busy={load.kind === 'loading' || refreshing}>
         {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
         {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
@@ -411,8 +420,9 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
             <SortableTable
               caption={t.contactsCaption}
               headingLevel={2}
-              columns={contactColumns(t, locale)}
+              columns={contactTableColumns}
               rows={contactRows}
+              memoizeRows
               getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
               downloadFilename={deriveExportFilename(person.displayName, 'transit-contacts', 'csv')}
             />
