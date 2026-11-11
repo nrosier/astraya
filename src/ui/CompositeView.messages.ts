@@ -21,6 +21,9 @@ const en = {
     'A composite is one synthetic midpoint chart, not a base chart with independent source rings, so Overlay settings are unavailable here. Use Synastry to compare two individual rings.',
 
   composeWithLabel: 'Compose with',
+  methodLabel: 'Method',
+  methodMidpoint: 'Midpoint (near-arc)',
+  methodDavison: 'Davison (relationship chart)',
   choosePersonOption: 'Choose a person…',
   unnamedOption: 'Unnamed',
   partnerGoneWarning: 'That person is no longer available to compose with.',
@@ -45,6 +48,9 @@ const nl: typeof en = {
     'Een composiet is één synthetische middelpunt-horoscoop, geen basishoroscoop met onafhankelijke bronringen. Overlayinstellingen zijn hier daarom niet beschikbaar. Gebruik Synastrie om twee afzonderlijke ringen te vergelijken.',
 
   composeWithLabel: 'Combineren met',
+  methodLabel: 'Methode',
+  methodMidpoint: 'Middelpunt (korte boog)',
+  methodDavison: 'Davison (relatiegrafiek)',
   choosePersonOption: 'Kies een persoon…',
   unnamedOption: 'Naamloos',
   partnerGoneWarning: 'Die persoon is niet langer beschikbaar om mee te combineren.',
