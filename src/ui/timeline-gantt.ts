@@ -2,7 +2,7 @@
  * @module ui/timeline-gantt
  * @purpose Pure layout for the timing timeline's Gantt chart (#1237): where each event's bar sits on the shared date axis, which events are points, and where the year ticks and the target date fall.
  * @conventions Positions are fractions of the axis (0 at the window's start, 1 at its end), so the chart scales to any width and holds no pixel sizes. An event with no end, or the same end as its start, is a point. A bar is clamped to the window, so one that starts before or ends after it still shows. An orb window (an event with an exact date, #1401) is a bar with the exact date marked inside it. Nothing here calculates astrology: it only places the normalised `TimingTimelineEvent` records the table also lists.
- * @exports GanttMark, GanttRow, YearTick, techniqueColorVar, barLabelFits, ganttFraction, ganttRows, yearTicks, thinYearTicks
+ * @exports GanttMark, GanttRow, YearTick, techniqueColorVar, barLabelFits, visibleBarLabels, ganttFraction, ganttRows, yearTicks, thinYearTicks
  */
 import type { JulianDayUT } from '../ephemeris/types.js';
 import type { TimingTimelineEvent, TimingTimelineTrack, TimingTimelineTrackEvents } from '../domain/timing-timeline.js';
@@ -47,12 +47,52 @@ export function techniqueColorVar(track: TimingTimelineTrack): string {
 }
 
 /** Average glyph width as a share of the font size, and the room kept either side of a label inside its bar. */
-const LABEL_GLYPH_EM = 0.6;
+const LABEL_GLYPH_EM = 0.65;
 const LABEL_PADDING_PX = 8;
 
 /** Whether a bar `barWidthPx` wide can hold `label` at `fontPx` (#1442); a narrower bar draws no label, so none is cut mid-word. */
 export function barLabelFits(label: string, barWidthPx: number, fontPx: number): boolean {
   return label.length > 0 && barWidthPx >= label.length * LABEL_GLYPH_EM * fontPx + 2 * LABEL_PADDING_PX;
+}
+
+/** One candidate in-bar label: its mark, its text, and the mark's pass label text (if any) beside its exact date. */
+export interface BarLabelCandidate {
+  readonly mark: GanttMark;
+  readonly text: string;
+  readonly passText?: string;
+}
+
+/**
+ * The keys of the marks whose in-bar label is drawn (#1442). A label is drawn only when it fits its own bar
+ * (`barLabelFits`), does not run over the exact-date mark or pass label of any window in the row, and does not touch a label
+ * already placed, earlier marks winning, so no two texts in a row overlap. Everything else keeps its full text in the bar's title and the table.
+ */
+export function visibleBarLabels(
+  candidates: readonly BarLabelCandidate[],
+  plotWidthPx: number,
+  fontPx: number,
+): ReadonlySet<string> {
+  const glyph = LABEL_GLYPH_EM * fontPx;
+  const taken: [number, number][] = [];
+  for (const { mark, passText } of candidates) {
+    if (mark.exact !== undefined) {
+      const x = mark.exact * plotWidthPx;
+      taken.push([x - 1, x + 4 + (passText?.length ?? 0) * glyph + 1]);
+    }
+  }
+  const shown = new Set<string>();
+  for (const { mark, text } of candidates) {
+    if (mark.point || mark.sub) continue;
+    const widthPx = (mark.end - mark.start) * plotWidthPx;
+    if (!barLabelFits(text, widthPx, fontPx)) continue;
+    const from = mark.start * plotWidthPx;
+    const textBox: [number, number] = [from + LABEL_PADDING_PX, from + LABEL_PADDING_PX + text.length * glyph];
+    // The bar's own exact mark and pass label are in `taken` too, so an orb window with a label inside is dropped when they collide.
+    if (taken.some(([a, b]) => textBox[0] < b && a < textBox[1])) continue;
+    taken.push(textBox);
+    shown.add(mark.key);
+  }
+  return shown;
 }
 
 /** A date's place on the axis, 0 to 1, clamped to the window. */
