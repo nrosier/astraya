@@ -44,7 +44,8 @@ import { deriveExportFilename } from '../domain/export-filename.js';
 import { SortableTable, csvExportTable, useCsvExports } from './SortableTable.js';
 import type { TableColumn } from './table-sort.js';
 import { TimingTimelineGantt } from './TimingTimelineGantt.js';
-import { ganttRows } from './timeline-gantt.js';
+import { ganttRows, techniqueColorVar } from './timeline-gantt.js';
+import { Badge } from './primitives/Badge.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { PersonNotFound } from './PersonNotFound.js';
@@ -76,6 +77,7 @@ type Range = (typeof RANGES)[number];
 interface EventRow {
   readonly key: string;
   readonly track: string;
+  readonly trackKey: TimingTimelineTrack;
   readonly event: string;
   readonly start: string;
   readonly end: string;
@@ -201,6 +203,7 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
         return {
           key: `${track}-${event.kind}-${String(event.startJd)}-${String(index)}`,
           track: t.tracks[track],
+          trackKey: track,
           event:
             timelineSubjectLabel(event.subject, locale) +
             (event.pass === undefined ? '' : ` (${t.passOf(event.pass.number, event.pass.count)})`),
@@ -215,7 +218,17 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
       : all.filter((row) => `${row.track} ${row.event} ${row.start} ${row.end}`.toLowerCase().includes(needle));
   }, [tracks, query, t, locale]);
   const columns: readonly TableColumn<EventRow>[] = [
-    { key: 'track', label: t.columnTrack, valueOf: (row) => row.track },
+    {
+      key: 'track',
+      label: t.columnTrack,
+      valueOf: (row) => row.track,
+      // The badge's text is the technique name; its dot is the colour the chart's bars use (#1442).
+      renderCell: (row) => (
+        <span className="technique-cell" style={{ '--tech': techniqueColorVar(row.trackKey) } as React.CSSProperties}>
+          <Badge>{row.track}</Badge>
+        </span>
+      ),
+    },
     { key: 'event', label: t.columnEvent, valueOf: (row) => row.event },
     { key: 'start', label: t.columnStart, valueOf: (row) => row.startJd, render: (row) => row.start },
     { key: 'end', label: t.columnEnd, valueOf: (row) => row.end },

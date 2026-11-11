@@ -3717,6 +3717,26 @@ label.stacked {
   background: color-mix(in oklab, var(--aspect-hard) 9%, transparent);
 }
 
+/* A technique's cell in the events table (#1442): the shared Badge with the technique name, a dot and an edge in the colour the chart's bars use. */
+.technique-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.technique-cell::before {
+  content: '';
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--tech);
+}
+
+.technique-cell .primitive-badge {
+  border-color: var(--tech);
+}
+
 /* Stat tiles (#826): a flex-wrapped layout over the global `dl` card surface; no border,
    radius or background of its own. Neutralises the global row hairline and cell padding. */
 dl.primitive-stat-list {
