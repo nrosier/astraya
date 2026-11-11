@@ -4,6 +4,7 @@
  * @conventions Moved out of ChartView.tsx (#817); the aspects table shows Applying as a dot plus label and the family as muted text on screen only (#815), while `render` stays plain text for copy, CSV and the PDF; takes the chart data and message bundle as arguments and never imports ChartView. The fixed-stars table moved to ChartViewPlacements (#815).
  * @exports AspectState, AspectContactFilter, isContactFilterActive, EmptyFilterNote, filterAspectRowsByContactFilter, aspectColumns, declinationColumns, antisciaColumns, midpointTreeColumns, allMidpointsColumns, renderAspectsTable
  */
+import { StatusMessage } from './primitives/StatusMessage.js';
 import { formatOrb } from './format.js';
 import { aspectHarmonicFamily } from '../astrology/aspects.js';
 import {
@@ -242,11 +243,7 @@ export function isContactFilterActive(filter: AspectContactFilter | undefined): 
 
 /** The empty-state note (#1333) shown in place of the Aspects table or the matrix grid when the filters leave no contacts. */
 export function EmptyFilterNote({ text }: { readonly text: string }): React.JSX.Element {
-  return (
-    <p className="hint" role="status">
-      {text}
-    </p>
-  );
+  return <StatusMessage kind="empty">{text}</StatusMessage>;
 }
 
 /** Keeps the rows the wheel and the aspect matrix still show: the same `isContactShown` test, then the preset's major-only switch. */
