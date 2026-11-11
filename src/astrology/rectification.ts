@@ -27,7 +27,7 @@
  * - **Transits to the angles**: Jupiter, Saturn, Uranus, Neptune, Pluto and the mean lunar node —
  *   the slow bodies, whose contact lasts long enough to line up with a dated event — conjunct,
  *   square or opposite the natal Ascendant or Midheaven.
- * - **Orb** (owner decision, #1445; Tebbs): one limit of 3 degrees for every contact (`RECTIFICATION_ORB_LIMIT`). Previously the existing transit orb of the body involved (`orbLimitFor` on
+ * - **Orb** (owner decision, #1445; Tebbs): one limit of 3 degrees for every contact (`RECTIFICATION_ORB_LIMIT`), which Tebbs gives only as the outer limit when building the natal hook; her directed-contact orb is 1 degree, a pending change (#1445). Previously the existing transit orb of the body involved (`orbLimitFor` on
  *   the daily transit preset of `transit-importance.ts`); no orb is invented here.
  * - **Weight** (owner decision, #1445, revised 2026-11-11): equal across contact types, scaled by
  *   closeness. A contact adds `1 − orb / limit`: 1 at exact, falling in a straight line to 0 at its
@@ -56,6 +56,8 @@ import type { BodyId, Degrees, EphemerisProvider, GeoPosition, HouseSystem, Juli
  * The orb limit for every contact, Solar Arc or transit, for any body. Tebbs (Complete Book of Chart Rectification)
  * says to consider exact contacts first, then within 1, 2 and up to 3 degrees, and that the closer the orb the more
  * important the contact. The score falls in a straight line from 1 at exact to 0 at this limit.
+ * TODO (#1445): Tebbs gives 1 degree for directions and progressions, and 3 degrees only as the outer limit when
+ * building the natal hook; the 1-degree directed orb is a pending calculation change, not made here.
  */
 export const RECTIFICATION_ORB_LIMIT: Degrees = 3;
 
