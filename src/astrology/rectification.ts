@@ -27,7 +27,7 @@
  * - **Transits to the angles**: Jupiter, Saturn, Uranus, Neptune, Pluto and the mean lunar node —
  *   the slow bodies, whose contact lasts long enough to line up with a dated event — conjunct,
  *   square or opposite the natal Ascendant or Midheaven.
- * - **Orb** (owner decision, #1445): the existing transit orb of the body involved (`orbLimitFor` on
+ * - **Orb** (owner decision, #1445; Tebbs): one limit of 3 degrees for every contact (`RECTIFICATION_ORB_LIMIT`). Previously the existing transit orb of the body involved (`orbLimitFor` on
  *   the daily transit preset of `transit-importance.ts`); no orb is invented here.
  * - **Weight** (owner decision, #1445, revised 2026-11-11): equal across contact types, scaled by
  *   closeness. A contact adds `1 − orb / limit`: 1 at exact, falling in a straight line to 0 at its
@@ -48,15 +48,20 @@
 import { bodyByKey } from './bodies.js';
 import { ageInYears } from './progressions.js';
 import { liftOf, windowAverage } from './rectification-lift.js';
-import { orbLimitFor, transitPreset } from './transit-importance.js';
 import type { BodyId, Degrees, EphemerisProvider, GeoPosition, HouseSystem, JulianDayUT } from '../ephemeris/types.js';
 
 /** The daily transit rule set, whose per-body orbs the contacts use (no orb of this tool's own). */
-const TRANSIT_ORB_RULES = transitPreset('important', { everyBodyKey: [], context: 'daily' });
 
-/** The orb limit for a contact involving this body: its existing transit orb. */
-export function contactOrbLimit(bodyKey: string): Degrees {
-  return orbLimitFor(TRANSIT_ORB_RULES, bodyKey);
+/**
+ * The orb limit for every contact, Solar Arc or transit, for any body. Tebbs (Complete Book of Chart Rectification)
+ * says to consider exact contacts first, then within 1, 2 and up to 3 degrees, and that the closer the orb the more
+ * important the contact. The score falls in a straight line from 1 at exact to 0 at this limit.
+ */
+export const RECTIFICATION_ORB_LIMIT: Degrees = 3;
+
+/** The orb limit for a contact, the same for every body (Tebbs, #1445). */
+export function contactOrbLimit(_bodyKey: string): Degrees {
+  return RECTIFICATION_ORB_LIMIT;
 }
 
 const ANGLE_KEYS: readonly string[] = ['asc', 'mc'];

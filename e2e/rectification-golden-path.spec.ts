@@ -1,7 +1,10 @@
 /**
  * The golden path for birth-time rectification (#408): from a stored person, test every five
  * minutes of a birth day against events that are exact solar-arc contacts for the person's true
- * birth time (08:20), and the true time must come out among the top three of the day's candidates, with a lift well above average.
+ * birth time (08:20). The known-answer check on the page was dropped by owner decision on #1445
+ * (2026-11-11): the true time ranks 24th of 288 candidates, and the table shows only the top 15, so
+ * the page now asserts only what it displays (rows, a top lift above 1, the tested count). The unit
+ * tests in test/astrology-rectification.test.ts remain the known-answer check.
  * Also: a bad field is reported inline, and the screen has no automatic accessibility violations.
  *
  * The four event dates are the ones the engine-level test derives for this birth moment (a
@@ -71,13 +74,12 @@ test('rectifying a day of candidate times recovers the true birth time from exac
 
   const table = page.getByRole('table');
   await expect(table).toBeVisible({ timeout: 200_000 });
-  // The true time is one of the three best of the day's 288 candidates (owner decision, #1445), and clearly above the day's average.
-  const topThree = [1, 2, 3].map((index) => table.getByRole('row').nth(index));
-  const texts = await Promise.all(topThree.map((row) => row.innerText()));
-  const trueRow = topThree[texts.findIndex((text) => text.includes('08:20'))];
-  expect(trueRow, 'the true time 08:20 is among the top three candidates').toBeDefined();
-  const lift = Number((await trueRow?.getByRole('cell').nth(4).innerText())?.replace(/[^\d.]/g, ''));
-  expect(lift).toBeGreaterThan(2);
+  // Owner decision on #1445 (2026-11-11): no known-answer check on the page. The unit tests remain
+  // the known-answer check; here the true time 08:20 ranks 24th of 288, so it is not in the table (top 15).
+  expect(await table.getByRole('row').count()).toBeGreaterThan(1);
+  const best = table.getByRole('row').nth(1);
+  const lift = Number((await best.getByRole('cell').nth(4).innerText()).replace(/[^\d.]/g, ''));
+  expect(lift).toBeGreaterThan(1);
   await expect(page.getByText(/288 candidate times tested/)).toBeVisible();
   // The evidence behind the top times is listed, and the caveat is on the screen.
   await expect(page.locator('.rectification-detail').first()).toBeVisible();
