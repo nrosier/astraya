@@ -21,13 +21,19 @@
  * the two differ for distant birthplaces.
  *
  * House cusps are calculated for the latitude of the cast place, which is the mean latitude in
- * the book's method and the midpoint's own latitude in the great-circle method.
+ * the book's method and the midpoint's own latitude in the great-circle method (owner decision,
+ * #1406, 2026-11-11).
+ *
+ * Midheaven adjustment (p. 247, opt-in through `adjustMidheaven`): the mid-point in time does not
+ * quite give the mid-point of the two natal Midheavens. The book uses the time to pick which of
+ * the two opposite mid-points to take, then shifts the Local Mean Time by the small amount that
+ * produces that Midheaven. This module does the same with the ephemeris Midheaven.
  */
 /**
  * @module domain/davison
  * @purpose Computes a Davison relationship chart: a real chart for the time and place midpoint of two births, alongside both natal charts (#1406).
- * @conventions Time midpoint is taken in Local Mean Time (Davison 1983, pp. 244-248) then converted to UT at the cast longitude; place midpoint defaults to the great-circle midpoint, with the book's arithmetic latitude/longitude mean as an option; houses use the cast place's latitude; all ephemeris access goes through `EphemerisProvider`.
- * @exports computeDavison, greatCircleMidpoint, arithmeticMidpoint, davisonPlace, DavisonData, DavisonOptions, DavisonPlaceMethod
+ * @conventions Time midpoint is taken in Local Mean Time (Davison 1983, pp. 244-248) then converted to UT at the cast longitude; place midpoint defaults to the great-circle midpoint, with the book's arithmetic latitude/longitude mean as an option; houses use the cast place's latitude; an opt-in p. 247 Midheaven adjustment moves the cast time so the Midheaven is the mid-point of the natal Midheavens; all ephemeris access goes through `EphemerisProvider`.
+ * @exports computeDavison, greatCircleMidpoint, arithmeticMidpoint, davisonPlace, DavisonData, DavisonOptions, DavisonPlaceMethod, midheavenTarget
  */
 import { computeChartDataAtJd, type ChartCalculationOptions, type ChartData } from './chart-compute.js';
 import { julianDayFor } from '../time/julian.js';
@@ -42,6 +48,11 @@ export type DavisonPlaceMethod = 'great-circle' | 'arithmetic';
 export interface DavisonOptions extends ChartCalculationOptions {
   /** Default `'great-circle'`. `'arithmetic'` is Davison 1983's mean of latitudes and of longitudes. */
   readonly placeMethod?: DavisonPlaceMethod;
+  /**
+   * Default `false`. When true, apply Davison 1983 p. 247: shift the cast time by the small amount
+   * that makes the Midheaven the mid-point of the two natal Midheavens.
+   */
+  readonly adjustMidheaven?: boolean;
 }
 
 export interface DavisonData {
@@ -57,6 +68,8 @@ export interface DavisonData {
   readonly castPlace: GeoPosition;
   /** Which place method produced `castPlace`, for the basis line. */
   readonly placeMethod: DavisonPlaceMethod;
+  /** Minutes the cast time was moved by the p. 247 Midheaven adjustment; 0 when it is off. */
+  readonly midheavenShiftMinutes: number;
 }
 
 const RAD = Math.PI / 180;
@@ -120,6 +133,32 @@ export function davisonPlace(a: Coordinates, b: Coordinates, method: DavisonPlac
   return method === 'arithmetic' ? arithmeticMidpoint(a, b) : greatCircleMidpoint(a, b);
 }
 
+/** Signed shortest arc from `from` to `to`, in degrees, within (-180, 180]. */
+function signedArc(from: number, to: number): number {
+  const d = (((to - from) % 360) + 540) % 360;
+  return d - 180;
+}
+
+/**
+ * Davison 1983 p. 247: the Midheaven the relationship chart should have. It is one of the two
+ * opposite mid-points of the natal Midheavens, the one nearer the Midheaven the time midpoint
+ * gave (`timeMidheaven`). Result in [0, 360).
+ */
+export function midheavenTarget(midheavenA: number, midheavenB: number, timeMidheaven: number): number {
+  const near = midheavenA + signedArc(midheavenA, midheavenB) / 2;
+  const far = near + 180;
+  const pick = Math.abs(signedArc(near, timeMidheaven)) <= Math.abs(signedArc(far, timeMidheaven)) ? near : far;
+  return ((pick % 360) + 360) % 360;
+}
+
+/** The Midheaven moves about 360.9856 degrees a day; used only for the first step of the solve. */
+const MIDHEAVEN_DEGREES_PER_DAY = 360.985647;
+/** Solve tolerance for the adjusted Midheaven, in degrees (well under a milli-arcsecond). */
+const MIDHEAVEN_TOLERANCE_DEG = 1e-9;
+const MIDHEAVEN_MAX_STEPS = 12;
+/** Any system gives the same Midheaven; Placidus is only the call's required argument. */
+const MIDHEAVEN_HOUSE_SYSTEM = 'P';
+
 /** Minutes in a day, and its reciprocal, for Local Mean Time offsets. */
 const MINUTES_PER_DAY = 1440;
 const DAYS_PER_MINUTE = 1 / MINUTES_PER_DAY;
@@ -136,7 +175,7 @@ export async function computeDavison(
   provider: EphemerisProvider,
   options: DavisonOptions = {},
 ): Promise<DavisonData> {
-  const { placeMethod = 'great-circle', ...chartOptions } = options;
+  const { placeMethod = 'great-circle', adjustMidheaven = false, ...chartOptions } = options;
 
   const [jdA, jdB] = await Promise.all([
     julianDayFor(provider, resolveMoment(momentA)),
@@ -158,13 +197,29 @@ export async function computeDavison(
   const castOffset =
     rawCastOffset + MINUTES_PER_DAY * Math.round(((offsetA + offsetB) / 2 - rawCastOffset) / MINUTES_PER_DAY);
   const meanOffset = (offsetA + offsetB) / 2;
-  const castJd = (jdA + jdB) / 2 + (meanOffset - castOffset) * DAYS_PER_MINUTE;
+  const timeJd = (jdA + jdB) / 2 + (meanOffset - castOffset) * DAYS_PER_MINUTE;
 
-  const [chartA, chartB, davison] = await Promise.all([
+  const [chartA, chartB] = await Promise.all([
     computeChartDataAtJd(jdA, placeA, provider, chartOptions),
     computeChartDataAtJd(jdB, placeB, provider, chartOptions),
-    computeChartDataAtJd(castJd, castPlace, provider, chartOptions),
   ]);
 
-  return { chartA, chartB, davison, castJd, castPlace, placeMethod };
+  let castJd: JulianDayUT = timeJd;
+  if (adjustMidheaven) {
+    // The Midheaven does not depend on the house system; the zodiac is the chart's own.
+    const midheavenAt = async (jd: JulianDayUT): Promise<number> =>
+      (await provider.houses(jd, castPlace, MIDHEAVEN_HOUSE_SYSTEM, chartOptions.zodiac)).midheaven;
+    const target = midheavenTarget(chartA.houses.midheaven, chartB.houses.midheaven, await midheavenAt(timeJd));
+    // The Midheaven turns steadily but not uniformly in longitude (obliquity), so close the gap in a few steps.
+    for (let step = 0; step < MIDHEAVEN_MAX_STEPS; step += 1) {
+      const gap = signedArc(await midheavenAt(castJd), target);
+      if (Math.abs(gap) < MIDHEAVEN_TOLERANCE_DEG) break;
+      castJd += gap / MIDHEAVEN_DEGREES_PER_DAY;
+    }
+  }
+  const midheavenShiftMinutes = (castJd - timeJd) * MINUTES_PER_DAY;
+
+  const davison = await computeChartDataAtJd(castJd, castPlace, provider, chartOptions);
+
+  return { chartA, chartB, davison, castJd, castPlace, placeMethod, midheavenShiftMinutes };
 }
