@@ -137,12 +137,42 @@ describe('judgePerfection (#552)', () => {
     expect(result.timeToPerfectDays).toBeCloseTo(50);
   });
 
-  it('reports frustration when a significator changes sign before perfection', () => {
+  // Positions for the two cases. The Sun (querent) at 0 deg, the Moon (quesited) at 10 deg, the direct
+  // aspect forming. A third planet between them at 5 deg interposes (prohibition). A third planet at
+  // 20 deg, past the Moon, reaches only the Moon (frustration).
+  const pos = (body: number, longitude: number) => ({
+    body,
+    longitude,
+    latitude: 0,
+    longitudeSpeed: 1,
+    latitudeSpeed: 0,
+    distanceSpeed: 0,
+    retrograde: false,
+  });
+
+  it('reports prohibition when a third planet interposes between the significators (Lilly, p. 71)', () => {
+    const aspects = [aspect(SUN, MOON, true, 5), aspect(VENUS, MOON, true, 1)];
+    const positions = [pos(SUN, 0), pos(MOON, 10), pos(VENUS, 5)];
+    const result = judgePerfection(aspects, SUN, MOON, positions);
+    expect(result.kind).toBe('prohibition');
+    expect(result.thirdBody).toBe(VENUS);
+  });
+
+  it('reports frustration when a third planet reaches the heavier significator without interposing (Lilly, p. 72)', () => {
+    const aspects = [aspect(SUN, MOON, true, 5), aspect(VENUS, MOON, true, 1)];
+    const positions = [pos(SUN, 0), pos(MOON, 10), pos(VENUS, 20)];
+    const result = judgePerfection(aspects, SUN, MOON, positions);
+    expect(result.kind).toBe('frustration');
+    expect(result.thirdBody).toBe(VENUS);
+    expect(result.impedimentBody).toBe(MOON);
+  });
+
+  it('keeps a sign change before perfection as its own result, not frustration (#798)', () => {
     const aspects = [aspect(SUN, MOON, true, 5)];
     const result = judgePerfection(aspects, SUN, MOON, undefined, {
       signChangeDays: new Map([[SUN, 2]]),
     });
-    expect(result.kind).toBe('frustration');
+    expect(result.kind).toBe('signChange');
     expect(result.impedimentBody).toBe(SUN);
   });
 
