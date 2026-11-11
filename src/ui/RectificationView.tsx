@@ -349,7 +349,11 @@ export function RectificationView(): React.JSX.Element {
         title={t.heading}
         titleTerm="rectification"
         titleAside={
-          <Tooltip text={t.hint} label={t.hintTooltipLabel} className="primitive-tooltip-icon">
+          <Tooltip
+            text={t.hint}
+            label={t.hintTooltipLabel}
+            className="primitive-tooltip-icon primitive-tooltip-superscript"
+          >
             ?
           </Tooltip>
         }

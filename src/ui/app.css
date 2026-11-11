@@ -8459,6 +8459,18 @@ button.mgrid-pair:focus-visible {
 }
 
 /* A standalone help icon: the button is a full target; the small ring is drawn inside it. */
+/* A superscript help mark beside a heading (owner review, round 9, #1445): small and raised, the touch target kept. */
+.primitive-tooltip-superscript {
+  vertical-align: super;
+  line-height: 0;
+}
+
+.primitive-tooltip-superscript .primitive-tooltip-trigger {
+  font-size: var(--text-2xs);
+  line-height: 1;
+  vertical-align: super;
+}
+
 .primitive-tooltip-icon .primitive-tooltip-trigger {
   position: relative;
   display: inline-grid;
@@ -9139,6 +9151,11 @@ a.quiet,
   position: relative;
 }
 
+/* A row with a stacked marker reserves a strip above its bars for it, so the marker stays inside its own row (owner review, #1442). */
+.gantt-plotbox:has(.gantt-stack) {
+  padding-top: 1.25rem;
+}
+
 .gantt-plot {
   display: block;
   width: 100%;
@@ -9235,18 +9252,18 @@ a.quiet,
 /* Stacked exacts (owner review, #1442): a focusable count that opens a list of the transits it covers on hover or focus. */
 .gantt-stack {
   position: absolute;
-  top: -0.25rem;
-  transform: translate(-50%, -100%);
+  top: 0;
+  transform: translate(-50%, 0);
   z-index: 2;
   /* A fixed footprint, so the marker stays put when its list opens beneath it. */
   height: 1.25rem;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
 }
 
 .gantt-stack-list {
   position: absolute;
-  bottom: 100%;
+  top: 100%;
   left: 50%;
   transform: translateX(-50%);
   min-width: 14rem;
