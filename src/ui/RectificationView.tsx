@@ -369,8 +369,12 @@ export function RectificationView(): React.JSX.Element {
         <p>
           <Badge tone="warning">{t.citationPending}</Badge>
         </p>
-        <p className="hint">{t.methodBody}</p>
-        <p className="hint">{t.methodLimits}</p>
+        <p className="hint">
+          <GlossaryText text={t.methodBody} />
+        </p>
+        <p className="hint">
+          <GlossaryText text={t.methodLimits} />
+        </p>
       </Disclosure>
 
       <div className="tool-layout">
