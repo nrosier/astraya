@@ -9,7 +9,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { arithmeticMidpoint, computeDavison, greatCircleMidpoint } from '../src/domain/davison.js';
+import { arithmeticMidpoint, computeDavison, greatCircleMidpoint, midheavenTarget } from '../src/domain/davison.js';
 import { civilFromJulianDay } from '../src/time/julian.js';
 import { localMeanTimeOffsetMinutes } from '../src/time/zones.js';
 import type { BirthMomentInput, Coordinates } from '../src/time/types.js';
@@ -257,5 +257,54 @@ describe('computeDavison chart', () => {
       expect(arcsecondsBetween(position.longitude, ref.longitude), `${name} longitude`).toBeLessThan(tolerance);
     }
     expect(compared).toBeGreaterThanOrEqual(10);
+  });
+});
+
+describe('Midheaven adjustment (Davison 1983, p. 247)', () => {
+  const dukeLon = -5 / 60;
+  const duchessLon = -(76 + 38 / 60);
+  const duke: BirthMomentInput = {
+    civil: { year: 1894, month: 6, day: 23, hour: 22, minute: 12, second: 0 },
+    coordinates: { latitude: 51 + 32 / 60, longitude: dukeLon },
+    offsetOverrideMinutes: localMeanTimeOffsetMinutes(dukeLon),
+  };
+  const duchess: BirthMomentInput = {
+    civil: { year: 1896, month: 6, day: 19, hour: 5, minute: 15, second: 0 },
+    coordinates: { latitude: 39 + 18 / 60, longitude: duchessLon },
+    offsetOverrideMinutes: localMeanTimeOffsetMinutes(duchessLon),
+  };
+
+  it('picks the mid-point of the natal Midheavens the time midpoint is nearer to', () => {
+    // 350 and 10 degrees: the near mid-point is 0, its opposite 180.
+    expect(midheavenTarget(350, 10, 5)).toBeCloseTo(0, 9);
+    expect(midheavenTarget(350, 10, 170)).toBeCloseTo(180, 9);
+    expect(midheavenTarget(10, 350, 355)).toBeCloseTo(0, 9);
+  });
+
+  it('is off by default', async () => {
+    const engine = await getEngine();
+    const data = await computeDavison(duke, duchess, engine, { placeMethod: 'arithmetic' });
+    expect(data.midheavenShiftMinutes).toBe(0);
+  });
+
+  it('gives the worked-example Midheaven, 26 Capricorn 27 (p. 247), and keeps the shift small', async () => {
+    const engine = await getEngine();
+    const plain = await computeDavison(duke, duchess, engine, { placeMethod: 'arithmetic' });
+    const data = await computeDavison(duke, duchess, engine, { placeMethod: 'arithmetic', adjustMidheaven: true });
+
+    const mcA = data.chartA.houses.midheaven;
+    const mcB = data.chartB.houses.midheaven;
+    const expected = midheavenTarget(mcA, mcB, plain.davison.houses.midheaven);
+    // The adjusted chart's Midheaven is exactly the chosen mid-point of the natal Midheavens.
+    expect(arcsecondsBetween(data.davison.houses.midheaven, expected)).toBeLessThan(0.01);
+
+    // Book value: 26 Capricorn 27 = 270 + 26 + 27/60 degrees. The book read its Midheavens from
+    // printed tables, so allow 0.15 degree (9 arcminutes) for table rounding.
+    const book = 270 + 26 + 27 / 60;
+    expect(Math.abs(data.davison.houses.midheaven - book)).toBeLessThan(0.15);
+
+    // "The small amount necessary": a few minutes of time, not hours.
+    expect(Math.abs(data.midheavenShiftMinutes)).toBeLessThan(30);
+    expect(Math.abs(data.midheavenShiftMinutes)).toBeGreaterThan(0);
   });
 });
