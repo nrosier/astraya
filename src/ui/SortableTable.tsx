@@ -11,10 +11,10 @@
 /**
  * @module SortableTable
  * @purpose Generic, reusable data table with sortable column headers, resizable columns (#1301), a Copy-to-clipboard button, and a CSV download, used across every tabular view in the app.
- * @conventions Thin wiring over table-sort.ts's sorting/serialization logic and table-column-width.ts's width arithmetic; uses SortableTable.messages.ts for en/nl text via useMessages(). Column widths are component state only (session-only, owner decision on #1301): never persisted, reset by the Reset action or a fresh mount.
+ * @conventions Thin wiring over table-sort.ts's sorting/serialization logic; `memoizeRows` (#1440) re-renders a plain row only when its displayed text changes and table-column-width.ts's width arithmetic; uses SortableTable.messages.ts for en/nl text via useMessages(). Column widths are component state only (session-only, owner decision on #1301): never persisted, reset by the Reset action or a fresh mount.
  * @exports SortableTable, CsvExportTable, csvExportTable, useCsvExports
  */
-import { useId, useLayoutEffect, useRef, useState } from 'react';
+import { memo, useId, useLayoutEffect, useRef, useState } from 'react';
 import { downloadText } from './download.js';
 import { type GlossaryTermId } from './astro-glossary.messages.js';
 import { GlossaryTerm } from './GlossaryTerm.js';
@@ -28,6 +28,7 @@ import {
   columnAlign,
   rowsToCsv,
   rowsToTsv,
+  cellText,
   sortRows,
   toggleSort,
   type CellValue,
@@ -108,6 +109,47 @@ export interface RowLinking<T> {
   readonly tint?: ((row: T) => string) | undefined;
 }
 
+interface MemoRowProps<T> {
+  readonly row: T;
+  readonly rowKey: string;
+  readonly columns: readonly TableColumn<T>[];
+  readonly aligns: ReadonlyMap<string, string | undefined>;
+}
+
+/** What a row shows: each cell's text, so two rows with the same text are the same row on screen. */
+function shownCells<T>(columns: readonly TableColumn<T>[], row: T): string {
+  return columns.map((column) => cellText(column, row)).join('\u0000');
+}
+
+/**
+ * A plain body row that re-renders only when what it displays changes (#1440): a playback step hands the table new row
+ * objects every time, but most rows show the same text as the step before. Only for a table that opts in with
+ * `memoizeRows`, whose cells are fully described by their text.
+ */
+const MemoRow = memo(
+  function MemoRow<T>({ row, rowKey, columns, aligns }: MemoRowProps<T>): React.JSX.Element {
+    return (
+      <tr data-row-key={rowKey}>
+        {columns.map((column) => (
+          <td
+            key={column.key}
+            data-align={aligns.get(column.key)}
+            className={column.wrapText ? 'data-table-cell-wrap' : undefined}
+          >
+            {column.renderCell ? column.renderCell(row) : screenText(column, row)}
+          </td>
+        ))}
+      </tr>
+    );
+  },
+  (previous, next) =>
+    previous.rowKey === next.rowKey &&
+    previous.columns.length === next.columns.length &&
+    previous.columns.every((column, index) => column.key === next.columns[index]?.key) &&
+    previous.columns.every((column) => previous.aligns.get(column.key) === next.aligns.get(column.key)) &&
+    shownCells(previous.columns, previous.row) === shownCells(next.columns, next.row),
+) as <T>(props: MemoRowProps<T>) => React.JSX.Element;
+
 export function SortableTable<T>({
   caption,
   columns,
@@ -119,6 +161,7 @@ export function SortableTable<T>({
   headingLevel = 3,
   captionTerm,
   linking,
+  memoizeRows = false,
 }: {
   readonly caption: string;
   readonly columns: readonly TableColumn<T>[];
@@ -140,6 +183,8 @@ export function SortableTable<T>({
   readonly captionTerm?: GlossaryTermId | undefined;
   /** Makes each row hoverable, focusable and selectable, to be linked with a drawing of the same records (#1442). */
   readonly linking?: RowLinking<T> | undefined;
+  /** True for a table that redraws often with mostly unchanged rows (a playing animation, #1440): a row then re-renders only when its displayed text changes. Not with `linking`; a cell built by `renderCell` must be fully described by its `render` text. */
+  readonly memoizeRows?: boolean;
 }): React.JSX.Element {
   const t = useMessages(sortableTableMessages);
   const [sort, setSort] = useState<SortState>();
@@ -353,6 +398,9 @@ export function SortableTable<T>({
           <tbody>
             {sorted.map((row) => {
               const rowKey = getRowKey(row);
+              if (memoizeRows && linking === undefined && selectedRowKey === undefined) {
+                return <MemoRow key={rowKey} row={row} rowKey={rowKey} columns={columns} aligns={aligns} />;
+              }
               const selected = selectedRowKey === rowKey;
               const linkedClass =
                 linking === undefined
