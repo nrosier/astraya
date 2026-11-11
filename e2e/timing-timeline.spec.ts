@@ -160,6 +160,7 @@ test('searches the events, and the technique filter takes a technique out of the
   await expect(page.getByText('No event matches that search.')).toBeVisible();
   await page.getByLabel('Search the events').fill('');
 
+  await page.getByRole('button', { name: /^Techniques \(\d+\)$/ }).click();
   await page.getByRole('group', { name: 'Techniques shown' }).getByLabel('Firdaria').uncheck();
   await expect(page.locator('.gantt-row')).toHaveCount(7);
   await expect(page.getByRole('img', { name: /^Firdaria/ })).toHaveCount(0);

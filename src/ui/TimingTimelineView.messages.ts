@@ -25,6 +25,8 @@ const en = {
   columnStart: 'Start',
   columnEnd: 'End',
   filterLegend: 'Techniques shown',
+  /** The toolbar button that opens the technique filter, with how many techniques are shown (#1442). */
+  techniquesButton: (count: number) => `Techniques (${String(count)})`,
   bodiesLabel: 'Bodies',
   bodiesNote: 'Applies to events that name a body. Zodiacal releasing, firdaria and profections stay.',
   bodyGroups: { all: 'All', major: 'Major planets', minor: 'Asteroids and Lilith' },
@@ -96,6 +98,7 @@ const nl = {
   columnStart: 'Begin',
   columnEnd: 'Einde',
   filterLegend: 'Getoonde technieken',
+  techniquesButton: (count) => `Technieken (${String(count)})`,
   bodiesLabel: 'Lichamen',
   bodiesNote: 'Geldt voor gebeurtenissen met een lichaam. Zodiacal releasing, firdaria en profecties blijven.',
   bodyGroups: { all: 'Alle', major: 'Hoofdplaneten', minor: 'Asteroïden en Lilith' },

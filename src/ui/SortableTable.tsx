@@ -95,6 +95,18 @@ function isEmptyValue(value: CellValue | null | undefined): value is '' | null |
   return value === '' || value === null || value === undefined;
 }
 
+/**
+ * Two-way linking of a table's rows with a drawing of the same records (#1442). A row reports hover, focus and selection
+ * and shows the hovered and selected state it is given back; `tint` gives a row its own colour (`--tech`) for the edge.
+ */
+export interface RowLinking<T> {
+  readonly hoveredKey: string | undefined;
+  readonly onHover: (key: string | undefined) => void;
+  /** Click, or Enter or Space on the focused row. */
+  readonly onSelect: (key: string) => void;
+  readonly tint?: ((row: T) => string) | undefined;
+}
+
 export function SortableTable<T>({
   caption,
   columns,
@@ -105,6 +117,7 @@ export function SortableTable<T>({
   wrap = false,
   headingLevel = 3,
   captionTerm,
+  linking,
 }: {
   readonly caption: string;
   readonly columns: readonly TableColumn<T>[];
@@ -124,6 +137,8 @@ export function SortableTable<T>({
   readonly headingLevel?: 2 | 3;
   /** A glossary term the caption names (#801): the caption text then opens that term's definition in place. On screen only. */
   readonly captionTerm?: GlossaryTermId | undefined;
+  /** Makes each row hoverable, focusable and selectable, to be linked with a drawing of the same records (#1442). */
+  readonly linking?: RowLinking<T> | undefined;
 }): React.JSX.Element {
   const t = useMessages(sortableTableMessages);
   const [sort, setSort] = useState<SortState>();
@@ -338,12 +353,50 @@ export function SortableTable<T>({
             {sorted.map((row) => {
               const rowKey = getRowKey(row);
               const selected = selectedRowKey === rowKey;
+              const linkedClass =
+                linking === undefined
+                  ? undefined
+                  : `data-table-row-linked${linking.hoveredKey === rowKey ? ' data-table-row-hovered' : ''}`;
+              const className = [selected ? 'data-table-row-selected' : undefined, linkedClass]
+                .filter((value) => value !== undefined)
+                .join(' ');
               return (
                 <tr
                   key={rowKey}
                   data-row-key={rowKey}
-                  className={selected ? 'data-table-row-selected' : undefined}
+                  className={className === '' ? undefined : className}
                   aria-current={selected ? 'true' : undefined}
+                  {...(linking === undefined
+                    ? {}
+                    : {
+                        tabIndex: 0,
+                        style:
+                          linking.tint === undefined
+                            ? undefined
+                            : ({ '--tech': linking.tint(row) } as React.CSSProperties),
+                        onMouseEnter: () => {
+                          linking.onHover(rowKey);
+                        },
+                        onMouseLeave: () => {
+                          linking.onHover(undefined);
+                        },
+                        onFocus: () => {
+                          linking.onHover(rowKey);
+                        },
+                        onBlur: () => {
+                          linking.onHover(undefined);
+                        },
+                        onClick: () => {
+                          linking.onSelect(rowKey);
+                        },
+                        onKeyDown: (event: React.KeyboardEvent<HTMLTableRowElement>) => {
+                          // Only the row itself: Enter or Space on a control inside it keeps its own meaning.
+                          if (event.target !== event.currentTarget || (event.key !== 'Enter' && event.key !== ' '))
+                            return;
+                          event.preventDefault();
+                          linking.onSelect(rowKey);
+                        },
+                      })}
                 >
                   {columns.map((column) => (
                     <td
