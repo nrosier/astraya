@@ -5,6 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import { bodyByKey } from '../src/astrology/bodies.js';
 import type { Aspect } from '../src/astrology/aspects.js';
+import type { BodyPosition } from '../src/ephemeris/types.js';
 import {
   judgeHorary,
   judgePerfection,
@@ -140,12 +141,13 @@ describe('judgePerfection (#552)', () => {
   // Positions for the two cases. The Sun (querent) at 0 deg, the Moon (quesited) at 10 deg, the direct
   // aspect forming. A third planet between them at 5 deg interposes (prohibition). A third planet at
   // 20 deg, past the Moon, reaches only the Moon (frustration).
-  const pos = (body: number, longitude: number) => ({
+  const pos = (body: number, longitude: number): BodyPosition => ({
     body,
     longitude,
     latitude: 0,
     longitudeSpeed: 1,
     latitudeSpeed: 0,
+    distance: 1,
     distanceSpeed: 0,
     retrograde: false,
   });
