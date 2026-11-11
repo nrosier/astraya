@@ -695,7 +695,7 @@ describe('CorpusOverridesPanel export and drawer editor (#1335)', () => {
     ).toBe(false);
     const group = container.querySelector(`.corpus-toolbar [role="radiogroup"][aria-label="${m.overriddenOnlyLabel}"]`);
     expect(group?.classList.contains('primitive-choice-group-segmented')).toBe(true);
-    const yes = Array.from(group?.querySelectorAll('input[type="radio"]') ?? []).find(
+    const yes = Array.from(group?.querySelectorAll<HTMLInputElement>('input[type="radio"]') ?? []).find(
       (el) => el.closest('label')?.textContent.trim() === m.overriddenOnlyYes,
     );
     const before = tableRows(container).length;
