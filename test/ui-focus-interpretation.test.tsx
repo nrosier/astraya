@@ -127,7 +127,7 @@ async function tickConsent(): Promise<void> {
     await Promise.resolve();
   });
 }
-/** The generation requests only: opening the panel also reads the history (#423), which is not what these tests count. */
+/** The generation requests only. */
 const generateCalls = (): [string, RequestInit][] =>
   (fetchMock.mock.calls as [string, RequestInit][]).filter(([url]) => url === '/api/interpretation/generate');
 const firstGenerateCall = (): [string, RequestInit] => {
@@ -144,46 +144,24 @@ async function generate(): Promise<void> {
   });
 }
 
-describe('past readings of the selected placement (#423)', () => {
-  const entry = (id: string, body: string, perspective: 'natal' | 'transit', description: string | null) => ({
-    id,
-    mode: 'focus',
-    locale: 'en',
-    createdAt: '2026-03-10T16:30:00.000Z',
-    description,
-    kind: 'focus',
-    basis: { kind: 'focus', body, perspective },
-  });
-
-  it('lists only the readings of this body from this perspective, each saying what it was based on', async () => {
-    fetchMock = vi.fn((url: string) =>
-      Promise.resolve(
-        new Response(
-          JSON.stringify(
-            url.startsWith('/api/interpretation/results')
-              ? {
-                  results: [
-                    entry('a', 'pluto', 'natal', 'Power and security'),
-                    entry('b', 'mars', 'natal', 'Drive'),
-                    entry('c', 'pluto', 'transit', 'A passing push'),
-                    { ...entry('d', 'pluto', 'natal', null), basis: null },
-                  ],
-                }
-              : { sections: [], description: null },
-          ),
-          { status: 200 },
-        ),
-      ),
-    );
-    globalThis.fetch = fetchMock as unknown as typeof fetch;
+describe('saved readings are not listed under the button (#1448)', () => {
+  it('renders no saved-readings list and never reads the saved list; a new reading still shows under the button', async () => {
     await mount({ context: CONTEXT, resetKey: 'a' });
     await act(async () => {
       await Promise.resolve();
     });
-    const items = Array.from(box().querySelectorAll('.tier2-saved-results li')).map((li) => li.textContent);
-    expect(items).toHaveLength(1);
-    expect(items[0]).toContain('Power and security');
-    expect(items[0]).toContain('Pluto (natal)');
+    expect(box().querySelector('.tier2-saved-results')).toBeNull();
+    expect(box().textContent).not.toContain('Past interpretations of this placement');
+    await tickConsent();
+    await generate();
+    await vi.waitFor(() => {
+      expect(box().querySelector('.tier2-result')?.textContent).toContain('Security meets power.');
+    });
+    expect(box().querySelector('.tier2-saved-results')).toBeNull();
+    const listReads = (fetchMock.mock.calls as [string][]).filter(([url]) =>
+      url.startsWith('/api/interpretation/results'),
+    );
+    expect(listReads).toHaveLength(0);
   });
 });
 
