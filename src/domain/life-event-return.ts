@@ -4,12 +4,12 @@
 /**
  * @module life-event-return
  * @purpose Finds the return in force at a stored life event, so picking an event on a Returns screen selects the return the person was living under.
- * @conventions Event time is local civil time at the birth place (the person's zone override, never the birth offset override); an untimed event counts as noon; the lunar search looks back `LUNAR_RETURN_SEARCH_DAYS` (longer than any gap between Moon returns) and takes the last return at or before the event; a solar event takes the event year's return, or the previous year's when the event falls before it.
- * @exports ReturnInForce, returnInForceAtEvent
+ * @conventions Event time is local civil time at the birth place (the person's zone override, never the birth offset override); an untimed event counts as noon; the lunar search looks back `LUNAR_RETURN_SEARCH_DAYS` (longer than any gap between Moon returns) and takes the last return at or before the event; a solar event takes the event year's return, or the previous year's when the event falls before it. `returnInForceAtJd` is the same rule for any as-of Julian day (the chart-search timing subjects, #1405); `returnInForceAtEvent` only converts the event to a Julian day first.
+ * @exports ReturnInForce, returnInForceAtJd, returnInForceAtEvent
  */
 import { civilFromJulianDay, julianDayFor } from '../time/julian.js';
 import { resolveMoment } from '../time/resolve.js';
-import type { EphemerisProvider, JulianDayUT } from '../ephemeris/types.js';
+import type { EphemerisProvider, JulianDayUT, Zodiac } from '../ephemeris/types.js';
 import type { BirthMomentInput } from '../time/types.js';
 import type { LifeEvent } from './life-events.js';
 import { LUNAR_RETURN_SEARCH_DAYS } from './return-chart.js';
@@ -52,6 +52,31 @@ function describe(returnJd: JulianDayUT): ReturnInForce {
   };
 }
 
+/**
+ * The return of `kind` in force at the Julian day `atJd`, for a person born at `birth`. `zodiac` is the person's
+ * zodiac (tropical when absent): a sidereal return falls at a different moment. Throws a RangeError when none is found.
+ */
+export async function returnInForceAtJd(
+  kind: 'solar-return' | 'lunar-return',
+  atJd: JulianDayUT,
+  birth: BirthMomentInput,
+  provider: EphemerisProvider,
+  zodiac?: Zodiac,
+): Promise<ReturnInForce> {
+  const options = zodiac === undefined ? {} : { zodiac };
+  if (kind === 'lunar-return') {
+    const found = await computeLunarReturns(birth, atJd - LUNAR_RETURN_SEARCH_DAYS, atJd, provider, options);
+    const last = found.returns.at(-1);
+    if (last === undefined) throw new RangeError('No lunar return was found before this date.');
+    return describe(last.returnJd);
+  }
+  const year = civilFromJulianDay(atJd).year;
+  const thisYear = await computeSolarReturn(birth, year, provider, options);
+  if (thisYear.returnJd <= atJd) return describe(thisYear.returnJd);
+  const previous = await computeSolarReturn(birth, year - 1, provider, options);
+  return describe(previous.returnJd);
+}
+
 /** The return of `kind` in force at `event`, for a person born at `birth`. Throws a RangeError when none is found. */
 export async function returnInForceAtEvent(
   kind: 'solar-return' | 'lunar-return',
@@ -59,16 +84,5 @@ export async function returnInForceAtEvent(
   birth: BirthMomentInput,
   provider: EphemerisProvider,
 ): Promise<ReturnInForce> {
-  const atEvent = await eventJd(event, birth, provider);
-  if (kind === 'lunar-return') {
-    const found = await computeLunarReturns(birth, atEvent - LUNAR_RETURN_SEARCH_DAYS, atEvent, provider);
-    const last = found.returns.at(-1);
-    if (last === undefined) throw new RangeError('No lunar return was found before this event.');
-    return describe(last.returnJd);
-  }
-  const eventYear = civilFromJulianDay(atEvent).year;
-  const thisYear = await computeSolarReturn(birth, eventYear, provider);
-  if (thisYear.returnJd <= atEvent) return describe(thisYear.returnJd);
-  const previous = await computeSolarReturn(birth, eventYear - 1, provider);
-  return describe(previous.returnJd);
+  return returnInForceAtJd(kind, await eventJd(event, birth, provider), birth, provider);
 }
