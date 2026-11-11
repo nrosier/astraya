@@ -56,6 +56,7 @@ import {
 } from './annotations.js';
 import { foldPin, PIN_ENTITY, type Pin } from './pins.js';
 import { CORRECTION_ENTITY, foldCorrection, type CorpusCorrection } from './corpus-corrections.js';
+import { CHART_SEARCH_ENTITY, foldChartSearch, type SavedChartSearch } from './chart-searches.js';
 import { foldSavedQuery, SAVED_QUERY_ENTITY, type SavedQuery } from './saved-queries.js';
 
 /** The field that hides a record. A register like any other, so undo needs no new machinery. */
@@ -110,6 +111,7 @@ const KNOWN_ENTITIES: readonly string[] = [
   BIRTH_NOTE_ENTITY,
   CONSULTATION_NOTE_ENTITY,
   SAVED_QUERY_ENTITY,
+  CHART_SEARCH_ENTITY,
   PIN_ENTITY,
   ANNOTATION_ENTITY,
   ACCOUNT_ENTITY,
@@ -206,6 +208,8 @@ export interface State {
     readonly charts: ReadonlyMap<string, Chart>;
     /** Saved queries hidden by a tombstone, so the list can offer Undo and Erase (#1061). */
     readonly savedQueries: ReadonlyMap<string, SavedQuery>;
+    /** Saved chart searches hidden by a tombstone, so the list can offer Undo and Erase (#1405). */
+    readonly chartSearches: ReadonlyMap<string, SavedChartSearch>;
     /** Pins hidden by a tombstone, so the list can offer Undo (#1061). */
     readonly pins: ReadonlyMap<string, Pin>;
   };
@@ -223,6 +227,11 @@ export interface State {
    * because hiding them would be silent loss. Map order is not part of the contract: sort before showing.
    */
   readonly savedQueries: ReadonlyMap<string, SavedQuery>;
+  /**
+   * Live saved chart searches, by id (#1405). Unreadable and incomplete ones are included, with their reason, because
+   * hiding them would be silent loss. Map order is not part of the contract: sort before showing.
+   */
+  readonly chartSearches: ReadonlyMap<string, SavedChartSearch>;
   /** Live pinned event-search results, by derived id (#1061). Unreadable ones are included, with their reason. */
   readonly pins: ReadonlyMap<string, Pin>;
   /**
@@ -246,6 +255,7 @@ export interface State {
    */
   readonly erased: {
     readonly savedQueries: ReadonlySet<string>;
+    readonly chartSearches: ReadonlySet<string>;
     readonly pins: ReadonlySet<string>;
     readonly annotations: ReadonlySet<string>;
   };
@@ -323,6 +333,21 @@ export function materialise(registers: Registers): State {
     else savedQueries.set(id, query);
   }
 
+  const chartSearches = new Map<string, SavedChartSearch>();
+  const deletedChartSearches = new Map<string, SavedChartSearch>();
+  const erasedChartSearches = new Set<string>();
+  for (const [id, fields] of Object.entries(registers[CHART_SEARCH_ENTITY] ?? {})) {
+    // Purged first, as for saved queries: a purge leaves only its marker, which would otherwise fold as incomplete.
+    if (isPurged(fields)) {
+      erasedChartSearches.add(id);
+      continue;
+    }
+    const search = foldChartSearch(id, fields);
+    if (search === undefined) continue;
+    if (isDeleted(fields)) deletedChartSearches.set(id, search);
+    else chartSearches.set(id, search);
+  }
+
   const pins = new Map<string, Pin>();
   const deletedPins = new Map<string, Pin>();
   for (const [id, fields] of Object.entries(registers[PIN_ENTITY] ?? {})) {
@@ -377,16 +402,28 @@ export function materialise(registers: Registers): State {
   return {
     people,
     charts,
-    deleted: { people: deletedPeople, charts: deletedCharts, savedQueries: deletedSavedQueries, pins: deletedPins },
+    deleted: {
+      people: deletedPeople,
+      charts: deletedCharts,
+      savedQueries: deletedSavedQueries,
+      chartSearches: deletedChartSearches,
+      pins: deletedPins,
+    },
     orphanCharts,
     birthNotes,
     consultationNotes,
     savedQueries,
+    chartSearches,
     pins,
     annotations,
     annotationEntities,
     erasedRevisions,
-    erased: { savedQueries: erasedQueries, pins: erasedPins, annotations: erasedAnnotations },
+    erased: {
+      savedQueries: erasedQueries,
+      chartSearches: erasedChartSearches,
+      pins: erasedPins,
+      annotations: erasedAnnotations,
+    },
     // Any other entity id under `account` is ignored: every device writes the one constant id.
     account: foldAccount(registers[ACCOUNT_ENTITY]?.[ACCOUNT_ENTITY_ID]),
     corrections,
