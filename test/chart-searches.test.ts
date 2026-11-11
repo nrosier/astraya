@@ -8,6 +8,7 @@ import { MAX_CUSTOM_PROMPT_LENGTH } from '../src/interpretation/prompt-guardrail
 import {
   CHART_SEARCH_ENTITY,
   CHART_SEARCH_MAX_CONDITIONS,
+  CHART_SEARCH_SCOPES,
   ChartSearchRefusedError,
   assertChartSearchMutation,
   chartSearchCreate,
@@ -30,12 +31,44 @@ const SEARCH_ID = 's-abcdefghijklmnop';
 const QUERY_ID = 'q-abcdefghijklmnop';
 
 const CONDITIONS: readonly StoredSearchCondition[] = [
-  { kind: 'sign', body: 'sun', sign: 4 },
-  { kind: 'house', body: 'moon', house: 7 },
-  { kind: 'aspect', body: 'mars', aspectKey: 'square', target: { kind: 'angle', angle: 'asc' } },
-  { kind: 'aspect', body: 'venus', aspectKey: 'trine', target: { kind: 'body', body: 'jupiter' } },
+  { kind: 'sign', scope: 'natal', body: 'sun', sign: 4 },
+  { kind: 'house', scope: 'natal', body: 'moon', house: 7 },
+  { kind: 'aspect', scope: 'natal', body: 'mars', aspectKey: 'square', target: { kind: 'angle', angle: 'asc' } },
+  { kind: 'aspect', scope: 'natal', body: 'venus', aspectKey: 'trine', target: { kind: 'body', body: 'jupiter' } },
 ];
-const DEFINITION: ChartSearchDefinition = { version: 1, operator: 'and', conditions: CONDITIONS };
+const DEFINITION: ChartSearchDefinition = { version: 2, operator: 'and', conditions: CONDITIONS };
+
+/** One condition per timing scope, as a version-2 definition stores them. */
+const TIMING_CONDITIONS: readonly StoredSearchCondition[] = [
+  { kind: 'aspect', scope: 'transit', body: 'saturn', aspectKey: 'square', target: { kind: 'angle', angle: 'mc' } },
+  { kind: 'aspect', scope: 'transit', body: 'moon', aspectKey: 'conjunction', target: { kind: 'angle', angle: 'asc' } },
+  { kind: 'aspect', scope: 'progression', body: 'sun', aspectKey: 'trine', target: { kind: 'body', body: 'venus' } },
+  { kind: 'aspect', scope: 'progression', body: 'moon', aspectKey: 'sextile', target: { kind: 'angle', angle: 'asc' } },
+  { kind: 'sign', scope: 'solarReturn', body: 'moon', sign: 9 },
+  { kind: 'house', scope: 'solarReturn', body: 'jupiter', house: 10 },
+  { kind: 'aspect', scope: 'solarReturn', body: 'mars', aspectKey: 'square', target: { kind: 'body', body: 'sun' } },
+  { kind: 'sign', scope: 'lunarReturn', body: 'sun', sign: 2 },
+  { kind: 'house', scope: 'lunarReturn', body: 'venus', house: 4 },
+  {
+    kind: 'aspect',
+    scope: 'lunarReturn',
+    body: 'moon',
+    aspectKey: 'opposition',
+    target: { kind: 'angle', angle: 'mc' },
+  },
+];
+const TIMING_DEFINITION: ChartSearchDefinition = { version: 2, operator: 'or', conditions: TIMING_CONDITIONS };
+
+/** What version 1 wrote: no `scope` key on any condition. */
+const V1_DEFINITION = {
+  version: 1,
+  operator: 'and',
+  conditions: [
+    { kind: 'sign', body: 'sun', sign: 4 },
+    { kind: 'house', body: 'moon', house: 7 },
+    { kind: 'aspect', body: 'mars', aspectKey: 'square', target: { kind: 'angle', angle: 'asc' } },
+  ],
+};
 
 function register(value: unknown, millis = T0): NoteFieldRegister {
   return { value, hlc: `${String(millis).padStart(18, '0')}-00000-a1b2c3d4e5f60718` };
@@ -90,7 +123,7 @@ describe('foldChartSearch', () => {
   });
 
   it('keeps a definition from a newer version as future-version, never defaulted', () => {
-    expect(foldChartSearch(SEARCH_ID, fieldsOf('Newer', { ...DEFINITION, version: 2, extra: true }))).toEqual({
+    expect(foldChartSearch(SEARCH_ID, fieldsOf('Newer', { ...DEFINITION, version: 3, extra: true }))).toEqual({
       status: 'unreadable',
       id: SEARCH_ID,
       name: 'Newer',
@@ -99,7 +132,7 @@ describe('foldChartSearch', () => {
   });
 
   it('keeps an unknown condition kind as unknown-condition, with the rest of the list untouched', () => {
-    const definition = { ...DEFINITION, conditions: [...CONDITIONS, { kind: 'transit', body: 'sun' }] };
+    const definition = { ...DEFINITION, conditions: [...CONDITIONS, { kind: 'comet', scope: 'natal', body: 'sun' }] };
     expect(foldChartSearch(SEARCH_ID, fieldsOf('Timing', definition))).toMatchObject({
       status: 'unreadable',
       name: 'Timing',
@@ -112,16 +145,20 @@ describe('foldChartSearch', () => {
       { ...DEFINITION, operator: 'xor' },
       { ...DEFINITION, conditions: 'nope' },
       { ...DEFINITION, conditions: [] },
-      { ...DEFINITION, conditions: [{ kind: 'sign', body: 'vulcan', sign: 1 }] },
-      { ...DEFINITION, conditions: [{ kind: 'sign', body: 'sun', sign: 12 }] },
-      { ...DEFINITION, conditions: [{ kind: 'house', body: 'sun', house: 0 }] },
+      { ...DEFINITION, conditions: [{ kind: 'sign', scope: 'natal', body: 'vulcan', sign: 1 }] },
+      { ...DEFINITION, conditions: [{ kind: 'sign', scope: 'natal', body: 'sun', sign: 12 }] },
+      { ...DEFINITION, conditions: [{ kind: 'house', scope: 'natal', body: 'sun', house: 0 }] },
       {
         ...DEFINITION,
-        conditions: [{ kind: 'aspect', body: 'sun', aspectKey: 'nope', target: { kind: 'angle', angle: 'asc' } }],
+        conditions: [
+          { kind: 'aspect', scope: 'natal', body: 'sun', aspectKey: 'nope', target: { kind: 'angle', angle: 'asc' } },
+        ],
       },
       {
         ...DEFINITION,
-        conditions: [{ kind: 'aspect', body: 'sun', aspectKey: 'square', target: { kind: 'angle', angle: 'ic' } }],
+        conditions: [
+          { kind: 'aspect', scope: 'natal', body: 'sun', aspectKey: 'square', target: { kind: 'angle', angle: 'ic' } },
+        ],
       },
       { ...DEFINITION, conditions: [null] },
       { ...DEFINITION, version: 0 },
@@ -140,7 +177,7 @@ describe('foldChartSearch', () => {
     expect(CHART_SEARCH_MAX_CONDITIONS).toBe(10);
     const many = (count: number) => ({
       ...DEFINITION,
-      conditions: Array.from({ length: count }, () => ({ kind: 'sign', body: 'sun', sign: 0 })),
+      conditions: Array.from({ length: count }, () => ({ kind: 'sign', scope: 'natal', body: 'sun', sign: 0 })),
     });
     expect(foldChartSearch(SEARCH_ID, fieldsOf('Ten', many(10)))).toMatchObject({ status: 'ready' });
     expect(foldChartSearch(SEARCH_ID, fieldsOf('Eleven', many(11)))).toMatchObject({
@@ -151,6 +188,107 @@ describe('foldChartSearch', () => {
 
   it('folds a non-string name to the empty string', () => {
     expect(foldChartSearch(SEARCH_ID, fieldsOf(7, DEFINITION))).toMatchObject({ status: 'ready', name: '' });
+  });
+});
+
+describe('timing scopes and versions', () => {
+  const fold2 = (definition: unknown) => foldChartSearch(SEARCH_ID, fieldsOf('Timing', definition));
+  const manyTiming = (count: number): ChartSearchDefinition => ({
+    ...TIMING_DEFINITION,
+    conditions: [...TIMING_CONDITIONS, ...TIMING_CONDITIONS].slice(0, count),
+  });
+
+  it('round-trips a version-2 definition with every timing scope, byte for byte', () => {
+    expect(new Set(TIMING_CONDITIONS.map((condition) => condition.scope))).toEqual(
+      new Set<string>(CHART_SEARCH_SCOPES.filter((scope) => scope !== 'natal')),
+    );
+    expect(fold2(TIMING_DEFINITION)).toEqual({
+      status: 'ready',
+      id: SEARCH_ID,
+      name: 'Timing',
+      definition: TIMING_DEFINITION,
+    });
+    const state = stateOf(chartSearchCreate(SEARCH_ID, 'Timing', TIMING_DEFINITION));
+    expect(state.chartSearches.get(SEARCH_ID)).toMatchObject({ status: 'ready', definition: TIMING_DEFINITION });
+    expect(Object.keys(TIMING_DEFINITION).sort()).toEqual(['conditions', 'operator', 'version']);
+  });
+
+  it('stores the transiting body of a transit-to-angle condition, any body key', () => {
+    for (const body of ['moon', 'sun', 'saturn', 'chiron']) {
+      const condition = {
+        kind: 'aspect',
+        scope: 'transit',
+        body,
+        aspectKey: 'square',
+        target: { kind: 'angle', angle: 'asc' },
+      };
+      const folded = fold2({ ...TIMING_DEFINITION, conditions: [condition] });
+      expect(folded).toMatchObject({ status: 'ready' });
+    }
+  });
+
+  it('reads a version-1 definition as natal-only, with no timing condition', () => {
+    const folded = fold2(V1_DEFINITION);
+    expect(folded).toMatchObject({ status: 'ready' });
+    if (folded?.status !== 'ready') return;
+    expect(folded.definition.version).toBe(2);
+    expect(folded.definition.conditions).toHaveLength(3);
+    expect(folded.definition.conditions.every((condition) => condition.scope === 'natal')).toBe(true);
+  });
+
+  it('keeps a version-1 condition that carries a scope as invalid', () => {
+    expect(fold2({ ...V1_DEFINITION, conditions: [{ ...V1_DEFINITION.conditions[0], scope: 'natal' }] })).toMatchObject(
+      {
+        status: 'unreadable',
+        reason: 'invalid',
+      },
+    );
+  });
+
+  it('keeps a version-2 condition without scope as invalid, never defaulted', () => {
+    expect(fold2({ ...DEFINITION, conditions: [{ kind: 'sign', body: 'sun', sign: 4 }] })).toMatchObject({
+      status: 'unreadable',
+      reason: 'invalid',
+    });
+    expect(fold2({ ...DEFINITION, conditions: [{ kind: 'sign', scope: null, body: 'sun', sign: 4 }] })).toMatchObject({
+      reason: 'invalid',
+    });
+  });
+
+  it('keeps an unknown scope string as unknown-condition', () => {
+    expect(
+      fold2({ ...DEFINITION, conditions: [{ kind: 'sign', scope: 'saturnReturn', body: 'sun', sign: 4 }] }),
+    ).toMatchObject({ status: 'unreadable', reason: 'unknown-condition' });
+  });
+
+  it('keeps a transit or progression sign or house condition as invalid', () => {
+    for (const scope of ['transit', 'progression']) {
+      expect(fold2({ ...DEFINITION, conditions: [{ kind: 'sign', scope, body: 'sun', sign: 4 }] })).toMatchObject({
+        reason: 'invalid',
+      });
+      expect(fold2({ ...DEFINITION, conditions: [{ kind: 'house', scope, body: 'sun', house: 4 }] })).toMatchObject({
+        reason: 'invalid',
+      });
+    }
+  });
+
+  it('keeps a version above 2 as future-version, listed and not refused by the fold', () => {
+    const future = { ...TIMING_DEFINITION, version: 3, conditions: [{ kind: 'newkind', scope: 'newscope' }] };
+    expect(fold2(future)).toEqual({ status: 'unreadable', id: SEARCH_ID, name: 'Timing', reason: 'future-version' });
+    const state = stateOf([put(SEARCH_ID, 'name', 'Timing'), put(SEARCH_ID, 'definition', future)]);
+    expect(state.chartSearches.get(SEARCH_ID)).toMatchObject({ status: 'unreadable', reason: 'future-version' });
+  });
+
+  it('accepts 10 timing conditions and refuses an 11th, in the fold and in the guard', () => {
+    expect(fold2(manyTiming(10))).toMatchObject({ status: 'ready' });
+    expect(fold2(manyTiming(11))).toMatchObject({ status: 'unreadable', reason: 'invalid' });
+    const guard = (count: number) => () => {
+      for (const mutation of chartSearchCreate(SEARCH_ID, 'Timing', manyTiming(count))) {
+        assertChartSearchMutation(mutation);
+      }
+    };
+    expect(guard(10)).not.toThrow();
+    expect(guard(11)).toThrow(ChartSearchRefusedError);
   });
 });
 
@@ -192,9 +330,10 @@ describe('the guard (assertChartSearchMutation)', () => {
       field: 'definition',
       value,
     });
-    const eleven = Array.from({ length: 11 }, () => ({ kind: 'sign', body: 'sun', sign: 0 }));
+    const eleven = Array.from({ length: 11 }, () => ({ kind: 'sign', scope: 'natal', body: 'sun', sign: 0 }));
     expect(refusal(write({ ...DEFINITION, conditions: eleven }))).toBe('invalid');
-    expect(refusal(write({ ...DEFINITION, version: 2 }))).toBe('invalid');
+    expect(refusal(write({ ...DEFINITION, version: 3 }))).toBe('invalid');
+    expect(refusal(write(V1_DEFINITION))).toBe('invalid');
     expect(refusal(write({ ...DEFINITION, conditions: [{ kind: 'transit' }] }))).toBe('invalid');
   });
 
