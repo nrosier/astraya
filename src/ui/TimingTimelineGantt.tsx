@@ -8,6 +8,8 @@ import type { JulianDayUT } from '../ephemeris/types.js';
 import type { TimingTimelineEvent, TimingTimelineTrack } from '../domain/timing-timeline.js';
 import { useLayoutEffect, useRef, useState } from 'react';
 import {
+  BAR_GAP_PX,
+  barSpan,
   visibleBarLabels,
   ganttFraction,
   techniqueColorVar,
@@ -20,7 +22,7 @@ import {
 const TICK_SEPARATION_EM = 3;
 const WIDTH = 1000;
 const HEIGHT = 24;
-/** A bar never draws narrower than this, so a short period is still a visible mark. */
+/** A bar never draws narrower than this many viewBox units, so a short period is still a visible mark. */
 const MIN_BAR = 3;
 
 export interface TimingTimelineGanttProps {
@@ -83,6 +85,8 @@ export function TimingTimelineGantt({
     };
   }, []);
   const ticks = thinYearTicks(yearTicks(fromJd, toJd), plot.width, TICK_SEPARATION_EM * plot.fontPx);
+  // The SVG sits inside a 1px border on each side; its viewBox is stretched over what is left.
+  const plotInnerPx = plot.width > 2 ? plot.width - 2 : 0;
   const target = ganttFraction(targetJd, fromJd, toJd) * WIDTH;
   return (
     <div className="gantt" role="group" aria-label={label}>
@@ -170,8 +174,7 @@ export function TimingTimelineGantt({
                     ) : (
                       <rect
                         className={mark.sub ? 'gantt-bar gantt-bar-sub' : 'gantt-bar'}
-                        x={mark.start * WIDTH}
-                        width={Math.max((mark.end - mark.start) * WIDTH, MIN_BAR)}
+                        {...barSpan(mark.start, mark.end, WIDTH, plotInnerPx, BAR_GAP_PX, MIN_BAR)}
                         y={mark.sub ? 15 : 3}
                         height={mark.sub ? 6 : 18}
                         rx={2}

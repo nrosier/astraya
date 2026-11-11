@@ -296,7 +296,7 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
         />
       </PageHeader>
       <DateAnimationBar date={asOf} onDateChange={setAsOf} onPlayingChange={setPlayback} />
-      <div className="timing-toolbar">
+      <div className="progressions-controls">
         <Select
           label={t.techniqueLabel}
           value={technique}
