@@ -3551,15 +3551,20 @@ label.stacked {
   font-weight: 650;
 }
 
-/* One shared base for the small labels (issue 1356): the badge, the corpus tag chip, the Sabian key-insight tag and the settings card tag share size and line height. Each class below keeps its own colour and layout. */
+/* One shared pill anatomy for the small labels (issue 1356): the badge, the corpus tag chip, the Sabian key-insight tag and the settings card tag share size, line height, display, padding, border and radius. Each class keeps its own colour and any layout that is genuinely different (see the overrides below). */
 .primitive-badge,
 .corpus-tag-chip,
 .sabian-insight-tag,
 .settings-card-tag {
+  display: inline-block;
+  padding: 0.1rem var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
   font-size: var(--text-xs);
   line-height: 1.4;
 }
 
+/* Overrides of the shared pill anatomy (issue 1356). The Sabian tag is block-level so the key-insight label sits on its own line above the insight text. */
 .sabian-insight-tag {
   display: block;
   margin-bottom: var(--space-1);
@@ -3733,10 +3738,6 @@ label.stacked {
 }
 
 .primitive-badge {
-  display: inline-block;
-  padding: 0.1rem var(--space-2);
-  border: 1px solid var(--line);
-  border-radius: 999px;
   background: var(--surface-hover);
   color: var(--fg);
 }
@@ -5772,13 +5773,12 @@ svg text.chart-symbol-text-unicode {
   list-style: none;
 }
 
+/* Corpus chip (issue 1356): inline-flex so the remove button sits beside the tag, with its own gap and an unequal inner padding (less on the button side). */
 .corpus-tag-chip {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
   padding: 0 var(--space-1) 0 var(--space-2);
-  border: 1px solid var(--line);
-  border-radius: 999px;
   background: var(--surface-hover);
 }
 
