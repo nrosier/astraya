@@ -1006,6 +1006,11 @@ footer {
   }
 }
 
+/* With the filter in the toolbar the table has the full width (#1442). */
+.timing-layout--full {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .forecast-as-of {
   max-width: 20rem;
 }
@@ -9162,7 +9167,36 @@ a.quiet,
   }
 }
 
-/* The technique filter: one checkbox per line, in the controls card. */
+/* The table toolbar (#1442): search, the bodies filter and the Techniques button on one row, wrapping on a narrow screen. */
+.timing-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-3);
+}
+
+.timing-popover-anchor {
+  position: relative;
+  margin-inline-start: auto;
+}
+
+/* The Techniques popover opens below its button, right-aligned so it stays on screen. */
+.timing-popover {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  z-index: 26;
+  min-width: min(15rem, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--fg);
+  box-shadow: var(--shadow-popover);
+}
+
+/* The technique filter: one checkbox per line, in the Techniques popover. */
 .timing-technique-filter {
   display: grid;
   gap: var(--space-1);

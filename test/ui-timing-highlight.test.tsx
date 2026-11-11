@@ -168,9 +168,15 @@ describe('two-way highlighting (#1442)', () => {
     const widthOf = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'clientWidth');
     Object.defineProperty(HTMLElement.prototype, 'clientWidth', { configurable: true, get: () => 1000 });
     globalThis.ResizeObserver = class {
-      observe(): void {}
-      disconnect(): void {}
-      unobserve(): void {}
+      observe(): void {
+        return undefined;
+      }
+      disconnect(): void {
+        return undefined;
+      }
+      unobserve(): void {
+        return undefined;
+      }
     };
     const { container, root } = mount([]);
     try {
@@ -218,5 +224,17 @@ describe('two-way highlighting (#1442)', () => {
       });
       container.remove();
     }
+  });
+});
+
+describe('the Techniques popover (#1442)', () => {
+  it('has en and nl wording with a count, and the legend is gone from the side column', async () => {
+    const { timingTimelineViewMessages } = await import('../src/ui/TimingTimelineView.messages.js');
+    expect(timingTimelineViewMessages.en.techniquesButton(7)).toBe('Techniques (7)');
+    expect(timingTimelineViewMessages.nl.techniquesButton(6)).toBe('Technieken (6)');
+    const { readFileSync } = await import('node:fs');
+    const source = readFileSync(`${import.meta.dirname}/../src/ui/TimingTimelineView.tsx`, 'utf8');
+    expect(source).not.toContain('timing-layout-side');
+    expect(source).toContain('aria-haspopup="true"');
   });
 });

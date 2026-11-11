@@ -1,10 +1,10 @@
 /**
  * @module TimingTimelineView
- * @purpose Renders the timing techniques on one shared date axis: a Gantt chart of every track over a 5 or 10 year range either side of the centre date, the same events in a searchable table, and the technique filter beside it (#1237).
+ * @purpose Renders the timing techniques on one shared date axis: a Gantt chart of every track over a 5 or 10 year range either side of the centre date, the same events in a searchable table, and the technique filter in a popover on the table's toolbar (#1237, #1442).
  * @conventions Keeps each calculation in its domain module and displays normalized TimingTimelineEvent records only; all visible labels use the co-located message catalogue.
  * @exports TimingTimelineView
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { firdariaPeriods } from '../astrology/firdaria.js';
 import { zodiacalReleasingPeriods, zodiacalReleasingSubperiods } from '../astrology/zodiacal-releasing.js';
 import { computeChartData } from '../domain/chart-compute.js';
@@ -45,6 +45,7 @@ import { SortableTable, csvExportTable, useCsvExports } from './SortableTable.js
 import type { TableColumn } from './table-sort.js';
 import { TimingTimelineGantt } from './TimingTimelineGantt.js';
 import { ganttRows, techniqueColorVar } from './timeline-gantt.js';
+import { useExclusiveOpen } from './use-exclusive-open.js';
 import { Badge } from './primitives/Badge.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
@@ -70,6 +71,9 @@ type Load =
 const YEAR_DAYS = 365.2425;
 /** The ranges the header offers: years either side of the centre date (#1237). */
 const BODY_GROUPS = ['all', 'major', 'minor'] as const satisfies readonly TimelineBodyGroup[];
+
+/** The one popover on the table toolbar: which techniques are shown. */
+const TECHNIQUES_KEY = 'techniques';
 
 const RANGES = ['5', '10'] as const;
 type Range = (typeof RANGES)[number];
@@ -111,6 +115,9 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
   // One event shared by the chart and the table (#1442): the one under the pointer or focus, and the one chosen.
   const [hoveredKey, setHoveredKey] = useState<string>();
   const [selectedKey, setSelectedKey] = useState<string>();
+  const techniques = useExclusiveOpen<typeof TECHNIQUES_KEY>('timeline');
+  const techniquesOpen = techniques.open === TECHNIQUES_KEY;
+  const techniquesId = useId();
   const chartRef = useRef<HTMLElement>(null);
   const tableRef = useRef<HTMLElement>(null);
   // Where the selection came from: a bar brings its row into view, a row brings its bar.
@@ -350,10 +357,63 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
             </section>
 
             {/* The event table on the left, the technique filter on the right (#1237, the shared timing layout). */}
-            <div className="timing-layout">
+            <div className="timing-layout timing-layout--full">
               <div className="timing-layout-main">
                 <section className="timing-card" ref={tableRef}>
-                  <TextField label={t.searchLabel} value={query} onChange={setQuery} />
+                  <div className="timing-toolbar">
+                    <TextField label={t.searchLabel} value={query} onChange={setQuery} />
+                    <ChoiceGroup
+                      label={t.bodiesLabel}
+                      value={bodyGroup}
+                      segmented
+                      showLabel
+                      options={BODY_GROUPS.map((group) => ({ value: group, label: t.bodyGroups[group] }))}
+                      onChange={(value) => {
+                        setBodyGroup(value === 'major' || value === 'minor' ? value : 'all');
+                      }}
+                    />
+                    <div
+                      className="timing-popover-anchor"
+                      ref={techniques.groupRef(TECHNIQUES_KEY)}
+                      onBlur={(event) => {
+                        techniques.onGroupBlur(TECHNIQUES_KEY, event);
+                      }}
+                    >
+                      <Button
+                        ref={techniques.buttonRef(TECHNIQUES_KEY)}
+                        aria-haspopup="true"
+                        aria-expanded={techniquesOpen}
+                        aria-controls={techniquesOpen ? techniquesId : undefined}
+                        onClick={() => {
+                          techniques.toggle(TECHNIQUES_KEY);
+                        }}
+                      >
+                        {t.techniquesButton(TIMING_TIMELINE_TRACKS.length - hidden.size)}
+                      </Button>
+                      {techniquesOpen && (
+                        <div id={techniquesId} className="timing-popover" role="group" aria-label={t.filterLegend}>
+                          <div className="timing-technique-filter">
+                            {TIMING_TIMELINE_TRACKS.map((track) => (
+                              <Checkbox
+                                key={track}
+                                label={t.tracks[track]}
+                                checked={!hidden.has(track)}
+                                onChange={(checked) => {
+                                  setHidden((current) => {
+                                    const next = new Set(current);
+                                    if (checked) next.delete(track);
+                                    else next.add(track);
+                                    return next;
+                                  });
+                                }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <p className="hint">{t.bodiesNote}</p>
                   {rows.length === 0 ? (
                     <p className="hint">{query.trim() === '' ? t.noEvents : t.noMatches}</p>
                   ) : (
@@ -388,39 +448,6 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
                     )}
                   </ul>
                 )}
-              </div>
-              <div className="timing-layout-side">
-                <section className="timing-card" aria-labelledby="timeline-techniques-heading">
-                  <h2 id="timeline-techniques-heading">{t.filterLegend}</h2>
-                  <ChoiceGroup
-                    label={t.bodiesLabel}
-                    value={bodyGroup}
-                    segmented
-                    showLabel
-                    options={BODY_GROUPS.map((group) => ({ value: group, label: t.bodyGroups[group] }))}
-                    onChange={(value) => {
-                      setBodyGroup(value === 'major' || value === 'minor' ? value : 'all');
-                    }}
-                  />
-                  <p className="hint">{t.bodiesNote}</p>
-                  <div role="group" aria-labelledby="timeline-techniques-heading" className="timing-technique-filter">
-                    {TIMING_TIMELINE_TRACKS.map((track) => (
-                      <Checkbox
-                        key={track}
-                        label={t.tracks[track]}
-                        checked={!hidden.has(track)}
-                        onChange={(checked) => {
-                          setHidden((current) => {
-                            const next = new Set(current);
-                            if (checked) next.delete(track);
-                            else next.add(track);
-                            return next;
-                          });
-                        }}
-                      />
-                    ))}
-                  </div>
-                </section>
               </div>
             </div>
           </>
