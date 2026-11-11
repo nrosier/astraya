@@ -382,8 +382,14 @@ describe('a return that cannot be found (answer 12)', () => {
   });
 
   it('a genuine provider failure still propagates out of buildSearchSubject', async () => {
-    const broken: EphemerisProvider = Object.assign(Object.create(engine) as EphemerisProvider, {
-      nextMoonCrossing: () => Promise.reject(new Error('engine failure')),
+    // A delegating wrapper, not an object inheriting from the engine: the engine's methods use private
+    // fields, so a call through a prototype-only object fails with a receiver error instead of the stub's error.
+    const broken: EphemerisProvider = new Proxy(engine, {
+      get(target, property) {
+        if (property === 'nextMoonCrossing') return () => Promise.reject(new Error('engine failure'));
+        const value: unknown = Reflect.get(target, property, target);
+        return typeof value === 'function' ? (value as (...args: unknown[]) => unknown).bind(target) : value;
+      },
     });
     await expect(
       buildSearchSubject(
