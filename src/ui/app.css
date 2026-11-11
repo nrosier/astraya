@@ -1101,6 +1101,15 @@ footer {
   margin-bottom: var(--space-4);
 }
 
+/* The Progressions selectors (#1442): an ordinary form row above the table, no wheel toolbar styling. */
+.progressions-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: flex-end;
+  margin-bottom: var(--space-4);
+}
+
 .timing-toolbar > * {
   flex: 0 1 19rem;
   min-width: min(100%, 10rem);

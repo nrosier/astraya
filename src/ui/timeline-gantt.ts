@@ -96,7 +96,7 @@ export function visibleBarLabels(
 }
 
 /** The least rendered gap, in CSS pixels, between two bars side by side in a row (#1442). */
-export const BAR_GAP_PX = 1;
+export const BAR_GAP_PX = 3;
 
 /**
  * A bar's x and width in viewBox units (#1442). The SVG is stretched to the plot, so a fixed number of units is a different

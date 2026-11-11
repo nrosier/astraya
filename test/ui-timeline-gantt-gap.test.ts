@@ -5,11 +5,12 @@ import { describe, expect, it } from 'vitest';
 import { BAR_GAP_PX, barSpan } from '../src/ui/timeline-gantt.js';
 
 describe('barSpan', () => {
-  it.each([388, 1278, 1918])('keeps at least 1px between two touching bars on a %i px plot', (plotPx) => {
+  it.each([388, 1278, 1918])('keeps at least BAR_GAP_PX (3px) between two touching bars on a %i px plot', (plotPx) => {
     const a = barSpan(0.1, 0.4, 1000, plotPx, BAR_GAP_PX, 3);
     const b = barSpan(0.4, 0.7, 1000, plotPx, BAR_GAP_PX, 3);
     const gapPx = ((b.x - (a.x + a.width)) * plotPx) / 1000;
-    expect(gapPx).toBeGreaterThanOrEqual(1 - 1e-9);
+    expect(BAR_GAP_PX).toBe(3);
+    expect(gapPx).toBeGreaterThanOrEqual(BAR_GAP_PX - 1e-9);
   });
 
   it('never gives a short bar a negative or too-small width', () => {
