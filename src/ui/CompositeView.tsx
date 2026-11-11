@@ -3,7 +3,7 @@
  * #30's near-arc midpoint convention for positions and the same convention applied to house
  * cusps (see `composite.ts`'s own doc comment for why: there is no single Julian day to hand
  * an ephemeris for a "recompute houses from a midpoint Ascendant/MC" approach, and the
- * time/space-midpoint "Davison" method is this issue's own explicit non-goal).
+ * time/space-midpoint "Davison" method is offered beside it as a choice, #1406 D2).
  *
  * The second person is picked from within this screen, not carried in the URL — the same
  * reasoning `SynastryView.tsx` gives for its own partner picker applies unchanged here. Unlike
@@ -14,7 +14,7 @@
 /**
  * @module CompositeView
  * @purpose Renders the composite (midpoint) chart screen between a saved person and a second, in-screen-picked partner.
- * @conventions Uses the near-arc midpoint convention for both positions and house cusps (`domain/composite.js`), not the time/space-midpoint "Davison" method; reuses `ChartDataView`/`ReportView` wholesale since the composite is a single synthetic `ChartData`. Text comes from co-located `CompositeView.messages.ts` via `useMessages()`.
+ * @conventions Uses the near-arc midpoint convention for both positions and house cusps (`domain/composite.js`), by default, with the time/space-midpoint "Davison" relationship chart (`domain/davison.ts`) offered as a method choice (#1406 D2); reuses `ChartDataView`/`ReportView` wholesale since the composite is a single synthetic `ChartData`. Text comes from co-located `CompositeView.messages.ts` via `useMessages()`.
  * @exports CompositeView
  */
 import { GlossaryText } from './GlossaryText.js';
@@ -23,6 +23,7 @@ import { personHref, routeHref } from './route.js';
 import { useEffect, useMemo, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { computeComposite, type CompositeData } from '../domain/composite.js';
+import { computeDavison } from '../domain/davison.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
 import type { ChartViewKind } from './chart-sections.js';
 import { ChartDataView } from './ChartView.js';
@@ -38,6 +39,7 @@ import { PersonNotFound } from './PersonNotFound.js';
 import { useStoreState } from './store-context.js';
 import type { ChartData } from '../domain/chart-compute.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import { ChoiceGroup } from './primitives/ChoiceGroup.js';
 import { useStableMoment } from './use-stable-moment.js';
 import { replaceRoute } from './nav-history.js';
 import { PageHeader } from './PageHeader.js';
@@ -67,7 +69,13 @@ export function CompositeView({
   // A composite belongs to no single person, so it follows the device default rulership (#806).
   const [rulership] = useRulershipChoice();
   // `computeComposite` takes no options: the engine defaults, with the near-arc midpoint of every body and cusp.
-  const basisLine = withBasisItems(useEngineBasisLine(rulership), useMessages(calculationBasisMessages).midpointMethod);
+  // The composite method (owner decision, #1406 D2): the near-arc midpoint (the default) or the Davison relationship chart.
+  const [compositeMethod, setCompositeMethod] = useState<'midpoint' | 'davison'>('midpoint');
+  const compositeMethodBasisKey = compositeMethod === 'davison' ? 'davisonMethod' : 'midpointMethod';
+  const basisLine = withBasisItems(
+    useEngineBasisLine(rulership),
+    useMessages(calculationBasisMessages)[compositeMethodBasisKey],
+  );
 
   const candidates = useMemo(
     () =>
@@ -96,8 +104,11 @@ export function CompositeView({
 
     void (async () => {
       try {
-        const data: CompositeData = await computeComposite(momentA, momentB, provider);
-        if (!effect.cancelled) setLoad({ kind: 'ready', data: data.composite });
+        const chart =
+          compositeMethod === 'davison'
+            ? (await computeDavison(momentA, momentB, provider)).davison
+            : ((await computeComposite(momentA, momentB, provider)) satisfies CompositeData).composite;
+        if (!effect.cancelled) setLoad({ kind: 'ready', data: chart });
       } catch (error) {
         if (!effect.cancelled)
           setLoad({ kind: 'error', message: error instanceof Error ? error.message : String(error) });
@@ -107,7 +118,7 @@ export function CompositeView({
     return () => {
       effect.cancelled = true;
     };
-  }, [personMoment, partnerMoment, provider]);
+  }, [personMoment, partnerMoment, provider, compositeMethod]);
 
   if (person === undefined) {
     return <PersonNotFound />;
@@ -141,6 +152,22 @@ export function CompositeView({
       </p>
       <p className="hint">
         <GlossaryText text={t.overlayContext} />
+      </p>
+
+      <p>
+        <ChoiceGroup
+          segmented
+          showLabel
+          label={t.methodLabel}
+          value={compositeMethod}
+          options={[
+            { value: 'midpoint', label: t.methodMidpoint },
+            { value: 'davison', label: t.methodDavison },
+          ]}
+          onChange={(value) => {
+            if (value === 'midpoint' || value === 'davison') setCompositeMethod(value);
+          }}
+        />
       </p>
 
       <p>

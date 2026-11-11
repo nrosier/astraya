@@ -16,6 +16,7 @@ const en = {
   draconic: 'Draconic',
   relocatedTo: (place: string) => `Relocated to ${place}`,
   midpointMethod: 'Midpoint method',
+  davisonMethod: 'Davison method',
 };
 
 const nl: typeof en = {
@@ -28,6 +29,7 @@ const nl: typeof en = {
   draconic: 'Draconisch',
   relocatedTo: (place: string) => `Verplaatst naar ${place}`,
   midpointMethod: 'Middelpuntmethode',
+  davisonMethod: 'Davison-methode',
 };
 
 export const calculationBasisMessages: Record<Locale, typeof en> = { en, nl };
