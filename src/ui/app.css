@@ -9231,6 +9231,17 @@ a.quiet,
 }
 
 /* The pass number of an orb window, beside its exact mark; HTML so the text is not stretched with the plot. */
+/* The count of same-day exacts drawn over their shared mark (owner review, #1442). */
+.gantt-stack-count {
+  position: absolute;
+  top: 0;
+  transform: translate(-50%, -100%);
+  font-size: var(--text-2xs);
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
 .gantt-pass {
   position: absolute;
   top: 50%;

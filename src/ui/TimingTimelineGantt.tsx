@@ -240,6 +240,19 @@ export function TimingTimelineGantt({
                 </span>
               ),
             )}
+            {/* Several exacts on one day share one mark, labelled with their count (owner review, #1442). */}
+            {row.marks.map((mark) =>
+              mark.exact === undefined || mark.stackCount === undefined || mark.stackCount < 2 ? null : (
+                <span
+                  key={`${mark.key}-count`}
+                  className="gantt-stack-count"
+                  style={{ left: `${String(mark.exact * 100)}%` }}
+                  aria-hidden="true"
+                >
+                  {mark.stackCount}
+                </span>
+              ),
+            )}
           </div>
         </div>
       ))}

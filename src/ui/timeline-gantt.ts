@@ -2,7 +2,7 @@
  * @module ui/timeline-gantt
  * @purpose Pure layout for the timing timeline's Gantt chart (#1237): where each event's bar sits on the shared date axis, which events are points, and where the year ticks and the target date fall.
  * @conventions Positions are fractions of the axis (0 at the window's start, 1 at its end), so the chart scales to any width and holds no pixel sizes. An event with no end, or the same end as its start, is a point. A bar is clamped to the window, so one that starts before or ends after it still shows. An orb window (an event with an exact date, #1401) is a bar with the exact date marked inside it. Nothing here calculates astrology: it only places the normalised `TimingTimelineEvent` records the table also lists.
- * @exports GanttMark, GanttRow, YearTick, techniqueColorVar, barLabelFits, visibleBarLabels, BAR_GAP_PX, barSpan, ganttFraction, ganttRows, yearTicks, thinYearTicks
+ * @exports GanttMark, GanttRow, YearTick, stackSameDayExacts, techniqueColorVar, barLabelFits, visibleBarLabels, BAR_GAP_PX, barSpan, ganttFraction, ganttRows, yearTicks, thinYearTicks
  */
 import type { JulianDayUT } from '../ephemeris/types.js';
 import type { TimingTimelineEvent, TimingTimelineTrack, TimingTimelineTrackEvents } from '../domain/timing-timeline.js';
@@ -19,6 +19,13 @@ export interface GanttMark {
   readonly event: TimingTimelineEvent;
   /** Where the exact date falls inside a bar that is an orb window (#1401). */
   readonly exact?: number;
+  /**
+   * How many events share this exact day in the row (owner review, #1442): the exact mark is drawn once with this count
+   * instead of stacking one mark per event. 1 when the event stands alone.
+   */
+  readonly stackCount?: number;
+  /** Every event that shares the exact day with this mark, so the count can be explained on hover. */
+  readonly stacked?: readonly TimingTimelineEvent[];
 }
 
 export interface GanttRow {
@@ -135,20 +142,53 @@ export function ganttRows(
 ): readonly GanttRow[] {
   return tracks.map(({ track, events }) => ({
     track,
-    marks: events.map((event, index) => {
-      const start = ganttFraction(event.startJd, fromJd, toJd);
-      const end = ganttFraction(event.endJd ?? event.startJd, fromJd, toJd);
-      return {
-        key: `${track}-${event.kind}-${String(event.startJd)}-${String(index)}`,
-        start,
-        end,
-        point: event.endJd === undefined || event.endJd === event.startJd,
-        sub: event.subject.kind === 'releasing' && event.subject.level === 2,
-        event,
-        ...(event.exactJd === undefined ? {} : { exact: ganttFraction(event.exactJd, fromJd, toJd) }),
-      };
-    }),
+    marks: stackSameDayExacts(
+      events.map((event, index) => {
+        const start = ganttFraction(event.startJd, fromJd, toJd);
+        const end = ganttFraction(event.endJd ?? event.startJd, fromJd, toJd);
+        return {
+          key: `${track}-${event.kind}-${String(event.startJd)}-${String(index)}`,
+          start,
+          end,
+          point: event.endJd === undefined || event.endJd === event.startJd,
+          sub: event.subject.kind === 'releasing' && event.subject.level === 2,
+          event,
+          ...(event.exactJd === undefined ? {} : { exact: ganttFraction(event.exactJd, fromJd, toJd) }),
+        };
+      }),
+    ),
   }));
+}
+
+/**
+ * Events whose exact dates fall on the same day in a row are drawn with ONE exact mark and a count, not one stacked mark
+ * per event (owner review, #1442). The day is the calendar day of the exact date, so two exacts that fall within the same
+ * day share a mark. The first event keeps the bar; the others are listed on it.
+ */
+export function stackSameDayExacts(marks: readonly GanttMark[]): readonly GanttMark[] {
+  const byDay = new Map<number, GanttMark[]>();
+  const order: GanttMark[] = [];
+  for (const mark of marks) {
+    if (mark.exact === undefined || mark.event.exactJd === undefined) {
+      order.push(mark);
+      continue;
+    }
+    const day = Math.floor(mark.event.exactJd);
+    const group = byDay.get(day);
+    if (group === undefined) {
+      const first: GanttMark[] = [mark];
+      byDay.set(day, first);
+      order.push(mark);
+    } else {
+      group.push(mark);
+    }
+  }
+  return order.map((mark) => {
+    if (mark.exact === undefined || mark.event.exactJd === undefined) return mark;
+    const group = byDay.get(Math.floor(mark.event.exactJd)) ?? [mark];
+    const stacked = group.map((member) => member.event);
+    return { ...mark, stackCount: group.length, stacked };
+  });
 }
 
 /** The first of January of every year inside the window, with its year, for the axis labels. */
