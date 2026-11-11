@@ -43,6 +43,7 @@
  */
 import { ASPECTS } from '../astrology/aspects.js';
 import { BODIES } from '../astrology/bodies.js';
+import { MAX_SEARCH_CONDITIONS } from '../domain/chart-search.js';
 import { isId } from '../domain/id.js';
 import type { NoteFieldRegister } from './notes.js';
 import type { Mutation } from './oplog.js';
@@ -56,8 +57,8 @@ export const CHART_SEARCH_DEFINITION_FIELD = 'definition';
 /** The `deleted` tombstone field, spelled here so the guard does not import the fold it is called from. */
 const TOMBSTONE_FIELD = 'deleted';
 
-/** The most conditions one saved search may hold (owner decision 10, #1405). */
-export const CHART_SEARCH_MAX_CONDITIONS = 10;
+/** The most conditions one saved search may hold: the domain's cap (owner decision 10, #1405), re-exported under the store's name. */
+export { MAX_SEARCH_CONDITIONS as CHART_SEARCH_MAX_CONDITIONS } from '../domain/chart-search.js';
 
 /** The natal angles an aspect condition may target. */
 export const CHART_SEARCH_ANGLES = ['asc', 'mc'] as const;
@@ -217,7 +218,7 @@ function readDefinition(value: unknown): DefinitionVerdict {
   const knownOperator = CHART_SEARCH_OPERATORS.find((candidate) => candidate === operator);
   if (knownOperator === undefined || !Array.isArray(conditions)) return { ok: false, reason: 'invalid' };
   const list: unknown[] = conditions;
-  if (list.length < 1 || list.length > CHART_SEARCH_MAX_CONDITIONS) return { ok: false, reason: 'invalid' };
+  if (list.length < 1 || list.length > MAX_SEARCH_CONDITIONS) return { ok: false, reason: 'invalid' };
   const read: StoredSearchCondition[] = [];
   let unknownKind = false;
   let invalid = false;
