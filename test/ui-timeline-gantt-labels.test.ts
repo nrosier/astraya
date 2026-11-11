@@ -46,35 +46,29 @@ describe('visibleBarLabels', () => {
 });
 
 describe('stackSameDayExacts (owner review, #1442)', () => {
-  it('draws one exact mark with a count when several exacts fall on the same day, and leaves a lone exact alone', async () => {
+  it('draws exacts that sit within the tolerance as one mark with a count, and keeps a distant exact separate', async () => {
     const { stackSameDayExacts } = await import('../src/ui/timeline-gantt.js');
-    const mark = (key: string, exactJd: number) =>
+    const mark = (key: string, exact: number) =>
       ({
         key,
         start: 0.4,
         end: 0.6,
         point: false,
         sub: false,
-        exact: 0.5,
+        exact,
         event: {
-          exactJd,
-          startJd: exactJd - 1,
-          endJd: exactJd + 1,
+          exactJd: 2461000 + exact,
+          startJd: 2460999,
+          endJd: 2461001,
           kind: 'periodic-transit',
           subject: { kind: 'aspect' },
         },
       }) as unknown as GanttMark;
-    // Three exacts on 11 Nov (JD 0.25, 0.5, 0.75 of that day), one alone on 20 Nov.
-    const day = 2461000;
-    const stacked = stackSameDayExacts([
-      mark('a', day + 0.25),
-      mark('b', day + 0.5),
-      mark('c', day + 0.75),
-      mark('d', day + 9),
-    ]);
-    expect(stacked).toHaveLength(2);
+    // Three exacts within a fraction of a pixel of one another, and one far away on the axis.
+    const stacked = stackSameDayExacts([mark('a', 0.5), mark('b', 0.5003), mark('c', 0.5006), mark('d', 0.9)]);
+    expect(stacked).toHaveLength(4);
     expect(stacked[0]?.stackCount).toBe(3);
     expect(stacked[0]?.stacked).toHaveLength(3);
-    expect(stacked[1]?.stackCount).toBe(1);
+    expect(stacked[3]?.stackCount).toBe(1);
   });
 });

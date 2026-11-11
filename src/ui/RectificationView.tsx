@@ -20,6 +20,7 @@ import { Badge } from './primitives/Badge.js';
 import { Button } from './primitives/Button.js';
 import { Checkbox } from './primitives/Checkbox.js';
 import { Disclosure } from './primitives/Disclosure.js';
+import { Tooltip } from './primitives/Tooltip.js';
 import { StatList } from './primitives/StatList.js';
 import { DateField } from './primitives/DateField.js';
 import { apiErrorText } from './api-error.js';
@@ -346,22 +347,21 @@ export function RectificationView(): React.JSX.Element {
     <main className="shell">
       <PageHeader title={t.heading} titleTerm="rectification" basis={basisLine} basisEditHref={null} headingLevel={2} />
       <p className="hint">
-        <GlossaryText text={t.hint} />
+        <Tooltip text={t.hint} label={t.hintTooltipLabel} className="primitive-tooltip-icon">
+          ?
+        </Tooltip>
       </p>
       <Notice>
         <GlossaryText text={t.caveat} />
       </Notice>
-      <section className="tool-card" aria-labelledby="rectification-method-heading">
-        <h2 id="rectification-method-heading">{t.methodHeading}</h2>
+      {/* The method is one dropdown: its citation status sits inside it, with the method and its limits (owner review, #1445). */}
+      <Disclosure title={t.methodHeading} showLabel={t.showMethod} hideLabel={t.hideMethod}>
         <p>
           <Badge tone="warning">{t.citationPending}</Badge>
         </p>
-        {/* The method and its limits are collapsed until the reader opens them (owner review, #1445). */}
-        <Disclosure title={t.methodHeading} showLabel={t.showMethod} hideLabel={t.hideMethod}>
-          <p className="hint">{t.methodBody}</p>
-          <p className="hint">{t.methodLimits}</p>
-        </Disclosure>
-      </section>
+        <p className="hint">{t.methodBody}</p>
+        <p className="hint">{t.methodLimits}</p>
+      </Disclosure>
 
       <div className="tool-layout">
         <section className="tool-card tool-form" aria-labelledby="rectification-search-heading">

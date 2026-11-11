@@ -185,8 +185,9 @@ export function TimingTimelineGantt({
                   </g>
                 );
               })}
+              {/* One exact line per stacked group: a shared exact day is drawn once, with its count (owner review, #1442). */}
               {row.marks.map((mark) =>
-                mark.exact === undefined ? null : (
+                mark.exact === undefined || (mark.stacked !== undefined && mark.stacked[0] !== mark.event) ? null : (
                   <line
                     key={`${mark.key}-exact`}
                     className="gantt-exact"
@@ -240,9 +241,12 @@ export function TimingTimelineGantt({
                 </span>
               ),
             )}
-            {/* Several exacts on one day share one mark, labelled with their count (owner review, #1442). */}
+            {/* Several exacts that draw on one spot share one mark, labelled once with their count (owner review, #1442). */}
             {row.marks.map((mark) =>
-              mark.exact === undefined || mark.stackCount === undefined || mark.stackCount < 2 ? null : (
+              mark.exact === undefined ||
+              mark.stackCount === undefined ||
+              mark.stackCount < 2 ||
+              mark.stacked?.[0] !== mark.event ? null : (
                 <span
                   key={`${mark.key}-count`}
                   className="gantt-stack-count"

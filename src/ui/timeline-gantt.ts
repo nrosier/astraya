@@ -2,7 +2,7 @@
  * @module ui/timeline-gantt
  * @purpose Pure layout for the timing timeline's Gantt chart (#1237): where each event's bar sits on the shared date axis, which events are points, and where the year ticks and the target date fall.
  * @conventions Positions are fractions of the axis (0 at the window's start, 1 at its end), so the chart scales to any width and holds no pixel sizes. An event with no end, or the same end as its start, is a point. A bar is clamped to the window, so one that starts before or ends after it still shows. An orb window (an event with an exact date, #1401) is a bar with the exact date marked inside it. Nothing here calculates astrology: it only places the normalised `TimingTimelineEvent` records the table also lists.
- * @exports GanttMark, GanttRow, YearTick, stackSameDayExacts, techniqueColorVar, barLabelFits, visibleBarLabels, BAR_GAP_PX, barSpan, ganttFraction, ganttRows, yearTicks, thinYearTicks
+ * @exports GanttMark, GanttRow, YearTick, stackSameDayExacts, STACK_TOLERANCE, techniqueColorVar, barLabelFits, visibleBarLabels, BAR_GAP_PX, barSpan, ganttFraction, ganttRows, yearTicks, thinYearTicks
  */
 import type { JulianDayUT } from '../ephemeris/types.js';
 import type { TimingTimelineEvent, TimingTimelineTrack, TimingTimelineTrackEvents } from '../domain/timing-timeline.js';
@@ -161,33 +161,28 @@ export function ganttRows(
 }
 
 /**
- * Events whose exact dates fall on the same day in a row are drawn with ONE exact mark and a count, not one stacked mark
- * per event (owner review, #1442). The day is the calendar day of the exact date, so two exacts that fall within the same
- * day share a mark. The first event keeps the bar; the others are listed on it.
+ * Exact marks that would draw on top of each other are drawn once, with a count (owner review, #1442). Two exacts stack
+ * when their lines fall within `STACK_TOLERANCE` of the axis (a fraction of the width), which is what the eye reads as one
+ * dark mark. The first mark in each cluster (in row order) keeps the line and carries the count and every event in it.
  */
+export const STACK_TOLERANCE = 0.001;
+
 export function stackSameDayExacts(marks: readonly GanttMark[]): readonly GanttMark[] {
-  const byDay = new Map<number, GanttMark[]>();
-  const order: GanttMark[] = [];
+  // Cluster the exact marks by position: a mark joins the first cluster whose anchor is within the tolerance.
+  const anchors: { at: number; members: GanttMark[] }[] = [];
   for (const mark of marks) {
-    if (mark.exact === undefined || mark.event.exactJd === undefined) {
-      order.push(mark);
-      continue;
-    }
-    const day = Math.floor(mark.event.exactJd);
-    const group = byDay.get(day);
-    if (group === undefined) {
-      const first: GanttMark[] = [mark];
-      byDay.set(day, first);
-      order.push(mark);
-    } else {
-      group.push(mark);
-    }
+    if (mark.exact === undefined) continue;
+    const cluster = anchors.find((anchor) => Math.abs(anchor.at - (mark.exact ?? 0)) <= STACK_TOLERANCE);
+    if (cluster === undefined) anchors.push({ at: mark.exact, members: [mark] });
+    else cluster.members.push(mark);
   }
-  return order.map((mark) => {
-    if (mark.exact === undefined || mark.event.exactJd === undefined) return mark;
-    const group = byDay.get(Math.floor(mark.event.exactJd)) ?? [mark];
-    const stacked = group.map((member) => member.event);
-    return { ...mark, stackCount: group.length, stacked };
+  const clusterOf = new Map<GanttMark, { at: number; members: GanttMark[] }>();
+  for (const anchor of anchors) for (const member of anchor.members) clusterOf.set(member, anchor);
+  return marks.map((mark) => {
+    const cluster = clusterOf.get(mark);
+    if (cluster === undefined) return mark;
+    const stacked = cluster.members.map((member) => member.event);
+    return { ...mark, stackCount: cluster.members.length, stacked };
   });
 }
 
