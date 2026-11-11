@@ -54,7 +54,9 @@ const en = {
     translation: 'A third planet translates light between the significators.',
     collection: 'A third planet collects light from both significators.',
     prohibition: 'Another application perfects first and prohibits the matter.',
-    frustration: 'A significator changes sign before the applying aspect can perfect: the matter is frustrated.',
+    frustration:
+      'A third planet reaches a significator before the applying aspect can perfect: the matter is frustrated.',
+    signChange: 'A significator changes sign before the applying aspect can perfect.',
     refranation: 'A significator stations before perfection and refrains from completing the aspect.',
     none: 'No perfection is found among the classical significators.',
   },
@@ -142,7 +144,9 @@ const nl: typeof en = {
     translation: 'Een derde planeet vertaalt licht tussen de significatoren.',
     collection: 'Een derde planeet verzamelt licht van beide significatoren.',
     prohibition: 'Een andere toepassing perfectioneert eerst en verhindert de zaak.',
-    frustration: 'Een significator verandert van teken vóór het aspect perfectioneert: de zaak wordt gefrustreerd.',
+    frustration:
+      'Een derde planeet bereikt een significator vóór het aspect perfectioneert: de zaak wordt gefrustreerd.',
+    signChange: 'Een significator verandert van teken vóór het aspect perfectioneert.',
     refranation: 'Een significator stationeert vóór de perfectionering en voltooit het aspect niet.',
     none: 'Er is geen perfectionering onder de klassieke significatoren.',
   },

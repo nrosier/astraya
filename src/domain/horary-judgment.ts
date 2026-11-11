@@ -16,7 +16,9 @@
  * Prohibition uses relative-motion estimates when positions are supplied. Frustration is reported
  * when a significator changes sign before that estimate can perfect; refranation is reported when
  * a supplied station forecast turns a significator retrograde/direct before perfection.
- * TODO (#798): frustration is currently the sign-change rule; the decided target is Lilly's rule (a third planet joining first), pending a calculation change.
+ * Frustration follows Lilly (Christian Astrology, 1647, Book I, p. 72): a swift planet would join a more ponderous one, but a third planet
+ * reaches the ponderous one first, so the swift planet is frustrated of its perfection. A sign change of a significator before perfection is
+ * reported separately as `'signChange'`, not as frustration (#798).
  */
 /**
  * @module domain/horary-judgment
@@ -72,8 +74,33 @@ function aspectBetween(aspects: readonly Aspect[], a: BodyId, b: BodyId): Aspect
   );
 }
 
+/**
+ * Whether a third body's longitude lies on the shorter arc between the two significators (Lilly, p. 71:
+ * a planet that interposes its body or aspect). Undefined when positions are not supplied, because the
+ * answer cannot be read from the aspects alone (#798).
+ */
+function interposes(
+  third: BodyId,
+  querent: BodyId,
+  quesited: BodyId,
+  positions: readonly BodyPosition[] | undefined,
+): boolean | undefined {
+  if (positions === undefined) return undefined;
+  const at = (body: BodyId): number | undefined => positions.find((position) => position.body === body)?.longitude;
+  const t = at(third);
+  const a = at(querent);
+  const b = at(quesited);
+  if (t === undefined || a === undefined || b === undefined) return undefined;
+  const norm = (x: number): number => ((x % 360) + 360) % 360;
+  const fromA = norm(t - a);
+  const span = norm(b - a);
+  // The shorter arc from querent to quesited; the third body is between them if it lies on that arc.
+  if (span <= 180) return fromA > 0 && fromA < span;
+  return fromA > span && fromA < 360;
+}
+
 export type PerfectionKind =
-  'directAspect' | 'translation' | 'collection' | 'prohibition' | 'frustration' | 'refranation' | 'none';
+  'directAspect' | 'translation' | 'collection' | 'prohibition' | 'frustration' | 'signChange' | 'refranation' | 'none';
 
 export interface PerfectionResult {
   readonly kind: PerfectionKind;
@@ -135,11 +162,39 @@ export function judgePerfection(
             ? interferenceTiming < directTiming
             : toThird?.orb !== undefined && toThird.orb < direct.orb;
         if (toThird?.applying === true && perfectsFirst) {
+          // Lilly, p. 71: prohibition is a planet that interposes between the significators. A planet
+          // that reaches only one significator, without interposing, frustrates it (p. 72, handled below).
+          // Without positions the interposition cannot be read, so it is reported as prohibition as before.
+          if (interposes(third, querent, quesited, positions) === false) continue;
           return {
             kind: 'prohibition',
             thirdBody: third,
             thirdBodyKey: bodyById(third)?.key ?? String(third),
             ...(interferenceTiming === undefined ? {} : { timeToPerfectDays: interferenceTiming }),
+          };
+        }
+      }
+    }
+    // Frustration (Lilly, p. 72): a third body reaches one significator before the direct aspect
+    // perfects, so the matter is frustrated of its perfection. Only a third body that is not a
+    // significator itself counts. This is the rule the prohibition check above was approximating.
+    for (const third of others) {
+      for (const target of [querent, quesited]) {
+        const toTarget = aspectBetween(aspects, third, target);
+        if (toTarget?.applying !== true) continue;
+        const reachTiming = timeToPerfect(toTarget, positions);
+        const reachesFirst =
+          reachTiming !== undefined && directTiming !== undefined
+            ? reachTiming < directTiming
+            : toTarget.orb < direct.orb;
+        if (reachesFirst) {
+          return {
+            kind: 'frustration',
+            aspect: direct,
+            thirdBody: third,
+            thirdBodyKey: bodyById(third)?.key ?? String(third),
+            impedimentBody: target,
+            ...(reachTiming === undefined ? {} : { timeToPerfectDays: reachTiming }),
           };
         }
       }
@@ -158,7 +213,7 @@ export function judgePerfection(
       const signChangeDays = motionForecast?.signChangeDays?.get(body);
       if (signChangeDays !== undefined && (directTiming === undefined || signChangeDays < directTiming)) {
         return {
-          kind: 'frustration',
+          kind: 'signChange',
           aspect: direct,
           ...(directTiming === undefined ? {} : { timeToPerfectDays: directTiming }),
           impedimentBody: body,
