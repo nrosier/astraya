@@ -338,7 +338,8 @@ test.describe('with the shared people (#799)', () => {
     const box = await card.boundingBox();
     // Full width on a 390px screen (D-824c: the drawer is full width below its 42rem maximum).
     expect(box?.width ?? 0).toBeGreaterThanOrEqual(388);
-    expect(box?.height ?? 0).toBeGreaterThanOrEqual(840);
+    // Fit to content, capped at 80% of the viewport (#1449): the drawer is never taller than the cap on a phone.
+    expect(box?.height ?? 0).toBeLessThanOrEqual(Math.round(844 * 0.8) + 1);
     // The drawer's tabs are the labelled select on a phone, not a scrolling tab row.
     await expect(card.getByRole('combobox', { name: 'Category', exact: true })).toBeVisible();
     await expect(card.getByRole('tablist')).toBeHidden();
