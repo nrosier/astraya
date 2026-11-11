@@ -9,9 +9,10 @@ import { TOOL_GROUPS, TOOLS } from '../src/ui/tools-nav.js';
 import { appNavMessages } from '../src/ui/AppNav.messages.js';
 
 describe('the tools menu', () => {
-  it('lists the six screens that are not about one person’s chart, each with a real route', () => {
+  it('lists the seven screens that are not about one person’s chart, each with a real route', () => {
     expect(TOOLS.map((tool) => tool.key)).toEqual([
       'cycles',
+      'graphic-ephemeris',
       'event-search',
       'eclipses',
       'horary',
@@ -37,6 +38,7 @@ describe('the tools menu', () => {
   it('groups every tool under one of the three Sky & cycles/Questions & planning/Birth data headings, consecutively', () => {
     expect(TOOL_GROUPS).toEqual(['sky-cycles', 'questions-planning', 'birth-data']);
     expect(TOOLS.map((tool) => tool.group)).toEqual([
+      'sky-cycles',
       'sky-cycles',
       'sky-cycles',
       'sky-cycles',

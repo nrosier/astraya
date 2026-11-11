@@ -323,6 +323,7 @@ const ROUTE_HASHES: Record<Route['kind'], string> = {
   composite: `${PERSON_HASH}/relationships/composite`,
   astrocartography: `${PERSON_HASH}/location/astrocartography`,
   cycles: '#/explore/cycles',
+  'graphic-ephemeris': '#/explore/graphic-ephemeris',
   'event-search': '#/explore/event-search',
   eclipses: '#/explore/eclipses',
   horary: '#/explore/horary',
@@ -354,7 +355,7 @@ describe('the sidebar on every route (#965)', () => {
       expect(parseRoute(hash).kind, hash).toBe(kind);
     }
     // The number of kinds in the Route union; a new kind must be added to ROUTE_HASHES and to this count.
-    expect(Object.keys(ROUTE_HASHES)).toHaveLength(35);
+    expect(Object.keys(ROUTE_HASHES)).toHaveLength(36);
   });
 
   it('keeps the exceptions to the person sidebar as exactly the #914 list', () => {

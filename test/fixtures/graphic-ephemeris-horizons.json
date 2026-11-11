@@ -1,0 +1,43 @@
+{
+  "$provenance": {
+    "source": "NASA/JPL Horizons system",
+    "api": "https://ssd.jpl.nasa.gov/api/horizons.api",
+    "retrieved": "2026-11-11",
+    "quantity": "31 (observer ecliptic longitude)",
+    "center": "500@399 (geocentric)",
+    "frame": "apparent, light-time corrected, true ecliptic and equinox of date",
+    "units": "degrees",
+    "timeScale": "UT, 00:00 on each date",
+    "reproduce": "node scripts/fetch-graphic-ephemeris-fixture.mjs",
+    "note": "Do not edit by hand. External reference values for the graphic ephemeris test (#1404)."
+  },
+  "longitudes": {
+    "2024-01-01": {
+      "sun": 280.0389812,
+      "moon": 155.9921866,
+      "mercury": 262.2816922,
+      "venus": 242.6122975,
+      "mars": 267.3083422,
+      "jupiter": 35.5823812,
+      "saturn": 333.243533
+    },
+    "2024-07-01": {
+      "sun": 99.6614542,
+      "moon": 36.9857132,
+      "mercury": 117.3040706,
+      "venus": 106.8751412,
+      "mars": 45.961663,
+      "jupiter": 68.2167446,
+      "saturn": 349.4268343
+    },
+    "2024-12-31": {
+      "sun": 279.7939554,
+      "moon": 280.5825094,
+      "mercury": 258.5970237,
+      "venus": 326.6360713,
+      "mars": 122.2408319,
+      "jupiter": 73.3230608,
+      "saturn": 344.449108
+    }
+  }
+}

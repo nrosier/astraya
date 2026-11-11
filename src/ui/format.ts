@@ -13,7 +13,7 @@
  * @module ui/format
  * @purpose Locale-aware display formatting (#158) for values that aren't fixed strings — dates and geographic coordinates — complementing messages.ts's fixed-string i18n.
  * @conventions Framework-free like src/domain and src/chart: every function takes Locale explicitly rather than reading locale.ts's store, so non-UI modules (chart-tables.ts, multi-wheel.ts) can call in without a React/localStorage dependency.
- * @exports todayInputValue, formatCoordinate, formatSignDegree, formatFixed, formatDecimal, formatInteger, formatTimestamp, formatCivilDate, formatCents, utcDay
+ * @exports todayInputValue, formatCoordinate, formatSignDegree, formatFixed, formatDecimal, formatInteger, formatTimestamp, formatCivilDate, formatAxisMonth, formatCents, utcDay
  */
 import { degreeParts } from '../domain/degree-parts.js';
 import type { Locale } from '../interpretation/schema.js';
@@ -125,6 +125,24 @@ export function formatCents(cents: number, locale: Locale): string {
   return new Intl.NumberFormat(locale === 'nl' ? 'nl-NL' : 'en-US', { style: 'currency', currency: 'USD' }).format(
     cents / 100,
   );
+}
+
+/**
+ * A date-axis mark (#1404): the month's short name in the reader's language (`Jan` / `jan`), with a two-digit year
+ * when the axis spans more than one year (`Jan 25` / `jan 25`). A UTC calendar date, never shifted by the time zone.
+ */
+export function formatAxisMonth(
+  civil: { readonly year: number; readonly month: number; readonly day: number },
+  withYear: boolean,
+  locale: Locale,
+): string {
+  const date = new Date(0);
+  date.setUTCFullYear(civil.year, civil.month - 1, civil.day);
+  return new Intl.DateTimeFormat(locale === 'nl' ? 'nl-NL' : 'en-US', {
+    month: 'short',
+    ...(withYear ? { year: '2-digit' as const } : {}),
+    timeZone: 'UTC',
+  }).format(date);
 }
 
 /** The UTC calendar day of an instant (now by default) as `YYYY-MM-DD`: the day a PDF or an "as of" date is stamped with. */

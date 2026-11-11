@@ -160,7 +160,15 @@ for (const theme of THEMES) {
   });
 }
 
-const TOOL_HASHES = ['cycles', 'event-search', 'eclipses', 'horary', 'electional', 'rectification'] as const;
+const TOOL_HASHES = [
+  'cycles',
+  'graphic-ephemeris',
+  'event-search',
+  'eclipses',
+  'horary',
+  'electional',
+  'rectification',
+] as const;
 
 test('every Tools page has a Tools h1, a Tabs bar with the tool open, and its own name as a section heading (#1139)', async () => {
   test.setTimeout(120_000);
@@ -181,8 +189,9 @@ test('Tools tabs: arrow, Home and End move between tools at their unchanged rout
   const tabs = page.getByRole('tablist', { name: 'Tools subtabs' });
   await expect(tabs).toBeVisible({ timeout: 30_000 });
   await tabs.getByRole('tab', { selected: true }).focus();
+  // The Tools menu order puts Graphic ephemeris after Cycles (#1404), so ArrowRight moves there first.
   await page.keyboard.press('ArrowRight');
-  await expect(page).toHaveURL(/#\/explore\/event-search$/);
+  await expect(page).toHaveURL(/#\/explore\/graphic-ephemeris$/);
   await expect(tabs.getByRole('tab', { selected: true })).toBeFocused();
   const outline = await page.evaluate<{ width: string; style: string }>(
     `(() => ({ width: getComputedStyle(document.activeElement).outlineWidth, style: getComputedStyle(document.activeElement).outlineStyle }))()`,

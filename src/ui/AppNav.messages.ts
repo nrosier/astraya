@@ -25,6 +25,7 @@ const en = {
   returnToLabel: 'Return to',
   toolLabels: {
     cycles: 'Planetary cycles',
+    'graphic-ephemeris': 'Graphic ephemeris',
     'event-search': 'Ephemeris research',
     eclipses: 'Eclipses',
     horary: 'Horary chart',
@@ -79,6 +80,7 @@ const nl: typeof en = {
   returnToLabel: 'Terug naar',
   toolLabels: {
     cycles: 'Planetaire cycli',
+    'graphic-ephemeris': 'Grafische efemeriden',
     'event-search': 'Ephemerisonderzoek',
     eclipses: 'Verduisteringen',
     horary: 'Horoscoop voor een vraag',

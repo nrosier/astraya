@@ -171,9 +171,12 @@ test('Tools: every tool tab is reachable from the keyboard (#882, #1139)', async
   const cycles = toolTabs.getByRole('tab', { name: 'Planetary cycles', exact: true });
   await tabUntilFocused(page, cycles, 'the open "Planetary cycles" tool tab');
   // Wait for each step's route and focus before the next key, as subview-nav.spec.ts does.
+  // The Tools menu order puts Graphic ephemeris after Planetary cycles (#1404), then Event search, then Eclipses.
+  await page.keyboard.press('ArrowRight');
+  await expect(page).toHaveURL(/#\/explore\/graphic-ephemeris$/);
+  await expect(toolTabs.getByRole('tab', { selected: true })).toBeFocused();
   await page.keyboard.press('ArrowRight');
   await expect(page).toHaveURL(/#\/explore\/event-search$/);
-  await expect(toolTabs.getByRole('tab', { selected: true })).toBeFocused();
   await page.keyboard.press('ArrowRight');
   await expect(page).toHaveURL(/#\/explore\/eclipses$/);
   await expect(toolTabs.getByRole('tab', { name: 'Eclipses', exact: true })).toHaveAttribute('aria-selected', 'true');

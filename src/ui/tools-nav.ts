@@ -18,14 +18,15 @@
  */
 /**
  * @module ui/tools-nav
- * @purpose Pure logic for the header's Tools menu (#421, #506/#509): the five not-person-scoped calculator screens (cycles/eclipses/horary/electional/rectification), grouped as Sky & cycles/Questions & planning/Birth data, and which one a route is on.
+ * @purpose Pure logic for the header's Tools menu (#421, #506/#509): the five not-person-scoped calculator screens (cycles/graphic ephemeris/eclipses/horary/electional/rectification), grouped as Sky & cycles/Questions & planning/Birth data, and which one a route is on.
  * @conventions Pure, like person-nav.ts and admin-nav.ts, so menu/active-tool logic is tested without a DOM; labels are translated and live in AppNav.messages.ts, looked up by key. TOOL_GROUPS is in display order; TOOLS stays grouped (every member of one group appears consecutively) so AppNav.tsx can render one heading per group without re-sorting.
  * @exports ToolKey, ToolGroupKey, Tool, TOOL_GROUPS, TOOLS
  */
 
 import { routeHref } from './route.js';
 
-export type ToolKey = 'cycles' | 'event-search' | 'eclipses' | 'horary' | 'electional' | 'rectification';
+export type ToolKey =
+  'cycles' | 'graphic-ephemeris' | 'event-search' | 'eclipses' | 'horary' | 'electional' | 'rectification';
 export type ToolGroupKey = 'sky-cycles' | 'questions-planning' | 'birth-data';
 
 export interface Tool {
@@ -40,6 +41,7 @@ export const TOOL_GROUPS: readonly ToolGroupKey[] = ['sky-cycles', 'questions-pl
 /** In menu order, grouped: every member of one group appears consecutively, in `TOOL_GROUPS` order. */
 export const TOOLS: readonly Tool[] = [
   { key: 'cycles', href: routeHref({ kind: 'cycles' }), group: 'sky-cycles' },
+  { key: 'graphic-ephemeris', href: routeHref({ kind: 'graphic-ephemeris' }), group: 'sky-cycles' },
   { key: 'event-search', href: routeHref({ kind: 'event-search' }), group: 'sky-cycles' },
   { key: 'eclipses', href: routeHref({ kind: 'eclipses' }), group: 'sky-cycles' },
   { key: 'horary', href: routeHref({ kind: 'horary' }), group: 'questions-planning' },

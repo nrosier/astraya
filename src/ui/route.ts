@@ -22,7 +22,7 @@
  *   #/people/:id/timing/:technique                        timeline|profections|progressions|solar-arc|primary-directions|transits|forecast
  *   #/people/:id/relationships/:technique                 synastry|composite (composite: ?view=)
  *   #/people/:id/location/astrocartography                Astrocartography
- *   #/explore/:tool                                       cycles|eclipses|horary|electional|rectification (horary: ?view=)
+ *   #/explore/:tool                                       cycles|graphic-ephemeris|eclipses|horary|electional|rectification (horary: ?view=)
  *   #/documents                                           Documents (PDF builder, saved charts)
  *   #/preferences[/:section]                              Preferences (appearance|astrology|data)
  *   #/admin, #/admin/usage, #/admin/corpus-overrides, #/admin/corpus-candidates, #/shared, #/about, #/changelog,
@@ -119,6 +119,7 @@ export type Route =
   // per docs/ui/UI-UX_GUIDELINES.md's setting-scope model. `section` links straight to one of its headings.
   | { readonly kind: 'preferences'; readonly section?: PreferencesSection }
   | { readonly kind: 'cycles' }
+  | { readonly kind: 'graphic-ephemeris' }
   | { readonly kind: 'event-search' }
   | { readonly kind: 'eclipses' }
   // `view` is the same Wheel/Aspects/Placements/Patterns & condition axis as the chart route's (#511).
@@ -150,7 +151,15 @@ const TIMING_SEGMENT_FOR_KIND = {
   transit: 'transits',
   'periodic-transit': 'forecast',
 } as const;
-const TOOL_KINDS = ['cycles', 'event-search', 'eclipses', 'horary', 'electional', 'rectification'] as const;
+const TOOL_KINDS = [
+  'cycles',
+  'graphic-ephemeris',
+  'event-search',
+  'eclipses',
+  'horary',
+  'electional',
+  'rectification',
+] as const;
 type ToolKind = (typeof TOOL_KINDS)[number];
 
 function isToolKind(value: string | undefined): value is ToolKind {
@@ -363,6 +372,7 @@ export function routeHref(route: Route): string {
     case 'astrocartography':
       return person(route.personId, 'location', 'astrocartography');
     case 'cycles':
+    case 'graphic-ephemeris':
     case 'event-search':
     case 'eclipses':
     case 'electional':
