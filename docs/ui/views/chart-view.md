@@ -72,3 +72,5 @@ The chart type, the aspects shown (families and orb caps) and the consultation p
 A selection survives a re-render of the chart. The overlay context is memoised on every chart view, so a Show click is not undone by a redraw.
 
 **Decided on #1333.** Placements, Elements and Patterns stay independent of the aspect filter, because a placement has no aspect to filter. Every other tab in the table above follows the rule for its kind.
+
+**Empty filters (decided on #1333, 2026-11-11).** When the chart type, aspects and preset leave no contacts, the Aspects and Matrix tabs show a short empty-state note saying why, in place of an empty table. The wheel draws no contact lines. Placements, Elements and Patterns are unaffected, as above.
