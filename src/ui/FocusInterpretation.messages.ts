@@ -3,7 +3,7 @@
  */
 /**
  * @module FocusInterpretation.messages
- * @purpose English/Dutch i18n strings for the Tier 2 AI-interpretation-of-a-placement feature: consent text, generate button, errors, and the saved-interpretation history.
+ * @purpose English/Dutch i18n strings for the Tier 2 AI-interpretation-of-a-placement feature: consent text, generate button, and errors.
  * @conventions Co-located i18n file exporting `{ en, nl }`, consumed by FocusInterpretation.tsx via `useMessages(focusInterpretationMessages)`; `nl` is typed as `typeof en`.
  * @exports focusInterpretationMessages
  */
@@ -16,10 +16,6 @@ const en = {
   signIn: 'Sign in to generate an AI interpretation of this placement.',
   disabledConsent: 'check the consent box first',
   error: (message: string) => `Could not generate: ${message}`,
-  savedHeading: 'Past interpretations of this placement',
-  /** `Tuesday March 10 2026 @ 17:30 (Short and sharp) (Mars (natal))`: the time, the model's short label if any, what it was based on. */
-  savedEntry: (time: string, basis: string, description: string | null) =>
-    description === null ? `${time} (${basis})` : `${time} (${description}) (${basis})`,
 };
 
 const nl: typeof en = {
@@ -31,9 +27,6 @@ const nl: typeof en = {
   signIn: 'Log in om een AI-interpretatie van deze plaatsing te genereren.',
   disabledConsent: 'vink eerst het toestemmingsvakje aan',
   error: (message) => `Kon niet genereren: ${message}`,
-  savedHeading: 'Eerdere interpretaties van deze plaatsing',
-  savedEntry: (time, basis, description) =>
-    description === null ? `${time} (${basis})` : `${time} (${description}) (${basis})`,
 };
 
 export const focusInterpretationMessages = { en, nl };

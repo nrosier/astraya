@@ -21,3 +21,14 @@ describe('chart overlay settings drawer height (#1357/#1358)', () => {
     expect(match?.[1]).toContain('max-height: calc(100dvh - 2 * var(--space-8));');
   });
 });
+
+describe('map and extended settings drawers height (#1449)', () => {
+  it.each(['MapSettingsDialog.tsx', 'ExtendedSettingsPanel.tsx'])(
+    '%s reuses the shared drawer-fit rule on its right-anchored drawer',
+    (file) => {
+      const source = readFileSync(new URL(`../src/ui/${file}`, import.meta.url), 'utf8');
+      expect(source).toMatch(/dialogClassName="[^"]*\bdrawer-fit\b/);
+      expect(source).toMatch(/placement="right"/);
+    },
+  );
+});

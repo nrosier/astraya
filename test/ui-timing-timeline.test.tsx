@@ -72,6 +72,7 @@ describe('the timing timeline Gantt (#554, #1237)', () => {
             trackLabels={labels}
             rowLabel={(track, count) => `${track}: ${String(count)}`}
             describe={(event) => timelineSubjectLabel(event.subject, 'en')}
+            barLabel={(event) => timelineSubjectLabel(event.subject, 'en')}
             passLabel={(number, count) => `${String(number)}/${String(count)}`}
             targetTitle="Centre date"
           />,
@@ -122,6 +123,7 @@ describe('an orb window on the Gantt (#1401)', () => {
             trackLabels={labels}
             rowLabel={(track, count) => `${track}: ${String(count)}`}
             describe={(e) => timelineSubjectLabel(e.subject, 'en')}
+            barLabel={(e) => timelineSubjectLabel(e.subject, 'en')}
             passLabel={(number, count) => `${String(number)}/${String(count)}`}
             targetTitle="Centre date"
           />,
