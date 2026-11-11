@@ -20,7 +20,10 @@ describe('Comparison layout', () => {
   it('defines two columns with a gap token and stacks at 40rem, with no colour literals', () => {
     const start = css.indexOf('.comparison-layout {');
     expect(start).toBeGreaterThan(-1);
-    const block = css.slice(start);
+    // The rule and its 40rem media query only: everything after the closing brace of that query belongs to other rules.
+    const mediaEnd = css.indexOf('\n}\n', css.indexOf('@media (max-width: 40rem)', start));
+    expect(mediaEnd).toBeGreaterThan(start);
+    const block = css.slice(start, mediaEnd + 3);
     expect(block).toMatch(/grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
     expect(block).toMatch(/gap: var\(--space-8\)/);
     expect(block).toMatch(
