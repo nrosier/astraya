@@ -147,18 +147,15 @@
   --measure-reading: 68ch;
 
   /*
-   * Semantic state tokens, independent of astrology meaning (#506 finding 1): today `.warning`,
-   * `button.danger`, and `.field-error`/`[aria-invalid]` all resolve to `--solar`, so a user
-   * cannot tell a warning from a destructive action from an invalid field by colour alone.
-   * Danger moves to the hard-aspect red; warning keeps the solar gold it already had; success
-   * and info borrow the soft-aspect/minor-aspect hues, which are not used for UI state anywhere
-   * today. These are aliases, not new hues — reusing colours already proven to clear WCAG AA
-   * in this palette rather than inventing a fifth hue family.
+   * Semantic state tokens with their own hues, separate from the astrology palette (issue 1348).
+   * The literal values live in each theme block below (dark here and in the dark override, light in
+   * the light blocks); none points at an aspect, element, ring or solar token. Each reaches 3:1 on
+   * both --surface and --bg of its theme.
    */
-  --color-danger: var(--aspect-hard);
-  --color-warning: var(--solar);
-  --color-success: var(--aspect-minor);
-  --color-info: var(--aspect-soft);
+  --color-danger: #f2555f;
+  --color-warning: #e8a020;
+  --color-success: #3ec46d;
+  --color-info: #4d9bff;
   --color-focus: var(--accent);
 
   --shadow-popover: 0 0.5rem 1.5rem rgb(0 0 0 / 20%);
@@ -187,6 +184,10 @@
     --element-earth: #2e7d32;
     --element-air: #b7791f;
     --element-water: #1d4ed8;
+    --color-danger: #c4252d;
+    --color-warning: #9a5b00;
+    --color-success: #1a7a3a;
+    --color-info: #1565c0;
     /* One colour per timing technique (issue 1442), on the Gantt bar and the table badge; each reaches 3:1 on --surface. */
     --color-tech-zr: #a88704;
     --color-tech-firdaria: #209c8d;
@@ -234,6 +235,10 @@
   --element-earth: #6fd08a;
   --element-air: #f2c14e;
   --element-water: #6aa8ff;
+  --color-danger: #f2555f;
+  --color-warning: #e8a020;
+  --color-success: #3ec46d;
+  --color-info: #4d9bff;
   /* One colour per timing technique (issue 1442), on the Gantt bar and the table badge; each reaches 3:1 on --surface. */
   --color-tech-zr: #facc15;
   --color-tech-firdaria: #2dd4bf;
@@ -268,6 +273,10 @@
   --element-earth: #2e7d32;
   --element-air: #b7791f;
   --element-water: #1d4ed8;
+  --color-danger: #c4252d;
+  --color-warning: #9a5b00;
+  --color-success: #1a7a3a;
+  --color-info: #1565c0;
   /* One colour per timing technique (issue 1442), on the Gantt bar and the table badge; each reaches 3:1 on --surface. */
   --color-tech-zr: #a88704;
   --color-tech-firdaria: #209c8d;
