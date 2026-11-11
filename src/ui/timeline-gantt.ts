@@ -2,7 +2,7 @@
  * @module ui/timeline-gantt
  * @purpose Pure layout for the timing timeline's Gantt chart (#1237): where each event's bar sits on the shared date axis, which events are points, and where the year ticks and the target date fall.
  * @conventions Positions are fractions of the axis (0 at the window's start, 1 at its end), so the chart scales to any width and holds no pixel sizes. An event with no end, or the same end as its start, is a point. A bar is clamped to the window, so one that starts before or ends after it still shows. An orb window (an event with an exact date, #1401) is a bar with the exact date marked inside it. Nothing here calculates astrology: it only places the normalised `TimingTimelineEvent` records the table also lists.
- * @exports GanttMark, GanttRow, YearTick, stackSameDayExacts, STACK_TOLERANCE, techniqueColorVar, barLabelFits, visibleBarLabels, BAR_GAP_PX, barSpan, ganttFraction, ganttRows, yearTicks, thinYearTicks
+ * @exports GanttMark, GanttRow, YearTick, stackSameDayExacts, STACK_TOLERANCE, MARKER_MERGE_DISTANCE, techniqueColorVar, barLabelFits, visibleBarLabels, BAR_GAP_PX, barSpan, ganttFraction, ganttRows, yearTicks, thinYearTicks
  */
 import type { JulianDayUT } from '../ephemeris/types.js';
 import type { TimingTimelineEvent, TimingTimelineTrack, TimingTimelineTrackEvents } from '../domain/timing-timeline.js';
@@ -167,6 +167,13 @@ export function ganttRows(
  */
 export const STACK_TOLERANCE = 0.001;
 
+/**
+ * How close two stacks can sit before their count markers would overlap on screen, as a fraction of the axis. A marker is
+ * about 24 CSS pixels wide on a plot of roughly 740 pixels, so stacks within this distance are merged into one marker
+ * (owner review, round 8, #1442: several overlapping buttons on one stripe).
+ */
+export const MARKER_MERGE_DISTANCE = 0.03;
+
 export function stackSameDayExacts(marks: readonly GanttMark[]): readonly GanttMark[] {
   // Cluster the exact marks by position: a mark joins the first cluster whose anchor is within the tolerance.
   const anchors: { at: number; members: GanttMark[] }[] = [];
@@ -176,6 +183,19 @@ export function stackSameDayExacts(marks: readonly GanttMark[]): readonly GanttM
     if (cluster === undefined) anchors.push({ at: mark.exact, members: [mark] });
     else cluster.members.push(mark);
   }
+  // Merge clusters whose markers would sit on top of each other on screen, so one visible spot is one marker.
+  anchors.sort((a, b) => a.at - b.at);
+  const merged: { at: number; members: GanttMark[] }[] = [];
+  for (const anchor of anchors) {
+    const last = merged[merged.length - 1];
+    if (last !== undefined && anchor.at - last.at <= MARKER_MERGE_DISTANCE) {
+      last.members.push(...anchor.members);
+    } else {
+      merged.push({ at: anchor.at, members: [...anchor.members] });
+    }
+  }
+  anchors.length = 0;
+  anchors.push(...merged);
   const clusterOf = new Map<GanttMark, { at: number; members: GanttMark[] }>();
   for (const anchor of anchors) for (const member of anchor.members) clusterOf.set(member, anchor);
   return marks.map((mark) => {

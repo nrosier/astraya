@@ -345,12 +345,18 @@ export function RectificationView(): React.JSX.Element {
 
   return (
     <main className="shell">
-      <PageHeader title={t.heading} titleTerm="rectification" basis={basisLine} basisEditHref={null} headingLevel={2} />
-      <p className="hint">
-        <Tooltip text={t.hint} label={t.hintTooltipLabel} className="primitive-tooltip-icon">
-          ?
-        </Tooltip>
-      </p>
+      <PageHeader
+        title={t.heading}
+        titleTerm="rectification"
+        titleAside={
+          <Tooltip text={t.hint} label={t.hintTooltipLabel} className="primitive-tooltip-icon">
+            ?
+          </Tooltip>
+        }
+        basis={basisLine}
+        basisEditHref={null}
+        headingLevel={2}
+      />
       <Notice>
         <GlossaryText text={t.caveat} />
       </Notice>
