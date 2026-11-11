@@ -110,6 +110,7 @@ export function MapSettingsDialog({
         heading={t.heading}
         closeLabel={t.closeLabel}
         placement="right"
+        dialogClassName="drawer-fit"
         onDiscard={discard}
         returnFocusTo={triggerRef}
         footer={

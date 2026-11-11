@@ -780,6 +780,7 @@ export function ExtendedSettingsPanel({
         heading={t.heading}
         closeLabel={t.closeLabel}
         placement="right"
+        dialogClassName="drawer-fit"
         onDiscard={() => {
           closeCard();
         }}
