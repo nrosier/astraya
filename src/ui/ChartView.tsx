@@ -30,7 +30,7 @@
  * @module ChartView
  * @purpose Renders the natal chart screen: the chart wheel plus every data table a chart computes (positions, houses, aspects, dignities, dispositors, declinations, antiscia, fixed stars, chart shape, derived points), with no file export of its own (a page links to the PDF creator from its PageHeader, #915).
  * @conventions Exports `ChartDataView`, the shared tabbed chart+tables UI reused by CompositeView/SharedChartView; every value is recomputed from the stored birth moment via `domain/chart-compute.js`/`domain/chart-tables.js` rather than read from a saved Chart record; houses/angles/derived-points tables are hidden when `timeAccuracy === 'unknown'`. Text comes from co-located `ChartView.messages.ts` via `useMessages()`.
- * @exports ChartView, ChartDataView, emphasisColumns, positionColumns, houseCuspColumns, angleColumns, aspectColumns, dignityColumns, almutenCandidateColumns, conditionColumns, receptionColumns, dispositorColumns, declinationColumns, antisciaColumns, midpointTreeColumns, allMidpointsColumns, fixedStarColumns, fixedStarsScopeNoteOf, checkedStarsOf, derivedPointColumns, houseSystemLabel, zodiacLabel, rulershipLabel
+ * @exports ChartView, ChartDataView, renderMatrixView, emphasisColumns, positionColumns, houseCuspColumns, angleColumns, aspectColumns, dignityColumns, almutenCandidateColumns, conditionColumns, receptionColumns, dispositorColumns, declinationColumns, antisciaColumns, midpointTreeColumns, allMidpointsColumns, fixedStarColumns, fixedStarsScopeNoteOf, checkedStarsOf, derivedPointColumns, houseSystemLabel, zodiacLabel, rulershipLabel
  */
 import { formatTimestamp } from './format.js';
 import { PrintProvenance } from './PrintProvenance.js';
@@ -161,6 +161,7 @@ import {
   midpointTreeColumns,
   allMidpointsColumns,
   renderAspectsTable,
+  EmptyFilterNote,
   type AspectContactFilter,
 } from './ChartViewAspects.js';
 import { emphasisColumns, renderElementsView } from './ChartViewElements.js';
@@ -341,7 +342,7 @@ export function rulershipLabel(rulership: string): string {
 }
 
 /** The Aspect matrix view (#511): the sheet's own grid, its aspect cells selecting that pair on the wheel. */
-function renderMatrixView(
+export function renderMatrixView(
   data: ChartData,
   displayName: string,
   pointVisibility: PointVisibilityOptions,
@@ -368,36 +369,42 @@ function renderMatrixView(
             ),
           },
         };
+  const emptyByFilter = input.matrix.aspects.length === 0 && full.matrix.aspects.length > 0;
   return (
     <>
       <p className="hint">{t.matrixHint}</p>
-      <AspectMatrixGrid
-        input={input.matrix}
-        label={t.matrixLabel}
-        locale={locale}
-        labels={{
-          symbol: t.symbolLabel,
-          name: t.matrixNameLabel,
-          degree: t.degLabel,
-          sign: t.signLabel,
-          minute: t.minLabel,
-          house: t.houseLabel,
-          retrograde: t.retrogradeLabel,
-        }}
-        describe={(aKey, bKey, aspectKey) =>
-          `${bodyDisplayName(aKey, locale)} ${aspectDisplayName(aspectKey, locale)} ${bodyDisplayName(bKey, locale)}`
-        }
-        selection={
-          selection === undefined
-            ? undefined
-            : {
-                selectedKey: selection.selectedKey,
-                onToggle: selection.onToggle,
-                onShowOnWheel: selection.onShowOnWheel,
-                canSelect: (aKey, bKey) => selection.selectableBodies.has(aKey) && selection.selectableBodies.has(bKey),
-              }
-        }
-      />
+      {emptyByFilter ? (
+        <EmptyFilterNote text={t.emptyFilterNote} />
+      ) : (
+        <AspectMatrixGrid
+          input={input.matrix}
+          label={t.matrixLabel}
+          locale={locale}
+          labels={{
+            symbol: t.symbolLabel,
+            name: t.matrixNameLabel,
+            degree: t.degLabel,
+            sign: t.signLabel,
+            minute: t.minLabel,
+            house: t.houseLabel,
+            retrograde: t.retrogradeLabel,
+          }}
+          describe={(aKey, bKey, aspectKey) =>
+            `${bodyDisplayName(aKey, locale)} ${aspectDisplayName(aspectKey, locale)} ${bodyDisplayName(bKey, locale)}`
+          }
+          selection={
+            selection === undefined
+              ? undefined
+              : {
+                  selectedKey: selection.selectedKey,
+                  onToggle: selection.onToggle,
+                  onShowOnWheel: selection.onShowOnWheel,
+                  canSelect: (aKey, bKey) =>
+                    selection.selectableBodies.has(aKey) && selection.selectableBodies.has(bKey),
+                }
+          }
+        />
+      )}
       {onOpenFormulas !== undefined && (
         <p className="hint">
           <Button onClick={onOpenFormulas}>{t.matrixFormulaLink}</Button>
