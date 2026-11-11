@@ -2,7 +2,7 @@
  * @module ui/timeline-gantt
  * @purpose Pure layout for the timing timeline's Gantt chart (#1237): where each event's bar sits on the shared date axis, which events are points, and where the year ticks and the target date fall.
  * @conventions Positions are fractions of the axis (0 at the window's start, 1 at its end), so the chart scales to any width and holds no pixel sizes. An event with no end, or the same end as its start, is a point. A bar is clamped to the window, so one that starts before or ends after it still shows. An orb window (an event with an exact date, #1401) is a bar with the exact date marked inside it. Nothing here calculates astrology: it only places the normalised `TimingTimelineEvent` records the table also lists.
- * @exports GanttMark, GanttRow, YearTick, techniqueColorVar, barLabelFits, visibleBarLabels, ganttFraction, ganttRows, yearTicks, thinYearTicks
+ * @exports GanttMark, GanttRow, YearTick, techniqueColorVar, barLabelFits, visibleBarLabels, BAR_GAP_PX, barSpan, ganttFraction, ganttRows, yearTicks, thinYearTicks
  */
 import type { JulianDayUT } from '../ephemeris/types.js';
 import type { TimingTimelineEvent, TimingTimelineTrack, TimingTimelineTrackEvents } from '../domain/timing-timeline.js';
@@ -93,6 +93,32 @@ export function visibleBarLabels(
     shown.add(mark.key);
   }
   return shown;
+}
+
+/** The least rendered gap, in CSS pixels, between two bars side by side in a row (#1442). */
+export const BAR_GAP_PX = 1;
+
+/**
+ * A bar's x and width in viewBox units (#1442). The SVG is stretched to the plot, so a fixed number of units is a different
+ * number of pixels at every width; the inset is therefore converted from pixels with the measured scale (`viewWidth / plotWidthPx`).
+ * Each end is pulled in by half the gap, so two bars that meet are `gapPx` apart in rendered pixels at any plot width. A bar too
+ * short to keep `minWidth` units after the inset keeps `minWidth`, centred on its own middle, so it still shows and never goes
+ * negative. An unmeasured plot (width 0) has no scale to convert with, so it draws no inset until it is measured.
+ */
+export function barSpan(
+  start: number,
+  end: number,
+  viewWidth: number,
+  plotWidthPx: number,
+  gapPx: number,
+  minWidth: number,
+): { readonly x: number; readonly width: number } {
+  const inset = plotWidthPx > 0 ? ((gapPx / 2) * viewWidth) / plotWidthPx : 0;
+  const from = start * viewWidth;
+  const to = end * viewWidth;
+  const width = to - from - 2 * inset;
+  if (width >= minWidth) return { x: from + inset, width };
+  return { x: (from + to) / 2 - minWidth / 2, width: minWidth };
 }
 
 /** A date's place on the axis, 0 to 1, clamped to the window. */

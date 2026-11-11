@@ -86,7 +86,8 @@ describe('the timing timeline Gantt (#554, #1237)', () => {
       }
       expect(container.querySelector('.gantt-bar title')?.textContent).toBe('From Fortune: Leo, ruled by Sun');
       // 30 of 100 days: the bar spans a third of the 1000-unit axis, and the target line sits in the middle.
-      expect(container.querySelector('.gantt-bar')?.getAttribute('width')).toBe('300');
+      // The bar is inset by half the 1px gap at each end, so a hair under its dates.
+      expect(Number(container.querySelector('.gantt-bar')?.getAttribute('width'))).toBeCloseTo(300, 0);
       expect(container.querySelector('.gantt-target')?.getAttribute('x1')).toBe('500');
     } finally {
       act(() => {
@@ -130,8 +131,8 @@ describe('an orb window on the Gantt (#1401)', () => {
         );
       });
       // 20 to 80 of 100 days: a bar from 200 and 600 wide, with the exact date at 40 of 100.
-      expect(container.querySelector('.gantt-bar')?.getAttribute('x')).toBe('200');
-      expect(Number(container.querySelector('.gantt-bar')?.getAttribute('width'))).toBeCloseTo(600, 6);
+      expect(Number(container.querySelector('.gantt-bar')?.getAttribute('x'))).toBeCloseTo(200, 0);
+      expect(Number(container.querySelector('.gantt-bar')?.getAttribute('width'))).toBeCloseTo(600, 0);
       expect(container.querySelector('.gantt-exact')?.getAttribute('x1')).toBe('400');
       expect(container.querySelector('.gantt-pass')?.textContent).toBe('2/3');
     } finally {

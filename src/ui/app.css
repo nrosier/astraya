@@ -9229,6 +9229,24 @@ a.quiet,
   gap: var(--space-3);
 }
 
+/* The toolbar's controls share one bottom edge and one height (owner visual review 2026-11-11): no field or choice group
+   carries its own bottom margin here, a segmented choice is as tall as the field and button beside it, and the Techniques
+   button's anchor is as wide as the button, so it sits in the row instead of taking a 19rem slot of its own. */
+.timing-toolbar .primitive-field,
+.timing-toolbar .primitive-choice-field {
+  margin-bottom: 0;
+}
+
+.timing-toolbar .primitive-choice-group-segmented .primitive-choice {
+  /* The group's own border adds the other two pixels. */
+  min-height: calc(var(--control-height) - 2px);
+}
+
+.timing-toolbar > .timing-popover-anchor {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
 .timing-popover-anchor {
   position: relative;
   margin-inline-start: auto;
