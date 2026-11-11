@@ -56,7 +56,7 @@
   --element-earth: #6fd08a;
   --element-air: #f2c14e;
   --element-water: #6aa8ff;
-  /* One colour per timing technique (#1442), on the Gantt bar and the table badge; each reaches 3:1 on --surface. */
+  /* One colour per timing technique (issue 1442), on the Gantt bar and the table badge; each reaches 3:1 on --surface. */
   --color-tech-zr: #facc15;
   --color-tech-firdaria: #2dd4bf;
   --color-tech-profection: #34d399;
@@ -187,7 +187,7 @@
     --element-earth: #2e7d32;
     --element-air: #b7791f;
     --element-water: #1d4ed8;
-    /* One colour per timing technique (#1442), on the Gantt bar and the table badge; each reaches 3:1 on --surface. */
+    /* One colour per timing technique (issue 1442), on the Gantt bar and the table badge; each reaches 3:1 on --surface. */
     --color-tech-zr: #a88704;
     --color-tech-firdaria: #209c8d;
     --color-tech-profection: #229d70;
@@ -234,7 +234,7 @@
   --element-earth: #6fd08a;
   --element-air: #f2c14e;
   --element-water: #6aa8ff;
-  /* One colour per timing technique (#1442), on the Gantt bar and the table badge; each reaches 3:1 on --surface. */
+  /* One colour per timing technique (issue 1442), on the Gantt bar and the table badge; each reaches 3:1 on --surface. */
   --color-tech-zr: #facc15;
   --color-tech-firdaria: #2dd4bf;
   --color-tech-profection: #34d399;
@@ -268,7 +268,7 @@
   --element-earth: #2e7d32;
   --element-air: #b7791f;
   --element-water: #1d4ed8;
-  /* One colour per timing technique (#1442), on the Gantt bar and the table badge; each reaches 3:1 on --surface. */
+  /* One colour per timing technique (issue 1442), on the Gantt bar and the table badge; each reaches 3:1 on --surface. */
   --color-tech-zr: #a88704;
   --color-tech-firdaria: #209c8d;
   --color-tech-profection: #229d70;
@@ -1006,7 +1006,7 @@ footer {
   }
 }
 
-/* With the filter in the toolbar the table has the full width (#1442). */
+/* With the filter in the toolbar the table has the full width (issue 1442). */
 .timing-layout--full {
   grid-template-columns: minmax(0, 1fr);
 }
@@ -3722,7 +3722,7 @@ label.stacked {
   background: color-mix(in oklab, var(--aspect-hard) 9%, transparent);
 }
 
-/* A technique's cell in the events table (#1442): the shared Badge with the technique name, a dot and an edge in the colour the chart's bars use. */
+/* A technique's cell in the events table (issue 1442): the shared Badge with the technique name, a dot and an edge in the colour the chart's bars use. */
 .technique-cell {
   display: inline-flex;
   align-items: center;
@@ -5460,7 +5460,7 @@ svg text.chart-symbol-text-unicode {
   cursor: pointer;
 }
 
-/* The row of the hovered event: a subtle background and an edge in its technique colour (#1442). */
+/* The row of the hovered event: a subtle background and an edge in its technique colour (issue 1442). */
 .data-table-row-hovered {
   background: var(--surface-hover);
   box-shadow: inset 3px 0 0 var(--tech, var(--accent));
@@ -9009,7 +9009,7 @@ a.quiet,
 
 /*
  * The timing timeline's Gantt chart (issue 1237): an HTML label beside a stretched SVG per track, so the names and the year
- * labels stay readable at any width. Colours are tokens: each row's technique colour (`--tech`, #1442), the centre date in the solar colour.
+ * labels stay readable at any width. Colours are tokens: each row's technique colour (`--tech`, issue 1442), the centre date in the solar colour.
  */
 .gantt {
   display: grid;
@@ -9089,7 +9089,7 @@ a.quiet,
   vector-effect: non-scaling-stroke;
 }
 
-/* Two-way highlighting (#1442): the event under the pointer or focus keeps full opacity and the others dim to 20%. */
+/* Two-way highlighting (issue 1442): the event under the pointer or focus keeps full opacity and the others dim to 20%. */
 .gantt-dim {
   opacity: 0.2;
 }
@@ -9128,7 +9128,7 @@ a.quiet,
   cursor: pointer;
 }
 
-/* A bar's name in white (#1442), laid over the bar and clipped to it; only drawn when the bar is wide enough to hold it. */
+/* A bar's name in white (issue 1442), laid over the bar and clipped to it; only drawn when the bar is wide enough to hold it. */
 .gantt-bar-label {
   position: absolute;
   top: 50%;
@@ -9167,7 +9167,7 @@ a.quiet,
   }
 }
 
-/* The table toolbar (#1442): search, the bodies filter and the Techniques button on one row, wrapping on a narrow screen. */
+/* The table toolbar (issue 1442): search, the bodies filter and the Techniques button on one row, wrapping on a narrow screen. */
 .timing-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -9193,7 +9193,6 @@ a.quiet,
   border-radius: var(--radius-md);
   background: var(--surface);
   color: var(--fg);
-  box-shadow: var(--shadow-popover);
 }
 
 /* The technique filter: one checkbox per line, in the Techniques popover. */
