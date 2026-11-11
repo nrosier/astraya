@@ -74,6 +74,7 @@ describe('the timing timeline Gantt (#554, #1237)', () => {
             describe={(event) => timelineSubjectLabel(event.subject, 'en')}
             barLabel={(event) => timelineSubjectLabel(event.subject, 'en')}
             passLabel={(number, count) => `${String(number)}/${String(count)}`}
+            stackedLabel={(count) => `${String(count)} exact`}
             targetTitle="Centre date"
           />,
         );
@@ -126,6 +127,7 @@ describe('an orb window on the Gantt (#1401)', () => {
             describe={(e) => timelineSubjectLabel(e.subject, 'en')}
             barLabel={(e) => timelineSubjectLabel(e.subject, 'en')}
             passLabel={(number, count) => `${String(number)}/${String(count)}`}
+            stackedLabel={(count) => `${String(count)} exact`}
             targetTitle="Centre date"
           />,
         );
@@ -256,5 +258,63 @@ describe('timelineSubjectLabel (#674)', () => {
     expect(timelineSubjectLabel({ kind: 'return', which: 'progressed-lunar-return' }, 'en')).toBe(
       'Progressed lunar return',
     );
+  });
+});
+
+describe('stacked exact transits (#1442)', () => {
+  it('shows one counted marker per stack, and opening it lists every transit in the stack as a bullet', () => {
+    const exact = (jd: number, body: string) =>
+      ({
+        kind: 'periodic-transit',
+        startJd: jd - 2,
+        endJd: jd + 2,
+        exactJd: jd,
+        subject: { kind: 'aspect', from: body, aspect: 'conjunction', to: 'sun' },
+        sourceModule: 'fixture',
+      }) as unknown as TimingTimelineEvent;
+    const row = [
+      {
+        track: 'periodic-transit' as const,
+        events: [exact(50, 'moon'), exact(50.001, 'venus'), exact(50.002, 'mars')],
+      },
+    ];
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root: Root = createRoot(container);
+    try {
+      act(() => {
+        root.render(
+          <TimingTimelineGantt
+            rows={ganttRows(row, 0, 100)}
+            fromJd={0}
+            toJd={100}
+            targetJd={50}
+            label="stack"
+            trackLabels={labels}
+            rowLabel={(track, count) => `${track}: ${String(count)}`}
+            describe={(event) => timelineSubjectLabel(event.subject, 'en')}
+            barLabel={(event) => timelineSubjectLabel(event.subject, 'en')}
+            passLabel={(number, count) => `${String(number)}/${String(count)}`}
+            stackedLabel={(count) => `${String(count)} exact transits`}
+            targetTitle="Centre date"
+          />,
+        );
+      });
+      const marker = container.querySelector<HTMLButtonElement>('.gantt-stack-count');
+      expect(marker).not.toBeNull();
+      expect(marker?.textContent).toBe('3');
+      expect(container.querySelector('.gantt-stack-list')).toBeNull();
+      act(() => {
+        marker?.focus();
+      });
+      const items = container.querySelectorAll('.gantt-stack-list li');
+      expect(items).toHaveLength(3);
+      expect(container.querySelector('.gantt-stack-list')?.tagName).toBe('UL');
+    } finally {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    }
   });
 });

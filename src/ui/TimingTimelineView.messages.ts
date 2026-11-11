@@ -43,6 +43,7 @@ const en = {
   } as Partial<Record<string, string>>,
   range: (start: string, end: string) => `${start} to ${end}`,
   /** An orb window (#1401): enters the orb, is exact, leaves the orb. */
+  stackedLabel: (count: number) => `${String(count)} exact transits on this date. Hover or focus to list them.`,
   orbWindow: (entry: string, exact: string, exit: string) =>
     `enters the orb ${entry}, exact ${exact}, leaves the orb ${exit}`,
   /** Which pass through the point a transit is (#1401), counting direct and retrograde passes in date order. */
@@ -114,6 +115,7 @@ const nl = {
       'Een geprofecteerd jaar loopt van verjaardag tot verjaardag, op de lokale geboortetijd; de maanden zijn twaalf gelijke delen van dat jaar.',
   },
   range: (start, end) => `${start} tot ${end}`,
+  stackedLabel: (count) => `${String(count)} exacte transiten op deze datum. Beweeg of focus om ze te tonen.`,
   orbWindow: (entry, exact, exit) => `komt in de orb ${entry}, exact ${exact}, verlaat de orb ${exit}`,
   passOf: (number, count) => `passage ${String(number)} van ${String(count)}`,
   passShort: (number, count) => `${String(number)}/${String(count)}`,

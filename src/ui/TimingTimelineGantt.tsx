@@ -6,7 +6,7 @@
  */
 import type { JulianDayUT } from '../ephemeris/types.js';
 import type { TimingTimelineEvent, TimingTimelineTrack } from '../domain/timing-timeline.js';
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useId, useLayoutEffect, useRef, useState } from 'react';
 import {
   BAR_GAP_PX,
   barSpan,
@@ -41,6 +41,8 @@ export interface TimingTimelineGanttProps {
   readonly barLabel: (event: TimingTimelineEvent) => string;
   /** A pass number as the short label beside an orb window's exact mark, e.g. "2/3". */
   readonly passLabel: (number: number, count: number) => string;
+  /** The accessible label of a stacked-exacts marker, given how many transits it covers (#1442). */
+  readonly stackedLabel: (count: number) => string;
   /** The target date in words, for the line's title. */
   readonly targetTitle: string;
   /** The event the pointer or focus is on (a bar or its table row), or `undefined` (#1442). The other bars dim to 20%. */
@@ -49,6 +51,63 @@ export interface TimingTimelineGanttProps {
   readonly selectedKey?: string | undefined;
   readonly onHover?: ((key: string | undefined) => void) | undefined;
   readonly onSelect?: ((key: string) => void) | undefined;
+}
+
+/**
+ * A marker for exact transits that draw on one spot (owner review, #1442): a focusable count that opens a bullet list of
+ * every event in the stack on hover or keyboard focus. Escape or leaving the marker closes it.
+ */
+function StackedExacts({
+  count,
+  left,
+  items,
+  label,
+}: {
+  readonly count: number;
+  readonly left: number;
+  readonly items: readonly string[];
+  readonly label: string;
+}): React.JSX.Element {
+  const [open, setOpen] = useState(false);
+  const id = useId();
+  return (
+    <span
+      className="gantt-stack"
+      style={{ left: `${String(left)}%` }}
+      onPointerEnter={() => {
+        setOpen(true);
+      }}
+      onPointerLeave={() => {
+        setOpen(false);
+      }}
+    >
+      <button
+        type="button"
+        className="gantt-stack-count"
+        aria-label={label}
+        aria-expanded={open}
+        aria-controls={open ? id : undefined}
+        onFocus={() => {
+          setOpen(true);
+        }}
+        onBlur={() => {
+          setOpen(false);
+        }}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') setOpen(false);
+        }}
+      >
+        {count}
+      </button>
+      {open && (
+        <ul id={id} className="gantt-stack-list">
+          {items.map((item, index) => (
+            <li key={`${String(index)}-${item}`}>{item}</li>
+          ))}
+        </ul>
+      )}
+    </span>
+  );
 }
 
 export function TimingTimelineGantt({
@@ -62,6 +121,7 @@ export function TimingTimelineGantt({
   describe,
   barLabel,
   passLabel,
+  stackedLabel,
   targetTitle,
   hoveredKey,
   selectedKey,
@@ -247,14 +307,13 @@ export function TimingTimelineGantt({
               mark.stackCount === undefined ||
               mark.stackCount < 2 ||
               mark.stacked?.[0] !== mark.event ? null : (
-                <span
+                <StackedExacts
                   key={`${mark.key}-count`}
-                  className="gantt-stack-count"
-                  style={{ left: `${String(mark.exact * 100)}%` }}
-                  aria-hidden="true"
-                >
-                  {mark.stackCount}
-                </span>
+                  count={mark.stackCount}
+                  left={mark.exact * 100}
+                  items={(mark.stacked ?? []).map((event) => describe(event))}
+                  label={stackedLabel(mark.stackCount)}
+                />
               ),
             )}
           </div>

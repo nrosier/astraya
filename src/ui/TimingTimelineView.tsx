@@ -344,6 +344,7 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
                 describe={describeEvent}
                 barLabel={(event) => timelineSubjectLabel(event.subject, locale)}
                 passLabel={t.passShort}
+                stackedLabel={t.stackedLabel}
                 targetTitle={t.targetLine(dateLabel(load.centreJd))}
                 hoveredKey={hoveredKey}
                 selectedKey={selectedKey}
