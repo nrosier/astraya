@@ -10,20 +10,14 @@
  */
 /**
  * @module FocusInterpretation
- * @purpose Renders the "interpret the tensions of this placement" Tier 2 AI-interpretation control shown under a selected chart placement, plus the history of past interpretations for that same placement/perspective.
+ * @purpose Renders the "interpret the tensions of this placement" Tier 2 AI-interpretation control shown under a selected chart placement,
  * @conventions A Tier 2 feature per ADR 0003: requires sign-in, a plain consent checkbox that is never remembered and is spent the moment the request is sent; sends only the placement's own `FocusContext` (sign, house, rulerships, aspects) via `generateTier2Interpretation`, never the whole chart or any name/date/time/place. Resets whenever `resetKey` (the selection) changes. Text comes from co-located `FocusInterpretation.messages.ts` via `useMessages()`.
  * @exports FocusInterpretation
  */
 import { useEffect, useId, useState } from 'react';
 import type { FocusContext } from '../interpretation/focus-context-schema.js';
 import type { Locale } from '../interpretation/schema.js';
-import {
-  generateTier2Interpretation,
-  getSavedInterpretation,
-  listSavedInterpretations,
-  type SavedInterpretationSummary,
-  type Tier2Section,
-} from '../interpretation/tier2-client.js';
+import { generateTier2Interpretation, type Tier2Section } from '../interpretation/tier2-client.js';
 import { Button } from './primitives/Button.js';
 import { Checkbox } from './primitives/Checkbox.js';
 import { useOnline } from './online-status.js';
@@ -31,8 +25,6 @@ import { StatusMessage } from './primitives/StatusMessage.js';
 import { sharedMessages } from './shared.messages.js';
 import { focusInterpretationMessages } from './FocusInterpretation.messages.js';
 import { useMessages } from './messages.js';
-import { basisLabel } from './result-basis-label.js';
-import { formatSavedTime } from './saved-time.js';
 import { useSessionUserOrUndefined } from './session-context.js';
 import { apiErrorText } from './api-error.js';
 
@@ -46,7 +38,7 @@ export function FocusInterpretation({
   readonly locale: Locale;
   /** Changes with the selection: the consent, the answer and any error start over. */
   readonly resetKey: string;
-  /** The person the readings are for (#768): lists and saves under them. Absent (until every caller passes it), nothing is listed or generated. */
+  /** The person the readings are saved under (#768). Absent (until every caller passes it), nothing is generated. */
   readonly personId?: string | undefined;
 }): React.JSX.Element | null {
   const t = useMessages(focusInterpretationMessages);
@@ -57,22 +49,7 @@ export function FocusInterpretation({
   const [generating, setGenerating] = useState(false);
   const [sections, setSections] = useState<readonly Tier2Section[] | undefined>(undefined);
   const [error, setError] = useState<string | undefined>(undefined);
-  const [saved, setSaved] = useState<readonly SavedInterpretationSummary[]>([]);
-  const [openingId, setOpeningId] = useState<string | undefined>(undefined);
   const reasonId = useId();
-
-  // The past readings of *this* body from *this* perspective (#423): other bodies' readings, and the
-  // report page's, are not shown under a placement they were not about. Re-read after each generation.
-  const [listVersion, setListVersion] = useState(0);
-  useEffect(() => {
-    if (user === undefined || personId === undefined) {
-      setSaved([]);
-      return;
-    }
-    void listSavedInterpretations({ personId }, locale)
-      .then(setSaved)
-      .catch(() => undefined);
-  }, [user, personId, listVersion, locale]);
 
   useEffect(() => {
     setConsent(false);
@@ -94,7 +71,6 @@ export function FocusInterpretation({
     generateTier2Interpretation({ mode: 'focus', focusContext: context, locale, personId })
       .then((generated) => {
         setSections(generated);
-        setListVersion((version) => version + 1);
       })
       .catch((caught: unknown) => {
         setError(apiErrorText(caught));
@@ -103,28 +79,6 @@ export function FocusInterpretation({
         setGenerating(false);
       });
   }
-
-  function openSaved(id: string): void {
-    setOpeningId(id);
-    setError(undefined);
-    getSavedInterpretation(id)
-      .then((detail) => {
-        setSections(detail.sections);
-      })
-      .catch((caught: unknown) => {
-        setError(apiErrorText(caught));
-      })
-      .finally(() => {
-        setOpeningId(undefined);
-      });
-  }
-
-  const history = saved.filter(
-    (entry) =>
-      entry.basis?.kind === 'focus' &&
-      entry.basis.body === context.focus_object.key &&
-      entry.basis.perspective === context.perspective,
-  );
 
   return (
     <section className="focus-interpretation" aria-label={t.heading}>
@@ -162,29 +116,6 @@ export function FocusInterpretation({
               <p>{section.body}</p>
             </article>
           ))}
-        </div>
-      )}
-      {history.length > 0 && (
-        <div className="tier2-saved-results">
-          <h4>{t.savedHeading}</h4>
-          <ul>
-            {history.map((entry) => (
-              <li key={entry.id}>
-                <Button
-                  disabled={openingId !== undefined}
-                  onClick={() => {
-                    openSaved(entry.id);
-                  }}
-                >
-                  {t.savedEntry(
-                    formatSavedTime(entry.createdAt, locale),
-                    entry.basis === null ? '' : basisLabel(entry.basis, locale),
-                    entry.description,
-                  )}
-                </Button>
-              </li>
-            ))}
-          </ul>
         </div>
       )}
     </section>
