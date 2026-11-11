@@ -12,6 +12,7 @@ import { ageInYears, TROPICAL_YEAR_DAYS } from '../src/astrology/progressions.js
 import {
   contactOrb,
   contactOrbLimit,
+  RECTIFICATION_DIRECTED_ORB_LIMIT,
   RECTIFICATION_ORB_LIMIT,
   MAX_RECTIFICATION_CANDIDATES,
   contactPoints,
@@ -66,12 +67,17 @@ describe('contact scoring conventions (#1445)', () => {
     }
   });
 
-  it('uses one 3 degree limit for every contact, from Tebbs (Complete Book of Chart Rectification)', () => {
+  it('uses a 1 degree limit for directed contacts and keeps 3 degrees for transits (Tebbs, #1445)', () => {
+    // Owner decision (2026-11-11): Tebbs's directed-contact orb is 1 degree. The 3 degree limit is the
+    // transit limit, unchanged by that decision.
     for (const key of [...OUTER_PLANET_KEYS, 'meanNode', 'sun', 'moon', 'mars']) {
-      expect(contactOrbLimit(key)).toBe(RECTIFICATION_ORB_LIMIT);
+      expect(contactOrbLimit(key, 'solar-arc')).toBe(RECTIFICATION_DIRECTED_ORB_LIMIT);
+      expect(contactOrbLimit(key, 'transit')).toBe(RECTIFICATION_ORB_LIMIT);
     }
+    expect(RECTIFICATION_DIRECTED_ORB_LIMIT).toBe(1);
     expect(RECTIFICATION_ORB_LIMIT).toBe(3);
-    expect(contactPoints(0, RECTIFICATION_ORB_LIMIT)).toBe(1);
+    expect(contactPoints(0, RECTIFICATION_DIRECTED_ORB_LIMIT)).toBe(1);
+    expect(contactPoints(RECTIFICATION_DIRECTED_ORB_LIMIT, RECTIFICATION_DIRECTED_ORB_LIMIT)).toBe(0);
     expect(contactPoints(RECTIFICATION_ORB_LIMIT, RECTIFICATION_ORB_LIMIT)).toBe(0);
   });
 });

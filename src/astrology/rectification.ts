@@ -56,14 +56,20 @@ import type { BodyId, Degrees, EphemerisProvider, GeoPosition, HouseSystem, Juli
  * The orb limit for every contact, Solar Arc or transit, for any body. Tebbs (Complete Book of Chart Rectification)
  * says to consider exact contacts first, then within 1, 2 and up to 3 degrees, and that the closer the orb the more
  * important the contact. The score falls in a straight line from 1 at exact to 0 at this limit.
- * TODO (#1445): Tebbs gives 1 degree for directions and progressions, and 3 degrees only as the outer limit when
- * building the natal hook; the 1-degree directed orb is a pending calculation change, not made here.
+ * Tebbs gives 1 degree for directions and progressions, and 3 degrees only as the outer limit when building the
+ * natal hook. Directed contacts now use the 1 degree limit (#1445); transit contacts keep this 3 degree limit.
  */
 export const RECTIFICATION_ORB_LIMIT: Degrees = 3;
 
-/** The orb limit for a contact, the same for every body (Tebbs, #1445). */
-export function contactOrbLimit(_bodyKey: string): Degrees {
-  return RECTIFICATION_ORB_LIMIT;
+/**
+ * The orb limit for directed (Solar Arc) contacts: 1 degree, Tebbs's directed-contact orb (owner decision, #1445,
+ * 2026-11-11). The 3 degree `RECTIFICATION_ORB_LIMIT` stays the transit limit, since no decision moved it.
+ */
+export const RECTIFICATION_DIRECTED_ORB_LIMIT: Degrees = 1;
+
+/** The orb limit for a contact of the given technique (#1445). Directed contacts use the 1 degree limit. */
+export function contactOrbLimit(_bodyKey: string, technique: RectificationTechnique = 'transit'): Degrees {
+  return technique === 'solar-arc' ? RECTIFICATION_DIRECTED_ORB_LIMIT : RECTIFICATION_ORB_LIMIT;
 }
 
 const ANGLE_KEYS: readonly string[] = ['asc', 'mc'];
@@ -168,7 +174,7 @@ function contactsBetween(
   for (const mover of moving) {
     for (const target of natal) {
       if (mover.key === target.key) continue;
-      const maxOrb = contactOrbLimit(ANGLE_KEYS.includes(mover.key) ? target.key : mover.key);
+      const maxOrb = contactOrbLimit(ANGLE_KEYS.includes(mover.key) ? target.key : mover.key, technique);
       for (const { key, angle } of CONTACT_ANGLES) {
         const orb = contactOrb(mover.longitude, target.longitude, angle, maxOrb);
         if (orb === undefined) continue;
