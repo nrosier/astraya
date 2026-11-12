@@ -53,8 +53,9 @@ import { PageHeader } from './PageHeader.js';
 import { useCalculationBasisLine, withBasisItems } from './calculation-basis.js';
 import { solarArcBasisItems } from './timing-basis.js';
 import { timingBasisMessages } from './timing-basis.messages.js';
-import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
-import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
+import { toChartCalculationOptions } from '../chart/extended-settings.js';
+import { usePersonCalculationSettings } from './person-calculation-settings.js';
+import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -186,10 +187,13 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
   const [locale] = useLocale();
   const [asOf, setAsOf] = useState(todayInputValue);
   const timingT = useMessages(timingBasisMessages);
-  // Solar arc is calculated with the engine defaults and its one key, the Sun's progressed arc.
-  const baseBasis = useCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE, undefined, {
-    rulers: false,
-  });
+  // Solar arc is calculated with the person's own settings (#1492) and its one key, the Sun's progressed arc.
+  const {
+    settings: personSettings,
+    unreadable: settingsUnreadable,
+    rulership,
+  } = usePersonCalculationSettings(personId);
+  const baseBasis = useCalculationBasisLine(personSettings, rulership, undefined, { rulers: false });
   const basisLine = withBasisItems(baseBasis, ...solarArcBasisItems(timingT));
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
@@ -200,7 +204,9 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
   }, [asOf]);
 
   useEffect(() => {
-    if (personMoment === undefined || provider === undefined || targetDate === undefined) return undefined;
+    // An unreadable register means no chart-dependent content at all, never one from placeholder settings (#806).
+    if (personMoment === undefined || provider === undefined || targetDate === undefined || settingsUnreadable)
+      return undefined;
     const moment = personMoment;
     const effect = { cancelled: false };
     setLoad({ kind: 'loading' });
@@ -208,7 +214,12 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
     void (async () => {
       try {
         const targetJd = await provider.julianDayFromUtc(targetDate.year, targetDate.month, targetDate.day, 12, 0, 0);
-        const data = await computeSolarArcDirections(moment, targetJd, provider);
+        const data = await computeSolarArcDirections(
+          moment,
+          targetJd,
+          provider,
+          toChartCalculationOptions(personSettings),
+        );
         if (!effect.cancelled) setLoad({ kind: 'ready', data });
       } catch (error) {
         if (!effect.cancelled)
@@ -219,7 +230,7 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
     return () => {
       effect.cancelled = true;
     };
-  }, [personMoment, provider, targetDate]);
+  }, [personMoment, provider, targetDate, personSettings, settingsUnreadable]);
 
   // The positions and contacts tables' CSVs, offered in the page header (#887). Positions first, as the screen lists them.
   const positions = load.kind === 'ready' ? positionRows(load.data.directedPositions, load.data.houses) : undefined;
@@ -255,6 +266,10 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
 
   if (person === undefined) {
     return <PersonNotFound />;
+  }
+
+  if (settingsUnreadable) {
+    return <UnreadableSettingsNotice name={person.displayName || ''} />;
   }
 
   if (person.moment === undefined) {
