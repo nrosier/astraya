@@ -20,6 +20,11 @@ const en = {
   heading: (name: string) => `${name}’s Transits`,
   hint: (name: string) =>
     `A bi-wheel: ${name}’s natal chart on the inner ring, transiting positions for the chosen date on the outer ring, cast for their natal place.`,
+  // The collapsible explainer under the date bar (#1400, #1440, owner review 2026-11-12): the owner's text, closed until opened.
+  explainerTitle: 'How to read this screen',
+  explainerSummary: 'Playback keys, the bi-wheel, the filter and how to select',
+  explainerShow: 'Show explanation',
+  explainerHide: 'Hide explanation',
   asOfLabel: 'As of',
   calculating: 'Calculating…',
   error: (message: string) => `Transits could not be calculated. ${message}`,
@@ -55,6 +60,10 @@ const nl: typeof en = {
   heading: (name: string) => `Transits van ${name}`,
   hint: (name: string) =>
     `Een biwiel: de natale horoscoop van ${name} op de binnenring, transiterende posities voor de gekozen datum op de buitenring, berekend voor hun geboorteplaats.`,
+  explainerTitle: 'Zo lees je dit scherm',
+  explainerSummary: 'Afspeeltoetsen, het biwiel, het filter en hoe je selecteert',
+  explainerShow: 'Uitleg tonen',
+  explainerHide: 'Uitleg verbergen',
   asOfLabel: 'Vanaf',
   calculating: 'Berekenen…',
   error: (message: string) => `Transits konden niet worden berekend. ${message}`,

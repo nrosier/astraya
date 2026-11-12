@@ -54,6 +54,7 @@ export function DateAnimationBar({
   onDateChange,
   onPlayingChange,
   mode = 'full',
+  showHint = true,
 }: {
   readonly date: string;
   readonly onDateChange: (date: string) => void;
@@ -64,6 +65,8 @@ export function DateAnimationBar({
    * steps only, for a screen that does not animate (Progressions, owner review 2026-11-11, #1442).
    */
   readonly mode?: 'full' | 'date';
+  /** False when the screen carries this text in its own explainer (Transits, #1400/#1440). */
+  readonly showHint?: boolean;
 }): React.JSX.Element {
   const playable = mode === 'full';
   const t = useMessages(dateAnimationBarMessages);
@@ -274,7 +277,7 @@ export function DateAnimationBar({
           {t.now}
         </Button>
       </div>
-      <p className="hint date-animation-hint">{t.hint}</p>
+      {showHint && <p className="hint date-animation-hint">{t.hint}</p>}
     </div>
   );
 }
