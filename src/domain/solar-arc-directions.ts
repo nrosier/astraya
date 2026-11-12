@@ -134,8 +134,10 @@ export async function computeSolarArcDirections(
         throw new Error('unreachable: every contact pairs bodies drawn from natalPositions');
       }
       const candidates = arcsToExactness(directedNatalLongitude, targetNatalLongitude, contact.aspect.angle);
+      // Candidates are in [0, 360); the arc is unwrapped and goes negative once the progressed Sun passes 0 (#1498).
+      const wrappedArc = ((arc % 360) + 360) % 360;
       const requiredArc = candidates.reduce((closest, candidate) =>
-        Math.abs(candidate - arc) < Math.abs(closest - arc) ? candidate : closest,
+        Math.abs(candidate - wrappedArc) < Math.abs(closest - wrappedArc) ? candidate : closest,
       );
       // Each bound found against the real ephemeris, like the exact date: the arc is not linear in time.
       const [exactJd, activeFromJd, activeUntilJd] = await Promise.all([

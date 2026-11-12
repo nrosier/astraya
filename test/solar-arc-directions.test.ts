@@ -247,4 +247,38 @@ describe('exact dates for a birth whose progressed Sun crosses 0 degrees (#1498)
     const [progressed] = await engine.positions(progressedJulianDay(natalJd, jd ?? natalJd), [sun.id]);
     expect(arcsecondsBetween(progressed?.longitude ?? 0, natalSun.longitude + 100)).toBeLessThan(5);
   });
+
+  it('dates contacts near the as-of date late in life, after the progressed Sun has wrapped (age 120)', async () => {
+    const engine = await getEngine();
+    const natalJd = await julianDayFor(engine, resolveMoment(EPOCH_BIRTH));
+    const asOfJd = natalJd + 120 * TROPICAL_YEAR_DAYS;
+    const result = await computeSolarArcDirections(EPOCH_BIRTH, asOfJd, engine);
+    const dated = result.contacts.filter((contact) => contact.exactJd !== undefined);
+    expect(dated.length).toBeGreaterThan(0);
+
+    const sun = bodyByKey('sun');
+    if (sun === undefined) throw new Error('unreachable: sun is always in BODIES');
+    const natal = await engine.positions(
+      natalJd,
+      BODIES.map((body) => body.id),
+    );
+    const natalOf = (body: number): number => {
+      const position = natal.find((p) => p.body === body);
+      if (position === undefined) throw new Error('unreachable: every body has a natal position');
+      return position.longitude;
+    };
+    for (const contact of dated) {
+      const exactJd = contact.exactJd;
+      if (exactJd === undefined) throw new Error('unreachable: filtered to dated contacts');
+      expect(Math.abs(exactJd - asOfJd)).toBeLessThan(20 * TROPICAL_YEAR_DAYS);
+      const [progressedSun] = await engine.positions(progressedJulianDay(natalJd, exactJd), [sun.id]);
+      const directed = natalOf(contact.bodyA) + (progressedSun?.longitude ?? 0) - natalOf(sun.id);
+      const target = natalOf(contact.bodyB);
+      const miss = Math.min(
+        arcsecondsBetween(directed, target + contact.aspect.angle),
+        arcsecondsBetween(directed, target - contact.aspect.angle),
+      );
+      expect(miss).toBeLessThan(5);
+    }
+  });
 });
