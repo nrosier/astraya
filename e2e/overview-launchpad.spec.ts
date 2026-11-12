@@ -186,6 +186,8 @@ test('on Transits the text above the wheel runs as wide as the wheel (#1225)', a
   await page.getByRole('tab', { name: 'Transits', exact: true }).click();
   const wheel = page.locator('div.chart-wheel');
   await expect(wheel).toBeVisible({ timeout: 60_000 });
+  // The text sits in the collapsible explainer under the date bar (#1400, #1440); open it first.
+  await page.getByRole('button', { name: /Show explanation/ }).click();
   const hint = page.getByText(/^A bi-wheel/);
   const hintBox = await hint.boundingBox();
   const wheelBox = await wheel.boundingBox();

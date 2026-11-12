@@ -307,7 +307,10 @@ export function TransitFilterStatus({
   shown,
   total,
   emptyOnly = false,
+  ruleNote = true,
 }: Pick<Props, 'filter' | 'rules' | 'onChange' | 'shown' | 'total'> & {
+  /** False when the screen states the "Important" rule in its own explainer (Transits, #1400/#1440). */
+  readonly ruleNote?: boolean;
   /** Only the way out of an empty list: the count and the rule live in the heading's info tooltip instead. */
   readonly emptyOnly?: boolean;
 }) {
@@ -317,7 +320,7 @@ export function TransitFilterStatus({
   return (
     <div className="transit-filter-status">
       {!emptyOnly && <FilterSummary summary={t.count(shown, total, presetName)} />}
-      {!emptyOnly && current === 'important' && (
+      {!emptyOnly && ruleNote && current === 'important' && (
         <p className="hint">{rules.context === 'daily' ? t.dailyNote : t.yearlyNote}</p>
       )}
       {shown === 0 && total > 0 && (

@@ -82,9 +82,16 @@ test.describe('with the shared people (#799)', () => {
     expect(shown).toBeLessThan(total);
     await expect(rows).toHaveCount(shown);
     await expect(crossLines).toHaveCount(shown);
+    // The collapsible explainer under the date bar (#1400, #1440) is closed on arrival, and its count is the live one.
+    const explainer = page.getByRole('button', { name: /Show explanation/ });
+    await expect(explainer).toHaveAttribute('aria-expanded', 'false');
+    await explainer.click();
+    const panel = page.locator('.primitive-disclosure-panel').filter({ hasText: 'Speed multiplies' });
+    await expect(panel).toContainText(`Important · ${String(shown)} of ${String(total)} shown`);
     await choosePreset(page, 'All');
     await expect(rows).toHaveCount(total);
     await expect(crossLines).toHaveCount(total);
+    await expect(panel).toContainText(`All · ${String(total)} of ${String(total)} shown`);
     await choosePreset(page, 'Important');
 
     // Click-to-isolate (#418): the transiting Saturn is picked out on its own ring, the panel names

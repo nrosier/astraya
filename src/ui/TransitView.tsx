@@ -19,11 +19,14 @@
 /**
  * @module TransitView
  * @purpose Transit bi-wheel screen for one saved person against a chosen date: natal chart on the inner ring, transiting positions on the outer ring, with filtered cross-chart contacts and void-of-course Moon.
- * @conventions Calls renderMultiWheelSvg directly, bypassing the single-chart AstroChartWheel wrapper, same as SynastryView.tsx; uses TransitView.messages.ts for en/nl text via useMessages(). Carries its own PrintProvenance footer (#564) labelled with engine defaults, since computeTransit doesn't yet take a user-configurable calculation snapshot. A recalculation keeps the earlier result on screen (aria-busy) so playback never unmounts the wheel or table (#1440).
+ * @conventions Calls renderMultiWheelSvg directly, bypassing the single-chart AstroChartWheel wrapper, same as SynastryView.tsx; uses TransitView.messages.ts for en/nl text via useMessages(). Carries its own PrintProvenance footer (#564) labelled with engine defaults, since computeTransit doesn't yet take a user-configurable calculation snapshot. A recalculation keeps the earlier result on screen (aria-busy) so playback never unmounts the wheel or table (#1440). The how-to text (date-bar keys, bi-wheel, live filter count and the Important rule, click-to-select) lives in one collapsed Disclosure under the date bar, from the owner's review text (#1400, #1440).
  * @exports TransitView, contactColumns
  */
 
 import { DateAnimationBar } from './DateAnimationBar.js';
+import { dateAnimationBarMessages } from './DateAnimationBar.messages.js';
+import { transitFilterPanelMessages } from './TransitFilterPanel.messages.js';
+import { Disclosure } from './primitives/Disclosure.js';
 import { useAsOfDate } from './use-as-of-date.js';
 import { GlossaryText } from './GlossaryText.js';
 import { personHref } from './route.js';
@@ -61,6 +64,7 @@ import { PatchedWheel } from './wheel-morph.js';
 import {
   chartRulerKeysOf,
   filterTransits,
+  presetOf,
   rankTransits,
   type TransitRuleContext,
 } from '../astrology/transit-importance.js';
@@ -254,6 +258,8 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
   }, [load, t, shownContacts, symbolClass, variants]);
 
   const wheelT = useMessages(biWheelSelectionPanelMessages);
+  const dateBarT = useMessages(dateAnimationBarMessages);
+  const filterT = useMessages(transitFilterPanelMessages);
   const {
     wheelRef,
     selectionKey,
@@ -365,10 +371,30 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
           />
         )}
       </PageHeader>
-      <DateAnimationBar date={asOf} onDateChange={setAsOf} onPlayingChange={setPlayback} />
-      <p className="hint">
-        <GlossaryText text={t.hint(person.displayName || t.thisPerson)} />
-      </p>
+      <DateAnimationBar date={asOf} onDateChange={setAsOf} onPlayingChange={setPlayback} showHint={false} />
+      {/* The owner's explainer text (review 2026-11-12), closed until opened; the live count is computed from the filter. */}
+      <Disclosure
+        title={t.explainerTitle}
+        summary={t.explainerSummary}
+        showLabel={t.explainerShow}
+        hideLabel={t.explainerHide}
+      >
+        <p className="hint">{dateBarT.hint}</p>
+        <p className="hint">
+          <GlossaryText text={t.hint(person.displayName || t.thisPerson)} />
+        </p>
+        {load.kind === 'ready' && (
+          <p className="hint">
+            {filterT.count(
+              shownContacts.length,
+              load.data.contacts.length,
+              filterT.presetsShort[presetOf(filter, rules) ?? 'custom'],
+            )}
+          </p>
+        )}
+        <p className="hint">{rules.context === 'daily' ? filterT.dailyNote : filterT.yearlyNote}</p>
+        <p className="hint">{wheelT.hint}</p>
+      </Disclosure>
 
       {/* The result region: busy while the transit (re)calculates, as the Astrocartography map is. */}
       <div aria-busy={load.kind === 'loading' || refreshing}>
@@ -386,9 +412,9 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
               onChange={setFilter}
               shown={shownContacts.length}
               total={load.data.contacts.length}
+              ruleNote={false}
             />
 
-            <p className="hint chart-wheel-hint">{wheelT.hint}</p>
             <PatchedWheel
               ref={wheelRef}
               className="chart-wheel chart-wheel-interactive"
