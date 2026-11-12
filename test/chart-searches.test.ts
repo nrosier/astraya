@@ -14,6 +14,7 @@ import {
   chartSearchCreate,
   chartSearchRename,
   foldChartSearch,
+  readChartSearchDefinition,
   sortedChartSearches,
   type ChartSearchDefinition,
   type StoredSearchCondition,
@@ -261,15 +262,37 @@ describe('timing scopes and versions', () => {
     ).toMatchObject({ status: 'unreadable', reason: 'unknown-condition' });
   });
 
-  it('keeps a transit or progression sign or house condition as invalid', () => {
+  it('accepts a transit sign and a progression house condition, and round-trips them', () => {
+    const conditions: readonly StoredSearchCondition[] = [
+      { kind: 'sign', scope: 'transit', body: 'saturn', sign: 11 },
+      { kind: 'house', scope: 'progression', body: 'moon', house: 8 },
+    ];
+    const definition: ChartSearchDefinition = { version: 2, operator: 'and', conditions };
+    for (const mutation of chartSearchCreate(SEARCH_ID, 'Moving', definition)) assertChartSearchMutation(mutation);
+    expect(readChartSearchDefinition(definition)).toEqual(definition);
+    expect(fold2(definition)).toMatchObject({ status: 'ready', definition });
+    const stored = chartSearchCreate(SEARCH_ID, 'Moving', definition)[1]?.value;
+    expect(readChartSearchDefinition(stored)).toEqual(definition);
+  });
+
+  it('still refuses out-of-range sign and house values for transit and progression', () => {
     for (const scope of ['transit', 'progression']) {
-      expect(fold2({ ...DEFINITION, conditions: [{ kind: 'sign', scope, body: 'sun', sign: 4 }] })).toMatchObject({
+      expect(fold2({ ...DEFINITION, conditions: [{ kind: 'sign', scope, body: 'sun', sign: 12 }] })).toMatchObject({
         reason: 'invalid',
       });
-      expect(fold2({ ...DEFINITION, conditions: [{ kind: 'house', scope, body: 'sun', house: 4 }] })).toMatchObject({
+      expect(fold2({ ...DEFINITION, conditions: [{ kind: 'house', scope, body: 'sun', house: 0 }] })).toMatchObject({
         reason: 'invalid',
       });
     }
+    expect(() => {
+      for (const m of chartSearchCreate(SEARCH_ID, 'x', {
+        version: 2,
+        operator: 'and',
+        conditions: [{ kind: 'house', scope: 'transit', body: 'sun', house: 13 }],
+      })) {
+        assertChartSearchMutation(m);
+      }
+    }).toThrow(ChartSearchRefusedError);
   });
 
   it('keeps a version above 2 as future-version, listed and not refused by the fold', () => {
