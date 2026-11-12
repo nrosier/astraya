@@ -144,7 +144,7 @@ export function positionColumns(
     {
       key: 'house',
       label: t.houseLabel,
-      align: 'center',
+      align: 'end',
       valueOf: (row) => row.house ?? '',
       render: (row) => (row.house === undefined ? '—' : String(row.house)),
     },

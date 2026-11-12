@@ -270,7 +270,7 @@ export function CyclesView(): React.JSX.Element {
           );
         },
       },
-      { key: 'date', label: t.dateColumn, valueOf: (row) => row.jd, render: (row) => row.date },
+      { key: 'date', label: t.dateColumn, valueOf: (row) => row.jd, render: (row) => row.date, align: 'start' },
       {
         key: 'aspect',
         label: t.aspectColumn,

@@ -23,14 +23,14 @@ type ContactRow = RowOf<ReturnType<typeof contactColumns>>;
 type ExactEventRow = RowOf<ReturnType<typeof exactEventColumns>>;
 
 describe('forecast daily table alignment (#1357/#1358)', () => {
-  it('left-aligns the Orb column even though its values are all numbers', () => {
+  it('right-aligns the Orb column (an angle, content only)', () => {
     const rows: ContactRow[] = [
       { key: 'a', sentence: 's', transiting: 'Sun', aspect: 'conjunction', natal: 'Moon', orb: 1.25, applying: true },
       { key: 'b', sentence: 's', transiting: 'Sun', aspect: 'trine', natal: 'Mars', orb: 0.5, applying: false },
     ];
     const orb = columnByKey(contactColumns(t), 'orb');
-    expect(orb.align).toBe('start');
-    expect(columnAlign(orb, rows)).toBe('start');
+    expect(orb.align).toBe('end');
+    expect(columnAlign(orb, rows)).toBe('end');
   });
 
   it('left-aligns the exact-today date column and lets its text wrap', () => {

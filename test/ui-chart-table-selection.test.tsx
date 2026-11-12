@@ -96,7 +96,7 @@ const showButton = (container: HTMLElement, name: string): HTMLButtonElement | n
 const dimmed = (container: HTMLElement): number => container.querySelectorAll('.chart-wheel .chart-dimmed').length;
 
 describe('a table row selects on the wheel (#418)', () => {
-  it('the Positions table centres the symbol and house columns and right-aligns the degree columns (#870)', async () => {
+  it('the Positions table centres the symbol column and right-aligns the house and degree columns (#870)', async () => {
     const container = await mount();
     await open(container, 'positions');
     // The Positions table is the data-table section whose heading is the Positions caption; search only its <thead>.
@@ -110,7 +110,7 @@ describe('a table row selects on the wheel (#418)', () => {
       return header?.getAttribute('data-align');
     };
     expect(align(chartViewMessages.en.symbolLabel)).toBe('center');
-    expect(align(chartViewMessages.en.houseLabel)).toBe('center');
+    expect(align(chartViewMessages.en.houseLabel)).toBe('end');
     expect(align(chartViewMessages.en.degLabel)).toBe('end');
     expect(align(chartViewMessages.en.minLabel)).toBe('end');
     expect(align(chartViewMessages.en.secLabel)).toBe('end');
