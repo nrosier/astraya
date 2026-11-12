@@ -268,8 +268,9 @@ test('opening a card in a multi-card row leaves the neighbouring column its own 
  * bottom edges cannot hide a shortfall: the probe sets the row to `align-items: start` and releases the last card's
  * grow, then reads the boxes. It changes nothing the page ships.
  *
- * Horary meets 90% at every measured width. Consultation is held to 0.895, the floor the owner accepted on 2026-10-30
- * (the two columns differ by 80px at 1280×800 and 3440×1440); it is still measured and reported.
+ * Horary meets 90% at every measured width. Consultation is held to 0.895, the floor the owner accepted on 2026-10-30.
+ * With the transit tables allowed to wrap and a 1fr/1.5fr split (#1498) it measures 0.956 at 1280×800 and 0.954 at
+ * 3440×1440 (shipped 3fr/2fr with nowrap cells measured 0.776 and 0.797); it is still measured and reported.
  */
 const NINETY_PERCENT = 0.9;
 const CONSULTATION_FLOOR = 0.895;
@@ -367,6 +368,21 @@ test('consultation side-by-side columns keep the owner-accepted floor (#895)', a
   expect(family, 'the pinned e2e font is applied').toContain('E2E Pinned');
   const short = ratios.filter((r) => r.ratio < CONSULTATION_FLOOR).map((r) => `${r.label}: ${r.ratio.toFixed(3)}`);
   expect(short, 'consultation shorter column below the accepted floor').toEqual([]);
+  // #1498: the wrapping tables must fit their column, so nothing scrolls sideways at the measured wide widths.
+  const overflowing: string[] = [];
+  for (const viewport of BOTTOM_EDGE_VIEWPORTS.filter((v) => v.width > 1000)) {
+    await page.setViewportSize(viewport);
+    await page.goto(`${baseUrl}/#/people/${id ?? ''}/consultation`);
+    await expect(page.locator('.consultation-grid')).toBeVisible({ timeout: 30_000 });
+    const widths = await page.evaluate<{ scroll: number; client: number }[]>(
+      `Array.from(document.querySelectorAll('.consultation-layout .data-table-scroll')).map((el) => ({ scroll: el.scrollWidth, client: el.clientWidth }))`,
+    );
+    expect(widths.length, 'the consultation has transit tables to measure').toBeGreaterThan(0);
+    for (const w of widths) {
+      if (w.scroll > w.client) overflowing.push(`${String(viewport.width)}: ${String(w.scroll)} > ${String(w.client)}`);
+    }
+  }
+  expect(overflowing, 'consultation tables overflow horizontally').toEqual([]);
 });
 
 test('birth record side-by-side columns keep the shorter at least 90% of the taller (#895)', async () => {
