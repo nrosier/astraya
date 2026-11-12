@@ -1,6 +1,6 @@
 /**
  * #800: the consultation layout contract. The key-metric tiles sit in a consultation-only grid of 2, 4 and 6
- * columns by container width (the shared StatList is untouched); the main grid is 60/40 from 48rem and one column
+ * columns by container width (the shared StatList is untouched); the main grid is 40/60 (1fr/1.5fr, #1498) from 48rem and one column
  * below; the transits to the Ascendant and Midheaven are one group, and so one Disclosure, per angle (D-800a); a
  * contact with no further exact pass shows an em dash named "No further exact pass" (D-800b).
  */
@@ -49,9 +49,9 @@ describe('consultation tile grid (#800)', () => {
 });
 
 describe('consultation main grid (#800)', () => {
-  it('is one column below 48rem and 60/40 (3fr/2fr) from 48rem', () => {
+  it('is one column below 48rem and 40/60 (1fr/1.5fr, #1498) from 48rem', () => {
     expect(columnsAt('.consultation-grid')).toBe('minmax(0, 1fr)');
-    expect(columnsAt('.consultation-grid', '48rem')).toBe('minmax(0, 3fr) minmax(0, 2fr)');
+    expect(columnsAt('.consultation-grid', '48rem')).toBe('minmax(0, 1fr) minmax(0, 1.5fr)');
   });
 
   it('keeps the general shell width, not the wide shell', () => {

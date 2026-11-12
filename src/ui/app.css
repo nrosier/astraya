@@ -7988,10 +7988,22 @@ button.primitive-disclosure-trigger:hover:not(:disabled) {
   align-items: start;
 }
 
+/* Split of the two columns (#1498). Measured on EINSTEIN with the 90% probe (natural heights): the old 3fr/2fr gave
+   0.776 at 1280 and 0.797 at 3440, because the transit tables' nowrap cells floored the left column's content at
+   441px and left the right column far taller. With the consultation tables wrapping (below), the floor is about 321px
+   and 1fr/1.5fr gives 0.956 at 1280 and 0.954 at 3440 with no horizontal overflow; 1fr/1.82fr overflowed at 1280. */
 @container consultation (min-width: 48rem) {
   .consultation-grid {
-    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
   }
+}
+
+/* The consultation's tables let Aspect and Next exact date wrap onto two lines (#1498, owner decision) instead of
+   keeping every cell on one line like the rest of the app's .data-table tables; that is what lets the narrower column
+   hold the 0.895 floor without a horizontal scrollbar. Scoped to the consultation so other tables keep nowrap. */
+.consultation-layout .data-table th,
+.consultation-layout .data-table td {
+  white-space: normal;
 }
 
 .consultation-col {

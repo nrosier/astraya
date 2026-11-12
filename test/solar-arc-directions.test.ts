@@ -7,8 +7,8 @@
  */
 import { describe, expect, it } from 'vitest';
 import { BODIES, bodyByKey } from '../src/astrology/bodies.js';
-import { ageInYears, mcArc, progressedJulianDay } from '../src/astrology/progressions.js';
-import { arcsToExactness } from '../src/astrology/solar-arc-directions.js';
+import { TROPICAL_YEAR_DAYS, ageInYears, mcArc, progressedJulianDay } from '../src/astrology/progressions.js';
+import { arcsToExactness, findExactnessJd } from '../src/astrology/solar-arc-directions.js';
 import { computeSecondaryProgression } from '../src/domain/secondary-progression.js';
 import { computeSolarArcDirections } from '../src/domain/solar-arc-directions.js';
 import { julianDayFor } from '../src/time/julian.js';
@@ -198,5 +198,87 @@ describe('computeSolarArcDirections (#47)', () => {
     const engine = await getEngine();
     const result = await computeSolarArcDirections(NATAL, 2460000, engine, { houseSystem: 'K' });
     expect(result.houses.system).toBe('K');
+  });
+});
+
+describe('exact dates for a birth whose progressed Sun crosses 0 degrees (#1498)', () => {
+  const EPOCH_BIRTH: BirthMomentInput = {
+    civil: { year: 1970, month: 1, day: 1, hour: 12, minute: 0, second: 0 },
+    coordinates: { latitude: 52.37, longitude: 4.9 },
+    offsetOverrideMinutes: 0,
+  };
+
+  it('dates the 1-degree arc and the contacts although the progressed Sun wraps past 360 within the window', async () => {
+    const engine = await getEngine();
+    const natalJd = await julianDayFor(engine, resolveMoment(EPOCH_BIRTH));
+    const sun = bodyByKey('sun');
+    if (sun === undefined) throw new Error('unreachable: sun is always in BODIES');
+    const [natalSun] = await engine.positions(natalJd, [sun.id]);
+    if (natalSun === undefined) throw new Error('unreachable: the ephemeris returned no position for the Sun');
+    const windowEndJd = natalJd + 150 * TROPICAL_YEAR_DAYS;
+
+    const oneDegreeJd = await findExactnessJd(engine, natalJd, natalSun.longitude, 1);
+    expect(oneDegreeJd).toBeDefined();
+
+    const result = await computeSolarArcDirections(EPOCH_BIRTH, natalJd + TROPICAL_YEAR_DAYS * 40, engine);
+    const dated = result.contacts.filter((contact) => contact.exactJd !== undefined);
+    expect(dated.length).toBeGreaterThan(0);
+
+    for (const jd of [oneDegreeJd, ...dated.map((contact) => contact.exactJd)]) {
+      if (jd === undefined) throw new Error('unreachable: filtered to defined dates');
+      expect(jd).toBeGreaterThanOrEqual(natalJd);
+      expect(jd).toBeLessThanOrEqual(windowEndJd);
+    }
+    // Independent route: the Sun progressed to the date sits the required arc beyond the natal Sun (mod 360).
+    if (oneDegreeJd === undefined) throw new Error('unreachable: asserted defined above');
+    const [progressed] = await engine.positions(progressedJulianDay(natalJd, oneDegreeJd), [sun.id]);
+    expect(arcsecondsBetween(progressed?.longitude ?? 0, natalSun.longitude + 1)).toBeLessThan(5);
+  });
+
+  it('dates an arc reached after the Sun has wrapped (a required arc of 100 degrees)', async () => {
+    const engine = await getEngine();
+    const natalJd = await julianDayFor(engine, resolveMoment(EPOCH_BIRTH));
+    const sun = bodyByKey('sun');
+    if (sun === undefined) throw new Error('unreachable: sun is always in BODIES');
+    const [natalSun] = await engine.positions(natalJd, [sun.id]);
+    if (natalSun === undefined) throw new Error('unreachable: the ephemeris returned no position for the Sun');
+    const jd = await findExactnessJd(engine, natalJd, natalSun.longitude, 100);
+    expect(jd).toBeDefined();
+    const [progressed] = await engine.positions(progressedJulianDay(natalJd, jd ?? natalJd), [sun.id]);
+    expect(arcsecondsBetween(progressed?.longitude ?? 0, natalSun.longitude + 100)).toBeLessThan(5);
+  });
+
+  it('dates contacts near the as-of date late in life, after the progressed Sun has wrapped (age 120)', async () => {
+    const engine = await getEngine();
+    const natalJd = await julianDayFor(engine, resolveMoment(EPOCH_BIRTH));
+    const asOfJd = natalJd + 120 * TROPICAL_YEAR_DAYS;
+    const result = await computeSolarArcDirections(EPOCH_BIRTH, asOfJd, engine);
+    const dated = result.contacts.filter((contact) => contact.exactJd !== undefined);
+    expect(dated.length).toBeGreaterThan(0);
+
+    const sun = bodyByKey('sun');
+    if (sun === undefined) throw new Error('unreachable: sun is always in BODIES');
+    const natal = await engine.positions(
+      natalJd,
+      BODIES.map((body) => body.id),
+    );
+    const natalOf = (body: number): number => {
+      const position = natal.find((p) => p.body === body);
+      if (position === undefined) throw new Error('unreachable: every body has a natal position');
+      return position.longitude;
+    };
+    for (const contact of dated) {
+      const exactJd = contact.exactJd;
+      if (exactJd === undefined) throw new Error('unreachable: filtered to dated contacts');
+      expect(Math.abs(exactJd - asOfJd)).toBeLessThan(20 * TROPICAL_YEAR_DAYS);
+      const [progressedSun] = await engine.positions(progressedJulianDay(natalJd, exactJd), [sun.id]);
+      const directed = natalOf(contact.bodyA) + (progressedSun?.longitude ?? 0) - natalOf(sun.id);
+      const target = natalOf(contact.bodyB);
+      const miss = Math.min(
+        arcsecondsBetween(directed, target + contact.aspect.angle),
+        arcsecondsBetween(directed, target - contact.aspect.angle),
+      );
+      expect(miss).toBeLessThan(5);
+    }
   });
 });
