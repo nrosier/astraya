@@ -1141,7 +1141,9 @@ async function buildSolarArcSectionPlan(
   if (person.moment === undefined) throw new Error('this person has no complete birth record');
   const st = solarArcViewMessages[locale];
   const targetJd = await targetJdOf(options.asOfDate, provider);
-  const data = await computeSolarArcDirections(person.moment, targetJd, provider);
+  const data = await computeSolarArcDirections(person.moment, targetJd, provider, {
+    zodiac: context.settings.zodiac,
+  });
   const heading = `${pt.solarArcLabel}${person.displayName === '' ? '' : ` — ${person.displayName}`}`;
 
   const tables: PdfTablePlan[] = [];

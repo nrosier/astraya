@@ -644,6 +644,41 @@ describe('buildPdfPlan', () => {
     ).toBe(true);
   }, 30_000);
 
+  it("reads the solar arc section in the person's zodiac while secondary progressions stay on engine defaults (#1492)", async () => {
+    const provider = await getEngine();
+    const lahiri = ayanamsaByKey('lahiri')?.id;
+    if (lahiri === undefined) throw new Error('expected the Lahiri ayanamsa');
+    const sidereal = { ...DEFAULT_EXTENDED_SETTINGS, zodiac: { kind: 'sidereal' as const, ayanamsa: lahiri } };
+    async function tablesOf(settings: typeof DEFAULT_EXTENDED_SETTINGS, part: Partial<PdfSelection>) {
+      const selection: PdfSelection = { personId: ADA.id, ...EMPTY_SELECTION, ...part };
+      const context: PdfPlanContext = {
+        person: ADA,
+        provider,
+        settings,
+        rulership: DEFAULT_RULERSHIP_CHOICE,
+        locale: 'en',
+        corpusFetch,
+      };
+      const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
+      expect(plan.errors).toHaveLength(0);
+      const [section] = plan.sections;
+      if (section?.kind !== 'chart') throw new Error('expected a chart section');
+      return section.tables.map((table) => table.body);
+    }
+    const solarArc = { solarArc: { positionsTable: true, contactsTable: false, asOfDate: '2025-01-01' } };
+    expect(await tablesOf(sidereal, solarArc)).not.toEqual(await tablesOf(DEFAULT_EXTENDED_SETTINGS, solarArc));
+    const progressions = {
+      progressions: {
+        technique: 'secondary' as const,
+        mcMethod: 'naibod' as const,
+        positionsTable: true,
+        contactsTable: false,
+        asOfDate: '2025-01-01',
+      },
+    };
+    expect(await tablesOf(sidereal, progressions)).toEqual(await tablesOf(DEFAULT_EXTENDED_SETTINGS, progressions));
+  }, 60_000);
+
   it('builds a profections section with the year/month table and profected-house meanings (#441)', async () => {
     const provider = await getEngine();
     const selection: PdfSelection = {
