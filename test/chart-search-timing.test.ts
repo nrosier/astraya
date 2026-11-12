@@ -40,7 +40,7 @@ import { computeLunarReturns } from '../src/domain/lunar-returns.js';
 import { computeSecondaryProgression } from '../src/domain/secondary-progression.js';
 import { ReturnNotFoundError } from '../src/domain/return-chart.js';
 import { computeSolarReturn } from '../src/domain/solar-return.js';
-import type { EphemerisProvider, JulianDayUT } from '../src/ephemeris/types.js';
+import type { EphemerisProvider, JulianDayUT, Zodiac } from '../src/ephemeris/types.js';
 import { julianDayFor } from '../src/time/julian.js';
 import { resolveMoment } from '../src/time/resolve.js';
 import type { BirthMomentInput } from '../src/time/types.js';
@@ -509,5 +509,28 @@ describe('solar-arc scope (#1486, cited to Tebbs, provisional)', () => {
     // A default-orb subject finds at least as many contacts as the tighter one.
     const wide = await subjectFor(['solarArc'], asOf());
     expect(wide.solarArc?.contacts.length ?? 0).toBeGreaterThanOrEqual(ours.length);
+  }, 120_000);
+
+  it('solar-arc scope contacts match computeSolarArcDirections in the sidereal zodiac (#1489)', async () => {
+    const zodiac: Zodiac = { kind: 'sidereal', ayanamsa: 1 };
+    const orbConfig = { ...DEFAULT_ORB_CONFIG, scalePercent: -40 };
+    const subject = await subjectFor(['solarArc'], asOf(), true, { orbConfig, zodiac });
+    const direct = await computeSolarArcDirections(NATAL, asOf(), engine, { orbConfig, zodiac });
+    const key = (a: { bodyA: number; bodyB: number; aspect: { key: string } }): string =>
+      `${a.bodyA}|${a.bodyB}|${a.aspect.key}`;
+    const ours = (subject.solarArc?.contacts ?? []).map(key).sort();
+    expect(ours.length).toBeGreaterThan(0);
+    expect(ours).toEqual(direct.contacts.map(key).sort());
+
+    // The directed Moon is the sidereal natal Moon plus the sidereal arc, both read straight from the engine.
+    const options = { zodiac };
+    const [natalSun, natalMoon] = await engine.positions(natalJd, [SUN, MOON], options);
+    const [progressedSun] = await engine.positions(progressedJulianDay(natalJd, asOf()), [SUN], options);
+    if (natalSun === undefined || natalMoon === undefined || progressedSun === undefined) {
+      throw new Error('no position');
+    }
+    const arc = mcArc('solarArc', ageInYears(natalJd, asOf()), natalSun.longitude, progressedSun.longitude);
+    const directedMoon = longitudeIn(subject.solarArc?.positions ?? [], MOON);
+    expect(angularSeparation(directedMoon, (natalMoon.longitude + arc) % 360)).toBeLessThan(1e-6);
   }, 120_000);
 });

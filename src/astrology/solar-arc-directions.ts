@@ -14,13 +14,13 @@
 /**
  * @module SolarArcDirections
  * @purpose Carries every natal body and angle forward by the secondary-progressed Sun's true solar arc, and finds exact contacts to the (unmoving) natal chart.
- * @conventions Reuses mcArc('solarArc', ...) from progressions.ts for the shared arc formula, but unlike secondary progression's own solarArc MC method, applies the arc to every body, not just the angles; exactness is found by bisection against the real ephemeris, since the true Sun's daily motion is not perfectly linear.
+ * @conventions Reuses mcArc('solarArc', ...) from progressions.ts for the shared arc formula, but unlike secondary progression's own solarArc MC method, applies the arc to every body, not just the angles; exactness is found by bisection against the real ephemeris, since the true Sun's daily motion is not perfectly linear. Both Suns are read in the requested zodiac.
  * @exports directPositions, directedSubjects, fixedNatalSubjects, arcsToExactness, findExactnessJd
  */
 import { type AspectSubject } from './aspects.js';
 import { bodyByKey, type BodyCategory } from './bodies.js';
 import { TROPICAL_YEAR_DAYS, ageInYears, mcArc, progressedJulianDay } from './progressions.js';
-import type { BodyId, BodyPosition, Degrees, EphemerisProvider, JulianDayUT } from '../ephemeris/types.js';
+import type { BodyId, BodyPosition, Degrees, EphemerisProvider, JulianDayUT, Zodiac } from '../ephemeris/types.js';
 
 function norm360(degrees: Degrees): Degrees {
   const value = degrees % 360;
@@ -109,6 +109,8 @@ export function arcsToExactness(
  * smooth and monotonic — the Sun never retrogrades — but not perfectly
  * linear. Returns undefined when `requiredArc` is not reached within
  * `searchWindowYears` of age (day-for-year, so that many days past `natalJd`).
+ * `zodiac` must be the one `natalSunLongitude` was read in; the progressed Sun
+ * is read in it too.
  */
 export async function findExactnessJd(
   provider: EphemerisProvider,
@@ -116,13 +118,18 @@ export async function findExactnessJd(
   natalSunLongitude: Degrees,
   requiredArc: Degrees,
   searchWindowYears = 150,
+  zodiac?: Zodiac,
 ): Promise<JulianDayUT | undefined> {
   const sun = bodyByKey('sun');
   if (sun === undefined) throw new Error('unreachable: sun is always in BODIES');
 
   const arcAt = async (jd: JulianDayUT): Promise<Degrees> => {
     const age = ageInYears(natalJd, jd);
-    const [position] = await provider.positions(progressedJulianDay(natalJd, jd), [sun.id]);
+    const [position] = await provider.positions(
+      progressedJulianDay(natalJd, jd),
+      [sun.id],
+      zodiac === undefined ? undefined : { zodiac },
+    );
     if (position === undefined) throw new Error('unreachable: the ephemeris returned no position for the Sun');
     return mcArc('solarArc', age, natalSunLongitude, position.longitude);
   };

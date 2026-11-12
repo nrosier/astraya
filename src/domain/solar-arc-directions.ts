@@ -13,7 +13,7 @@
 /**
  * @module solar-arc-directions
  * @purpose Computes a solar arc directions chart for a target date (#47): the natal Sun's own progressed arc applied uniformly to every body and angle.
- * @conventions Mirrors `secondary-progression.ts`'s shape (natal Julian day, one house and one batch position call), but applies the shared solar arc to every body/angle rather than only rotating angles (secondary progression's `'solarArc'` MC method); contacts to the fixed natal chart use `findCrossAspects`, and each found contact is additionally resolved to its exact date against the real ephemeris since the arc is not perfectly linear in time.
+ * @conventions Mirrors `secondary-progression.ts`'s shape (natal Julian day, one house and one batch position call), but applies the shared solar arc to every body/angle rather than only rotating angles (secondary progression's `'solarArc'` MC method); contacts to the fixed natal chart use `findCrossAspects`, and each found contact is additionally resolved to its exact date against the real ephemeris since the arc is not perfectly linear in time. Both Suns are read in the requested zodiac.
  * @exports computeSolarArcDirections, SolarArcDirectionsData, SolarArcDirectionsOptions, DirectedContact, SOLAR_ARC_ACTIVE_ORB_DEG
  */
 import { findCrossAspects, type Aspect, type OrbConfig } from '../astrology/aspects.js';
@@ -112,7 +112,7 @@ export async function computeSolarArcDirections(
 
   const age = ageInYears(natalJd, targetJd);
   const progressedJd = progressedJulianDay(natalJd, targetJd);
-  const [progressedSun] = await provider.positions(progressedJd, [sun.id]);
+  const [progressedSun] = await provider.positions(progressedJd, [sun.id], positionOptions);
   if (progressedSun === undefined) throw new Error('unreachable: the ephemeris returned no position for the Sun');
   const arc = mcArc('solarArc', age, natalSun.longitude, progressedSun.longitude);
 
@@ -139,11 +139,25 @@ export async function computeSolarArcDirections(
       );
       // Each bound found against the real ephemeris, like the exact date: the arc is not linear in time.
       const [exactJd, activeFromJd, activeUntilJd] = await Promise.all([
-        findExactnessJd(provider, natalJd, natalSun.longitude, requiredArc),
+        findExactnessJd(provider, natalJd, natalSun.longitude, requiredArc, undefined, options.zodiac),
         requiredArc - SOLAR_ARC_ACTIVE_ORB_DEG <= 0
           ? Promise.resolve(natalJd)
-          : findExactnessJd(provider, natalJd, natalSun.longitude, requiredArc - SOLAR_ARC_ACTIVE_ORB_DEG),
-        findExactnessJd(provider, natalJd, natalSun.longitude, requiredArc + SOLAR_ARC_ACTIVE_ORB_DEG),
+          : findExactnessJd(
+              provider,
+              natalJd,
+              natalSun.longitude,
+              requiredArc - SOLAR_ARC_ACTIVE_ORB_DEG,
+              undefined,
+              options.zodiac,
+            ),
+        findExactnessJd(
+          provider,
+          natalJd,
+          natalSun.longitude,
+          requiredArc + SOLAR_ARC_ACTIVE_ORB_DEG,
+          undefined,
+          options.zodiac,
+        ),
       ]);
       return { ...contact, exactJd, activeFromJd: exactJd === undefined ? undefined : activeFromJd, activeUntilJd };
     }),
