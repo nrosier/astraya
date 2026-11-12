@@ -14,7 +14,7 @@
  */
 import { personHref, routeHref } from './route.js';
 import { PageHeader } from './PageHeader.js';
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
 import { newId } from '../domain/id.js';
 import { newPersonCalculationMutations } from '../domain/person.js';
@@ -25,7 +25,7 @@ import { caveated, ordered, summary } from './people-list.js';
 import { peopleMessages } from './People.messages.js';
 import { useStore, useStoreState } from './store-context.js';
 import { trace } from '../trace.js';
-import { ChartSearchPanel } from './ChartSearchPanel.js';
+import { appMessages } from './App.messages.js';
 import { Button } from './primitives/Button.js';
 import { EmptyState } from './primitives/EmptyState.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
@@ -33,11 +33,19 @@ import { useRulershipChoice } from './rulership-setting.js';
 import { clearNoteJournalsForPerson } from './use-note-autosave.js';
 import { errorDetail } from './api-error.js';
 
+/**
+ * The chart-search card is behind a dynamic import (#1405): its code and the chart-search run core
+ * stay out of the eager bundle, so the People list costs a first-time visitor nothing extra. Same
+ * shape as the lazy screens in App.tsx.
+ */
+const ChartSearchPanel = lazy(async () => ({ default: (await import('./ChartSearchPanel.js')).ChartSearchPanel }));
+
 export function People(): React.JSX.Element {
   const store = useStore();
   const state = useStoreState();
   const [locale] = useLocale();
   const t = useMessages(peopleMessages);
+  const tApp = useMessages(appMessages);
   const [defaultProfile] = useDefaultCalculationProfile();
   const [defaultRulership] = useRulershipChoice();
   const [busy, setBusy] = useState(false);
@@ -112,7 +120,11 @@ export function People(): React.JSX.Element {
       </p>
 
       {/* The chart search sits above the list (#1405) and only when there is someone to search. */}
-      {people.length > 0 && <ChartSearchPanel />}
+      {people.length > 0 && (
+        <Suspense fallback={<StatusMessage kind="loading">{tApp.loadingScreen}</StatusMessage>}>
+          <ChartSearchPanel />
+        </Suspense>
+      )}
 
       {people.length === 0 ? (
         <EmptyState message={t.empty}>
