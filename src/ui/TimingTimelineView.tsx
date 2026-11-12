@@ -60,8 +60,9 @@ import { timelineSubjectLabel } from './timing-timeline-labels.js';
 import { useLocale } from './locale.js';
 import { PageHeader } from './PageHeader.js';
 import { useCalculationBasisLine } from './calculation-basis.js';
-import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
-import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
+import { orbsOf, toChartCalculationOptions } from '../chart/extended-settings.js';
+import { usePersonCalculationSettings } from './person-calculation-settings.js';
+import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -101,11 +102,14 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
   const { provider } = useEphemerisProvider();
   const t = useMessages(timingTimelineViewMessages);
   const [locale] = useLocale();
-  // Every technique on the timeline is calculated with the engine defaults and no ruler choice, so the line states those.
-  // The Preferences link is left off: no preference changes this timeline.
-  const basisLine = useCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE, undefined, {
-    rulers: false,
-  });
+  // The timeline is calculated with the person's own settings (#1492), except primary directions, which are always
+  // tropical and Placidus (noted on screen). No technique here takes a ruler choice, so the line leaves the rulers off.
+  const {
+    settings: personSettings,
+    unreadable: settingsUnreadable,
+    rulership,
+  } = usePersonCalculationSettings(personId);
+  const basisLine = useCalculationBasisLine(personSettings, rulership, undefined, { rulers: false });
   const [asOf, setAsOf] = useState(todayInputValue);
   const [range, setRange] = useState<Range>('5');
   const [query, setQuery] = useState('');
@@ -128,33 +132,40 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
   }, [asOf]);
 
   useEffect(() => {
-    if (person?.moment === undefined || provider === undefined || target === undefined) return undefined;
+    // An unreadable register means no timeline at all, never one from placeholder settings (#806).
+    if (person?.moment === undefined || provider === undefined || target === undefined || settingsUnreadable)
+      return undefined;
     const effect = { cancelled: false };
     const moment = person.moment;
+    const options = toChartCalculationOptions(personSettings);
+    const { houseSystem, zodiac } = personSettings;
+    const { orbConfig } = orbsOf(personSettings);
     setLoad({ kind: 'loading' });
     void (async () => {
       try {
         const targetJd = await provider.julianDayFromUtc(target.year, target.month, target.day, 12, 0, 0);
         const natalJd = await julianDayFor(provider, resolveMoment(moment));
         const [natal, profections, directions, progressions, solarArc, transit, forecast] = await Promise.all([
-          computeChartData(moment, provider, fixedStars === undefined ? {} : { fixedStars }),
-          computeProfections(moment, targetJd, provider),
+          computeChartData(moment, provider, fixedStars === undefined ? options : { ...options, fixedStars }),
+          computeProfections(moment, targetJd, provider, { houseSystem, zodiac }),
+          // Always tropical and Placidus by design (src/domain/primary-directions.ts:28-30), whatever the person's settings.
           generatePrimaryDirections(moment, provider),
-          computeSecondaryProgression(moment, targetJd, provider),
-          computeSolarArcDirections(moment, targetJd, provider),
-          computeTransit(moment, targetJd, provider),
+          computeSecondaryProgression(moment, targetJd, provider, { houseSystem, zodiac, orbConfig }),
+          computeSolarArcDirections(moment, targetJd, provider, { houseSystem, zodiac, orbConfig }),
+          computeTransit(moment, targetJd, provider, options),
           computePeriodicTransitForecast(
             moment,
             { dayJd: targetJd, monthFromJd: targetJd - 15, monthToJd: targetJd + 15, year: target.year },
             provider,
+            options,
           ),
         ]);
         // Each exact transit's orb entry, exit and pass number (#1401), across the tiers (the weekly tier's events repeat in the monthly one).
-        const windows = await computeTransitOrbWindows(provider, [
-          ...forecast.daily.exactToday,
-          ...forecast.weekly.events,
-          ...forecast.monthly.events,
-        ]);
+        const windows = await computeTransitOrbWindows(
+          provider,
+          [...forecast.daily.exactToday, ...forecast.weekly.events, ...forecast.monthly.events],
+          { zodiac, orbConfig },
+        );
         // Released from both lots (#680): Fortune for the body and life, Spirit for action and career.
         const fromFortune = zodiacalReleasingPeriods(natal.partOfFortune, natalJd, 18);
         const fromSpirit = zodiacalReleasingPeriods(natal.partOfSpirit, natalJd, 18);
@@ -180,7 +191,7 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
     return () => {
       effect.cancelled = true;
     };
-  }, [asOf, person?.moment, fixedStars, provider, target]);
+  }, [asOf, person?.moment, fixedStars, provider, target, personSettings, settingsUnreadable]);
 
   const halfWindow = YEAR_DAYS * Number(range);
   const fromJd = load.kind === 'ready' ? load.centreJd - halfWindow : 0;
@@ -282,6 +293,7 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
   );
 
   if (person === undefined) return <PersonNotFound />;
+  if (settingsUnreadable) return <UnreadableSettingsNotice name={person.displayName || ''} />;
   if (person.moment === undefined) {
     return (
       <main className="shell">

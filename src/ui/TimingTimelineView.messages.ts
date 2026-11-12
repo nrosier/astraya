@@ -40,6 +40,8 @@ const en = {
   trackNotes: {
     profections:
       'A profected year runs from one birthday to the next, at the local time of birth; its months are twelve equal parts of that year.',
+    'primary-directions':
+      'Primary directions are always calculated in the tropical zodiac with Placidus houses, whatever this person’s settings.',
   } as Partial<Record<string, string>>,
   range: (start: string, end: string) => `${start} to ${end}`,
   /** An orb window (#1401): enters the orb, is exact, leaves the orb. */
@@ -113,6 +115,8 @@ const nl = {
   trackNotes: {
     profections:
       'Een geprofecteerd jaar loopt van verjaardag tot verjaardag, op de lokale geboortetijd; de maanden zijn twaalf gelijke delen van dat jaar.',
+    'primary-directions':
+      'Primaire directies worden altijd berekend in de tropische dierenriem met Placidus-huizen, ongeacht de instellingen van deze persoon.',
   },
   range: (start, end) => `${start} tot ${end}`,
   bandLabel: (count) => `${String(count)} voorspelde transiten in deze rij. De tabel hieronder toont elk ervan.`,
