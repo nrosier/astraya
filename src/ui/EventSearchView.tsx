@@ -77,6 +77,7 @@ export function EventSearchView(): React.JSX.Element {
       {
         key: 'date',
         label: t.date,
+        align: 'start',
         valueOf: (row) => row.jd,
         render: (row) => new Date((row.jd - 2440587.5) * 86400000).toISOString().replace('.000Z', 'Z'),
       },

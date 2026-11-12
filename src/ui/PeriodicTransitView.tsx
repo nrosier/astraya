@@ -161,7 +161,7 @@ export function contactColumns(t: typeof periodicTransitViewMessages.en): readon
       label: t.orbLabel,
       valueOf: (row) => row.orb,
       render: (row) => formatOrb(row.orb),
-      align: 'start',
+      align: 'end',
     },
     {
       key: 'applying',

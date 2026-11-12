@@ -117,8 +117,8 @@ export function ElectionalView(): React.JSX.Element {
 
   const columns = useMemo<readonly TableColumn<ElectionRow>[]>(
     () => [
-      { key: 'start', label: t.startColumn, valueOf: (row) => row.startJd, render: (row) => row.start },
-      { key: 'end', label: t.endColumn, valueOf: (row) => row.endJd, render: (row) => row.end },
+      { key: 'start', label: t.startColumn, align: 'start', valueOf: (row) => row.startJd, render: (row) => row.start },
+      { key: 'end', label: t.endColumn, align: 'start', valueOf: (row) => row.endJd, render: (row) => row.end },
       {
         key: 'duration',
         label: t.durationColumn,
@@ -134,12 +134,14 @@ export function ElectionalView(): React.JSX.Element {
       {
         key: 'satisfied',
         label: t.satisfiedColumn,
+        align: 'start',
         valueOf: (row) => row.satisfied.length,
         render: (row) => ruleLabels(row.satisfied),
       },
       {
         key: 'violated',
         label: t.violatedColumn,
+        align: 'start',
         valueOf: (row) => row.violated.length,
         render: (row) => ruleLabels(row.violated),
       },

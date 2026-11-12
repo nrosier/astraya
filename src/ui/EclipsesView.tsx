@@ -156,7 +156,7 @@ export function EclipsesView(): React.JSX.Element {
 
   const columns = useMemo<readonly TableColumn<EclipseRow>[]>(
     () => [
-      { key: 'date', label: t.dateColumn, valueOf: (row) => row.jd, render: (row) => row.date },
+      { key: 'date', label: t.dateColumn, align: 'start', valueOf: (row) => row.jd, render: (row) => row.date },
       { key: 'type', label: t.typeColumn, valueOf: (row) => typeOf(row), render: (row) => typeOf(row) },
       {
         key: 'position',

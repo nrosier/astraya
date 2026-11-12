@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
- * #1357/#1358 — Forecast daily tables: the Orb column and the exact-today first column are left-aligned
- * (`align: 'start'`), and the exact-today date column may wrap so "... UT" is never cut off. Asserted on the
+ * #1357/#1358, #1404 — Forecast daily tables: the Orb column is right-aligned (an angle, owner rule of 2026-11-12,
+ * which replaced the earlier left alignment), the exact-today first column is left-aligned (`align: 'start'`), and the exact-today date column may wrap so "... UT" is never cut off. Asserted on the
  * exported column factories that the screen and the PDF export share.
  */
 import { describe, expect, it } from 'vitest';
@@ -23,14 +23,14 @@ type ContactRow = RowOf<ReturnType<typeof contactColumns>>;
 type ExactEventRow = RowOf<ReturnType<typeof exactEventColumns>>;
 
 describe('forecast daily table alignment (#1357/#1358)', () => {
-  it('left-aligns the Orb column even though its values are all numbers', () => {
+  it('right-aligns the Orb column: an angle is a number, so it lines up at the end', () => {
     const rows: ContactRow[] = [
       { key: 'a', sentence: 's', transiting: 'Sun', aspect: 'conjunction', natal: 'Moon', orb: 1.25, applying: true },
       { key: 'b', sentence: 's', transiting: 'Sun', aspect: 'trine', natal: 'Mars', orb: 0.5, applying: false },
     ];
     const orb = columnByKey(contactColumns(t), 'orb');
-    expect(orb.align).toBe('start');
-    expect(columnAlign(orb, rows)).toBe('start');
+    expect(orb.align).toBe('end');
+    expect(columnAlign(orb, rows)).toBe('end');
   });
 
   it('left-aligns the exact-today date column and lets its text wrap', () => {
