@@ -32,3 +32,28 @@ describe('map and extended settings drawers height (#1449)', () => {
     },
   );
 });
+
+describe('Life Events drawer height and phone bottom sheet (#1506/#1439)', () => {
+  const drawer = readFileSync(new URL('../src/ui/LifeEventsDrawer.tsx', import.meta.url), 'utf8');
+
+  it('reuses the shared drawer-fit rule on the right-anchored main drawer and keeps its own class', () => {
+    expect(drawer).toMatch(/dialogClassName="[^"]*\blife-events-drawer\b[^"]*"/);
+    expect(drawer).toMatch(
+      /dialogClassName="[^"]*\bdrawer-fit\b[^"]*\blife-events-drawer\b|dialogClassName="[^"]*\blife-events-drawer\b[^"]*\bdrawer-fit\b/,
+    );
+    expect(drawer).toMatch(/placement="right"[\s\S]{0,80}dialogClassName="[^"]*\bdrawer-fit\b/);
+  });
+
+  it('phone: a bottom sheet at the bottom, sized to content, capped at the 4rem margin, with a close handle', () => {
+    const phone =
+      /@media \(max-width: 40rem\) \{\s*\.primitive-staged-dialog\.life-events-drawer\[data-placement='right'\] \{([^}]*)\}/.exec(
+        css,
+      );
+    expect(phone).not.toBeNull();
+    expect(phone?.[1]).toContain('height: fit-content;');
+    expect(phone?.[1]).toContain('max-height: calc(100dvh - 2 * var(--space-8));');
+    expect(phone?.[1]).toContain('margin: auto 0 0;');
+    expect(phone?.[1]).not.toContain('92dvh');
+    expect(css).toMatch(/\.life-events-drawer \.settings-card-header::before \{[^}]*content: '';/);
+  });
+});
