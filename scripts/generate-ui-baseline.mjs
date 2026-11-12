@@ -55,7 +55,8 @@ const md = ['# UI behaviour baseline', '', ...intro.map((line) => line), ''];
 for (const [area, entries] of grouped) {
   md.push(`## ${area}`, '');
   for (const { file, titles } of entries) {
-    md.push(`### \`e2e/${file}\``, '', ...titles.map((title) => `- ${title}`), '');
+    md.push(`### \`e2e/${file}\``, '');
+    if (titles.length > 0) md.push(...titles.map((title) => `- ${title}`), '');
   }
 }
 writeFileSync('docs/ui/UI-UX_BASELINE.md', md.join('\n').replace(/\n+$/, '\n'));
