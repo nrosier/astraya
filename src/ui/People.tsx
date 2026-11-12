@@ -25,6 +25,7 @@ import { caveated, ordered, summary } from './people-list.js';
 import { peopleMessages } from './People.messages.js';
 import { useStore, useStoreState } from './store-context.js';
 import { trace } from '../trace.js';
+import { ChartSearchPanel } from './ChartSearchPanel.js';
 import { Button } from './primitives/Button.js';
 import { EmptyState } from './primitives/EmptyState.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
@@ -109,6 +110,9 @@ export function People(): React.JSX.Element {
           {t.addPerson}
         </Button>
       </p>
+
+      {/* The chart search sits above the list (#1405) and only when there is someone to search. */}
+      {people.length > 0 && <ChartSearchPanel />}
 
       {people.length === 0 ? (
         <EmptyState message={t.empty}>

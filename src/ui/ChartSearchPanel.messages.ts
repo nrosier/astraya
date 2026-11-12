@@ -1,6 +1,6 @@
 /**
  * @module ChartSearchPanel.messages
- * @purpose English/Dutch UI text for the "Search charts" card on People (#1405): scopes, condition kinds, operators, not-evaluable reasons, buttons, states and saved searches.
+ * @purpose English/Dutch UI text for the "Search charts" card on People (#1405): heading, field labels, scopes, condition kinds, operators, not-evaluable reasons, buttons, states and saved searches.
  * @conventions Co-located `{ en, nl }` catalogue consumed through `useMessages()`; `nl` is typed as `typeof en`; not-evaluable reasons are a fixed list mapped to one sentence each, never shown raw.
  * @exports chartSearchPanelMessages
  */
@@ -51,6 +51,51 @@ const en = {
   savedHeading: 'Saved searches',
   savedEmpty: 'No saved searches yet. Save the conditions above to reopen them later.',
   deleted: (name: string) => `Deleted “${name}”.`,
+  // Added with the card itself (#1405): the field labels, wording for results and saved searches that the first catalogue left out.
+  heading: 'Search charts',
+  intro: 'Find people whose chart matches the conditions you set. Nothing runs until you press Run search.',
+  conditionLabel: (n: string) => `Condition ${n}`,
+  field: {
+    scope: 'Scope',
+    kind: 'Condition',
+    body: 'Body',
+    sign: 'Sign',
+    house: 'House',
+    aspect: 'Aspect',
+    target: 'Target',
+  },
+  houseOption: (n: string) => `House ${n}`,
+  removeShort: 'Remove',
+  asOfInvalid: 'Enter a valid date.',
+  searchFailedDetail: 'The chart calculation is not available yet. Try again in a moment.',
+  matchesHeading: (n: string) => `Matches (${n})`,
+  foundSummary: (matches: string, total: string) => `${matches} of ${total} people match.`,
+  describe: {
+    sign: (scope: string, body: string, sign: string) => `${scope}: ${body} in ${sign}`,
+    house: (scope: string, body: string, house: string) => `${scope}: ${body} in house ${house}`,
+    aspect: (scope: string, body: string, aspect: string, target: string) => `${scope}: ${body} ${aspect} ${target}`,
+  },
+  blocked: {
+    settingsUnreadable: 'Their calculation settings were saved by a newer version, so no chart can be cast.',
+    birthDataIncomplete: 'Their birth date, time or place is incomplete, so no chart can be cast.',
+  },
+  nameLabel: 'Search name',
+  nameHelp: (max: string) => `Up to ${max} characters. The name can hold personal data, so keep it generic.`,
+  nameTooLong: (max: string) => `The name is longer than ${max} characters.`,
+  invalidSearch: 'This search cannot be saved: it needs between 1 and 10 valid conditions.',
+  saveFailed: 'That did not save.',
+  saved: (name: string) => `Saved “${name}”.`,
+  opened: (name: string) => `Opened “${name}”. Press Run search to run it.`,
+  unnamed: 'Unnamed search',
+  reopenLabel: (name: string) => `Reopen ${name}`,
+  deleteLabel: (name: string) => `Delete ${name}`,
+  savedSummary: (count: string, operator: string) => `${count} conditions · ${operator}`,
+  unreadable: {
+    'future-version': 'Saved by a newer version of Astraya, so this version cannot open it. It is kept.',
+    'unknown-condition': 'It uses a condition this version does not know. It is kept.',
+    invalid: 'Its saved conditions are not valid here, so it cannot be opened. It is kept.',
+    incomplete: 'Part of this search has not arrived yet. It is kept and opens once it is complete.',
+  },
 };
 
 const nl: typeof en = {
@@ -102,6 +147,53 @@ const nl: typeof en = {
   savedHeading: 'Opgeslagen zoekopdrachten',
   savedEmpty: 'Nog geen opgeslagen zoekopdrachten. Sla de voorwaarden hierboven op om ze later opnieuw te openen.',
   deleted: (name: string) => `“${name}” verwijderd.`,
+  heading: 'Horoscopen doorzoeken',
+  intro: 'Zoek personen wier horoscoop aan de voorwaarden voldoet. Er wordt niets uitgevoerd tot je Zoeken kiest.',
+  conditionLabel: (n: string) => `Voorwaarde ${n}`,
+  field: {
+    scope: 'Bereik',
+    kind: 'Voorwaarde',
+    body: 'Hemellichaam',
+    sign: 'Teken',
+    house: 'Huis',
+    aspect: 'Aspect',
+    target: 'Doel',
+  },
+  houseOption: (n: string) => `Huis ${n}`,
+  removeShort: 'Verwijderen',
+  asOfInvalid: 'Vul een geldige datum in.',
+  searchFailedDetail: 'De horoscoopberekening is nog niet beschikbaar. Probeer het zo opnieuw.',
+  matchesHeading: (n: string) => `Resultaten (${n})`,
+  foundSummary: (matches: string, total: string) => `${matches} van ${total} personen voldoen.`,
+  describe: {
+    sign: (scope: string, body: string, sign: string) => `${scope}: ${body} in ${sign}`,
+    house: (scope: string, body: string, house: string) => `${scope}: ${body} in huis ${house}`,
+    aspect: (scope: string, body: string, aspect: string, target: string) => `${scope}: ${body} ${aspect} ${target}`,
+  },
+  blocked: {
+    settingsUnreadable:
+      'Hun berekeningsinstellingen zijn door een nieuwere versie opgeslagen, dus er kan geen horoscoop worden berekend.',
+    birthDataIncomplete:
+      'Hun geboortedatum, -tijd of -plaats is onvolledig, dus er kan geen horoscoop worden berekend.',
+  },
+  nameLabel: 'Naam van de zoekopdracht',
+  nameHelp: (max: string) => `Maximaal ${max} tekens. De naam kan persoonsgegevens bevatten, houd hem dus algemeen.`,
+  nameTooLong: (max: string) => `De naam is langer dan ${max} tekens.`,
+  invalidSearch: 'Deze zoekopdracht kan niet worden opgeslagen: er zijn 1 tot 10 geldige voorwaarden nodig.',
+  saveFailed: 'Dat is niet opgeslagen.',
+  saved: (name: string) => `“${name}” opgeslagen.`,
+  opened: (name: string) => `“${name}” geopend. Kies Zoeken om de zoekopdracht uit te voeren.`,
+  unnamed: 'Naamloze zoekopdracht',
+  reopenLabel: (name: string) => `${name} heropenen`,
+  deleteLabel: (name: string) => `${name} verwijderen`,
+  savedSummary: (count: string, operator: string) => `${count} voorwaarden · ${operator}`,
+  unreadable: {
+    'future-version':
+      'Opgeslagen door een nieuwere versie van Astraya, dus deze versie kan hem niet openen. Hij blijft bewaard.',
+    'unknown-condition': 'Hij gebruikt een voorwaarde die deze versie niet kent. Hij blijft bewaard.',
+    invalid: 'De opgeslagen voorwaarden zijn hier niet geldig, dus hij kan niet worden geopend. Hij blijft bewaard.',
+    incomplete: 'Een deel van deze zoekopdracht is nog niet binnen. Hij blijft bewaard en opent zodra hij compleet is.',
+  },
 };
 
 export const chartSearchPanelMessages = { en, nl };

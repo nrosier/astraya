@@ -23,6 +23,7 @@ vi.mock('../src/ui/store-context.js', () => {
     deleted: { people: new Map() },
     consultationNotes: new Map(),
     savedQueries: new Map(),
+    chartSearches: new Map(),
     people: new Map([
       [
         'p1',
@@ -41,7 +42,7 @@ vi.mock('../src/ui/store-context.js', () => {
       ],
     ]),
   };
-  return { useStoreState: () => state, useStore: () => ({}), useOptionalStore: () => undefined };
+  return { useStoreState: () => state, useStore: () => ({ writable: true }), useOptionalStore: () => undefined };
 });
 
 vi.mock('../src/ui/person-calculation-settings.js', async () => {

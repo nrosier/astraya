@@ -17,6 +17,11 @@ import {
 import { resetRulershipMemory, writeRulershipChoice } from '../src/ui/rulership-setting.js';
 import { StoreProvider } from '../src/ui/store-context.js';
 
+// The Search charts card above the list reads the app's ephemeris provider; creating a person never runs a search.
+vi.mock('../src/ui/EphemerisProviderContext.js', () => ({
+  useEphemerisProvider: () => ({ provider: undefined, error: undefined }),
+}));
+
 let counter = 0;
 let store: Store;
 let root: Root | undefined;
