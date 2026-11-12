@@ -255,7 +255,7 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
       ),
     },
     { key: 'event', label: t.columnEvent, valueOf: (row) => row.event },
-    { key: 'start', label: t.columnStart, valueOf: (row) => row.startJd, render: (row) => row.start },
+    { key: 'start', label: t.columnStart, valueOf: (row) => row.startJd, render: (row) => row.start, align: 'start' },
     { key: 'end', label: t.columnEnd, valueOf: (row) => row.end },
   ];
   // A new result or filter can drop the selected or hovered event.

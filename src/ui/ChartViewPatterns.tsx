@@ -241,7 +241,7 @@ export function conditionColumns(
             label: t.motionScoreLabel,
             labelHelp: { text: t.motionScoreTooltip },
             valueOf: (row: ConditionRow) => row.motionScore ?? '',
-            align: 'center' as const,
+            align: 'end' as const,
             render: (row: ConditionRow) =>
               row.motionScore === undefined
                 ? '—'
