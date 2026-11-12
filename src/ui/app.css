@@ -9742,6 +9742,8 @@ a.quiet,
 .cycle-series-glyph path,
 .cycle-series-glyph text {
   stroke: currentColor;
+  /* The shared glyph weight (#1404), as the wheel's glyphs use it: the 0-100 glyph box is scaled to about 13 px. */
+  stroke-width: var(--glyph-stroke, 6);
   fill: none;
   color: var(--fg);
 }
