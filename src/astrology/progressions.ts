@@ -34,7 +34,7 @@
 /**
  * @module Progressions
  * @purpose Computes secondary (day-for-year) progressions, with a selectable method (quotidian, naibod, solarArc) for progressing the MC and houses.
- * @conventions Bodies progress by direct day-for-year substitution; 'quotidian' recomputes houses outright at the progressed moment; 'naibod' rotates angles/cusps by the mean Sun's daily motion (NAIBOD_DAILY_MOTION) times age; 'solarArc' rotates by the true solar arc traveled; naibod/solarArc rigidly rotate the whole natal house wheel via shiftHouses.
+ * @conventions Bodies progress by direct day-for-year substitution; 'quotidian' recomputes houses outright at the progressed moment; 'naibod' rotates angles/cusps by the mean Sun's daily motion (NAIBOD_DAILY_MOTION) times age; 'solarArc' rotates by the true solar arc traveled; naibod/solarArc rigidly rotate the whole natal house wheel via shiftHouses; both Suns and the quotidian progressed houses are read in the requested zodiac.
  * @exports TROPICAL_YEAR_DAYS, NAIBOD_DAILY_MOTION, ageInYears, progressedJulianDay, mcArc, shiftHouses, computeProgressedHouses
  */
 import type {
@@ -44,6 +44,7 @@ import type {
   HousePositions,
   HouseSystem,
   JulianDayUT,
+  Zodiac,
 } from '../ephemeris/types.js';
 
 export type ProgressedMcMethod = 'quotidian' | 'naibod' | 'solarArc';
@@ -110,6 +111,8 @@ export function shiftHouses(natal: HousePositions, arc: Degrees): HousePositions
 export interface SecondaryProgressionOptions {
   readonly mcMethod: ProgressedMcMethod;
   readonly houseSystem: HouseSystem;
+  /** Zodiac both Suns and the quotidian houses are read in; tropical when unset. */
+  readonly zodiac?: Zodiac;
 }
 
 export interface ProgressedHouses {
@@ -136,13 +139,14 @@ export async function computeProgressedHouses(
 ): Promise<ProgressedHouses> {
   const progressedJd = progressedJulianDay(natalJd, targetJd);
   const age = ageInYears(natalJd, targetJd);
+  const positionOptions = options.zodiac === undefined ? undefined : { zodiac: options.zodiac };
 
   if (options.mcMethod === 'quotidian') {
-    const houses = await provider.houses(progressedJd, place, options.houseSystem);
+    const houses = await provider.houses(progressedJd, place, options.houseSystem, options.zodiac);
     return { progressedJd, ageInYears: age, mcMethod: 'quotidian', houses };
   }
 
-  const [progressedSun] = await provider.positions(progressedJd, [0]);
+  const [progressedSun] = await provider.positions(progressedJd, [0], positionOptions);
   if (progressedSun === undefined) throw new Error('unreachable: the ephemeris returned no position for the Sun');
   const arc = mcArc(options.mcMethod, age, natalSunLongitude, progressedSun.longitude);
   return { progressedJd, ageInYears: age, mcMethod: options.mcMethod, houses: shiftHouses(natalHouses, arc) };
