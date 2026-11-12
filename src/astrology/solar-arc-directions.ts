@@ -131,7 +131,9 @@ export async function findExactnessJd(
       zodiac === undefined ? undefined : { zodiac },
     );
     if (position === undefined) throw new Error('unreachable: the ephemeris returned no position for the Sun');
-    return mcArc('solarArc', age, natalSunLongitude, position.longitude);
+    // mcArc is unwrapped (progressed minus natal), so it drops by 360 once the progressed Sun passes 0/360 (#1498);
+    // normalised, the arc is monotonic over the whole window (at most ~150 degrees, so never a full turn).
+    return norm360(mcArc('solarArc', age, natalSunLongitude, position.longitude));
   };
 
   let lo = natalJd;
