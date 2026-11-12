@@ -9,7 +9,8 @@
  * condition is checked against (owner decision 9): a reopened search is checked against the date the reader sets then.
  *
  * **Timing is a scope, not a kind.** Each condition carries a `scope`: `natal`, `transit`, `progression`,
- * `solarReturn` or `lunarReturn` (owner decision 1). One scope field on the three existing kinds keeps a single reader
+ * `solarReturn` or `lunarReturn` (owner decision 1); `solarArc` (#1486) is the solar-arc directed chart, evaluated like a
+ * progression. One scope field on the three existing kinds keeps a single reader
  * per kind, where four new kinds would repeat the body, aspect and target checks. `transit` and `progression` hold
  * `sign`, `house` or `aspect` conditions: the stored `body` is the transiting or progressed body; a sign reads its own
  * sign, a house is the natal house it occupies (decision 14), an aspect target a natal body or the natal `asc`/`mc`
@@ -72,7 +73,14 @@ type StoredOperator = (typeof CHART_SEARCH_OPERATORS)[number];
  * Where a condition is checked: the natal chart, a transit or progression against the natal chart, or the solar or
  * lunar return in force at the as-of date. The as-of date itself is never stored (owner decision 9).
  */
-export const CHART_SEARCH_SCOPES = ['natal', 'transit', 'progression', 'solarReturn', 'lunarReturn'] as const;
+export const CHART_SEARCH_SCOPES = [
+  'natal',
+  'transit',
+  'progression',
+  'solarReturn',
+  'lunarReturn',
+  'solarArc',
+] as const;
 export type StoredSearchScope = (typeof CHART_SEARCH_SCOPES)[number];
 
 /** The definition schema version this build writes. It reads 1 and 2. Independent of the envelope's `opVersion`. */

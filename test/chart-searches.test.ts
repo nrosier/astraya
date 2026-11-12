@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { newId, isId } from '../src/domain/id.js';
 import { MAX_CUSTOM_PROMPT_LENGTH } from '../src/interpretation/prompt-guardrail.js';
 import {
+  CHART_SEARCH_DEFINITION_FIELD,
   CHART_SEARCH_ENTITY,
   CHART_SEARCH_MAX_CONDITIONS,
   CHART_SEARCH_SCOPES,
@@ -200,8 +201,9 @@ describe('timing scopes and versions', () => {
   });
 
   it('round-trips a version-2 definition with every timing scope, byte for byte', () => {
+    // The solarArc scope has its own acceptance test below; this fixture covers the five scopes it was written for.
     expect(new Set(TIMING_CONDITIONS.map((condition) => condition.scope))).toEqual(
-      new Set<string>(CHART_SEARCH_SCOPES.filter((scope) => scope !== 'natal')),
+      new Set<string>(CHART_SEARCH_SCOPES.filter((scope) => scope !== 'natal' && scope !== 'solarArc')),
     );
     expect(fold2(TIMING_DEFINITION)).toEqual({
       status: 'ready',
@@ -234,6 +236,48 @@ describe('timing scopes and versions', () => {
     if (folded?.status !== 'ready') return;
     expect(folded.definition.version).toBe(2);
     expect(folded.definition.conditions).toHaveLength(3);
+    expect(folded.definition.conditions.every((condition) => condition.scope === 'natal')).toBe(true);
+  });
+
+  it('accepts a solarArc condition in a version-2 definition, every kind of condition, and round-trips it', () => {
+    const solarArc: readonly StoredSearchCondition[] = [
+      { kind: 'sign', scope: 'solarArc', body: 'sun', sign: 5 },
+      { kind: 'house', scope: 'solarArc', body: 'moon', house: 8 },
+      {
+        kind: 'aspect',
+        scope: 'solarArc',
+        body: 'venus',
+        aspectKey: 'trine',
+        target: { kind: 'body', body: 'jupiter' },
+      },
+    ];
+    const definition: ChartSearchDefinition = { version: 2, operator: 'and', conditions: solarArc };
+    expect(fold2(definition)).toEqual({ status: 'ready', id: SEARCH_ID, name: 'Timing', definition });
+    const state = stateOf(chartSearchCreate(SEARCH_ID, 'Timing', definition));
+    expect(state.chartSearches.get(SEARCH_ID)).toMatchObject({ status: 'ready', definition });
+  });
+
+  it('lists solarArc as the last scope, after the return scopes, and keeps the existing order', () => {
+    expect(CHART_SEARCH_SCOPES).toEqual(['natal', 'transit', 'progression', 'solarReturn', 'lunarReturn', 'solarArc']);
+  });
+
+  it('refuses to write a version-1 solarArc definition: version 1 has no scope', () => {
+    const version1 = {
+      entity: CHART_SEARCH_ENTITY,
+      entityId: SEARCH_ID,
+      field: CHART_SEARCH_DEFINITION_FIELD,
+      value: { version: 1, operator: 'and', conditions: [{ kind: 'sign', body: 'sun', sign: 5 }] },
+    };
+    expect(() => {
+      assertChartSearchMutation(version1);
+    }).toThrow(ChartSearchRefusedError);
+  });
+
+  it('reads version-1 definitions as natal and keeps them natal under the solarArc build', () => {
+    const folded = fold2(V1_DEFINITION);
+    expect(folded).toMatchObject({ status: 'ready' });
+    if (folded?.status !== 'ready') return;
+    expect(folded.definition.version).toBe(2);
     expect(folded.definition.conditions.every((condition) => condition.scope === 'natal')).toBe(true);
   });
 

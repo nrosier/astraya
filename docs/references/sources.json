@@ -1251,7 +1251,7 @@
     "status": "extracted",
     "copyrighted": true,
     "provisional": true,
-    "used_by": [],
+    "used_by": ["src/domain/chart-search-timing.ts"],
     "notes": "Llewellyn Publications imprint on title page. Copyright year not found on the pages checked. The file name is misleading; the content is the Tebbs book. Text layer present."
   },
   {

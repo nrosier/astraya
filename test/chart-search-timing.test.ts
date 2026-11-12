@@ -18,6 +18,9 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { angularSeparation, ASPECTS, DEFAULT_ORB_CONFIG } from '../src/astrology/aspects.js';
 import { bodyByKey } from '../src/astrology/bodies.js';
 import { houseOf } from '../src/astrology/emphasis.js';
+import { ageInYears, mcArc, progressedJulianDay } from '../src/astrology/progressions.js';
+import { signIndex } from '../src/astrology/signs.js';
+import { computeSolarArcDirections } from '../src/domain/solar-arc-directions.js';
 import {
   addCondition,
   evaluateCondition,
@@ -397,5 +400,114 @@ describe('a return that cannot be found (answer 12)', () => {
         broken,
       ),
     ).rejects.toThrow('engine failure');
+  }, 120_000);
+});
+
+describe('solar-arc scope (#1486, cited to Tebbs, provisional)', () => {
+  /** The solar arc at an as-of Julian day, from the natal and progressed Suns read straight from the engine. */
+  async function arcAt(asOfJd: JulianDayUT): Promise<number> {
+    const [natalSun] = await engine.positions(natalJd, [SUN]);
+    const [progressedSun] = await engine.positions(progressedJulianDay(natalJd, asOfJd), [SUN]);
+    if (natalSun === undefined || progressedSun === undefined) throw new Error('no Sun position');
+    return mcArc('solarArc', ageInYears(natalJd, asOfJd), natalSun.longitude, progressedSun.longitude);
+  }
+
+  /** Read at test time: `natalJd` is set in `beforeAll`, after collection. */
+  const asOf = (): JulianDayUT => natalJd + 12000;
+
+  it('directs each body by the true solar arc, read independently from the engine', async () => {
+    const subject = await subjectFor(['solarArc'], asOf());
+    const solarArc = subject.solarArc;
+    if (solarArc === undefined) throw new Error('expected a solar-arc reference');
+    const arc = await arcAt(asOf());
+    const natalMoon = longitudeIn(subject.chart.positions, MOON);
+    const directedMoon = longitudeIn(solarArc.positions, MOON);
+    expect(angularSeparation(directedMoon, (natalMoon + arc) % 360)).toBeLessThan(1e-6);
+  }, 120_000);
+
+  it('a sign condition reads the directed body sign, against the independent route', async () => {
+    const subject = await subjectFor(['solarArc'], asOf());
+    const arc = await arcAt(asOf());
+    const directedSun = (longitudeIn(subject.chart.positions, SUN) + arc) % 360;
+    const sign = signIndex(directedSun);
+    const cond = (s: number): SearchCondition => ({ kind: 'sign', scope: 'solarArc', body: SUN, sign: s });
+    expect(evaluateCondition(cond(sign), subject).outcome).toBe('matched');
+    expect(evaluateCondition(cond((sign + 1) % 12), subject).outcome).toBe('not-matched');
+  }, 120_000);
+
+  it('a house condition reads the natal house of the directed body, from the natal cusps', async () => {
+    const subject = await subjectFor(['solarArc'], asOf());
+    const solarArc = subject.solarArc;
+    if (solarArc === undefined) throw new Error('expected a solar-arc reference');
+    const natalCusps = (await engine.houses(natalJd, PLACE, 'P')).cusps;
+    const directedMoon = longitudeIn(solarArc.positions, MOON);
+    const natalHouse = houseOf(directedMoon, natalCusps);
+    const cond = (house: number): SearchCondition => ({ kind: 'house', scope: 'solarArc', body: MOON, house });
+    expect(evaluateCondition(cond(natalHouse), subject).outcome).toBe('matched');
+    expect(evaluateCondition(cond((natalHouse % 12) + 1), subject).outcome).toBe('not-matched');
+  }, 120_000);
+
+  it('an aspect condition is direction-aware: directed X to natal Y is not natal X to directed Y', async () => {
+    const subject = await subjectFor(['solarArc'], asOf());
+    const contacts = subject.solarArc?.contacts ?? [];
+    const has = (a: number, b: number, key: string): boolean =>
+      contacts.some((c) => c.bodyA === a && c.bodyB === b && c.aspect.key === key);
+    const contact = contacts.find((c) => c.bodyA !== c.bodyB && !has(c.bodyB, c.bodyA, c.aspect.key));
+    if (contact === undefined) throw new Error('no one-way solar-arc contact to test direction with');
+    const forward: AspectCondition = {
+      kind: 'aspect',
+      scope: 'solarArc',
+      body: contact.bodyA,
+      aspectKey: contact.aspect.key,
+      target: { kind: 'body', body: contact.bodyB },
+    };
+    const reverse: AspectCondition = { ...forward, body: contact.bodyB, target: { kind: 'body', body: contact.bodyA } };
+    expect(evaluateCondition(forward, subject).outcome).toBe('matched');
+    expect(evaluateCondition(reverse, subject).outcome).toBe('not-matched');
+  }, 120_000);
+
+  it('an unknown birth time makes house and angle conditions not-evaluable, and keeps sign conditions', async () => {
+    const subject = await subjectFor(['solarArc'], asOf(), false);
+    const house = evaluateCondition({ kind: 'house', scope: 'solarArc', body: MOON, house: 1 }, subject);
+    expect(house.outcome).toBe('not-evaluable');
+    expect(house.reason).toBe('birth-time-unknown');
+    const angle = evaluateCondition(
+      {
+        kind: 'aspect',
+        scope: 'solarArc',
+        body: SUN,
+        aspectKey: 'conjunction',
+        target: { kind: 'angle', angle: 'asc' },
+      },
+      subject,
+    );
+    expect(angle.outcome).toBe('not-evaluable');
+    expect(angle.reason).toBe('birth-time-unknown');
+    expect(subject.solarArc?.angleContacts).toEqual([]);
+    expect(evaluateCondition({ kind: 'sign', scope: 'solarArc', body: SUN, sign: 0 }, subject).outcome).not.toBe(
+      'not-evaluable',
+    );
+  }, 120_000);
+
+  it('a scope that was not computed is not-evaluable with timing-unavailable', async () => {
+    const subject = await subjectFor([], asOf());
+    const result = evaluateCondition({ kind: 'sign', scope: 'solarArc', body: SUN, sign: 0 }, subject);
+    expect(result.outcome).toBe('not-evaluable');
+    expect(result.reason).toBe('timing-unavailable');
+  }, 120_000);
+
+  it('contacts match computeSolarArcDirections for the same orbs, and the person orbs apply', async () => {
+    const orbConfig = { ...DEFAULT_ORB_CONFIG, scalePercent: -40 };
+    const subject = await subjectFor(['solarArc'], asOf(), true, { orbConfig });
+    const direct = await computeSolarArcDirections(NATAL, asOf(), engine, { orbConfig });
+    const key = (a: { bodyA: number; bodyB: number; aspect: { key: string } }): string =>
+      `${a.bodyA}|${a.bodyB}|${a.aspect.key}`;
+    const ours = (subject.solarArc?.contacts ?? []).map(key).sort();
+    const theirs = direct.contacts.map(key).sort();
+    expect(ours.length).toBeGreaterThan(0);
+    expect(ours).toEqual(theirs);
+    // A default-orb subject finds at least as many contacts as the tighter one.
+    const wide = await subjectFor(['solarArc'], asOf());
+    expect(wide.solarArc?.contacts.length ?? 0).toBeGreaterThanOrEqual(ours.length);
   }, 120_000);
 });
