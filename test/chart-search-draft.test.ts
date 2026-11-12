@@ -110,12 +110,13 @@ describe('definition conversion', () => {
   });
 
   it('round-trips every scope and kind, with a body and an angle target', () => {
+    // One sign per scope (six scopes, #1486), then a house for the first four, so the list stays at the
+    // MAX_SEARCH_CONDITIONS cap and every scope still appears. The two aspects below replace the first two slots.
     const conditions: SearchCondition[] = [];
-    for (const scope of SEARCH_SCOPES) {
-      conditions.push({ kind: 'sign', scope, body: sun.id, sign: 0 });
+    for (const scope of SEARCH_SCOPES) conditions.push({ kind: 'sign', scope, body: sun.id, sign: 0 });
+    for (const scope of SEARCH_SCOPES.slice(0, MAX_SEARCH_CONDITIONS - SEARCH_SCOPES.length)) {
       conditions.push({ kind: 'house', scope, body: moon.id, house: 12 });
     }
-    conditions.length = MAX_SEARCH_CONDITIONS;
     conditions[0] = {
       kind: 'aspect',
       scope: 'transit',
