@@ -232,7 +232,7 @@ for (const { width, height } of [
     expect(columns).toBe(layoutRem >= 64 ? 6 : layoutRem >= 40 ? 4 : 2);
     if (width === 390) expect(columns).toBe(2);
 
-    // One column on a phone; about 60/40 at 1280.
+    // One column on a phone; about 40/60 at 1280 (#1498).
     const [left, right] = await page.locator('.consultation-col').all();
     const leftBox = await left?.boundingBox();
     const rightBox = await right?.boundingBox();
@@ -243,8 +243,9 @@ for (const { width, height } of [
     } else {
       expect(Math.abs(rightBox.y - leftBox.y)).toBeLessThanOrEqual(1);
       const share = leftBox.width / (leftBox.width + rightBox.width);
-      expect(share).toBeGreaterThan(0.55);
-      expect(share).toBeLessThan(0.65);
+      // #1498: the split is 1fr/1.5fr, so the left column holds 1/2.5 = 0.40 of the grid (was 3fr/2fr, 0.6).
+      expect(share).toBeGreaterThan(0.38);
+      expect(share).toBeLessThan(0.42);
     }
 
     // The major transit table: four columns, in a focusable scroll region; an em dash is named when no pass is left.
@@ -262,8 +263,8 @@ for (const { width, height } of [
         "(() => { const el = document.querySelector('.consultation-section .data-table-scroll'); return el.scrollWidth - el.clientWidth; })()",
       ),
     );
-    if (width === 390) expect(overflow).toBeGreaterThan(0);
-    else expect(overflow).toBeLessThanOrEqual(1);
+    // #1498: wrapped transit cells make the table fit at 390 px as well, so no width overflows.
+    expect(overflow).toBeLessThanOrEqual(1);
     // The scroll cue's cover layers are the colour of the surface behind the frame, so a table that fits shows no
     // band either side (#1229): a darker or lighter cover reads as a band on both edges.
     const cover = await page.evaluate(`(() => {

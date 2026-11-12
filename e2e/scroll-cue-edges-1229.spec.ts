@@ -245,22 +245,6 @@ const OVERFLOW = `(() => {
   return el.scrollWidth - el.clientWidth;
 })()`;
 
-/** Where the frame's scroll position sits: `start` at 0, `end` at its maximum, `middle` halfway between. */
-function scrollPosition(where: 'start' | 'middle' | 'end'): string {
-  return `(() => {
-    const el = document.querySelector('.consultation-section .data-table-scroll');
-    const max = el.scrollWidth - el.clientWidth;
-    const target = ${JSON.stringify(where)};
-    el.scrollLeft = target === 'start' ? 0 : target === 'end' ? max : max / 2;
-    return Math.abs(el.scrollLeft - (target === 'start' ? 0 : target === 'end' ? max : max / 2)) <= 1;
-  })()`;
-}
-
-async function scrollTo(frame: Locator, where: 'start' | 'middle' | 'end'): Promise<void> {
-  // Scroll, then wait until the browser has applied it before reading pixels.
-  await expect.poll(() => frame.evaluate(scrollPosition(where))).toBe(true);
-}
-
 async function openConsultation(width: number, height: number): Promise<Locator> {
   // Open at the default desktop size, where the workspace nav shows the Consultation link, then resize (as the golden-path spec does).
   await openSharedPerson(page, baseUrl, EINSTEIN);
@@ -279,19 +263,10 @@ for (const { width, height } of VIEWPORTS) {
     const frame = await openConsultation(width, height);
     const overflow = await frame.evaluate(OVERFLOW);
 
-    if (width === 390) {
-      expect(overflow).toBeGreaterThan(0);
-
-      await scrollTo(frame, 'start');
-      expect(await readEdges(frame)).toEqual({ left: 'covered', right: 'faded' });
-
-      await scrollTo(frame, 'end');
-      expect(await readEdges(frame)).toEqual({ left: 'faded', right: 'covered' });
-    } else {
-      // At this width the table fits, so no edge hides a column and neither edge may show the fade.
-      expect(overflow).toBeLessThanOrEqual(1);
-      expect(await readEdges(frame)).toEqual({ left: 'covered', right: 'covered' });
-    }
+    // #1498: the transit table's cells now wrap, so it fits at every width, 390 px included: no overflow, and neither edge may show the fade.
+    // This test used to prove the cue on a 390 px overflow; it now proves the content fits and the cue is absent.
+    expect(overflow).toBe(0);
+    expect(await readEdges(frame)).toEqual({ left: 'covered', right: 'covered' });
   });
 
   test(`the #1076 cue follows the scroll position: start, middle and end give three different edge states on a wide table at ${String(width)}px (#1229)`, async () => {
@@ -299,23 +274,8 @@ for (const { width, height } of VIEWPORTS) {
     const frame = await openConsultation(width, height);
     const overflow = await frame.evaluate(OVERFLOW);
 
-    if (width === 390) {
-      expect(overflow).toBeGreaterThan(0);
-
-      await scrollTo(frame, 'start');
-      const start = await readEdges(frame);
-      await scrollTo(frame, 'middle');
-      const middle = await readEdges(frame);
-      await scrollTo(frame, 'end');
-      const end = await readEdges(frame);
-
-      expect(start).toEqual({ left: 'covered', right: 'faded' });
-      expect(middle).toEqual({ left: 'faded', right: 'faded' });
-      expect(end).toEqual({ left: 'faded', right: 'covered' });
-    } else {
-      // The table fits at this width, so there is no scroll to follow: the cue stays off on both edges throughout.
-      expect(overflow).toBeLessThanOrEqual(1);
-      expect(await readEdges(frame)).toEqual({ left: 'covered', right: 'covered' });
-    }
+    // #1498: wrapped cells make the table fit at 390 px too, so there is no scroll to follow: no overflow and the cue stays off on both edges.
+    expect(overflow).toBe(0);
+    expect(await readEdges(frame)).toEqual({ left: 'covered', right: 'covered' });
   });
 }
