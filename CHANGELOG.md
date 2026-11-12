@@ -8,6 +8,44 @@ feature and fixes is a minor release. See [docs/ops/RELEASING.md](docs/ops/RELEA
 
 ## [Unreleased]
 
+## [0.54.0] — 2026-11-12
+
+**Search your stored charts by placement, a graphic ephemeris, life events with categories and CSV, a rectification that scores by lift, and coloured, cross-highlighted timing techniques. Solar-arc views now follow the person's zodiac setting, which fixes wrong sidereal positions.**
+
+### Added
+
+- **Search stored charts by placement (#1405, #1486).** A chart-search card on the People screen builds conditions on natal, transit, progression and timing placements (sign and house included), runs them over the stored charts, and saves searches. A solar-arc scope is offered too (#1486). English and Dutch copy ("Zonneboog" for solar arc).
+- **Graphic ephemeris (#1404).** A new tool plots several bodies over a date range.
+- **Life events summary card and management drawer on the Birth record (#1439),** with an optional category, a category filter on the life-event pickers, and CSV import and export.
+- **Birth-time rectification reads life events and scores by lift (#1445).** Candidate times are scored with equal weight and closeness scaling, with event toggles, lift verdicts, a method note, and an optional rectified time (with a source note) beside the reported time. Every rectification contact uses one 3 degree orb limit from Tebbs, and directed solar arc contacts use his 1 degree orb.
+- **Colour per timing technique and two-way highlighting between the Gantt and the events table (#1442),** with a technique badge on each event and a Techniques popover on the table toolbar. Forecast exacts that fall on the same day stack into one mark with a count.
+- **The composite screen offers the Davison relationship chart beside the midpoint (#1406),** with Davison cusps at the midpoint latitude and an opt-in Midheaven adjustment (p.247).
+- **An empty-filter note on the Aspects and Matrix tabs (#1333).**
+
+### Changed
+
+- **Badges, chips and tags share one pill anatomy (#1356); shared buttons use the Button primitive (#1348).** Internal consistency changes with no new behaviour.
+
+### Fixed
+
+- **Solar-arc directions, the Solar Arc view, the Consultation, the PDF and the timing timeline now use the person's zodiac and calculation settings (#1489, #1491, #1492).** Before, the progressed Sun was read tropically, so sidereal charts could show wrong solar-arc and progressed positions.
+- **Solar-arc exact dates are found for births where the progressed Sun wraps (#1498),** so the timing timeline no longer shows an empty solar-arc track for them; the consultation transit table wraps its cells.
+- **Transit animation no longer flickers during playback (#1440):** the playing date stays out of React state and the wheel updates in place.
+- **Horary frustration follows Lilly, and interposition is told apart from prohibition (#798).**
+- **Gantt bars keep a gap and their in-bar labels no longer overlap (#1442);** the forecast row is drawn as one band.
+- **The Map and Extended settings drawers fit their content (#1449),** and the duplicate saved-readings list under Generate is gone (#1448).
+- **State colours have their own hues (#1348), headings follow one h2 and one h3 specification (#1354), page titles use the display type token, and chart-sheet position labels use the xs text token (#1352).**
+- **The overridden-only filter in Corpus Corrections is a yes/no segmented control (#1335).**
+
+### Documentation
+
+- The references index gains the Carter, Paulus, Brennan, Cicek, Tebbs and other rectification books; the citation decisions for #869, #1445 and #798 are recorded; the empty-filter rule is written into the chart view spec (#1333).
+- `docs/ops/RELEASING.md`: versions follow the change (minor for features, patch for fixes, major reserved), and the highest change in a release sets its number.
+
+### Notes for people running their own server
+
+- No database migration, no new environment variables, and no new `src/` files in the Dockerfile's copy list (`test/docker-runtime-files.test.ts` passes).
+
 ## [0.53.0] — 2026-11-10
 
 **Life events become part of a person's record and drive the timing tools, the transit and progression screens gain a date and animation bar, and progressions use the mean tropical year.**
