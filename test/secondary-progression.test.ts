@@ -13,7 +13,10 @@ import { computeSecondaryProgression } from '../src/domain/secondary-progression
 import { julianDayFor } from '../src/time/julian.js';
 import { resolveMoment } from '../src/time/resolve.js';
 import type { BirthMomentInput } from '../src/time/types.js';
+import type { Zodiac } from '../src/ephemeris/types.js';
 import { arcsecondsBetween, getEngine } from './engine-harness.js';
+
+const SIDEREAL: Zodiac = { kind: 'sidereal', ayanamsa: 1 };
 
 const NATAL: BirthMomentInput = {
   civil: { year: 1990, month: 6, day: 15, hour: 14, minute: 30, second: 0 },
@@ -122,5 +125,44 @@ describe('computeSecondaryProgression (#46)', () => {
     });
     expect(tight.contacts).toHaveLength(0);
     expect(wide.contacts.length).toBeGreaterThan(0);
+  });
+
+  it('solarArc MC: sidereal and tropical agree within the #1489 bound (#1491)', async () => {
+    const engine = await getEngine();
+    const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
+    const targetJd = natalJd + TROPICAL_YEAR_DAYS * 30;
+    const options = { mcMethod: 'solarArc' } as const;
+    const tropical = await computeSecondaryProgression(NATAL, targetJd, engine, options);
+    const sidereal = await computeSecondaryProgression(NATAL, targetJd, engine, { ...options, zodiac: SIDEREAL });
+    const natalTropical = await engine.houses(natalJd, NATAL_PLACE, 'P');
+    const natalSidereal = await engine.houses(natalJd, NATAL_PLACE, 'P', SIDEREAL);
+    const ayanamsaChange =
+      (await engine.ayanamsa(sidereal.progressedJd, SIDEREAL.ayanamsa)) -
+      (await engine.ayanamsa(natalJd, SIDEREAL.ayanamsa));
+    // The MC's shift from the natal MC is the solar arc in each zodiac.
+    const tropicalShift = tropical.houses.midheaven - natalTropical.midheaven;
+    const siderealShift = sidereal.houses.midheaven - natalSidereal.midheaven;
+    expect(arcsecondsBetween(siderealShift, tropicalShift - ayanamsaChange)).toBeLessThan(1);
+    expect(arcsecondsBetween(siderealShift, tropicalShift)).toBeLessThan(30);
+  });
+
+  it('quotidian progressed houses are read in the sidereal zodiac (#1491)', async () => {
+    const engine = await getEngine();
+    const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
+    const targetJd = natalJd + TROPICAL_YEAR_DAYS * 30;
+    const tropical = await computeSecondaryProgression(NATAL, targetJd, engine, { mcMethod: 'quotidian' });
+    const sidereal = await computeSecondaryProgression(NATAL, targetJd, engine, {
+      mcMethod: 'quotidian',
+      zodiac: SIDEREAL,
+    });
+    // Sidereal cusps are the tropical cusps minus the ayanamsa at the progressed moment.
+    const ayanamsa = await engine.ayanamsa(sidereal.progressedJd, SIDEREAL.ayanamsa);
+    expect(sidereal.houses.cusps).toHaveLength(tropical.houses.cusps.length);
+    sidereal.houses.cusps.forEach((cusp, index) => {
+      if (index === 0) return; // cusps[0] is unused
+
+      const expected = ((((tropical.houses.cusps[index] ?? 0) - ayanamsa) % 360) + 360) % 360;
+      expect(arcsecondsBetween(cusp, expected)).toBeLessThan(1);
+    });
   });
 });
