@@ -9740,11 +9740,16 @@ a.quiet,
   stroke: var(--series-2);
   stroke-dasharray: 6 3;
 }
+.cycle-series-glyph circle,
 .cycle-series-glyph path,
 .cycle-series-glyph text {
   stroke: currentColor;
   fill: none;
   color: var(--fg);
+}
+.cycle-series-glyph .glyph-fill {
+  fill: currentColor;
+  stroke: none;
 }
 .cycle-time-grid {
   opacity: 0.5;
