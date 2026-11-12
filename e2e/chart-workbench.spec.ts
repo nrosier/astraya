@@ -716,6 +716,23 @@ test.describe('with the shared people (#799)', () => {
     // Phone: the inspector sits below the wheel, not beside it.
     await page.setViewportSize({ width: 390, height: 844 });
     await expect(inspector).toBeVisible();
+    // The header's overlay triggers move for one frame after the resize, so the header is taller and the
+    // dial lower in that frame (#1503). Wait until the header height and the dial's box read the same on two
+    // successive animation frames before comparing.
+    const layoutSettled = (): Promise<boolean> =>
+      page.evaluate<boolean>(`(async () => {
+        const read = () => {
+          const header = document.querySelector('.app-header')?.getBoundingClientRect();
+          const box = document.querySelector('.chart-workbench-dial')?.getBoundingClientRect();
+          return JSON.stringify([header?.height, box?.x, box?.y, box?.width, box?.height]);
+        };
+        const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+        await nextFrame();
+        const first = read();
+        await nextFrame();
+        return read() === first;
+      })()`);
+    await expect.poll(layoutSettled).toBe(true);
     const dPhone = await dial.boundingBox();
     const iPhone = await inspector.boundingBox();
     if (dPhone === null || iPhone === null) throw new Error('no boxes');
