@@ -1,7 +1,7 @@
 /**
  * @module ChartSearchConditionRow
  * @purpose One editable condition of the "Search charts" card (#1405): scope, kind, body, then sign, house or aspect and its target, with a labelled Remove control.
- * @conventions Controlled by the draft: every change returns a whole new `SearchCondition` through `onChange`. Changing the kind starts that kind's defaults and keeps scope and body. Fields are shared `Select`s, one per line on a phone (40rem and below) and in a wrapping grid above it. The scope list offers natal, transit, progression, solarReturn and lunarReturn only; solarArc is added when #1486 lands.
+ * @conventions Controlled by the draft: every change returns a whole new `SearchCondition` through `onChange`. Changing the kind starts that kind's defaults and keeps scope and body. Fields are shared `Select`s, one per line on a phone (40rem and below) and in a wrapping grid above it. The scope list offers natal, transit, progression, solarReturn, lunarReturn and solarArc.
  * @exports ChartSearchConditionRow, blankCondition
  */
 import { ASPECTS } from '../astrology/aspects.js';
@@ -15,8 +15,8 @@ import { useMessages } from './messages.js';
 import { Button } from './primitives/Button.js';
 import { Select, type SelectOption } from './primitives/Select.js';
 
-// solarArc is added to this list when #1486 lands (its copy key is not in the catalogue yet).
-const SCOPES: readonly SearchScope[] = ['natal', 'transit', 'progression', 'solarReturn', 'lunarReturn'];
+// solarArc is offered too: #1486 has landed and its copy key is in the catalogue.
+const SCOPES: readonly SearchScope[] = ['natal', 'transit', 'progression', 'solarReturn', 'lunarReturn', 'solarArc'];
 const KINDS: readonly SearchCondition['kind'][] = ['sign', 'house', 'aspect'];
 const HOUSES: readonly number[] = Array.from({ length: 12 }, (_, index) => index + 1);
 const ANGLES: readonly SearchAngle[] = ['asc', 'mc'];

@@ -11,7 +11,7 @@ const en = {
     progression: 'Secondary progressions',
     solarReturn: 'Solar return',
     lunarReturn: 'Lunar return',
-    // TODO(#1405): add `solarArc` here when the solar arc scope lands in the domain. Not yet a domain scope; no key until then.
+    solarArc: 'Solar arc',
   },
   condition: {
     sign: 'Body in sign',
@@ -105,6 +105,7 @@ const nl: typeof en = {
     progression: 'Secundaire progressies',
     solarReturn: 'Zonne-return',
     lunarReturn: 'Maan-return',
+    solarArc: 'Zonnebooggeleide',
   },
   condition: {
     sign: 'Hemellichaam in teken',
