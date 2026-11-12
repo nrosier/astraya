@@ -110,6 +110,7 @@ export async function computeSecondaryProgression(
     {
       mcMethod,
       houseSystem,
+      ...(options.zodiac === undefined ? {} : { zodiac: options.zodiac }),
     },
   );
 
