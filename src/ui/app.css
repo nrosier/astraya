@@ -1318,6 +1318,91 @@ footer {
 }
 
 /* The form's action sits at its bottom right. */
+/* Search charts card on People (#1405). One condition field per line at 40rem and below (owner decision). */
+.chart-search .conds {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.chart-search .cond {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: end;
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.chart-search .cond-n {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  align-self: center;
+}
+
+.chart-search .cond-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: var(--space-3);
+}
+
+.chart-search .add-row,
+.chart-search .save-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.chart-search .save-row {
+  align-items: end;
+}
+
+.chart-search .save-row .primitive-field {
+  flex: 1 1 14rem;
+}
+
+.chart-search .asof {
+  max-width: 20rem;
+}
+
+.chart-search .saved,
+.chart-search .results {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.chart-search .saved {
+  border-top: 1px solid var(--line);
+  padding-top: var(--space-4);
+}
+
+.chart-search .saved h3,
+.chart-search .results h3 {
+  margin: 0;
+}
+
+@media (max-width: 40rem) {
+  .chart-search .cond {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .chart-search .cond-n {
+    display: none;
+  }
+
+  .chart-search .cond-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .chart-search .cond > button {
+    justify-self: end;
+  }
+}
+
 .tool-actions {
   display: flex;
   flex-wrap: wrap;
