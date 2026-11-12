@@ -2686,7 +2686,6 @@ label.stacked {
   color: var(--muted);
 }
 
-.data-table th[data-align='end'],
 .data-table td[data-align='end'] {
   text-align: right;
   font-variant-numeric: tabular-nums;
@@ -2788,7 +2787,6 @@ label.stacked {
   margin: 0 0 var(--space-4);
 }
 
-.data-table th[data-align='center'],
 .data-table td[data-align='center'] {
   text-align: center;
 }
@@ -2797,13 +2795,15 @@ label.stacked {
 .data-table-scroll-tall {
   max-height: min(70vh, 44rem);
   overflow-y: auto;
-  /* Scroll cue: a fade along the bottom edge while more rows lie below; the local layer in --bg covers it once the end is reached. */
+  /* Scroll cue: the base frame's side layers, plus a fade along the bottom edge while more rows lie below; the local layer covers it once the end is reached. The side covers use the base width and colour (#1229), or a band stays either side of a table that fits. */
   background:
-    linear-gradient(to right, var(--bg), var(--bg)) local left / var(--space-4) 100% no-repeat,
-    linear-gradient(to left, var(--bg), var(--bg)) local right / var(--space-4) 100% no-repeat,
-    linear-gradient(to right, var(--line), transparent) scroll left / var(--space-6) 100% no-repeat,
-    linear-gradient(to left, var(--line), transparent) scroll right / var(--space-6) 100% no-repeat,
-    linear-gradient(var(--bg), var(--bg)) local bottom / 100% var(--space-4) no-repeat,
+    linear-gradient(to right, var(--scroll-cover), var(--scroll-cover)) local left / var(--scroll-cue-width) 100%
+      no-repeat,
+    linear-gradient(to left, var(--scroll-cover), var(--scroll-cover)) local right / var(--scroll-cue-width) 100%
+      no-repeat,
+    linear-gradient(to right, var(--line), transparent) scroll left / var(--scroll-cue-width) 100% no-repeat,
+    linear-gradient(to left, var(--line), transparent) scroll right / var(--scroll-cue-width) 100% no-repeat,
+    linear-gradient(var(--scroll-cover), var(--scroll-cover)) local bottom / 100% var(--space-4) no-repeat,
     linear-gradient(to bottom, transparent, var(--line)) scroll bottom / 100% var(--space-6) no-repeat;
 }
 
@@ -2811,7 +2811,7 @@ label.stacked {
   position: sticky;
   top: 0;
   z-index: 1;
-  background: var(--bg);
+  background: var(--scroll-cover);
   /* border-collapse drops a sticky cell's own border while it scrolls, so the bottom rule is a shadow (#1065). */
   box-shadow: 0 1px 0 var(--line);
 }
@@ -2872,6 +2872,11 @@ label.stacked {
   background: var(--line);
 }
 
+.data-table th:last-child .data-table-resize:not(:hover, :focus-visible)::after {
+  /* No column follows the last one, so no separator is drawn at rest; the handle still shows on hover and focus. */
+  display: none;
+}
+
 .data-table-resize:hover::after,
 .data-table-resize:focus-visible::after {
   background: var(--accent);
@@ -2901,14 +2906,6 @@ label.stacked {
   letter-spacing: 0.02em;
   text-align: left;
   cursor: pointer;
-}
-
-.data-table th[data-align='end'] button {
-  text-align: right;
-}
-
-.data-table th[data-align='center'] button {
-  text-align: center;
 }
 
 .data-table th button:hover {

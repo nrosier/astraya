@@ -141,7 +141,13 @@ export function GraphicEphemerisView(): React.JSX.Element {
     if (result.kind !== 'ready') return [];
     const keys = result.data.bodyKeys;
     return [
-      { key: 'date', label: t.dateColumn, valueOf: (row) => row.day, render: (row) => isoFromDay(row.day) },
+      {
+        key: 'date',
+        label: t.dateColumn,
+        align: 'start',
+        valueOf: (row) => row.day,
+        render: (row) => isoFromDay(row.day),
+      },
       ...keys.map((key, index): TableColumn<TableRow> => ({
         key,
         label: bodyDisplayName(key, locale),

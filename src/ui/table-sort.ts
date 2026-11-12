@@ -52,7 +52,7 @@ export interface TableColumn<T> {
    */
   readonly wrapText?: boolean;
   /**
-   * Alignment of the header and every cell. Omitted, it follows the data: a column whose values are all numbers
+   * Alignment of every cell (the header stays at the start, #1404). Omitted, it follows the data: a column whose values are all numbers
    * lines up at the end, anything else at the start (`columnAlign`). Set it only where that is wrong, e.g. a
    * column of check marks, which reads best centred.
    */
