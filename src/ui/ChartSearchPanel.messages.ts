@@ -105,7 +105,7 @@ const nl: typeof en = {
     progression: 'Secundaire progressies',
     solarReturn: 'Zonne-return',
     lunarReturn: 'Maan-return',
-    solarArc: 'Zonnebooggeleide',
+    solarArc: 'Zonneboog',
   },
   condition: {
     sign: 'Hemellichaam in teken',
