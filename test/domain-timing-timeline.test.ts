@@ -8,6 +8,8 @@
 import { describe, expect, it } from 'vitest';
 import { ASPECTS, DEFAULT_ORB_CONFIG, orbFor } from '../src/astrology/aspects.js';
 import { bodyByKey } from '../src/astrology/bodies.js';
+import { TROPICAL_YEAR_DAYS, progressedJulianDay } from '../src/astrology/progressions.js';
+import { computeSolarArcDirections } from '../src/domain/solar-arc-directions.js';
 import { findExactTransitAspects } from '../src/astrology/transit-events.js';
 import { computeChartData } from '../src/domain/chart-compute.js';
 import { computeTransitOrbWindows } from '../src/domain/transit-orb-windows.js';
@@ -31,7 +33,7 @@ import {
 import { julianDayFor } from '../src/time/julian.js';
 import { resolveMoment } from '../src/time/resolve.js';
 import type { BirthMomentInput } from '../src/time/types.js';
-import { getEngine } from './engine-harness.js';
+import { arcsecondsBetween, getEngine } from './engine-harness.js';
 
 const NATAL: BirthMomentInput = {
   civil: { year: 1990, month: 6, day: 15, hour: 14, minute: 30, second: 0 },
@@ -179,6 +181,54 @@ describe('solarArcToTimelineEvents (#673)', () => {
         (t) => t.track === 'solar-arc',
       )?.events,
     ).toHaveLength(1);
+  });
+});
+
+describe('the solar-arc track for a 1970-01-01 birth (#1498)', () => {
+  const EPOCH_BIRTH: BirthMomentInput = {
+    civil: { year: 1970, month: 1, day: 1, hour: 12, minute: 0, second: 0 },
+    coordinates: { latitude: 52.37, longitude: 4.9 },
+    offsetOverrideMinutes: 0,
+  };
+
+  it('has dated solar-arc events inside the window, each exact where the directed body meets the natal one', async () => {
+    const engine = await getEngine();
+    const natalJd = await julianDayFor(engine, resolveMoment(EPOCH_BIRTH));
+    const windowEndJd = natalJd + 150 * TROPICAL_YEAR_DAYS;
+    const data = await computeSolarArcDirections(EPOCH_BIRTH, natalJd + 40 * TROPICAL_YEAR_DAYS, engine);
+
+    const events = solarArcToTimelineEvents(data);
+    const track = timingTimelineTracks(events, natalJd, windowEndJd).find((t) => t.track === 'solar-arc');
+    expect(track?.events.length).toBeGreaterThan(0);
+    expect(events.every((event) => event.kind === 'solar-arc')).toBe(true);
+
+    const dated = data.contacts.filter((contact) => contact.exactJd !== undefined);
+    expect(dated.length).toBe(events.length);
+    const sun = bodyByKey('sun');
+    if (sun === undefined) throw new Error('unreachable: sun is always in BODIES');
+    const natal = await engine.positions(natalJd, [sun.id, ...dated.flatMap((c) => [c.bodyA, c.bodyB])]);
+    const natalOf = (body: number): number => {
+      const position = natal.find((p) => p.body === body);
+      if (position === undefined) throw new Error('unreachable: natal position requested above');
+      return position.longitude;
+    };
+
+    // Independent route: at the exact date the directed body (natal + arc) sits the aspect angle from the natal target.
+    for (const contact of dated.slice(0, 10)) {
+      const exactJd = contact.exactJd;
+      if (exactJd === undefined) throw new Error('unreachable: filtered to dated contacts');
+      expect(exactJd).toBeGreaterThanOrEqual(natalJd);
+      expect(exactJd).toBeLessThanOrEqual(windowEndJd);
+      const [progressedSun] = await engine.positions(progressedJulianDay(natalJd, exactJd), [sun.id]);
+      const arc = (progressedSun?.longitude ?? 0) - natalOf(sun.id);
+      const directed = natalOf(contact.bodyA) + arc;
+      const target = natalOf(contact.bodyB);
+      const miss = Math.min(
+        arcsecondsBetween(directed, target + contact.aspect.angle),
+        arcsecondsBetween(directed, target - contact.aspect.angle),
+      );
+      expect(miss).toBeLessThan(5);
+    }
   });
 });
 
