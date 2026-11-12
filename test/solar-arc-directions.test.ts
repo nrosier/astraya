@@ -13,6 +13,7 @@ import { computeSecondaryProgression } from '../src/domain/secondary-progression
 import { computeSolarArcDirections } from '../src/domain/solar-arc-directions.js';
 import { julianDayFor } from '../src/time/julian.js';
 import { resolveMoment } from '../src/time/resolve.js';
+import type { Zodiac } from '../src/ephemeris/types.js';
 import type { BirthMomentInput } from '../src/time/types.js';
 import { arcsecondsBetween, getEngine } from './engine-harness.js';
 
@@ -21,6 +22,8 @@ const NATAL: BirthMomentInput = {
   coordinates: { latitude: 38.7478, longitude: -85.0672 },
   offsetOverrideMinutes: -300,
 };
+
+const SIDEREAL: Zodiac = { kind: 'sidereal', ayanamsa: 1 };
 
 const NATAL_PLACE = { latitude: NATAL.coordinates.latitude, longitude: NATAL.coordinates.longitude, altitude: 0 };
 
@@ -113,6 +116,60 @@ describe('computeSolarArcDirections (#47)', () => {
 
       expect(arcsecondsBetween(arcAtExact, requiredArc)).toBeLessThan(5);
       expect(exactJd).toBeGreaterThanOrEqual(natalJd);
+    }
+  });
+
+  it('sidereal and tropical solar arcs agree on the same natal chart (#1489)', async () => {
+    const engine = await getEngine();
+    const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
+    const targetJd = natalJd + 365.2425 * 30;
+    const tropical = await computeSolarArcDirections(NATAL, targetJd, engine);
+    const sidereal = await computeSolarArcDirections(NATAL, targetJd, engine, { zodiac: SIDEREAL });
+    const ayanamsaChange =
+      (await engine.ayanamsa(sidereal.progressedJd, SIDEREAL.ayanamsa)) -
+      (await engine.ayanamsa(natalJd, SIDEREAL.ayanamsa));
+    expect(arcsecondsBetween(sidereal.arc, tropical.arc - ayanamsaChange)).toBeLessThan(1);
+    expect(arcsecondsBetween(sidereal.arc, tropical.arc)).toBeLessThan(30);
+  });
+
+  it('sidereal exact dates are where the sidereal arc reaches the required arc (#1489)', async () => {
+    const engine = await getEngine();
+    const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
+    const targetJd = natalJd + 365.2425 * 80;
+    const options = { zodiac: SIDEREAL };
+
+    const natalPositions = await engine.positions(
+      natalJd,
+      BODIES.map((body) => body.id),
+      options,
+    );
+    const sun = bodyByKey('sun');
+    if (sun === undefined) throw new Error('unreachable: sun is always in BODIES');
+    const natalSun = natalPositions.find((position) => position.body === sun.id);
+    if (natalSun === undefined) throw new Error('unreachable: the ephemeris returned no position for the Sun');
+
+    const result = await computeSolarArcDirections(NATAL, targetJd, engine, options);
+    const withExactDate = result.contacts.filter((contact) => contact.exactJd !== undefined);
+    expect(withExactDate.length).toBeGreaterThan(0);
+
+    for (const contact of withExactDate) {
+      const directedNatal = natalPositions.find((position) => position.body === contact.bodyA);
+      const targetNatal = natalPositions.find((position) => position.body === contact.bodyB);
+      const candidates = arcsToExactness(
+        directedNatal?.longitude ?? 0,
+        targetNatal?.longitude ?? 0,
+        contact.aspect.angle,
+      );
+      const requiredArc = candidates.reduce((closest, candidate) =>
+        Math.abs(candidate - result.arc) < Math.abs(closest - result.arc) ? candidate : closest,
+      );
+      const exactJd = contact.exactJd;
+      if (exactJd === undefined) throw new Error('unreachable: filtered to contacts with a defined exactJd');
+      const age = ageInYears(natalJd, exactJd);
+      const [sunAtExact] = await engine.positions(progressedJulianDay(natalJd, exactJd), [sun.id], options);
+      expect(sunAtExact).toBeDefined();
+      const arcAtExact = mcArc('solarArc', age, natalSun.longitude, sunAtExact?.longitude ?? 0);
+      expect(arcsecondsBetween(arcAtExact, requiredArc)).toBeLessThan(5);
     }
   });
 
