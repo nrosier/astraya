@@ -4,13 +4,15 @@
  */
 import { beforeAll, describe, expect, it } from 'vitest';
 import { bodyByKey } from '../src/astrology/bodies.js';
-import { computeChartData, type ChartData } from '../src/domain/chart-compute.js';
 import {
   evaluateSearch,
   type ChartSearch,
   type SearchCondition,
   type SearchSubject,
 } from '../src/domain/chart-search.js';
+import { buildSearchSubject } from '../src/domain/chart-search-timing.js';
+import { julianDayFor } from '../src/time/julian.js';
+import { resolveMoment } from '../src/time/resolve.js';
 import type { BirthMomentInput } from '../src/time/types.js';
 import { getEngine } from './engine-harness.js';
 
@@ -27,12 +29,21 @@ function bodyId(key: string): number {
 const BODIES = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'] as const;
 const SIGNS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 
-/** Ten sign conditions, one per body: the largest search the cap allows. */
-const CONDITIONS: readonly SearchCondition[] = BODIES.map((key, index) => ({
-  kind: 'sign',
-  body: bodyId(key),
-  sign: SIGNS[index] ?? 0,
-}));
+/** Nine sign conditions and one solar-arc aspect: the largest search the cap allows, with a solar-arc condition in it (#1486). */
+const CONDITIONS: readonly SearchCondition[] = [
+  ...BODIES.slice(0, 9).map((key, index): SearchCondition => ({
+    kind: 'sign',
+    body: bodyId(key),
+    sign: SIGNS[index] ?? 0,
+  })),
+  {
+    kind: 'aspect',
+    scope: 'solarArc',
+    body: bodyId('sun'),
+    aspectKey: 'conjunction',
+    target: { kind: 'body', body: bodyId('moon') },
+  },
+];
 
 const SEARCH: ChartSearch = { operator: 'and', conditions: CONDITIONS };
 
@@ -40,16 +51,23 @@ let subjects: readonly SearchSubject[] = [];
 
 beforeAll(async () => {
   const engine = await getEngine();
-  const charts: ChartData[] = [];
+  const built: SearchSubject[] = [];
   for (let i = 0; i < PEOPLE; i += 1) {
     const moment: BirthMomentInput = {
       civil: { year: 1950 + i, month: 1 + (i % 12), day: 1 + (i % 27), hour: 6 + (i % 12), minute: 0, second: 0 },
       coordinates: { latitude: 38.7478, longitude: -85.0672 },
       offsetOverrideMinutes: -300,
     };
-    charts.push(await computeChartData(moment, engine));
+    // The solar-arc reference is computed here, once, like the natal chart; the timed match only reads it.
+    const asOfJd = (await julianDayFor(engine, resolveMoment(moment))) + 12000;
+    built.push(
+      await buildSearchSubject(
+        { natalMoment: moment, birthTimeKnown: true, settings: {}, asOfJd, scopes: ['solarArc'] },
+        engine,
+      ),
+    );
   }
-  subjects = charts.map((chart) => ({ chart, birthTimeKnown: true }));
+  subjects = built;
 });
 
 describe('placement search warm-match budget (#1405)', () => {

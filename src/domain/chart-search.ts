@@ -1,7 +1,7 @@
 /**
  * @module chart-search
  * @purpose Pure model and evaluator for searching stored charts by placement and timing (#1405): a flat list of scoped conditions (sign, house, aspect of a named body) combined with one AND or OR operator, evaluated against an already computed subject (natal chart plus optional transit, progression and return references).
- * @conventions No ephemeris, store or UI access: callers compute the `ChartData` and pass it in. Aspects are read from what the chart already computed (`aspects` for body-to-body, `angleAspects` for the natal Ascendant and Midheaven), never recomputed, so a search cannot disagree with the chart screen. Logic is three-valued: a house or angle condition for a person with no known birth time (or with undefined houses) is "not-evaluable" with a reason, never a silent non-match. AND is not-matched as soon as one condition is not-matched, else not-evaluable if any is; OR is matched as soon as one is matched, else not-evaluable if any is. A search holds 1 to `MAX_SEARCH_CONDITIONS` conditions. Every condition has a scope (absent means natal). Transit and progression scopes (answers 13 and 14): the moving body is the transiting or progressed body; a sign condition reads its own sign; a house condition reads the NATAL house the moving body occupies, from the natal cusps via `houseOf`; an aspect condition is direction-aware (`body` is the moving body, the target a natal body or the natal Ascendant or Midheaven), read from the contacts the caller computed, so the (transiting X, natal Y) pair differs from (transiting Y, natal X). Return scopes: the return chart is evaluated as a chart in its own right (a house is read in the return chart, aspects are those of the return chart); a return house or Ascendant/Midheaven condition is not-evaluable for an unknown birth time. A scope whose reference the caller did not supply is "not-evaluable" with reason `timing-unavailable`. The progressed houses carried on a progression reference come from `computeSecondaryProgression` and are kept for display only: no condition reads them.
+ * @conventions No ephemeris, store or UI access: callers compute the `ChartData` and pass it in. Aspects are read from what the chart already computed (`aspects` for body-to-body, `angleAspects` for the natal Ascendant and Midheaven), never recomputed, so a search cannot disagree with the chart screen. Logic is three-valued: a house or angle condition for a person with no known birth time (or with undefined houses) is "not-evaluable" with a reason, never a silent non-match. AND is not-matched as soon as one condition is not-matched, else not-evaluable if any is; OR is matched as soon as one is matched, else not-evaluable if any is. A search holds 1 to `MAX_SEARCH_CONDITIONS` conditions. Every condition has a scope (absent means natal). Solar-arc scope (#1486): the directed chart is evaluated exactly like a progression (moving body against the natal chart, direction-aware, houses read from the natal cusps). Transit and progression scopes (answers 13 and 14): the moving body is the transiting or progressed body; a sign condition reads its own sign; a house condition reads the NATAL house the moving body occupies, from the natal cusps via `houseOf`; an aspect condition is direction-aware (`body` is the moving body, the target a natal body or the natal Ascendant or Midheaven), read from the contacts the caller computed, so the (transiting X, natal Y) pair differs from (transiting Y, natal X). Return scopes: the return chart is evaluated as a chart in its own right (a house is read in the return chart, aspects are those of the return chart); a return house or Ascendant/Midheaven condition is not-evaluable for an unknown birth time. A scope whose reference the caller did not supply is "not-evaluable" with reason `timing-unavailable`. The progressed houses carried on a progression reference come from `computeSecondaryProgression` and are kept for display only: no condition reads them.
  * @exports SEARCH_SCOPES, SearchScope, TimingReference, searchScopes, MAX_SEARCH_CONDITIONS, SEARCH_ANGLES, SearchOperator, SearchAngle, SearchCondition, SignCondition, HouseCondition, AspectCondition, AspectTarget, ChartSearch, SearchSubject, NotEvaluableReason, ConditionOutcome, ConditionResult, PersonSearchOutcome, PersonSearchResult, AddConditionResult, addCondition, validateSearch, evaluateCondition, evaluateSearch
  */
 import type { Aspect } from '../astrology/aspects.js';
@@ -21,8 +21,8 @@ export type SearchAngle = (typeof SEARCH_ANGLES)[number];
 /** One operator for the whole list. */
 export type SearchOperator = 'and' | 'or';
 
-/** Which chart a condition reads: the natal chart, the sky at the as-of date, the progressed chart, or the return in force. */
-export const SEARCH_SCOPES = ['natal', 'transit', 'progression', 'solarReturn', 'lunarReturn'] as const;
+/** Which chart a condition reads: the natal chart, the sky at the as-of date, the progressed chart, the return in force, or the solar-arc directed chart (#1486). */
+export const SEARCH_SCOPES = ['natal', 'transit', 'progression', 'solarReturn', 'lunarReturn', 'solarArc'] as const;
 
 export type SearchScope = (typeof SEARCH_SCOPES)[number];
 
@@ -85,6 +85,8 @@ export interface SearchSubject {
   readonly birthTimeKnown: boolean;
   readonly transit?: TimingReference;
   readonly progression?: TimingReference;
+  /** The solar-arc directed chart at the as-of date (#1486): every natal body carried by the arc, against the natal chart. */
+  readonly solarArc?: TimingReference;
   /** The solar return in force at the as-of date, as a chart. */
   readonly solarReturn?: ChartData;
   /** The lunar return in force at the as-of date, as a chart. */
@@ -263,7 +265,8 @@ export function evaluateCondition(condition: SearchCondition, subject: SearchSub
     case 'natal':
       return evaluateOnChart(condition, subject.chart, subject.birthTimeKnown);
     case 'transit':
-    case 'progression': {
+    case 'progression':
+    case 'solarArc': {
       const moving = subject[scope];
       return moving === undefined
         ? notEvaluable(condition, 'timing-unavailable')
