@@ -185,7 +185,8 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
           }),
           computeProfections(moment, todayJd, provider),
           generatePrimaryDirections(moment, provider),
-          computeSolarArcDirections(moment, todayJd, provider),
+          // The person's own zodiac (#1492), so a sidereal person's directions are not read in the tropical.
+          computeSolarArcDirections(moment, todayJd, provider, { zodiac: personSettings.zodiac }),
           computeTransit(moment, todayJd, provider),
         ]);
         // The angles are never among the ranked contacts (#678), so they are found and listed apart.
@@ -228,7 +229,7 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
     return () => {
       effect.cancelled = true;
     };
-  }, [stableMoment, fixedStars, provider, now, rulership, settingsUnreadable]);
+  }, [stableMoment, fixedStars, provider, now, rulership, settingsUnreadable, personSettings.zodiac]);
 
   const natalHouses = load.kind === 'ready' ? load.transit.natal.houses : undefined;
   const rules = useMemo<TransitRuleContext>(
