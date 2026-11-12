@@ -11,8 +11,9 @@
  * **Timing is a scope, not a kind.** Each condition carries a `scope`: `natal`, `transit`, `progression`,
  * `solarReturn` or `lunarReturn` (owner decision 1). One scope field on the three existing kinds keeps a single reader
  * per kind, where four new kinds would repeat the body, aspect and target checks. `transit` and `progression` hold
- * only `aspect` conditions: the stored `body` is the transiting or progressed body, the target a natal body or the
- * natal `asc`/`mc` (decisions 2 and 11; any body key may transit an angle). `solarReturn` and `lunarReturn` hold
+ * `sign`, `house` or `aspect` conditions: the stored `body` is the transiting or progressed body; a sign reads its own
+ * sign, a house is the natal house it occupies (decision 14), an aspect target a natal body or the natal `asc`/`mc`
+ * (decisions 2 and 11; any body key may transit an angle). `solarReturn` and `lunarReturn` hold
  * `sign`, `house` or `aspect` conditions evaluated in the return chart in force at the as-of date (decisions 3 and 7),
  * so their aspect target is in that return chart too.
  *
@@ -38,7 +39,7 @@
  *
  * @module store/chart-searches
  * @purpose Folds saved chart searches (name and one atomic register of operator and conditions) into readable, unreadable or incomplete entries, and builds and refuses the mutations written to the op-log.
- * @conventions The definition is one last-write-wins register carrying its own schema `version` (this build writes 2, reads 1 and 2, keeps a higher one as `future-version`), never merged field by field, and never holding an as-of date; every version-2 condition carries a required `scope` (natal, transit, progression, solarReturn, lunarReturn; a missing scope is `invalid`, never defaulted), version-1 conditions have no scope and read as natal; transit and progression scopes hold aspect conditions only; bodies are stored by key, not by numeric id; an unreadable or incomplete search is listed and kept, never defaulted or hidden; fold functions never throw; refusals carry a code rather than prose, so the UI owns the wording; the name shares the saved-query cap; a search holds 1 to `CHART_SEARCH_MAX_CONDITIONS` conditions (owner decision 10); the list sorts by name then by a plain code-unit id comparison.
+ * @conventions The definition is one last-write-wins register carrying its own schema `version` (this build writes 2, reads 1 and 2, keeps a higher one as `future-version`), never merged field by field, and never holding an as-of date; every version-2 condition carries a required `scope` (natal, transit, progression, solarReturn, lunarReturn; a missing scope is `invalid`, never defaulted), version-1 conditions have no scope and read as natal; transit and progression scopes hold sign, house and aspect conditions (owner decision 14); bodies are stored by key, not by numeric id; an unreadable or incomplete search is listed and kept, never defaulted or hidden; fold functions never throw; refusals carry a code rather than prose, so the UI owns the wording; the name shares the saved-query cap; a search holds 1 to `CHART_SEARCH_MAX_CONDITIONS` conditions (owner decision 10); the list sorts by name then by a plain code-unit id comparison.
  * @exports CHART_SEARCH_ENTITY, CHART_SEARCH_NAME_FIELD, CHART_SEARCH_DEFINITION_FIELD, CHART_SEARCH_MAX_CONDITIONS, CHART_SEARCH_ANGLES, CHART_SEARCH_OPERATORS, CHART_SEARCH_SCOPES, CHART_SEARCH_DEFINITION_VERSION, StoredSearchScope, StoredSearchCondition, StoredSearchTarget, ChartSearchDefinition, ChartSearchUnreadable, SavedChartSearch, ChartSearchRefusal, ChartSearchRefusedError, readChartSearchDefinition, foldChartSearch, chartSearchCreate, chartSearchRename, assertChartSearchMutation, sortedChartSearches
  */
 import { ASPECTS } from '../astrology/aspects.js';
@@ -73,8 +74,6 @@ type StoredOperator = (typeof CHART_SEARCH_OPERATORS)[number];
  */
 export const CHART_SEARCH_SCOPES = ['natal', 'transit', 'progression', 'solarReturn', 'lunarReturn'] as const;
 export type StoredSearchScope = (typeof CHART_SEARCH_SCOPES)[number];
-/** The scopes a sign or house condition may use: a transit or progression is stored as an aspect only. */
-type ChartScope = Exclude<StoredSearchScope, 'transit' | 'progression'>;
 
 /** The definition schema version this build writes. It reads 1 and 2. Independent of the envelope's `opVersion`. */
 export const CHART_SEARCH_DEFINITION_VERSION = 2;
@@ -92,8 +91,8 @@ export type StoredSearchTarget =
  * `body` is the moving body and `target` is natal; for a return scope, everything is in the return chart.
  */
 export type StoredSearchCondition =
-  | { readonly kind: 'sign'; readonly scope: ChartScope; readonly body: string; readonly sign: number }
-  | { readonly kind: 'house'; readonly scope: ChartScope; readonly body: string; readonly house: number }
+  | { readonly kind: 'sign'; readonly scope: StoredSearchScope; readonly body: string; readonly sign: number }
+  | { readonly kind: 'house'; readonly scope: StoredSearchScope; readonly body: string; readonly house: number }
   | {
       readonly kind: 'aspect';
       readonly scope: StoredSearchScope;
@@ -198,8 +197,6 @@ function readCondition(value: unknown, version: number): ConditionVerdict {
     }
     return { ok: true, condition: { kind, scope, body, aspectKey, target: readTargetValue } };
   }
-  // A transit or progression is stored as an aspect to the natal chart only.
-  if (scope === 'transit' || scope === 'progression') return INVALID;
   if (kind === 'sign') return isIntegerIn(sign, 0, 11) ? { ok: true, condition: { kind, scope, body, sign } } : INVALID;
   return isIntegerIn(house, 1, 12) ? { ok: true, condition: { kind, scope, body, house } } : INVALID;
 }
