@@ -9552,7 +9552,8 @@ a.quiet,
 
 /*
  * The Life events management drawer . Desktop: the shared right-hand drawer, wide enough for the five-column
- * table (540 to 600px, the owner's range). Phone (40rem and narrower): a bottom sheet with a close handle.
+ * table (540 to 600px, the owner's range). Phone (40rem and narrower): a bottom sheet with a close handle, sized to its content and capped
+ * at the same --space-8 margin as the other drawers (#1506, #1439); no shared bottom-sheet primitive exists yet.
  */
 .primitive-staged-dialog.life-events-drawer[data-placement='right'] {
   width: min(37.5rem, 100vw);
@@ -9656,8 +9657,8 @@ a.quiet,
 @media (max-width: 40rem) {
   .primitive-staged-dialog.life-events-drawer[data-placement='right'] {
     width: 100vw;
-    height: 92dvh;
-    max-height: 92dvh;
+    height: fit-content;
+    max-height: calc(100dvh - 2 * var(--space-8));
     margin: auto 0 0;
     border-width: 1px 0 0;
     border-radius: var(--radius) var(--radius) 0 0;

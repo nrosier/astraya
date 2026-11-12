@@ -278,7 +278,7 @@ export function LifeEventsDrawer({
         onDiscard={onClose}
         returnFocusTo={returnFocusTo}
         placement="right"
-        dialogClassName="settings-card life-events-drawer"
+        dialogClassName="settings-card drawer-fit life-events-drawer"
         subheader={<p className="life-events-drawer-count">{t.configured(draft.length, LIFE_EVENTS_MAX)}</p>}
         footer={
           <>
