@@ -12,11 +12,18 @@
 /**
  * @module relationship-themes
  * @purpose Groups a synastry pairing's cross-chart aspects by customary reading theme (bond, attraction, communication, etc.) and computes body-to-angle contacts (#422).
- * @conventions Pure and synchronous over an already-computed `SynastryData`, no ephemeris access, matching `report.ts`'s convention for a single chart; theme classification follows a fixed priority order (Moon > Venus-Mars > Mercury > Saturn > Jupiter > Sun pairs > other), stated explicitly since a pair can match more than one rule; aspect valence (harmonious/challenging/neutral) matches the wheel's own aspect-line colour convention so counts never disagree with the chart.
+ * @conventions Pure and synchronous over an already-computed `SynastryData`, no ephemeris access, matching `report.ts`'s convention for a single chart; theme classification follows a fixed priority order (Moon > Venus-Mars > Mercury > Saturn > Jupiter > Sun pairs > other), stated explicitly since a pair can match more than one rule; aspect valence (harmonious/challenging/neutral) is derived from the aspect's catalogue tone, the same tone that drives the wheel's aspect-line colours, so counts never disagree with the chart.
  * @exports groupedRelationshipContacts, relationshipAngleContacts, aspectValence, RELATIONSHIP_THEMES, RelationshipTheme, RelationshipContact, AngleContact, AspectValence
  */
 import { bodyById } from '../astrology/bodies.js';
-import { matchPointAspect, type Aspect, type OrbConfig, type PointAspectMatch } from '../astrology/aspects.js';
+import {
+  aspectByKey,
+  aspectTone,
+  matchPointAspect,
+  type Aspect,
+  type OrbConfig,
+  type PointAspectMatch,
+} from '../astrology/aspects.js';
 import { rankedSynastryAspects, type SynastryData } from './synastry.js';
 import { housesAreDefined, type ChartData } from './chart-compute.js';
 import type { BodyId, BodyPosition, Degrees } from '../ephemeris/types.js';
@@ -50,20 +57,22 @@ const bodyKeyOf = (id: BodyId): string => bodyById(id)?.key ?? String(id);
 
 export type AspectValence = 'harmonious' | 'challenging' | 'neutral';
 
-const HARMONIOUS_ASPECT_KEYS = new Set(['conjunction', 'sextile', 'trine']);
-const CHALLENGING_ASPECT_KEYS = new Set(['semisquare', 'square', 'sesquiquadrate', 'opposition']);
-
 /**
- * Harmonious/challenging/neutral, by the same three-way split the live wheel's own aspect-line
- * colours already use (`chart-aspect-{square,opposition,...}` vs. `{conjunction,sextile,trine}`
- * vs. the quintile family — see `app.css`'s `--aspect-hard`/`--aspect-soft`/`--aspect-minor`),
- * so a count here never disagrees with what the chart itself shows. `semisextile` and the
- * quintile family (no tension, no flow) are `neutral`, matching that same convention.
+ * Harmonious/challenging/neutral, derived from the aspect's catalogue tone (`aspectTone`), so it
+ * matches the live wheel's aspect-line colours by construction: `hard` → challenging, `soft` →
+ * harmonious, `minor` → neutral (the semisextile and the quintile family carry no tension and no
+ * flow). A key missing from the catalogue falls back to `neutral` rather than throwing.
  */
 export function aspectValence(aspectKey: string): AspectValence {
-  if (HARMONIOUS_ASPECT_KEYS.has(aspectKey)) return 'harmonious';
-  if (CHALLENGING_ASPECT_KEYS.has(aspectKey)) return 'challenging';
-  return 'neutral';
+  if (aspectByKey(aspectKey) === undefined) return 'neutral';
+  switch (aspectTone(aspectKey)) {
+    case 'hard':
+      return 'challenging';
+    case 'soft':
+      return 'harmonious';
+    case 'minor':
+      return 'neutral';
+  }
 }
 
 /**
