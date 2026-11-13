@@ -327,10 +327,8 @@ describe('renderMultiWheelSvg ring roles (#1532)', () => {
     const transit: WheelRingInput = { ...natalRing, label: 'Transit', role: 'transit' };
     const svg = renderMultiWheelSvg([natalRing, transit]);
     expect(countClass(svg, 'chart-glyph-transit')).toBe(1);
-    const natalOnly = renderMultiWheelSvg([
-      { ...natalRing, role: 'natal' },
-      { ...transit, role: undefined },
-    ]);
+    const { role: _transitRole, ...noRoleTransit } = transit;
+    const natalOnly = renderMultiWheelSvg([{ ...natalRing, role: 'natal' }, noRoleTransit]);
     expect(countClass(natalOnly, 'chart-glyph-transit')).toBe(0);
   });
 });
