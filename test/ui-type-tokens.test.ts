@@ -48,3 +48,16 @@ describe('type-scale tokens in app.css', () => {
     expect(bare.map((l) => `${String(l.line)}: ${l.text.trim()}`)).toEqual([]);
   });
 });
+
+describe('no literal 0.875rem or 0.9rem in app.css (#1352, owner decision 2026-11-12)', () => {
+  it('uses the type tokens everywhere outside the token block', () => {
+    const offenders = lines
+      .map((text, i) => ({ line: i + 1, text }))
+      .filter((l) => /(?<![\d.])(?:0\.875|0\.9)rem\b/.test(l.text) && !/^\s*--text-[\w-]+:/.test(l.text));
+    expect(offenders.map((l) => `${String(l.line)}: ${l.text.trim()}`)).toEqual([]);
+  });
+
+  it('defines --text-sm-compact as 0.875rem', () => {
+    expect(css).toMatch(/^\s*--text-sm-compact:\s*0\.875rem;/m);
+  });
+});
