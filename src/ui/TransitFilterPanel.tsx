@@ -25,6 +25,7 @@ import {
   MINOR_ASPECT_KEYS,
   SOFT_ASPECT_KEYS,
   TRANSIT_PRESETS,
+  NATAL_GRID_KEYS,
   TRANSITING_GRID_KEYS,
   presetOf,
   sameFilter,
@@ -173,8 +174,8 @@ export function TransitFilterButton({
   };
 
   const bodyGroup = (legend: string, field: 'transiting' | 'natal') => {
-    // The transiting grid offers the decided 16 bodies (#1508); the natal grid keeps every catalogue body.
-    const keys = field === 'transiting' ? TRANSITING_GRID_KEYS : EVERY_BODY_KEY;
+    // The transiting grid offers the decided 16 bodies; the natal grid the same 16 plus ASC and MC (#1508).
+    const keys = field === 'transiting' ? TRANSITING_GRID_KEYS : NATAL_GRID_KEYS;
     return (
       <fieldset className="transit-filter-group">
         <legend>{legend}</legend>

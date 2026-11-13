@@ -46,7 +46,7 @@
  * @module TransitImportance
  * @purpose Defines transit filter presets (daily/yearly, important/outer/personal/all) and a deterministic importance score for ranking transit contacts.
  * @conventions Fixed, documented convention (#416): daily default favors fast triggers (Sun through Mars, plus slow planets only within 1° of exact) at 1.5° orb; yearly favors Jupiter through Chiron at 3.5° orb; score = W_transit × W_natal × W_aspect × orb multiplier × applying bonus (1.15x); the chart ruler stands in for the (uncovered) Ascendant as a natal target.
- * @exports TRANSIT_ORB_CONFIG, TRANSITING_GRID_KEYS, SavedTransitFilter, TRANSIT_PRESETS, isTransitFilter, readSavedTransitFilter, transitPreset, presetOf, sameFilter, orbLimitFor, passesTransitFilter, passesAngleTransitFilter, filterTransits, chartRulerKeysOf, transitImportance, rankTransits, fastTriggers
+ * @exports TRANSIT_ORB_CONFIG, TRANSITING_GRID_KEYS, NATAL_GRID_KEYS, SavedTransitFilter, TRANSIT_PRESETS, isTransitFilter, readSavedTransitFilter, transitPreset, presetOf, sameFilter, orbLimitFor, passesTransitFilter, passesAngleTransitFilter, filterTransits, chartRulerKeysOf, transitImportance, rankTransits, fastTriggers
  */
 import { DEFAULT_ORB_CONFIG, type Aspect, type OrbConfig } from './aspects.js';
 import { bodyById } from './bodies.js';
@@ -98,6 +98,12 @@ export const TRANSITING_GRID_KEYS: readonly string[] = [
   'pallas',
   'juno',
 ];
+
+/**
+ * The natal points the filter grid offers (#1508): the same 16 bodies plus the Ascendant and Midheaven. The presets
+ * never include 'asc' or 'mc'; they are chosen by the user only.
+ */
+export const NATAL_GRID_KEYS: readonly string[] = [...TRANSITING_GRID_KEYS, 'asc', 'mc'];
 export const HARD_ASPECT_KEYS = ['conjunction', 'square', 'opposition'] as const;
 export const SOFT_ASPECT_KEYS = ['sextile', 'trine'] as const;
 /** Transit orbs are Astraya's own choice (#416): no published source for them has been verified (#590). */

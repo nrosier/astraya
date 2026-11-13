@@ -435,7 +435,7 @@ describe('the body grids (#1508)', () => {
     return [...(group?.querySelectorAll('label') ?? [])].map((label) => (label.textContent ?? '').trim());
   };
 
-  it('offers 16 transiting bodies without Lilith or Vesta, and the whole catalogue as natal points', async () => {
+  it('offers 16 transiting bodies without Lilith or Vesta, and 18 natal points including ASC and MC', async () => {
     const container = await mount();
     await openCard(container);
     const transiting = labelsOf(container, 'Transiting planets');
@@ -443,8 +443,11 @@ describe('the body grids (#1508)', () => {
     expect(transiting.some((label) => label.includes('Lilith') || label.includes('Vesta'))).toBe(false);
     expect(transiting).toContain('Juno');
     const natal = labelsOf(container, 'Natal points');
-    expect(natal).toHaveLength(EVERY_BODY_KEY.length);
-    expect(natal).toContain('Vesta');
+    expect(natal).toHaveLength(18);
+    expect(natal).toContain('Ascendant');
+    expect(natal).toContain('Midheaven');
+    expect(transiting).not.toContain('Ascendant');
+    expect(transiting).not.toContain('Midheaven');
   });
 });
 
