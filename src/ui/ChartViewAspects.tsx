@@ -45,7 +45,7 @@ const ASPECT_ICONS: Readonly<
   Record<string, { readonly family: 'hard' | 'soft' | 'minor'; readonly shapes: React.ReactNode }>
 > = {
   conjunction: {
-    family: 'soft',
+    family: 'hard',
     shapes: (
       <>
         <circle cx="12" cy="12" r="4" />
@@ -55,7 +55,13 @@ const ASPECT_ICONS: Readonly<
   },
   sextile: {
     family: 'soft',
-    shapes: <polygon points="12,3 19.79,7.5 19.79,16.5 12,21 4.21,16.5 4.21,7.5" />,
+    shapes: (
+      <>
+        <line x1="12" y1="3" x2="12" y2="21" />
+        <line x1="4.2" y1="7.5" x2="19.8" y2="16.5" />
+        <line x1="4.2" y1="16.5" x2="19.8" y2="7.5" />
+      </>
+    ),
   },
   square: { family: 'hard', shapes: <rect x="6" y="6" width="12" height="12" /> },
   trine: { family: 'soft', shapes: <polygon points="12,5 19,18 5,18" /> },
@@ -69,7 +75,16 @@ const ASPECT_ICONS: Readonly<
       </>
     ),
   },
-  quincunx: { family: 'minor', shapes: <path d="M4 18 Q12 4 20 18" /> },
+  quincunx: {
+    family: 'minor',
+    shapes: (
+      <>
+        <line x1="4" y1="7" x2="20" y2="7" />
+        <line x1="12" y1="7" x2="6" y2="19" />
+        <line x1="12" y1="7" x2="18" y2="19" />
+      </>
+    ),
+  },
 };
 
 /** The aspect's mark before its name on screen (#1532); no mark for an aspect outside the six, and `aria-hidden` since the name is already in the cell. */
