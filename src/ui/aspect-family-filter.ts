@@ -2,9 +2,9 @@
  * @module ui/aspect-family-filter
  * @purpose Aspect-family filters for the wheel and the matrix, and the on-demand consultation presets built on them (#1063).
  * @conventions Pure, no React. Aspect keys are the existing `ASPECTS` keys (`astrology/aspects`); a family lists only keys that catalogue holds, so the decile, septile and novile sit in their own higher-harmonic family (#1184), apart from the quintile series. No selection means no filter, which is the default view; Orb caps hide a contact whose orb is wider than the cap and never widen one.
- * @exports ConsultationPreset, PresetSwitches, isMajorAspect, CONSULTATION_PRESETS, AspectFamilyKey, AspectFamily, ASPECT_FAMILIES, FILTERABLE_FAMILIES, CATALOGUE_KEYS, OrbCaps, isContactShown, orbCapFor, toggleFamily
+ * @exports ConsultationPreset, PresetSwitches, isMajorAspect, CONSULTATION_PRESETS, presetTones, AspectFamilyKey, AspectFamily, ASPECT_FAMILIES, FILTERABLE_FAMILIES, CATALOGUE_KEYS, OrbCaps, isContactShown, orbCapFor, toggleFamily
  */
-import { ASPECTS, type AspectFamily as CatalogueFamily } from '../astrology/aspects.js';
+import { ASPECTS, type AspectFamily as CatalogueFamily, type AspectTone } from '../astrology/aspects.js';
 
 export type AspectFamilyKey = 'major' | 'hardMinor' | 'softMinor' | 'higherHarmonic' | 'parallels' | 'nodalAngular';
 
@@ -171,3 +171,16 @@ export const CONSULTATION_PRESETS: readonly ConsultationPreset[] = [
 
 /** Every key in `ASPECTS`, so a test can check each family only names catalogue entries. */
 export const CATALOGUE_KEYS: readonly string[] = ASPECTS.map((aspect) => aspect.key);
+
+/**
+ * The wheel's tone pills a preset switches on (owner decision on #1532, 2026-11-14, "Follow listed aspects"): the tones
+ * of the aspects its families name. A body-defined family (nodes and angles) names no aspect, so it adds no tone. No
+ * preset switches every tone on.
+ */
+export function presetTones(preset: ConsultationPreset | undefined): ReadonlySet<AspectTone> {
+  if (preset === undefined) return new Set(ASPECTS.map((aspect) => aspect.tone));
+  const keys = new Set(
+    ASPECT_FAMILIES.filter((family) => preset.families.includes(family.key)).flatMap((family) => family.aspectKeys),
+  );
+  return new Set(ASPECTS.filter((aspect) => keys.has(aspect.key)).map((aspect) => aspect.tone));
+}

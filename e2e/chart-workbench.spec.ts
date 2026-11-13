@@ -255,6 +255,44 @@ test.describe('with the shared people (#799)', () => {
     await expect(dialog.getByRole('checkbox', { name: 'Transit ring', exact: true })).toBeChecked();
   });
 
+  test('a consultation preset sets the instrument bar: its tone pills, and Natal + transit for a ring it turns on (#1532)', async () => {
+    test.setTimeout(120_000);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    const bar = page.getByRole('group', { name: 'Wheel display', exact: true });
+    const pill = (name: string) => bar.getByRole('button', { name, exact: true });
+    const pressed = async () =>
+      Promise.all(['Hard', 'Soft', 'Minor'].map(async (name) => pill(name).getAttribute('aria-pressed')));
+    await expect.poll(pressed).toEqual(['true', 'true', 'true']);
+    const preset = page.getByLabel('Consultation preset', { exact: true });
+    const rings = bar.getByRole('radiogroup', { name: 'Rings on the wheel', exact: true });
+
+    // Standard overview names only major aspects, so Minor goes off (owner decision, 2026-11-14), and its transit ring
+    // shows with the ring toggle on Natal + transit.
+    await preset.selectOption({ label: 'Standard overview: major and nodal and angular, orbs 8 and 6' });
+    await expect.poll(pressed).toEqual(['true', 'true', 'false']);
+    await expect(rings.getByRole('radio', { name: 'Natal + transit', exact: true })).toBeChecked();
+    await rings.getByText('Natal only', { exact: true }).click();
+    await expect(rings.getByRole('radio', { name: 'Natal only', exact: true })).toBeChecked();
+
+    // Predictive and timing's hard-minor family holds quincunx and semisextile, so Minor comes back on; choosing it
+    // resets Natal only, so its transit ring shows.
+    await preset.selectOption({ label: 'Predictive and timing: major and hard minor' });
+    await expect.poll(pressed).toEqual(['true', 'true', 'true']);
+    await expect(rings.getByRole('radio', { name: 'Natal + transit', exact: true })).toBeChecked();
+    await expect(page.locator('[data-ring-legend]').first()).toBeVisible();
+
+    // Natal core turns the transit ring off, so the ring toggle goes; Minor is off again.
+    await preset.selectOption({ label: 'Natal and core temperament: major and parallels, orbs 7 and 5' });
+    await expect.poll(pressed).toEqual(['true', 'true', 'false']);
+    await expect(bar.getByRole('radiogroup')).toHaveCount(0);
+
+    // No preset switches every pill back on.
+    await preset.selectOption({ label: 'No preset (default view)' });
+    await expect.poll(pressed).toEqual(['true', 'true', 'true']);
+  });
+
   test('a consultation preset is applied only when chosen, and No preset returns the default view (#1063)', async () => {
     test.setTimeout(90_000);
     await page.setViewportSize({ width: 1280, height: 800 });

@@ -51,6 +51,7 @@ import {
   CONSULTATION_PRESETS,
   isContactShown,
   isMajorAspect,
+  presetTones,
   type AspectFamilyKey,
   type ConsultationPreset,
   type OrbCaps,
@@ -1017,6 +1018,9 @@ export function ChartDataView({
       setAspectFamilies(new Set(preset?.families ?? []));
       setOrbCaps(preset?.orbs);
       setPresetKey(preset?.key);
+      // The bar under the wheel follows the preset (#1532): its tone pills, and Natal only off so a ring it turns on shows.
+      setWheelTones(presetTones(preset));
+      setNatalOnly(false);
       // The preset's layers, chart facts and transit and solar arc orbs (#1190): on demand only, for this chart.
       setOverlaySettings((current) => presetOverlaySettings(current, preset, openingOverlaySettings));
     },

@@ -11,6 +11,7 @@ import {
   isContactShown,
   isMajorAspect,
   orbCapFor,
+  presetTones,
   toggleFamily,
   type AspectFamilyKey,
 } from '../src/ui/aspect-family-filter.js';
@@ -111,6 +112,16 @@ describe('consultation presets', () => {
       orbs: { luminary: 6, planet: 6 },
     });
     expect(CONSULTATION_PRESETS).toHaveLength(4);
+  });
+
+  it('switch on the tone pills of the aspects their families name, and no preset switches all on (#1532)', () => {
+    const tones = (key: string | undefined) => [...presetTones(CONSULTATION_PRESETS.find((p) => p.key === key))].sort();
+    // Owner decision on #1532 (2026-11-14), "Follow listed aspects": nodes and angles name no aspect, so add no tone.
+    expect(tones('standardOverview')).toEqual(['hard', 'soft']);
+    expect(tones('natalCore')).toEqual(['hard', 'soft']);
+    expect(tones('dynamicSynastry')).toEqual(['hard', 'soft']);
+    expect(tones('predictiveTiming')).toEqual(['hard', 'minor', 'soft']);
+    expect(tones(undefined)).toEqual(['hard', 'minor', 'soft']);
   });
 });
 
