@@ -134,13 +134,14 @@ for (const viewport of [
     }
 
     for (const type of ['Natal', 'Draconic'] as const) {
-      test(`${type}: chart type, aspect family and consultation preset sit side by side in one row (#1224)`, async () => {
+      test(`${type}: chart type and consultation preset sit side by side in one row; the Wheel tab has no family Select (#1224, #1532)`, async () => {
         await openSharedPerson(page, baseUrl, EINSTEIN);
         await openChart(page, type);
 
+        // On the Wheel tab the instrument bar's Hard, Soft and Minor pills replace the family Select (owner, 2026-11-13).
+        await expect(page.getByLabel('Aspects shown', { exact: true })).toHaveCount(0);
         const selects = [
           await box(page.getByLabel('Chart type', { exact: true })),
-          await box(page.getByLabel('Aspects shown', { exact: true })),
           await box(page.getByLabel('Consultation preset', { exact: true })),
         ];
         const wheel = await box(page.locator('div.chart-wheel'));
