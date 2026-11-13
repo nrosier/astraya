@@ -105,7 +105,7 @@ for (const viewport of [
         expect
           .soft(
             Math.abs(metrics.selectHeight - metrics.viewBarHeight),
-            `${type} at ${String(viewport.width)}: select height equals view bar`,
+            `${type} at ${String(viewport.width)}: select height (${String(metrics.selectHeight)}) equals view bar (${String(metrics.viewBarHeight)})`,
           )
           .toBeLessThanOrEqual(0.5);
       });
