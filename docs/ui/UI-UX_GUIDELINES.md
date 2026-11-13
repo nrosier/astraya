@@ -290,6 +290,39 @@ Opening the drawer copies the applied configuration into a draft. **Apply to map
 
 These are page/view settings. Do not persist them silently or mix account/device preferences into the drawer. Encode them in the URL only when reload, Back, bookmarking, or sharing is expected to reproduce the map.
 
+### Filter and settings dialog benchmark: Change filters (#1508)
+
+The **Change filters** dialog on the Transits page is the reference layout for every filter and settings screen. The owner approved the mockup on 2026-11-12 ("perfect"), with two corrections: the Transiting planets grid shows each of the 16 bodies once, and **All** and **Clear** sit in each card's header on the same line as the card title, for every grid. A new or reworked filter or settings dialog starts from this structure and states any departure on its issue.
+
+Approved structure, top to bottom:
+
+1. **Frame:** a dark dialog over a dimmed chart backdrop. The title **Change filters** sits at the left and a close control at the right.
+2. **Preset row:** a segmented control with Important, Outer, Personal, All, and Custom.
+3. **Orb tolerance row:** a segmented control with Tight, Balanced, and Wide. Balanced is the preset default.
+4. **Card area:** two columns. **Aspects** (Hard, Soft, and Minor checkboxes with glyphs, a divider, then **Applying only**) sits beside **Transiting planets** (the 16 bodies, four columns). **Natal points** (the 16 bodies plus ASC and MC, four columns) is a full-width card or a second row.
+5. **Footer:** **Reset to Default** and **Apply as Default** at the left; **Cancel** and **Apply** (primary) at the right.
+
+Placement rules:
+
+- A mode choice is a segmented row (§6), and the row states its default. Do not use a Select for a choice of two to four short options.
+- A checkbox grid sits in its own card. The card header is one line holding the title at the left and the bulk actions (**All**, **Clear**) at the right. Bulk actions never move above the grid or into the body of the card.
+- The footer orders actions secondary at the left and primary at the right. The primary action is the visually strongest control and is the last one in reading order.
+- Controls that share a row (the segmented rows, the footer buttons) share one height and one bottom edge. They use the shared control height of the `standard` size variant (§6, Shared control anatomy) and no feature-specific height.
+
+Measurable rules:
+
+- On desktop the card area has two columns. The columns of one card area are equal in width.
+- Grid columns inside a card are equal in width: four for the body grids.
+- A card header is one line at every verified width where the card is wider than its title plus its bulk actions; the bulk actions stay at the right edge of the header.
+- All footer buttons have one height. This height is the shared control height; the pixel value is taken from the approved mockup and recorded in the component, not repeated here.
+- Equal bottom edges for the two cards in a row follow §10.1 rules 1 to 3 (stretch the row, no fixed heights).
+
+Open items (not decided; do not treat them as settled):
+
+- **Natal points:** one card of 16 bodies plus ASC and MC, or two cards (bodies, then angles).
+- **Glyph style:** the reference screenshot uses stroked icons; the mockup uses font glyphs. The shared symbol preference (§4, Appearance & accessibility) governs until the owner chooses.
+- **390px stacking:** how the preset row and the orb tolerance row stack on a 390px-wide screen. No reference exists yet.
+
 ### Disclosure pattern
 
 Expandable reference content uses one shared `Disclosure` component. A disclosure trigger is a full-width interactive row containing:
