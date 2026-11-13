@@ -427,6 +427,27 @@ describe('the dialog’s group actions (#513)', () => {
   });
 });
 
+describe('the body grids (#1508)', () => {
+  const labelsOf = (container: HTMLElement, legend: string): string[] => {
+    const group = [...container.querySelectorAll('fieldset')].find(
+      (fieldset) => fieldset.querySelector('legend')?.textContent === legend,
+    );
+    return [...(group?.querySelectorAll('label') ?? [])].map((label) => (label.textContent ?? '').trim());
+  };
+
+  it('offers 16 transiting bodies without Lilith or Vesta, and the whole catalogue as natal points', async () => {
+    const container = await mount();
+    await openCard(container);
+    const transiting = labelsOf(container, 'Transiting planets');
+    expect(transiting).toHaveLength(16);
+    expect(transiting.some((label) => label.includes('Lilith') || label.includes('Vesta'))).toBe(false);
+    expect(transiting).toContain('Juno');
+    const natal = labelsOf(container, 'Natal points');
+    expect(natal).toHaveLength(EVERY_BODY_KEY.length);
+    expect(natal).toContain('Vesta');
+  });
+});
+
 describe('every body can be chosen', () => {
   it('lists the transiting bodies and the natal points from the same body list', () => {
     expect(EVERY_BODY_KEY).toContain('chiron');
