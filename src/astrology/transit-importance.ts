@@ -46,7 +46,7 @@
  * @module TransitImportance
  * @purpose Defines transit filter presets (daily/yearly, important/outer/personal/all) and a deterministic importance score for ranking transit contacts.
  * @conventions Fixed, documented convention (#416): daily default favors fast triggers (Sun through Mars, plus slow planets only within 1° of exact) at 1.5° orb; yearly favors Jupiter through Chiron at 3.5° orb; score = W_transit × W_natal × W_aspect × orb multiplier × applying bonus (1.15x); the chart ruler stands in for the (uncovered) Ascendant as a natal target.
- * @exports TRANSIT_ORB_CONFIG, TRANSITING_GRID_KEYS, NATAL_GRID_KEYS, SavedTransitFilter, TRANSIT_PRESETS, isTransitFilter, readSavedTransitFilter, transitPreset, presetOf, sameFilter, orbLimitFor, passesTransitFilter, passesAngleTransitFilter, filterTransits, chartRulerKeysOf, transitImportance, rankTransits, fastTriggers
+ * @exports TRANSIT_ORB_CONFIG, TRANSITING_GRID_KEYS, NATAL_GRID_KEYS, SavedTransitFilter, TRANSIT_PRESETS, isTransitFilter, readSavedTransitFilter, transitPreset, presetOf, sameFilter, orbLimitFor, passesTransitFilter, passesAngleTransitFilter, filterTransits, filterAngleTransits, chartRulerKeysOf, transitImportance, angleTransitImportance, rankTransits, rankTransitsWithAngles, fastTriggers
  */
 import { DEFAULT_ORB_CONFIG, type Aspect, type OrbConfig } from './aspects.js';
 import { bodyById } from './bodies.js';
@@ -277,6 +277,14 @@ export function filterTransits(contacts: readonly Aspect[], filter: TransitFilte
   return contacts.filter((contact) => passesTransitFilter(contact, filter));
 }
 
+/** The angle contacts the filter shows (#1508). */
+export function filterAngleTransits(
+  contacts: readonly TransitAngleContact[],
+  filter: TransitFilter,
+): readonly TransitAngleContact[] {
+  return contacts.filter((contact) => passesAngleTransitFilter(contact, filter));
+}
+
 /** The keys of the planets ruling the sign an Ascendant longitude is in: one, or the two co-rulers under Both. */
 export function chartRulerKeysOf(
   ascendantLongitude: number,
@@ -340,6 +348,41 @@ export function transitImportance(
     orbMultiplier *
     (contact.applying ? APPLYING_BONUS : 1)
   );
+}
+
+/** How much a transit to the natal Ascendant or Midheaven matters: the natal side weighs as the chart ruler, 1.5 (#1508, owner decision). */
+export function angleTransitImportance(contact: TransitAngleContact, filter: TransitFilter): number {
+  const transitingKey = keyOf(contact.body);
+  const limit = orbLimitFor(filter, transitingKey);
+  const orbMultiplier = Math.max(0, 1 - contact.orb / limit);
+  return (
+    (TRANSITING_WEIGHT[transitingKey] ?? OTHER_TRANSITING_WEIGHT) *
+    CHART_RULER_WEIGHT *
+    aspectWeight(contact.aspect.key) *
+    orbMultiplier *
+    (contact.applying ? APPLYING_BONUS : 1)
+  );
+}
+
+/** Body and angle contacts ranked together by one score, most important first; ties keep body contacts first, then input order. */
+export function rankTransitsWithAngles(
+  contacts: readonly Aspect[],
+  angleContacts: readonly TransitAngleContact[],
+  filter: TransitFilter,
+  chartRulerKeys: readonly string[] = [],
+): readonly (Aspect | TransitAngleContact)[] {
+  const all: readonly (Aspect | TransitAngleContact)[] = [...contacts, ...angleContacts];
+  return all
+    .map((contact, index) => ({
+      contact,
+      index,
+      score:
+        'angle' in contact
+          ? angleTransitImportance(contact, filter)
+          : transitImportance(contact, filter, chartRulerKeys),
+    }))
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .map(({ contact }) => contact);
 }
 
 /** The contacts most important first; ties keep their input order. */

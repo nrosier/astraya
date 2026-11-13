@@ -8,7 +8,7 @@ Hand-rolled SVG rendering layer: chart wheels (single/bi-/tri-ring), aspect webs
 - `coastline-110m.ts` — Generated Natural Earth 1:110m coastline (public domain) as a degree-space SVG path, loaded lazily under the ACG map (#667). Deps: none.
 - `pdf-map-data.ts` — Generated Natural Earth 1:50m land and borders for the PDF birth-place map, loaded lazily (#711). Deps: none.
 - `birth-map.ts` — Draws the PDF birth-place map as SVG (±20° around the birthplace) with an unlabelled pin on the birth coordinates (#711). Deps: `./svg-primitives`.
-- `aspect-web.ts` — Aspect chord rendering (cross-ring variant for bi-/tri-wheels). Deps: `astrology/aspects`, `astrology/bodies`, `./wheel`.
+- `aspect-web.ts` — Aspect chord rendering (cross-ring variant for bi-/tri-wheels, plus body-to-ASC/MC angle lines, #1508). Deps: `astrology/aspects`, `astrology/bodies`, `./wheel`.
 - `astrochart-adapter.ts` — Interop with `@astrodraw/astrochart` library (dev-only reference wheel). Deps: `astrology/bodies`, `domain/chart-compute`.
 - `body-id.ts` — Multi-ring body identifier codec (`key@ring`). Deps: none (pure string codec).
 - `calculation-profiles.ts` — Three built-in, versioned calculation profiles (Modern Western/Traditional Western/Sidereal (Lahiri)) as complete settings+rulership snapshots (#506/#510). Deps: `astrology/ayanamsas`, `astrology/rulership`, `./extended-settings`, `./object-policy`.

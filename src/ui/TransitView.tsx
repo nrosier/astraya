@@ -34,7 +34,7 @@ import { houseSystemLabel, rulershipLabel, zodiacLabel } from './ChartView.js';
 import { PrintProvenance } from './PrintProvenance.js';
 import { DEFAULT_EXTENDED_SETTINGS, settingsForContext, withOrbsOf } from '../chart/extended-settings.js';
 import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
-import { DEFAULT_ORB_CONFIG } from '../astrology/aspects.js';
+import { DEFAULT_ORB_CONFIG, type Aspect } from '../astrology/aspects.js';
 import { buildCalculationSnapshot, snapshotCalculationOptions } from '../domain/calculation-snapshot.js';
 import type { CalculationArtifact } from '../domain/calculation-artifact.js';
 import { artifactProvenanceIdentity, buildTechniqueChartArtifact } from './chart-artifact.js';
@@ -43,9 +43,9 @@ import { useSymbolClass } from './symbol-setting.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
 import { useEffect, useMemo, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
-import { crossAspectRows, type AspectRow } from '../domain/chart-tables.js';
+import { crossContactRows, type AspectRow } from '../domain/chart-tables.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
-import { computeTransit, type TransitData } from '../domain/transit.js';
+import { computeTransit, type TransitAngleContact, type TransitData } from '../domain/transit.js';
 import { transitWheelInput } from '../domain/transit-wheel.js';
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
 import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
@@ -64,9 +64,10 @@ import { useWheelIsolation } from './wheel-interaction.js';
 import { PatchedWheel } from './wheel-morph.js';
 import {
   chartRulerKeysOf,
+  filterAngleTransits,
   filterTransits,
   presetOf,
-  rankTransits,
+  rankTransitsWithAngles,
   type TransitRuleContext,
 } from '../astrology/transit-importance.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
@@ -231,16 +232,39 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
   );
   const [filter, setFilter, applyFilterForThisViewOnly] = useTransitFilter(rules);
   // The table, the wheel's cross-ring lines and the panel all read the same filtered, ranked list.
-  const shownContacts = useMemo(
+  // Body and angle (ASC, MC) contacts are ranked together (#1508), so the wheel and the table list the same contacts.
+  const rankedContacts = useMemo(
     () =>
       load.kind === 'ready'
-        ? rankTransits(filterTransits(load.data.contacts, filter), filter, rules.chartRulerKeys)
+        ? rankTransitsWithAngles(
+            filterTransits(load.data.contacts, filter),
+            filterAngleTransits(load.data.angleContacts, filter),
+            filter,
+            rules.chartRulerKeys,
+          )
         : [],
     [load, filter, rules],
   );
+  // "Of N": every body contact, plus the angle contacts to an angle the filter has chosen as a natal target
+  // (no preset chooses ASC or MC, so All still reads "N of N"; shown can never exceed this).
+  const totalContacts = useMemo(
+    () =>
+      load.kind === 'ready'
+        ? load.data.contacts.length + load.data.angleContacts.filter((c) => filter.natal.includes(c.angle)).length
+        : 0,
+    [load, filter],
+  );
+  const shownContacts = useMemo(
+    () => rankedContacts.filter((contact): contact is Aspect => !('angle' in contact)),
+    [rankedContacts],
+  );
+  const shownAngleContacts = useMemo(
+    () => rankedContacts.filter((contact): contact is TransitAngleContact => 'angle' in contact),
+    [rankedContacts],
+  );
 
   // Rebuilt only when the contacts change, so an unrelated render (a playback step's state) hands the table the same rows.
-  const contactRows = useMemo(() => crossAspectRows(shownContacts), [shownContacts]);
+  const contactRows = useMemo(() => crossContactRows(rankedContacts), [rankedContacts]);
 
   const contactTableColumns = useMemo(() => contactColumns(t, locale), [t, locale]);
 
@@ -254,11 +278,11 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
       // Natal is ring 0 (innermost), transit ring 1 (outer). `computeTransit`'s contacts are
       // already ordered transiting-first (bodyA), natal-second (bodyB) — the same order
       // `outerRingIndex`/`innerRingIndex` expect.
-      { innerRingIndex: 0, outerRingIndex: 1, aspects: shownContacts },
+      { innerRingIndex: 0, outerRingIndex: 1, aspects: shownContacts, angleAspects: shownAngleContacts },
     ];
     return renderMultiWheelSvg([natalRing, transitRing], crossAspects);
     // oxlint-disable-next-line react/exhaustive-deps -- the wheel renderers read the glyph settings from module state, so these are cache keys, not inputs the callback reads.
-  }, [load, t, filter, shownContacts, symbolClass, variants]);
+  }, [load, t, filter, shownContacts, shownAngleContacts, symbolClass, variants]);
 
   const wheelT = useMessages(biWheelSelectionPanelMessages);
   const dateBarT = useMessages(dateAnimationBarMessages);
@@ -277,12 +301,12 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
         { label: t.natalLabel, data: load.data.natal },
         { label: t.transitRingLabel, data: load.data.transit },
       ],
-      cross: crossAspectRows(shownContacts),
+      cross: contactRows,
       // Each contact's first end is the transiting body (ring 1), its second the natal point (ring 0).
       crossRingOfA: 1,
       crossRingOfB: 0,
     });
-  }, [load, selectionKey, t, shownContacts]);
+  }, [load, selectionKey, t, contactRows]);
 
   // What the "interpret the tensions of this placement" button would send (#424): for a transiting
   // planet, its contacts as they are on screen (after the filter); for a natal one, the natal chart's own.
@@ -306,7 +330,10 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
             t.contactsCaption,
             deriveExportFilename(person.displayName, 'transit-contacts', 'csv'),
             contactColumns(t, locale),
-            crossAspectRows(filterTransits(load.data.contacts, filter)),
+            crossContactRows([
+              ...filterTransits(load.data.contacts, filter),
+              ...filterAngleTransits(load.data.angleContacts, filter),
+            ]),
           ),
         ]
       : undefined,
@@ -389,8 +416,8 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
         {load.kind === 'ready' && (
           <p className="hint">
             {filterT.count(
-              shownContacts.length,
-              load.data.contacts.length,
+              rankedContacts.length,
+              totalContacts,
               filterT.presetsShort[presetOf(filter, rules) ?? 'custom'],
             )}
           </p>
@@ -413,8 +440,8 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
               filter={filter}
               rules={rules}
               onChange={setFilter}
-              shown={shownContacts.length}
-              total={load.data.contacts.length}
+              shown={rankedContacts.length}
+              total={totalContacts}
               ruleNote={false}
             />
 
