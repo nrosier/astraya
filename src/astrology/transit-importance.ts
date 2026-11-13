@@ -46,10 +46,11 @@
  * @module TransitImportance
  * @purpose Defines transit filter presets (daily/yearly, important/outer/personal/all) and a deterministic importance score for ranking transit contacts.
  * @conventions Fixed, documented convention (#416): daily default favors fast triggers (Sun through Mars, plus slow planets only within 1° of exact) at 1.5° orb; yearly favors Jupiter through Chiron at 3.5° orb; score = W_transit × W_natal × W_aspect × orb multiplier × applying bonus (1.15x); the chart ruler stands in for the (uncovered) Ascendant as a natal target.
- * @exports TRANSIT_ORB_CONFIG, TRANSITING_GRID_KEYS, SavedTransitFilter, TRANSIT_PRESETS, isTransitFilter, readSavedTransitFilter, transitPreset, presetOf, sameFilter, orbLimitFor, passesTransitFilter, filterTransits, chartRulerKeysOf, transitImportance, rankTransits, fastTriggers
+ * @exports TRANSIT_ORB_CONFIG, TRANSITING_GRID_KEYS, SavedTransitFilter, TRANSIT_PRESETS, isTransitFilter, readSavedTransitFilter, transitPreset, presetOf, sameFilter, orbLimitFor, passesTransitFilter, passesAngleTransitFilter, filterTransits, chartRulerKeysOf, transitImportance, rankTransits, fastTriggers
  */
 import { DEFAULT_ORB_CONFIG, type Aspect, type OrbConfig } from './aspects.js';
 import { bodyById } from './bodies.js';
+import type { TransitAngleContact } from '../domain/transit.js';
 import { DEFAULT_RULERSHIP_CHOICE, rulersOf, type RulershipChoice } from './rulership.js';
 
 export type TransitContext = 'daily' | 'yearly';
@@ -244,6 +245,22 @@ export function passesTransitFilter(contact: Aspect, filter: TransitFilter): boo
   return (
     filter.transiting.includes(transiting) &&
     filter.natal.includes(keyOf(contact.bodyB)) &&
+    filter.aspects.includes(contact.aspect.key) &&
+    contact.orb <= orbLimitFor(filter, transiting) &&
+    (!filter.applyingOnly || contact.applying)
+  );
+}
+
+/**
+ * Whether a transiting body's contact to the natal Ascendant or Midheaven passes the filter (#1508): the same
+ * transiting, aspect, orb-limit and applying-only rules as `passesTransitFilter`; the natal side is the angle itself
+ * ('asc' or 'mc'), which must be in `filter.natal`. The presets never list the angles, so only a user's choice shows them.
+ */
+export function passesAngleTransitFilter(contact: TransitAngleContact, filter: TransitFilter): boolean {
+  const transiting = keyOf(contact.body);
+  return (
+    filter.transiting.includes(transiting) &&
+    filter.natal.includes(contact.angle) &&
     filter.aspects.includes(contact.aspect.key) &&
     contact.orb <= orbLimitFor(filter, transiting) &&
     (!filter.applyingOnly || contact.applying)
