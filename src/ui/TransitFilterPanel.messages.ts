@@ -7,6 +7,42 @@
  * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via `useMessages()` by the sibling `TransitFilterPanel.tsx`.
  * @exports transitFilterPanelMessages
  */
+import { HARD_ASPECT_KEYS, MINOR_ASPECT_KEYS, SOFT_ASPECT_KEYS } from '../astrology/transit-importance.js';
+
+/** Aspect names as the filter's group labels spell them, keyed by aspect key (#1532). */
+const EN_ASPECT_NAMES: Readonly<Record<string, string>> = {
+  conjunction: 'conjunction',
+  semisquare: 'semisquare',
+  square: 'square',
+  sesquiquadrate: 'sesquiquadrate',
+  opposition: 'opposition',
+  sextile: 'sextile',
+  trine: 'trine',
+  quincunx: 'quincunx',
+};
+
+const NL_ASPECT_NAMES: Readonly<Record<string, string>> = {
+  conjunction: 'conjunctie',
+  semisquare: 'halfvierkant',
+  square: 'vierkant',
+  sesquiquadrate: 'anderhalfvierkant',
+  opposition: 'oppositie',
+  sextile: 'sextiel',
+  trine: 'driehoek',
+  quincunx: 'quincunx',
+};
+
+/** The group's aspect names, in the derived list's order, joined for a label (#1532). */
+function aspectNames(keys: readonly string[], names: Readonly<Record<string, string>>): string {
+  return keys
+    .map((key) => {
+      const name = names[key];
+      if (name === undefined) throw new RangeError(`no label name for aspect "${key}"`);
+      return name;
+    })
+    .join(', ');
+}
+
 const en = {
   heading: 'Change filters',
   presetLabel: 'Preset',
@@ -35,9 +71,9 @@ const en = {
   orbLabel: 'Orb tolerance',
   orbs: { tight: 'Tight (up to 1.5°)', balanced: 'Balanced (preset default)', wide: 'Wide (at least 5°)' },
   aspectsLegend: 'Aspects',
-  hard: 'Hard (conjunction, square, opposition)',
-  soft: 'Soft (sextile, trine)',
-  minor: 'Minor (semisquare, sesquiquadrate, quincunx)',
+  hard: `Hard (${aspectNames(HARD_ASPECT_KEYS, EN_ASPECT_NAMES)})`,
+  soft: `Soft (${aspectNames(SOFT_ASPECT_KEYS, EN_ASPECT_NAMES)})`,
+  minor: `Minor (${aspectNames(MINOR_ASPECT_KEYS, EN_ASPECT_NAMES)})`,
   transitingLegend: 'Transiting planets',
   natalLegend: 'Natal points',
   applyingOnly: 'Applying only',
@@ -84,9 +120,9 @@ const nl: typeof en = {
     wide: 'Ruim (minstens 5°)',
   },
   aspectsLegend: 'Aspecten',
-  hard: 'Hard (conjunctie, vierkant, oppositie)',
-  soft: 'Zacht (sextiel, driehoek)',
-  minor: 'Klein (halfvierkant, anderhalfvierkant, quincunx)',
+  hard: `Hard (${aspectNames(HARD_ASPECT_KEYS, NL_ASPECT_NAMES)})`,
+  soft: `Zacht (${aspectNames(SOFT_ASPECT_KEYS, NL_ASPECT_NAMES)})`,
+  minor: `Klein (${aspectNames(MINOR_ASPECT_KEYS, NL_ASPECT_NAMES)})`,
   transitingLegend: 'Transiterende planeten',
   natalLegend: 'Radixpunten',
   applyingOnly: 'Alleen toenemend',
