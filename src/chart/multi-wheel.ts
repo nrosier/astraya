@@ -52,7 +52,12 @@
 import type { Aspect } from '../astrology/aspects.js';
 import { SIGNS, degreesInSign } from '../astrology/signs.js';
 import type { BodyId, Degrees, HousePositions } from '../ephemeris/types.js';
-import { renderAspectWebSvg, renderCrossRingAspectWebSvg } from './aspect-web.js';
+import {
+  renderAspectWebSvg,
+  renderCrossRingAngleWebSvg,
+  renderCrossRingAspectWebSvg,
+  type CrossRingAngleAspect,
+} from './aspect-web.js';
 import type { GlyphLayoutInput } from './glyph-layout.js';
 import { bodyAttributes, hitAreaCircle, renderGlyphRingSvg, spreadGlyphs } from './glyph-layout.js';
 import { renderGlyph, signGlyph } from './glyphs.js';
@@ -102,6 +107,11 @@ export interface CrossRingAspects {
   readonly innerRingIndex: number;
   readonly outerRingIndex: number;
   readonly aspects: readonly Aspect[];
+  /**
+   * Outer-ring bodies' aspects to the inner ring's Ascendant or Midheaven (#1508), drawn as lines
+   * to the angle's longitude. Optional; the angle is read from the inner ring's `houses`.
+   */
+  readonly angleAspects?: readonly CrossRingAngleAspect[];
 }
 
 export interface MultiWheelOptions extends WheelOrientationOptions {
@@ -659,6 +669,16 @@ export function renderMultiWheelSvg(
       return { longitude, radius: geometry.aspectCircle, ring: cross.innerRingIndex };
     };
     parts.push(renderCrossRingAspectWebSvg(cross.aspects, resolveA, resolveB, ascendant, cx, cy, orientationOptions));
+    if (cross.angleAspects !== undefined && cross.angleAspects.length > 0) {
+      const resolveAngle = (angle: 'asc' | 'mc'): { longitude: Degrees; radius: number; ring: number } => ({
+        longitude: angle === 'asc' ? innerRing.houses.ascendant : innerRing.houses.midheaven,
+        radius: geometry.aspectCircle,
+        ring: cross.innerRingIndex,
+      });
+      parts.push(
+        renderCrossRingAngleWebSvg(cross.angleAspects, resolveA, resolveAngle, ascendant, cx, cy, orientationOptions),
+      );
+    }
   }
 
   // Fixed corner legend, not radial text (see this module's doc comment).

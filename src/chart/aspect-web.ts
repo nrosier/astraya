@@ -21,10 +21,10 @@
  * @module chart/aspect-web
  * @purpose Renders computed aspects as chords across the wheel's inner circle, including a cross-ring variant for multi-ring wheels.
  * @conventions One `<line>` per `Aspect` at a fixed radius (the aspect circle, not wherever glyph collision-spreading moved a body); styling (aspect key, applying/separating, tight-orb) is carried only as CSS classes, never inline colour; each chord is wrapped in a `<g>` with a wide invisible hit line for clickability and `data-aspect-*`/`data-ring-*` attributes for click-to-isolate.
- * @exports filterAspectsForDisplay, renderAspectWebSvg, renderCrossRingAspectWebSvg, TIGHT_ORB_DEG; AspectDisplayFilter type.
+ * @exports filterAspectsForDisplay, renderAspectWebSvg, renderCrossRingAspectWebSvg, renderCrossRingAngleWebSvg, TIGHT_ORB_DEG; AspectDisplayFilter, CrossRingAngleAspect types.
  */
 import type { AspectFamily } from '../astrology/aspects.js';
-import type { Aspect } from '../astrology/aspects.js';
+import type { Aspect, AspectMatch } from '../astrology/aspects.js';
 import { bodyById } from '../astrology/bodies.js';
 import type { BodyId, Degrees } from '../ephemeris/types.js';
 import type { WheelOrientationOptions } from './wheel.js';
@@ -72,19 +72,22 @@ export const TIGHT_ORB_DEG = 1;
  * group so a click anywhere in it resolves to the same aspect.
  */
 function aspectChord(
-  aspect: Aspect,
+  aspect: AspectMatch,
+  keyA: string,
+  keyB: string,
   pointA: { readonly x: number; readonly y: number },
   pointB: { readonly x: number; readonly y: number },
   extraClass: string,
   ringA: number,
   ringB: number,
+  extraAttributes = '',
 ): string {
   const direction = aspect.applying ? 'applying' : 'separating';
   const tight = aspect.orb <= TIGHT_ORB_DEG ? ' chart-aspect-tight' : '';
   const className = `chart-aspect${extraClass} chart-aspect-${aspect.aspect.key} chart-aspect-${direction}${tight}`;
   const coords = `x1="${fmt(pointA.x)}" y1="${fmt(pointA.y)}" x2="${fmt(pointB.x)}" y2="${fmt(pointB.y)}"`;
   return (
-    `<g class="chart-aspect-link" data-aspect-key="${aspect.aspect.key}" data-aspect-body-a="${bodyKeyOf(aspect.bodyA)}" data-aspect-body-b="${bodyKeyOf(aspect.bodyB)}" data-ring-a="${String(ringA)}" data-ring-b="${String(ringB)}">` +
+    `<g class="chart-aspect-link" data-aspect-key="${aspect.aspect.key}" data-aspect-body-a="${keyA}" data-aspect-body-b="${keyB}" data-ring-a="${String(ringA)}" data-ring-b="${String(ringB)}"${extraAttributes}>` +
     `<line ${coords} class="chart-hit-area" stroke="none" stroke-width="10" pointer-events="all" />` +
     `<line ${coords} class="${className}" />` +
     `</g>`
@@ -116,7 +119,7 @@ export function renderAspectWebSvg(
     const angleB = wheelAngle(longitudeOf(aspect.bodyB), ascendant, orientationOptions);
     const pointA = pointOnCircle(cx, cy, radius, angleA);
     const pointB = pointOnCircle(cx, cy, radius, angleB);
-    parts.push(aspectChord(aspect, pointA, pointB, '', ring, ring));
+    parts.push(aspectChord(aspect, bodyKeyOf(aspect.bodyA), bodyKeyOf(aspect.bodyB), pointA, pointB, '', ring, ring));
   }
   return parts.join('');
 }
@@ -147,7 +150,69 @@ export function renderCrossRingAspectWebSvg(
     const angleB = wheelAngle(b.longitude, ascendant, orientationOptions);
     const pointA = pointOnCircle(cx, cy, a.radius, angleA);
     const pointB = pointOnCircle(cx, cy, b.radius, angleB);
-    parts.push(aspectChord(aspect, pointA, pointB, ' chart-cross-aspect', a.ring, b.ring));
+    parts.push(
+      aspectChord(
+        aspect,
+        bodyKeyOf(aspect.bodyA),
+        bodyKeyOf(aspect.bodyB),
+        pointA,
+        pointB,
+        ' chart-cross-aspect',
+        a.ring,
+        b.ring,
+      ),
+    );
+  }
+  return parts.join('');
+}
+
+/**
+ * A body's aspect to a ring's Ascendant or Midheaven (#1508). The angle has no `BodyId`, so it is
+ * kept apart from `Aspect`; `TransitAngleContact` satisfies this shape.
+ */
+export interface CrossRingAngleAspect extends AspectMatch {
+  readonly angle: 'asc' | 'mc';
+  readonly body: BodyId;
+}
+
+/**
+ * Draws each angle contact from the moving body (outer ring) to the inner ring's Ascendant or
+ * Midheaven longitude, on the same aspect circle as `renderCrossRingAspectWebSvg`. The line carries
+ * the same `chart-aspect-link` markup with the angle's key (`asc`/`mc`) as the second end and
+ * `data-aspect-point="angle"`, so the isolation click handling reads it like any cross line.
+ */
+export function renderCrossRingAngleWebSvg(
+  aspects: readonly CrossRingAngleAspect[],
+  resolveBody: (body: BodyId) => { readonly longitude: Degrees; readonly radius: number; readonly ring: number },
+  resolveAngle: (angle: 'asc' | 'mc') => {
+    readonly longitude: Degrees;
+    readonly radius: number;
+    readonly ring: number;
+  },
+  ascendant: Degrees,
+  cx: number,
+  cy: number,
+  orientationOptions?: WheelOrientationOptions,
+): string {
+  const parts: string[] = [];
+  for (const aspect of aspects) {
+    const a = resolveBody(aspect.body);
+    const b = resolveAngle(aspect.angle);
+    const pointA = pointOnCircle(cx, cy, a.radius, wheelAngle(a.longitude, ascendant, orientationOptions));
+    const pointB = pointOnCircle(cx, cy, b.radius, wheelAngle(b.longitude, ascendant, orientationOptions));
+    parts.push(
+      aspectChord(
+        aspect,
+        bodyKeyOf(aspect.body),
+        aspect.angle,
+        pointA,
+        pointB,
+        ' chart-cross-aspect',
+        a.ring,
+        b.ring,
+        ' data-aspect-point="angle"',
+      ),
+    );
   }
   return parts.join('');
 }

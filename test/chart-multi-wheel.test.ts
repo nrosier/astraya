@@ -161,6 +161,49 @@ describe('renderMultiWheelSvg (#52)', () => {
     expect(svg).toContain('chart-aspect chart-cross-aspect chart-aspect-square chart-aspect-applying');
   });
 
+  it('draws one angle line per angle contact, ending on the natal Ascendant or Midheaven (#1508)', () => {
+    const point = aspect('square', 3, 0, 0.5);
+    const angleAspects = [
+      {
+        aspect: point.aspect,
+        separation: point.separation,
+        orb: point.orb,
+        allowedOrb: 8,
+        applying: true,
+        body: 3,
+        angle: 'asc' as const,
+      },
+      {
+        aspect: point.aspect,
+        separation: point.separation,
+        orb: point.orb,
+        allowedOrb: 8,
+        applying: false,
+        body: 3,
+        angle: 'mc' as const,
+      },
+    ];
+    const svg = renderMultiWheelSvg(
+      [natalRing, transitRing],
+      [
+        {
+          innerRingIndex: 0,
+          outerRingIndex: 1,
+          aspects: [],
+          angleAspects: angleAspects.slice(0, 1),
+        },
+      ],
+    );
+    expect(svg.match(/class="chart-aspect-link"/g)).toHaveLength(1);
+    expect(svg).toContain('data-aspect-body-b="asc" data-ring-a="1" data-ring-b="0" data-aspect-point="angle"');
+    const both = renderMultiWheelSvg(
+      [natalRing, transitRing],
+      [{ innerRingIndex: 0, outerRingIndex: 1, aspects: [], angleAspects }],
+    );
+    expect(both.match(/class="chart-aspect-link"/g)).toHaveLength(2);
+    expect(both).toContain('data-aspect-body-b="mc" data-ring-a="1" data-ring-b="0" data-aspect-point="angle"');
+  });
+
   it("draws a ring's own aspect web when it carries an `aspects` list", () => {
     const natalWithAspects: WheelRingInput = { ...natalRing, aspects: [aspect('square', 1, 2, 0.5)] };
     const svg = renderMultiWheelSvg([natalWithAspects, transitRing]);
