@@ -8,6 +8,7 @@ import { ASPECTS, type Aspect } from '../src/astrology/aspects.js';
 import { BODIES, bodyById, bodyByKey } from '../src/astrology/bodies.js';
 import {
   TRANSIT_ORB_CONFIG,
+  TRANSITING_GRID_KEYS,
   chartRulerKeysOf,
   fastTriggers,
   filterTransits,
@@ -370,5 +371,38 @@ describe('the saved default filter codec (#1220)', () => {
     expect(readSavedTransitFilter(null)).toBeUndefined();
     expect(isTransitFilter(custom)).toBe(true);
     expect(isTransitFilter({ ...custom, applyingOnly: 'yes' })).toBe(false);
+  });
+});
+
+describe('the transiting grid (#1508)', () => {
+  it('offers exactly the 16 design bodies, in order, and neither Lilith nor Vesta', () => {
+    expect(TRANSITING_GRID_KEYS).toEqual([
+      'sun',
+      'moon',
+      'mercury',
+      'venus',
+      'mars',
+      'jupiter',
+      'saturn',
+      'uranus',
+      'neptune',
+      'pluto',
+      'meanNode',
+      'trueNode',
+      'chiron',
+      'ceres',
+      'pallas',
+      'juno',
+    ]);
+    for (const absent of ['vesta', 'meanLilith', 'osculatingLilith', 'interpolatedLilith']) {
+      expect(TRANSITING_GRID_KEYS).not.toContain(absent);
+    }
+    expect(TRANSITING_GRID_KEYS.every((key) => EVERY.includes(key))).toBe(true);
+  });
+
+  it('leaves the presets on the whole catalogue', () => {
+    expect(transitPreset('all', rules('daily')).transiting).toEqual(EVERY);
+    expect(transitPreset('outer', rules('daily')).natal).toEqual(EVERY);
+    expect(transitPreset('personal', rules('yearly')).natal).toEqual(EVERY);
   });
 });
