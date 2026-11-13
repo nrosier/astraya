@@ -4,7 +4,7 @@
  * @conventions Pure over the `EphemerisProvider` parameter; no store, UI or sweph-wasm access. Only the scopes asked for are computed. Every compute call receives the person's own `SearchTimingSettings` (house system, zodiac, rulership, orbs, bodies; answer 15), so a search matches the person's chart and can differ from the Transit and Progressions screens, which use engine defaults; this is a recorded known gap. The as-of date becomes a Julian day with `provider.julianDayFromUtc(y, m, d, 12, 0, 0)`, noon UTC, the conversion the Transit and Progressions screens use; this is the chosen rule for the "today, local timezone" default (answer 6): the caller passes the user's local calendar date and it is read as that date at noon UTC. Transit: `computeTransit` (contacts already use `orbConfigForContext('transit', ...)`), plus every transiting body to the natal Ascendant and Midheaven with `matchPointAspect` under that same transit orb config (answer 11, no invented orb); the natal angle is a fixed point (speed 0). Progression: `computeSecondaryProgression` with the person's `mcMethod`; its positions, progressed houses and contacts are used as they come, never rebuilt into a `ChartData` from the real sky, and the progressed houses are carried for display only (house conditions read the natal cusps, answer 14); progression contacts use the person's own orbs (natal context). Returns: `returnInForceAtJd` (last return at or before the as-of date; a solar date before that year's return falls back to the previous year, answers 3 and 7) then `computeSolarReturnChart` or `computeLunarReturnChart` for that return, cast at the birth place with the person's settings and zodiac. Angle contacts are empty when the birth time is unknown or the houses have no solution. Solar arc (#1486, cited to Tebbs, provisional): the same true solar arc `computeSolarArcDirections` applies, every natal body directed by it, contacts found by `findCrossAspects` with the person's own orbs (no transit or synastry offset), natal houses shifted by the arc for display; no exact-date bisection, since search needs only the contacts. The directed body is `bodyA`, as for progression. Both Suns are read in the person's zodiac, as the directions module reads them (#1489), so the two agree exactly.
  * @exports asOfJulianDay, orUndefinedWhenNotFound, SearchTimingSettings, SearchTimingInput, buildSearchSubject
  */
-import { findCrossAspects, matchPointAspect, DEFAULT_ORB_CONFIG, type OrbConfig } from '../astrology/aspects.js';
+import { findCrossAspects, DEFAULT_ORB_CONFIG, type OrbConfig } from '../astrology/aspects.js';
 import { bodyById, bodyByKey, bodyIdsFor, type BodyCategory } from '../astrology/bodies.js';
 import { orbConfigForContext } from '../astrology/orb-profiles.js';
 import {
@@ -15,22 +15,16 @@ import {
   type ProgressedMcMethod,
 } from '../astrology/progressions.js';
 import { directedSubjects, directPositions, fixedNatalSubjects } from '../astrology/solar-arc-directions.js';
-import type { BodyId, BodyPosition, EphemerisProvider, GeoPosition, JulianDayUT } from '../ephemeris/types.js';
+import type { BodyId, EphemerisProvider, GeoPosition, JulianDayUT } from '../ephemeris/types.js';
 import { julianDayFor } from '../time/julian.js';
 import { resolveMoment } from '../time/resolve.js';
 import type { BirthMomentInput } from '../time/types.js';
-import {
-  computeChartData,
-  housesAreDefined,
-  type AngleAspect,
-  type ChartCalculationOptions,
-  type ChartData,
-} from './chart-compute.js';
+import { computeChartData, type ChartCalculationOptions, type ChartData } from './chart-compute.js';
 import { returnInForceAtJd } from './life-event-return.js';
 import { computeLunarReturnChart, computeSolarReturnChart, ReturnNotFoundError } from './return-chart.js';
 import { SEARCH_SCOPES, type SearchScope, type SearchSubject, type TimingReference } from './chart-search.js';
 import { computeSecondaryProgression } from './secondary-progression.js';
-import { computeTransit } from './transit.js';
+import { computeTransit, contactsToNatalAngles } from './transit.js';
 
 /** The person's own calculation settings (answer 15), plus their progressed-MC method. */
 export interface SearchTimingSettings extends ChartCalculationOptions {
@@ -56,45 +50,6 @@ export function asOfJulianDay(
   day: number,
 ): Promise<JulianDayUT> {
   return provider.julianDayFromUtc(year, month, day, 12, 0, 0);
-}
-
-function pointPosition(longitude: number): BodyPosition {
-  // A fixed natal point: speed 0, so applying/separating is the moving body's alone.
-  return {
-    body: -1,
-    longitude,
-    latitude: 0,
-    distance: 1,
-    longitudeSpeed: 0,
-    latitudeSpeed: 0,
-    distanceSpeed: 0,
-    retrograde: false,
-  };
-}
-
-/** Every moving body's aspect to the natal Ascendant and Midheaven, under `orbConfig`. */
-function contactsToNatalAngles(
-  moving: readonly BodyPosition[],
-  natal: ChartData,
-  birthTimeKnown: boolean,
-  orbConfig: NonNullable<ChartCalculationOptions['orbConfig']>,
-): readonly AngleAspect[] {
-  if (!birthTimeKnown || !housesAreDefined(natal.houses)) return [];
-  const angles = [
-    { angle: 'asc', longitude: natal.houses.ascendant },
-    { angle: 'mc', longitude: natal.houses.midheaven },
-  ] as const;
-  const contacts: AngleAspect[] = [];
-  for (const { angle, longitude } of angles) {
-    const point = pointPosition(longitude);
-    for (const body of moving) {
-      const definition = bodyById(body.body);
-      if (definition === undefined) continue;
-      const match = matchPointAspect(point, body, definition.category, orbConfig);
-      if (match !== undefined) contacts.push({ ...match, angle, body: body.body });
-    }
-  }
-  return contacts;
 }
 
 function place(moment: BirthMomentInput): GeoPosition {
