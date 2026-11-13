@@ -32,7 +32,7 @@
   --muted: #a09dc0;
 
   /* Structural accent. */
-  --accent: #a390fb;
+  --accent: #8b9cff;
   /* Issue 966 names these tokens; they alias the existing ones, so no new visual value (and they follow the theme overrides). */
   --bg-surface: var(--surface);
   --border-subtle: var(--line);
@@ -74,7 +74,7 @@
   --color-tech-sa: #fb923c;
   --color-tech-transit: #38bdf8;
   /* Attention accent: warnings, and the sun in anything we draw. */
-  --solar: #f2b75e;
+  --solar: #e5b567;
   /*
    * A multi-ring chart's second and third rings (#448: transits, synastry, composite — one
    * to three charts drawn as concentric rings, `chart/multi-wheel.ts`). Ring 0 keeps using
@@ -86,8 +86,8 @@
   --ring-1-color: #4fd1c5;
   --ring-2-color: #ff8ad1;
 
-  --glow-a: rgb(124 92 255 / 18%);
-  --glow-b: rgb(242 183 94 / 8%);
+  --glow-a: rgb(139 156 255 / 18%);
+  --glow-b: rgb(229 181 103 / 8%);
 
   --radius: 0.625rem;
   --radius-sm: 0.375rem;
@@ -193,16 +193,16 @@
     --fg: #16152b;
     --muted: #5c5878;
 
-    --accent: #5b3fd4;
-    --solar: #8f5a0e;
+    --accent: #3b49df;
+    --solar: #835208;
     --ring-1-color: #0f766e;
     --ring-2-color: #9d174d;
     --aspect-hard: #b3261e;
     --aspect-soft: #1857c4;
     --aspect-minor: #0a4d28;
-    --element-fire: #c62828;
-    --element-earth: #2e7d32;
-    --element-air: #b7791f;
+    --element-fire: #b92323;
+    --element-earth: #236827;
+    --element-air: #7d510b;
     --element-water: #1d4ed8;
     /* Graphic ephemeris series (#1404): the data-viz categorical slots 1-8 in fixed order, light steps. */
     --series-1: #2a78d6;
@@ -226,8 +226,8 @@
     --color-tech-sa: #e16805;
     --color-tech-transit: #0794d2;
 
-    --glow-a: rgb(124 92 255 / 8%);
-    --glow-b: rgb(242 183 94 / 7%);
+    --glow-a: rgb(59 73 223 / 8%);
+    --glow-b: rgb(131 82 8 / 7%);
   }
 }
 
@@ -253,8 +253,8 @@
   --fg: #eceafa;
   --muted: #a09dc0;
 
-  --accent: #a390fb;
-  --solar: #f2b75e;
+  --accent: #8b9cff;
+  --solar: #e5b567;
   --ring-1-color: #4fd1c5;
   --ring-2-color: #ff8ad1;
   --aspect-hard: #ff8189;
@@ -286,8 +286,8 @@
   --color-tech-sa: #fb923c;
   --color-tech-transit: #38bdf8;
 
-  --glow-a: rgb(124 92 255 / 18%);
-  --glow-b: rgb(242 183 94 / 8%);
+  --glow-a: rgb(139 156 255 / 18%);
+  --glow-b: rgb(229 181 103 / 8%);
 }
 
 :root[data-theme='light'] {
@@ -300,16 +300,16 @@
   --fg: #16152b;
   --muted: #5c5878;
 
-  --accent: #5b3fd4;
-  --solar: #8f5a0e;
+  --accent: #3b49df;
+  --solar: #835208;
   --ring-1-color: #0f766e;
   --ring-2-color: #9d174d;
   --aspect-hard: #b3261e;
   --aspect-soft: #1857c4;
   --aspect-minor: #0a4d28;
-  --element-fire: #c62828;
-  --element-earth: #2e7d32;
-  --element-air: #b7791f;
+  --element-fire: #b92323;
+  --element-earth: #236827;
+  --element-air: #7d510b;
   --element-water: #1d4ed8;
   /* Graphic ephemeris series (#1404): the data-viz categorical slots 1-8 in fixed order, light steps. */
   --series-1: #2a78d6;
@@ -333,8 +333,8 @@
   --color-tech-sa: #e16805;
   --color-tech-transit: #0794d2;
 
-  --glow-a: rgb(124 92 255 / 8%);
-  --glow-b: rgb(242 183 94 / 7%);
+  --glow-a: rgb(59 73 223 / 8%);
+  --glow-b: rgb(131 82 8 / 7%);
 }
 
 /*
