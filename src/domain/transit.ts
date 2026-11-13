@@ -22,13 +22,14 @@
 /**
  * @module transit
  * @purpose Computes a transit bi-wheel for one saved person against a chosen moment (#172) — the everyday "sky right now (or at any chosen moment) read against a natal chart that stays fixed".
- * @conventions Uses `subjectsFrom` for the transiting (moving) side and `fixedSubjects` for the natal (reference) side, mirroring `secondary-progression.ts`'s convention with "transiting" standing in for "progressed"; the transiting ring is cast at the natal place, since Astraya has no other recorded place for a saved person; both rings are full `ChartData`, so any single-chart table/wheel/sheet helper works unchanged for either ring.
- * @exports computeTransit, TransitData
+ * @conventions Uses `subjectsFrom` for the transiting (moving) side and `fixedSubjects` for the natal (reference) side, mirroring `secondary-progression.ts`'s convention with "transiting" standing in for "progressed"; the transiting ring is cast at the natal place, since Astraya has no other recorded place for a saved person; both rings are full `ChartData`, so any single-chart table/wheel/sheet helper works unchanged for either ring; angle contacts come from `contactsToNatalAngles` and are unconditional on birth-time accuracy (empty only when the houses have no solution).
+ * @exports computeTransit, contactsToNatalAngles, TransitData, TransitAngleContact
  */
 import {
   DEFAULT_ORB_CONFIG,
   findCrossAspects,
   fixedSubjects,
+  matchPointAspect,
   subjectsFrom,
   type Aspect,
 } from '../astrology/aspects.js';
@@ -37,10 +38,12 @@ import { bodyById, type BodyCategory } from '../astrology/bodies.js';
 import {
   computeChartData,
   computeChartDataAtJd,
+  housesAreDefined,
+  type AngleAspect,
   type ChartCalculationOptions,
   type ChartData,
 } from './chart-compute.js';
-import type { BodyId, EphemerisProvider, GeoPosition, JulianDayUT } from '../ephemeris/types.js';
+import type { BodyId, BodyPosition, EphemerisProvider, GeoPosition, JulianDayUT } from '../ephemeris/types.js';
 import type { BirthMomentInput } from '../time/types.js';
 
 function categoryOf(body: BodyId): BodyCategory {
@@ -49,11 +52,61 @@ function categoryOf(body: BodyId): BodyCategory {
   return definition.category;
 }
 
+/** A transiting body's aspect to the natal Ascendant or Midheaven (#1508); the angle is never a `BodyId`. */
+export interface TransitAngleContact extends AngleAspect {
+  readonly angle: 'asc' | 'mc';
+}
+
+function pointPosition(longitude: number): BodyPosition {
+  // A fixed natal point: speed 0, so applying/separating is the moving body's alone.
+  return {
+    body: -1,
+    longitude,
+    latitude: 0,
+    distance: 1,
+    longitudeSpeed: 0,
+    latitudeSpeed: 0,
+    distanceSpeed: 0,
+    retrograde: false,
+  };
+}
+
+/**
+ * Every moving body's aspect to the natal Ascendant and Midheaven, under `orbConfig` (the orb of
+ * `orbForPoint` via `matchPointAspect`). Empty when the natal houses have no solution (#378); the
+ * caller applies any birth-time-unknown gate through `birthTimeKnown`.
+ */
+export function contactsToNatalAngles(
+  moving: readonly BodyPosition[],
+  natal: ChartData,
+  birthTimeKnown: boolean,
+  orbConfig: NonNullable<ChartCalculationOptions['orbConfig']>,
+): readonly TransitAngleContact[] {
+  if (!birthTimeKnown || !housesAreDefined(natal.houses)) return [];
+  const angles = [
+    { angle: 'asc', longitude: natal.houses.ascendant },
+    { angle: 'mc', longitude: natal.houses.midheaven },
+  ] as const;
+  const contacts: TransitAngleContact[] = [];
+  for (const { angle, longitude } of angles) {
+    const point = pointPosition(longitude);
+    for (const body of moving) {
+      const definition = bodyById(body.body);
+      if (definition === undefined) continue;
+      const match = matchPointAspect(point, body, definition.category, orbConfig);
+      if (match !== undefined) contacts.push({ ...match, angle, body: body.body });
+    }
+  }
+  return contacts;
+}
+
 export interface TransitData {
   readonly natal: ChartData;
   readonly transit: ChartData;
   /** Aspects from the transiting positions (moving) to the fixed natal chart. */
   readonly contacts: readonly Aspect[];
+  /** Transiting bodies to the natal Ascendant and Midheaven (#1508); separate from `contacts`, empty without usable houses. Populated regardless of birth-time accuracy; callers must gate on timeAccuracy before using these contacts. */
+  readonly angleContacts: readonly TransitAngleContact[];
 }
 
 /**
@@ -76,11 +129,13 @@ export async function computeTransit(
 
   // The transit contacts always include the three minor aspects their filter can show (#590), whatever the
   // chart's own minor-aspect setting is; the chart's own aspects are left as the settings have them.
+  const orbs = orbConfigForContext('transit', options.orbConfig ?? DEFAULT_ORB_CONFIG);
   const contacts = findCrossAspects(
     subjectsFrom(transit.positions, categoryOf),
     fixedSubjects(natal.positions, categoryOf),
-    orbConfigForContext('transit', options.orbConfig ?? DEFAULT_ORB_CONFIG),
+    orbs,
   );
+  const angleContacts = contactsToNatalAngles(transit.positions, natal, true, orbs);
 
-  return { natal, transit, contacts };
+  return { natal, transit, contacts, angleContacts };
 }

@@ -6,8 +6,18 @@
  * mocked provider couldn't demonstrate.
  */
 import { describe, expect, it } from 'vitest';
-import { angularSeparation } from '../src/astrology/aspects.js';
-import { computeTransit } from '../src/domain/transit.js';
+import {
+  angularSeparation,
+  DEFAULT_ORB_CONFIG,
+  findCrossAspects,
+  fixedSubjects,
+  orbForPoint,
+  subjectsFrom,
+} from '../src/astrology/aspects.js';
+import { bodyByKey, bodyById } from '../src/astrology/bodies.js';
+import { orbConfigForContext } from '../src/astrology/orb-profiles.js';
+import { findExactTransitAspects } from '../src/astrology/transit-events.js';
+import { contactsToNatalAngles, computeTransit } from '../src/domain/transit.js';
 import { julianDayFor } from '../src/time/julian.js';
 import { resolveMoment } from '../src/time/resolve.js';
 import type { BirthMomentInput } from '../src/time/types.js';
@@ -88,5 +98,62 @@ describe('computeTransit (#172)', () => {
     const data = await computeTransit(NATAL, natalJd + 100, engine, { houseSystem: 'K' });
     expect(data.natal.houses.system).toBe('K');
     expect(data.transit.houses.system).toBe('K');
+  });
+});
+
+describe('transit angle contacts (#1508)', () => {
+  const ORBS = orbConfigForContext('transit', DEFAULT_ORB_CONFIG);
+
+  it('leaves the body contacts exactly as a direct findCrossAspects call gives them', async () => {
+    const engine = await getEngine();
+    const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
+    for (const days of [100, 365.2425 * 5, 365.2425 * 31]) {
+      const data = await computeTransit(NATAL, natalJd + days, engine);
+      const category = (body: number) => bodyById(body)?.category ?? 'planet';
+      const direct = findCrossAspects(
+        subjectsFrom(data.transit.positions, category),
+        fixedSubjects(data.natal.positions, category),
+        ORBS,
+      );
+      expect(data.contacts).toEqual(direct);
+    }
+  });
+
+  it('lists Saturn on the natal Ascendant once, with the orb rule of orbForPoint', async () => {
+    const engine = await getEngine();
+    const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
+    const natal = await computeTransit(NATAL, natalJd, engine);
+    const saturn = bodyByKey('saturn');
+    if (saturn === undefined) throw new Error('fixture bug: no Saturn');
+    const hits = await findExactTransitAspects(
+      engine,
+      [saturn.id],
+      new Map([['asc', natal.natal.houses.ascendant]]),
+      natalJd,
+      natalJd + 40 * 365.2425,
+      { sampleStepDays: 5 },
+    );
+    const exact = hits.find((hit) => hit.aspect.key === 'conjunction');
+    if (exact === undefined) throw new Error('fixture bug: Saturn never conjoins this Ascendant in 40 years');
+
+    const data = await computeTransit(NATAL, exact.jd + 2, engine);
+    const onAsc = data.angleContacts.filter((c) => c.angle === 'asc' && c.body === saturn.id);
+    expect(onAsc).toHaveLength(1);
+    const contact = onAsc[0];
+    const allowed = orbForPoint('conjunction', { key: 'saturn', category: saturn.category }, ORBS);
+    expect(contact?.aspect.key).toBe('conjunction');
+    expect(contact?.orbRule).toBe(allowed.rule);
+    expect(contact?.orb).toBeLessThanOrEqual(allowed.allowedOrb);
+  });
+
+  it('has no angle contacts when the natal houses are undefined', async () => {
+    const engine = await getEngine();
+    const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
+    const data = await computeTransit(NATAL, natalJd + 100, engine);
+    const undefinedHouses = {
+      ...data.natal,
+      houses: { ...data.natal.houses, ascendant: Number.NaN, midheaven: Number.NaN },
+    };
+    expect(contactsToNatalAngles(data.transit.positions, undefinedHouses, true, ORBS)).toEqual([]);
   });
 });
