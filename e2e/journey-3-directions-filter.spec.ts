@@ -2,7 +2,7 @@
  * Journey 3 of the final acceptance list (#514): enter a target date, change the Primary Directions
  * time key, and filter transits. Both controls are the real shared primitives on the real screens:
  * the time key is the Naibod/Ptolemy `ChoiceGroup` on the Primary Directions page, and the transit
- * filter is the "Which transits to show" button in the page header, whose card holds the "Show" presets and the rest (#1227).
+ * filter is the "Change filters" button in the page header, whose card holds the "Show" presets and the rest (#1227).
  *
  * Step -> box text:
  *   1. "Enter a target date"          -> the Primary Directions "As of" date field sets the age (third test).
@@ -84,7 +84,7 @@ test('the Primary Directions time key can be changed to Ptolemy and the arc for 
 
 /** Chooses a preset in the transit filter card, which a header button opens (#1227), and applies it. */
 async function choosePreset(page: Page, label: string): Promise<void> {
-  await page.getByRole('button', { name: 'Which transits to show', exact: true }).click();
+  await page.getByRole('button', { name: 'Change filters', exact: true }).click();
   await page.getByRole('radiogroup', { name: 'Show', exact: true }).getByLabel(label, { exact: true }).check();
   await page.getByRole('button', { name: 'Apply', exact: true }).click();
 }

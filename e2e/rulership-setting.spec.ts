@@ -135,12 +135,12 @@ test.describe('with the shared people (#799)', () => {
     await expect(rulersOption(page, 'Both')).toBeChecked();
     await expect(page.getByRole('table').first()).toBeVisible();
 
-    // Transits: the rulers are not part of the filter (#513) — the staged "Which transits to show" card points to
+    // Transits: the rulers are not part of the filter (#513) — the staged "Change filters" card points to
     // Preferences, where the device default is shown: Einstein's own choice does not change it (#806).
     await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).click();
     await page.getByRole('tab', { name: 'Transits', exact: true }).click();
     await expect(page.getByRole('heading', { level: 2, name: /transits/i })).toBeVisible();
-    await page.getByRole('button', { name: 'Which transits to show', exact: true }).click();
+    await page.getByRole('button', { name: 'Change filters', exact: true }).click();
     await expect(rulersOption(page, 'Both')).toHaveCount(0);
     await page.getByRole('link', { name: 'change it in Preferences' }).click();
     await expect(rulersOption(page, 'Modern')).toBeChecked();

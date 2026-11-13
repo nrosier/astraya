@@ -36,7 +36,7 @@ test.afterAll(async () => {
 
 /** Chooses a preset in the transit filter card, which a header button opens (#1227), and applies it. */
 async function choosePreset(page: Page, label: string): Promise<void> {
-  await page.getByRole('button', { name: 'Which transits to show', exact: true }).click();
+  await page.getByRole('button', { name: 'Change filters', exact: true }).click();
   await page.getByRole('radiogroup', { name: 'Show', exact: true }).getByLabel(label, { exact: true }).check();
   await page.getByRole('button', { name: 'Apply', exact: true }).click();
 }
