@@ -7905,10 +7905,82 @@ button.primitive-disclosure-trigger:hover:not(:disabled) {
   font-weight: bold;
 }
 
-.transit-filter-group-actions {
+/* The Change filters dialog (#1508). Wide enough for two equal card columns: the approved mockup's dialog is
+   1056px; this app's root size is 87.5% (14px), so 75.5rem (1057px) is the cap, held to the viewport minus the page margin on narrower screens. */
+.settings-card.transit-filter-dialog {
+  width: min(75.5rem, calc(100vw - 2rem));
+}
+
+/* Transiting planets and Aspects side by side as equal columns, Natal points full width below. Cards stretch to the
+   row height; none has a fixed height (UI/UX guide 10.1). */
+.transit-filter-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  align-items: stretch;
+  margin-top: var(--space-4);
+}
+
+.transit-filter-group {
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.transit-filter-group-natal {
+  grid-column: 1 / -1;
+}
+
+/* The header row: the legend floats left and the actions float right on the same line; the checks clear both. */
+.transit-filter-group > legend {
+  float: left;
+  min-height: var(--control-height-compact);
+  padding: 0;
+  line-height: var(--control-height-compact);
+  font-weight: 650;
+}
+
+.transit-filter-card-actions {
   display: flex;
+  float: right;
   gap: var(--space-2);
-  margin-bottom: var(--space-2);
+  min-height: var(--control-height-compact);
+  align-items: center;
+}
+
+.transit-filter-checks {
+  display: grid;
+  clear: both;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-1);
+}
+
+.transit-filter-checks-column {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.transit-filter-divider {
+  clear: both;
+  margin: var(--space-2) 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 40rem) {
+  .transit-filter-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .transit-filter-checks {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .transit-filter-checks-column {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* One object's row in the Extended Settings "Bodies and points" checklist (#585): its name, then
