@@ -162,6 +162,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `WorkspaceShell.tsx` + `WorkspaceShell.messages.ts` — Lays the header out as a collapsible left rail at >=64rem (#506/#509); AppNav.tsx's horizontal-bar/folding-panel behavior stays unchanged below that. Deps: `./workspace-rail-setting`.
 - `admin-nav.ts` — Admin tab strip logic (routes/active-tab). Deps: `route`.
 - `app.css` — Global stylesheet (design tokens, layout, components, no webfonts). Deps: none.
+- `chart-aspect-tones.css` — Chart aspect tone rules by `data-tone` (wheel, matrix, grid, print), loaded after `app.css`. Deps: none.
 - `astro-names.messages.ts` — i18n display names for astrological identifiers (signs/bodies/aspects). Deps: none.
 - `bi-wheel-selection.ts` — Bi-wheel selection facts (clicked element/ring/cross-ring relations). Deps: `domain/chart-compute`, `domain/chart-tables`, `chart/aspect-web`, `interpretation/selection`.
 - `chart-raster.ts` — Rasterizes wheel SVG to PNG via `canvas`. Deps: none (browser APIs).

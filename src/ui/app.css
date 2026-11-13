@@ -4427,22 +4427,6 @@ svg text.chart-symbol-text-unicode {
   fill: var(--muted);
 }
 
-/* Tone-keyed glyph text (#1532): the glyph takes its tone from data-tone, on itself (SVG) or its cell (grid). */
-.chart-aspect-glyph[data-tone='hard'] text.chart-symbol-text,
-[data-tone='hard'] .chart-aspect-glyph text.chart-symbol-text {
-  fill: var(--aspect-hard);
-}
-
-.chart-aspect-glyph[data-tone='soft'] text.chart-symbol-text,
-[data-tone='soft'] .chart-aspect-glyph text.chart-symbol-text {
-  fill: var(--aspect-soft);
-}
-
-.chart-aspect-glyph[data-tone='minor'] text.chart-symbol-text,
-[data-tone='minor'] .chart-aspect-glyph text.chart-symbol-text {
-  fill: var(--aspect-minor);
-}
-
 /* A symbol in a data table cell (#419): a small drawn glyph, or the Unicode or text form, in the row. */
 .table-symbol {
   display: inline-block;
@@ -4557,28 +4541,6 @@ svg text.chart-symbol-text-unicode {
  * distinction a reader looks for first, and two colour axes on one line read
  * as neither.
  */
-/* Tone-keyed chords (#1532): colour and dash come from data-tone; the per-key lists are gone. */
-.chart-aspect[data-tone='hard'] {
-  stroke: var(--aspect-hard);
-  stroke-width: 2;
-  stroke-dasharray: none;
-  opacity: 0.75;
-}
-
-.chart-aspect[data-tone='soft'] {
-  stroke: var(--aspect-soft);
-  stroke-width: 1.5;
-  stroke-dasharray: 5 3;
-  opacity: 0.7;
-}
-
-.chart-aspect[data-tone='minor'] {
-  stroke: var(--aspect-minor);
-  stroke-width: 1.5;
-  stroke-dasharray: 1 2;
-  opacity: 0.6;
-}
-
 .chart-aspect.chart-aspect-applying {
   opacity: 0.95;
 }
@@ -4952,56 +4914,6 @@ svg text.chart-symbol-text-unicode {
   stroke-linejoin: round;
 }
 
-/*
- * The grid repeats the wheel's family colouring, so "is this chart full of
- * squares?" is answerable from either one.
- */
-.chart-matrix-cell[data-tone='hard'] {
-  fill: color-mix(in oklab, var(--aspect-hard) 12%, transparent);
-}
-
-.chart-matrix-cell[data-tone='soft'] {
-  fill: color-mix(in oklab, var(--aspect-soft) 12%, transparent);
-}
-
-.chart-matrix-cell[data-tone='minor'] {
-  fill: color-mix(in oklab, var(--aspect-minor) 12%, transparent);
-}
-
-/* Tone-keyed glyph strokes (#1532): the drawn glyph takes its tone's colour, as its text does. */
-.chart-aspect-glyph[data-tone='hard'] circle,
-.chart-aspect-glyph[data-tone='hard'] path,
-.chart-aspect-glyph[data-tone='hard'] rect,
-.chart-aspect-glyph[data-tone='hard'] line,
-[data-tone='hard'] .chart-aspect-glyph circle,
-[data-tone='hard'] .chart-aspect-glyph path,
-[data-tone='hard'] .chart-aspect-glyph rect,
-[data-tone='hard'] .chart-aspect-glyph line {
-  stroke: var(--aspect-hard);
-}
-
-.chart-aspect-glyph[data-tone='soft'] circle,
-.chart-aspect-glyph[data-tone='soft'] path,
-.chart-aspect-glyph[data-tone='soft'] rect,
-.chart-aspect-glyph[data-tone='soft'] line,
-[data-tone='soft'] .chart-aspect-glyph circle,
-[data-tone='soft'] .chart-aspect-glyph path,
-[data-tone='soft'] .chart-aspect-glyph rect,
-[data-tone='soft'] .chart-aspect-glyph line {
-  stroke: var(--aspect-soft);
-}
-
-.chart-aspect-glyph[data-tone='minor'] circle,
-.chart-aspect-glyph[data-tone='minor'] path,
-.chart-aspect-glyph[data-tone='minor'] rect,
-.chart-aspect-glyph[data-tone='minor'] line,
-[data-tone='minor'] .chart-aspect-glyph circle,
-[data-tone='minor'] .chart-aspect-glyph path,
-[data-tone='minor'] .chart-aspect-glyph rect,
-[data-tone='minor'] .chart-aspect-glyph line {
-  stroke: var(--aspect-minor);
-}
-
 .chart-emphasis-total {
   fill: var(--fg);
 }
@@ -5286,37 +5198,6 @@ svg text.chart-symbol-text-unicode {
   .data-table caption {
     break-after: avoid;
     page-break-after: avoid;
-  }
-
-  /*
-   * Monochrome-safe aspect lines (#564): on screen, aspect family is colour-coded (see the
-   * `.chart-aspect-*` rules above, by design hue-only — "two colour axes on one line read as
-   * neither"). A printed, especially grayscale, page has no such guarantee: most consumer
-   * printers render colour as a flattened gray, and the soft/minor families already share one
-   * stroke-width on screen, so without a non-colour cue they can become visually
-   * indistinguishable in print. Printing forces black ink plus a distinct dash pattern per
-   * family instead — solid for hard aspects, dashed for soft, dotted for minor — so a reader
-   * can tell them apart by shape alone, not by trusting a printer's colour rendering.
-   */
-  .chart-aspect[data-tone='hard'] {
-    stroke: #000;
-    stroke-width: 2;
-    stroke-dasharray: none;
-    opacity: 0.85;
-  }
-
-  .chart-aspect[data-tone='soft'] {
-    stroke: #000;
-    stroke-width: 1.5;
-    stroke-dasharray: 5 3;
-    opacity: 0.75;
-  }
-
-  .chart-aspect[data-tone='minor'] {
-    stroke: #000;
-    stroke-width: 1;
-    stroke-dasharray: 1 2;
-    opacity: 0.65;
   }
 
   /* A screen-only affordance — the on-page provenance footer (#564) is a `position: fixed`
@@ -8515,19 +8396,6 @@ dl.consultation-tiles {
   color: var(--muted);
 }
 
-/* Tone-keyed grid glyph text (#1532): the cell carries data-tone; the glyph inherits it. */
-.mgrid [data-tone='hard'] .mgrid-symbol-text {
-  color: var(--aspect-hard);
-}
-
-.mgrid [data-tone='soft'] .mgrid-symbol-text {
-  color: var(--aspect-soft);
-}
-
-.mgrid [data-tone='minor'] .mgrid-symbol-text {
-  color: var(--aspect-minor);
-}
-
 .mgrid-retro {
   font-size: var(--text-xs);
   color: var(--muted);
@@ -8576,18 +8444,6 @@ button.mgrid-pair:focus-visible {
 
 .mgrid-dir {
   color: var(--muted);
-}
-
-.mgrid [data-tone='soft'] {
-  background: color-mix(in oklab, var(--aspect-soft) 9%, transparent);
-}
-
-.mgrid [data-tone='hard'] {
-  background: color-mix(in oklab, var(--aspect-hard) 9%, transparent);
-}
-
-.mgrid [data-tone='minor'] {
-  background: color-mix(in oklab, var(--aspect-minor) 9%, transparent);
 }
 
 /* 40rem and below (#826's one breakpoint): the Name and House columns drop; orb and a/s hide (glyph only). */

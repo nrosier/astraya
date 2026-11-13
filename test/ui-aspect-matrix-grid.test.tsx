@@ -197,9 +197,13 @@ describe('AspectMatrixGrid (#820)', () => {
     expect(block).not.toMatch(/monospace/i);
     expect(block).not.toMatch(/double|tight/);
     expect(block).toMatch(/var\(--line\)/);
-    expect(block).toMatch(/var\(--aspect-soft\)/);
-    expect(block).toMatch(/var\(--aspect-hard\)/);
-    expect(block).toMatch(/var\(--aspect-minor\)/);
     expect(block).toMatch(/font-variant-numeric:\s*tabular-nums/);
+  });
+
+  it('colours the matrix cells by tone from the chart aspect tone stylesheet', () => {
+    const tones = readFileSync('src/ui/chart-aspect-tones.css', 'utf8');
+    expect(tones).toMatch(/\.mgrid \[data-tone='soft'\] \{[^}]*var\(--aspect-soft\)/);
+    expect(tones).toMatch(/\.mgrid \[data-tone='hard'\] \{[^}]*var\(--aspect-hard\)/);
+    expect(tones).toMatch(/\.mgrid \[data-tone='minor'\] \{[^}]*var\(--aspect-minor\)/);
   });
 });
