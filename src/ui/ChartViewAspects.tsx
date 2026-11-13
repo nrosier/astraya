@@ -2,7 +2,7 @@
  * @module ChartViewAspects
  * @purpose Renders the Aspects chart view tables (aspects, antiscia, declinations, midpoints) and their columns.
  * @conventions Moved out of ChartView.tsx (#817); the aspects table shows Applying as a dot plus label and the family as muted text on screen only (#815), while `render` stays plain text for copy, CSV and the PDF; takes the chart data and message bundle as arguments and never imports ChartView. The fixed-stars table moved to ChartViewPlacements (#815).
- * @exports AspectState, AspectContactFilter, isContactFilterActive, EmptyFilterNote, filterAspectRowsByContactFilter, aspectColumns, declinationColumns, antisciaColumns, midpointTreeColumns, allMidpointsColumns, renderAspectsTable
+ * @exports AspectIcon, AspectState, AspectContactFilter, isContactFilterActive, EmptyFilterNote, filterAspectRowsByContactFilter, aspectColumns, declinationColumns, antisciaColumns, midpointTreeColumns, allMidpointsColumns, renderAspectsTable
  */
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { formatOrb } from './format.js';
@@ -35,6 +35,60 @@ import type { Locale } from '../interpretation/schema.js';
 function familyText(row: AspectRow): string {
   const family = aspectHarmonicFamily(row.aspectKey);
   return family === undefined ? '' : `H${String(family)}`;
+}
+
+/**
+ * The aspect marks (#1532), keyed by the `ASPECTS` keys. Each mark is drawn in a 24-unit box with `currentColor`
+ * strokes; the family picks the colour from the existing `--aspect-*` tokens, as the wheel's glyph classes do.
+ */
+const ASPECT_ICONS: Readonly<
+  Record<string, { readonly family: 'hard' | 'soft' | 'minor'; readonly shapes: React.ReactNode }>
+> = {
+  conjunction: {
+    family: 'soft',
+    shapes: (
+      <>
+        <circle cx="12" cy="12" r="4" />
+        <line x1="12" y1="4" x2="12" y2="1" />
+      </>
+    ),
+  },
+  sextile: {
+    family: 'soft',
+    shapes: <polygon points="12,3 19.79,7.5 19.79,16.5 12,21 4.21,16.5 4.21,7.5" />,
+  },
+  square: { family: 'hard', shapes: <rect x="6" y="6" width="12" height="12" /> },
+  trine: { family: 'soft', shapes: <polygon points="12,5 19,18 5,18" /> },
+  opposition: {
+    family: 'hard',
+    shapes: (
+      <>
+        <circle cx="5" cy="12" r="3" />
+        <circle cx="19" cy="12" r="3" />
+        <line x1="8" y1="12" x2="16" y2="12" />
+      </>
+    ),
+  },
+  quincunx: { family: 'minor', shapes: <path d="M4 18 Q12 4 20 18" /> },
+};
+
+/** The aspect's mark before its name on screen (#1532); no mark for an aspect outside the six, and `aria-hidden` since the name is already in the cell. */
+export function AspectIcon({ aspectKey }: { readonly aspectKey: string }): React.JSX.Element | null {
+  const icon = ASPECT_ICONS[aspectKey];
+  if (icon === undefined) return null;
+  return (
+    <svg
+      className={`aspect-icon aspect-icon--${icon.family}`}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      aria-hidden="true"
+      focusable="false"
+    >
+      {icon.shapes}
+    </svg>
+  );
 }
 
 /** The dot-plus-label Applying/Separating marker (#815); the Consultation transit table reuses it. */
@@ -87,6 +141,13 @@ export function aspectColumns(
       labelHelp: { text: t.aspectTooltip },
       valueOf: (row) => row.aspect,
       render: (row) => aspectDisplayName(row.aspectKey, locale),
+      // Screen only: the mark sits before the name (#1532); copy, CSV and the PDF keep the plain name from `render`.
+      renderCell: (row) => (
+        <>
+          <AspectIcon aspectKey={row.aspectKey} />
+          {aspectDisplayName(row.aspectKey, locale)}
+        </>
+      ),
     },
     {
       key: 'bodyBName',

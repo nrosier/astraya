@@ -2726,6 +2726,27 @@ label.stacked {
   background: transparent;
 }
 
+/* The aspect mark before the name in the Aspects table (#1532): the family colour from the existing aspect tokens. */
+.aspect-icon {
+  display: inline-block;
+  width: 1.45em;
+  height: 1.45em;
+  margin-right: var(--space-2);
+  vertical-align: -0.35em;
+}
+
+.aspect-icon--hard {
+  color: var(--aspect-hard);
+}
+
+.aspect-icon--soft {
+  color: var(--aspect-soft);
+}
+
+.aspect-icon--minor {
+  color: var(--aspect-minor);
+}
+
 /* An aspect line the aspect-family filter has hidden (#1063); the markup keeps it so clearing the filter restores it. */
 .chart-wheel .chart-aspect-link.chart-aspect-filtered {
   display: none;
@@ -4414,6 +4435,11 @@ svg text.chart-symbol-text-unicode {
   width: 1.25rem;
   height: 1.25rem;
   vertical-align: middle;
+}
+
+/* A sign's drawn glyph before its name in the Placements table (#1532). */
+.table-symbol--sign {
+  margin-right: var(--space-2);
 }
 
 .table-symbol-text {

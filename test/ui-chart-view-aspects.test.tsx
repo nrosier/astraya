@@ -93,6 +93,16 @@ describe('the aspects table (#815)', () => {
     expect(headersOf(view())).toEqual(['Body A', 'Aspect', 'Body B', 'Orb', 'State', 'Family']);
   });
 
+  it('puts a hidden aspect mark before each aspect name (#1532)', () => {
+    const rows = Array.from(view().querySelectorAll('tbody tr'));
+    expect(rows.length).toBe(ROWS.length);
+    for (const row of rows) {
+      const icon = row.querySelector('svg.aspect-icon');
+      expect(icon).not.toBeNull();
+      expect(icon?.getAttribute('aria-hidden')).toBe('true');
+    }
+  });
+
   it('shows Applying and Separating as a dot plus label, differing by modifier class', () => {
     const states = Array.from(view().querySelectorAll('.aspect-state'));
     expect(states.map((state) => state.textContent)).toEqual(['Applying', 'Separating']);
