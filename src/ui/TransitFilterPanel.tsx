@@ -185,9 +185,9 @@ export function TransitFilterButton({
     // The transiting grid offers the decided 16 bodies; the natal grid the same 16 plus ASC and MC (#1508).
     const keys = field === 'transiting' ? TRANSITING_GRID_KEYS : NATAL_GRID_KEYS;
     return (
-      <fieldset className="transit-filter-group">
+      <fieldset className={`transit-filter-group transit-filter-group-${field}`}>
         <legend>{legend}</legend>
-        <div className="transit-filter-group-actions">
+        <div className="transit-filter-card-actions">
           <Button
             size="compact"
             onClick={() => {
@@ -205,16 +205,18 @@ export function TransitFilterButton({
             {t.groupClear}
           </Button>
         </div>
-        {keys.map((key) => (
-          <Checkbox
-            key={key}
-            label={bodyDisplayName(key, locale)}
-            checked={draft[field].includes(key)}
-            onChange={() => {
-              setDraft({ ...draft, [field]: toggled(draft[field], key) });
-            }}
-          />
-        ))}
+        <div className="transit-filter-checks">
+          {keys.map((key) => (
+            <Checkbox
+              key={key}
+              label={bodyDisplayName(key, locale)}
+              checked={draft[field].includes(key)}
+              onChange={() => {
+                setDraft({ ...draft, [field]: toggled(draft[field], key) });
+              }}
+            />
+          ))}
+        </div>
       </fieldset>
     );
   };
@@ -228,6 +230,7 @@ export function TransitFilterButton({
       <StagedDialog
         open={open}
         phoneSheet
+        dialogClassName="settings-card transit-filter-dialog"
         heading={t.adjust}
         closeLabel={t.closeLabel}
         onDiscard={closeCard}
@@ -288,34 +291,39 @@ export function TransitFilterButton({
             if (orbSensitivity !== undefined) setDraft({ ...draft, orbSensitivity });
           }}
         />
-        <fieldset className="transit-filter-group">
-          <legend>{t.aspectsLegend}</legend>
-          {(
-            [
-              [HARD_ASPECT_KEYS, t.hard],
-              [SOFT_ASPECT_KEYS, t.soft],
-              [MINOR_ASPECT_KEYS, t.minor],
-            ] as const
-          ).map(([keys, label]) => (
+        <div className="transit-filter-cards">
+          {bodyGroup(t.transitingLegend, 'transiting')}
+          <fieldset className="transit-filter-group transit-filter-group-aspects">
+            <legend>{t.aspectsLegend}</legend>
+            <div className="transit-filter-checks transit-filter-checks-column">
+              {(
+                [
+                  [HARD_ASPECT_KEYS, t.hard],
+                  [SOFT_ASPECT_KEYS, t.soft],
+                  [MINOR_ASPECT_KEYS, t.minor],
+                ] as const
+              ).map(([keys, label]) => (
+                <Checkbox
+                  key={label}
+                  label={label}
+                  checked={groupChecked(keys)}
+                  onChange={() => {
+                    toggleGroup(keys);
+                  }}
+                />
+              ))}
+            </div>
+            <hr className="transit-filter-divider" />
             <Checkbox
-              key={label}
-              label={label}
-              checked={groupChecked(keys)}
-              onChange={() => {
-                toggleGroup(keys);
+              label={t.applyingOnly}
+              checked={draft.applyingOnly}
+              onChange={(checked) => {
+                setDraft({ ...draft, applyingOnly: checked });
               }}
             />
-          ))}
-        </fieldset>
-        <Checkbox
-          label={t.applyingOnly}
-          checked={draft.applyingOnly}
-          onChange={(checked) => {
-            setDraft({ ...draft, applyingOnly: checked });
-          }}
-        />
-        {bodyGroup(t.transitingLegend, 'transiting')}
-        {bodyGroup(t.natalLegend, 'natal')}
+          </fieldset>
+          {bodyGroup(t.natalLegend, 'natal')}
+        </div>
         <p className="hint">
           {t.rulersNote} <a href={routeHref({ kind: 'preferences', section: 'astrology' })}>{t.rulersLink}</a>.
         </p>
