@@ -234,23 +234,27 @@ export function TransitFilterButton({
         returnFocusTo={triggerRef}
         footer={
           <>
-            <Button
-              variant="primary"
-              disabled={!dirty}
-              aria-label={dirty ? t.applyButton : `${t.applyButton} — ${t.nothingChanged}`}
-              onClick={apply}
-            >
-              {t.applyButton}
-            </Button>
-            <Button
-              disabled={!dirty}
-              aria-label={dirty ? t.applyAsDefaultButton : `${t.applyAsDefaultButton} — ${t.nothingChanged}`}
-              onClick={applyAsDefault}
-            >
-              {t.applyAsDefaultButton}
-            </Button>
-            <Button onClick={resetToDefault}>{t.resetToDefaultButton}</Button>
-            <Button onClick={closeCard}>{t.cancelButton}</Button>
+            <div className="settings-card-footer-group">
+              <Button onClick={resetToDefault}>{t.resetToDefaultButton}</Button>
+              <Button
+                disabled={!dirty}
+                aria-label={dirty ? t.applyAsDefaultButton : `${t.applyAsDefaultButton} — ${t.nothingChanged}`}
+                onClick={applyAsDefault}
+              >
+                {t.applyAsDefaultButton}
+              </Button>
+            </div>
+            <div className="settings-card-footer-group">
+              <Button onClick={closeCard}>{t.cancelButton}</Button>
+              <Button
+                variant="primary"
+                disabled={!dirty}
+                aria-label={dirty ? t.applyButton : `${t.applyButton} — ${t.nothingChanged}`}
+                onClick={apply}
+              >
+                {t.applyButton}
+              </Button>
+            </div>
           </>
         }
       >

@@ -6591,7 +6591,9 @@ svg text.chart-symbol-text-unicode {
   align-items: center;
 }
 
+/* Every footer button shares the standard control height, so the buttons in a row share one top and bottom edge (#1508). */
 .settings-card-footer-group button {
+  height: var(--control-height);
   white-space: nowrap;
 }
 
@@ -6619,7 +6621,9 @@ svg text.chart-symbol-text-unicode {
     display: block;
   }
 
-  .primitive-staged-dialog[data-placement='right'] .settings-card-footer {
+  /* One row per group on a phone: the right drawer and the centred phone sheet (#1508) stack the two groups. */
+  .primitive-staged-dialog[data-placement='right'] .settings-card-footer,
+  .primitive-staged-dialog[data-sheet='phone'] .settings-card-footer {
     flex-direction: column;
     flex-wrap: wrap;
     align-items: stretch;

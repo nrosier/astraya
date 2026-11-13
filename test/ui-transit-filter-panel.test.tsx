@@ -475,6 +475,33 @@ describe('the dialog’s group actions (#513)', () => {
   });
 });
 
+describe('the dialog’s footer (#1508, owner decision 2026-11-12)', () => {
+  it('orders the footer as secondary actions left and primary right: Reset to Default, Apply as Default, Cancel, Apply', async () => {
+    const container = await mount();
+    await openCard(container);
+    const footer = container.querySelector('dialog .settings-card-footer');
+    if (footer === null) throw new Error('fixture bug: no footer in the Adjust card');
+    const buttons = [...footer.querySelectorAll('button')].map((button) => button.textContent);
+    expect(buttons).toEqual(['Reset to Default', 'Apply as Default', 'Cancel', 'Apply']);
+  });
+
+  it('holds the two secondary actions in the left group and Cancel then Apply in the right group', async () => {
+    const container = await mount();
+    await openCard(container);
+    const groups = [...(container.querySelector('dialog .settings-card-footer')?.children ?? [])];
+    expect(groups).toHaveLength(2);
+    const [left, right] = groups;
+    if (left === undefined || right === undefined) throw new Error('fixture bug: footer has no two groups');
+    expect(left.classList.contains('settings-card-footer-group')).toBe(true);
+    expect(right.classList.contains('settings-card-footer-group')).toBe(true);
+    expect([...left.querySelectorAll('button')].map((button) => button.textContent)).toEqual([
+      'Reset to Default',
+      'Apply as Default',
+    ]);
+    expect([...right.querySelectorAll('button')].map((button) => button.textContent)).toEqual(['Cancel', 'Apply']);
+  });
+});
+
 describe('the body grids (#1508)', () => {
   const labelsOf = (container: HTMLElement, legend: string): string[] => {
     const group = [...container.querySelectorAll('fieldset')].find(
