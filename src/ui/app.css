@@ -138,6 +138,7 @@
   --text-2xs: 0.75rem;
   --text-caption: 0.85rem;
   --text-xs: 0.79rem;
+  --text-sm-compact: 0.875rem;
   --text-sm: 0.889rem;
   --text-md: 1.05rem;
   --text-base: 1rem;
@@ -415,7 +416,7 @@
   border-radius: var(--radius-sm);
   background: var(--surface);
   color: var(--fg);
-  font-size: 0.875rem; /* literal kept: >0.01rem from --text-sm (0.889rem) */
+  font-size: var(--text-sm-compact);
 }
 
 .skip-link:focus {
@@ -459,7 +460,7 @@ html {
   border: 1px solid var(--line);
   background: var(--surface);
   color: var(--fg);
-  font-size: 0.875rem; /* literal kept: >0.01rem from --text-sm (0.889rem) */
+  font-size: var(--text-sm-compact);
 }
 
 /* The Preferences link (#506/#510) is the one `.corner-pill` that is a real route link, not a
@@ -550,7 +551,7 @@ a.corner-pill.active {
   border: 1px solid var(--line);
   background: var(--surface);
   color: var(--fg);
-  font-size: 0.875rem; /* literal kept: >0.01rem from --text-sm (0.889rem) */
+  font-size: var(--text-sm-compact);
   box-shadow: var(--shadow-popover);
 }
 
@@ -640,7 +641,7 @@ a.corner-pill.active {
   border: 1px solid var(--line);
   background: var(--surface);
   color: var(--fg);
-  font-size: 0.875rem; /* literal kept: >0.01rem from --text-sm (0.889rem) */
+  font-size: var(--text-sm-compact);
   box-shadow: var(--shadow-popover);
 }
 
@@ -988,7 +989,7 @@ footer {
   padding-top: var(--space-4);
   border-top: 1px solid var(--line);
   color: var(--muted);
-  font-size: 0.9rem; /* literal kept: >0.01rem from --text-sm (0.889rem) */
+  font-size: var(--text-sm);
   text-align: center;
 }
 
@@ -1840,7 +1841,7 @@ footer {
 .hint,
 .muted {
   color: var(--muted);
-  font-size: 0.9rem; /* literal kept: >0.01rem from --text-sm (0.889rem) */
+  font-size: var(--text-sm);
 }
 
 .hint {
@@ -2250,7 +2251,7 @@ label.stacked {
   display: block;
   margin-top: 0.15rem;
   color: var(--muted);
-  font-size: 0.875rem; /* literal kept: >0.01rem from --text-sm (0.889rem) */
+  font-size: var(--text-sm-compact);
   font-variant-numeric: tabular-nums;
 }
 
@@ -2339,7 +2340,7 @@ label.stacked {
   background: var(--surface);
   color: var(--fg);
   font: inherit;
-  font-size: 0.875rem; /* literal kept: >0.01rem from --text-sm (0.889rem) */
+  font-size: var(--text-sm-compact);
   text-align: start;
   cursor: pointer;
 }
@@ -2404,7 +2405,7 @@ label.stacked {
   border-radius: var(--radius-md);
   background: var(--surface);
   color: var(--fg);
-  font-size: 0.875rem; /* literal kept: >0.01rem from --text-sm (0.889rem) */
+  font-size: var(--text-sm-compact);
   box-shadow: var(--shadow-popover);
 }
 
@@ -2534,7 +2535,7 @@ label.stacked {
   margin: 0;
   max-width: 46rem;
   margin-inline: auto;
-  font-size: 0.875rem; /* literal kept: >0.01rem from --text-sm (0.889rem) */
+  font-size: var(--text-sm-compact);
   color: var(--muted);
 }
 
@@ -2651,7 +2652,7 @@ label.stacked {
   width: 100%;
   border-collapse: collapse;
   font-variant-numeric: tabular-nums;
-  font-size: 0.9rem; /* literal kept: >0.01rem from --text-sm (0.889rem) */
+  font-size: var(--text-sm);
 }
 
 .data-table th,
@@ -3948,7 +3949,7 @@ dl.primitive-stat-list {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
-  font-size: 0.9rem; /* literal kept: >0.01rem from --text-sm (0.889rem) */
+  font-size: var(--text-sm);
 }
 
 .selection-inspector-title {
@@ -3968,7 +3969,7 @@ dl.primitive-stat-list {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
-  font-size: 0.9rem; /* literal kept: >0.01rem from --text-sm (0.889rem) */
+  font-size: var(--text-sm);
 }
 
 .chart-isolation-panel ul {
@@ -5511,7 +5512,7 @@ svg text.chart-symbol-text-unicode {
 }
 .focus-interpretation h4 {
   margin: var(--space-3) 0 var(--space-1);
-  font-size: 0.9rem; /* literal kept: >0.01rem from --text-sm (0.889rem) */
+  font-size: var(--text-sm);
 }
 .focus-interpretation .tier2-result p {
   margin: 0;
@@ -6885,7 +6886,7 @@ svg text.chart-symbol-text-unicode {
   padding: var(--space-3) var(--space-4);
   border-left: 3px solid var(--line);
   background: var(--surface);
-  font-size: 0.875rem; /* literal kept: >0.01rem from --text-sm (0.889rem) */
+  font-size: var(--text-sm-compact);
 }
 
 .chart-overlay-provenance h3 {
