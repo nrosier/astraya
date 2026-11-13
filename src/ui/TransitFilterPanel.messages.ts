@@ -8,7 +8,7 @@
  * @exports transitFilterPanelMessages
  */
 const en = {
-  heading: 'Which transits to show',
+  heading: 'Change filters',
   presetLabel: 'Show',
   presets: {
     important: 'Important',
@@ -50,7 +50,8 @@ const en = {
 };
 
 const nl: typeof en = {
-  heading: 'Welke transits tonen',
+  // (?) Dutch label pending owner review (#1508 decision 5).
+  heading: 'Filters wijzigen',
   presetLabel: 'Toon',
   presets: {
     important: 'Belangrijk',
