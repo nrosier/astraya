@@ -55,7 +55,7 @@ Pure astrological calculation (no DOM/React): bodies, aspects, houses, dignities
 - `stations.ts` — Retrograde/direct station timing (longitude speed crosses zero). Deps: `ephemeris/types`.
 - `synastry-importance.ts` — Synastry aspect ranking (body weight + aspect weight + orb closeness). Deps: `aspects`, `bodies`.
 - `transit-events.ts` — Exact transit-to-natal aspect timing (via sample-then-bisect). Deps: `aspects`.
-- `transit-importance.ts` — Transit filtering + ranking engine (daily/yearly presets, the 16-body transiting grid list, #1508). Deps: `aspects`, `bodies`, `rulership`.
+- `transit-importance.ts` — Transit filtering + ranking engine (daily/yearly presets, the 16-body transiting grid list, angle-contact filter and ranking at the chart-ruler weight, #1508). Deps: `aspects`, `bodies`, `rulership`.
 - `triplicity.ts` — Triplicity rulership (Dorothean/Lilly, day/night/participating). Deps: `bodies`, `signs`.
 - `void-of-course.ts` — Void-of-course Moon (last exact aspect before leaving sign). Deps: `aspects`, `bodies`.
 - `zodiacal-releasing.ts` — Zodiacal releasing Levels 1–2 with Valens’ sign periods and Level-2 loosing-of-the-bond jump (#554). Deps: `dignities`, `signs`, `ephemeris/types`.

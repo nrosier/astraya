@@ -245,6 +245,15 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
         : [],
     [load, filter, rules],
   );
+  // "Of N": every body contact, plus the angle contacts to an angle the filter has chosen as a natal target
+  // (no preset chooses ASC or MC, so All still reads "N of N"; shown can never exceed this).
+  const totalContacts = useMemo(
+    () =>
+      load.kind === 'ready'
+        ? load.data.contacts.length + load.data.angleContacts.filter((c) => filter.natal.includes(c.angle)).length
+        : 0,
+    [load, filter],
+  );
   const shownContacts = useMemo(
     () => rankedContacts.filter((contact): contact is Aspect => !('angle' in contact)),
     [rankedContacts],
@@ -408,7 +417,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
           <p className="hint">
             {filterT.count(
               rankedContacts.length,
-              load.data.contacts.length + load.data.angleContacts.length,
+              totalContacts,
               filterT.presetsShort[presetOf(filter, rules) ?? 'custom'],
             )}
           </p>
@@ -432,7 +441,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
               rules={rules}
               onChange={setFilter}
               shown={rankedContacts.length}
-              total={load.data.contacts.length + load.data.angleContacts.length}
+              total={totalContacts}
               ruleNote={false}
             />
 
