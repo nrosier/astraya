@@ -106,7 +106,6 @@ export const TRANSITING_GRID_KEYS: readonly string[] = [
 export const NATAL_GRID_KEYS: readonly string[] = [...TRANSITING_GRID_KEYS, 'asc', 'mc'];
 export const HARD_ASPECT_KEYS = ['conjunction', 'square', 'opposition'] as const;
 export const SOFT_ASPECT_KEYS = ['sextile', 'trine'] as const;
-/** Transit orbs are Astraya's own choice (#416): no published source for them has been verified (#590). */
 /** The minor aspects Astraya calculates for transits (the semisextile and quintiles are left out). */
 export const MINOR_ASPECT_KEYS = ['semisquare', 'sesquiquadrate', 'quincunx'] as const;
 const MAJOR_ASPECT_KEYS = [...HARD_ASPECT_KEYS, ...SOFT_ASPECT_KEYS] as const;
@@ -119,7 +118,16 @@ export const TRANSIT_ORB_CONFIG: OrbConfig = { ...DEFAULT_ORB_CONFIG, enabledMin
 
 /** The widest orb a contact can have under the default orb rules (a luminary's major aspect). */
 export const WIDEST_ORB_DEG = 10;
+/**
+ * The Tight cap (degrees): the orb scale's Tight setting limits every transit orb to this. Astraya's own choice
+ * (#416); no published source is recorded in docs/references. Owner-decided value (#1508).
+ */
 export const TIGHT_ORB_CAP_DEG = 1.5;
+/**
+ * The Wide floor (degrees): the orb scale's Wide setting lifts every transit orb to at least this ("at least 5
+ * degrees", owner decision on #1508). Astraya's own choice (#416); no published source is recorded in
+ * docs/references.
+ */
 export const WIDE_ORB_FLOOR_DEG = 5;
 
 const DAILY_ORB_DEG = 1.5;
