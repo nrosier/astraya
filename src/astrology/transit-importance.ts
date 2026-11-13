@@ -46,7 +46,7 @@
  * @module TransitImportance
  * @purpose Defines transit filter presets (daily/yearly, important/outer/personal/all) and a deterministic importance score for ranking transit contacts.
  * @conventions Fixed, documented convention (#416): daily default favors fast triggers (Sun through Mars, plus slow planets only within 1° of exact) at 1.5° orb; yearly favors Jupiter through Chiron at 3.5° orb; score = W_transit × W_natal × W_aspect × orb multiplier × applying bonus (1.15x); the chart ruler stands in for the (uncovered) Ascendant as a natal target.
- * @exports TRANSIT_ORB_CONFIG, SavedTransitFilter, TRANSIT_PRESETS, isTransitFilter, readSavedTransitFilter, transitPreset, presetOf, sameFilter, orbLimitFor, passesTransitFilter, filterTransits, chartRulerKeysOf, transitImportance, rankTransits, fastTriggers
+ * @exports TRANSIT_ORB_CONFIG, TRANSITING_GRID_KEYS, SavedTransitFilter, TRANSIT_PRESETS, isTransitFilter, readSavedTransitFilter, transitPreset, presetOf, sameFilter, orbLimitFor, passesTransitFilter, filterTransits, chartRulerKeysOf, transitImportance, rankTransits, fastTriggers
  */
 import { DEFAULT_ORB_CONFIG, type Aspect, type OrbConfig } from './aspects.js';
 import { bodyById } from './bodies.js';
@@ -83,6 +83,20 @@ export interface TransitRuleContext {
 export const OUTER_PLANET_KEYS = ['jupiter', 'saturn', 'uranus', 'neptune', 'pluto'] as const;
 export const PERSONAL_PLANET_KEYS = ['sun', 'moon', 'mercury', 'venus', 'mars'] as const;
 const NODE_KEYS = ['meanNode', 'trueNode'] as const;
+/**
+ * The transiting bodies the filter grid offers (#1508, owner decision 3): exactly the 16 design bodies. Lilith and
+ * Vesta are in the catalogue but not offered here. The natal grid and the presets keep `everyBodyKey`.
+ */
+export const TRANSITING_GRID_KEYS: readonly string[] = [
+  ...PERSONAL_PLANET_KEYS,
+  ...OUTER_PLANET_KEYS,
+  'meanNode',
+  'trueNode',
+  'chiron',
+  'ceres',
+  'pallas',
+  'juno',
+];
 export const HARD_ASPECT_KEYS = ['conjunction', 'square', 'opposition'] as const;
 export const SOFT_ASPECT_KEYS = ['sextile', 'trine'] as const;
 /** Transit orbs are Astraya's own choice (#416): no published source for them has been verified (#590). */
