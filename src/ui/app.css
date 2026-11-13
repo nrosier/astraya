@@ -7331,7 +7331,8 @@ button.primitive-button-compact {
 .primitive-choice-group-segmented .primitive-choice {
   position: relative;
   justify-content: center;
-  min-height: 2.75rem;
+  /* The strip's own 1px border adds the other two pixels, so the outer pill is exactly one standard control tall. */
+  min-height: calc(var(--control-height) - 2px);
   padding: 0 var(--space-3);
   color: var(--muted);
   font-size: var(--text-xs);
@@ -7593,12 +7594,6 @@ button.primitive-button-compact {
 
 .page-header-actions .page-header-export-toggle {
   min-height: var(--control-height);
-}
-
-/* A segmented choice in a page header is as tall as the buttons and fields beside it. */
-.page-header-actions .primitive-choice-group-segmented .primitive-choice {
-  /* The group's own border adds the other two pixels. */
-  min-height: calc(var(--control-height) - 2px);
 }
 
 /* Chart pages' Export PDF (#976): a primary accent link to the PDF creator, with an arrow for the navigation. */
@@ -7966,6 +7961,18 @@ button.primitive-disclosure-trigger:hover:not(:disabled) {
   grid-template-columns: minmax(0, 1fr);
 }
 
+/* A long body name ellipsizes inside its cell rather than overflowing into the next column (#1508). */
+.transit-filter-checks .primitive-choice {
+  min-width: 0;
+}
+
+.transit-filter-checks .primitive-choice > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .transit-filter-divider {
   clear: both;
   margin: var(--space-2) 0;
@@ -7984,6 +7991,22 @@ button.primitive-disclosure-trigger:hover:not(:disabled) {
 
   .transit-filter-checks-column {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Preset and orb rows stack at full width, one 44px segment per line (#1508). */
+  .transit-filter-dialog .primitive-choice-group-segmented {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .transit-filter-dialog .primitive-choice-group-segmented .primitive-choice {
+    min-height: 44px;
+  }
+
+  .transit-filter-dialog .primitive-choice-group-segmented .primitive-choice + .primitive-choice {
+    border-top: 1px solid var(--line);
+    border-left: 0;
   }
 }
 
