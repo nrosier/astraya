@@ -4427,26 +4427,19 @@ svg text.chart-symbol-text-unicode {
   fill: var(--muted);
 }
 
-.chart-aspect-glyph-conjunction text.chart-symbol-text,
-.chart-aspect-glyph-semisquare text.chart-symbol-text,
-.chart-aspect-glyph-square text.chart-symbol-text,
-.chart-aspect-glyph-sesquiquadrate text.chart-symbol-text,
-.chart-aspect-glyph-opposition text.chart-symbol-text {
+/* Tone-keyed glyph text (#1532): the glyph takes its tone from data-tone, on itself (SVG) or its cell (grid). */
+.chart-aspect-glyph[data-tone='hard'] text.chart-symbol-text,
+[data-tone='hard'] .chart-aspect-glyph text.chart-symbol-text {
   fill: var(--aspect-hard);
 }
 
-.chart-aspect-glyph-semisextile text.chart-symbol-text,
-.chart-aspect-glyph-sextile text.chart-symbol-text,
-.chart-aspect-glyph-trine text.chart-symbol-text {
+.chart-aspect-glyph[data-tone='soft'] text.chart-symbol-text,
+[data-tone='soft'] .chart-aspect-glyph text.chart-symbol-text {
   fill: var(--aspect-soft);
 }
 
-.chart-aspect-glyph-quintile text.chart-symbol-text,
-.chart-aspect-glyph-biquintile text.chart-symbol-text,
-.chart-aspect-glyph-decile text.chart-symbol-text,
-.chart-aspect-glyph-novile text.chart-symbol-text,
-.chart-aspect-glyph-septile text.chart-symbol-text,
-.chart-aspect-glyph-quincunx text.chart-symbol-text {
+.chart-aspect-glyph[data-tone='minor'] text.chart-symbol-text,
+[data-tone='minor'] .chart-aspect-glyph text.chart-symbol-text {
   fill: var(--aspect-minor);
 }
 
@@ -4564,32 +4557,22 @@ svg text.chart-symbol-text-unicode {
  * distinction a reader looks for first, and two colour axes on one line read
  * as neither.
  */
-.chart-aspect-conjunction,
-.chart-aspect-semisquare,
-.chart-aspect-square,
-.chart-aspect-sesquiquadrate,
-.chart-aspect-opposition {
+/* Tone-keyed chords (#1532): colour and dash come from data-tone; the per-key lists are gone. */
+.chart-aspect[data-tone='hard'] {
   stroke: var(--aspect-hard);
   stroke-width: 2;
   stroke-dasharray: none;
   opacity: 0.75;
 }
 
-.chart-aspect-semisextile,
-.chart-aspect-sextile,
-.chart-aspect-trine {
+.chart-aspect[data-tone='soft'] {
   stroke: var(--aspect-soft);
   stroke-width: 1.5;
   stroke-dasharray: 5 3;
   opacity: 0.7;
 }
 
-.chart-aspect-quintile,
-.chart-aspect-biquintile,
-.chart-aspect-decile,
-.chart-aspect-novile,
-.chart-aspect-septile,
-.chart-aspect-quincunx {
+.chart-aspect[data-tone='minor'] {
   stroke: var(--aspect-minor);
   stroke-width: 1.5;
   stroke-dasharray: 1 2;
@@ -4996,68 +4979,37 @@ svg text.chart-symbol-text-unicode {
   fill: color-mix(in oklab, var(--aspect-minor) 12%, transparent);
 }
 
-.chart-aspect-glyph-semisquare circle,
-.chart-aspect-glyph-semisquare path,
-.chart-aspect-glyph-semisquare rect,
-.chart-aspect-glyph-semisquare line,
-.chart-aspect-glyph-square circle,
-.chart-aspect-glyph-square path,
-.chart-aspect-glyph-square rect,
-.chart-aspect-glyph-square line,
-.chart-aspect-glyph-sesquiquadrate circle,
-.chart-aspect-glyph-sesquiquadrate path,
-.chart-aspect-glyph-sesquiquadrate rect,
-.chart-aspect-glyph-sesquiquadrate line,
-.chart-aspect-glyph-opposition circle,
-.chart-aspect-glyph-opposition path,
-.chart-aspect-glyph-opposition rect,
-.chart-aspect-glyph-opposition line,
-.chart-aspect-glyph-conjunction circle,
-.chart-aspect-glyph-conjunction path,
-.chart-aspect-glyph-conjunction rect,
-.chart-aspect-glyph-conjunction line {
+/* Tone-keyed glyph strokes (#1532): the drawn glyph takes its tone's colour, as its text does. */
+.chart-aspect-glyph[data-tone='hard'] circle,
+.chart-aspect-glyph[data-tone='hard'] path,
+.chart-aspect-glyph[data-tone='hard'] rect,
+.chart-aspect-glyph[data-tone='hard'] line,
+[data-tone='hard'] .chart-aspect-glyph circle,
+[data-tone='hard'] .chart-aspect-glyph path,
+[data-tone='hard'] .chart-aspect-glyph rect,
+[data-tone='hard'] .chart-aspect-glyph line {
   stroke: var(--aspect-hard);
 }
 
-.chart-aspect-glyph-semisextile circle,
-.chart-aspect-glyph-semisextile path,
-.chart-aspect-glyph-semisextile rect,
-.chart-aspect-glyph-semisextile line,
-.chart-aspect-glyph-trine circle,
-.chart-aspect-glyph-trine path,
-.chart-aspect-glyph-trine rect,
-.chart-aspect-glyph-trine line,
-.chart-aspect-glyph-sextile circle,
-.chart-aspect-glyph-sextile path,
-.chart-aspect-glyph-sextile rect,
-.chart-aspect-glyph-sextile line {
+.chart-aspect-glyph[data-tone='soft'] circle,
+.chart-aspect-glyph[data-tone='soft'] path,
+.chart-aspect-glyph[data-tone='soft'] rect,
+.chart-aspect-glyph[data-tone='soft'] line,
+[data-tone='soft'] .chart-aspect-glyph circle,
+[data-tone='soft'] .chart-aspect-glyph path,
+[data-tone='soft'] .chart-aspect-glyph rect,
+[data-tone='soft'] .chart-aspect-glyph line {
   stroke: var(--aspect-soft);
 }
 
-.chart-aspect-glyph-quintile circle,
-.chart-aspect-glyph-quintile path,
-.chart-aspect-glyph-quintile rect,
-.chart-aspect-glyph-quintile line,
-.chart-aspect-glyph-biquintile circle,
-.chart-aspect-glyph-biquintile path,
-.chart-aspect-glyph-biquintile rect,
-.chart-aspect-glyph-biquintile line,
-.chart-aspect-glyph-decile circle,
-.chart-aspect-glyph-novile circle,
-.chart-aspect-glyph-septile circle,
-.chart-aspect-glyph-quincunx circle,
-.chart-aspect-glyph-decile path,
-.chart-aspect-glyph-novile path,
-.chart-aspect-glyph-septile path,
-.chart-aspect-glyph-quincunx path,
-.chart-aspect-glyph-decile rect,
-.chart-aspect-glyph-novile rect,
-.chart-aspect-glyph-septile rect,
-.chart-aspect-glyph-quincunx rect,
-.chart-aspect-glyph-decile line,
-.chart-aspect-glyph-novile line,
-.chart-aspect-glyph-septile line,
-.chart-aspect-glyph-quincunx line {
+.chart-aspect-glyph[data-tone='minor'] circle,
+.chart-aspect-glyph[data-tone='minor'] path,
+.chart-aspect-glyph[data-tone='minor'] rect,
+.chart-aspect-glyph[data-tone='minor'] line,
+[data-tone='minor'] .chart-aspect-glyph circle,
+[data-tone='minor'] .chart-aspect-glyph path,
+[data-tone='minor'] .chart-aspect-glyph rect,
+[data-tone='minor'] .chart-aspect-glyph line {
   stroke: var(--aspect-minor);
 }
 
@@ -8458,8 +8410,8 @@ dl.consultation-tiles {
 /* The on-screen aspect matrix (#820): a CSS grid of flat cells, the app's 1px --line border on a low-opacity --surface
    fill, no shadows and no nested container border. Screen only; the sheet and PDF keep the SVG drawing. No monospace
    token exists (#826), so numbers use tabular numerals in the inherited family. Aspect colours reach the glyphs through
-   the .chart-aspect-glyph-* rules above: cool for conjunction, sextile and trine, warm for the hard aspects, --aspect-minor
-   for the quintile family. */
+   the data-tone rules above: --aspect-hard for the hard aspects, --aspect-soft for the soft ones, --aspect-minor
+   for the minor ones. */
 .mgrid-scroll {
   /* The positioned ancestor of the headers' `.sr-only` spans: without it they escape this clip and stretch the page sideways on a phone. */
   position: relative;
@@ -8585,26 +8537,16 @@ dl.consultation-tiles {
   color: var(--muted);
 }
 
-.mgrid-symbol-text.chart-aspect-glyph-conjunction,
-.mgrid-symbol-text.chart-aspect-glyph-semisquare,
-.mgrid-symbol-text.chart-aspect-glyph-square,
-.mgrid-symbol-text.chart-aspect-glyph-sesquiquadrate,
-.mgrid-symbol-text.chart-aspect-glyph-opposition {
+/* Tone-keyed grid glyph text (#1532): the cell carries data-tone; the glyph inherits it. */
+.mgrid [data-tone='hard'] .mgrid-symbol-text {
   color: var(--aspect-hard);
 }
 
-.mgrid-symbol-text.chart-aspect-glyph-semisextile,
-.mgrid-symbol-text.chart-aspect-glyph-sextile,
-.mgrid-symbol-text.chart-aspect-glyph-trine {
+.mgrid [data-tone='soft'] .mgrid-symbol-text {
   color: var(--aspect-soft);
 }
 
-.mgrid-symbol-text.chart-aspect-glyph-quintile,
-.mgrid-symbol-text.chart-aspect-glyph-biquintile,
-.mgrid-symbol-text.chart-aspect-glyph-decile,
-.mgrid-symbol-text.chart-aspect-glyph-novile,
-.mgrid-symbol-text.chart-aspect-glyph-septile,
-.mgrid-symbol-text.chart-aspect-glyph-quincunx {
+.mgrid [data-tone='minor'] .mgrid-symbol-text {
   color: var(--aspect-minor);
 }
 
@@ -8658,15 +8600,15 @@ button.mgrid-pair:focus-visible {
   color: var(--muted);
 }
 
-.mgrid .mgrid-soft {
+.mgrid [data-tone='soft'] {
   background: color-mix(in oklab, var(--aspect-soft) 9%, transparent);
 }
 
-.mgrid .mgrid-hard {
+.mgrid [data-tone='hard'] {
   background: color-mix(in oklab, var(--aspect-hard) 9%, transparent);
 }
 
-.mgrid .mgrid-minor {
+.mgrid [data-tone='minor'] {
   background: color-mix(in oklab, var(--aspect-minor) 9%, transparent);
 }
 
