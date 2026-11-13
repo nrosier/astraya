@@ -74,6 +74,25 @@ test('capture the screens of the visual review', async ({ browser }) => {
   await page.locator('div.chart-wheel').waitFor();
   await shoot(page, '03-charts-natal');
 
+  // #1532: the Charts tabs beside the wheel, then the wheel with a transit ring (the bar's ring toggle shows).
+  for (const [tab, slug, ready] of [
+    ['Placements', '27-charts-placements', '#chart-view-placements table'],
+    ['Aspects', '28-charts-aspects', '#chart-view-aspects table'],
+    ['Aspect matrix', '29-charts-matrix', '.mgrid'],
+  ] as const) {
+    await page.getByRole('link', { name: tab, exact: true }).click();
+    await page.locator(ready).first().waitFor({ timeout: 60_000 });
+    await shoot(page, slug);
+  }
+  await page.getByRole('link', { name: 'Wheel', exact: true }).click();
+  await page.locator('div.chart-wheel').waitFor();
+  await page.locator('.chart-overlay-settings button.chart-overlay-trigger').click();
+  const overlayDialog = page.locator('.chart-overlay-settings dialog');
+  await overlayDialog.getByRole('checkbox', { name: 'Transit ring', exact: true }).check();
+  await overlayDialog.getByRole('button', { name: 'Apply overlays', exact: true }).click();
+  await page.locator('[data-ring-legend="1"]').waitFor({ timeout: 60_000 });
+  await shoot(page, '26-charts-natal-transit');
+
   await page.getByRole('link', { name: 'Overview', exact: true }).first().click();
   await page.getByText(/^Now: profected/).waitFor({ timeout: 60_000 });
   await page.locator('.overview-wheel svg').waitFor();
