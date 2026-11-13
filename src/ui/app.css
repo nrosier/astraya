@@ -9551,7 +9551,7 @@ a.quiet,
 /*
  * The Life events management drawer . Desktop: the shared right-hand drawer, wide enough for the five-column
  * table (540 to 600px, the owner's range). Phone (40rem and narrower): a bottom sheet with a close handle, sized to its content and capped
- * at the same --space-8 margin as the other drawers (#1506, #1439); no shared bottom-sheet primitive exists yet.
+ * at the same --space-8 margin as the other drawers (#1506, #1439); the sheet rule is the shared `data-sheet='phone'` one at the end of this file (#1508).
  */
 .primitive-staged-dialog.life-events-drawer[data-placement='right'] {
   width: min(37.5rem, 100vw);
@@ -9653,37 +9653,6 @@ a.quiet,
 }
 
 @media (max-width: 40rem) {
-  .primitive-staged-dialog.life-events-drawer[data-placement='right'] {
-    width: 100vw;
-    height: fit-content;
-    max-height: calc(100dvh - 2 * var(--space-8));
-    margin: auto 0 0;
-    border-width: 1px 0 0;
-    border-radius: var(--radius) var(--radius) 0 0;
-  }
-
-  /* The close handle: a bar centred above the heading. */
-  .life-events-drawer .settings-card-header {
-    position: relative;
-    padding-top: var(--space-6);
-  }
-
-  .life-events-drawer .settings-card-header::before {
-    content: '';
-    position: absolute;
-    top: var(--space-2);
-    left: 50%;
-    width: var(--space-8);
-    height: var(--space-1);
-    border-radius: var(--radius);
-    background: var(--line);
-    transform: translateX(-50%);
-  }
-
-  .life-events-drawer .settings-card-footer {
-    padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom));
-  }
-
   .life-events-toolbar {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -9801,4 +9770,50 @@ a.quiet,
 }
 .graphic-ephemeris-plot {
   overflow-x: auto;
+}
+
+/*
+ * Phone bottom sheet (#1508; owner decision 2026-11-12: every multi-row drawer is a bottom sheet at 40rem and
+ * narrower). `StagedDialog phoneSheet` sets data-sheet="phone". Sized to its content, capped at the same --space-8 margin
+ * as the desktop drawer-fit cap, rounded top corners and a close handle above the heading (#1506, #1439). The [open]
+ * term gives it the same specificity as the right-drawer and drawer-fit rules, and it sits after them so it wins. It also
+ * turns a centred dialog (Change filters) into a sheet. Single-message dialogs do not set the attribute.
+ */
+@media (max-width: 40rem) {
+  .primitive-staged-dialog[data-sheet='phone'][open] {
+    width: 100vw;
+    max-width: none;
+    height: fit-content;
+    max-height: calc(100dvh - 2 * var(--space-8));
+    margin: auto 0 0;
+    border-width: 1px 0 0;
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+
+  /* The close handle: a bar centred above the heading. */
+  .primitive-staged-dialog[data-sheet='phone'] .settings-card-header {
+    position: relative;
+    padding-top: var(--space-6);
+  }
+
+  .primitive-staged-dialog[data-sheet='phone'] .settings-card-header::before {
+    content: '';
+    position: absolute;
+    top: var(--space-2);
+    left: 50%;
+    width: var(--space-8);
+    height: var(--space-1);
+    border-radius: var(--radius);
+    background: var(--line);
+    transform: translateX(-50%);
+  }
+
+  .primitive-staged-dialog[data-sheet='phone'] .settings-card-footer {
+    padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom));
+  }
+
+  /* A sheet sized to its content: the body takes its content size and shrinks to scroll, like drawer-fit. */
+  .primitive-staged-dialog[data-sheet='phone'] > [class~='settings-card-body'] {
+    flex: 1 1 auto;
+  }
 }

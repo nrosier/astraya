@@ -6,7 +6,7 @@
 /**
  * @module ui/primitives/StagedDialog
  * @purpose A native `<dialog>` modal (focus trap, Escape, backdrop) for editing a draft, with one discard path and a sticky footer.
- * @conventions Controlled: the caller owns `open` and the draft, and closes the dialog from `onDiscard` (and from its own Apply); the dialog only reports that the reader wants out. Reuses the `.settings-card` look. `dialog.showModal` is missing in some test DOMs, hence the attribute fallback. The body scrolls inside the card and the footer stays reachable, so a short viewport never loses Apply. `placement="right"` sets `data-placement` and styles the same card as a right-anchored drawer (flat border, `--shadow-popover`, `--drawer-max-width`). `modal={false}` opens it with `show()` (no backdrop, page stays interactive; Escape handled by a document listener). Tab and Shift+Tab wrap inside a modal dialog (#824), so focus never reaches the browser chrome behind it. An optional `subheader` row (e.g. category tabs, #824) stays pinned under the heading.
+ * @conventions Controlled: the caller owns `open` and the draft, and closes the dialog from `onDiscard` (and from its own Apply); the dialog only reports that the reader wants out. Reuses the `.settings-card` look. `dialog.showModal` is missing in some test DOMs, hence the attribute fallback. The body scrolls inside the card and the footer stays reachable, so a short viewport never loses Apply. `placement="right"` sets `data-placement` and styles the same card as a right-anchored drawer (flat border, `--shadow-popover`, `--drawer-max-width`). `phoneSheet` sets `data-sheet="phone"`: one shared rule in `app.css` makes the card a bottom sheet at 40rem and narrower (#1508). `modal={false}` opens it with `show()` (no backdrop, page stays interactive; Escape handled by a document listener). Tab and Shift+Tab wrap inside a modal dialog (#824), so focus never reaches the browser chrome behind it. An optional `subheader` row (e.g. category tabs, #824) stays pinned under the heading.
  * @exports StagedDialog, StagedDialogProps
  */
 import { useEffect, useId, useRef } from 'react';
@@ -29,6 +29,8 @@ export interface StagedDialogProps {
   readonly dialogClassName?: string;
   /** `center` (default) is the modal card; `right` anchors it to the right edge as a drawer (#826). */
   readonly placement?: 'center' | 'right';
+  /** A multi-row dialog (a form or a list of controls) becomes a bottom sheet at 40rem and narrower (#1508). Leave off for a single message. */
+  readonly phoneSheet?: boolean;
   /**
    * `true` (default) opens it with `showModal()`: focus trap, inert page, dimmed backdrop. `false` opens it with
    * `show()` so the page beside it stays live (#817's Overlays drawer); Escape is then handled here.
@@ -51,6 +53,7 @@ export function StagedDialog({
   subheader,
   dialogClassName = 'settings-card',
   placement = 'center',
+  phoneSheet = false,
   modal = true,
 }: StagedDialogProps): React.JSX.Element {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -101,6 +104,7 @@ export function StagedDialog({
       className={`${dialogClassName} primitive-staged-dialog`}
       aria-labelledby={headingId}
       {...(placement === 'right' ? { 'data-placement': 'right' } : {})}
+      {...(phoneSheet ? { 'data-sheet': 'phone' } : {})}
       {...(modal ? {} : { 'data-modal': 'false' })}
       onCancel={(event) => {
         // Escape: the browser would close it silently; closing it through the caller also drops the draft.

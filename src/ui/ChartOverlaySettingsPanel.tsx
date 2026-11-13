@@ -173,6 +173,7 @@ export function ChartOverlaySettingsPanel({
         closeLabel={t.closeLabel}
         dialogClassName="chart-overlay-drawer drawer-fit"
         placement="right"
+        phoneSheet
         onDiscard={close}
         returnFocusTo={triggerRef}
         footer={
