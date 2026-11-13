@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'react';
+
 /**
  * The shared checkbox primitive (#506/#508): one size, stroke, selected colour, focus ring,
  * label gap, disabled treatment, and minimum row target, shared with `Radio` so the two read
@@ -23,6 +25,8 @@ export interface CheckboxProps {
   readonly description?: React.ReactNode;
   /** Drawn and announced as an on/off switch (`role="switch"`) rather than a tick box; same input, same behaviour. */
   readonly switchStyle?: boolean | undefined;
+  /** Drawn and announced as a partial state (a group with some, not all, members selected); the DOM property is set on the input. */
+  readonly indeterminate?: boolean | undefined;
 }
 
 export function Checkbox({
@@ -34,10 +38,16 @@ export function Checkbox({
   hideLabel,
   description,
   switchStyle,
+  indeterminate,
 }: CheckboxProps): React.JSX.Element {
+  const ref = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (ref.current !== null) ref.current.indeterminate = indeterminate === true;
+  }, [indeterminate]);
   return (
     <label className="primitive-choice" data-switch={switchStyle === true ? 'true' : undefined}>
       <input
+        ref={ref}
         type="checkbox"
         role={switchStyle === true ? 'switch' : undefined}
         id={id}

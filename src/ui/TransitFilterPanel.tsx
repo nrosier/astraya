@@ -99,32 +99,6 @@ export function useTransitFilter(
   return [filter, setFilter, setFilterForThisViewOnly];
 }
 
-/**
- * An aspect-group checkbox (#1532): checked when all its aspects are selected, indeterminate when only some are. The
- * shared `Checkbox` primitive has no indeterminate state, so this sets the DOM property itself.
- */
-function GroupCheckbox({
-  label,
-  checked,
-  indeterminate,
-  onChange,
-}: {
-  readonly label: string;
-  readonly checked: boolean;
-  readonly indeterminate: boolean;
-  readonly onChange: () => void;
-}): React.JSX.Element {
-  const ref = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    if (ref.current !== null) ref.current.indeterminate = indeterminate && !checked;
-  }, [indeterminate, checked]);
-  return (
-    <label className="primitive-choice">
-      <input ref={ref} type="checkbox" checked={checked} onChange={onChange} /> <span>{label}</span>
-    </label>
-  );
-}
-
 function toggled(list: readonly string[], key: string): readonly string[] {
   return list.includes(key) ? list.filter((candidate) => candidate !== key) : [...list, key];
 }
@@ -334,11 +308,11 @@ export function TransitFilterButton({
                   [MINOR_ASPECT_KEYS, t.minor],
                 ] as const
               ).map(([keys, label]) => (
-                <GroupCheckbox
+                <Checkbox
                   key={label}
                   label={label}
                   checked={groupChecked(keys)}
-                  indeterminate={groupSome(keys)}
+                  indeterminate={groupSome(keys) && !groupChecked(keys)}
                   onChange={() => {
                     toggleGroup(keys);
                   }}
