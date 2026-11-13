@@ -4095,11 +4095,17 @@ dl.metric-cards {
   fill: var(--muted);
 }
 
-.wheel-ring-outer,
-.wheel-ring-zodiac,
-.chart-multiwheel-ring {
+.wheel-ring-zodiac {
   fill: none;
   stroke: var(--line);
+  stroke-width: 1.5;
+}
+
+/* The outer dial circle is the wheel's boundary: `--muted`, not the faint `--line` of the inner structural rings. */
+.wheel-ring-outer,
+.chart-multiwheel-ring {
+  fill: none;
+  stroke: var(--muted);
   stroke-width: 1.5;
 }
 
@@ -4282,7 +4288,7 @@ dl.metric-cards {
 
 /* Horizon and meridian: the two lines a reader orients the whole chart by. */
 .chart-multiwheel-axis {
-  stroke: var(--accent);
+  stroke: var(--solar);
   stroke-width: 2.5;
 }
 
@@ -4295,7 +4301,7 @@ dl.metric-cards {
 }
 
 .chart-multiwheel-cusp-angle {
-  stroke: var(--accent);
+  stroke: var(--solar);
   stroke-width: 2;
 }
 
@@ -4339,6 +4345,21 @@ dl.metric-cards {
 .chart-glyph .glyph-fill {
   fill: var(--fg);
   stroke: none;
+}
+
+/* Transit glyphs (#1532): the same vector-glyph treatment as a natal body, in the transit ring's colour. */
+.chart-glyph-transit {
+  color: var(--ring-1-color);
+}
+
+.chart-glyph-transit circle,
+.chart-glyph-transit path,
+.chart-glyph-transit rect {
+  stroke: var(--ring-1-color);
+}
+
+.chart-glyph-transit .glyph-fill {
+  fill: var(--ring-1-color);
 }
 
 /* The Unicode and text symbol classes (#419): the same symbol written as text in the glyph's own 0-100
@@ -4523,6 +4544,7 @@ svg text.chart-symbol-text-unicode {
 .chart-aspect-opposition {
   stroke: var(--aspect-hard);
   stroke-width: 2;
+  stroke-dasharray: none;
   opacity: 0.75;
 }
 
@@ -4532,6 +4554,7 @@ svg text.chart-symbol-text-unicode {
 .chart-aspect-trine {
   stroke: var(--aspect-soft);
   stroke-width: 1.5;
+  stroke-dasharray: 5 3;
   opacity: 0.7;
 }
 
@@ -4543,6 +4566,7 @@ svg text.chart-symbol-text-unicode {
 .chart-aspect-quincunx {
   stroke: var(--aspect-minor);
   stroke-width: 1.5;
+  stroke-dasharray: 1 2;
   opacity: 0.6;
 }
 
