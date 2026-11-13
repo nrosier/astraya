@@ -3,6 +3,8 @@
  * The transit filter controls (#416), driven the way a user does: change the preset, adjust a
  * control, read the count — against the real contacts of a real transit.
  */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { act, useMemo } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
@@ -615,6 +617,49 @@ describe('the body grids (#1508)', () => {
     expect(natal).toContain('Midheaven');
     expect(transiting).not.toContain('Ascendant');
     expect(transiting).not.toContain('Midheaven');
+  });
+});
+
+describe('the body grids use four equal columns (#1508)', () => {
+  const css = readFileSync(join(process.cwd(), 'src/ui/app.css'), 'utf8');
+  const rule = (selector: string, from = 0): string => {
+    const start = css.indexOf(`${selector} {`, from);
+    if (start < 0) throw new Error(`fixture bug: no rule for ${selector}`);
+    return css.slice(start, css.indexOf('}', start));
+  };
+  const keysOf = (container: HTMLElement, legend: string): string[] => {
+    const group = [...container.querySelectorAll('fieldset')].find(
+      (fieldset) => fieldset.querySelector('legend')?.textContent === legend,
+    );
+    return [...(group?.querySelectorAll('.transit-filter-checks input') ?? [])].map(
+      (input) => input.closest('label')?.textContent.trim() ?? '',
+    );
+  };
+
+  it('lays the checks out as four equal minmax(0, 1fr) columns, and two below 640px', () => {
+    expect(rule('.transit-filter-checks')).toContain('grid-template-columns: repeat(4, minmax(0, 1fr))');
+    const phone = css.indexOf('@media (max-width: 40rem)', css.indexOf('.transit-filter-checks {'));
+    expect(rule('.transit-filter-checks', phone)).toContain('grid-template-columns: repeat(2, minmax(0, 1fr))');
+  });
+
+  it('ellipsizes a long label inside its cell instead of overflowing it', () => {
+    expect(rule('.transit-filter-checks .primitive-choice')).toContain('min-width: 0');
+    const label = rule('.transit-filter-checks .primitive-choice > span');
+    expect(label).toContain('overflow: hidden');
+    expect(label).toContain('text-overflow: ellipsis');
+    expect(label).toContain('white-space: nowrap');
+  });
+
+  it('holds 16 unique transiting bodies, and the same 16 plus Ascendant and Midheaven in Natal points', async () => {
+    const container = await mount();
+    await openCard(container);
+    const transiting = keysOf(container, 'Transiting planets');
+    expect(transiting).toHaveLength(16);
+    expect(new Set(transiting).size).toBe(16);
+    const natal = keysOf(container, 'Natal points');
+    expect(natal).toHaveLength(18);
+    expect(new Set(natal).size).toBe(18);
+    expect(natal.filter((label) => !transiting.includes(label)).sort()).toEqual(['Ascendant', 'Midheaven']);
   });
 });
 

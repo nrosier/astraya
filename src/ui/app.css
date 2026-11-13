@@ -7961,6 +7961,18 @@ button.primitive-disclosure-trigger:hover:not(:disabled) {
   grid-template-columns: minmax(0, 1fr);
 }
 
+/* A long body name ellipsizes inside its cell rather than overflowing into the next column (#1508). */
+.transit-filter-checks .primitive-choice {
+  min-width: 0;
+}
+
+.transit-filter-checks .primitive-choice > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .transit-filter-divider {
   clear: both;
   margin: var(--space-2) 0;
