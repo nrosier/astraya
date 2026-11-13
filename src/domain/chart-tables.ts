@@ -11,7 +11,7 @@
  * @module chart-tables
  * @purpose Shapes a computed `ChartData` into the flat rows a chart's data tables, wheel ring and sheet actually render (#44).
  * @conventions Pure and framework-free; kept separate from `chart-compute.ts` so the slow real-engine chart test and the fast pure row-shaping test can run independently; longitude is rounded to the nearest arcsecond before sign-splitting (`degreeParts`) to avoid a seconds rounding bumping the sign; the wheel's aspect web is limited to major aspects, tables show every aspect found.
- * @exports positionRows, houseCuspRows, angleRows, aspectRows, crossAspectRows, dignityRows, conditionRows, receptionRows, dispositorRows, declinationContactRows, antisciaRows, midpointTreeRows, allMidpointsRows, fixedStarRows, chartShapeOf, derivedPointRows, chartWheelRing, chartSheetMetaLines, chartSheetInput, degreeParts, visiblePositions, visibleAspects, visibleAngleAspects, almutenOfAscendant, AlmutenCandidateRow
+ * @exports positionRows, houseCuspRows, angleRows, aspectRows, crossAspectRows, crossContactRows, dignityRows, conditionRows, receptionRows, dispositorRows, declinationContactRows, antisciaRows, midpointTreeRows, allMidpointsRows, fixedStarRows, chartShapeOf, derivedPointRows, chartWheelRing, chartSheetMetaLines, chartSheetInput, degreeParts, visiblePositions, visibleAspects, visibleAngleAspects, almutenOfAscendant, AlmutenCandidateRow
  */
 import { almutenOf, essentialDignityScoreOf } from '../astrology/almuten.js';
 import { antiscialContacts, type AntiscialContact } from '../astrology/antiscia.js';
@@ -418,6 +418,29 @@ export function filterAspectRowsByHarmonicFamily(
  */
 export function crossAspectRows(aspects: readonly Aspect[]): readonly AspectRow[] {
   return aspects.map(basicAspectRow);
+}
+
+/**
+ * Cross-chart rows for a mix of body aspects and body-to-angle aspects (#1508). An angle contact becomes
+ * a row whose second end is the angle's key (`asc` or `mc`), named as the Ascendant or Midheaven.
+ */
+export function crossContactRows(contacts: readonly (Aspect | AngleAspect)[]): readonly AspectRow[] {
+  return contacts.map((contact) => {
+    if (!('angle' in contact)) return basicAspectRow(contact);
+    const body = bodyById(contact.body);
+    return {
+      bodyAKey: body?.key ?? String(contact.body),
+      bodyAName: body?.name ?? String(contact.body),
+      bodyBKey: contact.angle,
+      bodyBName: contact.angle === 'asc' ? 'Ascendant' : contact.angle === 'mc' ? 'Midheaven' : contact.angle,
+      aspect: contact.aspect.name,
+      aspectKey: contact.aspect.key,
+      angle: contact.aspect.angle,
+      separation: contact.separation,
+      orb: contact.orb,
+      applying: contact.applying,
+    };
+  });
 }
 
 export interface DignityRow {
