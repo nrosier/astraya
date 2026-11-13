@@ -35,7 +35,7 @@
  * @conventions Only the lower triangle below the diagonal is drawn (an aspect is symmetric); orb is shown as signed whole degrees (`separation - exact angle`, negative when short of exact) with an `a`/`s` applying/separating marker; cell/font sizes are fractions of a cell computed from panel width divided by row count, and the orb stack is hidden below `MIN_ORB_FONT_SIZE` to avoid overlapping, unreadably small text.
  * @exports renderAspectMatrixSvg, fitFontSize, formatSignedOrb, positionParts; MatrixBody, MatrixAspect, MatrixInteraction, AspectMatrixInput types.
  */
-import type { OrbRuleKind } from '../astrology/aspects.js';
+import { type OrbRuleKind, aspectTone } from '../astrology/aspects.js';
 import { SIGNS } from '../astrology/signs.js';
 import type { Degrees } from '../ephemeris/types.js';
 import { TIGHT_ORB_DEG } from './aspect-web.js';
@@ -335,6 +335,7 @@ export function renderAspectMatrixSvg(
             centerY,
             cell * (showOrb ? CELL_GLYPH_FRACTION : GLYPH_FRACTION),
             `chart-aspect-glyph chart-aspect-glyph-${aspect.aspectKey} chart-aspect-${direction}`,
+            `data-tone="${aspectTone(aspect.aspectKey)}"`,
           ),
         );
       }
