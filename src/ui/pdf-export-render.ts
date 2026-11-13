@@ -12,7 +12,7 @@
  * @module ui/pdf-export-render
  * @purpose Renders a finished `PdfPlan` (pdf-export-plan.ts) into an actual PDF document, drawing chart wheels as vector SVG and tables via autotable, for the PDF export feature (#441).
  * @conventions Browser-only — depends on jsPDF/svg2pdf.js/jspdf-autotable, which cannot be imported under Vitest (svg2pdf.js's ESM build does not resolve there), so this is covered by Playwright instead and loaded only via PdfExportBuilder.tsx's dynamic import() to keep these three libraries out of the eager bundle (scripts/check-bundle-size.mjs). Astrological glyphs are substituted with WinAnsi-safe text codes before drawing since jsPDF's core fonts can't render arbitrary Unicode.
- * @exports renderPdfPlan
+ * @exports renderPdfPlan, ASPECT_TONE
  */
 import jsPDF, { GState } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -26,6 +26,7 @@ import {
   SIGN_UNICODE,
 } from '../chart/symbol-text.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
+import { type AspectTone, aspectTone } from '../astrology/aspects.js';
 import { SIGNS } from '../astrology/signs.js';
 import { APP_VERSION } from '../version.js';
 import type { PdfParagraphGroupPlan, PdfPlan, PdfTablePlan } from './pdf-export-plan.js';
@@ -42,9 +43,8 @@ const LINE = 5.6;
 
 /**
  * The app's light-theme colours (`app.css`, `prefers-color-scheme: light`), as jsPDF takes them: a fixed copy, like
- * `standalone-svg.ts`'s palette, since a printed page has no theme (#655). The aspect tones follow `app.css`'s aspect
- * glyph rules: hard for semisquare, square, sesquiquadrate and opposition; soft for conjunction, semisextile, sextile and
- * trine; minor for the quintiles and quincunx.
+ * `standalone-svg.ts`'s palette, since a printed page has no theme (#655). An aspect's tone comes from `aspectTone`
+ * (#1532), so the PDF and the screen agree on which tone each aspect is.
  */
 type Rgb = readonly [number, number, number];
 const INK: Rgb = [22, 21, 43];
@@ -54,21 +54,10 @@ const TINT: Rgb = [243, 241, 250];
 const RULE: Rgb = [226, 223, 240];
 /** The contents' dot leaders: a quiet grey that still reads on paper. */
 const RULE_DARK: Rgb = [158, 152, 184];
-const ASPECT_TONE: Readonly<Record<string, Rgb>> = {
-  semisquare: [179, 38, 30],
-  square: [179, 38, 30],
-  sesquiquadrate: [179, 38, 30],
-  opposition: [179, 38, 30],
-  conjunction: [24, 87, 196],
-  semisextile: [24, 87, 196],
-  sextile: [24, 87, 196],
-  trine: [24, 87, 196],
-  quintile: [10, 77, 40],
-  biquintile: [10, 77, 40],
-  quincunx: [10, 77, 40],
-  decile: [10, 77, 40],
-  novile: [10, 77, 40],
-  septile: [10, 77, 40],
+export const ASPECT_TONE: Readonly<Record<AspectTone, Rgb>> = {
+  hard: [179, 38, 30],
+  soft: [24, 87, 196],
+  minor: [10, 77, 40],
 };
 const ALIGN: Readonly<Record<string, 'left' | 'right' | 'center'>> = { start: 'left', end: 'right', center: 'center' };
 /** y where content starts on a fresh page — the same 20 mm every page break below already uses. */
@@ -283,8 +272,8 @@ export async function renderPdfPlan(plan: PdfPlan): Promise<{ blob: Blob; filena
         if (data.section === 'head')
           data.cell.styles.halign = ALIGN[table.align[data.column.index] ?? 'start'] ?? 'left';
         if (aspects === undefined || data.section !== 'body' || data.column.index !== aspects.column) return;
-        const tone = ASPECT_TONE[aspects.keys[data.row.index] ?? ''];
-        if (tone !== undefined) data.cell.styles.textColor = [...tone];
+        const key = aspects.keys[data.row.index];
+        if (key !== undefined) data.cell.styles.textColor = [...ASPECT_TONE[aspectTone(key)]];
       },
       didDrawPage: (data) => {
         finalY = data.cursor?.y ?? finalY;
