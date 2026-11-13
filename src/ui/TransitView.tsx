@@ -305,8 +305,9 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
       // Each contact's first end is the transiting body (ring 1), its second the natal point (ring 0).
       crossRingOfA: 1,
       crossRingOfB: 0,
+      visibleAspectKeys: filter.aspects,
     });
-  }, [load, selectionKey, t, contactRows]);
+  }, [load, selectionKey, t, contactRows, filter.aspects]);
 
   // What the "interpret the tensions of this placement" button would send (#424): for a transiting
   // planet, its contacts as they are on screen (after the filter); for a natal one, the natal chart's own.

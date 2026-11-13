@@ -168,4 +168,21 @@ describe('resolveBiWheelSelection (#418)', () => {
     expect(resolveBiWheelSelection('aspect:sun@1|venus@0', input)).toBeUndefined();
     expect(resolveBiWheelSelection('nonsense', input)).toBeUndefined();
   });
+
+  it('lists only the aspects the aspects-shown filter keeps among a body’s own-ring aspects (#1508)', () => {
+    const hard = ['conjunction', 'square', 'opposition'];
+    const SOFT = ['sextile', 'trine'];
+    let checked = 0;
+    for (const position of transit.natal.positions) {
+      const key = keyOf(position.body);
+      const all = resolveBiWheelSelection(`body:${key}@0`, input);
+      const filtered = resolveBiWheelSelection(`body:${key}@0`, { ...input, visibleAspectKeys: hard });
+      if (all?.kind !== 'body' || filtered?.kind !== 'body') continue;
+      expect(filtered.ownAspects.filter((a) => SOFT.includes(a.row.aspectKey))).toEqual([]);
+      expect(filtered.ownAspects).toEqual(all.ownAspects.filter((a) => hard.includes(a.row.aspectKey)));
+      checked += all.ownAspects.filter((a) => SOFT.includes(a.row.aspectKey)).length;
+    }
+    // The fixture really has soft own-ring aspects, so the assertion above is not vacuous.
+    expect(checked).toBeGreaterThan(0);
+  });
 });
