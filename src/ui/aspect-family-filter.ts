@@ -4,7 +4,7 @@
  * @conventions Pure, no React. Aspect keys are the existing `ASPECTS` keys (`astrology/aspects`); a family lists only keys that catalogue holds, so the decile, septile and novile sit in their own higher-harmonic family (#1184), apart from the quintile series. No selection means no filter, which is the default view; Orb caps hide a contact whose orb is wider than the cap and never widen one.
  * @exports ConsultationPreset, PresetSwitches, isMajorAspect, CONSULTATION_PRESETS, AspectFamilyKey, AspectFamily, ASPECT_FAMILIES, FILTERABLE_FAMILIES, CATALOGUE_KEYS, OrbCaps, isContactShown, orbCapFor, toggleFamily
  */
-import { ASPECTS } from '../astrology/aspects.js';
+import { ASPECTS, type AspectFamily as CatalogueFamily } from '../astrology/aspects.js';
 
 export type AspectFamilyKey = 'major' | 'hardMinor' | 'softMinor' | 'higherHarmonic' | 'parallels' | 'nodalAngular';
 
@@ -16,12 +16,21 @@ export interface AspectFamily {
   readonly bodyKeys: readonly string[];
 }
 
-/** Families as recorded on #1063 (comment of 2026-11-05), limited to aspects the catalogue holds. */
+/** The `ASPECTS` keys whose catalogue `family` is `family`, in catalogue order (#1532). */
+function catalogueKeys(family: CatalogueFamily): readonly string[] {
+  return ASPECTS.filter((aspect) => aspect.family === family).map((aspect) => aspect.key);
+}
+
+/**
+ * Families as recorded on #1063 (comment of 2026-11-05), limited to aspects the catalogue holds. `major` and
+ * `higherHarmonic` derive from the catalogue `family` (#1532); `hardMinor` and `softMinor` stay the hand-written #1063
+ * grouping, guarded by `test/ui-aspect-family-filter.test.ts` so neither holds an aspect of the other tone.
+ */
 export const ASPECT_FAMILIES: readonly AspectFamily[] = [
-  { key: 'major', aspectKeys: ['conjunction', 'sextile', 'square', 'trine', 'opposition'], bodyKeys: [] },
+  { key: 'major', aspectKeys: catalogueKeys('major'), bodyKeys: [] },
   { key: 'hardMinor', aspectKeys: ['semisquare', 'sesquiquadrate', 'quincunx', 'semisextile'], bodyKeys: [] },
   { key: 'softMinor', aspectKeys: ['quintile', 'biquintile'], bodyKeys: [] },
-  { key: 'higherHarmonic', aspectKeys: ['decile', 'septile', 'novile'], bodyKeys: [] },
+  { key: 'higherHarmonic', aspectKeys: catalogueKeys('higher-harmonic'), bodyKeys: [] },
   // Parallels are declination contacts: the wheel and the matrix draw none, so this family has no line to show.
   { key: 'parallels', aspectKeys: [], bodyKeys: [] },
   {

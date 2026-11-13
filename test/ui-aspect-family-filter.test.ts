@@ -2,6 +2,7 @@
  * Aspect-family filters and consultation presets (#1063): family membership, the orb cap and the preset contents.
  */
 import { describe, expect, it } from 'vitest';
+import { aspectTone } from '../src/astrology/aspects.js';
 import {
   ASPECT_FAMILIES,
   CATALOGUE_KEYS,
@@ -31,7 +32,8 @@ describe('aspect families', () => {
     expect(keys('hardMinor')).toEqual(['semisquare', 'sesquiquadrate', 'quincunx', 'semisextile']);
     expect(keys('softMinor')).toEqual(['quintile', 'biquintile']);
     // Own family, apart from the quintile series (#1184).
-    expect(keys('higherHarmonic')).toEqual(['decile', 'septile', 'novile']);
+    // Derived from the catalogue family (#1532), so the order is catalogue order; membership is what is pinned.
+    expect([...keys('higherHarmonic')].sort()).toEqual(['decile', 'novile', 'septile']);
   });
 
   it('offer the higher-harmonic family as a filter and show its three aspects when it is chosen (#1184)', () => {
@@ -138,5 +140,14 @@ describe('what presets say and hide (#1190)', () => {
     for (const key of ['semisquare', 'sesquiquadrate', 'quincunx', 'semisextile', 'quintile', 'biquintile']) {
       expect(isMajorAspect(key)).toBe(false);
     }
+  });
+
+  // The hand-written #1063 minor groups are not derived from tone (owner decision Q7); this only forbids a member of
+  // the wrong tone, so a soft aspect cannot enter hardMinor and a hard aspect cannot enter softMinor (#1532).
+  it('keep a soft-tone aspect out of hardMinor and a hard-tone aspect out of softMinor (#1532)', () => {
+    const keys = (name: AspectFamilyKey): readonly string[] =>
+      ASPECT_FAMILIES.find((f) => f.key === name)?.aspectKeys ?? [];
+    for (const aspectKey of keys('hardMinor')) expect(aspectTone(aspectKey), aspectKey).not.toBe('soft');
+    for (const aspectKey of keys('softMinor')) expect(aspectTone(aspectKey), aspectKey).not.toBe('hard');
   });
 });
