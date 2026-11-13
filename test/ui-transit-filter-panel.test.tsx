@@ -323,6 +323,54 @@ describe('TransitFilterPanel (#416)', () => {
     expect(count(again)).toBe(before);
   });
 
+  it('Custom is a choice in the card: it restores the account\u2019s saved custom filter, also after a reload (#1508)', async () => {
+    // The saved custom filter as a reload finds it: read back from the account cache, not from this session.
+    const base = transitPreset('important', RULES.daily);
+    const saved = { ...base, aspects: [...base.aspects, 'semisquare', 'sesquiquadrate', 'quincunx'] };
+    localStorage.setItem(
+      accountCacheKey(DB_NAME),
+      JSON.stringify({ transitFilterDaily: { version: 1, custom: saved } }),
+    );
+    resetAccountPreferencesForTests();
+    const again = await mount();
+    await openCard(again);
+    await act(async () => {
+      radio(again, 'Show', 'All').click();
+      await Promise.resolve();
+    });
+    expect(checkboxUnder(again, 'Aspects', 'Minor').checked).toBe(true);
+    await act(async () => {
+      radio(again, 'Show', 'Important').click();
+      await Promise.resolve();
+    });
+    expect(checkboxUnder(again, 'Aspects', 'Minor').checked).toBe(false);
+    await act(async () => {
+      radio(again, 'Show', 'Custom').click();
+      await Promise.resolve();
+    });
+    expect(radio(again, 'Show', 'Custom').checked).toBe(true);
+    expect(checkboxUnder(again, 'Aspects', 'Minor').checked).toBe(true);
+    expect(again.textContent).not.toContain('No custom selection is saved yet');
+  });
+
+  it('Custom with nothing saved shows the Important selection and says so (#1508)', async () => {
+    const container = await mount();
+    await openCard(container);
+    await act(async () => {
+      radio(container, 'Show', 'All').click();
+      await Promise.resolve();
+    });
+    await act(async () => {
+      radio(container, 'Show', 'Custom').click();
+      await Promise.resolve();
+    });
+    expect(radio(container, 'Show', 'Custom').checked).toBe(true);
+    expect(container.textContent).toContain('No custom selection is saved yet');
+    expect(checkboxUnder(container, 'Aspects', 'Minor').checked).toBe(false);
+    await clickCardButton(container, 'Apply');
+    expect(selectedPreset(container)).toBe('Important');
+  });
+
   it('"Apply" (not "Apply as Default") commits to this view only, without changing the remembered default', async () => {
     const container = await mount();
     await openCard(container);

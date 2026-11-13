@@ -134,10 +134,18 @@ export function TransitFilterButton({
   const [draft, setDraft] = useState<TransitFilter>(filter);
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  // Custom (#1508) is the account's saved custom filter; before one is saved it shows the Important selection.
+  const preferences = useAccountPreferences();
+  const remembered = rules.context === 'daily' ? preferences.transitFilterDaily : preferences.transitFilterYearly;
+  const savedCustom = remembered !== undefined && 'custom' in remembered ? remembered.custom : undefined;
+  const customSelection = savedCustom ?? transitPreset('important', rules);
+  const [customPicked, setCustomPicked] = useState(false);
+  const customShown = customPicked && sameFilter(draft, customSelection);
   const dirty = !sameFilter(draft, filter);
 
   const openCard = (): void => {
     setDraft(filter);
+    setCustomPicked(false);
     setOpen(true);
   };
 
@@ -247,16 +255,25 @@ export function TransitFilterButton({
       >
         <ChoiceGroup
           label={t.presetLabel}
-          value={presetOf(draft, rules) ?? 'custom'}
+          value={customShown ? 'custom' : (presetOf(draft, rules) ?? 'custom')}
           options={[
             ...PRESETS.map((preset) => ({ value: preset, label: t.presetsShort[preset] })),
-            ...(presetOf(draft, rules) === undefined ? [{ value: 'custom', label: t.presetsShort.custom }] : []),
+            { value: 'custom', label: t.presetsShort.custom },
           ]}
           onChange={(value) => {
+            if (value === 'custom') {
+              setCustomPicked(true);
+              setDraft(customSelection);
+              return;
+            }
             const preset = PRESETS.find((candidate) => candidate === value);
-            if (preset !== undefined) setDraft(transitPreset(preset, rules));
+            if (preset !== undefined) {
+              setCustomPicked(false);
+              setDraft(transitPreset(preset, rules));
+            }
           }}
         />
+        {customShown && savedCustom === undefined && <p className="hint">{t.customNotSaved}</p>}
         <ChoiceGroup
           label={t.orbLabel}
           value={draft.orbSensitivity}

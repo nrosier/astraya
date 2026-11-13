@@ -37,6 +37,8 @@ export interface BiWheelInput {
   /** Which ring the first and second end (`bodyAKey`, `bodyBKey`) of each cross row is on. */
   readonly crossRingOfA: number;
   readonly crossRingOfB: number;
+  /** The aspects-shown filter (#1508): when given, a body's own-ring aspects list only these aspect keys, as the wheel draws them. */
+  readonly visibleAspectKeys?: readonly string[];
 }
 
 export interface BodyOnRing {
@@ -107,9 +109,10 @@ export function resolveBiWheelSelection(selectionKey: string, input: BiWheelInpu
     });
     // Only the lines the wheel draws inside a ring: the major aspects, but not conjunctions, whose
     // two bodies already sit side by side (cross-ring conjunctions are drawn, so they are in `aspects`).
-    const drawnOwn = filterAspectsForDisplay(ring.data.aspects, { visibleFamilies: ['major'] }).filter(
-      (aspect) => aspect.aspect.key !== 'conjunction',
-    );
+    const drawnOwn = filterAspectsForDisplay(ring.data.aspects, {
+      visibleFamilies: ['major'],
+      ...(input.visibleAspectKeys === undefined ? {} : { visibleAspectKeys: input.visibleAspectKeys }),
+    }).filter((aspect) => aspect.aspect.key !== 'conjunction');
     const ownAspects = crossAspectRows(drawnOwn).flatMap((row): BiWheelAspect[] => {
       if (row.bodyAKey === selection.key) return [{ row, other: { bodyKey: row.bodyBKey, ring: selection.ring } }];
       if (row.bodyBKey === selection.key) return [{ row, other: { bodyKey: row.bodyAKey, ring: selection.ring } }];
