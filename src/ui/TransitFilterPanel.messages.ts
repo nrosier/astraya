@@ -9,7 +9,7 @@
  */
 const en = {
   heading: 'Change filters',
-  presetLabel: 'Show',
+  presetLabel: 'Preset',
   presets: {
     important: 'Important',
     outer: 'Outer planets (Jupiter–Pluto)',
@@ -32,8 +32,8 @@ const en = {
   yearlyNote:
     'Important, for a year: Jupiter, Saturn, Uranus, Neptune, Pluto and Chiron touching your planets and nodes by a major aspect within 3.5°, wide enough to follow a retrograde cycle. A common working convention, not a fixed rule — widen it below.',
   adjust: 'Change filters',
-  orbLabel: 'Orb',
-  orbs: { tight: 'Tight (up to 1.5°)', balanced: 'Balanced (the preset’s own)', wide: 'Wide (at least 5°)' },
+  orbLabel: 'Orb tolerance',
+  orbs: { tight: 'Tight (up to 1.5°)', balanced: 'Balanced (preset default)', wide: 'Wide (at least 5°)' },
   aspectsLegend: 'Aspects',
   hard: 'Hard (conjunction, square, opposition)',
   soft: 'Soft (sextile, trine)',
@@ -54,7 +54,7 @@ const en = {
 const nl: typeof en = {
   // (?) Dutch label pending owner review (#1508 decision 5).
   heading: 'Filters wijzigen',
-  presetLabel: 'Toon',
+  presetLabel: 'Voorinstelling',
   presets: {
     important: 'Belangrijk',
     outer: 'Buitenplaneten (Jupiter–Pluto)',
@@ -77,8 +77,12 @@ const nl: typeof en = {
   yearlyNote:
     'Belangrijk, voor een jaar: Jupiter, Saturnus, Uranus, Neptunus, Pluto en Chiron die je planeten en knopen raken met een hoofdaspect binnen 3,5°, ruim genoeg om een retrograde cyclus te volgen. Een gangbare werkafspraak, geen vaste regel — verbreed het hieronder.',
   adjust: 'Filters wijzigen',
-  orbLabel: 'Orb',
-  orbs: { tight: 'Krap (tot 1,5°)', balanced: 'Gemiddeld (van de keuze zelf)', wide: 'Ruim (minstens 5°)' },
+  orbLabel: 'Orbtolerantie',
+  orbs: {
+    tight: 'Krap (tot 1,5°)',
+    balanced: 'Gemiddeld (standaard van de voorinstelling)',
+    wide: 'Ruim (minstens 5°)',
+  },
   aspectsLegend: 'Aspecten',
   hard: 'Hard (conjunctie, vierkant, oppositie)',
   soft: 'Zacht (sextiel, driehoek)',

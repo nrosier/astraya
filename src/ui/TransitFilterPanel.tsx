@@ -262,6 +262,8 @@ export function TransitFilterButton({
         }
       >
         <ChoiceGroup
+          segmented
+          showLabel
           label={t.presetLabel}
           value={customShown ? 'custom' : (presetOf(draft, rules) ?? 'custom')}
           options={[
@@ -283,6 +285,8 @@ export function TransitFilterButton({
         />
         {customShown && savedCustom === undefined && <p className="hint">{t.customNotSaved}</p>}
         <ChoiceGroup
+          segmented
+          showLabel
           label={t.orbLabel}
           value={draft.orbSensitivity}
           options={SENSITIVITIES.map((sensitivity) => ({ value: sensitivity, label: t.orbs[sensitivity] }))}

@@ -24,6 +24,7 @@ import {
 } from '../src/ui/account-preferences.js';
 import { setLocale } from '../src/ui/locale.js';
 import { EVERY_BODY_KEY, TransitFilterPanel, useTransitFilter } from '../src/ui/TransitFilterPanel.js';
+import { transitFilterPanelMessages } from '../src/ui/TransitFilterPanel.messages.js';
 import { getEngine } from './engine-harness.js';
 
 let contacts: readonly Aspect[];
@@ -109,7 +110,7 @@ const count = (container: HTMLElement): string => container.querySelector('[role
 const totalCount = (): string => String(contacts.length);
 
 /** The radio of a named choice group (the preset row, or the orb scale in the dialog), by its visible label. */
-function radio(container: HTMLElement, group: 'Show' | 'Orb', label: string): HTMLInputElement {
+function radio(container: HTMLElement, group: 'Preset' | 'Orb tolerance', label: string): HTMLInputElement {
   const found = [...container.querySelectorAll(`[role="radiogroup"][aria-label="${group}"] label`)]
     .find((candidate) => candidate.textContent.trim() === label)
     ?.querySelector('input');
@@ -121,14 +122,14 @@ function radio(container: HTMLElement, group: 'Show' | 'Orb', label: string): HT
  * Chooses a radio in the filter card. The preset ("Show") is a card control since #1227, staged like the rest, so
  * choosing one opens the card and applies it; the orb scale is chosen inside a card the test has already opened.
  */
-async function choose(container: HTMLElement, group: 'Show' | 'Orb', label: string): Promise<void> {
-  if (group === 'Show') await openCard(container);
+async function choose(container: HTMLElement, group: 'Preset' | 'Orb tolerance', label: string): Promise<void> {
+  if (group === 'Preset') await openCard(container);
   const input = radio(container, group, label);
   await act(async () => {
     input.click();
     await Promise.resolve();
   });
-  if (group === 'Show') await clickCardButton(container, 'Apply');
+  if (group === 'Preset') await clickCardButton(container, 'Apply');
 }
 
 /** The preset the status line names ("Important · 12 of 87 shown"); the card shows the same choice while it is open. */
@@ -214,7 +215,7 @@ describe('TransitFilterPanel (#416)', () => {
   it('the “All” preset shows everything and names itself; no separate Show all button exists', async () => {
     const container = await mount();
     expect([...container.querySelectorAll('button')].some((b) => b.textContent === 'Show all')).toBe(false);
-    await choose(container, 'Show', 'All');
+    await choose(container, 'Preset', 'All');
     expect(count(container)).toBe(`All · ${totalCount()} of ${totalCount()} shown`);
     expect(selectedPreset(container)).toBe('All');
     expect(container.textContent).not.toContain('Important, for a day');
@@ -239,11 +240,11 @@ describe('TransitFilterPanel (#416)', () => {
     const shownOf = (): number => Number(/· (\d+) of/.exec(count(container))?.[1]);
     const balanced = shownOf();
     await openCard(container);
-    await choose(container, 'Orb', 'Wide (at least 5°)');
+    await choose(container, 'Orb tolerance', 'Wide (at least 5°)');
     await clickCardButton(container, 'Apply');
     const wide = shownOf();
     await openCard(container);
-    await choose(container, 'Orb', 'Tight (up to 1.5°)');
+    await choose(container, 'Orb tolerance', 'Tight (up to 1.5°)');
     await clickCardButton(container, 'Apply');
     const tight = shownOf();
     expect(wide).toBeGreaterThanOrEqual(balanced);
@@ -298,7 +299,7 @@ describe('TransitFilterPanel (#416)', () => {
     // The preset is a card control (#1227); only "Apply as Default" remembers it.
     await openCard(container);
     await act(async () => {
-      radio(container, 'Show', 'Outer').click();
+      radio(container, 'Preset', 'Outer').click();
       await Promise.resolve();
     });
     await clickCardButton(container, 'Apply as Default');
@@ -335,20 +336,20 @@ describe('TransitFilterPanel (#416)', () => {
     const again = await mount();
     await openCard(again);
     await act(async () => {
-      radio(again, 'Show', 'All').click();
+      radio(again, 'Preset', 'All').click();
       await Promise.resolve();
     });
     expect(checkboxUnder(again, 'Aspects', 'Minor').checked).toBe(true);
     await act(async () => {
-      radio(again, 'Show', 'Important').click();
+      radio(again, 'Preset', 'Important').click();
       await Promise.resolve();
     });
     expect(checkboxUnder(again, 'Aspects', 'Minor').checked).toBe(false);
     await act(async () => {
-      radio(again, 'Show', 'Custom').click();
+      radio(again, 'Preset', 'Custom').click();
       await Promise.resolve();
     });
-    expect(radio(again, 'Show', 'Custom').checked).toBe(true);
+    expect(radio(again, 'Preset', 'Custom').checked).toBe(true);
     expect(checkboxUnder(again, 'Aspects', 'Minor').checked).toBe(true);
     expect(again.textContent).not.toContain('No custom selection is saved yet');
   });
@@ -357,14 +358,14 @@ describe('TransitFilterPanel (#416)', () => {
     const container = await mount();
     await openCard(container);
     await act(async () => {
-      radio(container, 'Show', 'All').click();
+      radio(container, 'Preset', 'All').click();
       await Promise.resolve();
     });
     await act(async () => {
-      radio(container, 'Show', 'Custom').click();
+      radio(container, 'Preset', 'Custom').click();
       await Promise.resolve();
     });
-    expect(radio(container, 'Show', 'Custom').checked).toBe(true);
+    expect(radio(container, 'Preset', 'Custom').checked).toBe(true);
     expect(container.textContent).toContain('No custom selection is saved yet');
     expect(checkboxUnder(container, 'Aspects', 'Minor').checked).toBe(false);
     await clickCardButton(container, 'Apply');
@@ -545,6 +546,51 @@ describe('the dialog’s footer (#1508, owner decision 2026-11-12)', () => {
       'Apply as Default',
     ]);
     expect([...right.querySelectorAll('button')].map((button) => button.textContent)).toEqual(['Cancel', 'Apply']);
+  });
+});
+
+describe('the preset and orb rows (#1508, owner decisions 2026-11-12)', () => {
+  const groupNamed = (container: HTMLElement, name: string): HTMLElement => {
+    const found = container.querySelector<HTMLElement>(`[role="radiogroup"][aria-label="${name}"]`);
+    if (found === null) throw new Error(`fixture bug: no "${name}" radiogroup`);
+    return found;
+  };
+
+  it('draws both rows as segmented controls with a visible label', async () => {
+    const container = await mount();
+    await openCard(container);
+    for (const name of ['Preset', 'Orb tolerance']) {
+      const group = groupNamed(container, name);
+      expect(group.classList.contains('primitive-choice-group-segmented')).toBe(true);
+      expect(group.previousElementSibling?.textContent).toBe(name);
+    }
+  });
+
+  it('names the balanced default "Balanced (preset default)"', async () => {
+    const container = await mount();
+    await openCard(container);
+    const labels = [...groupNamed(container, 'Orb tolerance').querySelectorAll('label')].map((l) =>
+      l.textContent.trim(),
+    );
+    expect(labels).toContain('Balanced (preset default)');
+  });
+
+  it('uses the approved Dutch wording', async () => {
+    const container = await mount('nl');
+    await openCard(container);
+    const orb = groupNamed(container, 'Orbtolerantie');
+    expect(groupNamed(container, 'Voorinstelling').classList.contains('primitive-choice-group-segmented')).toBe(true);
+    expect([...orb.querySelectorAll('label')].map((l) => l.textContent.trim())).toContain(
+      'Gemiddeld (standaard van de voorinstelling)',
+    );
+  });
+
+  it('keeps the en and nl catalogues in parity', () => {
+    const keys = (value: unknown): string[] =>
+      typeof value === 'object' && value !== null
+        ? Object.entries(value).flatMap(([k, v]) => [k, ...keys(v).map((sub) => `${k}.${sub}`)])
+        : [];
+    expect(keys(transitFilterPanelMessages.nl)).toEqual(keys(transitFilterPanelMessages.en));
   });
 });
 
