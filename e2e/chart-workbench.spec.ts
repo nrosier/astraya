@@ -208,7 +208,7 @@ test.describe('with the shared people (#799)', () => {
     await expect.poll(async () => cells.count()).toBe(cellsBefore);
   });
 
-  test('the instrument bar sits centred directly under the wheel, and Natal only hides the transit ring for this view (#1532)', async () => {
+  test('the instrument bar sits centred directly under the wheel, one dial draws both wheels, and Natal only hides the transit ring for this view (#1532)', async () => {
     test.setTimeout(120_000);
     await page.setViewportSize({ width: 1280, height: 800 });
     await openSharedPerson(page, baseUrl, EINSTEIN);
@@ -226,6 +226,10 @@ test.describe('with the shared people (#799)', () => {
     expect(barBox.y + barBox.height).toBeLessThanOrEqual(800);
     // Without a transit ring there is no ring toggle (owner decision, 2026-11-13).
     await expect(bar.getByRole('radiogroup')).toHaveCount(0);
+    // One renderer for both wheels (owner review, 2026-11-14): the same dial, at the same size, with or without a ring.
+    const dialSvg = page.locator('.chart-workbench-dial div.chart-wheel > svg');
+    await expect(dialSvg).toHaveClass(/chart-dial/);
+    const plainDial = await dialSvg.boundingBox();
 
     // With a transit ring, Natal only removes it from this view; the saved overlay setting stays on.
     await page.locator('.chart-overlay-settings button.chart-overlay-trigger').click();
@@ -236,6 +240,10 @@ test.describe('with the shared people (#799)', () => {
     await expect(dialog).toBeHidden();
     const legends = page.locator('[data-ring-legend]');
     await expect(legends).toHaveCount(2);
+    await expect(dialSvg).toHaveClass(/chart-dial/);
+    const ringDial = await dialSvg.boundingBox();
+    if (plainDial === null || ringDial === null) throw new Error('no dial box');
+    expect(Math.abs(ringDial.width - plainDial.width)).toBeLessThanOrEqual(1);
     const rings = bar.getByRole('radiogroup', { name: 'Rings on the wheel', exact: true });
     await expect(rings.getByRole('radio', { name: 'Natal + transit', exact: true })).toBeChecked();
     await rings.getByText('Natal only', { exact: true }).click();

@@ -766,6 +766,26 @@ export function ChartDataView({
   const housesComputed = load.kind !== 'ready' || housesAreDefined(load.data.houses);
   const housesRenderable = showHouses && housesComputed;
 
+  // One composition for every wheel on this screen (owner review of #1532, 2026-11-14): the plain wheel and the wheel
+  // with overlay rings are both drawn by `renderChartDialSvg` with the same display options, so the natal ring looks the
+  // same with or without a transit ring. Only the rings and the contacts between them differ.
+  const dialComposition = useMemo(() => {
+    if (load.kind !== 'ready' || !housesRenderable) return undefined;
+    const input = chartSheetInput(
+      load.data,
+      metaLines ?? [displayName || t.chartFallback],
+      displayName || t.natalFallback,
+      toPointVisibilityOptions(extendedSettings),
+      (bodyKey) => bodyShortName(bodyKey, locale),
+    );
+    const options = {
+      ...resolveWheelDisplayOptions({}),
+      signWedgeStyle: toSignWedgeStyle(extendedSettings),
+    };
+    return { input, options };
+    // oxlint-disable-next-line react/exhaustive-deps -- the wheel renderers read the glyph settings from module state, so these are cache keys, not inputs the callback reads.
+  }, [load, housesRenderable, displayName, metaLines, extendedSettings, t, locale, symbolClass, variants]);
+
   useEffect(() => {
     if (overlayContext === undefined || load.kind !== 'ready' || !hasChartOverlays(viewOverlaySettings)) {
       setOverlayLoad({ kind: 'idle' });
@@ -952,7 +972,11 @@ export function ChartDataView({
           }
         }
         if (!effect.cancelled) {
-          setOverlayLoad({ kind: 'ready', markup: renderMultiWheelSvg(rings, crossAspects), ringData });
+          const markup =
+            dialComposition === undefined
+              ? renderMultiWheelSvg(rings, crossAspects)
+              : renderChartDialSvg({ ...dialComposition.input, rings, crossAspects }, dialComposition.options).markup;
+          setOverlayLoad({ kind: 'ready', markup, ringData });
         }
       } catch (error) {
         if (!effect.cancelled) {
@@ -972,26 +996,16 @@ export function ChartDataView({
     extendedSettings,
     rulership,
     fixedStarsSaved,
+    dialComposition,
   ]);
 
   // The export sheet (SVG/PNG/PDF) and the on-screen dial are two compositions of one computed chart (#511):
   // the dial is the sheet's own wheel, drawn alone; everything else the sheet holds is shown as tables.
   const { sheet, dial } = useMemo(() => {
-    if (load.kind !== 'ready' || !housesRenderable) return { sheet: undefined, dial: undefined };
-    const input = chartSheetInput(
-      load.data,
-      metaLines ?? [displayName || t.chartFallback],
-      displayName || t.natalFallback,
-      toPointVisibilityOptions(extendedSettings),
-      (bodyKey) => bodyShortName(bodyKey, locale),
-    );
-    const options = {
-      ...resolveWheelDisplayOptions({}),
-      signWedgeStyle: toSignWedgeStyle(extendedSettings),
-    };
+    if (dialComposition === undefined) return { sheet: undefined, dial: undefined };
+    const { input, options } = dialComposition;
     return { sheet: renderChartSheetSvg(input, options), dial: renderChartDialSvg(input, options) };
-    // oxlint-disable-next-line react/exhaustive-deps -- the wheel renderers read the glyph settings from module state, so these are cache keys, not inputs the callback reads.
-  }, [load, housesRenderable, displayName, metaLines, extendedSettings, t, locale, symbolClass, variants]);
+  }, [dialComposition]);
 
   const changeFamilies = useCallback((next: ReadonlySet<AspectFamilyKey>): void => {
     setAspectFamilies(next);
