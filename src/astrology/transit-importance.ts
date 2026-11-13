@@ -48,7 +48,7 @@
  * @conventions Fixed, documented convention (#416): daily default favors fast triggers (Sun through Mars, plus slow planets only within 1° of exact) at 1.5° orb; yearly favors Jupiter through Chiron at 3.5° orb; score = W_transit × W_natal × W_aspect × orb multiplier × applying bonus (1.15x); the chart ruler stands in for the (uncovered) Ascendant as a natal target.
  * @exports TRANSIT_ORB_CONFIG, TRANSITING_GRID_KEYS, NATAL_GRID_KEYS, SavedTransitFilter, TRANSIT_PRESETS, isTransitFilter, readSavedTransitFilter, transitPreset, presetOf, sameFilter, orbLimitFor, passesTransitFilter, passesAngleTransitFilter, filterTransits, filterAngleTransits, chartRulerKeysOf, transitImportance, angleTransitImportance, rankTransits, rankTransitsWithAngles, fastTriggers
  */
-import { DEFAULT_ORB_CONFIG, type Aspect, type OrbConfig } from './aspects.js';
+import { DEFAULT_ORB_CONFIG, aspectKeysByTone, type Aspect, type AspectTone, type OrbConfig } from './aspects.js';
 import { bodyById } from './bodies.js';
 import type { TransitAngleContact } from '../domain/transit.js';
 import { DEFAULT_RULERSHIP_CHOICE, rulersOf, type RulershipChoice } from './rulership.js';
@@ -104,17 +104,30 @@ export const TRANSITING_GRID_KEYS: readonly string[] = [
  * never include 'asc' or 'mc'; they are chosen by the user only.
  */
 export const NATAL_GRID_KEYS: readonly string[] = [...TRANSITING_GRID_KEYS, 'asc', 'mc'];
-export const HARD_ASPECT_KEYS = ['conjunction', 'square', 'opposition'] as const;
-export const SOFT_ASPECT_KEYS = ['sextile', 'trine'] as const;
+/** The major aspects the transit filter offers, by family (#1532): membership is unchanged by the tone table. */
+const MAJOR_HARD_KEYS = ['conjunction', 'square', 'opposition'] as const;
+const MAJOR_SOFT_KEYS = ['sextile', 'trine'] as const;
+const MAJOR_ASPECT_KEYS = [...MAJOR_HARD_KEYS, ...MAJOR_SOFT_KEYS] as const;
 /** The minor aspects Astraya calculates for transits (the semisextile and quintiles are left out). */
-export const MINOR_ASPECT_KEYS = ['semisquare', 'sesquiquadrate', 'quincunx'] as const;
-const MAJOR_ASPECT_KEYS = [...HARD_ASPECT_KEYS, ...SOFT_ASPECT_KEYS] as const;
+const TRANSIT_CALCULATED_MINOR_KEYS = ['semisquare', 'sesquiquadrate', 'quincunx'] as const;
+/** The aspects the transit filter considers: the majors plus the calculated minors (#1532). */
+const TRANSIT_ASPECT_KEYS: readonly string[] = [...MAJOR_ASPECT_KEYS, ...TRANSIT_CALCULATED_MINOR_KEYS];
+/** The transit aspects of one tone, in `ASPECTS` order (#1532): the Hard, Soft and Minor filter groups. */
+function transitKeysByTone(tone: AspectTone): readonly string[] {
+  return aspectKeysByTone(tone).filter((key) => TRANSIT_ASPECT_KEYS.includes(key));
+}
+export const HARD_ASPECT_KEYS: readonly string[] = transitKeysByTone('hard');
+export const SOFT_ASPECT_KEYS: readonly string[] = transitKeysByTone('soft');
+export const MINOR_ASPECT_KEYS: readonly string[] = transitKeysByTone('minor');
 
 /**
  * The orbs transits are calculated with: the defaults, plus the three minor aspects the filter can
  * show. The engine always calculates them; whether they are shown is the filter's business.
  */
-export const TRANSIT_ORB_CONFIG: OrbConfig = { ...DEFAULT_ORB_CONFIG, enabledMinorAspects: [...MINOR_ASPECT_KEYS] };
+export const TRANSIT_ORB_CONFIG: OrbConfig = {
+  ...DEFAULT_ORB_CONFIG,
+  enabledMinorAspects: [...TRANSIT_CALCULATED_MINOR_KEYS],
+};
 
 /** The widest orb a contact can have under the default orb rules (a luminary's major aspect). */
 export const WIDEST_ORB_DEG = 10;
@@ -185,7 +198,7 @@ export function transitPreset(preset: TransitPreset, rules: TransitRuleContext):
         ...common,
         transiting: rules.everyBodyKey,
         natal: rules.everyBodyKey,
-        aspects: [...MAJOR_ASPECT_KEYS, ...MINOR_ASPECT_KEYS],
+        aspects: [...MAJOR_ASPECT_KEYS, ...TRANSIT_CALCULATED_MINOR_KEYS],
         maxOrb: WIDEST_ORB_DEG,
       };
   }
@@ -335,8 +348,8 @@ function natalWeight(natalKey: string, chartRulerKeys: readonly string[]): numbe
 }
 
 function aspectWeight(aspectKey: string): number {
-  if ((HARD_ASPECT_KEYS as readonly string[]).includes(aspectKey)) return 1;
-  if ((SOFT_ASPECT_KEYS as readonly string[]).includes(aspectKey)) return SOFT_ASPECT_WEIGHT;
+  if ((MAJOR_HARD_KEYS as readonly string[]).includes(aspectKey)) return 1;
+  if ((MAJOR_SOFT_KEYS as readonly string[]).includes(aspectKey)) return SOFT_ASPECT_WEIGHT;
   return MINOR_ASPECT_WEIGHT;
 }
 
