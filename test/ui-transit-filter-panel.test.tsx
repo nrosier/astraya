@@ -444,6 +444,52 @@ describe('TransitFilterPanel (#416)', () => {
   });
 });
 
+describe('the dialog’s card area (#1508)', () => {
+  const groupOf = (container: HTMLElement, legend: string): HTMLFieldSetElement => {
+    const found = [...container.querySelectorAll('fieldset')].find(
+      (fieldset) => fieldset.querySelector('legend')?.textContent === legend,
+    );
+    if (found === undefined) throw new Error(`fixture bug: no "${legend}" group`);
+    return found;
+  };
+
+  it('holds Applying only inside the Aspects card, after a divider', async () => {
+    const container = await mount();
+    await openCard(container);
+    const aspects = groupOf(container, 'Aspects');
+    const applying = checkboxUnder(container, 'Aspects', 'Applying only');
+    expect(aspects.contains(applying)).toBe(true);
+    const divider = aspects.querySelector('hr');
+    expect(divider).not.toBeNull();
+    expect(divider?.compareDocumentPosition(applying) ?? 0).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  it('puts All and Clear in the legend row of the two body cards, and none in Aspects', async () => {
+    const container = await mount();
+    await openCard(container);
+    for (const legend of ['Transiting planets', 'Natal points']) {
+      const group = groupOf(container, legend);
+      const actions = group.querySelector('legend')?.nextElementSibling;
+      expect(actions?.classList.contains('transit-filter-card-actions')).toBe(true);
+      expect([...(actions?.querySelectorAll('button') ?? [])].map((b) => b.textContent)).toEqual(['All', 'Clear']);
+    }
+    expect(groupOf(container, 'Aspects').querySelector('.transit-filter-card-actions')).toBeNull();
+  });
+
+  it('lays out Transiting planets and Aspects as two columns, with Natal points full width below', async () => {
+    const container = await mount();
+    await openCard(container);
+    const area = groupOf(container, 'Transiting planets').parentElement;
+    expect(area?.classList.contains('transit-filter-cards')).toBe(true);
+    expect([...(area?.children ?? [])].map((child) => child.querySelector('legend')?.textContent)).toEqual([
+      'Transiting planets',
+      'Aspects',
+      'Natal points',
+    ]);
+    expect(groupOf(container, 'Natal points').parentElement).toBe(area);
+  });
+});
+
 describe('the dialog’s group actions (#513)', () => {
   it('All and Clear set every body in a group at once, as a draft', async () => {
     const container = await mount();
