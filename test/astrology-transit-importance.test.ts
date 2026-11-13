@@ -14,6 +14,7 @@ import {
   filterTransits,
   isTransitFilter,
   orbLimitFor,
+  passesAngleTransitFilter,
   presetOf,
   rankTransits,
   readSavedTransitFilter,
@@ -23,7 +24,7 @@ import {
   type TransitFilter,
   type TransitRuleContext,
 } from '../src/astrology/transit-importance.js';
-import { computeTransit, type TransitData } from '../src/domain/transit.js';
+import { computeTransit, type TransitAngleContact, type TransitData } from '../src/domain/transit.js';
 import { getEngine } from './engine-harness.js';
 
 let transit: TransitData;
@@ -404,5 +405,65 @@ describe('the transiting grid (#1508)', () => {
     expect(transitPreset('all', rules('daily')).transiting).toEqual(EVERY);
     expect(transitPreset('outer', rules('daily')).natal).toEqual(EVERY);
     expect(transitPreset('personal', rules('yearly')).natal).toEqual(EVERY);
+  });
+});
+
+describe('the aspects filter on angle contacts (#1508)', () => {
+  function angleContact(
+    transiting: string,
+    angle: 'asc' | 'mc',
+    aspectKey: string,
+    orb: number,
+    applying = true,
+  ): TransitAngleContact {
+    const base = contact(transiting, 'sun', aspectKey, orb, applying);
+    return {
+      body: base.bodyA,
+      angle,
+      aspect: base.aspect,
+      separation: base.separation,
+      orb,
+      allowedOrb: 8,
+      applying,
+      orbRule: 'body',
+      pointConvention: 'luminary',
+    } as unknown as TransitAngleContact;
+  }
+  const withAngles = (patch: Partial<TransitFilter>): TransitFilter => ({
+    ...transitPreset('all', rules('daily')),
+    natal: ['asc', 'mc'],
+    ...patch,
+  });
+
+  it('Hard only drops a soft ASC contact and keeps a hard one', () => {
+    const filter = withAngles({ aspects: ['conjunction', 'square', 'opposition'] });
+    expect(passesAngleTransitFilter(angleContact('saturn', 'asc', 'trine', 1), filter)).toBe(false);
+    expect(passesAngleTransitFilter(angleContact('saturn', 'asc', 'square', 1), filter)).toBe(true);
+  });
+
+  it('drops an angle contact outside the orb limit', () => {
+    const filter = withAngles({ maxOrb: 1.5 });
+    expect(passesAngleTransitFilter(angleContact('mars', 'mc', 'square', 1.4), filter)).toBe(true);
+    expect(passesAngleTransitFilter(angleContact('mars', 'mc', 'square', 1.6), filter)).toBe(false);
+  });
+
+  it('honours applying-only, the transiting list and the natal angle choice', () => {
+    expect(
+      passesAngleTransitFilter(angleContact('mars', 'mc', 'square', 1, false), withAngles({ applyingOnly: true })),
+    ).toBe(false);
+    expect(passesAngleTransitFilter(angleContact('mars', 'mc', 'square', 1), withAngles({ transiting: ['sun'] }))).toBe(
+      false,
+    );
+    expect(passesAngleTransitFilter(angleContact('mars', 'mc', 'square', 1), withAngles({ natal: ['asc'] }))).toBe(
+      false,
+    );
+    expect(passesAngleTransitFilter(angleContact('mars', 'mc', 'square', 1), withAngles({ natal: ['mc'] }))).toBe(true);
+  });
+
+  it('is off for the presets, which never list the angles', () => {
+    for (const preset of ['important', 'outer', 'personal', 'all'] as const) {
+      const filter = transitPreset(preset, rules('daily'));
+      expect(passesAngleTransitFilter(angleContact('saturn', 'asc', 'square', 0.5), filter)).toBe(false);
+    }
   });
 });
