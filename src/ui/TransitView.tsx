@@ -10,7 +10,7 @@
  *
  * The wheel bypasses `AstroChartWheel.tsx` (the third-party `@astrodraw/astrochart` wrapper,
  * single-chart only) entirely and calls `renderMultiWheelSvg` directly with two rings built
- * by `chartWheelRing` — natal innermost, transiting outer, matching how most astrology
+ * by `transitWheelInput` — natal innermost, transiting outer, matching how most astrology
  * software draws a transit wheel and matching `computeTransit`'s own contacts ordering
  * (moving/transiting first). The result is a complete standalone `<svg>` (default, non-`bare`
  * options), injected the same trust-boundary way `ChartView.tsx` injects its sheet markup:
@@ -43,9 +43,10 @@ import { useSymbolClass } from './symbol-setting.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
 import { useEffect, useMemo, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
-import { chartWheelRing, crossAspectRows, type AspectRow } from '../domain/chart-tables.js';
+import { crossAspectRows, type AspectRow } from '../domain/chart-tables.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
 import { computeTransit, type TransitData } from '../domain/transit.js';
+import { transitWheelInput } from '../domain/transit-wheel.js';
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
 import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
 import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
@@ -245,8 +246,10 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
 
   const wheelMarkup = useMemo(() => {
     if (load.kind !== 'ready') return undefined;
-    const natalRing = chartWheelRing(load.data.natal, t.natalLabel);
-    const transitRing = chartWheelRing(load.data.transit, t.transitRingLabel);
+    const { natalRing, transitRing } = transitWheelInput(load.data, filter, {
+      natal: t.natalLabel,
+      transit: t.transitRingLabel,
+    });
     const crossAspects: readonly CrossRingAspects[] = [
       // Natal is ring 0 (innermost), transit ring 1 (outer). `computeTransit`'s contacts are
       // already ordered transiting-first (bodyA), natal-second (bodyB) — the same order
@@ -255,7 +258,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
     ];
     return renderMultiWheelSvg([natalRing, transitRing], crossAspects);
     // oxlint-disable-next-line react/exhaustive-deps -- the wheel renderers read the glyph settings from module state, so these are cache keys, not inputs the callback reads.
-  }, [load, t, shownContacts, symbolClass, variants]);
+  }, [load, t, filter, shownContacts, symbolClass, variants]);
 
   const wheelT = useMessages(biWheelSelectionPanelMessages);
   const dateBarT = useMessages(dateAnimationBarMessages);
