@@ -6,7 +6,7 @@
  */
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { formatOrb } from './format.js';
-import { aspectHarmonicFamily, aspectTone } from '../astrology/aspects.js';
+import { aspectByKey, aspectHarmonicFamily, aspectTone, type AspectTone } from '../astrology/aspects.js';
 import {
   allMidpointsRows,
   antisciaRows,
@@ -296,18 +296,37 @@ export function allMidpointsColumns(
   ];
 }
 
-/** The wheel's own contact filter (#1063, #1333): the aspect families, the orb caps and the preset's minor-natal switch. */
+/**
+ * The wheel's own contact filter (#1063, #1333): the aspect families, the orb caps, the preset's minor-natal switch and
+ * the instrument bar's Hard, Soft and Minor pills (#1532), so the Aspects table lists what the wheel draws.
+ */
 export interface AspectContactFilter {
   readonly families: ReadonlySet<AspectFamilyKey>;
   readonly orbCaps?: OrbCaps | undefined;
   readonly suppressMinorNatal?: boolean | undefined;
+  /** The tones the wheel draws; absent or all three means no tone filter. */
+  readonly tones?: ReadonlySet<AspectTone> | undefined;
+}
+
+/** True when a pill is off, so some tone is hidden from the wheel (#1532). */
+function tonesFilter(filter: AspectContactFilter): boolean {
+  return filter.tones !== undefined && filter.tones.size < 3;
+}
+
+/** A key outside the catalogue has no tone, so the pills never hide it. */
+function toneShown(aspectKey: string, tones: ReadonlySet<AspectTone> | undefined): boolean {
+  const tone = aspectByKey(aspectKey)?.tone;
+  return tones === undefined || tone === undefined || tones.has(tone);
 }
 
 /** True when the families, orb caps or the preset's major-only switch can remove contacts. */
 export function isContactFilterActive(filter: AspectContactFilter | undefined): boolean {
   return (
     filter !== undefined &&
-    (filter.families.size > 0 || filter.orbCaps !== undefined || filter.suppressMinorNatal === true)
+    (filter.families.size > 0 ||
+      filter.orbCaps !== undefined ||
+      filter.suppressMinorNatal === true ||
+      tonesFilter(filter))
   );
 }
 
@@ -329,7 +348,8 @@ export function filterAspectRowsByContactFilter(
         filter.families,
         filter.orbCaps,
       ) &&
-      (filter.suppressMinorNatal !== true || isMajorAspect(row.aspectKey)),
+      (filter.suppressMinorNatal !== true || isMajorAspect(row.aspectKey)) &&
+      toneShown(row.aspectKey, filter.tones),
   );
 }
 

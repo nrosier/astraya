@@ -36,9 +36,17 @@ import { formatTimestamp } from './format.js';
 import { PrintProvenance } from './PrintProvenance.js';
 import { HOUSE_SYSTEMS } from '../astrology/houses.js';
 import type { Zodiac } from '../ephemeris/types.js';
-import { ASPECTS, aspectHarmonicFamily, DEFAULT_ORB_CONFIG, type Aspect } from '../astrology/aspects.js';
+import {
+  ASPECTS,
+  aspectHarmonicFamily,
+  aspectByKey,
+  DEFAULT_ORB_CONFIG,
+  type Aspect,
+  type AspectTone,
+} from '../astrology/aspects.js';
 import { Select } from './primitives/Select.js';
 import { AspectFamilyControls } from './AspectFamilyControls.js';
+import { ALL_ASPECT_TONES, ChartInstrumentBar } from './ChartInstrumentBar.js';
 import {
   CONSULTATION_PRESETS,
   isContactShown,
@@ -729,6 +737,14 @@ export function ChartDataView({
   );
   const [overlaySettings, setOverlaySettings] = useState<ChartOverlaySettings>(openingOverlaySettings);
   const [overlayLoad, setOverlayLoad] = useState<OverlayLoad>({ kind: 'idle' });
+  // The instrument bar under the wheel (#1532): the Hard, Soft and Minor pills (all on by default) and the view-only
+  // Natal only switch, which hides the transit ring here without changing the saved overlay settings.
+  const [wheelTones, setWheelTones] = useState<ReadonlySet<AspectTone>>(() => new Set(ALL_ASPECT_TONES));
+  const [natalOnly, setNatalOnly] = useState(false);
+  const viewOverlaySettings = useMemo<ChartOverlaySettings>(
+    () => (natalOnly && overlaySettings.transit ? { ...overlaySettings, transit: false } : overlaySettings),
+    [natalOnly, overlaySettings],
+  );
 
   const pointVisibility = useMemo(() => toPointVisibilityOptions(extendedSettings), [extendedSettings]);
   // What the written reading leaves out (#721): the wheel's "What it means" text follows the same set as the report.
@@ -751,7 +767,7 @@ export function ChartDataView({
   const housesRenderable = showHouses && housesComputed;
 
   useEffect(() => {
-    if (overlayContext === undefined || load.kind !== 'ready' || !hasChartOverlays(overlaySettings)) {
+    if (overlayContext === undefined || load.kind !== 'ready' || !hasChartOverlays(viewOverlaySettings)) {
       setOverlayLoad({ kind: 'idle' });
       return undefined;
     }
@@ -790,19 +806,19 @@ export function ChartDataView({
           });
         };
 
-        if (overlaySettings.natal && overlayContext.baseSource !== 'natal') {
+        if (viewOverlaySettings.natal && overlayContext.baseSource !== 'natal') {
           addChart(
             'natal',
             overlayT.natal,
             await computeChartData(overlayContext.moment, overlayContext.provider, calculationOptions),
           );
         }
-        if (overlaySettings.draconic && overlayContext.baseSource !== 'draconic') {
+        if (viewOverlaySettings.draconic && overlayContext.baseSource !== 'draconic') {
           const draconic = await computeDraconic(overlayContext.moment, overlayContext.provider, calculationOptions);
           addChart('draconic', overlayT.draconic, draconic.draconic);
         }
-        if (overlaySettings.transit) {
-          const parts = dateParts(overlaySettings.transitDate);
+        if (viewOverlaySettings.transit) {
+          const parts = dateParts(viewOverlaySettings.transitDate);
           if (parts === undefined) throw new Error('Transit date is incomplete.');
           const [year, month, day] = parts;
           const targetJd = await overlayContext.provider.julianDayFromUtc(year, month, day, 12, 0, 0);
@@ -811,7 +827,7 @@ export function ChartDataView({
             orbConfig: orbConfigForContext('transit', calculationOptions.orbConfig ?? DEFAULT_ORB_CONFIG),
           });
           // A transit orb limit (#1190) only hides wider contacts from the rings' cross-aspects; nothing is recalculated.
-          const transitOrb = orbLimitDegrees(overlaySettings.transitOrb);
+          const transitOrb = orbLimitDegrees(viewOverlaySettings.transitOrb);
           addChart(
             'transit',
             overlayT.transit,
@@ -821,8 +837,8 @@ export function ChartDataView({
               : transit.contacts.filter((contact) => contact.orb <= transitOrb),
           );
         }
-        if (overlaySettings.progressed) {
-          const parts = dateParts(overlaySettings.progressedDate);
+        if (viewOverlaySettings.progressed) {
+          const parts = dateParts(viewOverlaySettings.progressedDate);
           if (parts === undefined) throw new Error('Progressed date is incomplete.');
           const [year, month, day] = parts;
           const targetJd = await overlayContext.provider.julianDayFromUtc(year, month, day, 12, 0, 0);
@@ -838,8 +854,8 @@ export function ChartDataView({
             provenance: snapshot,
           });
         }
-        if (overlaySettings.directed) {
-          const parts = dateParts(overlaySettings.directedDate);
+        if (viewOverlaySettings.directed) {
+          const parts = dateParts(viewOverlaySettings.directedDate);
           if (parts === undefined) throw new Error('Directed date is incomplete.');
           const [year, month, day] = parts;
           const targetJd = await overlayContext.provider.julianDayFromUtc(year, month, day, 12, 0, 0);
@@ -855,8 +871,8 @@ export function ChartDataView({
             provenance: `${snapshot} · ${overlayT.primaryDirectionsProvenance}`,
           });
         }
-        if (overlaySettings.solarArc) {
-          const parts = dateParts(overlaySettings.solarArcDate);
+        if (viewOverlaySettings.solarArc) {
+          const parts = dateParts(viewOverlaySettings.solarArcDate);
           if (parts === undefined) throw new Error('Solar arc date is incomplete.');
           const [year, month, day] = parts;
           const targetJd = await overlayContext.provider.julianDayFromUtc(year, month, day, 12, 0, 0);
@@ -866,7 +882,7 @@ export function ChartDataView({
             overlayContext.provider,
             calculationOptions,
           );
-          const solarArcOrb = orbLimitDegrees(overlaySettings.solarArcOrb);
+          const solarArcOrb = orbLimitDegrees(viewOverlaySettings.solarArcOrb);
           overlays.set('solarArc', {
             ring: solarArcOverlayRing(arcData, overlayT.solarArc),
             contacts:
@@ -874,13 +890,13 @@ export function ChartDataView({
             provenance: `${snapshot} · ${overlayT.solarArcProvenance}`,
           });
         }
-        if (overlaySettings.return) {
-          const parts = dateParts(overlaySettings.returnDate);
+        if (viewOverlaySettings.return) {
+          const parts = dateParts(viewOverlaySettings.returnDate);
           if (parts === undefined) throw new Error('Return date is incomplete.');
           const [year, month, day] = parts;
           const targetJd = await overlayContext.provider.julianDayFromUtc(year, month, day, 12, 0, 0);
           const returned =
-            overlaySettings.returnKind === 'solar'
+            viewOverlaySettings.returnKind === 'solar'
               ? await computeSolarReturnChart(overlayContext.moment, year, overlayContext.provider, calculationOptions)
               : await computeLunarReturnChart(
                   overlayContext.moment,
@@ -890,14 +906,14 @@ export function ChartDataView({
                 );
           addChart(
             'return',
-            overlaySettings.returnKind === 'solar' ? overlayT.solarReturn : overlayT.lunarReturn,
+            viewOverlaySettings.returnKind === 'solar' ? overlayT.solarReturn : overlayT.lunarReturn,
             returned.chart,
             returned.contacts,
           );
         }
-        if (overlaySettings.relocated) {
-          const latitude = parseCoordinate(overlaySettings.latitude, -90, 90);
-          const longitude = parseCoordinate(overlaySettings.longitude, -180, 180);
+        if (viewOverlaySettings.relocated) {
+          const latitude = parseCoordinate(viewOverlaySettings.latitude, -90, 90);
+          const longitude = parseCoordinate(viewOverlaySettings.longitude, -180, 180);
           if (latitude === undefined || longitude === undefined) {
             throw new Error('A relocated overlay needs valid latitude and longitude.');
           }
@@ -910,7 +926,7 @@ export function ChartDataView({
           // A relocated chart has exactly the natal longitudes, so cross-aspecting it to natal would only draw self-conjunctions.
           addChart('relocated', overlayT.relocated, relocated.relocated);
         }
-        for (const source of orderedChartOverlaySources(overlaySettings)) {
+        for (const source of orderedChartOverlaySources(viewOverlaySettings)) {
           const overlay = overlays.get(source);
           if (overlay === undefined) continue;
           const outerRingIndex = rings.length;
@@ -921,7 +937,7 @@ export function ChartDataView({
             provenance: overlay.provenance,
           });
           if (
-            overlaySettings.interRingAspects &&
+            viewOverlaySettings.interRingAspects &&
             overlayContext.baseSource === 'natal' &&
             overlay.contacts !== undefined
           ) {
@@ -947,7 +963,16 @@ export function ChartDataView({
     return () => {
       effect.cancelled = true;
     };
-  }, [load, overlayContext, overlaySettings, overlayT, pointVisibility, extendedSettings, rulership, fixedStarsSaved]);
+  }, [
+    load,
+    overlayContext,
+    viewOverlaySettings,
+    overlayT,
+    pointVisibility,
+    extendedSettings,
+    rulership,
+    fixedStarsSaved,
+  ]);
 
   // The export sheet (SVG/PNG/PDF) and the on-screen dial are two compositions of one computed chart (#511):
   // the dial is the sheet's own wheel, drawn alone; everything else the sheet holds is shown as tables.
@@ -993,6 +1018,7 @@ export function ChartDataView({
     <AspectFamilyControls
       families={aspectFamilies}
       onChange={changeFamilies}
+      showFamily={activeTab !== 'wheel'}
       presetKey={presetKey}
       onPreset={choosePreset}
     />
@@ -1029,6 +1055,11 @@ export function ChartDataView({
       const b = bodyById(aspect.bodyB)?.key ?? String(aspect.bodyB);
       orbs.set(`${a}|${b}|${aspect.aspect.key}`, aspect.orb);
     }
+    // A drawn line whose key is not in the catalogue has no tone, so the Hard, Soft and Minor pills never hide it.
+    const toneShown = (key: string): boolean => {
+      const tone = aspectByKey(key)?.tone;
+      return tone === undefined || wheelTones.has(tone);
+    };
     for (const link of root.querySelectorAll('.chart-aspect-link')) {
       const aKey = link.getAttribute('data-aspect-body-a') ?? '';
       const bKey = link.getAttribute('data-aspect-body-b') ?? '';
@@ -1040,10 +1071,11 @@ export function ChartDataView({
       link.classList.toggle(
         'chart-aspect-filtered',
         !isContactShown({ aKey, bKey, aspectKey, orb }, aspectFamilies, orbCaps) ||
-          (suppressMinorNatal && sameRing && !isMajorAspect(aspectKey)),
+          (suppressMinorNatal && sameRing && !isMajorAspect(aspectKey)) ||
+          !toneShown(aspectKey),
       );
     }
-  }, [wheelMarkup, wheelRef, aspectFamilies, orbCaps, filterData, activeTab, suppressMinorNatal]);
+  }, [wheelMarkup, wheelRef, aspectFamilies, orbCaps, filterData, activeTab, suppressMinorNatal, wheelTones]);
 
   // The Positions and Aspects tables share the wheel's selection (#418): a button on a row selects it on the
   // wheel, and the row the wheel has selected is marked. Only where there is a wheel, and never in the PDF.
@@ -1163,16 +1195,26 @@ export function ChartDataView({
           <div className="chart-workbench">
             <div className="chart-workbench-dial">
               <p className="hint chart-wheel-hint">{t.wheelClickHint}</p>
-              <div
-                ref={wheelRef}
-                className="chart-wheel chart-wheel-interactive"
-                // The wheel is generated entirely by this app from data it just computed — never
-                // user-supplied markup — so injecting it is the same trust boundary as any other
-                // value this component renders, just carried as a string instead of JSX.
-                dangerouslySetInnerHTML={{ __html: wheelMarkup }}
-                onClick={handleWheelClick}
-                onKeyDown={handleWheelKeyDown}
-              />
+              {/* The wheel and its instrument bar share one grid track, so the bar stays directly beneath the wheel (#1532). */}
+              <div className="chart-wheel-stack">
+                <div
+                  ref={wheelRef}
+                  className="chart-wheel chart-wheel-interactive"
+                  // The wheel is generated entirely by this app from data it just computed — never
+                  // user-supplied markup — so injecting it is the same trust boundary as any other
+                  // value this component renders, just carried as a string instead of JSX.
+                  dangerouslySetInnerHTML={{ __html: wheelMarkup }}
+                  onClick={handleWheelClick}
+                  onKeyDown={handleWheelKeyDown}
+                />
+                <ChartInstrumentBar
+                  tones={wheelTones}
+                  onTonesChange={setWheelTones}
+                  transitRing={overlaySettings.transit}
+                  natalOnly={natalOnly}
+                  onNatalOnlyChange={setNatalOnly}
+                />
+              </div>
               {controlsSlot === null && aspectControls}
             </div>
             <SelectionInspector
@@ -1370,7 +1412,7 @@ export function ChartDataView({
                             boundsScheme,
                             tableSelection,
                             harmonicFamily,
-                            { families: aspectFamilies, orbCaps, suppressMinorNatal },
+                            { families: aspectFamilies, orbCaps, suppressMinorNatal, tones: wheelTones },
                           )}
                         </>
                       );

@@ -3854,15 +3854,121 @@ label.stacked {
   margin-top: 0;
   margin-bottom: 0;
   /*
-   * Height cap (#801): the wheel is square, so its width is its height. 27rem is
+   * Height cap (#801): the wheel is square, so its width is its height. 30.5rem is
    * the chrome above the SVG (header, chart type, nav row, card top, hint; the chart type
-   * block above the nav row added 3rem in #981), so the SVG bottom
+   * block above the nav row added 3rem in #981) plus the 3.5rem instrument bar under the wheel (#1532), so the bar's bottom
    * lands at or above the viewport bottom; 26rem (364px at a 14px root) is the floor
    * where glyphs and hit targets stay legible. Wider than the cap the wheel keeps
    * its 7/12 column width; the cap binds only on short viewports. 55rem is the upper
    * bound: the widest the wheel is drawn, so a tall viewport never grows it past that.
    */
-  max-width: min(55rem, max(26rem, calc(100vh - 27rem)));
+  max-width: min(55rem, max(26rem, calc(100vh - 30.5rem)));
+}
+
+/*
+ * The instrument bar under the natal wheel (#1532, owner-approved mockup 2026-11-13): one pill-shaped bar centred on the
+ * wheel's MC-IC axis. The wheel and the bar share the dial's second grid track through .chart-wheel-stack, so the wheel's
+ * height cap keeps room for the bar.
+ */
+.chart-wheel-stack {
+  display: block;
+}
+
+.chart-instrument-bar {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: fit-content;
+  max-width: 100%;
+  margin: var(--space-3) auto 0;
+  padding: var(--space-1);
+  border: var(--border-hairline) solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.chart-instrument-bar .primitive-choice-group-segmented {
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.chart-instrument-bar .primitive-choice-group-segmented .primitive-choice {
+  min-height: var(--control-height-compact);
+  border-radius: 999px;
+}
+
+.chart-instrument-bar .primitive-choice-group-segmented .primitive-choice + .primitive-choice {
+  border-left: 0;
+}
+
+.chart-instrument-bar-divider {
+  align-self: stretch;
+  width: var(--border-hairline);
+  background: var(--line);
+}
+
+.chart-instrument-bar-tones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+/* Each pill's border is its tone's chord style: hard solid, soft dashed, minor dotted, in the tone's own token. */
+.chart-tone-pill {
+  min-height: var(--control-height-compact);
+  padding: 0 var(--space-3);
+  border: 2px solid;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--fg);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.chart-tone-pill--hard {
+  border-style: solid;
+  border-color: var(--aspect-hard);
+}
+
+.chart-tone-pill--soft {
+  border-style: dashed;
+  border-color: var(--aspect-soft);
+}
+
+.chart-tone-pill--minor {
+  border-style: dotted;
+  border-color: var(--aspect-minor);
+}
+
+.chart-tone-pill[aria-pressed='false'] {
+  color: var(--muted);
+  font-weight: 400;
+  opacity: 0.6;
+}
+
+.chart-tone-pill:hover {
+  background: var(--surface-hover);
+}
+
+.chart-tone-pill:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Narrow (40rem): the bar keeps the normal corner radius, the divider goes, and the two groups wrap. */
+@media (max-width: 40rem) {
+  .chart-instrument-bar {
+    flex-wrap: wrap;
+    border-radius: var(--radius);
+  }
+
+  .chart-instrument-bar-divider {
+    display: none;
+  }
 }
 
 .chart-workbench-dial .chart-wheel-hint {

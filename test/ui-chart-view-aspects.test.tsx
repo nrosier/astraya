@@ -16,6 +16,7 @@ import {
   aspectColumns,
   declinationColumns,
   filterAspectRowsByContactFilter,
+  isContactFilterActive,
 } from '../src/ui/ChartViewAspects.js';
 import { aspectSelectionKey } from '../src/ui/table-selection.js';
 import { SortableTable } from '../src/ui/SortableTable.js';
@@ -195,6 +196,22 @@ describe('the aspects table follows the wheel and matrix filter (#1333)', () => 
       orbCaps: { luminary: 2, planet: 2 },
     });
     expect(keys(rows)).toEqual(['trine']);
+  });
+
+  it('follows the instrument bar pills: a tone that is off is not listed, and all three on is no filter (#1532)', () => {
+    const quincunx = { ...(ROWS[0] ?? fixtureBug()), aspect: 'Quincunx', aspectKey: 'quincunx', orb: 1 };
+    const rows = [...MIXED, quincunx];
+    // semisquare is a hard tone (owner decision, 2026-11-13), so Hard off drops it with the square.
+    expect(
+      keys(filterAspectRowsByContactFilter(rows, { families: new Set(), tones: new Set(['soft', 'minor']) })),
+    ).toEqual(['trine', 'quincunx']);
+    expect(
+      keys(filterAspectRowsByContactFilter(rows, { families: new Set(), tones: new Set(['hard', 'soft']) })),
+    ).toEqual(['trine', 'square', 'semisquare']);
+    const all = { families: new Set<never>(), tones: new Set(['hard', 'soft', 'minor'] as const) };
+    expect(filterAspectRowsByContactFilter(rows, all)).toEqual(rows);
+    expect(isContactFilterActive(all)).toBe(false);
+    expect(isContactFilterActive({ families: new Set(), tones: new Set(['hard']) })).toBe(true);
   });
 
   it('drops minor aspects when the preset suppresses them in a natal chart', () => {
