@@ -25,7 +25,7 @@
  * @module Aspects
  * @purpose Computes Ptolemaic and minor aspects between bodies, including configurable orbs and applying/separating direction.
  * @conventions Three orb tiers (major, sextile, minor) widened for luminaries, scaled by a global percentage; Astraya's own defaults, with no verified published source (majors 7°/10° with a luminary, sextile 4°/5°30', minors flat 2°30', Astraya's convention (#869): Avelar p.238 and Marks p.73 give ranges, not this value); minor and higher-harmonic (decile, septile, novile; angles exactly 360/n; same flat 2°30' tier as the minors, no published source claimed, #1184) aspects are opt-in via enabledMinorAspects; `harmonicFamilyOf` is Addey's harmonic-number grouping, a distinct concept from the major/minor `AspectFamily`; a calculated point's orb is the aspecting body's own moiety when the config has moieties (Lilly p. 208 for the Ascendant, an Astraya extension for MC/Vertex/lots), else the tier, and the rule used is recorded (#796).
- * @exports ASPECTS, DEFAULT_ORB_CONFIG, orbFor, orbForPoint, matchPointAspect, pointOrbConventionOf, angularSeparation, matchAspect, findAspects, findCrossAspects, subjectsFrom, fixedSubjects, harmonicFamilyOf, aspectHarmonicFamily
+ * @exports ASPECTS, AspectTone, aspectTone, aspectKeysByTone, DEFAULT_ORB_CONFIG, orbFor, orbForPoint, matchPointAspect, pointOrbConventionOf, angularSeparation, matchAspect, findAspects, findCrossAspects, subjectsFrom, fixedSubjects, harmonicFamilyOf, aspectHarmonicFamily
  */
 import { bodyById, type BodyCategory } from './bodies.ts';
 import type { BodyId, BodyPosition, Degrees } from '../ephemeris/types.js';
@@ -36,35 +36,53 @@ import type { BodyId, BodyPosition, Degrees } from '../ephemeris/types.js';
  */
 export type AspectFamily = 'major' | 'minor' | 'higher-harmonic';
 
+/** The colour and dash grouping of an aspect (#1532): `hard` and `soft` are the classical pair, `minor` the rest. Separate from `family`. */
+export type AspectTone = 'hard' | 'soft' | 'minor';
+
 export interface AspectDefinition {
   readonly key: string;
   readonly name: string;
   /** The exact angular separation this aspect names, in [0, 180]. */
   readonly angle: Degrees;
   readonly family: AspectFamily;
+  readonly tone: AspectTone;
 }
 
 export const ASPECTS: readonly AspectDefinition[] = [
-  { key: 'conjunction', name: 'Conjunction', angle: 0, family: 'major' },
-  { key: 'semisextile', name: 'Semisextile', angle: 30, family: 'minor' },
-  { key: 'decile', name: 'Decile', angle: 360 / 10, family: 'higher-harmonic' },
-  { key: 'novile', name: 'Novile', angle: 360 / 9, family: 'higher-harmonic' },
-  { key: 'semisquare', name: 'Semisquare', angle: 45, family: 'minor' },
-  { key: 'septile', name: 'Septile', angle: 360 / 7, family: 'higher-harmonic' },
-  { key: 'sextile', name: 'Sextile', angle: 60, family: 'major' },
-  { key: 'quintile', name: 'Quintile', angle: 72, family: 'minor' },
-  { key: 'square', name: 'Square', angle: 90, family: 'major' },
-  { key: 'trine', name: 'Trine', angle: 120, family: 'major' },
-  { key: 'sesquiquadrate', name: 'Sesquiquadrate', angle: 135, family: 'minor' },
-  { key: 'biquintile', name: 'Biquintile', angle: 144, family: 'minor' },
-  { key: 'quincunx', name: 'Quincunx', angle: 150, family: 'minor' },
-  { key: 'opposition', name: 'Opposition', angle: 180, family: 'major' },
+  { key: 'conjunction', name: 'Conjunction', angle: 0, family: 'major', tone: 'hard' },
+  { key: 'semisextile', name: 'Semisextile', angle: 30, family: 'minor', tone: 'minor' },
+  { key: 'decile', name: 'Decile', angle: 360 / 10, family: 'higher-harmonic', tone: 'minor' },
+  { key: 'novile', name: 'Novile', angle: 360 / 9, family: 'higher-harmonic', tone: 'minor' },
+  { key: 'semisquare', name: 'Semisquare', angle: 45, family: 'minor', tone: 'hard' },
+  { key: 'septile', name: 'Septile', angle: 360 / 7, family: 'higher-harmonic', tone: 'minor' },
+  { key: 'sextile', name: 'Sextile', angle: 60, family: 'major', tone: 'soft' },
+  { key: 'quintile', name: 'Quintile', angle: 72, family: 'minor', tone: 'minor' },
+  { key: 'square', name: 'Square', angle: 90, family: 'major', tone: 'hard' },
+  { key: 'trine', name: 'Trine', angle: 120, family: 'major', tone: 'soft' },
+  { key: 'sesquiquadrate', name: 'Sesquiquadrate', angle: 135, family: 'minor', tone: 'hard' },
+  { key: 'biquintile', name: 'Biquintile', angle: 144, family: 'minor', tone: 'minor' },
+  { key: 'quincunx', name: 'Quincunx', angle: 150, family: 'minor', tone: 'minor' },
+  { key: 'opposition', name: 'Opposition', angle: 180, family: 'major', tone: 'hard' },
 ];
 
 const BY_KEY = new Map<string, AspectDefinition>(ASPECTS.map((aspect) => [aspect.key, aspect]));
 
 export function aspectByKey(key: string): AspectDefinition | undefined {
   return BY_KEY.get(key);
+}
+
+/** The tone of a catalogue aspect (#1532). Throws on an unknown key rather than returning undefined. */
+export function aspectTone(key: string): AspectTone {
+  const aspect = BY_KEY.get(key);
+  if (aspect === undefined) {
+    throw new RangeError(`no tone defined for aspect "${key}"`);
+  }
+  return aspect.tone;
+}
+
+/** The keys of every aspect with the given tone, in `ASPECTS` order (#1532). */
+export function aspectKeysByTone(tone: AspectTone): readonly string[] {
+  return ASPECTS.filter((aspect) => aspect.tone === tone).map((aspect) => aspect.key);
 }
 
 /**

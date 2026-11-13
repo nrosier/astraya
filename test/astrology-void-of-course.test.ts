@@ -189,8 +189,16 @@ describe('findMoonSignWindow and voidOfCourseAt (#409)', () => {
       signEntryJd: 100,
       signExitJd: 102.5,
       events: [
-        { jd: 100.5, body: 1, aspect: { key: 'trine', name: 'Trine', angle: 120, family: 'major' as const } },
-        { jd: 101.2, body: 2, aspect: { key: 'square', name: 'Square', angle: 90, family: 'major' as const } },
+        {
+          jd: 100.5,
+          body: 1,
+          aspect: { key: 'trine', name: 'Trine', angle: 120, family: 'major' as const, tone: 'soft' as const },
+        },
+        {
+          jd: 101.2,
+          body: 2,
+          aspect: { key: 'square', name: 'Square', angle: 90, family: 'major' as const, tone: 'hard' as const },
+        },
       ],
     };
     expect(voidOfCourseAt(window, 100.1)).toMatchObject({ isVoid: false, lastAspect: undefined });
