@@ -25,6 +25,7 @@ import {
   MINOR_ASPECT_KEYS,
   SOFT_ASPECT_KEYS,
   TRANSIT_PRESETS,
+  TRANSITING_GRID_KEYS,
   presetOf,
   sameFilter,
   transitPreset,
@@ -171,39 +172,43 @@ export function TransitFilterButton({
     setDraft({ ...draft, aspects });
   };
 
-  const bodyGroup = (legend: string, field: 'transiting' | 'natal') => (
-    <fieldset className="transit-filter-group">
-      <legend>{legend}</legend>
-      <div className="transit-filter-group-actions">
-        <Button
-          size="compact"
-          onClick={() => {
-            setDraft({ ...draft, [field]: [...EVERY_BODY_KEY] });
-          }}
-        >
-          {t.groupAll}
-        </Button>
-        <Button
-          size="compact"
-          onClick={() => {
-            setDraft({ ...draft, [field]: [] });
-          }}
-        >
-          {t.groupClear}
-        </Button>
-      </div>
-      {EVERY_BODY_KEY.map((key) => (
-        <Checkbox
-          key={key}
-          label={bodyDisplayName(key, locale)}
-          checked={draft[field].includes(key)}
-          onChange={() => {
-            setDraft({ ...draft, [field]: toggled(draft[field], key) });
-          }}
-        />
-      ))}
-    </fieldset>
-  );
+  const bodyGroup = (legend: string, field: 'transiting' | 'natal') => {
+    // The transiting grid offers the decided 16 bodies (#1508); the natal grid keeps every catalogue body.
+    const keys = field === 'transiting' ? TRANSITING_GRID_KEYS : EVERY_BODY_KEY;
+    return (
+      <fieldset className="transit-filter-group">
+        <legend>{legend}</legend>
+        <div className="transit-filter-group-actions">
+          <Button
+            size="compact"
+            onClick={() => {
+              setDraft({ ...draft, [field]: [...keys] });
+            }}
+          >
+            {t.groupAll}
+          </Button>
+          <Button
+            size="compact"
+            onClick={() => {
+              setDraft({ ...draft, [field]: [] });
+            }}
+          >
+            {t.groupClear}
+          </Button>
+        </div>
+        {keys.map((key) => (
+          <Checkbox
+            key={key}
+            label={bodyDisplayName(key, locale)}
+            checked={draft[field].includes(key)}
+            onChange={() => {
+              setDraft({ ...draft, [field]: toggled(draft[field], key) });
+            }}
+          />
+        ))}
+      </fieldset>
+    );
+  };
 
   return (
     <>

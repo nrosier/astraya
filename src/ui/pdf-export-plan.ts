@@ -88,6 +88,7 @@ import { formatSignedOrb } from '../chart/aspect-matrix.js';
 import { lunarPhaseOf } from '../astrology/lunar-phase.js';
 import { computeComposite } from '../domain/composite.js';
 import { computeTransit } from '../domain/transit.js';
+import { transitWheelInput } from '../domain/transit-wheel.js';
 import { computePeriodicTransitForecast, type PeriodicTransitPeriods } from '../domain/periodic-transit.js';
 import { computeSecondaryProgression } from '../domain/secondary-progression.js';
 import { computeMinorProgression } from '../domain/minor-progression.js';
@@ -919,8 +920,10 @@ async function buildTransitsSectionPlan(
 
   let svg: PdfChartSectionPlan['svg'];
   if (options.wheel) {
-    const natalRing = chartWheelRing(data.natal, vt.natalLabel);
-    const transitRing = chartWheelRing(data.transit, vt.transitRingLabel);
+    const { natalRing, transitRing } = transitWheelInput(data, filter, {
+      natal: vt.natalLabel,
+      transit: vt.transitRingLabel,
+    });
     const crossAspects: readonly CrossRingAspects[] = [{ innerRingIndex: 0, outerRingIndex: 1, aspects: shown }];
     const markup = renderMultiWheelSvg([natalRing, transitRing], crossAspects);
     svg = { markup: standaloneSvg(markup), width: 800, height: 800 };
