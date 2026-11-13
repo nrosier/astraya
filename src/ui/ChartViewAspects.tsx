@@ -6,7 +6,7 @@
  */
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { formatOrb } from './format.js';
-import { aspectHarmonicFamily } from '../astrology/aspects.js';
+import { aspectHarmonicFamily, aspectTone } from '../astrology/aspects.js';
 import {
   allMidpointsRows,
   antisciaRows,
@@ -39,13 +39,10 @@ function familyText(row: AspectRow): string {
 
 /**
  * The aspect marks (#1532), keyed by the `ASPECTS` keys. Each mark is drawn in a 24-unit box with `currentColor`
- * strokes; the family picks the colour from the existing `--aspect-*` tokens, as the wheel's glyph classes do.
+ * strokes; its tone (`aspect-icon--<tone>`) comes from `aspectTone`, as the wheel's `data-tone` does.
  */
-const ASPECT_ICONS: Readonly<
-  Record<string, { readonly family: 'hard' | 'soft' | 'minor'; readonly shapes: React.ReactNode }>
-> = {
+const ASPECT_ICONS: Readonly<Record<string, { readonly shapes: React.ReactNode }>> = {
   conjunction: {
-    family: 'hard',
     shapes: (
       <>
         <circle cx="12" cy="12" r="4" />
@@ -54,7 +51,6 @@ const ASPECT_ICONS: Readonly<
     ),
   },
   sextile: {
-    family: 'soft',
     shapes: (
       <>
         <line x1="12" y1="3" x2="12" y2="21" />
@@ -63,10 +59,9 @@ const ASPECT_ICONS: Readonly<
       </>
     ),
   },
-  square: { family: 'hard', shapes: <rect x="6" y="6" width="12" height="12" /> },
-  trine: { family: 'soft', shapes: <polygon points="12,5 19,18 5,18" /> },
+  square: { shapes: <rect x="6" y="6" width="12" height="12" /> },
+  trine: { shapes: <polygon points="12,5 19,18 5,18" /> },
   opposition: {
-    family: 'hard',
     shapes: (
       <>
         <circle cx="5" cy="12" r="3" />
@@ -76,7 +71,6 @@ const ASPECT_ICONS: Readonly<
     ),
   },
   quincunx: {
-    family: 'minor',
     shapes: (
       <>
         <line x1="4" y1="7" x2="20" y2="7" />
@@ -87,13 +81,13 @@ const ASPECT_ICONS: Readonly<
   },
 };
 
-/** The aspect's mark before its name on screen (#1532); no mark for an aspect outside the six, and `aria-hidden` since the name is already in the cell. */
+/** The aspect's mark before its name on screen (#1532); no mark for an aspect outside the six, and `aria-hidden` since the name is already in the cell. The tone comes from `aspectTone`. */
 export function AspectIcon({ aspectKey }: { readonly aspectKey: string }): React.JSX.Element | null {
   const icon = ASPECT_ICONS[aspectKey];
   if (icon === undefined) return null;
   return (
     <svg
-      className={`aspect-icon aspect-icon--${icon.family}`}
+      className={`aspect-icon aspect-icon--${aspectTone(aspectKey)}`}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
