@@ -35,7 +35,7 @@
  * @conventions Only the lower triangle below the diagonal is drawn (an aspect is symmetric); orb is shown as signed whole degrees (`separation - exact angle`, negative when short of exact) with an `a`/`s` applying/separating marker; cell/font sizes are fractions of a cell computed from panel width divided by row count, and the orb stack is hidden below `MIN_ORB_FONT_SIZE` to avoid overlapping, unreadably small text.
  * @exports renderAspectMatrixSvg, fitFontSize, formatSignedOrb, positionParts; MatrixBody, MatrixAspect, MatrixInteraction, AspectMatrixInput types.
  */
-import { type OrbRuleKind, aspectTone } from '../astrology/aspects.js';
+import { type OrbRuleKind, aspectByKey, aspectTone } from '../astrology/aspects.js';
 import { SIGNS } from '../astrology/signs.js';
 import type { Degrees } from '../ephemeris/types.js';
 import { TIGHT_ORB_DEG } from './aspect-web.js';
@@ -129,6 +129,12 @@ export function formatSignedOrb(signedOrb: Degrees): string {
 /** An unordered pair key, so a lookup finds the aspect however the caller ordered its two bodies. */
 function pairKey(a: string, b: string): string {
   return a <= b ? `${a} ${b}` : `${b} ${a}`;
+}
+
+/** The cell's `data-tone` (#1532) from the catalogue; none for an empty cell or a key outside the catalogue. */
+function aspectToneAttrs(aspect: MatrixAspect | undefined): Readonly<Record<string, string>> | undefined {
+  const tone = aspect === undefined ? undefined : aspectByKey(aspect.aspectKey)?.tone;
+  return tone === undefined ? undefined : { 'data-tone': tone };
 }
 
 function pad2(value: number): string {
@@ -321,6 +327,7 @@ export function renderAspectMatrixSvg(
           cell,
           cell,
           aspect ? `chart-matrix-cell chart-matrix-cell-${aspect.aspectKey}${tight}` : 'chart-matrix-cell',
+          aspectToneAttrs(aspect),
         ),
       );
       if (!aspect) continue;

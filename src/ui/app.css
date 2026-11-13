@@ -4956,26 +4956,15 @@ svg text.chart-symbol-text-unicode {
  * The grid repeats the wheel's family colouring, so "is this chart full of
  * squares?" is answerable from either one.
  */
-.chart-matrix-cell-semisquare,
-.chart-matrix-cell-square,
-.chart-matrix-cell-sesquiquadrate,
-.chart-matrix-cell-opposition {
+.chart-matrix-cell[data-tone='hard'] {
   fill: color-mix(in oklab, var(--aspect-hard) 12%, transparent);
 }
 
-.chart-matrix-cell-conjunction,
-.chart-matrix-cell-semisextile,
-.chart-matrix-cell-sextile,
-.chart-matrix-cell-trine {
+.chart-matrix-cell[data-tone='soft'] {
   fill: color-mix(in oklab, var(--aspect-soft) 12%, transparent);
 }
 
-.chart-matrix-cell-quintile,
-.chart-matrix-cell-biquintile,
-.chart-matrix-cell-decile,
-.chart-matrix-cell-novile,
-.chart-matrix-cell-septile,
-.chart-matrix-cell-quincunx {
+.chart-matrix-cell[data-tone='minor'] {
   fill: color-mix(in oklab, var(--aspect-minor) 12%, transparent);
 }
 
