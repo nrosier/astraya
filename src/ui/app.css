@@ -5309,32 +5309,21 @@ svg text.chart-symbol-text-unicode {
    * family instead — solid for hard aspects, dashed for soft, dotted for minor — so a reader
    * can tell them apart by shape alone, not by trusting a printer's colour rendering.
    */
-  .chart-aspect-semisquare,
-  .chart-aspect-square,
-  .chart-aspect-sesquiquadrate,
-  .chart-aspect-opposition {
+  .chart-aspect[data-tone='hard'] {
     stroke: #000;
     stroke-width: 2;
     stroke-dasharray: none;
     opacity: 0.85;
   }
 
-  .chart-aspect-conjunction,
-  .chart-aspect-semisextile,
-  .chart-aspect-sextile,
-  .chart-aspect-trine {
+  .chart-aspect[data-tone='soft'] {
     stroke: #000;
     stroke-width: 1.5;
     stroke-dasharray: 5 3;
     opacity: 0.75;
   }
 
-  .chart-aspect-quintile,
-  .chart-aspect-biquintile,
-  .chart-aspect-decile,
-  .chart-aspect-novile,
-  .chart-aspect-septile,
-  .chart-aspect-quincunx {
+  .chart-aspect[data-tone='minor'] {
     stroke: #000;
     stroke-width: 1;
     stroke-dasharray: 1 2;
