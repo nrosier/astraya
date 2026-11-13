@@ -19,6 +19,8 @@ const en = {
   },
   presetsShort: { important: 'Important', outer: 'Outer', personal: 'Personal', all: 'All', custom: 'Custom' },
   count: (shown: number, total: number, preset: string) => `${preset} · ${String(shown)} of ${String(total)} shown`,
+  customNotSaved:
+    'No custom selection is saved yet, so Custom shows the Important selection. Change it and choose Apply as Default to keep your own.',
   clearFilters: 'Clear filters',
   groupAll: 'All',
   groupClear: 'Clear',
@@ -62,6 +64,8 @@ const nl: typeof en = {
   },
   presetsShort: { important: 'Belangrijk', outer: 'Buiten', personal: 'Persoonlijk', all: 'Alle', custom: 'Aangepast' },
   count: (shown, total, preset) => `${preset} · ${String(shown)} van ${String(total)} getoond`,
+  customNotSaved:
+    'Er is nog geen eigen selectie bewaard, dus Aangepast toont de selectie Belangrijk. Pas die aan en kies Toepassen als standaard om je eigen selectie te bewaren.',
   clearFilters: 'Filters wissen',
   groupAll: 'Alle',
   groupClear: 'Geen',
