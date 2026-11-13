@@ -79,7 +79,7 @@ test('a filter that matches no transits shows the empty state, and Clear filters
   const [, total] = await transitCount(page);
 
   // Untick every transiting and natal body in the filter dialog: nothing can match.
-  await page.getByRole('button', { name: 'Which transits to show', exact: true }).click();
+  await page.getByRole('button', { name: 'Change filters', exact: true }).click();
   await page
     .getByRole('group', { name: 'Transiting planets' })
     .getByRole('button', { name: 'Clear', exact: true })

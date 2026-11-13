@@ -389,7 +389,7 @@ describe('TransitFilterPanel (#416)', () => {
   it('is in Dutch when the language is Dutch', async () => {
     const container = await mount('nl');
     expect(count(container)).toMatch(/^Belangrijk · \d+ van \d+ getoond$/);
-    expect(container.textContent).toContain('Welke transits tonen');
+    expect(container.textContent).toContain('Filters wijzigen');
     await openCard(container);
     expect(container.textContent).toContain('Alleen toenemend');
     expect(container.textContent).toContain('Belangrijk, voor een dag');
