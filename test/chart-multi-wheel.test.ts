@@ -322,6 +322,16 @@ describe('renderMultiWheelSvg zodiac ring', () => {
   });
 });
 
+describe('renderMultiWheelSvg ring roles (#1532)', () => {
+  it('wraps only a transit-role ring glyph group in chart-glyph-transit', () => {
+    const transit: WheelRingInput = { ...natalRing, label: 'Transit', role: 'transit' };
+    const svg = renderMultiWheelSvg([natalRing, transit]);
+    expect(countClass(svg, 'chart-glyph-transit')).toBe(1);
+    const natalOnly = renderMultiWheelSvg([{ ...natalRing, role: 'natal' }, { ...transit, role: undefined }]);
+    expect(countClass(natalOnly, 'chart-glyph-transit')).toBe(0);
+  });
+});
+
 describe('renderMultiWheelSvg house structure', () => {
   it('numbers all twelve houses', () => {
     const svg = renderMultiWheelSvg([natalRing]);
