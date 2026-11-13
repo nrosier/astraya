@@ -1,0 +1,2199 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Charts page mockup v4: Wheel, Placements, Aspects (evaluation only)</title>
+    <style>
+      /* Palette scheme blocks: the only place hex literals appear. Values: owner-adopted. */
+      :root,
+      [data-theme='dark'] {
+        color-scheme: dark;
+        --bg: #0b0c18;
+        --surface: #15162a;
+        --surface-hover: #1d1e36;
+        --line: #2a2b45;
+        --fg: #eceafa;
+        --muted: #a09dc0;
+        --accent: #8b9cff;
+        --solar: #e5b567;
+        --aspect-hard: #ff8189;
+        --aspect-soft: #6ec3ff;
+        --aspect-minor: #8fe0a0;
+        --element-fire: #ff7a6b;
+        --element-earth: #6fd08a;
+        --element-air: #f2c14e;
+        --element-water: #6aa8ff;
+        --ring-1-color: #4fd1c5;
+        --ring-2-color: #ff8ad1;
+      }
+      [data-theme='light'] {
+        color-scheme: light;
+        --bg: #fbfaff;
+        --surface: #f3f1fa;
+        --surface-hover: #ebe8f6;
+        --line: #e2dff0;
+        --fg: #16152b;
+        --muted: #5c5878;
+        --accent: #3b49df;
+        --solar: #835208;
+        --aspect-hard: #b3261e;
+        --aspect-soft: #1857c4;
+        --aspect-minor: #0a4d28;
+        --element-fire: #b92323;
+        --element-earth: #236827;
+        --element-air: #7d510b;
+        --element-water: #1d4ed8;
+        --ring-1-color: #0f766e;
+        --ring-2-color: #9d174d;
+      }
+
+      /* Metrics measured from the real app at 1920x1080 (root 14px, 3.5px grid). */
+      :root {
+        --text-2xs: 0.75rem;
+        --text-xs: 0.79rem;
+        --text-sm: 0.889rem;
+        --text-caption: 0.85rem;
+        --text-base: 1rem;
+        --text-lg: 1.125rem;
+        --text-title: 2.5rem;
+        --space-1: 3.5px;
+        --space-2: 7px;
+        --space-3: 10.5px;
+        --space-4: 14px;
+        --space-6: 21px;
+        --space-8: 28px;
+        --ctl-h: 28px;
+        --radius: 10px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        font-size: 87.5%;
+      }
+      body {
+        margin: 0;
+        height: 100vh;
+        overflow: hidden;
+        background: var(--bg);
+        color: var(--fg);
+        font-family:
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+        font-size: var(--text-base);
+        line-height: 1.3;
+        display: grid;
+        grid-template-columns: 224px minmax(0, 1fr);
+      }
+      a {
+        color: inherit;
+      }
+      h1,
+      h2 {
+        margin: 0;
+      }
+
+      /* App shell: sidebar */
+      .side {
+        background: var(--surface);
+        border-right: 1px solid var(--line);
+        display: flex;
+        flex-direction: column;
+        padding: var(--space-4);
+        gap: var(--space-4);
+        min-height: 0;
+      }
+      .brand {
+        font-weight: 650;
+      }
+      .person {
+        font-weight: 650;
+        padding-bottom: var(--space-3);
+        border-bottom: 1px solid var(--line);
+      }
+      .side nav {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .side nav a {
+        display: block;
+        padding: 0 var(--space-3);
+        line-height: 30px;
+        border-radius: 5px;
+        text-decoration: none;
+        font-weight: 650;
+        color: var(--muted);
+      }
+      .side nav a[aria-current] {
+        background: var(--surface-hover);
+        color: var(--fg);
+      }
+      .side-foot {
+        margin-top: auto;
+        display: grid;
+        gap: var(--space-3);
+        font-size: var(--text-2xs);
+        color: var(--muted);
+      }
+      .ctl {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        border: 0;
+        margin: 0;
+        padding: 0;
+        min-width: 0;
+      }
+      .ctl > legend {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        padding: 0;
+      }
+      .ctl > .lab {
+        font-size: var(--text-xs);
+        color: var(--muted);
+      }
+
+      /* Pill segmented control: borderless pill on a tinted track, solid accent when active. */
+      .seg {
+        display: inline-flex;
+        background: var(--line);
+        border-radius: 999px;
+        padding: 2px;
+        height: var(--ctl-h);
+      }
+      .seg label {
+        display: flex;
+        align-items: center;
+        padding: 0 var(--space-3);
+        border-radius: 999px;
+        font-size: var(--text-sm);
+        color: var(--muted);
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .seg label:hover {
+        background: var(--surface-hover);
+        color: var(--fg);
+      }
+      .seg input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .seg label:has(input:checked),
+      .seg label:has(input:checked):hover {
+        background: var(--accent);
+        color: var(--bg);
+      }
+      .seg label:has(input:focus-visible),
+      .chip:has(input:focus-visible) {
+        outline: 2px solid var(--fg);
+        outline-offset: 1px;
+      }
+
+      /* Main column */
+      main {
+        min-width: 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        width: min(100%, 1078px);
+        margin: 0 auto;
+        padding: var(--space-4) var(--space-6) var(--space-3);
+        gap: var(--space-3);
+      }
+      .crumb {
+        font-size: var(--text-xs);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+        text-decoration: none;
+      }
+      .page-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--space-6);
+      }
+      h1 {
+        font-size: var(--text-title);
+        font-weight: 620;
+        line-height: 1.1;
+      }
+      .basis {
+        margin: 0;
+        font-size: var(--text-caption);
+        color: var(--muted);
+      }
+      .basis a {
+        color: var(--accent);
+      }
+      .actions {
+        display: flex;
+        gap: var(--space-2);
+      }
+      .btn {
+        font: inherit;
+        font-size: var(--text-base);
+        height: 32px;
+        padding: 0 var(--space-4);
+        border-radius: 5.25px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--fg);
+        cursor: pointer;
+      }
+      .btn:hover {
+        background: var(--surface-hover);
+      }
+      .btn.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: var(--bg);
+        font-weight: 600;
+      }
+      .btn.quiet {
+        background: transparent;
+        border-color: transparent;
+        color: var(--accent);
+        height: 26px;
+        padding: 0 var(--space-2);
+        font-size: var(--text-sm);
+      }
+      .btn.quiet:hover {
+        background: var(--surface-hover);
+        border-color: var(--surface-hover);
+      }
+      .btn.quiet[aria-pressed='true'] {
+        background: var(--surface-hover);
+        color: var(--fg);
+      }
+
+      /* Controls row (.chart-controls-row): three labelled selects */
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-3);
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-1);
+        flex: 0 1 20rem;
+        min-width: min(100%, 12rem);
+      }
+      .field label {
+        font-size: var(--text-xs);
+        font-weight: 550;
+        color: var(--muted);
+      }
+      .field select {
+        font: inherit;
+        height: 2.68rem;
+        padding: 0 var(--space-3);
+        border-radius: 5.25px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--fg);
+        width: 100%;
+      }
+      .field select:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 1px;
+      }
+
+      /* Tab row (.tab-row): links above 40rem, labelled Select at and below it */
+      .tab-row {
+        border-bottom: 1px solid var(--line);
+        display: flex;
+      }
+      .tab-row nav {
+        display: flex;
+      }
+      .chart-view-link {
+        padding: 0 var(--space-3);
+        line-height: 36px;
+        font-size: var(--text-sm);
+        color: var(--muted);
+        text-decoration: none;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -1px;
+      }
+      .chart-view-link:hover {
+        color: var(--fg);
+      }
+      .chart-view-link[aria-current='page'] {
+        color: var(--fg);
+        font-weight: 600;
+        border-bottom-color: var(--accent);
+      }
+      .chart-view-link:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: -2px;
+      }
+      .chart-view-select {
+        display: none;
+      }
+
+      .panel {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .panel[hidden] {
+        display: none;
+      }
+      .empty-panel {
+        border: 1px dashed var(--line);
+        border-radius: 8.75px;
+        color: var(--muted);
+        display: grid;
+        place-items: center;
+        flex: 1;
+        font-size: var(--text-sm);
+      }
+
+      /* Workbench: dial then inspector */
+      .shell {
+        container: wb / inline-size;
+        flex: 1;
+        min-height: 0;
+        display: flex;
+      }
+      .workbench {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--space-4) var(--space-8);
+        align-items: stretch;
+        width: 100%;
+        min-height: 0;
+        grid-template-rows: minmax(0, 1fr);
+      }
+      @container wb (min-width: 68rem) {
+        .workbench {
+          grid-template-columns: minmax(0, 1fr) 24rem;
+        }
+      }
+      .dial {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+        min-height: 0;
+        min-width: 0;
+      }
+      .hint {
+        margin: 0;
+        font-size: var(--text-sm);
+        color: var(--muted);
+      }
+      .wheel-wrap {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        justify-content: center;
+      }
+      .wheel-wrap svg {
+        height: 100%;
+        width: auto;
+        max-width: 100%;
+        aspect-ratio: 1 / 1;
+      }
+      .dial-controls {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+      }
+      .dial-row {
+        display: flex;
+        align-items: center;
+        gap: var(--space-4);
+        flex-wrap: wrap;
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-1);
+        height: var(--ctl-h);
+        padding: 0 var(--space-3);
+        border-radius: 999px;
+        font-size: var(--text-sm);
+        cursor: pointer;
+        border: 1px solid var(--line);
+        color: var(--muted);
+      }
+      .chip:hover {
+        background: var(--surface-hover);
+      }
+      .chip:has(input:checked) {
+        color: var(--fg);
+        border-color: var(--accent);
+      }
+      .chip input {
+        accent-color: var(--accent);
+        margin: 0 var(--space-1) 0 0;
+      }
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-4);
+        font-size: var(--text-xs);
+        color: var(--muted);
+      }
+      .legend .item {
+        display: inline-flex;
+        align-items: center;
+      }
+      .sw {
+        display: inline-block;
+        vertical-align: middle;
+        width: 28px;
+        height: 8px;
+        margin-right: var(--space-2);
+      }
+      .sw line {
+        stroke-width: 2;
+      }
+      .c-hard {
+        stroke: var(--aspect-hard);
+      }
+      .c-soft {
+        stroke: var(--aspect-soft);
+      }
+      .c-minor {
+        stroke: var(--aspect-minor);
+      }
+
+      /* Instrument bar under the wheel: ring toggle | divider | tone pills | divider | Filters pill. Popover opens upward from the bar's right end. */
+      .dial-controls {
+        align-self: center;
+        max-width: 100%;
+      }
+      .bar-anchor {
+        position: relative;
+        display: inline-block;
+        max-width: 100%;
+      }
+      .bar {
+        display: inline-flex;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: var(--space-3);
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: var(--space-1) var(--space-3);
+        max-width: 100%;
+      }
+      .bar-group {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+      }
+      .bar-div {
+        align-self: center;
+        width: 0;
+        height: 1.25rem;
+        border-left: 1px solid var(--line);
+      }
+      .fpill {
+        display: inline-flex;
+        align-items: center;
+        height: var(--ctl-h);
+        padding: 0 var(--space-3) 0 var(--space-2);
+        border-radius: 999px;
+        border-width: 1px;
+        font-size: var(--text-sm);
+        cursor: pointer;
+        color: var(--muted);
+        background: transparent;
+        white-space: nowrap;
+      }
+      .fpill:hover {
+        background: var(--surface-hover);
+      }
+      .fpill input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .fpill[data-state='all'],
+      .fpill[data-state='partial'] {
+        color: var(--fg);
+      }
+      .fpill[data-state='all'] {
+        background: var(--surface-hover);
+      }
+      .fpill .mark {
+        display: inline-block;
+        width: 1.1em;
+        text-align: center;
+        margin-right: var(--space-1);
+      }
+      .fpill:has(input:focus-visible) {
+        outline: 2px solid var(--fg);
+        outline-offset: 1px;
+      }
+      .fpill-hard {
+        border-style: solid;
+        border-color: var(--aspect-hard);
+      }
+      .fpill-soft {
+        border-style: dashed;
+        border-color: var(--aspect-soft);
+      }
+      .fpill-minor {
+        border-style: dotted;
+        border-color: var(--aspect-minor);
+      }
+      .fbtn {
+        font: inherit;
+        font-size: var(--text-sm);
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+        height: var(--ctl-h);
+        padding: 0 var(--space-3);
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: transparent;
+        color: var(--fg);
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .fbtn:hover,
+      .fbtn[aria-expanded='true'] {
+        background: var(--surface-hover);
+      }
+      .fbtn:focus-visible {
+        outline: 2px solid var(--fg);
+        outline-offset: 1px;
+      }
+
+      /* Filters popover: absolute, above the bar's right end; no layout shift. */
+      .pop {
+        position: absolute;
+        bottom: calc(100% + 0.5rem);
+        right: 0;
+        z-index: 20;
+        width: 28rem;
+        max-width: 92vw;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: var(--space-3);
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-3);
+      }
+      .pop[hidden] {
+        display: none;
+      }
+      .pop-head {
+        display: none;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .pop-head strong {
+        font-size: var(--text-base);
+        font-weight: 600;
+      }
+      .presets {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+      }
+      .ppill {
+        display: inline-flex;
+        align-items: center;
+        height: var(--ctl-h);
+        padding: 0 var(--space-3);
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        font-size: var(--text-sm);
+        color: var(--muted);
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .ppill:hover {
+        background: var(--surface-hover);
+        color: var(--fg);
+      }
+      .ppill input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .ppill:has(input:checked) {
+        color: var(--bg);
+        background: var(--accent);
+        border-color: var(--accent);
+      }
+      .ppill:has(input:focus-visible) {
+        outline: 2px solid var(--fg);
+        outline-offset: 1px;
+      }
+      .checks {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: repeat(8, auto);
+        grid-auto-flow: column;
+        gap: 2px var(--space-4);
+      }
+      .chk {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        min-height: var(--ctl-h);
+        font-size: var(--text-sm);
+        color: var(--fg);
+        cursor: pointer;
+        border-radius: 5px;
+        padding: 0 var(--space-1);
+      }
+      .chk:hover {
+        background: var(--surface-hover);
+      }
+      .chk input {
+        accent-color: var(--accent);
+        margin: 0;
+      }
+      .chk:has(input:focus-visible) {
+        outline: 2px solid var(--fg);
+        outline-offset: 1px;
+      }
+      .chk .gl {
+        display: inline-block;
+        width: 1.6em;
+        text-align: center;
+        font-family: system-ui, 'Segoe UI Symbol', 'Apple Symbols', sans-serif;
+      }
+      .gl-hard {
+        color: var(--aspect-hard);
+      }
+      .gl-soft {
+        color: var(--aspect-soft);
+      }
+      .gl-minor {
+        color: var(--aspect-minor);
+      }
+      .scrim {
+        display: none;
+      }
+
+      /* Selection inspector card */
+      .inspector {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 8.75px;
+        padding: var(--space-4);
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-3);
+        min-height: 0;
+        overflow: auto;
+        align-self: stretch;
+      }
+      .inspector h2 {
+        font-size: var(--text-lg);
+        font-weight: 600;
+      }
+      .insp-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--space-2);
+      }
+      .badges {
+        display: flex;
+        gap: var(--space-2);
+        flex-wrap: wrap;
+      }
+      .badge {
+        font-size: var(--text-xs);
+        padding: 1px var(--space-2);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--muted);
+      }
+      .badge.rx {
+        color: var(--solar);
+        border-color: var(--solar);
+      }
+      .rel {
+        margin: 0;
+        padding-left: var(--space-4);
+        font-size: var(--text-sm);
+        color: var(--muted);
+      }
+      .rel li {
+        margin: 2px 0;
+      }
+
+      /* Drawn glyph symbols (path data copied from src/chart/glyphs.ts, 0-100 box). Colour comes from the use element's `color`. */
+      .g100 > * {
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 6;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .g100 > .glyph-fill {
+        fill: currentColor;
+        stroke: none;
+      }
+      .g24 > * {
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .ico {
+        display: inline-block;
+        width: 1.25em;
+        height: 1.25em;
+        vertical-align: -0.28em;
+        margin-right: var(--space-2);
+        color: var(--fg);
+      }
+      .ico.sign {
+        color: var(--accent);
+      }
+      .chip .ico {
+        margin-right: var(--space-1);
+      }
+      .ai {
+        display: inline-block;
+        width: 1.45em;
+        height: 1.45em;
+        vertical-align: -0.35em;
+        margin-right: var(--space-2);
+      }
+      .ai-hard {
+        color: var(--aspect-hard);
+      }
+      .ai-soft {
+        color: var(--aspect-soft);
+      }
+      .ai-minor {
+        color: var(--aspect-minor);
+      }
+      .ai-hard + .nm,
+      .ai-soft + .nm,
+      .ai-minor + .nm {
+        color: var(--fg);
+      }
+
+      /* Cards and tables (natal mockup styles) */
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: var(--space-3) var(--space-4);
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+        min-height: 0;
+        min-width: 0;
+      }
+      .card-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        min-height: var(--ctl-h);
+      }
+      .card h2 {
+        font-size: var(--text-lg);
+        font-weight: 600;
+      }
+      .stack {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-3);
+        overflow: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: var(--text-sm);
+        font-variant-numeric: tabular-nums;
+        table-layout: fixed;
+      }
+      th {
+        text-align: left;
+        font-size: var(--text-xs);
+        font-weight: 600;
+        color: var(--muted);
+        padding: var(--space-1) var(--space-2);
+        border-bottom: 1px solid var(--line);
+        background: var(--surface);
+      }
+      td {
+        padding: 2px var(--space-2);
+        border-bottom: 1px solid var(--line);
+        white-space: nowrap;
+      }
+      tbody tr:last-child td {
+        border-bottom: 0;
+      }
+      tbody tr:hover td {
+        background: var(--surface-hover);
+      }
+      td.num {
+        text-align: right;
+        padding-right: var(--space-6);
+      }
+      .retro {
+        color: var(--solar);
+      }
+      .empty {
+        color: var(--muted);
+        padding: var(--space-3) var(--space-2);
+        font-size: var(--text-sm);
+      }
+      .legend-line {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-6);
+        align-items: center;
+        font-size: var(--text-xs);
+        color: var(--muted);
+        padding-top: var(--space-1);
+      }
+      .legend-line strong {
+        color: var(--fg);
+        font-weight: 600;
+      }
+      .legend-line .item {
+        display: inline-flex;
+        align-items: center;
+      }
+
+      /* Wheel colours: classes only (no SVG colour presentation attributes). */
+      svg.wheel {
+        display: block;
+        font-variant-numeric: tabular-nums;
+      }
+      .wheel text {
+        font-family: system-ui, 'Segoe UI Symbol', 'Apple Symbols', sans-serif;
+      }
+      .fill-bg {
+        fill: var(--bg);
+      }
+      .fill-surface {
+        fill: var(--surface);
+      }
+      .st-line {
+        stroke: var(--line);
+      }
+      .wheel .st-struct {
+        stroke: var(--muted);
+      }
+      .tick-major,
+      .tick-med,
+      .leader {
+        stroke: var(--muted);
+      }
+      .tick-minor {
+        stroke: var(--line);
+      }
+      .house-num {
+        fill: var(--muted);
+      }
+      .axis {
+        stroke: var(--solar);
+      }
+      .axis-label {
+        fill: var(--solar);
+        font-weight: 700;
+      }
+      .axis-deg {
+        fill: var(--fg);
+      }
+      .natal-glyph {
+        color: var(--fg);
+      }
+      .transit-glyph {
+        color: var(--ring-1-color);
+      }
+      .body-tick {
+        stroke: var(--fg);
+      }
+      .body-tick-t {
+        stroke: var(--ring-1-color);
+      }
+      .cusp-t {
+        stroke: var(--ring-1-color);
+      }
+      .deg-label {
+        fill: var(--fg);
+      }
+      .deg-label-t {
+        fill: var(--ring-1-color);
+      }
+      .min-label {
+        fill: var(--muted);
+      }
+      .rx-mark {
+        fill: var(--solar);
+        font-weight: 700;
+      }
+      .legend-sw-natal {
+        stroke: var(--accent);
+      }
+      .legend-sw-transit {
+        stroke: var(--ring-1-color);
+      }
+      .legend-txt {
+        fill: var(--fg);
+      }
+      .sign-glyph {
+        color: var(--accent);
+        opacity: 0.8;
+      }
+      .wheel .hit {
+        fill: var(--fg);
+        fill-opacity: 0;
+        cursor: pointer;
+      }
+      .wheel .body:hover .hit {
+        fill-opacity: 0.12;
+      }
+      .wheel .body.sel .hit {
+        fill: var(--accent);
+        fill-opacity: 0.25;
+      }
+      .wheel .body:focus-visible {
+        outline: none;
+      }
+      .wheel .body:focus-visible .hit {
+        stroke: var(--fg);
+        stroke-width: 1.5;
+        fill-opacity: 0.12;
+      }
+      .wheel .dim {
+        stroke-opacity: 0.12;
+      }
+
+      /* Phone: 40rem and below swaps the tab row for the labelled Chart view Select; the sidebar goes away. */
+      @media (max-width: 40rem) {
+        body {
+          grid-template-columns: minmax(0, 1fr);
+          overflow: auto;
+          height: auto;
+        }
+        .side {
+          display: none;
+        }
+        .page-head {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .tab-row nav {
+          display: none;
+        }
+        .chart-view-select {
+          display: flex;
+          flex-direction: column;
+          gap: var(--space-1);
+          width: 100%;
+          margin: var(--space-1) 0 var(--space-2);
+        }
+        .chart-view-select label {
+          font-size: var(--text-xs);
+          font-weight: 550;
+          color: var(--muted);
+        }
+        .chart-view-select select {
+          font: inherit;
+          height: 2.68rem;
+          padding: 0 var(--space-3);
+          border-radius: 5.25px;
+          border: 1px solid var(--line);
+          background: var(--surface);
+          color: var(--fg);
+        }
+        .tab-row {
+          border-bottom: 0;
+        }
+        .wheel-wrap svg {
+          height: auto;
+          width: 100%;
+        }
+      }
+
+      /* Bar phone layout at 640px and below: container radius var(--radius), dividers hidden, ring toggle row 1, tones + Filters row 2, Filters opens a bottom sheet. */
+      @media (max-width: 640px) {
+        .bar {
+          flex-wrap: wrap;
+          justify-content: center;
+          border-radius: var(--radius);
+          padding: var(--space-2) var(--space-3);
+          row-gap: var(--space-2);
+        }
+        .bar-div {
+          display: none;
+        }
+        .bar-group.g-rings {
+          flex: 1 1 100%;
+          justify-content: center;
+        }
+        .pop {
+          position: fixed;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          width: auto;
+          max-width: none;
+          max-height: 80vh;
+          overflow: auto;
+          border-radius: var(--radius) var(--radius) 0 0;
+          padding: var(--space-4);
+          z-index: 40;
+        }
+        .pop-head {
+          display: flex;
+        }
+        .ppill,
+        .chk {
+          min-height: 3.15rem;
+        }
+        .ppill {
+          height: auto;
+        }
+        .scrim:not([hidden]) {
+          display: block;
+          position: fixed;
+          inset: 0;
+          background: var(--bg);
+          opacity: 0.7;
+          z-index: 30;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true" focusable="false">
+      <defs>
+        <symbol class="g100" id="b-sun" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="36" />
+          <circle cx="50" cy="50" r="8" class="glyph-fill" />
+        </symbol>
+        <symbol class="g100" id="b-moon" viewBox="0 0 100 100">
+          <path
+            d="M35.62 14.02 C32.63 14.13 29.75 14.62 26.98 15.42 C41.89 19.82 52.78 33.68 52.78 50.01 C52.78 66.34 41.89 80.2 26.98 84.59 C30.17 85.52 33.54 86 37.03 86 C56.9 86 73.02 69.88 73.02 50.01 C73.02 30.14 56.9 14.02 37.03 14.02 C36.56 14.02 36.09 14 35.62 14.02 L35.62 14.02"
+          />
+        </symbol>
+        <symbol class="g100" id="b-mercury" viewBox="0 0 100 100">
+          <path
+            d="M69.31 47.1 C69.45 55.15 63.69 62.83 55.95 65.02 C49.08 67.09 41.13 64.81 36.5 59.3 C31.69 53.81 30.55 45.42 33.86 38.89 C36.92 32.59 43.71 28.29 50.74 28.42 C57.51 28.42 64.11 32.4 67.19 38.44 C68.58 41.1 69.33 44.1 69.31 47.1 L69.31 47.1 M66.49 14.02 C65.94 20.95 60.24 27.04 53.37 28.07 C47.08 29.14 40.24 26.07 37.13 20.44 C36 18.47 35.3 16.26 35.1 14 M50.64 65.71 C50.64 72.47 50.64 79.24 50.64 86 M42.19 77.54 C47.82 77.54 53.46 77.54 59.1 77.54"
+          />
+        </symbol>
+        <symbol class="g100" id="b-venus" viewBox="0 0 100 100">
+          <path
+            d="M71.66 36.84 C71.74 44.19 67.73 51.37 61.5 55.2 C54.93 59.4 46.07 59.56 39.35 55.61 C32.92 51.97 28.64 44.82 28.52 37.4 C28.26 30.14 32 22.92 38.03 18.91 C44.44 14.47 53.29 14 60.14 17.7 C66.77 21.14 71.33 28.24 71.63 35.73 C71.65 36.1 71.66 36.47 71.66 36.84 L71.66 36.84 M50.09 58.47 C50.09 67.65 50.09 76.82 50.09 86 M38.32 74.2 C46.17 74.2 54.01 74.2 61.86 74.2"
+          />
+        </symbol>
+        <symbol class="g100" id="b-mars" viewBox="0 0 100 100">
+          <path
+            d="M85.56 14 C76.66 22.85 67.76 31.7 58.87 40.54 M62.5 14.28 C70.09 14.28 77.67 14.28 85.25 14.28 C85.25 21.82 85.25 29.36 85.25 36.9"
+          />
+          <path
+            d="M68.49 57.93 C68.63 68.07 62.18 77.87 52.85 81.83 C43.59 86 32 84.04 24.65 77.02 C17.3 70.34 14.44 59.28 17.61 49.87 C20.69 40.03 30.1 32.58 40.41 31.93 C50.34 31.04 60.42 36.48 65.19 45.23 C67.35 49.09 68.5 53.5 68.49 57.93 L68.49 57.93"
+          />
+        </symbol>
+        <symbol class="g100" id="b-jupiter" viewBox="0 0 100 100">
+          <path
+            d="M66.82 14 L66.82 86 M78.68 67.54 L21.32 67.54 M27.25 39.85 C25.27 39.85 21.32 38 21.32 30.62 C21.32 23.23 29.23 15.85 37.14 15.85 C45.05 15.85 52.97 21.38 52.97 34.31 C52.97 47.23 43.08 67.54 23.29 67.54"
+          />
+        </symbol>
+        <symbol class="g100" id="b-saturn" viewBox="0 0 100 100">
+          <path
+            d="M40.12 14 L40.12 70.43 M30.55 23.24 L54.02 23.24 M67.49 82.11 C65.54 84.05 63.58 86 61.63 86 C59.67 86 55.76 84.05 55.76 80.16 C55.76 76.27 57.72 72.38 61.63 68.49 C65.54 64.59 69.45 56.81 69.45 49.03 C69.45 41.24 65.54 33.46 57.72 33.46 C50.32 33.46 44.03 37.35 40.12 45.14"
+          />
+        </symbol>
+        <symbol class="g100" id="b-uranus" viewBox="0 0 100 100">
+          <path
+            d="M28.27 62.07 C23.66 62.07 19.06 62.07 14.45 62.07 C14.65 61.43 14.01 60.15 14.83 60 C17.33 59.37 19.84 58.74 22.35 58.12 C22.35 44.95 22.35 31.78 22.35 18.61 C19.71 17.95 17.08 17.3 14.45 16.64 C14.65 16.05 14 14.61 14.84 14.66 C19.32 14.66 23.79 14.66 28.27 14.66 C28.27 30.46 28.27 46.27 28.27 62.07 L28.27 62.07"
+            class="glyph-fill"
+          />
+          <path
+            d="M71.73 62.07 C76.34 62.07 80.94 62.07 85.55 62.07 C85.35 61.43 85.99 60.15 85.17 60 C82.67 59.37 80.16 58.74 77.65 58.12 C77.65 44.95 77.65 31.78 77.65 18.61 C80.29 17.95 82.92 17.3 85.55 16.64 C85.35 16.05 86 14.61 85.16 14.66 C80.68 14.66 76.21 14.66 71.73 14.66 C71.73 30.46 71.73 46.27 71.73 62.07 L71.73 62.07"
+            class="glyph-fill"
+          />
+          <path
+            d="M26.3 38.36 C42.1 38.36 57.9 38.36 73.7 38.36 M50 14.66 C50 31.78 50 48.9 50 66.02 M57.9 75.89 C58.16 81.17 52.05 85.39 47.2 83.3 C42.24 81.63 40.4 74.56 44 70.71 C47.19 66.79 54.19 67.23 56.69 71.7 C57.48 72.95 57.91 74.42 57.9 75.89 L57.9 75.89"
+          />
+        </symbol>
+        <symbol class="g100" id="b-neptune" viewBox="0 0 100 100">
+          <path
+            d="M29.1 16.6 C23.86 52.19 32.59 57.53 50.05 57.53 C67.51 57.53 76.24 52.19 71 16.6 M50.05 20.15 L50.05 86 M36.08 71.76 L64.02 71.76 M19.44 21.51 L29.35 14 L36.71 24.1 M41.15 30.01 L49.79 21.02 L58.61 29.81 M63.26 24.72 L70.75 14.72 L80.56 22.36"
+          />
+        </symbol>
+        <symbol class="g100" id="b-pluto" viewBox="0 0 100 100">
+          <path
+            d="M34 70 L66 70 M50 86 L50 52 M64 28 C64 35.73 57.73 42 50 42 C42.27 42 36 35.73 36 28 C36 20.27 42.27 14 50 14 C57.73 14 64 20.27 64 28 L64 28 M74 28 C74 41.25 63.25 52 50 52 C36.75 52 26 41.25 26 28 C26 28 26 28 26 28"
+          />
+        </symbol>
+        <symbol class="g100" id="s-0" viewBox="0 0 100 100">
+          <path
+            d="M47.03 88.86 C47.03 85.61 47.06 82.36 46.9 79.12 C46.54 71.58 45.6 64.08 44.3 56.65 C43.18 50.37 41.81 44.12 39.78 38.08 C38.6 34.66 37.23 31.31 35.61 28.09 C34.13 25.2 32.44 22.37 30.15 20.05 C28.65 18.55 26.79 17.27 24.66 16.94 C22.77 16.65 20.74 17.09 19.22 18.29 C17.38 19.72 16.24 21.89 15.67 24.13 C15.06 26.59 15.04 29.18 15.38 31.69 C15.93 35.67 17.52 39.44 19.6 42.85 C17.58 42.85 15.57 42.85 13.56 42.85 C11.47 39.06 9.84 34.95 9.34 30.62 C9 27.63 9.19 24.55 10.13 21.68 C11.13 18.62 13.06 15.86 15.62 13.91 C17.55 12.44 19.91 11.57 22.33 11.38 C24.99 11.14 27.71 11.66 30.08 12.89 C33.17 14.47 35.63 17.05 37.62 19.85 C40.29 23.64 42.26 27.87 43.84 32.22 C46.51 39.65 48 47.46 48.92 55.3 C49.15 57.26 49.34 59.22 49.5 61.19 C49.84 61.19 50.18 61.19 50.51 61.19 C51.11 52.58 52.35 43.97 54.91 35.7 C56.48 30.67 58.54 25.76 61.39 21.32 C63.36 18.28 65.77 15.44 68.87 13.52 C71.2 12.07 73.93 11.27 76.67 11.33 C79.11 11.35 81.56 12.01 83.62 13.34 C85.52 14.56 87.1 16.26 88.3 18.17 C89.92 20.75 90.69 23.8 90.81 26.83 C91 30.8 90.07 34.76 88.59 38.42 C87.97 39.93 87.27 41.41 86.49 42.85 C84.47 42.85 82.44 42.85 80.42 42.85 C82.4 39.27 84.03 35.42 84.62 31.35 C84.98 28.87 84.94 26.31 84.38 23.85 C83.86 21.68 82.85 19.54 81.14 18.05 C79.91 16.96 78.28 16.36 76.64 16.35 C74.71 16.29 72.85 17.08 71.34 18.25 C69.13 19.94 67.48 22.24 66.04 24.6 C63.92 28.15 62.29 31.98 60.85 35.86 C58.78 41.64 57.39 47.65 56.24 53.68 C54.7 61.82 53.61 70.05 53.19 78.32 C53.03 81.25 53 84.18 53.01 87.11 C53.01 87.69 53.01 88.27 53.01 88.86 C51.02 88.86 49.03 88.86 47.03 88.86 L47.03 88.86"
+            class="glyph-fill"
+          />
+        </symbol>
+        <symbol class="g100" id="s-1" viewBox="0 0 100 100">
+          <path
+            d="M37.96 39.27 C34.83 38.05 31.88 36.2 29.77 33.56 C27.1 30.32 25.21 26.54 23.16 22.9 C21.9 20.61 20.48 18.36 18.55 16.57 C17.24 15.36 15.67 14.37 13.9 13.99 C13.07 13.78 12.21 13.78 11.35 13.79 C11.1 13.83 10.89 13.81 10.98 13.49 C10.98 12.01 10.98 10.52 10.98 9.04 C12.37 9.06 13.76 9 15.14 9.08 C17.91 9.31 20.5 10.6 22.61 12.37 C25.34 14.64 27.44 17.57 29.24 20.61 C30.51 22.81 31.74 25.03 33.02 27.22 C34.25 29.29 35.65 31.27 37.35 32.99 C38.84 34.51 40.64 35.77 42.65 36.49 C45.45 37.53 48.48 37.74 51.44 37.62 C54.1 37.49 56.8 37 59.17 35.73 C61.39 34.56 63.18 32.73 64.7 30.77 C66.45 28.51 67.78 25.98 69.22 23.52 C70.5 21.35 71.7 19.12 73.2 17.08 C74.93 14.7 76.99 12.48 79.51 10.93 C81.45 9.75 83.69 9.02 85.97 9.04 C87.02 9.03 88.06 9.05 89.11 9.04 C89.11 10.62 89.11 12.21 89.11 13.79 C88 13.78 86.88 13.76 85.81 14.08 C83.62 14.68 81.79 16.15 80.33 17.83 C78.82 19.54 77.68 21.53 76.59 23.52 C74.71 26.88 72.93 30.33 70.5 33.34 C69.53 34.56 68.41 35.67 67.13 36.58 C65.6 37.69 63.9 38.57 62.13 39.27 C66.36 41.58 70.13 44.78 72.85 48.76 C75.15 52.09 76.67 55.94 77.18 59.95 C77.67 63.73 77.4 67.62 76.3 71.27 C75.14 75.05 73.06 78.51 70.38 81.41 C67.17 84.93 63.14 87.78 58.59 89.29 C54.13 90.77 49.28 91 44.68 90.12 C40.53 89.31 36.62 87.43 33.34 84.78 C30.53 82.53 28.07 79.82 26.22 76.74 C24.26 73.48 23.06 69.78 22.75 65.99 C22.33 61.29 23.12 56.46 25.22 52.22 C27.52 47.51 31.21 43.54 35.59 40.69 C36.36 40.19 37.15 39.71 37.96 39.27 L37.96 39.27 M50.06 84.26 C53.92 84.29 57.81 83.3 61.08 81.24 C63.64 79.63 65.86 77.5 67.61 75.04 C69.54 72.27 70.71 68.98 70.98 65.62 C71.33 61.54 70.59 57.31 68.56 53.73 C67.09 51.1 65.02 48.81 62.62 46.99 C60.26 45.2 57.5 43.95 54.59 43.38 C51.6 42.79 48.48 42.8 45.49 43.39 C42.22 44.05 39.13 45.56 36.58 47.71 C33.43 50.32 30.96 53.81 29.84 57.76 C28.88 61.11 28.78 64.68 29.47 68.09 C30.15 71.33 31.71 74.37 33.9 76.85 C36.15 79.42 38.94 81.57 42.15 82.82 C44.66 83.83 47.36 84.27 50.06 84.26 L50.06 84.26"
+            class="glyph-fill"
+          />
+        </symbol>
+        <symbol class="g100" id="s-2" viewBox="0 0 100 100">
+          <path
+            d="M10.09 91 C10.09 88.99 10.09 86.97 10.09 84.96 C16.25 83.34 22.48 82 28.81 81.23 C28.81 60.38 28.81 39.52 28.81 18.66 C22.47 18.07 16.2 16.85 10.09 15.08 C10.09 13.05 10.09 11.03 10.09 9 C19.22 11.51 28.68 12.68 38.12 13.21 C46.31 13.64 54.52 13.63 62.71 13.16 C71.88 12.61 81.04 11.44 89.91 9 C89.91 11.03 89.91 13.05 89.91 15.08 C83.79 16.84 77.5 18.07 71.16 18.66 C71.16 39.52 71.16 60.38 71.16 81.23 C77.49 82 83.74 83.35 89.91 84.96 C89.91 86.97 89.91 88.99 89.91 91 C75.45 87.19 60.42 85.86 45.5 86.21 C33.57 86.49 21.64 87.95 10.09 91 L10.09 91 M36.07 80.8 C41.91 80.15 47.8 80.04 53.68 80.15 C57.09 80.23 60.5 80.42 63.89 80.8 C63.89 60.25 63.89 39.71 63.89 19.16 C57.81 19.56 51.72 19.61 45.63 19.53 C42.44 19.48 39.25 19.38 36.07 19.16 C36.07 39.71 36.07 60.25 36.07 80.8 L36.07 80.8"
+            class="glyph-fill"
+          />
+        </symbol>
+        <symbol class="g100" id="s-3" viewBox="0 0 100 100">
+          <path
+            d="M9 73.48 L9 66.51 C22.45 72.65 35.48 75.69 48.03 75.69 C56.26 75.69 62.95 74.63 68.11 72.49 C64.84 70.82 62.38 68.71 60.74 66.19 C59.11 63.66 58.28 60.68 58.28 57.26 C58.28 52.78 59.91 48.94 63.14 45.71 C66.35 42.51 70.25 40.92 74.73 40.92 C79.22 40.92 83.03 42.51 86.23 45.68 C89.4 48.88 91 52.69 91 57.2 C91 64.33 86.65 70.28 77.9 75.02 C69.16 79.75 58.21 82.12 45.05 82.12 C33.65 82.12 21.65 79.27 9 73.48 L9 73.48 M62.6 57.29 C62.6 60.56 63.78 63.37 66.19 65.74 C68.55 68.11 71.44 69.29 74.73 69.29 C78.06 69.29 80.88 68.11 83.22 65.83 C85.52 63.53 86.68 60.72 86.68 57.39 C86.68 54 85.52 51.12 83.19 48.75 C80.85 46.39 78.03 45.2 74.7 45.2 C71.34 45.2 68.49 46.39 66.12 48.75 C63.78 51.09 62.6 53.93 62.6 57.29 L62.6 57.29 M91 26.55 L91 33.53 C77.52 27.38 64.52 24.31 51.94 24.31 C43.74 24.31 37.02 25.37 31.83 27.54 C35.16 29.21 37.62 31.32 39.23 33.85 C40.89 36.37 41.69 39.35 41.69 42.77 C41.69 47.25 40.09 51.09 36.86 54.32 C33.62 57.52 29.75 59.12 25.23 59.12 C20.75 59.12 16.94 57.55 13.77 54.35 C10.6 51.18 9 47.34 9 42.87 C9 35.7 13.35 29.72 22.1 24.98 C30.8 20.25 41.79 17.88 54.95 17.88 C66.35 17.88 78.35 20.76 91 26.55 L91 26.55 M37.4 42.74 C37.4 39.44 36.22 36.63 33.81 34.26 C31.41 31.93 28.53 30.74 25.2 30.74 C21.87 30.74 19.05 31.89 16.75 34.2 C14.44 36.5 13.29 39.32 13.29 42.64 C13.29 46.03 14.48 48.91 16.81 51.28 C19.12 53.65 21.97 54.83 25.3 54.83 C28.63 54.83 31.51 53.65 33.85 51.28 C36.22 48.91 37.4 46.07 37.4 42.74 L37.4 42.74"
+            class="glyph-fill"
+          />
+        </symbol>
+        <symbol class="g100" id="s-4" viewBox="0 0 100 100">
+          <path
+            d="M82.06 84.53 C80.41 86.03 78.65 87.42 76.72 88.55 C75.11 89.49 73.37 90.24 71.55 90.64 C70.46 90.89 69.33 91 68.21 90.97 C66.64 90.93 65.06 90.66 63.59 90.09 C62.23 89.58 60.97 88.81 59.87 87.86 C59.01 87.12 58.25 86.27 57.61 85.34 C56.82 84.19 56.23 82.9 55.89 81.55 C55.48 79.97 55.39 78.32 55.54 76.7 C55.69 75.06 56.02 73.45 56.43 71.86 C57.07 69.42 57.89 67.04 58.79 64.69 C60.11 61.24 61.61 57.86 63.18 54.52 C64.44 51.84 65.7 49.15 66.96 46.47 C68.09 44.05 69.12 41.57 69.94 39.02 C70.52 37.2 71 35.34 71.26 33.44 C71.39 32.46 71.45 31.48 71.43 30.5 C71.4 28.49 71.13 26.47 70.5 24.54 C69.98 22.94 69.2 21.41 68.18 20.07 C67.6 19.3 66.95 18.59 66.24 17.94 C65.06 16.87 63.7 16 62.24 15.38 C60.57 14.67 58.77 14.28 56.96 14.15 C55.67 14.05 54.36 14.06 53.07 14.2 C51.34 14.38 49.63 14.81 48.05 15.55 C46.63 16.21 45.32 17.11 44.19 18.2 C43.09 19.29 42.17 20.56 41.5 21.96 C40.77 23.45 40.34 25.07 40.14 26.71 C39.93 28.48 39.99 30.28 40.24 32.04 C40.56 34.31 41.18 36.53 41.96 38.68 C42.59 40.41 43.32 42.09 44.12 43.75 C44.66 44.87 45.2 46 45.75 47.12 C46.63 48.99 47.47 50.88 48.17 52.83 C48.62 54.07 49.01 55.33 49.26 56.62 C49.4 57.38 49.49 58.15 49.47 58.92 C49.45 60.57 49.15 62.22 48.57 63.76 C47.97 65.36 47.07 66.84 45.97 68.14 C45.14 69.13 44.2 70.04 43.17 70.83 C41.82 71.87 40.3 72.69 38.68 73.22 C37.03 73.77 35.28 74.01 33.54 73.99 C31.78 73.97 30.01 73.69 28.35 73.1 C26.78 72.54 25.31 71.7 24.01 70.66 C23.25 70.04 22.54 69.36 21.89 68.62 C20.77 67.36 19.85 65.93 19.2 64.37 C18.54 62.79 18.17 61.1 18.06 59.39 C17.94 57.59 18.08 55.75 18.55 54 C18.97 52.42 19.67 50.92 20.59 49.56 C21.35 48.43 22.27 47.41 23.27 46.49 C24.52 45.35 25.96 44.39 27.52 43.72 C29.03 43.07 30.65 42.7 32.29 42.59 C33.11 42.54 33.94 42.55 34.75 42.63 C35.98 42.75 37.19 43.03 38.37 43.39 C37.15 41.05 36.08 38.62 35.28 36.09 C34.63 34.02 34.17 31.88 34.05 29.71 C33.98 28.53 34.02 27.34 34.15 26.17 C34.36 24.2 34.88 22.27 35.71 20.48 C36.53 18.71 37.66 17.09 39.01 15.67 C40.67 13.91 42.64 12.43 44.81 11.35 C46.78 10.37 48.91 9.72 51.08 9.38 C53.2 9.05 55.35 9 57.48 9.14 C59.92 9.31 62.34 9.78 64.62 10.66 C66.58 11.41 68.42 12.46 70.05 13.78 C70.8 14.38 71.5 15.04 72.15 15.75 C73.52 17.24 74.65 18.95 75.49 20.8 C76.42 22.85 76.99 25.07 77.25 27.31 C77.4 28.62 77.45 29.94 77.43 31.26 C77.4 33.15 77.26 35.04 76.92 36.9 C76.78 37.63 76.61 38.35 76.4 39.06 C76.09 40.14 75.7 41.19 75.3 42.23 C74.53 44.21 73.68 46.15 72.81 48.08 C72.4 48.98 71.99 49.87 71.58 50.76 C70.68 52.73 69.77 54.7 68.87 56.68 C67.36 59.95 65.9 63.25 64.56 66.6 C63.77 68.56 63.02 70.55 62.4 72.57 C62.06 73.7 61.74 74.84 61.55 76 C61.45 76.59 61.39 77.19 61.41 77.78 C61.44 78.88 61.63 79.98 62.05 81 C62.39 81.83 62.88 82.59 63.5 83.24 C64.11 83.92 64.85 84.48 65.68 84.87 C66.56 85.28 67.54 85.48 68.51 85.51 C69.44 85.54 70.37 85.4 71.27 85.14 C72.56 84.76 73.78 84.14 74.92 83.43 C76.21 82.62 77.4 81.68 78.54 80.68 C79.71 81.96 80.89 83.24 82.06 84.53 L82.06 84.53 M22.49 58.23 C22.49 59.63 22.71 61.04 23.2 62.36 C23.65 63.6 24.35 64.74 25.21 65.74 C25.84 66.46 26.55 67.11 27.34 67.65 C28.36 68.36 29.51 68.88 30.71 69.18 C31.9 69.48 33.13 69.56 34.35 69.48 C35.59 69.4 36.83 69.1 37.96 68.58 C39.16 68.04 40.24 67.25 41.16 66.33 C42.12 65.39 42.92 64.29 43.48 63.07 C44.04 61.87 44.36 60.57 44.45 59.26 C44.53 58.16 44.48 57.06 44.28 55.98 C44.05 54.71 43.59 53.49 42.92 52.39 C42.45 51.61 41.89 50.89 41.25 50.24 C40.3 49.31 39.21 48.52 38 47.98 C36.84 47.45 35.58 47.15 34.31 47.07 C32.91 46.97 31.49 47.1 30.16 47.52 C28.97 47.89 27.86 48.49 26.89 49.25 C25.85 50.06 24.94 51.04 24.22 52.15 C23.53 53.22 23.03 54.41 22.76 55.66 C22.58 56.5 22.49 57.37 22.49 58.23 L22.49 58.23"
+            class="glyph-fill"
+          />
+        </symbol>
+        <symbol class="g100" id="s-5" viewBox="0 0 100 100">
+          <path
+            d="M27.78 33.98 C27.78 47.31 27.78 60.64 27.78 73.96 C25.65 73.96 23.51 73.96 21.38 73.96 C21.38 58.53 21.38 43.09 21.38 27.66 C21.38 24.65 20.99 21.63 20.15 18.74 C19.35 15.95 18.13 13.29 16.57 10.85 C16.43 10.63 16.27 10.39 16.14 10.18 C18.38 10.18 20.63 10.18 22.88 10.18 C24.28 12.1 25.35 14.26 26.15 16.49 C26.89 18.54 27.41 20.65 27.78 22.79 C28.92 20.01 30.24 17.29 31.85 14.74 C32.87 13.13 34.01 11.59 35.29 10.18 C37.38 9.78 39.47 9.39 41.56 9 C43.03 10.89 44.16 13.03 45.01 15.26 C45.99 17.88 46.6 20.63 46.97 23.4 C46.98 23.49 46.99 23.59 47.01 23.68 C47.96 20.67 49.37 17.82 51.09 15.16 C52.21 13.42 53.46 11.76 54.8 10.18 C56.86 9.78 58.92 9.39 60.98 9 C62.54 11.15 63.81 13.51 64.68 16.02 C65.54 18.45 66.02 21 66.14 23.57 C66.17 24.19 66.17 24.81 66.17 25.43 C66.17 29.31 66.17 33.19 66.17 37.06 C67.03 34.62 68 32.21 69.15 29.88 C69.89 28.41 70.7 26.97 71.64 25.62 C73.4 24.98 75.16 24.33 76.92 23.68 C78.99 26.86 80.68 30.29 81.85 33.9 C82.91 37.18 83.54 40.61 83.7 44.06 C83.86 47.83 83.52 51.62 82.6 55.29 C81.58 59.37 79.87 63.26 77.61 66.8 C75.53 70.07 73 73.04 70.23 75.73 C69.33 76.61 68.39 77.46 67.44 78.29 C67.67 79.99 68.23 81.63 68.94 83.19 C69.83 85.13 70.97 86.94 72.21 88.66 C72.8 89.46 73.4 90.24 74.03 91 C71.52 91 69.02 91 66.52 91 C65.33 89.5 64.34 87.84 63.49 86.12 C62.81 84.74 62.21 83.32 61.68 81.88 C59.13 83.32 56.38 84.4 53.56 85.21 C51.41 85.83 49.22 86.29 47.01 86.65 C47.01 84.82 47.01 83 47.01 81.18 C49.94 80.58 52.85 79.79 55.64 78.69 C57.3 78.04 58.91 77.28 60.44 76.38 C59.98 73.57 59.76 70.73 59.77 67.89 C59.77 54.99 59.77 42.1 59.77 29.2 C59.76 26.81 59.64 24.41 59.28 22.04 C59 20.27 58.6 18.51 57.93 16.84 C57.68 16.19 57.38 15.55 57.03 14.94 C54.88 17.26 53.11 19.91 51.65 22.7 C49.97 25.93 48.7 29.36 47.7 32.85 C47.45 33.72 47.22 34.6 47.01 35.48 C47.01 48.31 47.01 61.14 47.01 73.96 C44.86 73.96 42.72 73.96 40.58 73.96 C40.58 59.76 40.58 45.55 40.58 31.35 C40.57 28.72 40.47 26.09 40.17 23.48 C39.96 21.73 39.66 19.98 39.17 18.28 C38.83 17.12 38.39 15.98 37.77 14.94 C35.31 17.81 33.24 21 31.54 24.38 C30 27.46 28.76 30.68 27.78 33.98 L27.78 33.98 M66.17 72.31 C68.56 69.89 70.69 67.2 72.43 64.27 C73.27 62.86 74.02 61.39 74.66 59.87 C75.87 56.96 76.68 53.89 77.06 50.76 C77.31 48.76 77.39 46.74 77.31 44.72 C77.18 41.69 76.64 38.67 75.72 35.77 C75.24 34.26 74.66 32.78 74 31.34 C72.22 33.53 70.75 35.96 69.51 38.49 C68.17 41.23 67.09 44.08 66.17 46.98 C66.17 55.42 66.17 63.87 66.17 72.31 L66.17 72.31"
+            class="glyph-fill"
+          />
+        </symbol>
+        <symbol class="g100" id="s-6" viewBox="0 0 100 100">
+          <path
+            d="M9 84.41 C9 81.88 9 79.35 9 76.82 C36.33 76.82 63.67 76.82 91 76.82 C91 79.35 91 81.88 91 84.41 C63.67 84.41 36.33 84.41 9 84.41 L9 84.41 M41.41 54.47 C41.41 56.84 41.41 59.2 41.41 61.57 C30.61 61.57 19.8 61.57 9 61.57 C9 59.02 9 56.48 9 53.94 C16.57 53.94 24.15 53.94 31.72 53.94 C29.07 51.27 26.97 47.97 26.07 44.28 C25.31 41.21 25.4 37.98 26.01 34.89 C26.8 31.02 28.71 27.41 31.34 24.46 C34.3 21.12 38.07 18.42 42.36 17.05 C46.21 15.82 50.36 15.59 54.34 16.24 C58.37 16.9 62.19 18.67 65.34 21.24 C68.67 23.96 71.49 27.42 73.03 31.46 C74.25 34.65 74.7 38.12 74.43 41.51 C74.13 45.02 72.75 48.39 70.66 51.21 C69.95 52.17 69.16 53.08 68.32 53.94 C75.88 53.94 83.44 53.94 91 53.94 C91 56.48 91 59.02 91 61.57 C80.2 61.57 69.39 61.57 58.59 61.57 C58.59 59.2 58.59 56.84 58.59 54.47 C61.47 52.62 64.02 50.1 65.45 46.95 C66.87 43.85 67.19 40.29 66.58 36.94 C65.99 33.74 64.28 30.8 61.97 28.52 C59.61 26.14 56.56 24.39 53.24 23.8 C49.3 23.09 45.07 23.66 41.61 25.74 C39.3 27.12 37.32 29.04 35.8 31.26 C33.99 33.92 33.11 37.14 33.17 40.34 C33.18 43.43 34.03 46.53 35.77 49.09 C37.22 51.28 39.22 53.06 41.41 54.47 L41.41 54.47"
+            class="glyph-fill"
+          />
+        </symbol>
+        <symbol class="g100" id="s-7" viewBox="0 0 100 100">
+          <path
+            d="M18.01 73.31 C18.01 58.27 18.01 43.24 18.01 28.21 C18 25.22 17.72 22.21 17 19.3 C16.38 16.82 15.44 14.41 14.1 12.23 C13.67 11.53 13.21 10.87 12.71 10.23 C14.97 10.23 17.22 10.23 19.48 10.23 C20.99 12.52 22.18 15.02 23.04 17.63 C23.58 19.27 24 20.94 24.31 22.64 C25.64 19.37 27.27 16.21 29.3 13.31 C30.05 12.24 30.85 11.21 31.71 10.23 C33.74 9.82 35.77 9.41 37.8 9 C39.15 10.57 40.19 12.4 40.98 14.31 C41.92 16.55 42.52 18.93 42.93 21.32 C43.04 21.98 43.14 22.64 43.23 23.3 C44.32 20.14 45.88 17.14 47.74 14.36 C48.69 12.93 49.72 11.55 50.82 10.23 C52.89 9.82 54.96 9.41 57.03 9 C58.52 11.02 59.71 13.26 60.54 15.64 C61.46 18.23 61.94 20.97 62.07 23.71 C62.1 24.39 62.11 25.08 62.11 25.76 C62.11 38.76 62.11 51.75 62.11 64.74 C62.11 66.58 62.14 68.42 62.24 70.26 C62.29 71.1 62.36 71.95 62.49 72.78 C62.53 73.06 62.6 73.32 62.67 73.59 C62.92 74.48 63.33 75.33 63.87 76.08 C64.09 76.37 64.31 76.65 64.57 76.9 C65.33 77.67 66.27 78.24 67.27 78.64 C68.52 79.13 69.85 79.39 71.18 79.52 C72.01 79.6 72.85 79.63 73.68 79.62 C74.9 79.62 76.11 79.62 77.32 79.62 C77.32 77.52 77.32 75.41 77.32 73.31 C80.64 76.31 83.97 79.32 87.29 82.33 C83.97 85.22 80.64 88.11 77.32 91 C77.32 88.96 77.32 86.91 77.32 84.87 C75.35 84.87 73.39 84.87 71.42 84.87 C69.52 84.86 67.62 84.69 65.78 84.21 C64.27 83.82 62.8 83.2 61.52 82.3 C60.59 81.65 59.76 80.84 59.08 79.93 C58.12 78.64 57.44 77.15 56.96 75.61 C56.37 73.73 56.07 71.77 55.92 69.81 C55.83 68.66 55.8 67.5 55.8 66.34 C55.8 53.74 55.8 41.14 55.8 28.54 C55.8 26.29 55.69 24.04 55.37 21.81 C55.13 20.23 54.79 18.66 54.22 17.16 C53.91 16.34 53.53 15.55 53.04 14.81 C50.66 17.56 48.67 20.64 47.09 23.91 C45.35 27.5 44.09 31.32 43.23 35.22 C43.23 47.91 43.23 60.61 43.23 73.31 C41.12 73.31 39.02 73.31 36.92 73.31 C36.92 59.12 36.92 44.94 36.92 30.75 C36.92 28.19 36.82 25.63 36.52 23.08 C36.31 21.36 36.01 19.64 35.52 17.98 C35.18 16.88 34.76 15.8 34.16 14.81 C31.75 17.53 29.72 20.59 28.09 23.83 C26.49 27.01 25.25 30.37 24.31 33.8 C24.31 46.97 24.31 60.14 24.31 73.31 C22.21 73.31 20.11 73.31 18.01 73.31 L18.01 73.31"
+            class="glyph-fill"
+          />
+        </symbol>
+        <symbol class="g100" id="s-8" viewBox="0 0 100 100">
+          <path
+            d="M85.6 14.37 L91 52.86 L83.31 54.07 L79.35 26.01 L44.19 61.31 L60.74 77.85 L55.22 83.37 L38.68 66.79 L14.36 91 L9 85.63 L33.28 61.38 L16.77 44.8 L22.21 39.28 L38.75 55.86 L73.99 20.64 L45.98 16.71 L47.18 9 L85.6 14.37 L85.6 14.37"
+            class="glyph-fill"
+          />
+        </symbol>
+        <symbol class="g100" id="s-9" viewBox="0 0 100 100">
+          <path
+            d="M24.65 57.44 C24.65 56.63 24.65 55.82 24.65 55.01 C24.63 52.93 24.46 50.86 24.23 48.79 C23.86 45.53 23.33 42.29 22.75 39.06 C22.38 37.08 21.99 35.11 21.56 33.14 C21.09 31.03 20.59 28.91 19.98 26.83 C19.64 25.71 19.27 24.59 18.8 23.51 C18.37 22.55 17.83 21.64 17.16 20.83 C16.43 19.95 15.54 19.22 14.52 18.7 C13.42 18.15 12.21 17.86 10.99 17.78 C10.5 17.75 10.02 17.76 9.54 17.76 C9.36 17.76 9.18 17.76 9 17.76 C9 16.01 9 14.26 9 12.51 C10.61 12.51 12.22 12.51 13.82 12.51 C15.27 12.52 16.74 12.7 18.11 13.2 C19.2 13.6 20.23 14.21 21.08 15.02 C21.98 15.87 22.69 16.93 23.2 18.06 C23.98 19.73 24.59 21.48 25.13 23.24 C25.99 26.01 26.66 28.83 27.27 31.66 C27.77 34.02 28.21 36.39 28.62 38.77 C29.7 33.96 31.16 29.23 33.17 24.72 C34.93 20.78 37.11 17.02 39.79 13.63 C40.1 13.25 40.4 12.86 40.72 12.51 C43.53 11.97 46.33 11.43 49.14 10.89 C50.01 12.86 50.68 14.92 51.27 16.99 C52.15 20.1 52.82 23.27 53.4 26.45 C53.73 28.33 54.03 30.21 54.31 32.11 C54.7 34.66 55.08 37.21 55.47 39.76 C55.71 41.5 55.95 43.24 56.16 44.98 C56.25 45.75 56.33 46.51 56.43 47.28 C56.69 49.35 57 51.41 57.45 53.45 C57.65 54.36 57.88 55.27 58.17 56.17 C59.34 53.93 60.75 51.79 62.48 49.95 C63.93 48.41 65.61 47.09 67.5 46.14 C69.24 45.26 71.13 44.71 73.06 44.49 C74.48 44.33 75.93 44.32 77.36 44.5 C79.1 44.71 80.81 45.22 82.38 46.01 C83.88 46.77 85.23 47.78 86.42 48.95 C87.67 50.18 88.74 51.61 89.51 53.19 C90.25 54.72 90.7 56.4 90.87 58.1 C91 59.35 90.98 60.62 90.85 61.87 C90.65 63.74 90.15 65.58 89.32 67.28 C88.49 68.98 87.34 70.53 85.99 71.85 C84.7 73.11 83.22 74.18 81.58 74.93 C80 75.66 78.29 76.1 76.55 76.25 C75.35 76.36 74.13 76.34 72.93 76.23 C70.73 76.04 68.57 75.49 66.55 74.61 C64.35 73.66 62.33 72.31 60.55 70.72 C60.02 70.26 59.52 69.77 59.03 69.26 C57.95 72.09 56.81 74.89 55.51 77.62 C54.69 79.31 53.83 80.98 52.81 82.57 C52.2 83.53 51.53 84.46 50.73 85.29 C49.85 86.21 48.77 86.92 47.61 87.46 C46.14 88.13 44.56 88.53 42.96 88.78 C41.32 89.03 39.66 89.11 38 89.1 C36.14 89.1 34.29 89.1 32.44 89.1 C32.44 87.33 32.44 85.56 32.44 83.79 C33.4 83.79 34.37 83.8 35.33 83.79 C37.12 83.78 38.92 83.66 40.67 83.31 C41.99 83.03 43.29 82.63 44.46 81.98 C45.32 81.5 46.1 80.88 46.72 80.12 C47.34 79.37 47.85 78.55 48.32 77.7 C49.17 76.17 49.9 74.58 50.59 72.97 C51.77 70.19 52.82 67.35 53.81 64.5 C53.97 64.03 54.13 63.56 54.29 63.1 C53.52 61.74 52.8 60.36 52.2 58.92 C51.84 58.05 51.53 57.16 51.33 56.24 C51.09 55.17 50.91 54.08 50.74 52.99 C50.35 50.54 50.04 48.07 49.73 45.61 C49.2 41.56 48.66 37.51 48.12 33.46 C47.73 30.48 47.28 27.5 46.67 24.55 C46.31 22.77 45.89 20.99 45.33 19.26 C45.06 18.44 44.76 17.64 44.4 16.87 C42.38 19.26 40.68 21.9 39.21 24.65 C37.51 27.84 36.11 31.18 34.89 34.58 C33.56 38.29 32.46 42.09 31.76 45.97 C31.28 48.68 31 51.44 31.01 54.2 C31.01 55.28 31.01 56.36 31.01 57.44 C28.89 57.44 26.77 57.44 24.65 57.44 L24.65 57.44 M60.46 63.86 C62.03 65.6 63.75 67.21 65.68 68.54 C67.29 69.65 69.06 70.55 70.96 71.07 C72.65 71.54 74.44 71.68 76.19 71.44 C77.5 71.26 78.78 70.85 79.93 70.2 C80.9 69.66 81.78 68.95 82.54 68.14 C83.49 67.15 84.25 65.98 84.77 64.71 C85.34 63.3 85.61 61.78 85.64 60.26 C85.68 59 85.53 57.73 85.14 56.52 C84.75 55.27 84.11 54.11 83.29 53.1 C82.38 51.99 81.28 51.02 80 50.35 C78.88 49.75 77.64 49.39 76.38 49.26 C74.67 49.09 72.91 49.29 71.3 49.9 C69.78 50.47 68.41 51.38 67.23 52.48 C65.78 53.82 64.6 55.42 63.59 57.11 C62.32 59.25 61.31 61.53 60.46 63.86 L60.46 63.86"
+            class="glyph-fill"
+          />
+        </symbol>
+        <symbol class="g100" id="s-10" viewBox="0 0 100 100">
+          <path
+            d="M9 72.96 L33.8 56.61 L39.23 69.27 L58.43 56.61 L63.8 69.27 L83.03 56.61 L90.97 75.26 L85.83 77.53 L80.53 64.87 L61.23 77.53 L55.86 64.87 L36.73 77.53 L31.33 64.87 L12.03 77.53 L9 72.96 L9 72.96 M9.03 38.85 L33.83 22.47 L39.26 35.13 L58.5 22.47 L63.86 35.13 L83.06 22.47 L91 41.12 L85.86 43.39 L80.56 30.73 L61.23 43.39 L55.86 30.73 L36.73 43.39 L31.39 30.73 L12.1 43.39 L9.03 38.85 L9.03 38.85"
+            class="glyph-fill"
+          />
+        </symbol>
+        <symbol class="g100" id="s-11" viewBox="0 0 100 100">
+          <path
+            d="M41.94 51.26 C41.94 55.29 41.35 59.3 40.33 63.19 C39.56 66.16 38.55 69.07 37.36 71.91 C35.28 76.85 32.66 81.58 29.52 85.93 C28.26 87.68 26.91 89.37 25.48 91 C22.64 91 19.8 91 16.96 91 C20.84 86.91 24.32 82.42 27.11 77.51 C29.5 73.31 31.37 68.8 32.57 64.1 C33.64 59.91 34.16 55.59 34.16 51.26 C28.62 51.26 23.08 51.26 17.54 51.26 C17.54 49.32 17.54 47.37 17.54 45.43 C23.08 45.43 28.62 45.43 34.16 45.43 C33.92 41.03 33.04 36.67 31.61 32.5 C29.96 27.67 27.59 23.11 24.76 18.87 C22.43 15.38 19.8 12.09 16.96 9 C19.65 9 22.33 9 25.02 9 C28.8 13.04 32.14 17.51 34.81 22.37 C37.26 26.81 39.14 31.57 40.38 36.49 C41.12 39.42 41.64 42.42 41.94 45.43 C47.31 45.43 52.69 45.43 58.06 45.43 C58.6 40.23 59.77 35.1 61.61 30.2 C63.42 25.37 65.88 20.77 68.85 16.55 C70.71 13.89 72.77 11.37 74.98 9 C77.67 9 80.35 9 83.04 9 C79.27 13.11 75.85 17.56 73.04 22.39 C70.6 26.6 68.64 31.1 67.38 35.81 C66.54 38.95 66.02 42.18 65.84 45.43 C71.38 45.43 76.92 45.43 82.46 45.43 C82.46 47.37 82.46 49.32 82.46 51.26 C76.92 51.26 71.38 51.26 65.84 51.26 C65.84 55.92 66.45 60.58 67.69 65.06 C68.98 69.75 70.94 74.24 73.42 78.42 C76.11 82.97 79.4 87.16 83.04 91 C80.21 91 77.38 91 74.56 91 C71.17 87.18 68.24 82.96 65.8 78.48 C64.54 76.16 63.4 73.77 62.39 71.32 C60.74 67.27 59.44 63.05 58.71 58.73 C58.29 56.26 58.06 53.77 58.06 51.26 C52.69 51.26 47.31 51.26 41.94 51.26 L41.94 51.26"
+            class="glyph-fill"
+          />
+        </symbol>
+
+        <symbol class="g24" id="a-conjunction" viewBox="0 0 24 24">
+          <circle cx="8.5" cy="15.5" r="4.5" />
+          <line x1="12" y1="12" x2="19" y2="5" />
+        </symbol>
+        <symbol class="g24" id="a-sextile" viewBox="0 0 24 24">
+          <line x1="12" y1="3" x2="12" y2="21" />
+          <line x1="4.2" y1="7.5" x2="19.8" y2="16.5" />
+          <line x1="4.2" y1="16.5" x2="19.8" y2="7.5" />
+        </symbol>
+        <symbol class="g24" id="a-square" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" /></symbol>
+        <symbol class="g24" id="a-trine" viewBox="0 0 24 24"><polygon points="12,4 20.5,19 3.5,19" /></symbol>
+        <symbol class="g24" id="a-opposition" viewBox="0 0 24 24">
+          <circle cx="5.5" cy="12" r="3" />
+          <circle cx="18.5" cy="12" r="3" />
+          <line x1="8.5" y1="12" x2="15.5" y2="12" />
+        </symbol>
+        <symbol class="g24" id="a-quincunx" viewBox="0 0 24 24">
+          <line x1="4" y1="7" x2="20" y2="7" />
+          <line x1="12" y1="7" x2="6" y2="19" />
+          <line x1="12" y1="7" x2="18" y2="19" />
+        </symbol>
+      </defs>
+    </svg>
+
+    <aside class="side" aria-label="Sample app navigation (inert)">
+      <div class="brand">Astraya</div>
+      <div class="person">Mira Sample</div>
+      <nav aria-label="Person sections">
+        <a href="#" data-inert>Birth record</a><a href="#" data-inert>Overview</a
+        ><a href="#" data-inert>Consultation</a> <a href="#" aria-current="page" data-inert>Charts</a
+        ><a href="#" data-inert>Interpretation</a><a href="#" data-inert>Astrocartography</a>
+        <a href="#" data-inert>Transits &amp; Forecast</a><a href="#" data-inert>Progressions &amp; Directions</a
+        ><a href="#" data-inert>Relationship Charts</a> <a href="#" data-inert>Tools</a><a href="#" data-inert>PDF</a>
+      </nav>
+      <div class="side-foot">
+        <fieldset class="ctl">
+          <legend>Page theme (mockup only)</legend>
+          <span class="lab" aria-hidden="true">Theme</span>
+          <div class="seg">
+            <label><input type="radio" name="theme" value="dark" checked />Dark</label
+            ><label><input type="radio" name="theme" value="light" />Light</label>
+          </div>
+        </fieldset>
+        <span>Mockup only. Not part of the app.</span>
+      </div>
+    </aside>
+
+    <main>
+      <a class="crumb" href="#" data-inert>&larr; Mira&rsquo;s Timing Timeline</a>
+      <div class="page-head">
+        <h1>Mira Sample&rsquo;s Natal Chart</h1>
+        <div class="actions">
+          <button class="btn" type="button">Overlay settings</button>
+          <button class="btn" type="button">Extended settings</button>
+          <button class="btn primary" type="button">Export PDF</button>
+        </div>
+      </div>
+      <p class="basis">
+        Tropical &middot; Placidus &middot; Modern rulers &middot; Standard orbs &nbsp;<a href="#" data-inert>Edit</a>
+        &nbsp;&middot;&nbsp; Mira Sample, born 1 January 1990, 12:00, Sample City &nbsp;&middot;&nbsp; Sample chart, not
+        a real person. Sample data, not an ephemeris result.
+      </p>
+
+      <div class="controls" role="group" aria-label="Chart controls">
+        <div class="field">
+          <label for="f-type">Chart type</label>
+          <select id="f-type">
+            <option selected>Natal</option>
+            <option>Draconic</option>
+            <option>Harmonic</option>
+            <option>Solar return</option>
+            <option>Lunar return</option>
+            <option>Relocated</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-fam">Aspects shown</label>
+          <select id="f-fam"></select>
+        </div>
+        <div class="field">
+          <label for="f-preset">Consultation preset</label>
+          <select id="f-preset"></select>
+        </div>
+      </div>
+
+      <div class="tab-row">
+        <nav aria-label="Chart view navigation" id="tabs"></nav>
+        <div class="chart-view-select">
+          <label for="f-view">Chart view</label
+          ><select id="f-view"></select>
+        </div>
+      </div>
+
+      <!-- WHEEL TAB: wheel, selection and controls only. No tables. -->
+      <section class="panel" id="panel-wheel" aria-label="Wheel">
+        <div class="shell">
+          <div class="workbench">
+            <div class="dial">
+              <p class="hint">
+                Click a planet, sign or aspect line to highlight it and its connections. Click it again, or an empty
+                spot, to clear.
+              </p>
+              <div class="wheel-wrap" id="wheel" aria-live="polite"></div>
+              <div class="dial-controls">
+                <div class="bar-anchor">
+                  <div class="bar" id="bar" role="group" aria-label="Wheel display options">
+                    <div class="bar-group g-rings">
+                      <div class="seg" role="radiogroup" aria-label="Wheel rings">
+                        <label><input type="radio" name="rings" value="two" checked />Natal + transit</label
+                        ><label><input type="radio" name="rings" value="one" />Natal only</label>
+                      </div>
+                    </div>
+                    <span class="bar-div" aria-hidden="true"></span>
+                    <div
+                      class="bar-group"
+                      id="fam-chips"
+                      role="group"
+                      aria-label="Aspect tones drawn on the wheel"
+                    ></div>
+                    <span class="bar-div" aria-hidden="true"></span>
+                    <div class="bar-group g-filters">
+                      <button
+                        type="button"
+                        class="fbtn"
+                        id="filters-btn"
+                        aria-haspopup="dialog"
+                        aria-expanded="false"
+                        aria-controls="filters-pop"
+                      >
+                        <span id="filters-label">Major</span><span aria-hidden="true">&#9662;</span>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="pop" id="filters-pop" role="dialog" aria-label="Aspect filters" hidden>
+                    <div class="pop-head">
+                      <strong>Aspect filters</strong><button class="btn quiet" type="button" id="pop-done">Done</button>
+                    </div>
+                    <div class="presets" id="presets" role="group" aria-label="Presets"></div>
+                    <div class="checks" id="checks" role="group" aria-label="Individual aspects"></div>
+                  </div>
+                  <div class="scrim" id="scrim" hidden></div>
+                </div>
+              </div>
+            </div>
+            <section class="inspector" aria-labelledby="insp-h" aria-live="polite" id="inspector"></section>
+          </div>
+        </div>
+      </section>
+
+      <!-- PLACEMENTS TAB -->
+      <section class="panel" id="panel-placements" aria-label="Placements" hidden>
+        <div class="stack">
+          <section class="card" aria-labelledby="t-pl">
+            <div class="card-head"><h2 id="t-pl">Positions</h2></div>
+            <table>
+              <colgroup>
+                <col style="width: 24%" />
+                <col style="width: 24%" />
+                <col style="width: 16%" />
+                <col style="width: 12%" />
+                <col />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>Body</th>
+                  <th>Sign</th>
+                  <th>Degree</th>
+                  <th>House</th>
+                  <th>Motion</th>
+                </tr>
+              </thead>
+              <tbody id="pl-body"></tbody>
+            </table>
+          </section>
+          <section class="card" aria-labelledby="t-ho">
+            <div class="card-head"><h2 id="t-ho">Houses &amp; angles</h2></div>
+            <table>
+              <colgroup>
+                <col style="width: 24%" />
+                <col style="width: 24%" />
+                <col style="width: 16%" />
+                <col />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>House</th>
+                  <th>Sign</th>
+                  <th>Degree</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="ho-body"></tbody>
+            </table>
+          </section>
+        </div>
+      </section>
+
+      <!-- ASPECTS TAB -->
+      <section class="panel" id="panel-aspects" aria-label="Aspects" hidden>
+        <div class="stack">
+          <section class="card" aria-labelledby="t-as">
+            <div class="card-head">
+              <h2 id="t-as">Aspects</h2>
+              <fieldset class="ctl">
+                <legend>Aspect family filter</legend>
+                <div class="seg" id="fam-seg">
+                  <label><input type="radio" name="fam" value="all" checked />All</label
+                  ><label><input type="radio" name="fam" value="hard" />Hard</label
+                  ><label><input type="radio" name="fam" value="soft" />Soft</label
+                  ><label><input type="radio" name="fam" value="minor" />Minor</label>
+                </div>
+              </fieldset>
+            </div>
+            <table>
+              <colgroup>
+                <col style="width: 28%" />
+                <col style="width: 28%" />
+                <col style="width: 28%" />
+                <col />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>Body A</th>
+                  <th>Aspect</th>
+                  <th>Body B</th>
+                  <th>Orb</th>
+                </tr>
+              </thead>
+              <tbody id="as-body"></tbody>
+            </table>
+            <div class="legend-line" id="as-legend" aria-label="Aspect family legend"></div>
+          </section>
+        </div>
+      </section>
+
+      <!-- The other three real tabs: label only -->
+      <section class="panel" id="panel-other" aria-label="Not in this mockup" hidden>
+        <div class="empty-panel">Not in this mockup</div>
+      </section>
+    </main>
+
+    <script>
+      'use strict';
+      const CONFIG = {
+        viewBox: 600,
+        R: 260,
+        radiiFactors: {
+          zodiacOuter: 0.92,
+          zodiacInner: 0.8,
+          vernierInner: 0.75,
+          transitMid: 0.665,
+          natalOuter: 0.58,
+          natalMid: 0.515,
+          houseCollar: 0.45,
+          core: 0.4,
+        },
+        minSepNatal: 6,
+        minSepTransit: 7,
+        signGlyphSize: 16,
+        bodyGlyphSize: 14,
+        stackSignSize: 10,
+        tickLen: { medium: 6, minor: 3 },
+        tickWidth: { major: 1.25, medium: 1, minor: 0.75 },
+        axisWidth: 1.5,
+        houseNumFont: 9,
+        degFont: 8.5,
+        stackDegFont: 9,
+        stackMinFont: 7.5,
+        axisLabelFont: 7,
+        axisDegFont: 7.5,
+        bodyTickLen: 4,
+        dash: { hard: null, soft: '5 3', minor: '1 2' },
+        orbLimit: { hard: 6, soft: 5, minor: 2 },
+        // App family (Aspects shown) -> [angle, drawn family]. Sample data only has these six aspect types.
+        famAngles: {
+          major: [
+            [0, 'hard'],
+            [90, 'hard'],
+            [180, 'hard'],
+            [60, 'soft'],
+            [120, 'soft'],
+          ],
+          hardMinor: [[150, 'minor']],
+          softMinor: [],
+          higherHarmonic: [],
+          nodalAngular: [],
+        },
+        aspectNames: {
+          0: 'Conjunction',
+          60: 'Sextile',
+          90: 'Square',
+          120: 'Trine',
+          180: 'Opposition',
+          150: 'Quincunx',
+        },
+        aspectIcon: { 0: 'conjunction', 60: 'sextile', 90: 'square', 120: 'trine', 180: 'opposition', 150: 'quincunx' },
+        opacity: { exact: 1, wide: 0.45, normal: 0.85 },
+      };
+      const CENTER = CONFIG.viewBox / 2;
+      const RADII = { outer: CONFIG.R };
+      for (const k in CONFIG.radiiFactors) RADII[k] = CONFIG.R * CONFIG.radiiFactors[k];
+      // Radial stack tracks of a single ring: fractions of the band from the real resolveRingBands(1) (src/chart/sheet-geometry.ts:195-198).
+      // Axis stop: real-app capture, gap x=763..1016 around centre 889.5 on outer radius 289.5px -> 126.5/289.5 = 0.437.
+      const AXIS_STOP_RATIO = 126.5 / 289.5;
+      const AXIS_STOP = CONFIG.R * AXIS_STOP_RATIO;
+      const HIT_R = 15; // hit circle radius in viewBox units (diameter 30 units)
+      const STACK = { glyph: 0.78, degree: 0.49, sign: 0.31, minute: 0.14 };
+
+      const ASC = 112,
+        MC = 22;
+      const CUSPS = [112, 140, 168, 202, 236, 266, 292, 320, 348, 22, 52, 82];
+      const TCUSPS = [96, 126, 158, 192, 226, 258, 276, 306, 338, 12, 42, 72];
+      const g = (id, label, longitude, retro) => ({ id, label, longitude, retro: !!retro });
+      const NATAL = [
+        g('sun', 'Sun', 84.5),
+        g('moon', 'Moon', 201.2),
+        g('mercury', 'Mercury', 96.8, true),
+        g('venus', 'Venus', 118.4),
+        g('mars', 'Mars', 121.9),
+        g('jupiter', 'Jupiter', 255.3),
+        g('saturn', 'Saturn', 292.7, true),
+        g('uranus', 'Uranus', 33.1),
+        g('neptune', 'Neptune', 330.6),
+        g('pluto', 'Pluto', 268.0, true),
+      ];
+      const TRANSIT = [
+        g('sun', 'Sun', 232.4),
+        g('moon', 'Moon', 84.0),
+        g('mercury', 'Mercury', 249.6),
+        g('venus', 'Venus', 205.9),
+        g('mars', 'Mars', 297.3),
+        g('jupiter', 'Jupiter', 91.2),
+        g('saturn', 'Saturn', 354.8),
+        g('uranus', 'Uranus', 58.7),
+        g('neptune', 'Neptune', 359.4),
+        g('pluto', 'Pluto', 302.1),
+      ];
+      const SIGN_NAMES = [
+        'Aries',
+        'Taurus',
+        'Gemini',
+        'Cancer',
+        'Leo',
+        'Virgo',
+        'Libra',
+        'Scorpio',
+        'Sagittarius',
+        'Capricorn',
+        'Aquarius',
+        'Pisces',
+      ];
+      const ELEMENT_OF = ['fire', 'earth', 'air', 'water'];
+      const TABS = ['Wheel', 'Aspects', 'Aspect matrix', 'Elements & modalities', 'Placements', 'Patterns & condition'];
+
+      function eclipticToSvgRad(longitude, ascendant) {
+        const relativeDeg = (longitude - ascendant + 360) % 360;
+        return (((180 - relativeDeg + 360) % 360) * Math.PI) / 180;
+      }
+      const polar = (radius, rad) => ({ x: CENTER + radius * Math.cos(rad), y: CENTER + radius * Math.sin(rad) });
+      const f = (n) => Math.round(n * 100) / 100;
+      const fmtDM = (v) => {
+        const t = Math.round(v * 60);
+        return `${Math.floor(t / 60)}°${String(t % 60).padStart(2, '0')}′`;
+      };
+      const inSign = (lon) => ((lon % 30) + 30) % 30;
+      const norm = (lon) => ((lon % 360) + 360) % 360;
+      const signOf = (lon) => Math.floor(norm(lon) / 30);
+      const houseOf = (lon) => {
+        for (let i = 0; i < 12; i++) {
+          const s = CUSPS[i],
+            span = (CUSPS[(i + 1) % 12] - s + 360) % 360;
+          if ((lon - s + 360) % 360 < span) return i + 1;
+        }
+        return 1;
+      };
+      const bodyIco = (id, cls = '') => `<svg class="ico ${cls}" aria-hidden="true"><use href="#b-${id}"/></svg>`;
+      const signIco = (i) => `<svg class="ico sign" aria-hidden="true"><use href="#s-${i}"/></svg>`;
+      const aspIco = (angle, fam) =>
+        `<svg class="ai ai-${fam}" aria-hidden="true"><use href="#a-${CONFIG.aspectIcon[angle]}"/></svg>`;
+
+      function resolveBodyCollisions(bodies, minSepDeg) {
+        const sorted = bodies
+          .map((b) => ({ ...b, displayLongitude: norm(b.longitude) }))
+          .sort((a, b) => a.displayLongitude - b.displayLongitude);
+        if (sorted.length < 2) return sorted;
+        for (let pass = 0; pass < 4; pass++) {
+          for (let i = 0; i < sorted.length; i++) {
+            const curr = sorted[i],
+              next = sorted[(i + 1) % sorted.length];
+            const diff = (next.displayLongitude - curr.displayLongitude + 360) % 360;
+            if (diff < minSepDeg) {
+              const nudge = (minSepDeg - diff) / 2;
+              curr.displayLongitude = (curr.displayLongitude - nudge + 360) % 360;
+              next.displayLongitude = (next.displayLongitude + nudge) % 360;
+            }
+          }
+        }
+        return sorted;
+      }
+
+      // Natal-natal aspects (tables, wheel) and, for the wheel, transit-natal chords.
+      function sepOrb(a, b, ang) {
+        let sep = Math.abs(a - b) % 360;
+        if (sep > 180) sep = 360 - sep;
+        return Math.abs(sep - ang);
+      }
+      function computeAspects(natal, transit) {
+        const out = [];
+        const test = (A, B, cross) => {
+          for (const key in CONFIG.famAngles)
+            for (const [ang, fam] of CONFIG.famAngles[key]) {
+              const orb = sepOrb(A.longitude, B.longitude, ang);
+              if (orb <= CONFIG.orbLimit[fam])
+                out.push({
+                  a: A,
+                  b: B,
+                  appFamily: key,
+                  family: fam,
+                  angle: ang,
+                  orb,
+                  cross,
+                  ida: cross ? `t:${A.id}` : A.id,
+                  idb: B.id,
+                });
+            }
+        };
+        for (let i = 0; i < natal.length; i++)
+          for (let j = i + 1; j < natal.length; j++) test(natal[i], natal[j], false);
+        for (const t of transit) for (const n of natal) test(t, n, true);
+        return out;
+      }
+
+      const line = (x1, y1, x2, y2, cls, w, extra = '') =>
+        `<line x1="${f(x1)}" y1="${f(y1)}" x2="${f(x2)}" y2="${f(y2)}" class="${cls}" stroke-width="${w}" ${extra}/>`;
+      const circle = (r, fillCls, strokeCls, w) =>
+        `<circle cx="${CENTER}" cy="${CENTER}" r="${f(r)}" class="${fillCls} ${strokeCls}" stroke-width="${w}"/>`;
+      const useGlyph = (pt, size, id, cls) =>
+        `<use href="#${id}" x="${f(pt.x - size / 2)}" y="${f(pt.y - size / 2)}" width="${size}" height="${size}" class="${cls}"/>`;
+      const txt = (pt, size, cls, str) =>
+        `<text x="${f(pt.x)}" y="${f(pt.y)}" text-anchor="middle" dominant-baseline="central" font-size="${size}" class="${cls}">${str}</text>`;
+      const halfArcDeg = (chars, font, radius) => (((chars * 0.62 * font) / 2 + font * 0.3) / radius) * (180 / Math.PI);
+
+      const state = {
+        natal: new Set(NATAL.map((b) => b.id)),
+        sel_aspects: new Set(),
+        appFams: new Set(),
+        preset: 'none',
+        rings: 'two',
+        theme: 'dark',
+        tab: 'Wheel',
+        sel: null,
+        only: false,
+        aspFilter: 'all',
+      };
+      let SEL = null;
+
+      function renderWheel(natalVis, aspects) {
+        const asc = ASC,
+          two = state.rings === 'two';
+        let s = '';
+        // Rings (v2 layout). In single-ring mode the natal band spans houseCollar..vernierInner (real resolveRingBands(1)).
+        s += circle(RADII.outer, 'fill-bg', 'st-line st-struct', 1);
+        s += circle(RADII.zodiacOuter, 'fill-surface', 'st-line', 1);
+        s += circle(RADII.zodiacInner, 'fill-bg', 'st-line', 1);
+        s += circle(RADII.vernierInner, 'fill-surface', 'st-line', 1);
+        if (two) s += circle(RADII.natalOuter, 'fill-surface', 'st-line', 1);
+        s += circle(RADII.houseCollar, 'fill-surface', 'st-line', 0.75);
+        s += circle(RADII.core, 'fill-bg', 'st-line', 1);
+        for (let i = 0; i < 12; i++) {
+          const cr = eclipticToSvgRad(i * 30, asc),
+            mr = eclipticToSvgRad(i * 30 + 15, asc);
+          const a = polar(RADII.zodiacOuter, cr),
+            b = polar(RADII.zodiacInner, cr);
+          const gp = polar((RADII.zodiacOuter + RADII.zodiacInner) / 2, mr);
+          s += line(a.x, a.y, b.x, b.y, 'st-line st-struct', 1);
+          s +=
+            `<g><title>${SIGN_NAMES[i]}</title>` + useGlyph(gp, CONFIG.signGlyphSize, `s-${i}`, 'sign-glyph') + '</g>';
+        }
+        for (let deg = 0; deg < 360; deg++) {
+          const major = deg % 10 === 0,
+            med = !major && deg % 5 === 0;
+          const len = major
+            ? RADII.zodiacInner - RADII.vernierInner
+            : med
+              ? CONFIG.tickLen.medium
+              : CONFIG.tickLen.minor;
+          const rad = eclipticToSvgRad(deg, asc);
+          const p1 = polar(RADII.zodiacInner, rad),
+            p2 = polar(RADII.zodiacInner - len, rad);
+          s += line(
+            p1.x,
+            p1.y,
+            p2.x,
+            p2.y,
+            major ? 'tick-major' : med ? 'tick-med' : 'tick-minor',
+            major ? CONFIG.tickWidth.major : med ? CONFIG.tickWidth.medium : CONFIG.tickWidth.minor,
+          );
+        }
+        // House spokes and numbers
+        CUSPS.forEach((c, idx) => {
+          const span = (CUSPS[(idx + 1) % 12] - c + 360) % 360,
+            mid = (c + span / 2) % 360;
+          const cr = eclipticToSvgRad(c, asc),
+            mr = eclipticToSvgRad(mid, asc);
+          const po = polar(two ? RADII.natalOuter : RADII.vernierInner, cr),
+            pi = polar(RADII.core, cr);
+          const np = polar((RADII.houseCollar + RADII.core) / 2, mr);
+          s += line(po.x, po.y, pi.x, pi.y, 'st-line', 1);
+          s += txt(np, CONFIG.houseNumFont, 'house-num', idx + 1);
+        });
+        // ADDED (ring 1 band cusps): transit ring's own cusp stubs, multi-wheel.ts:417-450
+        if (two) {
+          const bi = RADII.natalOuter,
+            bo = RADII.vernierInner;
+          TCUSPS.forEach((c, i) => {
+            const angular = i % 3 === 0,
+              cr = eclipticToSvgRad(c, asc);
+            const a = polar(bi, cr),
+              b = polar(angular ? bo : bi + (bo - bi) * 0.4, cr);
+            s += line(
+              a.x,
+              a.y,
+              b.x,
+              b.y,
+              'cusp-t',
+              angular ? 1.5 : 1,
+              `stroke-opacity="${angular ? 1 : 0.6}"${angular ? ' stroke-dasharray="1 3"' : ''}`,
+            );
+          });
+        }
+        // Axes: outer dial edge inward, stopping at AXIS_STOP on both sides of the centre (ratio measured from the real-app capture).
+        const axisSeg = (rad) => {
+          const o1 = polar(RADII.outer, rad),
+            i1 = polar(AXIS_STOP, rad),
+            o2 = polar(RADII.outer, rad + Math.PI),
+            i2 = polar(AXIS_STOP, rad + Math.PI);
+          return (
+            line(o1.x, o1.y, i1.x, i1.y, 'axis', CONFIG.axisWidth) +
+            line(o2.x, o2.y, i2.x, i2.y, 'axis', CONFIG.axisWidth)
+          );
+        };
+        s += axisSeg(eclipticToSvgRad(ASC, asc)) + axisSeg(eclipticToSvgRad(MC, asc));
+        // ADDED (house dial labels + axis degrees), multi-wheel.ts:307-383
+        const houseNumR = (RADII.houseCollar + RADII.core) / 2,
+          degR = (RADII.zodiacOuter + RADII.outer) / 2;
+        [
+          ['ASC', ASC],
+          ['DSC', ASC + 180],
+          ['MC', MC],
+          ['IC', MC + 180],
+        ].forEach(([label, lon]) => {
+          const lp = polar(
+            houseNumR,
+            eclipticToSvgRad(lon - halfArcDeg(label.length, CONFIG.axisLabelFont, houseNumR), asc),
+          );
+          s += txt(lp, CONFIG.axisLabelFont, 'axis-label', label);
+          const t = Math.round(inSign(lon) * 60),
+            dTxt = `${Math.floor(t / 60)}°`,
+            mTxt = `${String(t % 60).padStart(2, '0')}′`;
+          const dp = polar(degR, eclipticToSvgRad(lon + halfArcDeg(dTxt.length, CONFIG.axisDegFont, degR), asc));
+          const mp = polar(degR, eclipticToSvgRad(lon - halfArcDeg(mTxt.length, CONFIG.axisDegFont, degR), asc));
+          s += txt(dp, CONFIG.axisDegFont, 'axis-deg', dTxt) + txt(mp, CONFIG.axisDegFont, 'axis-deg', mTxt);
+        });
+        // Aspect chords
+        for (const a of aspects) {
+          const pA = polar(RADII.core - 1, eclipticToSvgRad(a.a.longitude, asc)),
+            pB = polar(RADII.core - 1, eclipticToSvgRad(a.b.longitude, asc));
+          const exact = a.orb < 1,
+            wide = a.orb > 3,
+            dash = CONFIG.dash[a.family];
+          const touches =
+            SEL === null || (!a.cross && (a.a.id === SEL || a.b.id === SEL)) || (a.cross && a.b.id === SEL);
+          s += line(
+            pA.x,
+            pA.y,
+            pB.x,
+            pB.y,
+            `chord c-${a.family}${touches ? '' : ' dim'}`,
+            exact ? 1.75 : a.family === 'minor' ? 1 : 1.25,
+            `data-family="${a.family}" ${dash ? `stroke-dasharray="${dash}"` : ''} stroke-opacity="${exact ? CONFIG.opacity.exact : wide ? CONFIG.opacity.wide : CONFIG.opacity.normal}"`,
+          );
+        }
+        // Natal ring
+        const bandIn = RADII.houseCollar,
+          bandOut = two ? RADII.natalOuter : RADII.vernierInner,
+          bw = bandOut - bandIn;
+        for (const b of resolveBodyCollisions(natalVis, CONFIG.minSepNatal)) {
+          const tr = eclipticToSvgRad(b.longitude, asc),
+            dr = eclipticToSvgRad(b.displayLongitude, asc);
+          const glyphR = two ? RADII.natalMid : bandIn + bw * STACK.glyph;
+          const gp = polar(glyphR, dr),
+            ta = polar(bandOut, tr),
+            ge = polar(glyphR + 9, dr);
+          const tk0 = polar(bandIn, tr),
+            tk1 = polar(bandIn + CONFIG.bodyTickLen, tr);
+          const dim = SEL !== null && SEL !== b.id ? ' dim' : '';
+          s +=
+            `<g class="body${SEL === b.id ? ' sel' : ''}" data-body="${b.id}" tabindex="0" role="button" aria-pressed="${SEL === b.id}" aria-label="${b.label}"><title>${b.label} (natal)</title>` +
+            line(tk0.x, tk0.y, tk1.x, tk1.y, 'body-tick', 1.25) +
+            line(ta.x, ta.y, ge.x, ge.y, 'leader', 0.75) +
+            `<circle cx="${f(gp.x)}" cy="${f(gp.y)}" r="${HIT_R}" class="hit"/>` +
+            `<g class="${dim ? 'dim-g' : ''}" opacity="${dim ? 0.35 : 1}">` +
+            useGlyph(gp, CONFIG.bodyGlyphSize, `b-${b.id}`, 'natal-glyph');
+          if (b.retro) {
+            const rp = polar(glyphR, dr);
+            s += `<text x="${f(rp.x + 8)}" y="${f(rp.y + 9)}" font-size="7" class="rx-mark" text-anchor="middle">R</text>`;
+          }
+          if (!two) {
+            const dp = polar(bandIn + bw * STACK.degree, dr),
+              sp = polar(bandIn + bw * STACK.sign, dr),
+              mp = polar(bandIn + bw * STACK.minute, dr);
+            const t = Math.round(inSign(b.longitude) * 60),
+              si = signOf(b.longitude);
+            s +=
+              txt(dp, CONFIG.stackDegFont, 'deg-label', `${Math.floor(t / 60)}°`) +
+              useGlyph(sp, CONFIG.stackSignSize, `s-${si}`, 'sign-glyph') +
+              txt(mp, CONFIG.stackMinFont, 'min-label', `${String(t % 60).padStart(2, '0')}′`);
+          }
+          s += '</g></g>';
+        }
+        // Transit ring
+        if (two) {
+          for (const b of resolveBodyCollisions(TRANSIT, CONFIG.minSepTransit)) {
+            const tr = eclipticToSvgRad(b.longitude, asc),
+              dr = eclipticToSvgRad(b.displayLongitude, asc);
+            const gp = polar(RADII.transitMid + 6, dr),
+              dp = polar(RADII.transitMid - 9, dr);
+            const ta = polar(RADII.vernierInner, tr),
+              ge = polar(RADII.transitMid + 14, dr);
+            const tk0 = polar(RADII.natalOuter, tr),
+              tk1 = polar(RADII.natalOuter + CONFIG.bodyTickLen, tr);
+            s +=
+              `<g style="pointer-events:none"><title>${b.label} (transit)</title>` +
+              line(tk0.x, tk0.y, tk1.x, tk1.y, 'body-tick-t', 1.25) +
+              line(ta.x, ta.y, ge.x, ge.y, 'leader', 0.75) +
+              useGlyph(gp, CONFIG.bodyGlyphSize, `b-${b.id}`, 'transit-glyph') +
+              txt(dp, CONFIG.degFont, 'deg-label-t', `${Math.floor(inSign(b.longitude))}°`) +
+              '</g>';
+          }
+          // ADDED (corner ring legend), multi-wheel.ts:686-725
+          s +=
+            line(8, 14, 26, 14, 'legend-sw-natal', 2) +
+            `<text x="32" y="14" font-size="10" dominant-baseline="central" class="legend-txt">Natal</text>` +
+            line(8, 30, 26, 30, 'legend-sw-transit', 2, 'stroke-dasharray="1 3"') +
+            `<text x="32" y="30" font-size="10" dominant-baseline="central" class="legend-txt">Transit</text>`;
+        }
+        return `<svg class="wheel" viewBox="0 0 ${CONFIG.viewBox} ${CONFIG.viewBox}" role="img" aria-label="Natal chart wheel, sample data" data-rings="${state.rings}">${s}</svg>`;
+      }
+
+      const swatch = (fam) =>
+        `<svg class="sw" viewBox="0 0 28 8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" class="c-${fam}"${CONFIG.dash[fam] ? ` stroke-dasharray="${CONFIG.dash[fam]}"` : ''}/></svg>`;
+
+      // Real option labels (AspectFamilyControls.messages.ts). Preset -> families follows the preset descriptions.
+      const FAMILIES = [
+        ['major', 'Major: conjunction, sextile, square, trine, opposition'],
+        ['hardMinor', 'Hard minor: semisquare, sesquiquadrate, quincunx, semisextile'],
+        ['softMinor', 'Soft minor: quintile, biquintile'],
+        ['higherHarmonic', 'Higher harmonic: decile, septile, novile'],
+        ['nodalAngular', 'Nodal and angular: contacts to the nodes, angles, Vertex and Fortune'],
+      ];
+      const PRESETS = [
+        ['standardOverview', 'Standard overview: major and nodal and angular, orbs 8 and 6', ['major', 'nodalAngular']],
+        ['natalCore', 'Natal and core temperament: major and parallels, orbs 7 and 5', ['major']],
+        ['predictiveTiming', 'Predictive and timing: major and hard minor', ['major', 'hardMinor']],
+        ['dynamicSynastry', 'Dynamic synastry: major and nodal and angular, orb 6', ['major', 'nodalAngular']],
+      ];
+      const famEl = document.getElementById('f-fam'),
+        preEl = document.getElementById('f-preset');
+      function syncSelects() {
+        const only = state.appFams.size === 1 ? [...state.appFams][0] : null;
+        const val = state.appFams.size === 0 ? 'all' : only || 'custom';
+        famEl.innerHTML =
+          '<option value="all">All aspects</option>' +
+          FAMILIES.map(([k, l]) => `<option value="${k}">${l}</option>`).join('') +
+          (val === 'custom' ? '<option value="custom" disabled>Chosen families</option>' : '');
+        famEl.value = val;
+        preEl.innerHTML =
+          '<option value="none">No preset (default view)</option>' +
+          PRESETS.map(([k, l]) => `<option value="${k}">${l}</option>`).join('');
+        preEl.value = state.preset;
+      }
+      famEl.addEventListener('change', () => {
+        state.preset = 'none';
+        state.appFams = famEl.value === 'all' ? new Set() : new Set([famEl.value]);
+        render();
+      });
+      preEl.addEventListener('change', () => {
+        const p = PRESETS.find((x) => x[0] === preEl.value);
+        state.preset = preEl.value;
+        state.appFams = p ? new Set(p[2]) : new Set();
+        render();
+      });
+
+      const SIGN_PLACE = (lon) => `${SIGN_NAMES[signOf(lon)]} ${fmtDM(inSign(lon))}`;
+      function inspector(aspects) {
+        const el = document.getElementById('inspector');
+        const b = NATAL.find((x) => x.id === state.sel);
+        if (!b || !state.natal.has(b.id)) {
+          el.innerHTML =
+            '<h2 id="insp-h">Selection</h2><p class="hint">Select a planet, sign, house cusp, or aspect to explore it</p>';
+          return;
+        }
+        const rel = aspects.filter((a) => !a.cross && (a.a.id === b.id || a.b.id === b.id));
+        el.innerHTML = `<div class="insp-head"><h2 id="insp-h">Selection</h2></div>
+    <div class="insp-head"><strong>${bodyIco(b.id)}${b.label}</strong><button class="btn quiet" type="button" id="b-clear">Clear</button></div>
+    <div class="badges"><span class="badge">${SIGN_PLACE(b.longitude)}</span><span class="badge">House ${houseOf(b.longitude)}</span><span class="badge${b.retro ? ' rx' : ''}">${b.retro ? 'Retrograde' : 'Direct'}</span></div>
+    <button class="btn quiet" type="button" id="b-only" aria-pressed="${state.only}">${state.only ? 'Show all aspects' : 'Show only this body’s aspects'}</button>
+    <p class="hint">Sample line: ${b.label} stands in ${SIGN_NAMES[signOf(b.longitude)]}. Sample text, not an interpretation.</p>
+    <ul class="rel">${rel.map((a) => `<li>${(a.a.id === b.id ? a.b : a.a).label}: ${CONFIG.aspectNames[a.angle]}</li>`).join('') || '<li>No aspect contacts shown.</li>'}</ul>`;
+        document.getElementById('b-clear').onclick = () => {
+          state.sel = null;
+          state.only = false;
+          render();
+        };
+        document.getElementById('b-only').onclick = () => {
+          state.only = !state.only;
+          render();
+        };
+      }
+
+      const LEG = {
+        hard: ['Hard', 'solid', 'conjunction, square, opposition'],
+        soft: ['Soft', 'dashed', 'sextile, trine'],
+        minor: ['Minor', 'dotted', 'quincunx'],
+      };
+
+      function renderTabs() {
+        document.getElementById('tabs').innerHTML = TABS.map(
+          (t) =>
+            `<a class="chart-view-link" href="#" data-tab="${t}"${t === state.tab ? ' aria-current="page"' : ''}>${t.replace('&', '&amp;')}</a>`,
+        ).join('');
+        const sel = document.getElementById('f-view');
+        sel.innerHTML = TABS.map(
+          (t) => `<option${t === state.tab ? ' selected' : ''}>${t.replace('&', '&amp;')}</option>`,
+        ).join('');
+        const pane =
+          state.tab === 'Wheel'
+            ? 'wheel'
+            : state.tab === 'Placements'
+              ? 'placements'
+              : state.tab === 'Aspects'
+                ? 'aspects'
+                : 'other';
+        for (const p of ['wheel', 'placements', 'aspects', 'other'])
+          document.getElementById(`panel-${p}`).hidden = p !== pane;
+      }
+
+      function render() {
+        document.documentElement.setAttribute('data-theme', state.theme);
+        SEL = state.sel && state.natal.has(state.sel) ? state.sel : null;
+        const vis = NATAL.filter((b) => state.natal.has(b.id));
+        const all = computeAspects(vis, state.rings === 'two' ? TRANSIT : []);
+        const byApp = all.filter((a) => state.appFams.size === 0 || state.appFams.has(a.appFamily));
+        const shown = byApp.filter((a) => state.sel_aspects.has(ANGLE_ID[a.angle]));
+        const drawn =
+          state.only && SEL
+            ? shown.filter((a) => (!a.cross && (a.a.id === SEL || a.b.id === SEL)) || (a.cross && a.b.id === SEL))
+            : shown;
+        renderTabs();
+        document.getElementById('wheel').innerHTML = renderWheel(vis, drawn);
+        inspector(shown);
+        syncSelects();
+
+        // Placements tab
+        document.getElementById('pl-body').innerHTML =
+          vis
+            .map(
+              (b) =>
+                `<tr data-body="${b.id}"><td>${bodyIco(b.id)}${b.label}</td><td>${signIco(signOf(b.longitude))}${SIGN_NAMES[signOf(b.longitude)]}</td><td class="num">${fmtDM(inSign(b.longitude))}</td><td class="num">${houseOf(b.longitude)}</td><td class="${b.retro ? 'retro' : ''}">${b.retro ? 'Retrograde' : 'Direct'}</td></tr>`,
+            )
+            .join('') || '<tr><td colspan="5" class="empty">No bodies selected.</td></tr>';
+        const ANG = { 1: 'ASC', 4: 'IC', 7: 'DSC', 10: 'MC' };
+        document.getElementById('ho-body').innerHTML = CUSPS.map(
+          (c, i) =>
+            `<tr><td>${i + 1}${ANG[i + 1] ? ` &middot; ${ANG[i + 1]}` : ''}</td><td>${signIco(signOf(c))}${SIGN_NAMES[signOf(c)]}</td><td class="num">${fmtDM(inSign(c))}</td><td></td></tr>`,
+        ).join('');
+
+        // Aspects tab: natal-natal, filtered by the Aspects shown select and the pill filter
+        const rows = byApp.filter((a) => !a.cross && (state.aspFilter === 'all' || a.family === state.aspFilter));
+        document.getElementById('as-body').innerHTML =
+          rows
+            .map(
+              (a) =>
+                `<tr data-family="${a.family}"><td>${bodyIco(a.a.id)}${a.a.label}</td><td>${aspIco(a.angle, a.family)}<span class="nm">${CONFIG.aspectNames[a.angle]}</span></td><td>${bodyIco(a.b.id)}${a.b.label}</td><td class="num">${fmtDM(a.orb)}</td></tr>`,
+            )
+            .join('') ||
+          '<tr><td colspan="4" class="empty">No aspects match this filter. Choose All to show every family.</td></tr>';
+        document.getElementById('as-legend').innerHTML =
+          '<strong>Aspect families</strong>' +
+          ['hard', 'soft', 'minor']
+            .map((k) => `<span class="item">${swatch(k)}${LEG[k][0]}, ${LEG[k][1]} (${LEG[k][2]})</span>`)
+            .join('');
+      }
+
+      // Aspect catalogue. Tone facts: Hard = conjunction, semisquare, square, sesquiquadrate, opposition; Soft = sextile, trine;
+      // Minor = quincunx, semisextile, quintile, biquintile, decile, septile, novile. "nodal" has no tone (contacts to nodes/angles, not an aspect angle).
+      const CATALOGUE = [
+        ['conjunction', 'Conjunction', '☌', 'hard'],
+        ['semisquare', 'Semisquare', '∠', 'hard'],
+        ['square', 'Square', '□', 'hard'],
+        ['sesquiquadrate', 'Sesquiquadrate', '⚼', 'hard'],
+        ['opposition', 'Opposition', '☍', 'hard'],
+        ['sextile', 'Sextile', '⚹', 'soft'],
+        ['trine', 'Trine', '△', 'soft'],
+        ['nodal', 'Nodal & angular contacts', '☊', null],
+        ['quincunx', 'Quincunx', '⚻', 'minor'],
+        ['semisextile', 'Semisextile', '⚺', 'minor'],
+        ['quintile', 'Quintile', 'Q', 'minor'],
+        ['biquintile', 'Biquintile', 'bQ', 'minor'],
+        ['decile', 'Decile', 'Dc', 'minor'],
+        ['septile', 'Septile', 'S', 'minor'],
+        ['novile', 'Novile', 'N', 'minor'],
+      ];
+      const ANGLE_ID = {
+        0: 'conjunction',
+        60: 'sextile',
+        90: 'square',
+        120: 'trine',
+        180: 'opposition',
+        150: 'quincunx',
+      };
+      const TONES = ['hard', 'soft', 'minor'];
+      const toneIds = (t) => CATALOGUE.filter((c) => c[3] === t).map((c) => c[0]);
+      const BAR_PRESETS = [
+        ['major', 'Major', ['conjunction', 'sextile', 'square', 'trine', 'opposition']],
+        ['hardMinor', 'Hard minor', ['semisquare', 'sesquiquadrate', 'quincunx', 'semisextile']],
+        ['softMinor', 'Soft minor', ['quintile', 'biquintile']],
+        ['higherHarmonic', 'Higher harmonic', ['decile', 'septile', 'novile']],
+        ['nodalAngular', 'Nodal & angular', ['nodal']],
+      ];
+      state.sel_aspects = new Set(BAR_PRESETS[0][2]);
+      const MARK = { all: '✓', partial: '–', off: '' };
+
+      document.getElementById('fam-chips').innerHTML = TONES.map(
+        (k) =>
+          `<label class="fpill fpill-${k}" data-tone="${k}" data-state="off"><input type="checkbox" name="wfam" value="${k}"><span class="mark" aria-hidden="true"></span>${LEG[k][0]}</label>`,
+      ).join('');
+      document.getElementById('presets').innerHTML = BAR_PRESETS.map(
+        ([k, l]) => `<label class="ppill"><input type="radio" name="preset" value="${k}">${l}</label>`,
+      ).join('');
+      document.getElementById('checks').innerHTML = CATALOGUE.map(
+        ([k, l, gl, t]) =>
+          `<label class="chk"><input type="checkbox" name="asp" value="${k}"><span class="gl${t ? ' gl-' + t : ''}" aria-hidden="true">${gl}</span>${l}</label>`,
+      ).join('');
+
+      function toneState(t) {
+        const ids = toneIds(t),
+          n = ids.filter((i) => state.sel_aspects.has(i)).length;
+        return n === 0 ? 'off' : n === ids.length ? 'all' : 'partial';
+      }
+      function activePreset() {
+        for (const [k, l, ids] of BAR_PRESETS)
+          if (ids.length === state.sel_aspects.size && ids.every((i) => state.sel_aspects.has(i))) return [k, l];
+        return null;
+      }
+      function syncBar() {
+        for (const t of TONES) {
+          const st = toneState(t),
+            lab = document.querySelector(`.fpill[data-tone="${t}"]`),
+            inp = lab.querySelector('input');
+          lab.dataset.state = st;
+          lab.querySelector('.mark').textContent = MARK[st];
+          inp.checked = st === 'all';
+          inp.indeterminate = st === 'partial';
+        }
+        const ap = activePreset();
+        document.getElementById('filters-label').textContent = ap ? ap[1] : 'Custom';
+        document.querySelectorAll('#presets input').forEach((i) => {
+          i.checked = !!ap && i.value === ap[0];
+        });
+        document.querySelectorAll('#checks input').forEach((i) => {
+          i.checked = state.sel_aspects.has(i.value);
+        });
+      }
+      document.getElementById('fam-chips').addEventListener('change', (e) => {
+        const t = e.target.value,
+          ids = toneIds(t);
+        if (toneState(t) === 'all') ids.forEach((i) => state.sel_aspects.delete(i));
+        else ids.forEach((i) => state.sel_aspects.add(i));
+        syncBar();
+        render();
+      });
+      document.getElementById('presets').addEventListener('change', (e) => {
+        const p = BAR_PRESETS.find((x) => x[0] === e.target.value);
+        state.sel_aspects = new Set(p[2]);
+        syncBar();
+        render();
+      });
+      document.getElementById('checks').addEventListener('change', (e) => {
+        if (e.target.checked) state.sel_aspects.add(e.target.value);
+        else state.sel_aspects.delete(e.target.value);
+        syncBar();
+        render();
+      });
+
+      // Filters disclosure: popover above the bar on desktop, bottom sheet at 640px and below (CSS).
+      const fBtn = document.getElementById('filters-btn'),
+        fPop = document.getElementById('filters-pop'),
+        fScrim = document.getElementById('scrim');
+      function setPop(open) {
+        fPop.hidden = !open;
+        fScrim.hidden = !open;
+        fBtn.setAttribute('aria-expanded', String(open));
+        if (open) {
+          const first = fPop.querySelector('input');
+          if (first) first.focus();
+        } else fBtn.focus();
+      }
+      fBtn.addEventListener('click', () => setPop(fPop.hidden));
+      document.getElementById('pop-done').addEventListener('click', () => setPop(false));
+      fScrim.addEventListener('click', () => setPop(false));
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !fPop.hidden) setPop(false);
+      });
+      document.addEventListener('click', (e) => {
+        if (!fPop.hidden && !e.target.closest('.bar-anchor')) {
+          fPop.hidden = true;
+          fScrim.hidden = true;
+          fBtn.setAttribute('aria-expanded', 'false');
+        }
+      });
+      syncBar();
+      document.querySelector('.side').addEventListener('change', (e) => {
+        if (e.target.name === 'theme') {
+          state.theme = e.target.value;
+          render();
+        }
+      });
+      document.querySelector('.dial').addEventListener('change', (e) => {
+        if (e.target.name === 'rings') {
+          state.rings = e.target.value;
+          render();
+        }
+      });
+      document.getElementById('fam-seg').addEventListener('change', (e) => {
+        state.aspFilter = e.target.value;
+        render();
+      });
+      document.getElementById('tabs').addEventListener('click', (e) => {
+        const a = e.target.closest('[data-tab]');
+        if (a) {
+          e.preventDefault();
+          state.tab = a.dataset.tab;
+          render();
+        }
+      });
+      document.getElementById('f-view').addEventListener('change', (e) => {
+        state.tab = e.target.value.replace('&amp;', '&');
+        render();
+      });
+      const wheelEl = document.getElementById('wheel');
+      wheelEl.addEventListener('click', (e) => {
+        const gEl = e.target.closest('.body');
+        state.sel = gEl && gEl.dataset.body !== state.sel ? gEl.dataset.body : null;
+        if (!state.sel) state.only = false;
+        render();
+      });
+      wheelEl.addEventListener('keydown', (e) => {
+        if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('.body')) {
+          e.preventDefault();
+          const id = e.target.closest('.body').dataset.body;
+          state.sel = state.sel === id ? null : id;
+          render();
+          const n = wheelEl.querySelector(`[data-body="${id}"]`);
+          if (n) n.focus();
+        }
+      });
+      document.querySelectorAll('[data-inert]').forEach((a) => a.addEventListener('click', (e) => e.preventDefault()));
+      render();
+    </script>
+  </body>
+</html>
