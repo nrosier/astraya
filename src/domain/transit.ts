@@ -22,7 +22,7 @@
 /**
  * @module transit
  * @purpose Computes a transit bi-wheel for one saved person against a chosen moment (#172) — the everyday "sky right now (or at any chosen moment) read against a natal chart that stays fixed".
- * @conventions Uses `subjectsFrom` for the transiting (moving) side and `fixedSubjects` for the natal (reference) side, mirroring `secondary-progression.ts`'s convention with "transiting" standing in for "progressed"; the transiting ring is cast at the natal place, since Astraya has no other recorded place for a saved person; both rings are full `ChartData`, so any single-chart table/wheel/sheet helper works unchanged for either ring.
+ * @conventions Uses `subjectsFrom` for the transiting (moving) side and `fixedSubjects` for the natal (reference) side, mirroring `secondary-progression.ts`'s convention with "transiting" standing in for "progressed"; the transiting ring is cast at the natal place, since Astraya has no other recorded place for a saved person; both rings are full `ChartData`, so any single-chart table/wheel/sheet helper works unchanged for either ring; angle contacts come from `contactsToNatalAngles` and are unconditional on birth-time accuracy (empty only when the houses have no solution).
  * @exports computeTransit, contactsToNatalAngles, TransitData, TransitAngleContact
  */
 import {
@@ -105,7 +105,7 @@ export interface TransitData {
   readonly transit: ChartData;
   /** Aspects from the transiting positions (moving) to the fixed natal chart. */
   readonly contacts: readonly Aspect[];
-  /** Transiting bodies to the natal Ascendant and Midheaven (#1508); separate from `contacts`, empty without usable houses. */
+  /** Transiting bodies to the natal Ascendant and Midheaven (#1508); separate from `contacts`, empty without usable houses. Populated regardless of birth-time accuracy; callers must gate on timeAccuracy before using these contacts. */
   readonly angleContacts: readonly TransitAngleContact[];
 }
 
