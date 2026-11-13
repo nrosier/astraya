@@ -227,6 +227,7 @@ export function TransitFilterButton({
 
       <StagedDialog
         open={open}
+        phoneSheet
         heading={t.adjust}
         closeLabel={t.closeLabel}
         onDiscard={closeCard}

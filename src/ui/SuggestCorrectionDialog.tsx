@@ -82,6 +82,7 @@ export function SuggestCorrectionDialog({
       heading={target?.label === undefined ? t.suggestHeading : `${t.suggestHeading}: ${target.label}`}
       closeLabel={t.closeLabel}
       placement="right"
+      phoneSheet
       dialogClassName="settings-card drawer-fit"
       onDiscard={onClose}
       returnFocusTo={returnFocusTo}

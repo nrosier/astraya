@@ -126,6 +126,7 @@ export function CorpusCorrectionEditor({
       heading={target?.label === undefined ? t.heading : `${t.heading}: ${target.label}`}
       closeLabel={t.closeLabel}
       placement="right"
+      phoneSheet
       dialogClassName="settings-card drawer-fit"
       onDiscard={onClose}
       returnFocusTo={returnFocusTo}

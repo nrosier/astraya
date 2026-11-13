@@ -429,6 +429,7 @@ export function CorpusOverridesPanel(): React.JSX.Element {
           heading={editing === undefined ? t.editorHeading : labelForKey(editing.key, uiLocale)}
           closeLabel={t.closeEditorLabel}
           placement="right"
+          phoneSheet
           dialogClassName="settings-card drawer-fit"
           onDiscard={cancelEdit}
           returnFocusTo={editTriggerRef}
