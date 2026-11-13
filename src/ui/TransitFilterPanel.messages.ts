@@ -91,7 +91,7 @@ const nl: typeof en = {
   closeLabel: 'Sluiten zonder toe te passen',
   applyButton: 'Toepassen',
   applyAsDefaultButton: 'Toepassen als standaard',
-  resetToDefaultButton: 'Terugzetten naar standaard',
+  resetToDefaultButton: 'Standaardwaarden',
   cancelButton: 'Annuleren',
   nothingChanged: 'er is niets gewijzigd',
 };
