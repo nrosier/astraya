@@ -4406,6 +4406,7 @@ svg text.chart-symbol-text-unicode {
   fill: var(--muted);
 }
 
+.chart-aspect-glyph-conjunction text.chart-symbol-text,
 .chart-aspect-glyph-semisquare text.chart-symbol-text,
 .chart-aspect-glyph-square text.chart-symbol-text,
 .chart-aspect-glyph-sesquiquadrate text.chart-symbol-text,
@@ -4413,7 +4414,6 @@ svg text.chart-symbol-text-unicode {
   fill: var(--aspect-hard);
 }
 
-.chart-aspect-glyph-conjunction text.chart-symbol-text,
 .chart-aspect-glyph-semisextile text.chart-symbol-text,
 .chart-aspect-glyph-sextile text.chart-symbol-text,
 .chart-aspect-glyph-trine text.chart-symbol-text {
@@ -4538,6 +4538,7 @@ svg text.chart-symbol-text-unicode {
  * distinction a reader looks for first, and two colour axes on one line read
  * as neither.
  */
+.chart-aspect-conjunction,
 .chart-aspect-semisquare,
 .chart-aspect-square,
 .chart-aspect-sesquiquadrate,
@@ -4548,7 +4549,6 @@ svg text.chart-symbol-text-unicode {
   opacity: 0.75;
 }
 
-.chart-aspect-conjunction,
 .chart-aspect-semisextile,
 .chart-aspect-sextile,
 .chart-aspect-trine {
@@ -4985,14 +4985,14 @@ svg text.chart-symbol-text-unicode {
 .chart-aspect-glyph-opposition circle,
 .chart-aspect-glyph-opposition path,
 .chart-aspect-glyph-opposition rect,
-.chart-aspect-glyph-opposition line {
-  stroke: var(--aspect-hard);
-}
-
+.chart-aspect-glyph-opposition line,
 .chart-aspect-glyph-conjunction circle,
 .chart-aspect-glyph-conjunction path,
 .chart-aspect-glyph-conjunction rect,
-.chart-aspect-glyph-conjunction line,
+.chart-aspect-glyph-conjunction line {
+  stroke: var(--aspect-hard);
+}
+
 .chart-aspect-glyph-semisextile circle,
 .chart-aspect-glyph-semisextile path,
 .chart-aspect-glyph-semisextile rect,
@@ -8559,6 +8559,7 @@ dl.consultation-tiles {
   color: var(--muted);
 }
 
+.mgrid-symbol-text.chart-aspect-glyph-conjunction,
 .mgrid-symbol-text.chart-aspect-glyph-semisquare,
 .mgrid-symbol-text.chart-aspect-glyph-square,
 .mgrid-symbol-text.chart-aspect-glyph-sesquiquadrate,
@@ -8566,7 +8567,6 @@ dl.consultation-tiles {
   color: var(--aspect-hard);
 }
 
-.mgrid-symbol-text.chart-aspect-glyph-conjunction,
 .mgrid-symbol-text.chart-aspect-glyph-semisextile,
 .mgrid-symbol-text.chart-aspect-glyph-sextile,
 .mgrid-symbol-text.chart-aspect-glyph-trine {
