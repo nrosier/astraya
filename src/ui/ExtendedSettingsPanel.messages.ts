@@ -146,7 +146,7 @@ const en = {
   lunarNodesLabel: 'Lunar nodes:',
   lunarNodesObjectName: 'Lunar nodes',
   nodeHelp: 'Mean and true differ by up to about 1.5°.',
-  minorPlanetsLegend: 'Minor planets (Swiss Ephemeris asteroid elements)',
+  asteroidsGroupLabel: 'Asteroids',
   aspectsToHint:
     'The Ascendant and Midheaven always aspect the bodies. The Vertex and the two parts do so here, to bodies only, never to each other or the angles; a part is not aspected to the luminary it is built from, as that repeats an Ascendant aspect.',
   antiscia: 'Show antiscia and contra-antiscia on the wheel',
@@ -454,7 +454,7 @@ const nl: typeof en = {
   lunarNodesLabel: 'Maansknopen:',
   lunarNodesObjectName: 'Maansknopen',
   nodeHelp: 'Gemiddeld en waar verschillen tot ongeveer 1,5°.',
-  minorPlanetsLegend: 'Kleine planeten (asteroïde-elementen van Swiss Ephemeris)',
+  asteroidsGroupLabel: 'Asteroïden',
   aspectsToHint:
     'De Ascendant en het Midheaven maken altijd aspecten met de lichamen. De Vertex en de twee punten doen dat hier, alleen met lichamen, nooit met elkaar of met de assen; een punt maakt geen aspect met het lichtgevend lichaam waaruit het is opgebouwd, omdat dat een Ascendant-aspect herhaalt.',
   antiscia: 'Antiscia en contra-antiscia op het wiel tonen',
