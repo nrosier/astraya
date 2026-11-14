@@ -55,6 +55,12 @@ test('the cycles screen lists the great conjunctions with a diagram, and narrows
   // The motion filter is a radio group (#901), so the retrograde choice is the checked radio, not a select value.
   await expect(page.getByRole('radio', { name: 'Retrograde only (e.g. Venus’s inferior conjunctions)' })).toBeChecked();
   await expect(table.getByRole('row').nth(1)).toContainText('Venus');
+
+  // The two bodies are pills too (#1545): the preset set them to Venus and Sun, and a body pill changes one of them.
+  await expect(page.getByRole('button', { name: /^First body Venus/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Second body Sun/ })).toBeVisible();
+  await choosePill(page, 'Second body', 'Mars');
+  await expect(page.getByRole('button', { name: /^Second body Mars/ })).toBeVisible();
 });
 
 test('a diagram point and its table row select each other (#418)', async ({ page }) => {

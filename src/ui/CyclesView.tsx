@@ -360,8 +360,8 @@ export function CyclesView(): React.JSX.Element {
             ]}
             onChange={choosePreset}
           />
-          <div className="tool-field-row">
-            <Select
+          <div className="tool-pill-row">
+            <PillSelect
               label={t.bodyALabel}
               value={params.bodyA}
               options={CYCLE_BODY_KEYS.map((key) => ({ value: key, label: nameOf(key) }))}
@@ -369,7 +369,7 @@ export function CyclesView(): React.JSX.Element {
                 edit({ bodyA: value });
               }}
             />
-            <Select
+            <PillSelect
               label={t.bodyBLabel}
               value={params.bodyB}
               options={CYCLE_BODY_KEYS.map((key) => ({ value: key, label: nameOf(key) }))}
