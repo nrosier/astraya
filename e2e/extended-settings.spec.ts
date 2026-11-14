@@ -224,20 +224,20 @@ test.describe('with the shared people (#799)', () => {
     await allReports.check();
     await expect(matrix.getByLabel('Jupiter — included in the written report', { exact: true })).toBeChecked();
 
-    // The orb scale is a horizontal segmented control on the Orbs & aspects tab: a labelled radiogroup the arrow keys
-    // walk through.
+    // The orb scale is one slider with three detent chips under it on the Orbs & aspects first screen (#1544).
     await openSettingsTab(page, 'Orbs & aspects');
-    const scale = card.getByRole('radiogroup', { name: 'Orb scale step', exact: true });
-    await expect(scale).toHaveClass(/primitive-choice-group-segmented/);
-    await expect(scale.getByRole('radio')).toHaveCount(3);
-    await scale.getByRole('radio', { name: '0%', exact: true }).check();
-    await scale.getByRole('radio', { name: '0%', exact: true }).focus();
-    await page.keyboard.press('ArrowRight');
-    await expect(scale.getByRole('radio', { name: '+40%', exact: true })).toBeChecked();
-    await page.keyboard.press('ArrowLeft');
-    await expect(scale.getByRole('radio', { name: '0%', exact: true })).toBeChecked();
-    const labels = scale.locator('label');
-    const tops = await Promise.all([0, 1, 2].map(async (index) => (await labels.nth(index).boundingBox())?.y ?? -1));
+    const chips = card.getByRole('group', { name: 'Orb scale steps', exact: true });
+    await expect(chips.getByRole('button')).toHaveCount(3);
+    await chips.getByRole('button', { name: 'Wide +40%', exact: true }).click();
+    await expect(chips.getByRole('button', { name: 'Wide +40%', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await chips.getByRole('button', { name: 'Standard 0%', exact: true }).click();
+    await expect(chips.getByRole('button', { name: 'Standard 0%', exact: true })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    const tops = await Promise.all(
+      [0, 1, 2].map(async (index) => (await chips.getByRole('button').nth(index).boundingBox())?.y ?? -1),
+    );
     expect(new Set(tops.map((top) => Math.round(top))).size).toBe(1);
 
     // The 42rem cap holds on a wide screen.
@@ -457,7 +457,7 @@ test.describe('with the shared people (#799)', () => {
     await expectSavedAfterClose(0);
   });
 
-  test('an Advanced group starts closed on Profile, Orbs and Special, none on Display, and the open state is remembered (#856)', async () => {
+  test('an Advanced group starts closed on Profile and Special, none on Orbs or Display, and the open state is remembered (#856)', async () => {
     test.setTimeout(90_000);
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await openNatalChart(page);
@@ -466,10 +466,14 @@ test.describe('with the shared people (#799)', () => {
     const card = page.locator('dialog.settings-card');
     const panel = card.locator('[role="tabpanel"]:not([hidden])');
     await openSettings(page);
-    for (const tab of ['Profile & frame', 'Orbs & aspects', 'Special points'] as const) {
+    for (const tab of ['Profile & frame', 'Special points'] as const) {
       await card.getByRole('tab', { name: tab, exact: true }).click();
       await expect(panel.getByRole('button', { name: /^Advanced/ })).toHaveAttribute('aria-expanded', 'false');
     }
+    // The orb scale and minor aspects are on the Orbs & aspects first screen (#1544): no Advanced group there.
+    await card.getByRole('tab', { name: 'Orbs & aspects', exact: true }).click();
+    await expect(panel.getByRole('button', { name: /^Advanced/ })).toHaveCount(0);
+    await expect(panel.getByRole('slider', { name: 'Orb scale' })).toBeVisible();
     await card.getByRole('tab', { name: 'Display & glyphs', exact: true }).click();
     await expect(panel.getByRole('button', { name: /^Advanced/ })).toHaveCount(0);
 
@@ -484,7 +488,7 @@ test.describe('with the shared people (#799)', () => {
     await openSettings(page);
     await card.getByRole('tab', { name: 'Profile & frame', exact: true }).click();
     await expect(panel.getByRole('button', { name: /^Advanced/ })).toHaveAttribute('aria-expanded', 'true');
-    await card.getByRole('tab', { name: 'Orbs & aspects', exact: true }).click();
+    await card.getByRole('tab', { name: 'Special points', exact: true }).click();
     await expect(panel.getByRole('button', { name: /^Advanced/ })).toHaveAttribute('aria-expanded', 'false');
   });
 
