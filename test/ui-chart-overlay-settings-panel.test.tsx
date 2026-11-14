@@ -155,11 +155,11 @@ describe('ChartOverlaySettingsPanel', () => {
     await click(must(container.querySelector('button.chart-overlay-trigger')));
     const groups = [...container.querySelectorAll<HTMLElement>('.date-animation-bar[role="group"]')];
     expect(groups.map((group) => group.getAttribute('aria-label'))).toEqual([
-      'Transit date',
-      'Progressed to date',
-      'Directed to date',
-      'Solar arc to date',
-      'Return date',
+      'Transit date stepper',
+      'Progressed to date stepper',
+      'Directed to date stepper',
+      'Solar arc to date stepper',
+      'Return date stepper',
     ]);
     // A ring that is off keeps its stepper disabled, as its date field was.
     expect(groups.every((group) => [...group.querySelectorAll('button')].every((b) => b.disabled))).toBe(true);

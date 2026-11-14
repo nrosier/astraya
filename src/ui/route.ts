@@ -438,12 +438,11 @@ const OVERLAY_RING_PARAMS: Readonly<Record<OverlayRingKey | 'transit', string>> 
 };
 
 function ringDatesOf(query: URLSearchParams): OverlayRingDates | undefined {
-  const found: { -readonly [K in OverlayRingKey]?: string } = {};
-  for (const key of OVERLAY_RING_KEYS) {
+  const found = OVERLAY_RING_KEYS.flatMap((key) => {
     const value = chartDateParam(query.get(OVERLAY_RING_PARAMS[key]));
-    if (value !== undefined) found[key] = value;
-  }
-  return Object.keys(found).length === 0 ? undefined : found;
+    return value === undefined ? [] : [[key, value] as const];
+  });
+  return found.length === 0 ? undefined : Object.fromEntries(found);
 }
 
 /**

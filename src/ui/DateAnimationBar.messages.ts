@@ -7,6 +7,7 @@
  */
 const en = {
   groupLabel: 'Date and animation',
+  groupLabelFor: (name: string) => `${name} stepper`,
   play: 'Play',
   pause: 'Pause',
   stepBack: (interval: string) => `Step back one ${interval}`,
@@ -23,6 +24,7 @@ const en = {
 
 const nl: typeof en = {
   groupLabel: 'Datum en animatie',
+  groupLabelFor: (name: string) => `${name}, stapper`,
   play: 'Afspelen',
   pause: 'Pauzeren',
   stepBack: (interval: string) => `Een ${interval} terug`,

@@ -178,7 +178,11 @@ export function DateAnimationBar({
   const intervalName = t.intervalNames[interval];
   return (
     <div className="date-animation-bar-wrap">
-      <div className="date-animation-bar" role="group" aria-label={label ?? t.groupLabel}>
+      <div
+        className="date-animation-bar"
+        role="group"
+        aria-label={label === undefined ? t.groupLabel : t.groupLabelFor(label)}
+      >
         {playable && (
           <Button
             variant="primary"
