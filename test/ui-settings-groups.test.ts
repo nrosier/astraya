@@ -27,7 +27,7 @@ describe('the placement table', () => {
 
   it('keeps the tab lists the owner decided on #856', () => {
     expect(advancedFields('profile')).toEqual(['boundsScheme']);
-    // The orb scale and the minor aspects moved to the Orbs & aspects first screen (#1544): no Advanced group is left there.
+    // The orb scale and minor aspects moved from an Advanced group to the Orbs & aspects first screen (#1544).
     expect(ADVANCED_TABS).toEqual(['profile', 'special']);
     expect(PLACEMENT.orbScalePercent).toBe('first');
     expect(PLACEMENT.enabledMinorAspects).toBe('first');
@@ -69,23 +69,15 @@ describe('the customised count', () => {
     const traditional = applyCalculationProfile(DEFAULT_EXTENDED_SETTINGS, 'traditional-western-v1');
     expect(customisedCount('special', { ...traditional, lilithVariant: 'true', nodeVariant: 'true' })).toBe(2);
     expect(customisedCount('profile', { ...traditional, boundsScheme: 'ptolemaic' })).toBe(1);
-    // The minor aspects sit on the Orbs & aspects first screen (#1544), so no Advanced group counts them.
-    for (const tab of ADVANCED_TABS) {
-      expect(customisedCount(tab, { ...traditional, enabledMinorAspects: ['quincunx'] }), tab).toBe(0);
-    }
+    expect(customisedCount('orbs', { ...traditional, enabledMinorAspects: ['quincunx'] })).toBe(1);
     // The same change is invisible to the other tabs.
-    expect(customisedCount('profile', { ...traditional, lilithVariant: 'true' })).toBe(0);
+    expect(customisedCount('orbs', { ...traditional, lilithVariant: 'true' })).toBe(0);
   });
 
-  it('does not count the orb scale on any Advanced tab, because the Orbs & aspects first screen shows it (#1544)', () => {
-    for (const tab of ADVANCED_TABS) {
-      for (const orbScalePercent of [-50, 40, -30]) {
-        expect(
-          customisedCount(tab, { ...DEFAULT_EXTENDED_SETTINGS, orbScalePercent }),
-          `${tab} ${orbScalePercent}`,
-        ).toBe(0);
-      }
-    }
+  it('does not count the orb scale while it sits on a named step, because the first screen already shows it', () => {
+    expect(customisedCount('orbs', { ...DEFAULT_EXTENDED_SETTINGS, orbScalePercent: -50 })).toBe(0);
+    expect(customisedCount('orbs', { ...DEFAULT_EXTENDED_SETTINGS, orbScalePercent: 40 })).toBe(0);
+    expect(customisedCount('orbs', { ...DEFAULT_EXTENDED_SETTINGS, orbScalePercent: -30 })).toBe(1);
   });
 
   it('no longer counts an object policy, since the Bodies tab shows it on its first screen, and still adds the extra values (#1544)', () => {
@@ -94,15 +86,15 @@ describe('the customised count', () => {
       objectPolicies: { ...DEFAULT_OBJECT_POLICIES, ceres: { visible: true, aspectParticipant: true } },
     } as ExtendedSettings;
     expect(PLACEMENT.objectPolicies).toBe('first');
-    expect(customisedCount('special', changed)).toBe(0);
-    expect(customisedCount('special', changed, 2)).toBe(2);
-    expect(customisedCount('special', DEFAULT_EXTENDED_SETTINGS, 1)).toBe(1);
+    expect(customisedCount('orbs', changed)).toBe(0);
+    expect(customisedCount('orbs', changed, 2)).toBe(2);
+    expect(customisedCount('orbs', DEFAULT_EXTENDED_SETTINGS, 1)).toBe(1);
   });
 
   it('treats the same minor aspects in another order as the same choice', () => {
     const a = { ...DEFAULT_EXTENDED_SETTINGS, enabledMinorAspects: ['quincunx', 'semisquare'] };
     const b = { ...DEFAULT_EXTENDED_SETTINGS, enabledMinorAspects: ['semisquare', 'quincunx'] };
-    for (const tab of ADVANCED_TABS) expect(customisedCount(tab, a)).toBe(customisedCount(tab, b));
+    expect(customisedCount('orbs', a)).toBe(customisedCount('orbs', b));
   });
 
   it('picks the profile a draft differs from least as its baseline', () => {

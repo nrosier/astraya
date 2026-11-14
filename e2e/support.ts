@@ -194,10 +194,11 @@ export async function openSettingsTab(page: Page, tab: SettingsTab): Promise<voi
   } else {
     await dialog.getByRole('combobox', { name: 'Category', exact: true }).selectOption({ label: tab });
   }
-  // Fine-tuning controls sit in a collapsed Advanced group on three of the tabs (#856). A spec that asks for a tab
-  // wants the controls in it, so open the group; a spec about the collapsed state clicks the tabs itself. Bodies and
-  // Display & glyphs have no Advanced group (#1544).
-  if (tab !== 'Display & glyphs' && tab !== 'Bodies') await openAdvancedGroup(page);
+  // Fine-tuning controls sit in a collapsed Advanced group on two of the tabs (#856). A spec that asks for a tab
+  // wants the controls in it, so open the group; a spec about the collapsed state clicks the tabs itself. Bodies,
+  // Orbs & aspects (its orb scale and minor aspects are on the first screen) and Display & glyphs have no Advanced
+  // group (#1544).
+  if (tab !== 'Display & glyphs' && tab !== 'Bodies' && tab !== 'Orbs & aspects') await openAdvancedGroup(page);
 }
 
 /** Opens the open tab's Advanced group (#856), if it is closed. */
