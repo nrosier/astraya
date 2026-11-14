@@ -352,7 +352,7 @@ Create these boundaries or equivalent boundaries with the same responsibilities:
 Implement in this order:
 
 1. Add the six target route views and move each old section's content to its target view. Remove the old section parameter contract when the new navigation lands.
-2. Replace the five chart-type pills with one labelled Select in the header. Remove chart types from application navigation.
+2. Keep one chart-type pill button in the header that opens a card of exclusive chart-type choices, replacing the five chart-type pills. Remove chart types from application navigation.
 3. Extract the existing dial renderer from the combined on-screen sheet without changing chart geometry or hit targets.
 4. Render the dial followed by `SelectionInspector` in DOM order inside one workbench container.
 5. Make the workbench an inline-size query container. Below `68rem`, use one column with the inspector immediately after the visualization. At `68rem` and above, use `minmax(46rem, 1fr) minmax(20rem, 24rem)` with a `2rem` gap. This threshold is the sum of the minimum useful chart width, inspector width, and gap; it is not a viewport breakpoint. Put chart workbenches in the wide visualization shell rather than the current `64rem` general-content shell, which would make the two-column state unreachable. The visualization remains first in DOM and focus order, and the inspector may scroll inside itself on desktop (#817 owner decision) while sitting in flow below `68rem`.
