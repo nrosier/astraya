@@ -157,10 +157,10 @@ describe('computeDavison time midpoint', () => {
     expect(data.castPlace.latitude).toBeCloseTo(45 + 25 / 60, 9);
   });
 
-  it('converts both births to LMT before the midpoint, then back to UT at the cast longitude', async () => {
+  it('is the exact UT midpoint whichever place method is used, even when the great circle runs far from the mean longitude (#1406, 2026-11-14)', async () => {
     const engine = await getEngine();
-    // Fixed date, deliberately given as civil UTC (offset 0) at far-apart longitudes: a plain UT
-    // mean would ignore the longitudes, an LMT mean does not.
+    // Far-apart longitudes, whose great-circle midpoint runs over the pole, far from the mean longitude: reading the
+    // LMT mean at the cast longitude would move the time by hours. The owner chose the plain UT midpoint instead.
     const a: BirthMomentInput = {
       civil: { year: 2000, month: 3, day: 10, hour: 12, minute: 0, second: 0 },
       coordinates: { latitude: 40, longitude: 120 },
@@ -171,16 +171,14 @@ describe('computeDavison time midpoint', () => {
       coordinates: { latitude: 40, longitude: -60 },
       offsetOverrideMinutes: 0,
     };
-    const data = await computeDavison(a, b, engine);
     const jdA = await engine.julianDayFromUtc(2000, 3, 10, 12, 0, 0);
     const jdB = await engine.julianDayFromUtc(2000, 3, 20, 12, 0, 0);
-
-    const lmtA = jdA + localMeanTimeOffsetMinutes(120) / 1440;
-    const lmtB = jdB + localMeanTimeOffsetMinutes(-60) / 1440;
-    const expected = (lmtA + lmtB) / 2 - localMeanTimeOffsetMinutes(data.castPlace.longitude) / 1440;
-    expect(data.castJd).toBeCloseTo(expected, 9);
-    // The cast place sits at longitude 30 E on this route's far side; the LMT route is not the UT mean.
-    expect(Math.abs(data.castJd - (jdA + jdB) / 2)).toBeGreaterThan(1e-4);
+    const greatCircle = await computeDavison(a, b, engine);
+    const arithmetic = await computeDavison(a, b, engine, { placeMethod: 'arithmetic' });
+    expect(greatCircle.castJd).toBeCloseTo((jdA + jdB) / 2, 9);
+    expect(arithmetic.castJd).toBeCloseTo((jdA + jdB) / 2, 9);
+    // The two methods cast the chart at different places, but at the same moment.
+    expect(Math.abs(greatCircle.castPlace.longitude - arithmetic.castPlace.longitude)).toBeGreaterThan(1);
   });
 
   it('is unchanged by swapping the two people', async () => {

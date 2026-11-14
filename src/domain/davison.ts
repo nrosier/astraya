@@ -7,10 +7,12 @@
  *
  * Time (Davison, *Synastry*, 1983, p. 244 and the worked example on pp. 246-247): the halfway
  * point in time is the meeting of the elder's progressed date and the younger's converse date,
- * which is the exact midpoint of the two birth instants. The book first expresses each birth
- * time in Local Mean Time and reads the result as the Local Mean Time of the relationship
- * horoscope's own meridian. This module does the same: it takes the mean of the two LMT
- * instants, then converts that LMT back to UT at the chosen place's longitude for the engine.
+ * which is the exact midpoint of the two birth instants. The book works in Local Mean Time: it
+ * takes the mean of the two births' LMTs and reads it as the LMT of the mean longitude. Since
+ * LMT = UT + longitude / 15°, that is exactly the midpoint of the two UT instants. This module
+ * takes that UT midpoint directly, for both place methods (owner decision, #1406, 2026-11-14), so
+ * the time does not depend on where the chart is cast: reading the LMT mean at the great-circle
+ * longitude instead would move it by the difference between that longitude and the mean one.
  *
  * Place: the default is the great-circle (spherical geodesic) midpoint of the two birthplaces,
  * standard spherical geometry: both places become unit vectors, the vectors are added and
@@ -32,13 +34,12 @@
 /**
  * @module domain/davison
  * @purpose Computes a Davison relationship chart: a real chart for the time and place midpoint of two births, alongside both natal charts (#1406).
- * @conventions Time midpoint is taken in Local Mean Time (Davison 1983, pp. 244-248) then converted to UT at the cast longitude; place midpoint defaults to the great-circle midpoint, with the book's arithmetic latitude/longitude mean as an option; houses use the cast place's latitude; an opt-in p. 247 Midheaven adjustment moves the cast time so the Midheaven is the mid-point of the natal Midheavens; all ephemeris access goes through `EphemerisProvider`.
+ * @conventions Time midpoint is the exact UT midpoint of the two births, for both place methods (Davison 1983, p. 244; identical to the book's LMT mean read at the mean longitude); place midpoint defaults to the great-circle midpoint, with the book's arithmetic latitude/longitude mean as an option; houses use the cast place's latitude; an opt-in p. 247 Midheaven adjustment moves the cast time so the Midheaven is the mid-point of the natal Midheavens; all ephemeris access goes through `EphemerisProvider`.
  * @exports computeDavison, greatCircleMidpoint, arithmeticMidpoint, davisonPlace, DavisonData, DavisonOptions, DavisonPlaceMethod, midheavenTarget
  */
 import { computeChartDataAtJd, type ChartCalculationOptions, type ChartData } from './chart-compute.js';
 import { julianDayFor } from '../time/julian.js';
 import { resolveMoment } from '../time/resolve.js';
-import { localMeanTimeOffsetMinutes } from '../time/zones.js';
 import type { BirthMomentInput, Coordinates } from '../time/types.js';
 import type { EphemerisProvider, GeoPosition, JulianDayUT } from '../ephemeris/types.js';
 
@@ -159,15 +160,13 @@ const MIDHEAVEN_MAX_STEPS = 12;
 /** Any system gives the same Midheaven; Placidus is only the call's required argument. */
 const MIDHEAVEN_HOUSE_SYSTEM = 'P';
 
-/** Minutes in a day, and its reciprocal, for Local Mean Time offsets. */
+/** Minutes in a day, for the Midheaven shift. */
 const MINUTES_PER_DAY = 1440;
-const DAYS_PER_MINUTE = 1 / MINUTES_PER_DAY;
 
 /**
  * Davison relationship chart for two birth moments. `provider` must already be initialized.
  *
- * The cast instant is the mean of the two births' Local Mean Times (each longitude's own LMT),
- * read as the LMT of the cast place's meridian and converted back to UT there.
+ * The cast instant is the exact UT midpoint of the two births, whichever place method is used.
  */
 export async function computeDavison(
   momentA: BirthMomentInput,
@@ -187,17 +186,8 @@ export async function computeDavison(
   const middle = davisonPlace(momentA.coordinates, momentB.coordinates, placeMethod);
   const castPlace: GeoPosition = { latitude: middle.latitude, longitude: middle.longitude, altitude: 0 };
 
-  // Each birth time in Local Mean Time, then the halfway instant, then back to UT at the cast meridian.
-  // LMT_x = UT_x + offset_x, so mean(LMT) = mean(UT) + mean(offset); UT_cast = mean(LMT) - castOffset.
-  const offsetA = localMeanTimeOffsetMinutes(momentA.coordinates.longitude);
-  const offsetB = localMeanTimeOffsetMinutes(momentB.coordinates.longitude);
-  // The cast meridian's LMT offset is taken on the same day-branch as the mean of the two, so a
-  // great-circle midpoint beside the 180 degree meridian is not read a whole day away.
-  const rawCastOffset = localMeanTimeOffsetMinutes(castPlace.longitude);
-  const castOffset =
-    rawCastOffset + MINUTES_PER_DAY * Math.round(((offsetA + offsetB) / 2 - rawCastOffset) / MINUTES_PER_DAY);
-  const meanOffset = (offsetA + offsetB) / 2;
-  const timeJd = (jdA + jdB) / 2 + (meanOffset - castOffset) * DAYS_PER_MINUTE;
+  // The halfway instant in UT (p. 244). The book's LMT mean, read at the mean longitude, is the same instant.
+  const timeJd = (jdA + jdB) / 2;
 
   const [chartA, chartB] = await Promise.all([
     computeChartDataAtJd(jdA, placeA, provider, chartOptions),
