@@ -4,7 +4,7 @@
  * ticks run at `min(speed, MAX_TICKS_PER_SECOND)` per second, so below the 60 clamp every speed is one step per tick.
  */
 import { describe, expect, it } from 'vitest';
-import { PLAYBACK_SPEEDS, playbackPlan, stepsPerSecond } from '../src/ui/date-animation.ts';
+import { MAX_TICKS_PER_SECOND, PLAYBACK_SPEEDS, playbackPlan, stepsPerSecond } from '../src/ui/date-animation.ts';
 
 describe('playback tick rate for each offered speed (#1440)', () => {
   it('offers exactly the speeds 0.5x, 1x, 2x, 5x, 10x and 30x', () => {
@@ -37,5 +37,22 @@ describe('playback tick rate for each offered speed (#1440)', () => {
       expect(stepsPerSecond(cur.speed)).toBeGreaterThan(stepsPerSecond(prev.speed));
       expect(cur.tickMs).toBeLessThan(prev.tickMs);
     }
+  });
+});
+
+describe('the 60-per-second recalculation clamp (#1400, owner answer A3)', () => {
+  it('never plans more than MAX_TICKS_PER_SECOND ticks per second at any offered speed', () => {
+    for (const speed of PLAYBACK_SPEEDS) {
+      const { tickMs } = playbackPlan(speed);
+      expect(1000 / tickMs).toBeLessThanOrEqual(MAX_TICKS_PER_SECOND + 1e-9);
+    }
+  });
+
+  it('clamps a rate above the cap to 60 ticks per second and folds the rest into steps per tick', () => {
+    const plan = playbackPlan(120);
+    expect(plan.tickMs).toBeCloseTo(1000 / MAX_TICKS_PER_SECOND, 9);
+    expect(plan.stepsPerTick).toBeCloseTo(2, 9);
+    // Steps per second are unchanged by the clamp: the date still advances by the speed each second.
+    expect((1000 / plan.tickMs) * plan.stepsPerTick).toBeCloseTo(120, 6);
   });
 });
