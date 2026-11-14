@@ -116,8 +116,8 @@ describe('relationshipAngleContacts (#422)', () => {
 
 describe('aspectValence (#422)', () => {
   it('matches the wheel’s own hard/soft/minor colour convention', () => {
-    for (const key of ['conjunction', 'sextile', 'trine']) expect(aspectValence(key)).toBe('harmonious');
-    for (const key of ['semisquare', 'square', 'sesquiquadrate', 'opposition']) {
+    for (const key of ['sextile', 'trine']) expect(aspectValence(key)).toBe('harmonious');
+    for (const key of ['conjunction', 'semisquare', 'square', 'sesquiquadrate', 'opposition']) {
       expect(aspectValence(key)).toBe('challenging');
     }
     for (const key of ['semisextile', 'quintile', 'biquintile', 'quincunx']) {

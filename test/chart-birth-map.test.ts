@@ -9,7 +9,7 @@ const COLORS = {
   land: '#f3f1fa',
   coast: '#5c5878',
   border: '#9e98b8',
-  pin: '#5b3fd4',
+  pin: '#3b49df',
 };
 const SIZE = { width: 680, height: 300 };
 

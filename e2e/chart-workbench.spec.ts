@@ -171,7 +171,7 @@ test.describe('with the shared people (#799)', () => {
     await expect.poll(visibleLines).toBe(before);
   });
 
-  test('the aspect-family filter keeps only the chosen family on the wheel and the matrix, and All aspects restores them (#1063)', async () => {
+  test('the Hard, Soft and Minor pills filter the wheel by tone, and the family Select filters the matrix (#1063, #1532)', async () => {
     test.setTimeout(90_000);
     await page.setViewportSize({ width: 1280, height: 800 });
     await openSharedPerson(page, baseUrl, EINSTEIN);
@@ -180,17 +180,117 @@ test.describe('with the shared people (#799)', () => {
     await expect.poll(async () => shown.count()).toBeGreaterThan(3);
     const before = await shown.count();
 
-    const filter = page.getByLabel('Aspects shown');
-    await filter.selectOption({ label: 'Hard minor: semisquare, sesquiquadrate, quincunx, semisextile' });
+    // On the Wheel tab the pills replace the family Select (owner, 2026-11-13); every pill starts on.
+    await expect(page.getByLabel('Aspects shown', { exact: true })).toHaveCount(0);
+    const pills = page.getByRole('group', { name: 'Aspect families on the wheel', exact: true });
+    const hard = pills.getByRole('button', { name: 'Hard', exact: true });
+    await expect(hard).toHaveAttribute('aria-pressed', 'true');
+    await hard.click();
+    await expect(hard).toHaveAttribute('aria-pressed', 'false');
     await expect.poll(async () => shown.count()).toBeLessThan(before);
-    await expect(
-      page.locator(
-        'svg.chart-dial g.chart-aspect-link:not(.chart-aspect-filtered):not([data-aspect-key="semisquare"]):not([data-aspect-key="sesquiquadrate"]):not([data-aspect-key="quincunx"]):not([data-aspect-key="semisextile"])',
-      ),
-    ).toHaveCount(0);
-
-    await filter.selectOption({ label: 'All aspects' });
+    for (const key of ['conjunction', 'square', 'opposition', 'semisquare', 'sesquiquadrate']) {
+      await expect(
+        page.locator(`svg.chart-dial g.chart-aspect-link:not(.chart-aspect-filtered)[data-aspect-key="${key}"]`),
+      ).toHaveCount(0);
+    }
+    await hard.click();
     await expect.poll(async () => shown.count()).toBe(before);
+
+    // The matrix keeps the family Select.
+    await page.getByRole('link', { name: 'Aspect matrix', exact: true }).click();
+    const cells = page.locator('.mgrid-aspect');
+    await expect(cells.first()).toBeVisible();
+    const cellsBefore = await cells.count();
+    const filter = page.getByLabel('Aspects shown', { exact: true });
+    await filter.selectOption({ label: 'Hard minor: semisquare, sesquiquadrate, quincunx, semisextile' });
+    await expect.poll(async () => cells.count()).toBeLessThan(cellsBefore);
+    await filter.selectOption({ label: 'All aspects' });
+    await expect.poll(async () => cells.count()).toBe(cellsBefore);
+  });
+
+  test('the instrument bar sits centred directly under the wheel, one dial draws both wheels, and Natal only hides the transit ring for this view (#1532)', async () => {
+    test.setTimeout(120_000);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    const wheel = page.locator('.chart-workbench-dial div.chart-wheel');
+    const bar = page.getByRole('group', { name: 'Wheel display', exact: true });
+    await expect(bar).toBeVisible();
+    // Centred on the wheel's MC-IC axis and directly beneath it.
+    const wheelBox = await wheel.boundingBox();
+    const barBox = await bar.boundingBox();
+    if (wheelBox === null || barBox === null) throw new Error('no wheel or bar box');
+    expect(Math.abs(barBox.x + barBox.width / 2 - (wheelBox.x + wheelBox.width / 2))).toBeLessThanOrEqual(1);
+    expect(barBox.y).toBeGreaterThanOrEqual(wheelBox.y + wheelBox.height);
+    expect(barBox.y - (wheelBox.y + wheelBox.height)).toBeLessThanOrEqual(24);
+    expect(barBox.y + barBox.height).toBeLessThanOrEqual(800);
+    // Without a transit ring there is no ring toggle (owner decision, 2026-11-13).
+    await expect(bar.getByRole('radiogroup')).toHaveCount(0);
+    // One renderer for both wheels (owner review, 2026-11-14): the same dial, at the same size, with or without a ring.
+    const dialSvg = page.locator('.chart-workbench-dial div.chart-wheel > svg');
+    await expect(dialSvg).toHaveClass(/chart-dial/);
+    const plainDial = await dialSvg.boundingBox();
+
+    // With a transit ring, Natal only removes it from this view; the saved overlay setting stays on.
+    await page.locator('.chart-overlay-settings button.chart-overlay-trigger').click();
+    const dialog = page.locator('.chart-overlay-settings dialog');
+    await dialog.getByRole('checkbox', { name: 'Transit ring', exact: true }).check();
+    await dialog.getByLabel('Transit date', { exact: true }).fill('2025-01-01');
+    await dialog.getByRole('button', { name: 'Apply overlays', exact: true }).click();
+    await expect(dialog).toBeHidden();
+    const legends = page.locator('[data-ring-legend]');
+    await expect(legends).toHaveCount(2);
+    await expect(dialSvg).toHaveClass(/chart-dial/);
+    const ringDial = await dialSvg.boundingBox();
+    if (plainDial === null || ringDial === null) throw new Error('no dial box');
+    expect(Math.abs(ringDial.width - plainDial.width)).toBeLessThanOrEqual(1);
+    const rings = bar.getByRole('radiogroup', { name: 'Rings on the wheel', exact: true });
+    await expect(rings.getByRole('radio', { name: 'Natal + transit', exact: true })).toBeChecked();
+    await rings.getByText('Natal only', { exact: true }).click();
+    await expect(legends).toHaveCount(0);
+    await expect(page.locator('svg.chart-dial .chart-glyph-transit')).toHaveCount(0);
+    await rings.getByText('Natal + transit', { exact: true }).click();
+    await expect(legends).toHaveCount(2);
+    await page.locator('.chart-overlay-settings button.chart-overlay-trigger').click();
+    await expect(dialog.getByRole('checkbox', { name: 'Transit ring', exact: true })).toBeChecked();
+  });
+
+  test('a consultation preset sets the instrument bar: its tone pills, and Natal + transit for a ring it turns on (#1532)', async () => {
+    test.setTimeout(120_000);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    const bar = page.getByRole('group', { name: 'Wheel display', exact: true });
+    const pill = (name: string) => bar.getByRole('button', { name, exact: true });
+    const pressed = async () =>
+      Promise.all(['Hard', 'Soft', 'Minor'].map(async (name) => pill(name).getAttribute('aria-pressed')));
+    await expect.poll(pressed).toEqual(['true', 'true', 'true']);
+    const preset = page.getByLabel('Consultation preset', { exact: true });
+    const rings = bar.getByRole('radiogroup', { name: 'Rings on the wheel', exact: true });
+
+    // Standard overview names only major aspects, so Minor goes off (owner decision, 2026-11-14), and its transit ring
+    // shows with the ring toggle on Natal + transit.
+    await preset.selectOption({ label: 'Standard overview: major and nodal and angular, orbs 8 and 6' });
+    await expect.poll(pressed).toEqual(['true', 'true', 'false']);
+    await expect(rings.getByRole('radio', { name: 'Natal + transit', exact: true })).toBeChecked();
+    await rings.getByText('Natal only', { exact: true }).click();
+    await expect(rings.getByRole('radio', { name: 'Natal only', exact: true })).toBeChecked();
+
+    // Predictive and timing's hard-minor family holds quincunx and semisextile, so Minor comes back on; choosing it
+    // resets Natal only, so its transit ring shows.
+    await preset.selectOption({ label: 'Predictive and timing: major and hard minor' });
+    await expect.poll(pressed).toEqual(['true', 'true', 'true']);
+    await expect(rings.getByRole('radio', { name: 'Natal + transit', exact: true })).toBeChecked();
+    await expect(page.locator('[data-ring-legend]').first()).toBeVisible();
+
+    // Natal core turns the transit ring off, so the ring toggle goes; Minor is off again.
+    await preset.selectOption({ label: 'Natal and core temperament: major and parallels, orbs 7 and 5' });
+    await expect.poll(pressed).toEqual(['true', 'true', 'false']);
+    await expect(bar.getByRole('radiogroup')).toHaveCount(0);
+
+    // No preset switches every pill back on.
+    await preset.selectOption({ label: 'No preset (default view)' });
+    await expect.poll(pressed).toEqual(['true', 'true', 'true']);
   });
 
   test('a consultation preset is applied only when chosen, and No preset returns the default view (#1063)', async () => {
@@ -205,11 +305,14 @@ test.describe('with the shared people (#799)', () => {
     await expect(preset).toHaveValue('none');
 
     await preset.selectOption({ label: 'Predictive and timing: major and hard minor' });
-    await expect(page.getByLabel('Aspects shown')).toContainText('Chosen families');
     await expect.poll(async () => shown.count()).toBeLessThanOrEqual(before);
+    // The family Select is on the Matrix tab only (#1532); there it reads the preset's families.
+    await page.getByRole('link', { name: 'Aspect matrix', exact: true }).click();
+    await expect(page.getByLabel('Aspects shown', { exact: true })).toContainText('Chosen families');
 
-    await preset.selectOption({ label: 'No preset (default view)' });
-    await expect(page.getByLabel('Aspects shown')).toHaveValue('all');
+    await page.getByLabel('Consultation preset').selectOption({ label: 'No preset (default view)' });
+    await expect(page.getByLabel('Aspects shown', { exact: true })).toHaveValue('all');
+    await page.getByRole('link', { name: 'Wheel', exact: true }).click();
     await expect.poll(async () => shown.count()).toBe(before);
   });
 
@@ -350,7 +453,7 @@ test.describe('with the shared people (#799)', () => {
     await expect(page.locator('.chart-wheel')).toBeInViewport();
   });
 
-  test('Show on an Aspects row keeps the pair under the chart type and aspect filter (#1333)', async () => {
+  test('Show on an Aspects row keeps the pair under the chart type and aspect filter (#1333, #1532)', async () => {
     test.setTimeout(90_000);
     await page.setViewportSize({ width: 1600, height: 1000 });
     await openSharedPerson(page, baseUrl, EINSTEIN);
@@ -379,14 +482,16 @@ test.describe('with the shared people (#799)', () => {
     await page.getByRole('link', { name: 'Wheel', exact: true }).click();
     await page.getByLabel('Consultation preset', { exact: true }).selectOption({ label: 'No preset (default view)' });
 
-    await page.getByLabel('Aspects shown', { exact: true }).selectOption({
-      label: 'Major: conjunction, sextile, square, trine, opposition',
-    });
+    // The Minor pill off (#1532): the table follows the wheel and lists no minor-tone contact.
+    await page
+      .getByRole('group', { name: 'Aspect families on the wheel', exact: true })
+      .getByRole('button', { name: 'Minor', exact: true })
+      .click();
     await page.getByRole('link', { name: 'Aspects', exact: true }).click();
     // The table lists only what the wheel shows: no minor contact is in it.
     const rows = page.locator('#chart-view-aspects table').first().locator('tbody tr');
     await expect(rows.first()).toBeVisible();
-    const minor = /Semisquare|Sesquiquadrate|Quincunx|Semisextile|Quintile|Biquintile|Septile/i;
+    const minor = /Quincunx|Semisextile|Quintile|Biquintile|Decile|Septile|Novile/i;
     await expect(rows.filter({ hasText: minor })).toHaveCount(0);
 
     // Show on a row with the Moon: the wheel keeps that row's pair and the line between them (#1333).
@@ -410,15 +515,19 @@ test.describe('with the shared people (#799)', () => {
     const outside = ['sun', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'].find((body) => !pair.includes(body));
     if (outside === undefined) throw new Error('no body outside the row');
     await expect(page.locator(`.chart-wheel [data-body="${outside}"]`).first()).toHaveClass(/chart-dimmed/);
-    // Only major contacts are visible, and the family filter is still chosen.
-    await expect(page.getByLabel('Aspects shown', { exact: true })).toContainText('Major');
+    // No minor-tone contact is visible, and the Minor pill is still off (#1532).
+    await expect(
+      page
+        .getByRole('group', { name: 'Aspect families on the wheel', exact: true })
+        .getByRole('button', { name: 'Minor', exact: true }),
+    ).toHaveAttribute('aria-pressed', 'false');
     const shown = page.locator('svg.chart-dial g.chart-aspect-link:not(.chart-aspect-filtered)');
     await expect.poll(async () => shown.count()).toBeGreaterThan(0);
-    await expect(
-      page.locator(
-        'svg.chart-dial g.chart-aspect-link:not(.chart-aspect-filtered):not([data-aspect-key="conjunction"]):not([data-aspect-key="sextile"]):not([data-aspect-key="square"]):not([data-aspect-key="trine"]):not([data-aspect-key="opposition"])',
-      ),
-    ).toHaveCount(0);
+    for (const key of ['quincunx', 'semisextile', 'quintile', 'biquintile', 'decile', 'septile', 'novile']) {
+      await expect(
+        page.locator(`svg.chart-dial g.chart-aspect-link:not(.chart-aspect-filtered)[data-aspect-key="${key}"]`),
+      ).toHaveCount(0);
+    }
   });
 
   test('the aspect matrix grid shows Name and House at 1280 and drops them at 390 (#820)', async () => {

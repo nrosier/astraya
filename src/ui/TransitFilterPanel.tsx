@@ -174,6 +174,7 @@ export function TransitFilterButton({
   };
 
   const groupChecked = (keys: readonly string[]): boolean => keys.every((key) => draft.aspects.includes(key));
+  const groupSome = (keys: readonly string[]): boolean => keys.some((key) => draft.aspects.includes(key));
   const toggleGroup = (keys: readonly string[]): void => {
     const aspects = groupChecked(keys)
       ? draft.aspects.filter((key) => !keys.includes(key))
@@ -311,6 +312,7 @@ export function TransitFilterButton({
                   key={label}
                   label={label}
                   checked={groupChecked(keys)}
+                  indeterminate={groupSome(keys) && !groupChecked(keys)}
                   onChange={() => {
                     toggleGroup(keys);
                   }}

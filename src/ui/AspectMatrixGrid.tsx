@@ -1,11 +1,12 @@
 /**
  * @module ui/AspectMatrixGrid
  * @purpose The on-screen aspect matrix (#820): an ARIA table of divs styled with the flat primitive tokens, its aspect cells selecting a pair on the wheel.
- * @conventions Screen only (D-shared-drawing): the sheet and PDF keep `renderAspectMatrixSvg`'s drawing, which this reuses only for its position maths and glyph registry. Columns are Icon, Name, Degree, Sign, Minute, House, then one per body; the lower triangle holds the aspects and the diagonal repeats each row's identifier. Name and House drop at 40rem and below. No exact-aspect highlight (D-820) and no total row. Colours come from the aspect-family tokens through the existing glyph classes; every rule lives in app.css under `.mgrid`.
+ * @conventions Screen only (D-shared-drawing): the sheet and PDF keep `renderAspectMatrixSvg`'s drawing, which this reuses only for its position maths and glyph registry. Columns are Icon, Name, Degree, Sign, Minute, House, then one per body; the lower triangle holds the aspects and the diagonal repeats each row's identifier. Name and House drop at 40rem and below. No exact-aspect highlight (D-820) and no total row. Each aspect cell's tone comes from `aspectTone` as `data-tone`; every rule lives in app.css under `.mgrid`.
  * @exports AspectMatrixGrid, AspectMatrixGridLabels, AspectMatrixGridSelection
  */
 import { useMemo } from 'react';
 import { formatSignedOrb, positionParts, type AspectMatrixInput, type MatrixBody } from '../chart/aspect-matrix.js';
+import { aspectTone } from '../astrology/aspects.js';
 import { bodyId } from '../chart/body-id.js';
 import { aspectGlyph, bodyGlyph, renderGlyph, signGlyph, type GlyphDefinition } from '../chart/glyphs.js';
 import { getSymbolClass } from '../chart/symbol-class.js';
@@ -15,23 +16,6 @@ import type { Locale } from '../interpretation/schema.js';
 import { signDisplayName } from './astro-names.messages.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { Button } from './primitives/Button.js';
-
-/** The aspect keys of each colour family, matching the wheel's own grouping (hard warm, soft cool, minor green). */
-const HARD_ASPECTS: ReadonlySet<string> = new Set(['semisquare', 'square', 'sesquiquadrate', 'opposition']);
-const MINOR_ASPECTS: ReadonlySet<string> = new Set([
-  'quintile',
-  'biquintile',
-  'quincunx',
-  'decile',
-  'novile',
-  'septile',
-]);
-
-function familyClass(aspectKey: string): string {
-  if (HARD_ASPECTS.has(aspectKey)) return 'mgrid-hard';
-  if (MINOR_ASPECTS.has(aspectKey)) return 'mgrid-minor';
-  return 'mgrid-soft';
-}
 
 export interface AspectMatrixGridLabels {
   readonly symbol: string;
@@ -229,10 +213,11 @@ export function AspectMatrixGrid({
                       </span>
                     </>
                   );
-                  const cellClass = `mgrid-cell mgrid-aspect ${familyClass(aspect.aspectKey)}`;
+                  const cellClass = 'mgrid-cell mgrid-aspect';
+                  const tone = aspectTone(aspect.aspectKey);
                   if (selection?.canSelect(row.key, column.key) !== true) {
                     return (
-                      <div role="cell" key={column.key} className={cellClass}>
+                      <div role="cell" key={column.key} className={cellClass} data-tone={tone}>
                         <span className="mgrid-pair" role="img" aria-label={name}>
                           {body}
                         </span>
@@ -242,7 +227,7 @@ export function AspectMatrixGrid({
                   const active = selection;
                   const key = selectionKey.aspect(bodyId(row.key, 0), bodyId(column.key, 0));
                   return (
-                    <div role="cell" key={column.key} className={cellClass}>
+                    <div role="cell" key={column.key} className={cellClass} data-tone={tone}>
                       <Button
                         variant="plain"
                         className="mgrid-pair"
