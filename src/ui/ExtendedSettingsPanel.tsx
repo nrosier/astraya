@@ -309,6 +309,13 @@ export function ExtendedSettingsPanel({
     patch({ objectPolicies: { ...draft.objectPolicies, ...updates } });
   };
 
+  /** Group-level "None" (#1544): hides, unlinks and takes the report off every object in the group; "Clear" leaves Reports alone. */
+  const setGroupNone = (keys: readonly ObjectKey[]): void => {
+    const updates: Partial<Record<ObjectKey, ObjectPolicy>> = {};
+    for (const key of keys) updates[key] = withInterpreted({ visible: false, aspectParticipant: false }, false);
+    patch({ objectPolicies: { ...draft.objectPolicies, ...updates } });
+  };
+
   /** Named object-visibility preset (#585) — applies a complete `ObjectPolicies` snapshot, the same atomic-replace pattern `chooseProfile` uses for a calculation profile. */
   const choosePreset = (id: string): void => {
     if (!(OBJECT_POLICY_PRESET_IDS as readonly string[]).includes(id)) return;
@@ -421,6 +428,14 @@ export function ExtendedSettingsPanel({
         }}
       >
         {t.groupClear}
+      </Button>
+      <Button
+        size="compact"
+        onClick={() => {
+          setGroupNone(keys);
+        }}
+      >
+        {t.groupNone}
       </Button>
     </div>
   );
