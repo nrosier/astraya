@@ -103,7 +103,7 @@ export const SETTINGS: readonly SettingDefinition[] = [
     key: 'astraya:advancedGroups',
     scope: 'device',
     owner:
-      'Which Advanced groups of the Extended settings drawer (Profile, Bodies, Special) are open; display only, never a calculation setting',
+      'Which Advanced groups of the Extended settings drawer (Profile, Orbs, Special) are open; display only, never a calculation setting',
     describeDefault: 'all closed',
     persistence: 'local-storage',
     synced: false,
