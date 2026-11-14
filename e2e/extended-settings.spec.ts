@@ -287,6 +287,7 @@ test.describe('with the shared people (#799)', () => {
       .getByRole('radiogroup', { name: 'Calculation profile', exact: true })
       .getByRole('radio', { name: /^Sidereal/ })
       .check();
+    await card.getByRole('button', { name: /^Defaults/ }).click();
     await card.getByRole('button', { name: 'Save as my default', exact: true }).click();
     await expect(card).toBeHidden();
     // Einstein was given a copy of the default when he was created, so the card shows his own settings (#806).

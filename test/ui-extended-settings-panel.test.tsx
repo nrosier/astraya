@@ -99,8 +99,20 @@ function unmount(container: HTMLElement, root: Root): void {
   container.remove();
 }
 
-const buttonNamed = (container: HTMLElement, name: string): HTMLButtonElement | undefined =>
+const findButton = (container: HTMLElement, name: string): HTMLButtonElement | undefined =>
   Array.from(container.querySelectorAll('button')).find((button) => button.textContent === name);
+
+/** Save and Reset live in the footer's Defaults menu (#1544): a lookup for either opens that menu first. */
+const buttonNamed = (container: HTMLElement, name: string): HTMLButtonElement | undefined => {
+  const found = findButton(container, name);
+  if (found !== undefined || (name !== 'Save as my default' && name !== 'Reset to my default')) return found;
+  const menu = findButton(container, 'Defaults ▾');
+  if (menu === undefined) return undefined;
+  act(() => {
+    menu.click();
+  });
+  return findButton(container, name);
+};
 
 const trigger = (container: HTMLElement): HTMLButtonElement => {
   const found = container.querySelector<HTMLButtonElement>('button.extended-settings-trigger');
@@ -253,8 +265,9 @@ describe('ExtendedSettingsPanel', () => {
       rainbowCheckbox.click();
     });
 
+    const item1 = buttonNamed(container, 'Save as my default');
     act(() => {
-      buttonNamed(container, 'Save as my default')?.click();
+      item1?.click();
     });
 
     expect(onRedraw).not.toHaveBeenCalled();
@@ -550,8 +563,9 @@ describe('the trigger and the starting points (#442)', () => {
     const { container, root } = await mount(fakeProvider(), onRedraw);
     openCard(container);
     chooseRulers(container, 1);
+    const item2 = buttonNamed(container, 'Save as my default');
     act(() => {
-      buttonNamed(container, 'Save as my default')?.click();
+      item2?.click();
     });
     expect(onRedraw).not.toHaveBeenCalled();
     expect(readDefaultCalculationProfile()?.rulership).toBe('traditional');
@@ -570,15 +584,17 @@ describe('the trigger and the starting points (#442)', () => {
     act(() => {
       checkboxLabeled(container, 'Rainbow Color Zodiac').click();
     });
+    const item3 = buttonNamed(container, 'Save as my default');
     act(() => {
-      buttonNamed(container, 'Save as my default')?.click();
+      item3?.click();
     });
     expect(readDefaultCalculationProfile()?.settings.rainbowZodiac).toBe(true);
 
     openCard(container);
     expect(checkboxLabeled(container, 'Rainbow Color Zodiac').checked).toBe(false);
+    const item4 = buttonNamed(container, 'Reset to my default');
     act(() => {
-      buttonNamed(container, 'Reset to my default')?.click();
+      item4?.click();
     });
     expect(checkboxLabeled(container, 'Rainbow Color Zodiac').checked).toBe(true);
     // With the default saved, the reset goes back to it; cleared, it goes back to the Astraya defaults.
@@ -586,10 +602,45 @@ describe('the trigger and the starting points (#442)', () => {
     act(() => {
       checkboxLabeled(container, 'Rainbow Color Zodiac').click();
     });
+    const item5 = buttonNamed(container, 'Reset to my default');
     act(() => {
-      buttonNamed(container, 'Reset to my default')?.click();
+      item5?.click();
     });
     expect(checkboxLabeled(container, 'Rainbow Color Zodiac').checked).toBe(false);
+    unmount(container, root);
+  });
+});
+
+describe('the Defaults menu (#1544)', () => {
+  it('lists Save as my default and Reset to my default, and Reset still reaches the saved default', async () => {
+    const { container, root } = await mount(fakeProvider(), vi.fn());
+    openCard(container);
+    expect(findButton(container, 'Save as my default')).toBeUndefined();
+    act(() => {
+      findButton(container, 'Defaults ▾')?.click();
+    });
+    expect(
+      Array.from(container.querySelectorAll('.settings-card-defaults-item')).map((item) => item.textContent),
+    ).toEqual(['Save as my default', 'Reset to my default']);
+
+    // Save a Custom default through the menu, wander off it, then Reset to my default returns to it.
+    act(() => {
+      checkboxLabeled(container, 'Rainbow Color Zodiac').click();
+    });
+    act(() => {
+      findButton(container, 'Save as my default')?.click();
+    });
+    expect(readDefaultCalculationProfile()?.settings.rainbowZodiac).toBe(true);
+    openCard(container);
+    expect(checkboxLabeled(container, 'Rainbow Color Zodiac').checked).toBe(false);
+    act(() => {
+      findButton(container, 'Defaults ▾')?.click();
+    });
+    act(() => {
+      findButton(container, 'Reset to my default')?.click();
+    });
+    expect(checkboxLabeled(container, 'Rainbow Color Zodiac').checked).toBe(true);
+    expect(container.querySelector('.settings-card-defaults-menu')).toBeNull();
     unmount(container, root);
   });
 });

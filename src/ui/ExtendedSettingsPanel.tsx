@@ -87,6 +87,7 @@ import { extendedSettingsPanelMessages } from './ExtendedSettingsPanel.messages.
 import { changedSettings, sameSettings } from './extended-settings-summary.js';
 import { orbRulesDraftFrom, orbRulesFromDraft, withOrbRules, type OrbRulesDraft } from './orb-rules-draft.js';
 import { OrbRulesFields } from './OrbRulesFields.js';
+import { useExclusiveOpen } from './use-exclusive-open.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { Button } from './primitives/Button.js';
@@ -135,6 +136,9 @@ const NO_POINTS: readonly CustomPointDefinition[] = [];
 const NO_STARS: readonly ChosenFixedStar[] = [];
 
 /** The four drawer categories, in the order a chart is set up (#824). */
+/** The one dropdown in the footer (#1544): the Defaults menu. */
+const DEFAULTS_KEY = 'defaults';
+
 const CATEGORIES = ['profile', 'bodies', 'orbs', 'special', 'display'] as const;
 type Category = (typeof CATEGORIES)[number];
 
@@ -707,36 +711,84 @@ export function ExtendedSettingsPanel({
   };
   const categoryTabs = CATEGORIES.map((key) => ({ key, label: categoryLabels[key] }));
 
-  /** The footer's left and right groups (#824): Save and Reset on the left, Cancel and Apply on the right. */
+  const defaults = useExclusiveOpen<typeof DEFAULTS_KEY>('extended-settings-defaults');
+  const defaultsOpen = defaults.open === DEFAULTS_KEY;
+  const defaultsMenuId = useId();
+
+  /** The footer's three controls (#1544): a Defaults menu (Save as my default, Reset to my default) on the left, Cancel and Apply on the right. */
   const footer = (
     <>
       <div className="settings-card-footer-group">
-        <Button
-          disabled={!dirty || !rulesValid}
-          aria-label={dirty ? t.saveAsDefaultButton : `${t.saveAsDefaultButton} — ${t.nothingChanged}`}
-          title={t.saveAsDefaultHint}
-          onClick={saveAsDefault}
+        <div
+          ref={defaults.groupRef(DEFAULTS_KEY)}
+          className="settings-card-defaults"
+          onBlur={(event) => {
+            defaults.onGroupBlur(DEFAULTS_KEY, event);
+          }}
+          onKeyDown={(event) => {
+            // Escape closes the menu only, not the drawer around it.
+            if (event.key === 'Escape' && defaultsOpen) event.preventDefault();
+          }}
         >
-          {t.saveAsDefaultButton}
-        </Button>
-        {savedDefault !== undefined ? (
           <Button
+            ref={defaults.buttonRef(DEFAULTS_KEY)}
+            aria-haspopup="true"
+            aria-expanded={defaultsOpen}
+            aria-controls={defaultsOpen ? defaultsMenuId : undefined}
             onClick={() => {
-              resetTo(savedDefault.settings, savedDefault.rulership);
+              defaults.toggle(DEFAULTS_KEY);
             }}
           >
-            {t.resetToMyDefaultButton}
+            {t.defaultsMenuButton}
+            <span aria-hidden="true"> ▾</span>
           </Button>
-        ) : (
-          <Button
-            title={t.resetNoDefaultHint}
-            onClick={() => {
-              resetTo(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE);
-            }}
-          >
-            {t.resetToMyDefaultButton}
-          </Button>
-        )}
+          {defaultsOpen && (
+            <div
+              id={defaultsMenuId}
+              className="settings-card-defaults-menu"
+              role="group"
+              aria-label={t.defaultsMenuButton}
+            >
+              <Button
+                variant="plain"
+                className="settings-card-defaults-item"
+                disabled={!dirty || !rulesValid}
+                aria-label={dirty ? t.saveAsDefaultButton : `${t.saveAsDefaultButton} — ${t.nothingChanged}`}
+                title={t.saveAsDefaultHint}
+                onClick={() => {
+                  defaults.close();
+                  saveAsDefault();
+                }}
+              >
+                {t.saveAsDefaultButton}
+              </Button>
+              {savedDefault !== undefined ? (
+                <Button
+                  variant="plain"
+                  className="settings-card-defaults-item"
+                  onClick={() => {
+                    defaults.close();
+                    resetTo(savedDefault.settings, savedDefault.rulership);
+                  }}
+                >
+                  {t.resetToMyDefaultButton}
+                </Button>
+              ) : (
+                <Button
+                  variant="plain"
+                  className="settings-card-defaults-item"
+                  title={t.resetNoDefaultHint}
+                  onClick={() => {
+                    defaults.close();
+                    resetTo(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE);
+                  }}
+                >
+                  {t.resetToMyDefaultButton}
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
       <div className="settings-card-footer-group">
         <Button

@@ -224,6 +224,7 @@ const en = {
 
   applyButton: 'Apply and redraw',
   nothingChanged: 'nothing has changed',
+  defaultsMenuButton: 'Defaults',
   saveAsDefaultButton: 'Save as my default',
   saveAsDefaultHint: 'Applies to every new chart on this device.',
   cancelButton: 'Cancel',
@@ -525,6 +526,7 @@ const nl: typeof en = {
 
   applyButton: 'Toepassen en opnieuw tekenen',
   nothingChanged: 'er is niets gewijzigd',
+  defaultsMenuButton: 'Standaard',
   saveAsDefaultButton: 'Opslaan als mijn standaard',
   saveAsDefaultHint: 'Geldt voor elke nieuwe grafiek op dit apparaat.',
   cancelButton: 'Annuleren',
