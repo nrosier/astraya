@@ -115,6 +115,7 @@ const en = {
   objectInterpretedLabel: (name: string) => `${name} — included in the written report`,
   groupAll: 'All',
   groupClear: 'Clear',
+  groupNone: 'None',
   objectPresetLabel: 'Object visibility preset',
   objectPresetOptions: {
     custom: 'Custom',
@@ -417,6 +418,7 @@ const nl: typeof en = {
   objectInterpretedLabel: (name: string) => `${name} — opgenomen in het geschreven rapport`,
   groupAll: 'Alles',
   groupClear: 'Wissen',
+  groupNone: 'Geen',
   objectPresetLabel: 'Voorinstelling objectzichtbaarheid',
   objectPresetOptions: {
     custom: 'Aangepast',
