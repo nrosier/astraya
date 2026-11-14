@@ -9888,6 +9888,13 @@ a.quiet,
   cursor: pointer;
 }
 
+/* A touch target (#1073): 44px on a coarse pointer through the shared --target-min; desktop keeps 2.68rem. */
+@media (pointer: coarse) {
+  .primitive-pill-select-pill {
+    min-height: var(--target-min);
+  }
+}
+
 .primitive-pill-select-pill > span:first-child {
   min-width: 0;
   overflow: hidden;

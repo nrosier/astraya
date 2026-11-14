@@ -43,7 +43,7 @@ test.afterAll(async () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-// On the Wheel tab the instrument bar's pills replace the family Select (#1532), so the row holds two Selects.
+// On the Wheel tab the instrument bar's pills replace the family Select (#1532), so the row holds two pills (#1545).
 const LABELS = ['Chart type', 'Consultation preset'] as const;
 
 test('Tab reaches chart type and consultation preset in order, each with a visible focus ring (#1224, #1532)', async () => {
@@ -52,10 +52,12 @@ test('Tab reaches chart type and consultation preset in order, each with a visib
   await openChart(page, 'Natal');
   await page.setViewportSize({ width: 390, height: 844 });
 
-  const selects = LABELS.map((label) => page.getByLabel(label, { exact: true }));
+  const selects = LABELS.map((label) => page.getByRole('button', { name: label }));
   for (const select of selects) await expect(select).toBeVisible();
 
-  // Start from the first select, then Tab: the next stop must be the other select.
+  // Start from the first pill, then Tab: the next stop must be the other pill. A key press first makes the
+  // programmatic focus count as keyboard focus, so `:focus-visible` matches (the preceding click would not).
+  await page.keyboard.press('Escape');
   await selects[0]?.focus();
   for (const [index, label] of LABELS.entries()) {
     const select = selects[index];

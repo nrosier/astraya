@@ -13,7 +13,7 @@ import { CHART_TYPES, type ChartType, type ChartViewKind } from './chart-section
 import { chartHref } from './route.js';
 import { chartTypesMessages } from './ChartTypes.messages.js';
 import { useMessages } from './messages.js';
-import { Select } from './primitives/Select.js';
+import { PillSelect } from './primitives/PillSelect.js';
 import { replaceRoute } from './nav-history.js';
 
 /** The element `ChartView` finds to place the aspect family and preset Selects beside the chart type (#1224). */
@@ -32,7 +32,7 @@ export function ChartTypeSelector({
   return (
     <div className="chart-controls-row">
       <div className="chart-type-select">
-        <Select
+        <PillSelect
           label={t.typeSelectorLabel}
           value={type}
           options={CHART_TYPES.map((candidate) => ({ value: candidate, label: t.typeLabels[candidate] }))}

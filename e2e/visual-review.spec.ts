@@ -15,7 +15,7 @@ import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { build } from '../server/index.ts';
 import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
-import { gotoAndSettle, openNatalChart } from './support.ts';
+import { choosePill, gotoAndSettle, openNatalChart } from './support.ts';
 
 const OUT = process.env.VISUAL_REVIEW_OUT;
 const SIZES = [
@@ -203,7 +203,7 @@ test('capture the screens of the visual review', async ({ browser }) => {
   // #1190: a consultation preset that adds lines to the Selection card.
   await openSharedPerson(page, baseUrl, EINSTEIN);
   await openNatalChart(page);
-  await page.getByLabel('Consultation preset').selectOption({ label: 'Predictive and timing: major and hard minor' });
+  await choosePill(page, 'Consultation preset', 'Predictive and timing: major and hard minor');
   await page.getByText(/^Active Time Lord/).waitFor({ timeout: 60_000 });
   await page.waitForTimeout(800);
   await shoot(page, '22-chart-preset-predictive');
