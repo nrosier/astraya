@@ -4237,6 +4237,12 @@ dl.metric-cards {
   stroke-width: 1.5;
 }
 
+/* The transit ring's band is filled with --accent at 18% (owner decision, #1532, 2026-11-14); its edges keep their stroke. */
+.chart-ring-band-transit {
+  fill: color-mix(in oklab, var(--accent) 18%, transparent);
+  stroke: none;
+}
+
 /*
  * These two circles both fill (not just stroke) their disk, one drawn under
  * the other, purely for the layering: the zodiac-inner boundary shades the

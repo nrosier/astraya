@@ -92,6 +92,7 @@ const STANDALONE_STYLE = [
   '.chart-cross-aspect { stroke-dasharray: 4 3; }',
   // The legend swatch is a short line sample, not a dot (#448): a stroke, not a fill, so it
   // can carry the same dash pattern as the angle spoke it stands for.
+  '.chart-ring-band-transit { fill: #3b49df; fill-opacity: 0.18; stroke: none; }',
   '.chart-multiwheel-legend-swatch { fill: none; stroke: #3b49df; stroke-width: 2; }',
   // A second or third ring's own colour AND dash pattern (#448), matching app.css's
   // `--ring-1-color`/`--ring-2-color` light-theme values and dash patterns — see that file's
