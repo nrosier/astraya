@@ -63,7 +63,7 @@ test('two people with known birth times get a Composite screen with a wheel and 
   // #1303: the consultation preset Select sits above the tab bar, outside the chart, and the first slot (the chart
   // type, which composite does not have) stays empty. On the Wheel tab the instrument bar's pills replace the family
   // Select (#1532).
-  const preset = page.getByLabel('Consultation preset', { exact: true });
+  const preset = page.getByRole('button', { name: 'Consultation preset' });
   await expect(page.getByLabel('Aspects shown', { exact: true })).toHaveCount(0);
   await expect(preset).toBeVisible();
   const tabBar = await page
@@ -76,7 +76,7 @@ test('two people with known birth times get a Composite screen with a wheel and 
   if (tabBar === null || presetBox === null || wheelBox === null) throw new Error('no bounding box');
   expect(presetBox.y + presetBox.height).toBeLessThanOrEqual(tabBar.y);
   expect(presetBox.y + presetBox.height).toBeLessThanOrEqual(wheelBox.y);
-  await expect(page.getByLabel('Chart type', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Chart type' })).toHaveCount(0);
 
   // #359: the composite chart now also renders real interpretive text via `ReportView`,
   // reusing `report.ts`'s `assembleReport` the same way the natal Report tab already does.

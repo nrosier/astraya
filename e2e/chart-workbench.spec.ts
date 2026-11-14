@@ -12,7 +12,7 @@ import type { BrowserContext, Locator, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
-import { applySettings, openNatalChart, openSettings } from './support.ts';
+import { applySettings, choosePill, openNatalChart, openSettings } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -265,12 +265,11 @@ test.describe('with the shared people (#799)', () => {
     const pressed = async () =>
       Promise.all(['Hard', 'Soft', 'Minor'].map(async (name) => pill(name).getAttribute('aria-pressed')));
     await expect.poll(pressed).toEqual(['true', 'true', 'true']);
-    const preset = page.getByLabel('Consultation preset', { exact: true });
     const rings = bar.getByRole('radiogroup', { name: 'Rings on the wheel', exact: true });
 
     // Standard overview names only major aspects, so Minor goes off (owner decision, 2026-11-14), and its transit ring
     // shows with the ring toggle on Natal + transit.
-    await preset.selectOption({ label: 'Standard overview: major and nodal and angular, orbs 8 and 6' });
+    await choosePill(page, 'Consultation preset', 'Standard overview: major and nodal and angular, orbs 8 and 6');
     await expect.poll(pressed).toEqual(['true', 'true', 'false']);
     await expect(rings.getByRole('radio', { name: 'Natal + transit', exact: true })).toBeChecked();
     await rings.getByText('Natal only', { exact: true }).click();
@@ -278,18 +277,18 @@ test.describe('with the shared people (#799)', () => {
 
     // Predictive and timing's hard-minor family holds quincunx and semisextile, so Minor comes back on; choosing it
     // resets Natal only, so its transit ring shows.
-    await preset.selectOption({ label: 'Predictive and timing: major and hard minor' });
+    await choosePill(page, 'Consultation preset', 'Predictive and timing: major and hard minor');
     await expect.poll(pressed).toEqual(['true', 'true', 'true']);
     await expect(rings.getByRole('radio', { name: 'Natal + transit', exact: true })).toBeChecked();
     await expect(page.locator('[data-ring-legend]').first()).toBeVisible();
 
     // Natal core turns the transit ring off, so the ring toggle goes; Minor is off again.
-    await preset.selectOption({ label: 'Natal and core temperament: major and parallels, orbs 7 and 5' });
+    await choosePill(page, 'Consultation preset', 'Natal and core temperament: major and parallels, orbs 7 and 5');
     await expect.poll(pressed).toEqual(['true', 'true', 'false']);
     await expect(bar.getByRole('radiogroup')).toHaveCount(0);
 
     // No preset switches every pill back on.
-    await preset.selectOption({ label: 'No preset (default view)' });
+    await choosePill(page, 'Consultation preset', 'No preset (default view)');
     await expect.poll(pressed).toEqual(['true', 'true', 'true']);
   });
 
@@ -301,16 +300,16 @@ test.describe('with the shared people (#799)', () => {
     const shown = page.locator('svg.chart-dial g.chart-aspect-link:not(.chart-aspect-filtered)');
     await expect.poll(async () => shown.count()).toBeGreaterThan(3);
     const before = await shown.count();
-    const preset = page.getByLabel('Consultation preset');
-    await expect(preset).toHaveValue('none');
+    const preset = page.getByRole('button', { name: 'Consultation preset' });
+    await expect(preset).toContainText('No preset');
 
-    await preset.selectOption({ label: 'Predictive and timing: major and hard minor' });
+    await choosePill(page, 'Consultation preset', 'Predictive and timing: major and hard minor');
     await expect.poll(async () => shown.count()).toBeLessThanOrEqual(before);
     // The family Select is on the Matrix tab only (#1532); there it reads the preset's families.
     await page.getByRole('link', { name: 'Aspect matrix', exact: true }).click();
     await expect(page.getByLabel('Aspects shown', { exact: true })).toContainText('Chosen families');
 
-    await page.getByLabel('Consultation preset').selectOption({ label: 'No preset (default view)' });
+    await choosePill(page, 'Consultation preset', 'No preset (default view)');
     await expect(page.getByLabel('Aspects shown', { exact: true })).toHaveValue('all');
     await page.getByRole('link', { name: 'Wheel', exact: true }).click();
     await expect.poll(async () => shown.count()).toBe(before);
@@ -325,7 +324,7 @@ test.describe('with the shared people (#799)', () => {
     // Nothing is added until the preset is chosen.
     await expect(inspector.getByText(/^Active Time Lord/)).toHaveCount(0);
 
-    await page.getByLabel('Consultation preset').selectOption({ label: 'Predictive and timing: major and hard minor' });
+    await choosePill(page, 'Consultation preset', 'Predictive and timing: major and hard minor');
     await expect(inspector.getByText(/^Active Time Lord \(firdaria\): .+/)).toBeVisible({ timeout: 60_000 });
     await expect(inspector.getByText(/^Profection year: .+, \d+(st|nd|rd|th) house, lord .+/)).toBeVisible();
     await expect(inspector.getByRole('link', { name: 'See Consultation' })).toBeVisible();
@@ -347,7 +346,7 @@ test.describe('with the shared people (#799)', () => {
     }
 
     // No preset brings the Selection card back to what it was.
-    await page.getByLabel('Consultation preset').selectOption({ label: 'No preset (default view)' });
+    await choosePill(page, 'Consultation preset', 'No preset (default view)');
     await expect(inspector.getByText(/^Active Time Lord/)).toHaveCount(0);
   });
 
@@ -458,15 +457,13 @@ test.describe('with the shared people (#799)', () => {
     await page.setViewportSize({ width: 1600, height: 1000 });
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await openNatalChart(page);
-    await expect(page.getByLabel('Chart type', { exact: true })).toContainText('Natal');
+    await expect(page.getByRole('button', { name: 'Chart type' })).toContainText('Natal');
     // With a filter that hides lines, the Aspects table lists exactly the contacts the wheel still draws (#1333).
     const drawn = page.locator('svg.chart-dial g.chart-aspect-link:not(.chart-aspect-filtered)');
     await expect.poll(async () => drawn.count()).toBeGreaterThan(3);
     const all = await drawn.count();
     // The preset's orb caps hide the widest contacts from the wheel.
-    await page.getByLabel('Consultation preset', { exact: true }).selectOption({
-      label: 'Natal and core temperament: major and parallels, orbs 7 and 5',
-    });
+    await choosePill(page, 'Consultation preset', 'Natal and core temperament: major and parallels, orbs 7 and 5');
     await expect.poll(async () => drawn.count()).toBeLessThan(all);
     const kept = await drawn.count();
     await page.getByRole('link', { name: 'Aspects', exact: true }).click();
@@ -480,7 +477,7 @@ test.describe('with the shared people (#799)', () => {
         .filter({ hasNotText: 'Conjunction' }),
     ).toHaveCount(kept);
     await page.getByRole('link', { name: 'Wheel', exact: true }).click();
-    await page.getByLabel('Consultation preset', { exact: true }).selectOption({ label: 'No preset (default view)' });
+    await choosePill(page, 'Consultation preset', 'No preset (default view)');
 
     // The Minor pill off (#1532): the table follows the wheel and lists no minor-tone contact.
     await page

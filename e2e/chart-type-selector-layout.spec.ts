@@ -1,6 +1,6 @@
 /**
  * Every chart page uses the same chart-type selector layout (#981, owner decision 2026-11-01): the back link sits
- * above the page heading, the "Chart type" label sits above its select, and the select is the same height as the
+ * above the page heading, the "Chart type" label sits inline beside its pill (#1545), and the pill is the same height as the
  * view bar under it. Checked for each chart type at the two reference viewports, 1280x800 and 3440x1440.
  */
 import { mkdtempSync, rmSync } from 'node:fs';
@@ -47,6 +47,9 @@ test.afterAll(async () => {
 async function box(locator: Locator): Promise<{ top: number; bottom: number; height: number }> {
   // boundingBox() does not wait, so the element must be visible first.
   await expect.soft(locator, 'element visible').toBeVisible();
+  // The chart page re-renders when a pill commits a new type (#1545), so the element can be re-mounted between the
+  // visibility check and the measurement; poll until it has a box again.
+  await expect.poll(async () => (await locator.boundingBox()) !== null).toBe(true);
   const result = await locator.boundingBox();
   if (result === null) throw new Error('element has no bounding box');
   return { top: result.y, bottom: result.y + result.height, height: result.height };
@@ -79,13 +82,17 @@ for (const viewport of [
     test.use({ viewport });
 
     /** Computed design values of the selector wrapper, its select and the view bar, read per chart type. */
-    async function selectorMetrics(): Promise<SelectorMetrics> {
-      const select = await box(page.getByLabel('Chart type', { exact: true }));
+    async function selectorMetrics(type: (typeof CHART_TYPE_LABELS)[number]): Promise<SelectorMetrics> {
+      // Wait for the pill to show this type before measuring: it re-mounts as the page settles on the new chart (#1545).
+      await expect(page.getByRole('button', { name: 'Chart type' })).toContainText(type);
+      const select = await box(page.getByRole('button', { name: 'Chart type' }));
+      // Owner decision (2026-11-14): the view bar is hidden on Relocated, so its height is not measured there; every
+      // other chart type still has its pill compared against the view bar.
       const viewBarLocator = page.locator('.tab-row__viewport').first();
-      const hasViewBar = (await viewBarLocator.count()) > 0;
+      const hasViewBar = type !== 'Relocated' && (await viewBarLocator.count()) > 0;
       const viewBarHeight = hasViewBar ? (await box(viewBarLocator)).height : null;
       const styles = await page.evaluate<SelectorStyles | null>(
-        "(() => { const w = document.querySelector('.chart-type-select'); const f = w && w.querySelector('.primitive-field'); const l = w && w.querySelector('label'); if (!w || !l) return null; const ws = getComputedStyle(w); return { wrapperMarginTop: ws.marginTop, wrapperMarginBottom: ws.marginBottom, fieldGap: f ? getComputedStyle(f).rowGap : '', labelMarginBottom: getComputedStyle(l).marginBottom }; })()",
+        "(() => { const w = document.querySelector('.chart-type-select'); const p = w && w.querySelector('.primitive-pill-select'); const l = w && w.querySelector('.primitive-pill-select-label'); if (!w || !l || !p) return null; const ws = getComputedStyle(w); return { wrapperMarginTop: ws.marginTop, wrapperMarginBottom: ws.marginBottom, fieldGap: getComputedStyle(p).columnGap, labelMarginBottom: getComputedStyle(l).marginBottom }; })()",
       );
       if (styles === null) throw new Error('chart type selector is not rendered');
       return { selectHeight: select.height, viewBarHeight, ...styles };
@@ -96,7 +103,7 @@ for (const viewport of [
         await openSharedPerson(page, baseUrl, EINSTEIN);
         await openChart(page, type);
 
-        const metrics = await selectorMetrics();
+        const metrics = await selectorMetrics(type);
         // Relocated has no view bar (no tabs), so there is nothing to match against; the design-value test covers it.
         if (metrics.viewBarHeight === null) {
           expect.soft(type, 'only Relocated has no view bar').toBe('Relocated');
@@ -110,7 +117,7 @@ for (const viewport of [
           .toBeLessThanOrEqual(0.5);
       });
 
-      test(`${type}: the back link sits above the heading and the label sits above the select`, async () => {
+      test(`${type}: the back link sits above the heading and the label sits beside the pill`, async () => {
         await openSharedPerson(page, baseUrl, EINSTEIN);
         await openChart(page, type);
 
@@ -125,11 +132,12 @@ for (const viewport of [
             .soft(page.locator('.chart-title-row'), `Natal at ${String(viewport.width)}: no title row`)
             .toHaveCount(0);
 
-        const label = await box(page.locator('.chart-type-select label'));
-        const select = await box(page.getByLabel('Chart type', { exact: true }));
+        // The pill draws its label inline (#1545): the label sits to the left of the pill, not above it.
+        const label = await box(page.locator('.chart-type-select .primitive-pill-select-label'));
+        const pill = await box(page.getByRole('button', { name: 'Chart type' }));
         expect
-          .soft(label.bottom, `${type} at ${String(viewport.width)}: label above the select`)
-          .toBeLessThanOrEqual(select.top);
+          .soft(label.top, `${type} at ${String(viewport.width)}: label on the pill's row`)
+          .toBeLessThanOrEqual(pill.bottom);
       });
     }
 
@@ -141,8 +149,8 @@ for (const viewport of [
         // On the Wheel tab the instrument bar's Hard, Soft and Minor pills replace the family Select (owner, 2026-11-13).
         await expect(page.getByLabel('Aspects shown', { exact: true })).toHaveCount(0);
         const selects = [
-          await box(page.getByLabel('Chart type', { exact: true })),
-          await box(page.getByLabel('Consultation preset', { exact: true })),
+          await box(page.getByRole('button', { name: 'Chart type' })),
+          await box(page.getByRole('button', { name: 'Consultation preset' })),
         ];
         const wheel = await box(page.locator('div.chart-wheel'));
         const [first, ...rest] = selects;
@@ -176,7 +184,7 @@ for (const viewport of [
       for (const type of CHART_TYPE_LABELS) {
         await openSharedPerson(page, baseUrl, EINSTEIN);
         await openChart(page, type);
-        rows.push({ type, metrics: await selectorMetrics() });
+        rows.push({ type, metrics: await selectorMetrics(type) });
       }
       const [first, ...rest] = rows;
       if (first === undefined) throw new Error('no chart types measured');

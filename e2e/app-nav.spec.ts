@@ -15,6 +15,7 @@ import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
 import {
+  choosePill,
   closeSettings,
   gotoAndSettle,
   openChart,
@@ -326,8 +327,10 @@ test.describe('with the shared people (#799)', () => {
     // The header has one Charts link and no chart-type menu; the type is chosen once, on the page.
     await header.getByRole('link', { name: 'Charts', exact: true }).click();
     await expect(header.getByRole('button', { name: 'Charts', exact: true })).toHaveCount(0);
-    const selector = page.getByLabel('Chart type', { exact: true });
-    await expect(selector.locator('option')).toHaveText([
+    const selector = page.getByRole('button', { name: 'Chart type' });
+    await expect(selector).toContainText('Natal');
+    await selector.click();
+    await expect(page.getByRole('radiogroup', { name: 'Chart type', exact: true }).getByRole('radio')).toHaveText([
       'Natal',
       'Draconic',
       'Harmonic',
@@ -335,10 +338,10 @@ test.describe('with the shared people (#799)', () => {
       'Lunar return',
       'Relocated',
     ]);
-    await expect(selector).toHaveValue('natal');
+    await page.keyboard.press('Escape');
 
     // Choosing a type opens that chart; natal needs no query.
-    await selector.selectOption('draconic');
+    await choosePill(page, 'Chart type', 'Draconic');
     await expect(page.getByRole('heading', { name: /draconic/i, level: 1 })).toBeVisible();
     await expect(page).toHaveURL(/#\/people\/[^/]+\/charts\/draconic\/wheel$/);
 
@@ -347,10 +350,10 @@ test.describe('with the shared people (#799)', () => {
     await expect(page).toHaveURL(/\/charts\/draconic\/aspects$/);
 
     // Switching type keeps the view.
-    await selector.selectOption('natal');
+    await choosePill(page, 'Chart type', 'Natal');
     await expect(page).toHaveURL(/\/charts\/natal\/aspects$/);
     await expect(page.getByRole('heading', { name: 'Aspects', level: 2 })).toBeVisible();
-    await expect(selector).toHaveValue('natal');
+    await expect(selector).toContainText('Natal');
 
     // The header's Charts link marks the chart page as current.
     await expect(header.getByRole('link', { name: 'Charts', exact: true })).toHaveAttribute('aria-current', 'page');
