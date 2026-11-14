@@ -32,8 +32,24 @@ export function circle(cx: number, cy: number, r: number, className: string): st
   return `<circle cx="${fmt(cx)}" cy="${fmt(cy)}" r="${fmt(r)}" class="${className}" />`;
 }
 
-export function rect(x: number, y: number, width: number, height: number, className: string): string {
-  return `<rect x="${fmt(x)}" y="${fmt(y)}" width="${fmt(width)}" height="${fmt(height)}" class="${className}" />`;
+/**
+ * A `<rect>`. `attrs` adds extra attributes (e.g. `data-tone`) after `class`, values escaped; omitted, the output is unchanged.
+ */
+export function rect(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  className: string,
+  attrs?: Readonly<Record<string, string>>,
+): string {
+  const extra =
+    attrs === undefined
+      ? ''
+      : Object.entries(attrs)
+          .map(([name, value]) => ` ${name}="${escapeXml(value)}"`)
+          .join('');
+  return `<rect x="${fmt(x)}" y="${fmt(y)}" width="${fmt(width)}" height="${fmt(height)}" class="${className}"${extra} />`;
 }
 
 /** A closed straight-edged shape through the given points, e.g. an annular wedge approximated by a fine-enough point list. */

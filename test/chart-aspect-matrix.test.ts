@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { AspectMatrixInput, MatrixBody } from '../src/chart/aspect-matrix.js';
+import { aspectTone } from '../src/astrology/aspects.js';
 import { renderAspectMatrixSvg } from '../src/chart/aspect-matrix.js';
 import type { PanelLayout } from '../src/chart/sheet-geometry.js';
 
@@ -282,5 +283,13 @@ describe('long body names (#432)', () => {
     expect(markup).toContain('aria-pressed="false"');
     // The cell's own drawing moves inside the button instead of being duplicated beside it.
     expect(markup.split('class="chart-matrix-cell').length - 1).toBe(6);
+  });
+});
+
+describe('matrix aspect cells carry data-tone from aspectTone (#1532)', () => {
+  it('marks a drawn aspect glyph with the tone of its aspect key', () => {
+    const { markup } = renderAspectMatrixSvg(input, LAYOUT);
+    expect(markup).toContain(`data-tone="${aspectTone('square')}"`);
+    expect(markup).toContain(`data-tone="${aspectTone('trine')}"`);
   });
 });

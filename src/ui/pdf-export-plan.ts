@@ -392,7 +392,7 @@ const MAP_COLORS = {
   land: '#f8f7fd',
   coast: '#5c5878',
   border: '#9e98b8',
-  pin: '#5b3fd4',
+  pin: '#3b49df',
 };
 
 /**

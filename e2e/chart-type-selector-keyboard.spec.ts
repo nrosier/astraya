@@ -43,9 +43,10 @@ test.afterAll(async () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-const LABELS = ['Chart type', 'Aspects shown', 'Consultation preset'] as const;
+// On the Wheel tab the instrument bar's pills replace the family Select (#1532), so the row holds two Selects.
+const LABELS = ['Chart type', 'Consultation preset'] as const;
 
-test('Tab reaches chart type, aspects shown and consultation preset in order, each with a visible focus ring (#1224)', async () => {
+test('Tab reaches chart type and consultation preset in order, each with a visible focus ring (#1224, #1532)', async () => {
   await openSharedPerson(page, baseUrl, EINSTEIN);
   // The header's Charts link lives in the wide rail; open the chart there, then shrink to the phone viewport.
   await openChart(page, 'Natal');
@@ -54,7 +55,7 @@ test('Tab reaches chart type, aspects shown and consultation preset in order, ea
   const selects = LABELS.map((label) => page.getByLabel(label, { exact: true }));
   for (const select of selects) await expect(select).toBeVisible();
 
-  // Start from the first select, then Tab: the next two stops must be the other two selects, in order.
+  // Start from the first select, then Tab: the next stop must be the other select.
   await selects[0]?.focus();
   for (const [index, label] of LABELS.entries()) {
     const select = selects[index];
