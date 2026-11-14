@@ -2,7 +2,7 @@
  * @module ui/timeline-gantt
  * @purpose Pure layout for the timing timeline's Gantt chart (#1237): where each event's bar sits on the shared date axis, which events are points, and where the year ticks and the target date fall.
  * @conventions Positions are fractions of the axis (0 at the window's start, 1 at its end), so the chart scales to any width and holds no pixel sizes. An event with no end, or the same end as its start, is a point. A bar is clamped to the window, so one that starts before or ends after it still shows. An orb window (an event with an exact date, #1401) is a bar with the exact date marked inside it. Nothing here calculates astrology: it only places the normalised `TimingTimelineEvent` records the table also lists.
- * @exports GanttMark, GanttRow, YearTick, ForecastBand, forecastBand, techniqueColorVar, barLabelFits, visibleBarLabels, BAR_GAP_PX, barSpan, ganttFraction, ganttRows, yearTicks, thinYearTicks
+ * @exports GanttMark, GanttRow, YearTick, ForecastBand, forecastBand, techniqueColorVar, barLabelFits, visibleBarLabels, passBarPlacements, BAR_GAP_PX, barSpan, ganttFraction, ganttRows, yearTicks, thinYearTicks
  */
 import type { JulianDayUT } from '../ephemeris/types.js';
 import type { TimingTimelineEvent, TimingTimelineTrack, TimingTimelineTrackEvents } from '../domain/timing-timeline.js';
@@ -93,6 +93,43 @@ export function visibleBarLabels(
     shown.add(mark.key);
   }
   return shown;
+}
+
+/**
+ * Where each orb window's pass number is drawn on its own bar (#1401): at the bar's right end when the text fits between the
+ * exact-date mark and that end, otherwise at the bar's left end when it fits before the exact-date mark and the bar's name
+ * label is not drawn there, otherwise nowhere (the pass stays in the bar's title and the table). A spot is also refused when
+ * another window's exact-date mark falls under the text, so adjacent windows never pile their numbers on each other's marks.
+ */
+export function passBarPlacements(
+  candidates: readonly BarLabelCandidate[],
+  nameShown: ReadonlySet<string>,
+  plotWidthPx: number,
+  fontPx: number,
+): ReadonlyMap<string, 'start' | 'end'> {
+  const glyph = LABEL_GLYPH_EM * fontPx;
+  const placed = new Map<string, 'start' | 'end'>();
+  for (const { mark, passText } of candidates) {
+    if (mark.exact === undefined || passText === undefined || mark.point || mark.sub) continue;
+    const textPx = passText.length * glyph;
+    const from = mark.start * plotWidthPx;
+    const to = mark.end * plotWidthPx;
+    const exact = mark.exact * plotWidthPx;
+    const free = (a: number, b: number): boolean =>
+      !candidates.some(
+        (other) =>
+          other.mark !== mark &&
+          other.mark.exact !== undefined &&
+          other.mark.exact * plotWidthPx > a - 1 &&
+          other.mark.exact * plotWidthPx < b + 1,
+      );
+    const endBox: [number, number] = [to - LABEL_PADDING_PX - textPx, to - LABEL_PADDING_PX];
+    const startBox: [number, number] = [from + LABEL_PADDING_PX, from + LABEL_PADDING_PX + textPx];
+    if (endBox[0] > exact + 3 && endBox[0] >= from && free(endBox[0], endBox[1])) placed.set(mark.key, 'end');
+    else if (startBox[1] < exact - 3 && startBox[1] <= to && !nameShown.has(mark.key) && free(startBox[0], startBox[1]))
+      placed.set(mark.key, 'start');
+  }
+  return placed;
 }
 
 /** The least rendered gap, in CSS pixels, between two bars side by side in a row (#1442). */
