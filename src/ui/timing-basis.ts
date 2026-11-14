@@ -24,8 +24,11 @@ export function progressionBasisItems(
 }
 
 /** Solar arc directions use one key, the Sun's own progressed arc, and direct longitude only. */
-export function solarArcBasisItems(t: TimingBasisWords): readonly string[] {
-  return [t.solarArc, t.solarArcLongitude];
+export function solarArcBasisItems(
+  t: TimingBasisWords,
+  directedIn: 'longitude' | 'declination' = 'longitude',
+): readonly string[] {
+  return [t.solarArc, directedIn === 'declination' ? t.solarArcDeclination : t.solarArcLongitude];
 }
 
 /** The primary-direction time key, semi-arc method and the fixed ±1° window of arc the view is set to. */
