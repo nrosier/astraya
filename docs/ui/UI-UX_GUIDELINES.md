@@ -98,7 +98,7 @@ Do not create separate beginner and expert modes. Keep common actions visible, r
 
 ### Target chart page
 
-Charts has one entry in the application rail. Do not list Natal, Draconic, Harmonic, Solar return, and Lunar return as a submenu and then repeat them as a pill or tab row on the page. Use one labelled **Chart type** control in the content header. Changing it updates the route and page title, for example **Draconic chart · Ada Lovelace**.
+Charts has one entry in the application rail. Do not list Natal, Draconic, Harmonic, Solar return, and Lunar return as a submenu and then repeat them as a pill or tab row on the page. Use one labelled **Chart type** pill button in the content header. The pill shows the current type and opens a card of exclusive choices (see **Pill buttons and cards** under Shared control anatomy). Changing it updates the route and page title, for example **Draconic chart · Ada Lovelace**.
 
 The current on-screen chart sheet combines the dial, aspect matrix, emphasis grid, and degree strip in one tall SVG. Because the selection inspector follows that SVG, clicking something near the dial can place its explanation several panels below the click. Separate the on-screen renderers while retaining the combined chart sheet for SVG, PNG, and PDF export.
 
@@ -119,7 +119,7 @@ The Wheel view uses a responsive workbench. Below a `68rem` content container, t
 
 ```text
 ┌ Natal chart · Ada Lovelace ───────────────────────────────────────┐
-│ Chart type [ Natal ▾ ]  Tropical · Placidus · Modern             │
+│ Chart type: (Natal ▾)   Tropical · Placidus · Modern             │
 │                                              [Edit basis] [Export]│
 ├ Wheel ─── Aspects ─── Placements ─── Patterns & condition────────┤
 │                                  │ Selected: Leo                  │
@@ -377,23 +377,26 @@ A table that is wider than its frame scrolls sideways inside the shared `.data-t
 
 Choose controls by the decision being made, not by whichever component a nearby screen already uses:
 
-| Decision shape                                    | Required pattern                                                                                                                                                          |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Two to four short, exclusive choices              | Segmented control implemented as a labelled radio group. Selected, hover, focus, and disabled states must remain distinct in both themes (see the segmented rules below). |
-| Two to five exclusive choices needing explanation | Radio option cards with a short title and one concise consequence per choice. The entire card may activate its radio.                                                     |
-| Five to twelve concise choices                    | Shared Select. Use a proven accessible popover primitive when the popup must match Astraya; retain a styled native fallback.                                              |
-| A long or searchable choice list                  | Combobox with text filtering, result count, full keyboard navigation, and a clear no-results state.                                                                       |
-| Independent multiple choices                      | Checkbox group with a visible legend. For long groups, add group-level **Select all** and **Clear** actions and show a selected count.                                    |
-| Immediate persistent on/off preference            | Switch with visible state text where ambiguity is possible.                                                                                                               |
-| Boolean value inside a staged form                | Checkbox. A switch must not imply immediate application when the parent requires Apply.                                                                                   |
-| Date                                              | Shared `DateField` with direct keyboard entry, locale-aware display, ISO storage, validation, and an optional calendar button.                                            |
-| Number with a meaningful increment                | Shared `NumberField` with the same field shell and one standard stepper. Define `min`, `max`, `step`, unit, and accessible Increase/Decrease labels.                      |
-| Active filters                                    | `FilterSummary` showing the preset/custom name, shown/total count, and one **Change filters** action. Keep a direct **Clear** action for zero results.                    |
-| Optional explanatory or reference content         | Shared `Disclosure` with a full-width title, content summary, explicit Show/Hide wording, trailing chevron, and visible interaction states.                               |
+| Decision shape                                    | Required pattern                                                                                                                                                                                                                  |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Two to four short, exclusive choices              | Segmented control implemented as a labelled radio group. Selected, hover, focus, and disabled states must remain distinct in both themes (see the segmented rules below).                                                         |
+| Two to five exclusive choices needing explanation | Radio option cards with a short title and one concise consequence per choice. The entire card may activate its radio.                                                                                                             |
+| Five to twelve concise choices                    | Shared Select. Use a proven accessible popover primitive when the popup must match Astraya; retain a styled native fallback.                                                                                                      |
+| A long or searchable choice list                  | Combobox with text filtering, result count, full keyboard navigation, and a clear no-results state.                                                                                                                               |
+| Independent multiple choices                      | Checkbox group with a visible legend. For long groups, add group-level **Select all** and **Clear** actions and show a selected count.                                                                                            |
+| Independent toggles as pills                      | Pill toggles with checkbox semantics: each pill is a checkbox, and several may be selected at once. Used for aspect-family and tone choices.                                                                                      |
+| Immediate persistent on/off preference            | Switch with visible state text where ambiguity is possible.                                                                                                                                                                       |
+| Boolean value inside a staged form                | Checkbox. A switch must not imply immediate application when the parent requires Apply.                                                                                                                                           |
+| Date                                              | Shared `DateField` with direct keyboard entry, locale-aware display, ISO storage, validation, and an optional calendar button.                                                                                                    |
+| Number with a meaningful increment                | Shared `NumberField` with the same field shell and one standard stepper. Define `min`, `max`, `step`, unit, and accessible Increase/Decrease labels.                                                                              |
+| Active filters                                    | `FilterSummary` showing the preset/custom name, shown/total count, and one **Change filters** action. Keep a direct **Clear** action for zero results.                                                                            |
+| Optional explanatory or reference content         | Shared `Disclosure` with a full-width title, content summary, explicit Show/Hide wording, trailing chevron, and visible interaction states.                                                                                       |
+| Exclusive choice opened from a button             | Pill button showing the current value that opens a card of radio options. The card opens downward when the pill sits at the top of the page and upward at the bottom. On screens 640px and below the card becomes a bottom sheet. |
 
 Use these mappings in the current product and in new work:
 
-- **Chart type:** one labelled Select in the chart header because five route-level choices must fit on mobile. It replaces both the Charts submenu and the chart-type pill row.
+- **Chart type:** a labelled pill button in the chart header that shows the current type and opens a card of exclusive choices. The card opens downward because the pill sits at the top of the page, and becomes a bottom sheet on screens 640px and below. It replaces both the Charts submenu in the rail and the chart-type pill row, so the choices are listed once, in the card.
+- **Consultation preset:** a labelled pill button that shows the current preset and opens a card of exclusive preset choices. It follows the same open direction and bottom-sheet rule as Chart type.
 - **Chart view:** one row of six ordinary route links on desktop and one shared labelled Select on narrow screens. Preserve chart type and view in the URL; do not render these route links with tab semantics.
 - **Primary Directions time key:** two-choice segmented control for Naibod/Ptolemy. Put the selected rate and a concise explanation below the group; use option cards if translated labels make the segment too wide.
 - **Planetary rulers:** option cards for Modern, Traditional, and Both. The default lives in Preferences → Astrology defaults. A chart Advanced settings dialog may stage a chart-only override, but it must not silently change the user's default.
@@ -428,6 +431,17 @@ The shared date field must remain directly editable. The calendar opens from a s
 - State units and accepted formats before entry. Parse and format dates, numbers, coordinates, currency, and timezones through shared deterministic helpers.
 - Disable a control only when interaction cannot succeed. Explain the prerequisite next to it and provide the recovery action.
 - Mobile touch targets should be at least 44 by 44 CSS pixels.
+
+#### Pill buttons and cards
+
+Use this pattern for the Chart type and Consultation preset controls (§2, Target chart page) and for independent aspect-family and tone toggles.
+
+- Pill radius is `999px`. The label sits inline before its pill, for example **Chart type: [Draconic ▾]**.
+- An exclusive choice pill opens a card of radio options anchored to it. Only one card is open at a time. Escape closes the card, a click outside closes it, and focus returns to the pill.
+- The card opens downward when the pill sits at the top of the page (Chart type and Consultation preset). The Filters card below the instrument bar opens upward.
+- On screens 640px and below, the card becomes a bottom sheet.
+- Independent toggles are pills with checkbox semantics, so several may be selected at once. They are not radio buttons.
+- The card uses the same surface and border tokens as the Filters card. Pills and cards use existing tokens only; do not add feature-specific colours, radii, or heights.
 
 ## 7. Design every state, including unhappy paths
 
