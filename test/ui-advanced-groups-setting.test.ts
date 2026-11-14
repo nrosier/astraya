@@ -29,11 +29,11 @@ describe('the Advanced groups open state', () => {
   });
 
   it('opens and closes one tab at a time, and remembers it in this browser', () => {
-    writeAdvancedGroupOpen('bodies', true);
+    writeAdvancedGroupOpen('orbs', true);
     writeAdvancedGroupOpen('special', true);
-    expect(readOpenAdvancedGroups()).toEqual(['bodies', 'special']);
-    expect(JSON.parse(localStorage.getItem(ADVANCED_GROUPS_KEY) ?? 'null')).toEqual(['bodies', 'special']);
-    writeAdvancedGroupOpen('bodies', false);
+    expect(readOpenAdvancedGroups()).toEqual(['orbs', 'special']);
+    expect(JSON.parse(localStorage.getItem(ADVANCED_GROUPS_KEY) ?? 'null')).toEqual(['orbs', 'special']);
+    writeAdvancedGroupOpen('orbs', false);
     expect(readOpenAdvancedGroups()).toEqual(['special']);
   });
 
@@ -52,14 +52,14 @@ describe('the Advanced groups open state', () => {
   });
 
   it('reads anything malformed or unknown as all closed', () => {
-    for (const stored of ['not json', '{"profile":true}', '"bodies"', '[1,2]', '["nope"]', 'null']) {
+    for (const stored of ['not json', '{"profile":true}', '"orbs"', '[1,2]', '["nope"]', 'null']) {
       localStorage.setItem(ADVANCED_GROUPS_KEY, stored);
       resetAdvancedGroupsForTests();
       expect(readOpenAdvancedGroups(), stored).toEqual([]);
     }
-    localStorage.setItem(ADVANCED_GROUPS_KEY, '["bodies","nope","bodies"]');
+    localStorage.setItem(ADVANCED_GROUPS_KEY, '["orbs","nope","orbs"]');
     resetAdvancedGroupsForTests();
-    expect(readOpenAdvancedGroups()).toEqual(['bodies']);
+    expect(readOpenAdvancedGroups()).toEqual(['orbs']);
   });
 
   it('holds a choice for this page when the browser refuses to store it', () => {

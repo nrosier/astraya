@@ -27,7 +27,7 @@ describe('the placement table', () => {
 
   it('keeps the tab lists the owner decided on #856', () => {
     expect(advancedFields('profile')).toEqual(['boundsScheme']);
-    expect(advancedFields('bodies')).toEqual(['orbScalePercent', 'enabledMinorAspects', 'objectPolicies']);
+    expect(advancedFields('orbs')).toEqual(['orbScalePercent', 'enabledMinorAspects']);
     expect(advancedFields('special')).toEqual([
       'lilithVariant',
       'nodeVariant',
@@ -66,31 +66,32 @@ describe('the customised count', () => {
     const traditional = applyCalculationProfile(DEFAULT_EXTENDED_SETTINGS, 'traditional-western-v1');
     expect(customisedCount('special', { ...traditional, lilithVariant: 'true', nodeVariant: 'true' })).toBe(2);
     expect(customisedCount('profile', { ...traditional, boundsScheme: 'ptolemaic' })).toBe(1);
-    expect(customisedCount('bodies', { ...traditional, enabledMinorAspects: ['quincunx'] })).toBe(1);
+    expect(customisedCount('orbs', { ...traditional, enabledMinorAspects: ['quincunx'] })).toBe(1);
     // The same change is invisible to the other tabs.
-    expect(customisedCount('bodies', { ...traditional, lilithVariant: 'true' })).toBe(0);
+    expect(customisedCount('orbs', { ...traditional, lilithVariant: 'true' })).toBe(0);
   });
 
   it('does not count the orb scale while it sits on a named step, because the first screen already shows it', () => {
-    expect(customisedCount('bodies', { ...DEFAULT_EXTENDED_SETTINGS, orbScalePercent: -50 })).toBe(0);
-    expect(customisedCount('bodies', { ...DEFAULT_EXTENDED_SETTINGS, orbScalePercent: 40 })).toBe(0);
-    expect(customisedCount('bodies', { ...DEFAULT_EXTENDED_SETTINGS, orbScalePercent: -30 })).toBe(1);
+    expect(customisedCount('orbs', { ...DEFAULT_EXTENDED_SETTINGS, orbScalePercent: -50 })).toBe(0);
+    expect(customisedCount('orbs', { ...DEFAULT_EXTENDED_SETTINGS, orbScalePercent: 40 })).toBe(0);
+    expect(customisedCount('orbs', { ...DEFAULT_EXTENDED_SETTINGS, orbScalePercent: -30 })).toBe(1);
   });
 
-  it('counts a changed object policy once, however many objects it touches, and adds the extra values', () => {
-    const hidden = {
+  it('no longer counts an object policy, since the Bodies tab shows it on its first screen, and still adds the extra values (#1544)', () => {
+    const changed = {
       ...DEFAULT_EXTENDED_SETTINGS,
       objectPolicies: { ...DEFAULT_OBJECT_POLICIES, ceres: { visible: true, aspectParticipant: true } },
     } as ExtendedSettings;
-    expect(customisedCount('bodies', hidden)).toBe(1);
-    expect(customisedCount('bodies', hidden, 2)).toBe(3);
-    expect(customisedCount('bodies', DEFAULT_EXTENDED_SETTINGS, 1)).toBe(1);
+    expect(PLACEMENT.objectPolicies).toBe('first');
+    expect(customisedCount('orbs', changed)).toBe(0);
+    expect(customisedCount('orbs', changed, 2)).toBe(2);
+    expect(customisedCount('orbs', DEFAULT_EXTENDED_SETTINGS, 1)).toBe(1);
   });
 
   it('treats the same minor aspects in another order as the same choice', () => {
     const a = { ...DEFAULT_EXTENDED_SETTINGS, enabledMinorAspects: ['quincunx', 'semisquare'] };
     const b = { ...DEFAULT_EXTENDED_SETTINGS, enabledMinorAspects: ['semisquare', 'quincunx'] };
-    expect(customisedCount('bodies', a)).toBe(customisedCount('bodies', b));
+    expect(customisedCount('orbs', a)).toBe(customisedCount('orbs', b));
   });
 
   it('picks the profile a draft differs from least as its baseline', () => {

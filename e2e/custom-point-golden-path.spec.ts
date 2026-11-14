@@ -54,20 +54,20 @@ test('a custom formula point is rendered, hidden, and removed from the natal cha
   const card = page.locator('dialog.settings-card');
   const formulaSection = card.locator('fieldset.settings-card-group', { hasText: 'Custom formula points' });
 
-  await openSettings(page, 'Bodies & orbs');
+  await openSettings(page, 'Special points');
   await formulaSection.getByLabel('Name', { exact: true }).fill('Sun plus Moon');
   await formulaSection.getByLabel('Formula', { exact: true }).fill('sun + moon');
   await formulaSection.getByRole('button', { name: 'Add formula point', exact: true }).click();
   await applySettings(page);
 
-  // Saved formula points are not drawn on the wheel (#817, moved to the Bodies tab in #824).
+  // Saved formula points are not drawn on the wheel (#817, moved to the drawer in #824, under Special points since #1544).
   await expect(page.locator('g.chart-body-stack[data-body="Sun plus Moon"]')).toHaveCount(0);
 
   await page.getByRole('link', { name: 'Placements', exact: true }).click();
   await expect(page.getByRole('table').filter({ hasText: 'Sun plus Moon' })).toBeVisible();
 
   // A point can be kept but not drawn.
-  await openSettings(page, 'Bodies & orbs');
+  await openSettings(page, 'Special points');
   // The saved-list toggle is a radiogroup labelled with the point's name; the add-row toggle is not.
   await formulaSection
     .getByRole('radiogroup', { name: 'Point mode: Sun plus Moon' })
@@ -77,7 +77,7 @@ test('a custom formula point is rendered, hidden, and removed from the natal cha
   await expect(page.getByRole('table').filter({ hasText: 'Sun plus Moon' })).toHaveCount(0);
 
   // A formula that repeats a built-in point is refused.
-  await openSettings(page, 'Bodies & orbs');
+  await openSettings(page, 'Special points');
   await formulaSection.getByLabel('Name', { exact: true }).fill('Duplicate Sun');
   await formulaSection.getByLabel('Formula', { exact: true }).fill('sun');
   await formulaSection.getByRole('button', { name: 'Add formula point', exact: true }).click();
@@ -85,6 +85,6 @@ test('a custom formula point is rendered, hidden, and removed from the natal cha
 
   await formulaSection.getByRole('button', { name: 'Remove Sun plus Moon', exact: true }).click();
   await applySettings(page);
-  await openSettings(page, 'Bodies & orbs');
+  await openSettings(page, 'Special points');
   await expect(formulaSection.getByText('No custom formula points yet.')).toBeVisible();
 });

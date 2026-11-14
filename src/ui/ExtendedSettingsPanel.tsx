@@ -13,13 +13,13 @@
  * kept by Apply or Save as my default.
  *
  * The categories are tabs on a wide screen and a labelled select below 40rem (`docs/ui/UI-UX_GUIDELINES.md` §2):
- * Profile and frame, Bodies and orbs, Display and glyphs, Special points. Long astrological explanations sit behind
+ * Profile and frame, Bodies, Orbs and aspects, Special points, Display and glyphs. Long astrological explanations sit behind
  * a Disclosure, not inline. A starting point (a preset) fills the profile settings of a tradition in one go and
  * shows "Custom" when the draft matches none.
  */
 /**
  * @module ExtendedSettingsPanel
- * @purpose Renders the chart's "Extended settings" drawer: four tabbed categories (profile and frame, bodies and orbs, display and glyphs, special points), the object visibility matrix, the custom formula points, the chosen fixed stars (#803), the planetary rulers and the symbol device preference, with a pinned Apply/Cancel footer.
+ * @purpose Renders the chart's "Extended settings" drawer: five tabbed categories (profile and frame, bodies, orbs and aspects, special points, display and glyphs), the object visibility matrix, the custom formula points, the chosen fixed stars (#803), the planetary rulers and the symbol device preference, with a pinned Apply/Cancel footer.
  * @conventions Calculation/display settings, rulers, formula points and chosen fixed stars are edited in a local draft and only committed via "Apply and redraw" (every change needs a real recompute); the symbols are a device preference previewed live and put back by Cancel. The drawer is `StagedDialog placement="right"`. Tabs use the shared `Tabs` primitive, with a labelled Select below 40rem. Text comes from co-located `ExtendedSettingsPanel.messages.ts` via `useMessages()`.
  * @exports ExtendedSettingsPanel
  */
@@ -135,7 +135,7 @@ const NO_POINTS: readonly CustomPointDefinition[] = [];
 const NO_STARS: readonly ChosenFixedStar[] = [];
 
 /** The four drawer categories, in the order a chart is set up (#824). */
-const CATEGORIES = ['profile', 'bodies', 'display', 'special'] as const;
+const CATEGORIES = ['profile', 'bodies', 'orbs', 'special', 'display'] as const;
 type Category = (typeof CATEGORIES)[number];
 
 function lilithPointKey(variant: ExtendedSettings['lilithVariant']): ObjectKey {
@@ -232,7 +232,7 @@ export function ExtendedSettingsPanel({
   /** Loads the shipped star catalogue for the picker; the same-origin `sefstars.txt` unless a test passes its own. */
   readonly loadCatalogue?: (() => Promise<LoadedStarCatalogue>) | undefined;
   /**
-   * A counter another part of the chart screen raises to open the drawer on the Bodies and orbs tab (#815: the link
+   * A counter another part of the chart screen raises to open the drawer on the Special points tab (#815: the link
    * that replaced the inline formula editor). Each new value opens it once; the value it starts with opens nothing.
    */
   readonly openRequest?: number | undefined;
@@ -459,21 +459,21 @@ export function ExtendedSettingsPanel({
     setAtOpen(undefined);
   };
 
-  // An outside request (#815) opens the drawer on the Bodies and orbs tab. When the trigger is hidden inside the
+  // An outside request (#815) opens the drawer on the Special points tab, where the formula points now live (#1544). When the trigger is hidden inside the
   // collapsed "Chart actions" panel (40rem and below), that panel is opened first, so the dialog has a box to show in.
   const handledRequest = useRef(openRequest);
-  const openOnBodies = useEffectEvent((): void => {
+  const openOnSpecial = useEffectEvent((): void => {
     const trigger = triggerRef.current;
     if (trigger !== null && trigger.getClientRects().length === 0) {
       trigger.closest<HTMLElement>('.tab-row')?.querySelector<HTMLElement>('[data-tab-row-toggle]')?.click();
     }
     openCard();
-    setCategory('bodies');
+    setCategory('special');
   });
   useEffect(() => {
     if (openRequest === undefined || openRequest === handledRequest.current) return;
     handledRequest.current = openRequest;
-    openOnBodies();
+    openOnSpecial();
   }, [openRequest]);
 
   // A changed value from outside resets the draft while the drawer is closed; leaving the page is StagedDialog's job.
@@ -499,7 +499,7 @@ export function ExtendedSettingsPanel({
   // The Advanced groups (#856): open or closed is a device preference; a closed group says how many of its values
   // differ from the active profile's baseline. Nothing here touches the draft, so Apply keeps every hidden value.
   const [profileAdvancedOpen, setProfileAdvancedOpen] = useAdvancedGroupOpen('profile');
-  const [bodiesAdvancedOpen, setBodiesAdvancedOpen] = useAdvancedGroupOpen('bodies');
+  const [orbsAdvancedOpen, setOrbsAdvancedOpen] = useAdvancedGroupOpen('orbs');
   const [specialAdvancedOpen, setSpecialAdvancedOpen] = useAdvancedGroupOpen('special');
   const advancedSummary = (tab: AdvancedTab, extra = 0): string | undefined => {
     const count = customisedCount(tab, effective, extra);
@@ -698,8 +698,9 @@ export function ExtendedSettingsPanel({
   const categoryLabels: Record<Category, string> = {
     profile: t.tabProfile,
     bodies: t.tabBodies,
-    display: t.tabDisplay,
+    orbs: t.tabOrbs,
     special: t.tabSpecial,
+    display: t.tabDisplay,
   };
   const categoryTabs = CATEGORIES.map((key) => ({ key, label: categoryLabels[key] }));
 
@@ -975,6 +976,83 @@ export function ExtendedSettingsPanel({
           <div {...tabPanelProps(tabsId, 'bodies')} hidden={category !== 'bodies'}>
             <>
               <fieldset className="field-group settings-card-group">
+                <legend>{t.matrixLegend}</legend>
+                <p className="hint settings-card-tag">{t.appliesOnApply}</p>
+                <div className="settings-card-block">
+                  <OptionCards
+                    label={t.objectPresetLabel}
+                    value={currentObjectPreset ?? 'custom'}
+                    options={[
+                      ...(currentObjectPreset === undefined
+                        ? [
+                            {
+                              value: 'custom',
+                              title: t.objectPresetOptions.custom,
+                              consequence: t.objectPresetNotes.custom,
+                            },
+                          ]
+                        : []),
+                      ...OBJECT_POLICY_PRESET_IDS.map((id) => ({
+                        value: id,
+                        title: t.objectPresetOptions[id],
+                        consequence: t.objectPresetNotes[id],
+                      })),
+                    ]}
+                    onChange={choosePreset}
+                  />
+                </div>
+                <StatusMessage kind="success">
+                  {t.objectVisibleCount(
+                    String(Object.values(draft.objectPolicies).filter((policy) => policy.visible).length),
+                    String(Object.keys(draft.objectPolicies).length),
+                  )}
+                </StatusMessage>
+                <div className="settings-card-matrix-toolbar">
+                  {groupActions(t.planetsGroupLabel, PLANET_KEYS)}
+                  {groupActions(t.minorPlanetsLegend, ASTEROID_KEYS)}
+                  {groupActions(t.pointsGroupLabel, POINT_KEYS)}
+                </div>
+                <div className="settings-card-matrix-bulk" role="group" aria-label={t.matrixBulkLabel}>
+                  <Checkbox
+                    label={t.matrixAllVisible}
+                    checked={everyRow((policy) => policy.visible)}
+                    onChange={(on) => {
+                      setColumn('visible', on);
+                    }}
+                  />
+                  <Checkbox
+                    label={t.matrixAllAspects}
+                    checked={everyRow((policy) => policy.aspectParticipant)}
+                    onChange={(on) => {
+                      setColumn('aspects', on);
+                    }}
+                  />
+                  <Checkbox
+                    label={t.matrixAllReports}
+                    checked={everyRow(isInterpreted)}
+                    onChange={(on) => {
+                      setColumn('reports', on);
+                    }}
+                  />
+                </div>
+                <SortableTable
+                  caption={t.matrixLegend}
+                  columns={matrixColumns}
+                  rows={matrixRows}
+                  getRowKey={(row) => row.key}
+                />
+                <Disclosure title={t.aboutPoints} showLabel={t.showDetails} hideLabel={t.hideDetails}>
+                  <p className="hint">{t.vertexHelp}</p>
+                  <p className="hint">{t.spiritHelp}</p>
+                  <p className="hint">{t.aspectsToHint}</p>
+                </Disclosure>
+              </fieldset>
+            </>
+          </div>
+
+          <div {...tabPanelProps(tabsId, 'orbs')} hidden={category !== 'orbs'}>
+            <>
+              <fieldset className="field-group settings-card-group">
                 <legend>{t.aspectsLegend}</legend>
                 <p className="hint settings-card-tag">{t.appliesOnApply}</p>
                 <div className="settings-card-block">
@@ -1061,12 +1139,12 @@ export function ExtendedSettingsPanel({
               </fieldset>
 
               <AdvancedGroup
-                title={t.advancedTitle.bodies}
-                summary={advancedSummary('bodies', formulaRows.length)}
+                title={t.advancedTitle.orbs}
+                summary={advancedSummary('orbs')}
                 showLabel={t.showDetails}
                 hideLabel={t.hideDetails}
-                open={bodiesAdvancedOpen}
-                onOpenChange={setBodiesAdvancedOpen}
+                open={orbsAdvancedOpen}
+                onOpenChange={setOrbsAdvancedOpen}
               >
                 <fieldset className="field-group settings-card-group">
                   <legend>{t.fineTuneAspectsLegend}</legend>
@@ -1102,125 +1180,7 @@ export function ExtendedSettingsPanel({
                     </Disclosure>
                   </div>
                 </fieldset>
-
-                <fieldset className="field-group settings-card-group">
-                  <legend>{t.matrixLegend}</legend>
-                  <p className="hint settings-card-tag">{t.appliesOnApply}</p>
-                  <div className="settings-card-block">
-                    <OptionCards
-                      label={t.objectPresetLabel}
-                      value={currentObjectPreset ?? 'custom'}
-                      options={[
-                        ...(currentObjectPreset === undefined
-                          ? [
-                              {
-                                value: 'custom',
-                                title: t.objectPresetOptions.custom,
-                                consequence: t.objectPresetNotes.custom,
-                              },
-                            ]
-                          : []),
-                        ...OBJECT_POLICY_PRESET_IDS.map((id) => ({
-                          value: id,
-                          title: t.objectPresetOptions[id],
-                          consequence: t.objectPresetNotes[id],
-                        })),
-                      ]}
-                      onChange={choosePreset}
-                    />
-                  </div>
-                  <StatusMessage kind="success">
-                    {t.objectVisibleCount(
-                      String(Object.values(draft.objectPolicies).filter((policy) => policy.visible).length),
-                      String(Object.keys(draft.objectPolicies).length),
-                    )}
-                  </StatusMessage>
-                  <div className="settings-card-matrix-toolbar">
-                    {groupActions(t.planetsGroupLabel, PLANET_KEYS)}
-                    {groupActions(t.minorPlanetsLegend, ASTEROID_KEYS)}
-                    {groupActions(t.pointsGroupLabel, POINT_KEYS)}
-                  </div>
-                  <div className="settings-card-matrix-bulk" role="group" aria-label={t.matrixBulkLabel}>
-                    <Checkbox
-                      label={t.matrixAllVisible}
-                      checked={everyRow((policy) => policy.visible)}
-                      onChange={(on) => {
-                        setColumn('visible', on);
-                      }}
-                    />
-                    <Checkbox
-                      label={t.matrixAllAspects}
-                      checked={everyRow((policy) => policy.aspectParticipant)}
-                      onChange={(on) => {
-                        setColumn('aspects', on);
-                      }}
-                    />
-                    <Checkbox
-                      label={t.matrixAllReports}
-                      checked={everyRow(isInterpreted)}
-                      onChange={(on) => {
-                        setColumn('reports', on);
-                      }}
-                    />
-                  </div>
-                  <SortableTable
-                    caption={t.matrixLegend}
-                    columns={matrixColumns}
-                    rows={matrixRows}
-                    getRowKey={(row) => row.key}
-                  />
-                  <Disclosure title={t.aboutPoints} showLabel={t.showDetails} hideLabel={t.hideDetails}>
-                    <p className="hint">{t.vertexHelp}</p>
-                    <p className="hint">{t.spiritHelp}</p>
-                    <p className="hint">{t.aspectsToHint}</p>
-                  </Disclosure>
-                </fieldset>
-
-                {onCustomPointsChange !== undefined && (
-                  <fieldset className="field-group settings-card-group">
-                    <legend>{t.formulaHeading}</legend>
-                    <p className="hint settings-card-tag">{t.appliesOnApply}</p>
-                    <p className="hint">{t.formulaStaged}</p>
-                    <FormulaPointsSection
-                      rows={formulaRows}
-                      name={pointName}
-                      formula={pointFormula}
-                      shown={pointShown}
-                      error={pointError}
-                      onName={setPointName}
-                      onFormula={setPointFormula}
-                      onShown={setPointShown}
-                      onAdd={addFormulaPoint}
-                      onRemove={removeFormulaPoint}
-                      onKeep={keepFormulaPoint}
-                      onMode={setFormulaMode}
-                      t={t}
-                    />
-                  </fieldset>
-                )}
               </AdvancedGroup>
-            </>
-          </div>
-
-          <div {...tabPanelProps(tabsId, 'display')} hidden={category !== 'display'}>
-            <>
-              <fieldset className="field-group settings-card-group">
-                <legend>{t.wheelLegend}</legend>
-                <p className="hint settings-card-tag">{t.appliesOnApply}</p>
-                <Checkbox
-                  label={t.rainbowColorZodiac}
-                  checked={draft.rainbowZodiac}
-                  onChange={(value) => {
-                    patch({ rainbowZodiac: value });
-                  }}
-                />
-              </fieldset>
-
-              <fieldset className="field-group settings-card-group">
-                <legend>{t.symbolsFrameSubtitle}</legend>
-                <p className="hint settings-card-tag">{t.devicePreview}</p>
-                <SymbolSetting />
-              </fieldset>
             </>
           </div>
 
@@ -1433,6 +1393,51 @@ export function ExtendedSettingsPanel({
                   )}
                 </fieldset>
               )}
+
+              {onCustomPointsChange !== undefined && (
+                <fieldset className="field-group settings-card-group">
+                  <legend>{t.formulaHeading}</legend>
+                  <p className="hint settings-card-tag">{t.appliesOnApply}</p>
+                  <p className="hint">{t.formulaStaged}</p>
+                  <FormulaPointsSection
+                    rows={formulaRows}
+                    name={pointName}
+                    formula={pointFormula}
+                    shown={pointShown}
+                    error={pointError}
+                    onName={setPointName}
+                    onFormula={setPointFormula}
+                    onShown={setPointShown}
+                    onAdd={addFormulaPoint}
+                    onRemove={removeFormulaPoint}
+                    onKeep={keepFormulaPoint}
+                    onMode={setFormulaMode}
+                    t={t}
+                  />
+                </fieldset>
+              )}
+            </>
+          </div>
+
+          <div {...tabPanelProps(tabsId, 'display')} hidden={category !== 'display'}>
+            <>
+              <fieldset className="field-group settings-card-group">
+                <legend>{t.wheelLegend}</legend>
+                <p className="hint settings-card-tag">{t.appliesOnApply}</p>
+                <Checkbox
+                  label={t.rainbowColorZodiac}
+                  checked={draft.rainbowZodiac}
+                  onChange={(value) => {
+                    patch({ rainbowZodiac: value });
+                  }}
+                />
+              </fieldset>
+
+              <fieldset className="field-group settings-card-group">
+                <legend>{t.symbolsFrameSubtitle}</legend>
+                <p className="hint settings-card-tag">{t.devicePreview}</p>
+                <SymbolSetting />
+              </fieldset>
             </>
           </div>
         </div>
@@ -1518,7 +1523,7 @@ function stagedPoints(rows: readonly FormulaDraftRow[]): readonly CustomPointDef
 }
 
 /**
- * The formula points section of the Bodies and orbs tab (#824): the name and formula inputs, the Show/Aspect choice,
+ * The formula points section of the Special points tab (#824): the name and formula inputs, the Show/Aspect choice,
  * the add button, and a compact list where a pending add or removal is labelled as a draft until Apply.
  */
 function FormulaPointsSection({
