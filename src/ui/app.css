@@ -9848,3 +9848,163 @@ a.quiet,
     flex: 1 1 auto;
   }
 }
+
+/*
+ * The PillSelect primitive (#1545, PillSelect.tsx): a label, a pill that shows the value, and a card of radio options that
+ * opens below the pill. The card is a bottom sheet on a phone. Tokens only; the pill's height matches .chart-type-select.
+ */
+.primitive-pill-select {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.primitive-pill-select-label {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
+.primitive-pill-select-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  box-sizing: border-box;
+  height: 2.68rem;
+  min-width: 0;
+  max-width: 16rem;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--fg);
+  font: inherit;
+  font-size: var(--text-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.primitive-pill-select-pill > span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.primitive-pill-select-pill:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+.primitive-pill-select-pill:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid var(--color-focus);
+  outline-offset: 0;
+}
+
+.primitive-pill-select-pill:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* A chevron drawn with borders, the same approach as .primitive-disclosure-chevron. */
+.primitive-pill-select-caret {
+  width: 0.45rem;
+  height: 0.45rem;
+  flex: none;
+  margin-top: -0.2rem;
+  border-right: 2px solid currentcolor;
+  border-bottom: 2px solid currentcolor;
+  transform: rotate(45deg);
+}
+
+.primitive-pill-select-card {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  z-index: 20;
+  box-sizing: border-box;
+  min-width: 12rem;
+  max-width: min(100vw - 2 * var(--space-4), 24rem);
+  padding: var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.primitive-pill-select-card [role='radiogroup'] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.primitive-pill-select-card [role='radio'] {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--control-height-compact);
+  padding: var(--space-1) var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.primitive-pill-select-card [role='radio']:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+.primitive-pill-select-card [role='radio']:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 0;
+}
+
+.primitive-pill-select-card [role='radio']:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* The selected option: accent text and a small accent dot, so the choice reads without colour alone. */
+.primitive-pill-select-card [role='radio'][aria-checked='true'] {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.primitive-pill-select-card [role='radio'][aria-checked='true']::before {
+  content: '';
+  flex: none;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+/* On a phone the card becomes a bottom sheet, anchored to the viewport rather than the pill. */
+@media (max-width: 40rem) {
+  .primitive-pill-select-card {
+    position: fixed;
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 40;
+    width: 100vw;
+    max-width: none;
+    min-width: 0;
+    max-height: calc(100dvh - 2 * var(--space-8));
+    overflow: auto;
+    padding: var(--space-4);
+    padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+}

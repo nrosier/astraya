@@ -27,7 +27,10 @@ describe('the placement table', () => {
 
   it('keeps the tab lists the owner decided on #856', () => {
     expect(advancedFields('profile')).toEqual(['boundsScheme']);
-    expect(advancedFields('orbs')).toEqual(['orbScalePercent', 'enabledMinorAspects']);
+    // The orb scale and minor aspects moved from an Advanced group to the Orbs & aspects first screen (#1544).
+    expect(ADVANCED_TABS).toEqual(['profile', 'special']);
+    expect(PLACEMENT.orbScalePercent).toBe('first');
+    expect(PLACEMENT.enabledMinorAspects).toBe('first');
     expect(advancedFields('special')).toEqual([
       'lilithVariant',
       'nodeVariant',

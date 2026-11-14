@@ -100,7 +100,7 @@ import type { TableColumn } from './table-sort.js';
 import { RulershipSetting } from './RulershipSetting.js';
 import { SymbolSetting } from './SymbolSetting.js';
 import { useAdvancedGroupOpen } from './advanced-groups-setting.js';
-import { customisedCount, ORB_SCALE_SEGMENTS, type AdvancedTab } from './settings-groups.js';
+import { customisedCount, ORB_SCALE_SEGMENTS, type CountTab } from './settings-groups.js';
 import { useGlyphVariants, type GlyphLook } from './glyph-variant-setting.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { VARIANT_BODIES } from '../chart/glyph-variants.js';
@@ -241,6 +241,9 @@ export function ExtendedSettingsPanel({
   // The practitioner's own orb rules (#590) are typed as strings and only become settings when every entry parses,
   // so a half-typed number never reaches the chart. `draft.orbRules` is not read; `effective` below is the draft.
   const [rulesText, setRulesText] = useState<OrbRulesDraft>(() => orbRulesDraftFrom(value.orbRules));
+  // Custom minor aspects (#1544): display-only, so choosing it never writes a setting. A set that matches no preset shows it too.
+  const [minorCustomOpen, setMinorCustomOpen] = useState(() => minorSetFor(value.enabledMinorAspects) === 'custom');
+  const minorSetShown = minorCustomOpen ? 'custom' : minorSetFor(draft.enabledMinorAspects);
   // The planetary rulers are edited in the draft with everything else and written only on Apply (#806).
   const [rulers, setRulers] = useState<RulershipChoice>(rulership);
   // The formula points are staged in the draft too: a pending add or remove is saved only by Apply (#824, D-824b).
@@ -282,6 +285,7 @@ export function ExtendedSettingsPanel({
   const replaceDraft = (next: ExtendedSettings): void => {
     setDraft(next);
     setRulesText(orbRulesDraftFrom(next.orbRules));
+    setMinorCustomOpen(false);
   };
 
   /** One object's whole policy, replaced atomically — never a hybrid of two partial patches racing each other. */
@@ -499,9 +503,8 @@ export function ExtendedSettingsPanel({
   // The Advanced groups (#856): open or closed is a device preference; a closed group says how many of its values
   // differ from the active profile's baseline. Nothing here touches the draft, so Apply keeps every hidden value.
   const [profileAdvancedOpen, setProfileAdvancedOpen] = useAdvancedGroupOpen('profile');
-  const [orbsAdvancedOpen, setOrbsAdvancedOpen] = useAdvancedGroupOpen('orbs');
   const [specialAdvancedOpen, setSpecialAdvancedOpen] = useAdvancedGroupOpen('special');
-  const advancedSummary = (tab: AdvancedTab, extra = 0): string | undefined => {
+  const advancedSummary = (tab: CountTab, extra = 0): string | undefined => {
     const count = customisedCount(tab, effective, extra);
     return count === 0 ? undefined : t.advancedCustomised(String(count));
   };
@@ -1055,22 +1058,41 @@ export function ExtendedSettingsPanel({
               <fieldset className="field-group settings-card-group">
                 <legend>{t.aspectsLegend}</legend>
                 <p className="hint settings-card-tag">{t.appliesOnApply}</p>
+                {advancedSummary('orbs') !== undefined && (
+                  <p className="hint settings-card-customised">{advancedSummary('orbs')}</p>
+                )}
                 <div className="settings-card-block">
-                  <ChoiceGroup
-                    label={t.orbScaleSegmentLabel}
-                    segmented
-                    showLabel
-                    value={segmentFor(draft.orbScalePercent)}
-                    options={ORB_SCALE_SEGMENTS.map((segment) => ({
-                      value: segment.value,
-                      label: segment.label,
-                    }))}
-                    onChange={(value) => {
-                      const segment = ORB_SCALE_SEGMENTS.find((candidate) => candidate.value === value);
-                      if (segment !== undefined)
-                        replaceDraft({ ...withoutOrbRules(effective), orbScalePercent: segment.percent });
-                    }}
-                  />
+                  <label>
+                    {t.scaleLabel}
+                    {draft.orbScalePercent > 0 ? '+' : ''}
+                    {draft.orbScalePercent}%
+                    <input
+                      type="range"
+                      aria-label={t.orbScaleAriaLabel}
+                      min={-90}
+                      max={90}
+                      step={10}
+                      value={draft.orbScalePercent}
+                      onChange={(event) => {
+                        patch({ orbScalePercent: Number(event.target.value) });
+                      }}
+                    />
+                  </label>
+                  <div className="settings-card-orb-chips" role="group" aria-label={t.orbScaleSegmentLabel}>
+                    {ORB_SCALE_SEGMENTS.map((segment) => (
+                      <Button
+                        key={segment.value}
+                        variant="quiet"
+                        size="compact"
+                        aria-pressed={draft.orbScalePercent === segment.percent}
+                        onClick={() => {
+                          replaceDraft({ ...withoutOrbRules(effective), orbScalePercent: segment.percent });
+                        }}
+                      >
+                        {t.orbScaleChips[segment.value]}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
                 <div className="settings-card-block">
                   <OptionCards
@@ -1119,54 +1141,25 @@ export function ExtendedSettingsPanel({
                     <ChoiceGroup
                       label={t.minorSetLabel}
                       segmented
-                      value={minorSetFor(draft.enabledMinorAspects)}
+                      value={minorSetShown}
                       options={[
                         { value: 'off', label: t.minorSetOptions.off },
                         { value: 'quintiles', label: t.minorSetOptions.quintiles },
                         { value: 'all', label: t.minorSetOptions.all },
-                        ...(minorSetFor(draft.enabledMinorAspects) === 'custom'
-                          ? [{ value: 'custom', label: t.minorSetOptions.custom }]
-                          : []),
+                        { value: 'custom', label: t.minorSetOptions.custom },
                       ]}
                       onChange={(value) => {
+                        // Custom only opens the checklist; it writes no setting until an item is ticked.
+                        setMinorCustomOpen(value === 'custom');
                         if (value === 'off') patch({ enabledMinorAspects: [] });
                         else if (value === 'quintiles') patch({ enabledMinorAspects: MINOR_SET_QUINTILES });
                         else if (value === 'all') patch({ enabledMinorAspects: MINOR_ASPECTS.map((a) => a.key) });
                       }}
                     />
                   </div>
-                </div>
-              </fieldset>
-
-              <AdvancedGroup
-                title={t.advancedTitle.orbs}
-                summary={advancedSummary('orbs')}
-                showLabel={t.showDetails}
-                hideLabel={t.hideDetails}
-                open={orbsAdvancedOpen}
-                onOpenChange={setOrbsAdvancedOpen}
-              >
-                <fieldset className="field-group settings-card-group">
-                  <legend>{t.fineTuneAspectsLegend}</legend>
-                  <p className="hint settings-card-tag">{t.appliesOnApply}</p>
-                  <label>
-                    {t.scaleLabel}
-                    {draft.orbScalePercent > 0 ? '+' : ''}
-                    {draft.orbScalePercent}%
-                    <input
-                      type="range"
-                      aria-label={t.orbScaleAriaLabel}
-                      min={-90}
-                      max={90}
-                      step={10}
-                      value={draft.orbScalePercent}
-                      onChange={(event) => {
-                        patch({ orbScalePercent: Number(event.target.value) });
-                      }}
-                    />
-                  </label>
-                  <div className="settings-card-block">
-                    <Disclosure title={t.minorChooseEach} showLabel={t.showDetails} hideLabel={t.hideDetails}>
+                  {minorSetShown === 'custom' && (
+                    <fieldset className="field-group settings-card-minor-checklist">
+                      <legend>{t.minorChooseEach}</legend>
                       {[...MINOR_ASPECTS, ...HIGHER_HARMONIC_ASPECTS].map((aspect) => (
                         <Checkbox
                           key={aspect.key}
@@ -1177,10 +1170,10 @@ export function ExtendedSettingsPanel({
                           }}
                         />
                       ))}
-                    </Disclosure>
-                  </div>
-                </fieldset>
-              </AdvancedGroup>
+                    </fieldset>
+                  )}
+                </div>
+              </fieldset>
             </>
           </div>
 
@@ -1444,11 +1437,6 @@ export function ExtendedSettingsPanel({
       </StagedDialog>
     </div>
   );
-}
-
-/** The segment the scale sits on, or `custom` between them. */
-function segmentFor(percent: number): string {
-  return ORB_SCALE_SEGMENTS.find((segment) => segment.percent === percent)?.value ?? 'custom';
 }
 
 /** An aspect angle as degrees, with arcminutes when it is not whole (the septile, 360/7, reads 51°26'). */
