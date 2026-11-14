@@ -11,7 +11,8 @@
  * afterthought: every token is redefined, not patched.
  *
  * Every foreground/background pair here was measured rather than eyeballed and
- * clears WCAG AA (the weakest is 5.56:1, light-mode gold on the page). Accessibility
+ * clears WCAG AA: text 4.5:1 and graphics 3:1, measured on --bg and --surface. The weakest text pair is 4.83:1 in light
+ * (--color-success on --surface) and 5.29:1 in dark (--color-danger on --surface). No AAA (7:1) claim is made. Accessibility
  * is an explicit milestone, so the palette should not be the thing that fails it.
  *
  * No webfonts, by design: the Content Security Policy allows `font-src 'self'`
@@ -4357,7 +4358,7 @@ dl.metric-cards {
 .wheel-ring-house {
   fill: var(--surface);
   fill-opacity: 0.6;
-  stroke: var(--muted);
+  stroke: var(--line);
   stroke-width: 1;
 }
 
@@ -4390,7 +4391,7 @@ dl.metric-cards {
 
 .chart-multiwheel .chart-axis-label,
 .chart-sheet .chart-axis-label {
-  fill: var(--accent);
+  fill: var(--solar);
   font-size: var(--text-2xs);
   font-weight: 700;
 }
