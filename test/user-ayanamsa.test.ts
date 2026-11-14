@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * The user-defined ayanamsa (#1407; owner decision 2026-11-14, "Date + degrees"): its validation, its round trip
  * through a calculation snapshot, the degrees and minutes the settings fields show, and the basis line it states.
