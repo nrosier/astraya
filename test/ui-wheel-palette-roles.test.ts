@@ -144,9 +144,10 @@ describe('wheel colour roles in app.css (issue 1532)', () => {
   ];
   for (const [selector, property, value] of roles) {
     it(`${selector} sets ${property} to ${value}`, () => {
-      expect(declarationsOf(css, selector)).toMatch(
-        new RegExp(`${property}:\\s*${value.replace(/[()]/g, '\\$&')}\\s*(;|$)`),
-      );
+      const declarations = declarationsOf(css, selector)
+        .split(';')
+        .map((d) => d.trim().replace(/\s+/g, ' '));
+      expect(declarations).toContain(`${property}: ${value}`);
     });
   }
 
@@ -212,9 +213,7 @@ describe('standalone SVG export matches the on-screen roles (issue 1532)', () =>
 
   it('holds the light values of the adopted palette', () => {
     for (const name of ['element-fire', 'element-earth', 'element-air'] as const) {
-      expect(style, name).toContain(
-        `.chart-sign-${name.replace('element', 'element')} path { stroke: ${light(name)}; }`,
-      );
+      expect(style, name).toContain(`.chart-sign-${name} path { stroke: ${light(name)}; }`);
     }
     expect(light('accent')).toBe('#3b49df');
     expect(light('solar')).toBe('#835208');
