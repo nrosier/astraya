@@ -63,6 +63,7 @@ One level above `src/astrology/`: composes pure astrological calculations into s
 - `return-chart.ts` — Solar/lunar return as first-class displayable chart (with natal contacts). Deps: `./chart-compute`, `./lunar-returns`, `./solar-return`, `astrology/aspects`.
 - `secondary-progression.ts` — Secondary progressions (day-for-year, three MC methods). Deps: `astrology/progressions`, `astrology/aspects`, `astrology/bodies`.
 - `solar-arc-directions.ts` — Solar arc directions (apply progressed Sun's arc to all bodies). Deps: `astrology/solar-arc-directions`, `astrology/progressions`, `astrology/aspects`.
+- `solar-arc-declination.ts` — Solar arc in declination (#1407): the Sun's declination arc on every natal declination, parallels and contraparallels to natal. Deps: `astrology/progressions`, `./chart-tables`.
 - `solar-return.ts` — Solar return (Sun returns to natal longitude each year). Deps: `astrology/solar-lunar-returns`, `astrology/aspects`, `ephemeris/generated-constants`.
 - `synastry.ts` — Two-person compatibility core (independent charts + cross-chart aspects + importance ranking); applies synastry's tighter orbs to the orbs it is given. Deps: `astrology/aspects`, `astrology/orb-profiles`, `astrology/synastry-importance`, `./chart-compute`.
 - `text-diff.ts` — Pure word-level diff of two plain texts (same/added/removed segments) for the admin review of user submissions (#1338). Deps: none.

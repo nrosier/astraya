@@ -11,7 +11,7 @@
  * @module chart-tables
  * @purpose Shapes a computed `ChartData` into the flat rows a chart's data tables, wheel ring and sheet actually render (#44).
  * @conventions Pure and framework-free; kept separate from `chart-compute.ts` so the slow real-engine chart test and the fast pure row-shaping test can run independently; longitude is rounded to the nearest arcsecond before sign-splitting (`degreeParts`) to avoid a seconds rounding bumping the sign; the wheel's aspect web is limited to major aspects, tables show every aspect found.
- * @exports positionRows, houseCuspRows, angleRows, aspectRows, crossAspectRows, crossContactRows, dignityRows, conditionRows, receptionRows, dispositorRows, declinationContactRows, antisciaRows, midpointTreeRows, allMidpointsRows, fixedStarRows, chartShapeOf, derivedPointRows, chartWheelRing, chartSheetMetaLines, chartSheetInput, degreeParts, visiblePositions, visibleAspects, visibleAngleAspects, almutenOfAscendant, AlmutenCandidateRow
+ * @exports DEFAULT_DECLINATION_ORB, positionRows, houseCuspRows, angleRows, aspectRows, crossAspectRows, crossContactRows, dignityRows, conditionRows, receptionRows, dispositorRows, declinationContactRows, antisciaRows, midpointTreeRows, allMidpointsRows, fixedStarRows, chartShapeOf, derivedPointRows, chartWheelRing, chartSheetMetaLines, chartSheetInput, degreeParts, visiblePositions, visibleAspects, visibleAngleAspects, almutenOfAscendant, AlmutenCandidateRow
  */
 import { almutenOf, essentialDignityScoreOf } from '../astrology/almuten.js';
 import { antiscialContacts, type AntiscialContact } from '../astrology/antiscia.js';
@@ -796,8 +796,11 @@ export interface DeclinationContactRow {
   readonly orb: Degrees;
 }
 
-/** Default parallel/contraparallel orb (#398) — tighter than a longitude aspect's, matching the convention most sources use for this equatorial contact. */
-const DEFAULT_DECLINATION_ORB: Degrees = 1;
+/**
+ * Default parallel/contraparallel orb (#398) — tighter than a longitude aspect's, matching the convention most sources
+ * use for this equatorial contact. Also the declination solar arc's orb (#1407).
+ */
+export const DEFAULT_DECLINATION_ORB: Degrees = 1;
 
 /**
  * Every parallel/contraparallel contact within `orb` (default 1°) — `undefined` (returns an

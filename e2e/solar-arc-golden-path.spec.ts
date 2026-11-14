@@ -70,6 +70,35 @@ test('a person with a known birth time gets a Solar Arc screen with directed pos
   await expect.poll(() => page.url()).toContain(`date=${after}`);
 });
 
+test('the Solar Arc screen can direct in declination: parallels to the natal bodies (#1407)', async () => {
+  test.setTimeout(60_000);
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  await page.getByRole('link', { name: 'Progressions & Directions', exact: true }).click();
+  await page.getByRole('tab', { name: 'Solar Arc', exact: true }).click();
+  const directedIn = page.getByLabel('Directed in', { exact: true });
+  await expect(directedIn).toHaveValue('longitude');
+
+  await directedIn.selectOption('declination');
+  await expect(page.locator('.page-header-basis')).toHaveText(
+    'Tropical · Placidus · Mean node · Standard orbs · Solar arc (the Sun’s progressed arc) · directed in declination',
+  );
+  await expect(page.getByText(/^Arc in declination: /)).toBeVisible();
+  await expect(page.getByText('Longitude only: declination is not directed.')).toHaveCount(0);
+  const declinations = page.getByRole('table', { name: 'Directed declinations' });
+  await expect(declinations).toBeVisible();
+  // Each declination reads as degrees and minutes north or south of the equator.
+  await expect(declinations.locator('tbody tr').first()).toContainText(/\d+°\d{2}′ [NS]/);
+  const parallels = page.getByRole('table', { name: 'Directed-to-natal parallels' });
+  await expect(
+    parallels.or(page.getByText('No directed-to-natal parallels or contraparallels within orb.')),
+  ).toBeVisible();
+
+  // Back to longitude: the screen is as it was.
+  await directedIn.selectOption('longitude');
+  await expect(page.getByRole('table', { name: 'Directed positions' })).toBeVisible();
+  await expect(page.getByText('Longitude only: declination is not directed.')).toBeVisible();
+});
+
 test('a person with an unknown birth time is told solar arc directions need one', async () => {
   await openSharedPerson(page, baseUrl, MARIC);
 
