@@ -94,6 +94,7 @@ test('a chart override applied to one chart is kept apart from a calculation def
   await expect(page.locator('div.chart-wheel')).toBeVisible();
   await openSettings(page);
   await profile.getByRole('radio', { name: /^Sidereal/ }).check();
+  await card.getByRole('button', { name: /^Defaults/ }).click();
   await card.getByRole('button', { name: 'Save as my default', exact: true }).click();
   await expect(card).toBeHidden();
   await openSettings(page);
