@@ -408,7 +408,9 @@ describe('the visibility matrix bulk checkboxes (#824, boxes B and C)', () => {
   it('has one row per shown object (17: the chosen Lilith and node models stand for their families), under Object, Visible, Aspects and Reports', async () => {
     const { container, root } = await mount(undefined, vi.fn());
     openDrawer(container);
-    const rows = drawer(container).querySelectorAll('.data-table:not(:has(td:nth-child(5))) tbody tr');
+    const rows = drawer(container).querySelectorAll(
+      '.data-table:not(:has(td:nth-child(5))) tbody tr:not(.data-table-group-row)',
+    );
     expect(rows.length).toBeGreaterThanOrEqual(17);
     const first = rows[0];
     expect(first?.querySelectorAll('input[type="checkbox"]')).toHaveLength(3);

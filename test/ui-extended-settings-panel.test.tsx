@@ -216,8 +216,8 @@ function chooseRulers(container: HTMLElement, index: number): void {
 const PLANETS = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'] as const;
 
 /** One of the Planets group's All / Clear / None buttons (#1544). */
-const groupButton = (container: HTMLElement, name: string): HTMLButtonElement | undefined =>
-  Array.from(container.querySelectorAll('[role="group"][aria-label="Planets"] button')).find(
+const groupButton = (container: HTMLElement, name: string, group = 'Planets'): HTMLButtonElement | undefined =>
+  Array.from(container.querySelectorAll(`[role="group"][aria-label="${group}"] button`)).find(
     (button): button is HTMLButtonElement => button instanceof HTMLButtonElement && button.textContent === name,
   );
 
@@ -393,6 +393,107 @@ describe('ExtendedSettingsPanel', () => {
     const frame = container.querySelector('.data-table-scroll-tall');
     expect(frame?.querySelector('thead th')).not.toBeNull();
     expect(frame?.textContent).toContain('Mars');
+    unmount(container, root);
+  });
+
+  it('partitions the matrix rows under Planets, Asteroids and Points group header rows, with every row kept (#1544)', async () => {
+    const { container, root } = await mount(fakeProvider(), vi.fn());
+    openCard(container);
+    const body = container.querySelector('.data-table-scroll tbody');
+    const rows = Array.from(body?.querySelectorAll(':scope > tr') ?? []);
+    const layout = rows.map((row) =>
+      row.classList.contains('data-table-group-row')
+        ? `[${row.querySelector('[role="group"]')?.getAttribute('aria-label') ?? ''}]`
+        : (row.querySelector('td')?.textContent ?? ''),
+    );
+    expect(layout.filter((entry) => entry.startsWith('['))).toEqual(['[Planets]', '[Asteroids]', '[Points]']);
+    expect(layout.indexOf('[Planets]')).toBe(0);
+    expect(layout.indexOf('Mars')).toBeGreaterThan(layout.indexOf('[Planets]'));
+    expect(layout.indexOf('Mars')).toBeLessThan(layout.indexOf('[Asteroids]'));
+    expect(layout.indexOf('Ceres')).toBeGreaterThan(layout.indexOf('[Asteroids]'));
+    expect(layout.indexOf('Ceres')).toBeLessThan(layout.indexOf('[Points]'));
+    expect(layout.indexOf('Vertex')).toBeGreaterThan(layout.indexOf('[Points]'));
+    // 10 planets, 5 asteroids (Ceres, Pallas, Juno, Vesta, Chiron) and 5 points (Lilith, nodes, Vertex, Fortune, Spirit).
+    expect(layout).toHaveLength(3 + 10 + 5 + 5);
+    // The column header row is still the only thead row, and each group header carries All, Clear and None.
+    expect(container.querySelectorAll('.data-table-scroll thead tr')).toHaveLength(1);
+    for (const group of ['Planets', 'Asteroids', 'Points']) {
+      const names = Array.from(container.querySelectorAll(`[role="group"][aria-label="${group}"] button`)).map(
+        (button) => button.textContent,
+      );
+      expect(names).toEqual(expect.arrayContaining(['All', 'Clear', 'None']));
+    }
+    unmount(container, root);
+  });
+
+  it('None on Asteroids sets only the asteroid rows: Planets and Points stay as they were (#1544)', async () => {
+    const onRedraw = vi.fn();
+    const { container, root } = await mount(fakeProvider(), onRedraw);
+    openCard(container);
+    act(() => {
+      groupButton(container, 'None', 'Asteroids')?.click();
+    });
+    act(() => {
+      buttonNamed(container, 'Apply and redraw')?.click();
+    });
+    const settings = (onRedraw.mock.lastCall as [ExtendedSettings, string])[0];
+    for (const key of ['ceres', 'pallas', 'juno', 'vesta', 'chiron'] as const) {
+      expect(settings.objectPolicies[key]).toEqual({ visible: false, aspectParticipant: false, interpreted: false });
+    }
+    for (const key of [...PLANETS, 'vertex', 'partOfFortune', 'partOfSpirit'] as const) {
+      expect(settings.objectPolicies[key]).toEqual(DEFAULT_EXTENDED_SETTINGS.objectPolicies[key]);
+    }
+    unmount(container, root);
+  });
+
+  it('All on Points restores its rows and leaves the other groups as they were (#1544)', async () => {
+    const onRedraw = vi.fn();
+    const { container, root } = await mount(fakeProvider(), onRedraw);
+    openCard(container);
+    act(() => {
+      groupButton(container, 'None', 'Points')?.click();
+    });
+    act(() => {
+      groupButton(container, 'All', 'Points')?.click();
+    });
+    act(() => {
+      groupButton(container, 'None', 'Planets')?.click();
+    });
+    act(() => {
+      buttonNamed(container, 'Apply and redraw')?.click();
+    });
+    const settings = (onRedraw.mock.lastCall as [ExtendedSettings, string])[0];
+    for (const key of ['vertex', 'partOfFortune', 'partOfSpirit'] as const) {
+      expect(settings.objectPolicies[key].visible).toBe(true);
+      expect(settings.objectPolicies[key].aspectParticipant).toBe(true);
+    }
+    expect(settings.objectPolicies.sun).toEqual({ visible: false, aspectParticipant: false, interpreted: false });
+    expect(settings.objectPolicies.ceres).toEqual(DEFAULT_EXTENDED_SETTINGS.objectPolicies.ceres);
+    unmount(container, root);
+  });
+
+  it('collapses a group to its header row and expands it again (#1544)', async () => {
+    const { container, root } = await mount(fakeProvider(), vi.fn());
+    openCard(container);
+    const toggle = (): HTMLButtonElement => {
+      const found = container.querySelector<HTMLButtonElement>(
+        '[role="group"][aria-label="Asteroids"] button[aria-expanded]',
+      );
+      if (found === null) throw new Error('test fixture bug: no Asteroids toggle');
+      return found;
+    };
+    expect(toggle().getAttribute('aria-expanded')).toBe('true');
+    expect(container.querySelector('.data-table-scroll tbody')?.textContent).toContain('Ceres');
+    act(() => {
+      toggle().click();
+    });
+    expect(toggle().getAttribute('aria-expanded')).toBe('false');
+    expect(container.querySelector('.data-table-scroll tbody')?.textContent).not.toContain('Ceres');
+    expect(container.querySelector('.data-table-scroll tbody')?.textContent).toContain('Mars');
+    act(() => {
+      toggle().click();
+    });
+    expect(container.querySelector('.data-table-scroll tbody')?.textContent).toContain('Ceres');
     unmount(container, root);
   });
 
