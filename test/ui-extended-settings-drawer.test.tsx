@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * The Extended settings drawer (#824): a right-anchored `StagedDialog` with four tabbed categories, a pinned footer
+ * The Extended settings drawer (#824): a right-anchored `StagedDialog` with five tabbed categories, a pinned footer
  * (Save and Reset on the left; Cancel and Apply on the right), and a staged formula-point draft. A pending add or
  * delete is written only by Apply, and Cancel discards it (D-824b). Mounted with `createRoot` and real DOM nodes,
  * like `ui-extended-settings-panel.test.tsx`; the ephemeris provider is a hand-built fake, since no value is computed.
@@ -50,7 +50,7 @@ function fakeProvider(): EphemerisProvider {
 // These tests drive controls inside the Advanced groups, so each starts with all three open (#856); the tests of the
 // closed state itself are in ui-extended-settings-advanced.test.tsx.
 beforeEach(() => {
-  localStorage.setItem(ADVANCED_GROUPS_KEY, JSON.stringify(['profile', 'bodies', 'special']));
+  localStorage.setItem(ADVANCED_GROUPS_KEY, JSON.stringify(['profile', 'orbs', 'special']));
   resetAdvancedGroupsForTests();
 });
 
@@ -193,11 +193,11 @@ describe('the drawer structure (#824)', () => {
     unmount(container, root);
   });
 
-  it('has the four categories as tabs, in the order a chart is set up', async () => {
+  it('has the five categories as tabs, in the order a chart is set up', async () => {
     const { container, root } = await mount(undefined, vi.fn());
     openDrawer(container);
     const tabs = Array.from(drawer(container).querySelectorAll('[role="tab"]')).map((tab) => tab.textContent);
-    expect(tabs).toEqual(['Profile & frame', 'Bodies & orbs', 'Display & glyphs', 'Special points']);
+    expect(tabs).toEqual(['Profile & frame', 'Bodies', 'Orbs & aspects', 'Special points', 'Display & glyphs']);
     unmount(container, root);
   });
 
