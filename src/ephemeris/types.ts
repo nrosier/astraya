@@ -10,7 +10,7 @@
  * @module ephemeris/types
  * @purpose Defines the engine-agnostic types and the EphemerisProvider interface that form the boundary between the Swiss Ephemeris implementation and the rest of Astraya's astrology code.
  * @conventions Nothing in this file mentions sweph-wasm, so src/astrology/** and the UI depend only on these types and the engine stays swappable and testable without WebAssembly; every EphemerisProvider method is async because the real implementation runs in a Web Worker, and failures are thrown as EphemerisError rather than encoded as sentinel values.
- * @exports Degrees, JulianDayUT, CalendarSystem, BodyId, Zodiac, GeoPosition, BodyPosition, HousePositions, HouseSystem, FixedStarPosition, FixedStarMagnitude, PositionOptions, HorizontalPosition, AzimuthAltitudeOptions, SolarEclipseKind, LunarEclipseKind, SolarEclipse, LunarEclipse, EphemerisProvider, EphemerisError, EphemerisErrorContext
+ * @exports Degrees, JulianDayUT, CalendarSystem, BodyId, UserAyanamsa, Zodiac, GeoPosition, BodyPosition, HousePositions, HouseSystem, FixedStarPosition, FixedStarMagnitude, PositionOptions, HorizontalPosition, AzimuthAltitudeOptions, SolarEclipseKind, LunarEclipseKind, SolarEclipse, LunarEclipse, EphemerisProvider, EphemerisError, EphemerisErrorContext
  */
 
 /** Ecliptic longitude in degrees, 0 <= lon < 360, measured from 0° Aries. */
@@ -31,8 +31,24 @@ export type CalendarSystem = 'gregorian' | 'julian';
 /** Swiss Ephemeris body identifier. See `SE` in generated-constants.ts. */
 export type BodyId = number;
 
-/** Which zodiac the longitudes are measured in. */
-export type Zodiac = { readonly kind: 'tropical' } | { readonly kind: 'sidereal'; readonly ayanamsa: number };
+/**
+ * A user-defined ayanamsa (#1407): the ayanamsa in degrees at a reference date, which the engine precesses from there
+ * (Swiss Ephemeris `SE_SIDM_USER`, with the reference taken in UT through `SE_SIDBIT_USER_UT`).
+ */
+export interface UserAyanamsa {
+  /** The reference date, `YYYY-MM-DD` in the Gregorian calendar, taken at 0h UT. */
+  readonly referenceDate: string;
+  /** The ayanamsa at the reference date, in degrees, 0 <= degrees < 360. */
+  readonly degrees: Degrees;
+}
+
+/**
+ * Which zodiac the longitudes are measured in. A sidereal zodiac names a predefined `SE_SIDM_*` mode, or
+ * `SE_SIDM_USER` with its `user` definition; `user` is present exactly when the mode is `SE_SIDM_USER`.
+ */
+export type Zodiac =
+  | { readonly kind: 'tropical' }
+  | { readonly kind: 'sidereal'; readonly ayanamsa: number; readonly user?: UserAyanamsa };
 
 /** Where the observer is, for topocentric positions and house calculation. */
 export interface GeoPosition {
@@ -251,8 +267,12 @@ export interface EphemerisProvider {
    */
   houseSystemName(system: HouseSystem): Promise<string>;
 
-  /** Ayanamsa value in degrees for the given instant and sidereal mode. */
-  ayanamsa(jd: JulianDayUT, mode: number): Promise<Degrees>;
+  /**
+   * Ayanamsa value in degrees for the given instant and sidereal mode: the true value (with nutation), which is the
+   * offset between tropical and sidereal longitudes. `mean: true` leaves nutation out, which is the value a
+   * user-defined ayanamsa takes at its reference date (#1407).
+   */
+  ayanamsa(jd: JulianDayUT, mode: number, options?: { readonly mean?: boolean }): Promise<Degrees>;
 
   /**
    * True obliquity of the ecliptic at the given instant, in degrees — the

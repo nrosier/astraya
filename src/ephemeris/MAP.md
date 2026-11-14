@@ -4,7 +4,7 @@ Swiss Ephemeris boundary (only place `sweph-wasm` imported; lint-enforced). Rest
 
 - `assets.ts` — Pins exact data files, fixed-star catalog, WASM binary by size/SHA-256 (1800-2399 CE). Deps: none.
 - `client.ts` — Web Worker client for `EphemerisProvider` (request/response, timeouts, fatal-error latching). Deps: protocol, types.
-- `engine.ts` — Only `sweph-wasm` consumer; `SwissEphemerisEngine` implementation (bodies, houses, ayanamsas, fixed stars with a full-size star-name buffer (#803), eclipse search, azimuth/altitude). Deps: assets, generated-constants, types.
+- `engine.ts` — Only `sweph-wasm` consumer; `SwissEphemerisEngine` implementation (bodies, houses, ayanamsas including a user-defined one (#1407), fixed stars with a full-size star-name buffer (#803), eclipse search, azimuth/altitude). Deps: assets, generated-constants, types.
 - `finite-difference.ts` — Pinned sampling interval and circular-unwrap rate helper for non-body points' own motion (chart angles, Vertex, lots). Deps: types.
 - `generated-constants.ts` — Swiss Ephemeris C library constants (body IDs, flags, ayanamsa modes) read from live `sweph-wasm` instance. Deps: none.
 - `protocol.ts` — Wire contract between UI thread and ephemeris worker (request/response types, error serialization). Deps: types.

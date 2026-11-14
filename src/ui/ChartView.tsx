@@ -343,7 +343,10 @@ export function houseSystemLabel(code: string): string {
 }
 
 export function zodiacLabel(zodiac: Zodiac): string {
-  return zodiac.kind === 'tropical' ? 'Tropical' : `Sidereal (ayanamsa ${String(zodiac.ayanamsa)})`;
+  if (zodiac.kind === 'tropical') return 'Tropical';
+  return zodiac.user === undefined
+    ? `Sidereal (ayanamsa ${String(zodiac.ayanamsa)})`
+    : 'Sidereal (user-defined ayanamsa)';
 }
 
 export function rulershipLabel(rulership: string): string {

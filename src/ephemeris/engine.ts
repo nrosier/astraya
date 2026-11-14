@@ -49,6 +49,7 @@ import {
   type PositionOptions,
   type SolarEclipse,
   type SolarEclipseKind,
+  type UserAyanamsa,
   type Zodiac,
 } from './types.js';
 
@@ -94,6 +95,11 @@ const GREGORIAN = SE.SE_GREG_CAL;
 const JULIAN = SE.SE_JUL_CAL;
 
 /** Swiss Ephemeris `gregflag` for a resolved calendar. */
+/** What `#sidModeSet` records: the mode, plus a user ayanamsa's definition so a changed one is set again. */
+function sidModeKey(mode: number, user: UserAyanamsa | undefined): string {
+  return user === undefined ? String(mode) : `${String(mode)}|${user.referenceDate}|${String(user.degrees)}`;
+}
+
 function gregflag(calendar: CalendarSystem): number {
   return calendar === 'julian' ? JULIAN : GREGORIAN;
 }
@@ -206,8 +212,8 @@ function windingCount(cusps: readonly Degrees[]): number {
 export class SwissEphemerisEngine implements EphemerisProvider {
   #swe: SweInstance | undefined;
   #initializing: Promise<void> | undefined;
-  /** Tracks the sidereal mode currently set on the WASM instance. */
-  #sidModeSet: number | undefined;
+  /** Tracks the sidereal mode currently set on the WASM instance, as `sidModeKey` gives it. */
+  #sidModeSet: string | undefined;
   readonly #config: EngineConfig;
 
   constructor(config: EngineConfig = {}) {
@@ -260,12 +266,36 @@ export class SwissEphemerisEngine implements EphemerisProvider {
    */
   #applyZodiac(zodiac: Zodiac | undefined): number {
     if (!zodiac || zodiac.kind === 'tropical') return 0;
-    const swe = this.#instance();
-    if (this.#sidModeSet !== zodiac.ayanamsa) {
-      swe.swe_set_sid_mode(zodiac.ayanamsa, 0, 0);
-      this.#sidModeSet = zodiac.ayanamsa;
-    }
+    this.#setSidMode(zodiac.ayanamsa, zodiac.user);
     return SE.SEFLG_SIDEREAL;
+  }
+
+  /**
+   * Sets the sidereal mode on the WASM instance unless it is already set. A user-defined ayanamsa (#1407) is
+   * `SE_SIDM_USER` with its reference date (0h UT, so `SE_SIDBIT_USER_UT`) and its degrees at that date; Swiss
+   * Ephemeris precesses it from there (programmer's documentation, `swe_set_sid_mode`).
+   */
+  #setSidMode(mode: number, user: UserAyanamsa | undefined): void {
+    const key = sidModeKey(mode, user);
+    if (this.#sidModeSet === key) return;
+    const swe = this.#instance();
+    if (mode === SE.SE_SIDM_USER) {
+      if (user === undefined)
+        throw new EphemerisError('A user-defined ayanamsa needs its reference date and degrees.', {
+          call: 'swe_set_sid_mode',
+        });
+      const [year, month, day] = user.referenceDate.split('-').map(Number);
+      if (year === undefined || month === undefined || day === undefined) {
+        throw new EphemerisError(`Invalid user ayanamsa reference date: ${user.referenceDate}`, {
+          call: 'swe_set_sid_mode',
+        });
+      }
+      const t0 = swe.swe_julday(year, month, day, 0, GREGORIAN);
+      swe.swe_set_sid_mode(SE.SE_SIDM_USER | SE.SE_SIDBIT_USER_UT, t0, user.degrees);
+    } else {
+      swe.swe_set_sid_mode(mode, 0, 0);
+    }
+    this.#sidModeSet = key;
   }
 
   #flagsFor(options: PositionOptions | undefined): number {
@@ -461,13 +491,10 @@ export class SwissEphemerisEngine implements EphemerisProvider {
     return this.#instance().swe_house_name(system);
   }
 
-  async ayanamsa(jd: JulianDayUT, mode: number): Promise<Degrees> {
-    const swe = this.#instance();
-    if (this.#sidModeSet !== mode) {
-      swe.swe_set_sid_mode(mode, 0, 0);
-      this.#sidModeSet = mode;
-    }
-    return swe.swe_get_ayanamsa_ex_ut(jd, SE.SEFLG_SWIEPH);
+  async ayanamsa(jd: JulianDayUT, mode: number, options?: { readonly mean?: boolean }): Promise<Degrees> {
+    this.#setSidMode(mode, undefined);
+    const flags = options?.mean === true ? SE.SEFLG_SWIEPH | SE.SEFLG_NONUT : SE.SEFLG_SWIEPH;
+    return this.#instance().swe_get_ayanamsa_ex_ut(jd, flags);
   }
 
   async ayanamsaName(mode: number): Promise<string> {

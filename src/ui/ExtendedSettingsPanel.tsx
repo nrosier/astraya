@@ -30,10 +30,10 @@ import { AdvancedGroup } from './primitives/AdvancedGroup.js';
 import { Badge } from './primitives/Badge.js';
 import { tabPanelProps, Tabs } from './primitives/Tabs.js';
 import { Disclosure } from './primitives/Disclosure.js';
-import { formatDecimal } from './format.js';
+import { formatDecimal, todayInputValue } from './format.js';
 import { useCallback, useEffect, useEffectEvent, useId, useRef, useState } from 'react';
 import { ASPECTS, DEFAULT_ORB_CONFIG } from '../astrology/aspects.js';
-import { ayanamsaByKey, AYANAMSAS } from '../astrology/ayanamsas.js';
+import { ayanamsaByKey, AYANAMSAS, USER_AYANAMSA_ID } from '../astrology/ayanamsas.js';
 import { HOUSE_SYSTEMS } from '../astrology/houses.js';
 import {
   CALCULATION_SCHEME_IDS,
@@ -96,6 +96,7 @@ import { StatusMessage } from './primitives/StatusMessage.js';
 import { ChoiceGroup } from './primitives/ChoiceGroup.js';
 import { OptionCards } from './primitives/OptionCards.js';
 import { Select } from './primitives/Select.js';
+import { UserAyanamsaFields } from './UserAyanamsaFields.js';
 import { TextField } from './primitives/TextField.js';
 import { SortableTable } from './SortableTable.js';
 import type { TableColumn } from './table-sort.js';
@@ -704,7 +705,20 @@ export function ExtendedSettingsPanel({
   const houseName = (code: string): string =>
     houseSystemNames.get(code) ?? HOUSE_SYSTEMS.find((system) => system.code === code)?.key ?? code;
   const ayanamsaName = (id: number): string =>
-    ayanamsaNames.get(id) ?? AYANAMSAS.find((ayanamsa) => ayanamsa.id === id)?.key ?? String(id);
+    id === USER_AYANAMSA_ID
+      ? t.userAyanamsaOption
+      : (ayanamsaNames.get(id) ?? AYANAMSAS.find((ayanamsa) => ayanamsa.id === id)?.key ?? String(id));
+
+  // Choosing User-defined (#1407) starts from the current ayanamsa's mean value today, so the chart does not move
+  // until the reader changes the date or the degrees.
+  const chooseUserAyanamsa = async (fromMode: number): Promise<void> => {
+    const referenceDate = todayInputValue();
+    const [year, month, day] = referenceDate.split('-').map(Number);
+    if (year === undefined || month === undefined || day === undefined) return;
+    const jd = await provider.julianDay(year, month, day, 0);
+    const degrees = await provider.ayanamsa(jd, fromMode, { mean: true });
+    patch({ zodiac: { kind: 'sidereal', ayanamsa: USER_AYANAMSA_ID, user: { referenceDate, degrees } } });
+  };
 
   // What the trigger says: only what differs from the defaults, by name.
   const changes = changedSettings(value);
@@ -982,14 +996,30 @@ export function ExtendedSettingsPanel({
                     <Select
                       label={t.ayanamsaLabel}
                       value={String(ayanamsaId)}
-                      options={AYANAMSAS.map((ayanamsa) => ({
-                        value: String(ayanamsa.id),
-                        label: ayanamsaNames.get(ayanamsa.id) ?? ayanamsa.key,
-                      }))}
+                      options={[
+                        ...AYANAMSAS.map((ayanamsa) => ({
+                          value: String(ayanamsa.id),
+                          label: ayanamsaNames.get(ayanamsa.id) ?? ayanamsa.key,
+                        })),
+                        { value: String(USER_AYANAMSA_ID), label: t.userAyanamsaOption },
+                      ]}
                       onChange={(value) => {
-                        patch({ zodiac: { kind: 'sidereal', ayanamsa: Number(value) } });
+                        const mode = Number(value);
+                        if (mode !== USER_AYANAMSA_ID) {
+                          patch({ zodiac: { kind: 'sidereal', ayanamsa: mode } });
+                        } else if (ayanamsaId !== undefined && ayanamsaId !== USER_AYANAMSA_ID) {
+                          void chooseUserAyanamsa(ayanamsaId);
+                        }
                       }}
                     />
+                    {draft.zodiac.kind === 'sidereal' && draft.zodiac.user !== undefined && (
+                      <UserAyanamsaFields
+                        value={draft.zodiac.user}
+                        onChange={(user) => {
+                          patch({ zodiac: { kind: 'sidereal', ayanamsa: USER_AYANAMSA_ID, user } });
+                        }}
+                      />
+                    )}
                   </div>
                 )}
 
