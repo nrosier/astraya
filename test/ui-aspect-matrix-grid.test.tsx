@@ -190,7 +190,9 @@ describe('AspectMatrixGrid (#820)', () => {
     const css = readFileSync('src/ui/app.css', 'utf8');
     const start = css.indexOf('/* The on-screen aspect matrix (#820)');
     expect(start).toBeGreaterThan(-1);
-    const block = css.slice(start).replace(/\/\*[\s\S]*?\*\//g, '');
+    // Only the matrix block: the PillSelect section after it (#1545) legitimately uses the popover shadow token.
+    const end = css.indexOf(' * The PillSelect primitive (#1545');
+    const block = css.slice(start, end > start ? end : undefined).replace(/\/\*[\s\S]*?\*\//g, '');
     expect(block).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
     expect(block).not.toMatch(/\brgba?\(|\bhsla?\(/);
     expect(block).not.toMatch(/box-shadow:(?!\s*none)/);
