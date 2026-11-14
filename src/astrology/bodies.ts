@@ -17,7 +17,7 @@
  * @module Bodies
  * @purpose Defines the canonical set of bodies (luminaries, planets, nodes, Lilith variants, Chiron, main-belt asteroids) Astraya computes positions for, plus the opt-in set (Pholus, #804) that is computed only on request.
  * @conventions Order matches traditional chart-listing order, not SE numeric ids; the lunar nodes and three Lilith variants are orbital elements rather than physical bodies, computed by Swiss Ephemeris under three different models, so none can be checked against JPL Horizons.
- * @exports BODIES, OPT_IN_BODIES, BodySetOptions, bodiesFor, bodyIdsFor, bodyById, bodyByKey, southNode
+ * @exports BODIES, OPT_IN_BODIES, HELIOCENTRIC_ONLY_BODIES, BodySetOptions, bodiesFor, bodyIdsFor, bodyById, bodyByKey, southNode
  */
 import { SE } from '../ephemeris/generated-constants.ts';
 import type { BodyId } from '../ephemeris/types.js';
@@ -82,6 +82,15 @@ const WITH_OPT_IN: readonly BodyDefinition[] = BODIES.flatMap((body) =>
 );
 
 /**
+ * Bodies only the heliocentric chart computes (#1407): the Earth, which takes the Sun's place there. Swiss Ephemeris
+ * gives it a position only with the heliocentric flag, so it is never in `BODIES` or `bodiesFor`; it is known to
+ * `bodyById`/`bodyByKey` so the heliocentric chart's tables and wheel can name and draw it.
+ */
+export const HELIOCENTRIC_ONLY_BODIES: readonly BodyDefinition[] = [
+  { id: SE.SE_EARTH, key: 'earth', name: 'Earth', category: 'planet' },
+];
+
+/**
  * The bodies to compute for `options`: `BODIES` itself (the very same array) unless an opt-in body was requested,
  * in which case the opt-in bodies sit after Chiron, in chart-listing order. The shared seam of #804 — every
  * module that used to read `BODIES` for a computation reads this instead.
@@ -95,8 +104,9 @@ export function bodyIdsFor(options?: BodySetOptions): readonly BodyId[] {
   return bodiesFor(options).map((body) => body.id);
 }
 
-const BY_ID = new Map<BodyId, BodyDefinition>(WITH_OPT_IN.map((body) => [body.id, body]));
-const BY_KEY = new Map<string, BodyDefinition>(WITH_OPT_IN.map((body) => [body.key, body]));
+const KNOWN: readonly BodyDefinition[] = [...WITH_OPT_IN, ...HELIOCENTRIC_ONLY_BODIES];
+const BY_ID = new Map<BodyId, BodyDefinition>(KNOWN.map((body) => [body.id, body]));
+const BY_KEY = new Map<string, BodyDefinition>(KNOWN.map((body) => [body.key, body]));
 
 export function bodyById(id: BodyId): BodyDefinition | undefined {
   return BY_ID.get(id);

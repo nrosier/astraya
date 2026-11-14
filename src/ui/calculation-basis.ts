@@ -46,7 +46,8 @@ export interface BasisWords {
  * the house system.
  */
 export interface BasisParts {
-  readonly houses?: 'settings' | 'whole-sign';
+  /** `'none'` is for the heliocentric chart (#1407), which has no houses and no lunar nodes: it drops both items. */
+  readonly houses?: 'settings' | 'whole-sign' | 'none';
   readonly rulers?: boolean;
   readonly orbs?: boolean;
 }
@@ -72,8 +73,9 @@ export function buildCalculationBasisLine(
   const builtIn = settings.orbRules === undefined ? matchOrbProfile(settings.orbScalePercent) : undefined;
   const zodiac =
     settings.zodiac.kind === 'tropical' ? t.tropical : settings.zodiac.user === undefined ? t.sidereal : t.siderealUser;
-  const houses = parts.houses === 'whole-sign' ? t.wholeSign : houseSystemName(settings.houseSystem);
-  const node = settings.nodeVariant === 'true' ? t.trueNode : t.meanNode;
+  const houses =
+    parts.houses === 'none' ? '' : parts.houses === 'whole-sign' ? t.wholeSign : houseSystemName(settings.houseSystem);
+  const node = parts.houses === 'none' ? '' : settings.nodeVariant === 'true' ? t.trueNode : t.meanNode;
   const rulers = t.rulers(words.rulerTitles[rulership]);
   const orbs = t.orbs(deviceOrbProfile ?? words.orbProfileTitles[builtIn ?? 'custom']);
   if (parts.houses === undefined && parts.rulers !== false && parts.orbs !== false) {
@@ -121,6 +123,7 @@ export function useEngineBasisLine(
   orbsFrom?: ExtendedSettings,
   zodiacLabel?: string,
   orbProfileName?: string,
+  parts?: BasisParts,
 ): string {
   const words = useBasisWords();
   return buildCalculationBasisLine(
@@ -128,5 +131,6 @@ export function useEngineBasisLine(
     rulership,
     zodiacLabel === undefined ? words : { ...words, t: { ...words.t, tropical: zodiacLabel } },
     orbProfileName,
+    parts,
   );
 }

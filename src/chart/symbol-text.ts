@@ -40,6 +40,7 @@ export const BODY_UNICODE: Readonly<Record<string, string>> = {
   interpolatedLilith: '⚸',
   chiron: '⚷',
   pholus: '⯛', // U+2BDB PHOLUS, Unicode 11
+  earth: '⊕', // U+2295 CIRCLED PLUS, the Earth as the glyph draws it (#1407)
   ceres: '⚳',
   pallas: '⚴',
   juno: '⚵',
@@ -98,6 +99,7 @@ export const BODY_CODES: Readonly<Record<string, string>> = {
   interpolatedLilith: 'ILI',
   chiron: 'CHI',
   pholus: 'PHO',
+  earth: 'EAR',
   ceres: 'CER',
   pallas: 'PAL',
   juno: 'JUN',

@@ -33,7 +33,7 @@ import type { MidpointTreeHit } from '../astrology/midpoints.js';
 import { bodyById } from '../astrology/bodies.js';
 import type { BodyId, Degrees } from '../ephemeris/types.js';
 import type { CrossRingAspects, MultiWheelOptions, WheelRingInput } from './multi-wheel.js';
-import { renderMultiWheelSvg } from './multi-wheel.js';
+import { renderMultiWheelSvg, wheelOrientationLongitude } from './multi-wheel.js';
 import type { PanelLayout } from './sheet-geometry.js';
 import { resolveSheetGeometry } from './sheet-geometry.js';
 import { baselineOffset, escapeXml, fmt, line, text } from './svg-primitives.js';
@@ -99,7 +99,7 @@ function renderWheelOverlays(input: ChartSheetInput, options: ChartSheetOptions 
         renderAntisciaOverlaySvg(
           filterAntisciaForDisplay(overlays.antiscia),
           longitudeOf,
-          ring.houses.ascendant,
+          wheelOrientationLongitude(ring, options),
           geometry.cx,
           geometry.cy,
           geometry.aspectCircle,
@@ -114,7 +114,7 @@ function renderWheelOverlays(input: ChartSheetInput, options: ChartSheetOptions 
         renderDeclinationOverlaySvg(
           overlays.declinations,
           longitudeOf,
-          ring.houses.ascendant,
+          wheelOrientationLongitude(ring, options),
           geometry.cx,
           geometry.cy,
           geometry.aspectCircle,

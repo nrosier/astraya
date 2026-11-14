@@ -126,6 +126,7 @@ describe('the derived-chart interpretation note (#725)', () => {
     expect(CHART_TYPES.filter((type) => isDerivedChartType(type))).toEqual([
       'draconic',
       'harmonic',
+      'heliocentric',
       'solar-return',
       'lunar-return',
       'relocated',
