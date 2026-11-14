@@ -24,6 +24,7 @@ import { Button } from './primitives/Button.js';
 import { AdvancedGroup } from './primitives/AdvancedGroup.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { utcDay } from './format.js';
+import { PillSelect } from './primitives/PillSelect.js';
 import { Select } from './primitives/Select.js';
 import { useId, useMemo, useState } from 'react';
 import {
@@ -515,7 +516,7 @@ export function PdfExportBuilder({
       {/* Issue 1075: the starting point and Build PDF sit below the title and context line (guidelines §5), not in the title row. */}
       <div className="pdf-primary-bar">
         <div className="pdf-header-preset">
-          <Select
+          <PillSelect
             label={t.presetLabel}
             value={currentPreset ?? 'custom'}
             options={[
