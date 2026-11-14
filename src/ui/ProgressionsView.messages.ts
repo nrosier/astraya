@@ -41,6 +41,23 @@ const en = {
   positionsCaption: 'Progressed positions',
   contactsCaption: 'Progressed-to-natal contacts',
   noContacts: 'No progressed-to-natal contacts within orb.',
+  contactTargetLabel: 'Contacts to',
+  contactTargets: { natal: 'Natal', progressed: 'Progressed', transit: 'Transits' },
+  contactCaptions: {
+    natal: 'Progressed-to-natal contacts',
+    progressed: 'Progressed-to-progressed contacts',
+    transit: 'Transit-to-progressed contacts',
+  },
+  noContactsFor: {
+    natal: 'No progressed-to-natal contacts within orb.',
+    progressed: 'No progressed-to-progressed contacts within orb.',
+    transit: 'No transit-to-progressed contacts within orb.',
+  },
+  contactBodyLabels: {
+    natal: { a: 'Progressed', b: 'Natal' },
+    progressed: { a: 'Progressed', b: 'Progressed' },
+    transit: { a: 'Transit', b: 'Progressed' },
+  },
 
   symbolLabel: 'Symbol',
   bodyLabel: 'Body',
@@ -89,6 +106,23 @@ const nl: typeof en = {
   positionsCaption: 'Progressieve posities',
   contactsCaption: 'Progressief-natale contacten',
   noContacts: 'Geen progressief-natale contacten binnen orb.',
+  contactTargetLabel: 'Contacten met',
+  contactTargets: { natal: 'Natal', progressed: 'Progressief', transit: 'Transits' },
+  contactCaptions: {
+    natal: 'Progressief-natale contacten',
+    progressed: 'Progressief-progressieve contacten',
+    transit: 'Contacten van transits met progressief',
+  },
+  noContactsFor: {
+    natal: 'Geen progressief-natale contacten binnen orb.',
+    progressed: 'Geen progressief-progressieve contacten binnen orb.',
+    transit: 'Geen contacten van transits met progressief binnen orb.',
+  },
+  contactBodyLabels: {
+    natal: { a: 'Progressief', b: 'Natal' },
+    progressed: { a: 'Progressief', b: 'Progressief' },
+    transit: { a: 'Transit', b: 'Progressief' },
+  },
 
   symbolLabel: 'Symbool',
   bodyLabel: 'Hemellichaam',

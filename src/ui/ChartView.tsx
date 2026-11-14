@@ -633,10 +633,17 @@ export function ChartDataView({
   initialTransitDate,
   chartType,
   personId,
+  frameHasHouses = true,
 }: {
   readonly load: Load;
   readonly displayName: string;
   readonly showHouses: boolean;
+  /**
+   * False for a chart whose frame has no houses at all (the heliocentric chart, #1407): the wheel is still drawn,
+   * without cusps, house numbers or angles, and the tables carry no houses. Distinct from `showHouses={false}` for an
+   * unknown birth time, which draws no wheel and says why. Defaults to true.
+   */
+  readonly frameHasHouses?: boolean;
   /**
    * Header lines for the sheet. Passed in rather than derived here because only
    * the caller holds the birth moment the date/place lines come from; omitted,
@@ -774,7 +781,7 @@ export function ChartDataView({
   // with overlay rings are both drawn by `renderChartDialSvg` with the same display options, so the natal ring looks the
   // same with or without a transit ring. Only the rings and the contacts between them differ.
   const dialComposition = useMemo(() => {
-    if (load.kind !== 'ready' || !housesRenderable) return undefined;
+    if (load.kind !== 'ready' || (frameHasHouses && !housesRenderable)) return undefined;
     const input = chartSheetInput(
       load.data,
       metaLines ?? [displayName || t.chartFallback],
@@ -785,10 +792,22 @@ export function ChartDataView({
     const options = {
       ...resolveWheelDisplayOptions({}),
       signWedgeStyle: toSignWedgeStyle(extendedSettings),
+      ...(frameHasHouses ? {} : { housesShown: false }),
     };
     return { input, options };
     // oxlint-disable-next-line react/exhaustive-deps -- the wheel renderers read the glyph settings from module state, so these are cache keys, not inputs the callback reads.
-  }, [load, housesRenderable, displayName, metaLines, extendedSettings, t, locale, symbolClass, variants]);
+  }, [
+    load,
+    housesRenderable,
+    frameHasHouses,
+    displayName,
+    metaLines,
+    extendedSettings,
+    t,
+    locale,
+    symbolClass,
+    variants,
+  ]);
 
   useEffect(() => {
     if (overlayContext === undefined || load.kind !== 'ready' || !hasChartOverlays(viewOverlaySettings)) {
@@ -1358,7 +1377,7 @@ export function ChartDataView({
         actions={headerTarget === null ? (headerActions ?? undefined) : undefined}
       />
       {headerTarget !== null && headerActions !== null && createPortal(headerActions, headerTarget)}
-      {!showHouses && <p className="hint">{t.housesUnknownHint(displayName || t.thisPerson)}</p>}
+      {!showHouses && frameHasHouses && <p className="hint">{t.housesUnknownHint(displayName || t.thisPerson)}</p>}
       {showHouses && !housesComputed && <p className="hint">{t.housesUndefinedHint(displayName || t.thisPerson)}</p>}
 
       {/* The result region: busy while the chart (re)calculates, as the Astrocartography map is. */}

@@ -47,7 +47,7 @@
  * @module chart/multi-wheel
  * @purpose The chart wheel renderer: draws one or more charts as concentric rings around a shared centre, covering both the single natal wheel and multi-ring cases with one implementation.
  * @conventions A single ring is not a special case — it is `resolveRingBands(geometry, 1)`'s one band — so a natal wheel can never drift from a multi-wheel in tick tiers, glyph conventions or ring radii; every ring shares one wheel-space anchor (the innermost/base ring's Ascendant) so a given ecliptic degree lands at the same angular position in every ring, only the radius differs; aspect chords always end on the aspect circle and conjunctions are excluded from the web (the glyphs already show them); every clickable symbol is a `<g>` with `data-body`/`data-sign`/`data-aspect-body-*` attributes plus an invisible hit area for click-to-isolate; ring labels are a fixed corner legend, not radial text, to avoid upside-down labels on the far side of the circle.
- * @exports renderMultiWheelSvg; WheelRingInput, CrossRingAspects, MultiWheelOptions types.
+ * @exports renderMultiWheelSvg, wheelOrientationLongitude; WheelRingInput, CrossRingAspects, MultiWheelOptions types.
  */
 import type { Aspect } from '../astrology/aspects.js';
 import { SIGNS, degreesInSign } from '../astrology/signs.js';
@@ -135,6 +135,17 @@ export interface MultiWheelOptions extends WheelOrientationOptions {
    * drawn with the `chart-point-muted` class (reduced contrast, still visible). Omitted means no dimming at all.
    */
   readonly emphasizedBodies?: readonly string[];
+  /**
+   * False for a chart with no houses in its frame (the heliocentric chart, #1407): no house cusps, house numbers or
+   * angle axes are drawn, and the wheel is oriented with 0° Aries on the left instead of by an Ascendant. Defaults
+   * to true.
+   */
+  readonly housesShown?: boolean;
+}
+
+/** The orientation longitude of a wheel: its base ring's Ascendant, or 0° Aries when it draws no houses (#1407). */
+export function wheelOrientationLongitude(ring: WheelRingInput, options?: MultiWheelOptions): Degrees {
+  return options?.housesShown === false ? 0 : ring.houses.ascendant;
 }
 
 const DEFAULT_SIZE = 800;
@@ -582,7 +593,8 @@ export function renderMultiWheelSvg(
 
   const geometry = resolveSheetGeometry(size);
   const { cx, cy } = geometry;
-  const ascendant = baseRing.houses.ascendant;
+  const housesShown = options?.housesShown !== false;
+  const ascendant = wheelOrientationLongitude(baseRing, options);
   const bands = resolveRingBands(geometry, rings.length);
 
   const parts: string[] = [renderZodiacRingSvg(geometry, ascendant, orientationOptions, signWedgeStyle)];
@@ -591,7 +603,9 @@ export function renderMultiWheelSvg(
       '<defs><marker id="chart-multiwheel-ring-arrowhead" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" class="chart-multiwheel-ring-arrowhead" /></marker></defs>',
     );
   }
-  parts.push(renderBaseHousesSvg(baseRing.houses, geometry, ascendant, houseWedgeStyle, orientationOptions));
+  if (housesShown) {
+    parts.push(renderBaseHousesSvg(baseRing.houses, geometry, ascendant, houseWedgeStyle, orientationOptions));
+  }
   parts.push(circle(cx, cy, geometry.aspectCircle, 'wheel-ring-aspect'));
 
   rings.forEach((ring, index) => {
@@ -607,7 +621,7 @@ export function renderMultiWheelSvg(
           ? DEFAULT_MIN_SEPARATION_NATAL_DEG
           : DEFAULT_MIN_SEPARATION_TRANSIT_DEG);
     if (ring.role === 'transit') parts.push(renderRingBandFillSvg(geometry, band, 'chart-ring-band-transit'));
-    if (index > 0) {
+    if (index > 0 && housesShown) {
       parts.push(
         renderRingCuspsSvg(ring.houses, ascendant, geometry, band, index, houseWedgeStyle, orientationOptions),
       );

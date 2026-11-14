@@ -34,6 +34,13 @@ import { deriveExportFilename } from '../domain/export-filename.js';
 import { houseOf } from '../astrology/emphasis.js';
 import { computeMinorProgression, type MinorProgressionData } from '../domain/minor-progression.js';
 import { computeSecondaryProgression, type SecondaryProgressionData } from '../domain/secondary-progression.js';
+import {
+  PROGRESSION_CONTACT_TARGETS,
+  progressedToProgressed,
+  transitsToProgressed,
+  type ProgressionContactTarget,
+} from '../domain/progression-contacts.js';
+import type { Aspect } from '../astrology/aspects.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { formatFixed, formatOrb } from './format.js';
 import { useLocale } from './locale.js';
@@ -60,7 +67,12 @@ type ProgressionData = SecondaryProgressionData | MinorProgressionData;
 
 type Load =
   | { readonly kind: 'loading' }
-  | { readonly kind: 'ready'; readonly data: ProgressionData }
+  | {
+      readonly kind: 'ready';
+      readonly data: ProgressionData;
+      /** The transiting sky on the as-of date to the progressed chart (#1407), computed with the progression. */
+      readonly transitContacts: readonly Aspect[];
+    }
   | { readonly kind: 'error'; readonly message: string };
 
 interface PositionRow extends DegreeParts {
@@ -117,11 +129,13 @@ export function positionColumns(
 export function contactColumns(
   t: typeof progressionsViewMessages.en,
   locale: Locale,
+  target: ProgressionContactTarget = 'natal',
 ): readonly TableColumn<AspectRow>[] {
+  const labels = t.contactBodyLabels[target];
   return [
     {
       key: 'bodyAName',
-      label: t.bodyALabel,
+      label: labels.a,
       valueOf: (row) => row.bodyAName,
       render: (row) => bodyDisplayName(row.bodyAKey, locale),
     },
@@ -134,7 +148,7 @@ export function contactColumns(
     },
     {
       key: 'bodyBName',
-      label: t.bodyBLabel,
+      label: labels.b,
       valueOf: (row) => row.bodyBName,
       render: (row) => bodyDisplayName(row.bodyBKey, locale),
     },
@@ -167,6 +181,8 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
   const [locale] = useLocale();
   const [technique, setTechnique] = useState<Technique>('secondary');
   const [mcMethod, setMcMethod] = useState<ProgressedMcMethod>('naibod');
+  // What the contacts are measured to (#1407; owner decision 2026-11-14): natal as before, progressed, or transits.
+  const [contactTarget, setContactTarget] = useState<ProgressionContactTarget>('natal');
   const [asOf, setAsOf] = useAsOfDate();
   const timingT = useMessages(timingBasisMessages);
   // Progressions are calculated with the engine defaults plus the technique and MC method chosen below.
@@ -198,8 +214,9 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
           technique === 'secondary'
             ? await computeSecondaryProgression(moment, targetJd, provider, { mcMethod })
             : await computeMinorProgression(technique, moment, targetJd, provider);
+        const transitContacts = await transitsToProgressed(targetJd, data.positions, provider);
         if (!effect.cancelled) {
-          setLoad({ kind: 'ready', data });
+          setLoad({ kind: 'ready', data, transitContacts });
           setRefreshing(false);
         }
       } catch (error) {
@@ -216,7 +233,18 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
   }, [personMoment, provider, targetDate, technique, mcMethod]);
 
   const positions = load.kind === 'ready' ? positionRows(load.data.positions, load.data.houses) : undefined;
-  const contacts = load.kind === 'ready' ? crossAspectRows(load.data.contacts) : undefined;
+  const contacts =
+    load.kind !== 'ready'
+      ? undefined
+      : crossAspectRows(
+          contactTarget === 'natal'
+            ? load.data.contacts
+            : contactTarget === 'progressed'
+              ? progressedToProgressed(load.data.positions)
+              : load.transitContacts,
+        );
+  const contactsCaption = t.contactCaptions[contactTarget];
+  const contactsCsvName = contactTarget === 'natal' ? 'progression-contacts' : 'progression-contacts-' + contactTarget;
   // The positions table's CSV, then the contacts table's (only when it has rows, as the screen renders it), in
   // source order, offered in the page header (#887).
   useCsvExports(
@@ -232,10 +260,10 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
           ...(contacts !== undefined && contacts.length > 0
             ? [
                 csvExportTable(
-                  'progression-contacts',
-                  t.contactsCaption,
-                  deriveExportFilename(person.displayName, 'progression-contacts', 'csv'),
-                  contactColumns(t, locale),
+                  contactsCsvName,
+                  contactsCaption,
+                  deriveExportFilename(person.displayName, contactsCsvName, 'csv'),
+                  contactColumns(t, locale, contactTarget),
                   contacts,
                 ),
               ]
@@ -324,6 +352,15 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
             }}
           />
         )}
+        <Select
+          label={t.contactTargetLabel}
+          value={contactTarget}
+          options={PROGRESSION_CONTACT_TARGETS.map((target) => ({ value: target, label: t.contactTargets[target] }))}
+          onChange={(value) => {
+            const next = PROGRESSION_CONTACT_TARGETS.find((target) => target === value);
+            if (next !== undefined) setContactTarget(next);
+          }}
+        />
       </div>
 
       {/* The result region: busy while the progressions (re)calculate, as the Astrocartography map is. */}
@@ -347,16 +384,16 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
                 {contacts !== undefined && contacts.length > 0 && (
                   <section className="timing-card">
                     <SortableTable
-                      caption={t.contactsCaption}
+                      caption={contactsCaption}
                       headingLevel={2}
-                      columns={contactColumns(t, locale)}
+                      columns={contactColumns(t, locale, contactTarget)}
                       rows={contacts}
                       getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
-                      downloadFilename={deriveExportFilename(person.displayName, 'progression-contacts', 'csv')}
+                      downloadFilename={deriveExportFilename(person.displayName, contactsCsvName, 'csv')}
                     />
                   </section>
                 )}
-                {contacts?.length === 0 && <p className="hint">{t.noContacts}</p>}
+                {contacts?.length === 0 && <p className="hint">{t.noContactsFor[contactTarget]}</p>}
               </div>
               <div className="timing-layout-side">
                 {positions !== undefined && (

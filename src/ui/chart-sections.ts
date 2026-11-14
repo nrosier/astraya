@@ -21,7 +21,7 @@
  */
 /**
  * @module ui/chart-sections
- * @purpose Defines and parses the Chart screen's two URL-encoded axes — chart type (natal/draconic/harmonic/solar-return/lunar-return) and view (wheel/aspects/matrix/elements/placements/patterns) — so the header menu, type selector, and ChartViewNav stay in agreement.
+ * @purpose Defines and parses the Chart screen's two URL-encoded axes — chart type (natal/draconic/harmonic/heliocentric/solar-return/lunar-return/relocated) and view (wheel/aspects/matrix/elements/placements/patterns) — so the header menu, type selector, and ChartViewNav stay in agreement.
  * @conventions Pure functions only (no DOM), parsed/tested like route.ts; labels are translated via ChartView's own messages object rather than owning its own *.messages.ts file. Views are route-level links per docs/ui/UI-UX_GUIDELINES.md §2, not ARIA tabs.
  * @exports CHART_VIEWS, ChartViewKind, CHART_TYPES, ChartType, isChartType, isDerivedChartType, isChartView, chartViewFromHash, chartViewLabels
  */
@@ -30,7 +30,15 @@ import type { chartViewMessages } from './ChartView.messages.js';
 export const CHART_VIEWS = ['wheel', 'aspects', 'matrix', 'elements', 'placements', 'patterns'] as const;
 export type ChartViewKind = (typeof CHART_VIEWS)[number];
 
-export const CHART_TYPES = ['natal', 'draconic', 'harmonic', 'solar-return', 'lunar-return', 'relocated'] as const;
+export const CHART_TYPES = [
+  'natal',
+  'draconic',
+  'harmonic',
+  'heliocentric',
+  'solar-return',
+  'lunar-return',
+  'relocated',
+] as const;
 export type ChartType = (typeof CHART_TYPES)[number];
 
 export function isChartType(value: unknown): value is ChartType {
