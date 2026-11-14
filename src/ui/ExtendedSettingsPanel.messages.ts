@@ -35,6 +35,7 @@ const en = {
 
   appliesOnApply: 'Applies when you choose “Apply and redraw”.',
   devicePreview: 'Shown at once, kept when you apply or save, and put back by Cancel.',
+  livePreview: 'Live preview',
 
   zodiacHousesLegend: 'Chart frame',
   houseSystemLegend: 'House system',
@@ -336,6 +337,7 @@ const nl: typeof en = {
 
   appliesOnApply: 'Wordt toegepast met “Toepassen en opnieuw tekenen”.',
   devicePreview: 'Direct zichtbaar, behouden bij toepassen of opslaan en teruggezet door Annuleren.',
+  livePreview: 'Live voorbeeld',
 
   zodiacHousesLegend: 'Grondvlak',
   houseSystemLegend: 'Huizensysteem',

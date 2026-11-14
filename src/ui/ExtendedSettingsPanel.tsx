@@ -27,6 +27,7 @@ import { Checkbox } from './primitives/Checkbox.js';
 import { NumberField } from './primitives/NumberField.js';
 import { StagedDialog } from './primitives/StagedDialog.js';
 import { AdvancedGroup } from './primitives/AdvancedGroup.js';
+import { Badge } from './primitives/Badge.js';
 import { tabPanelProps, Tabs } from './primitives/Tabs.js';
 import { Disclosure } from './primitives/Disclosure.js';
 import { formatDecimal } from './format.js';
@@ -832,13 +833,13 @@ export function ExtendedSettingsPanel({
       >
         {applyFailed && <StatusMessage kind="error">{t.applyFailed}</StatusMessage>}
         <p className="hint">{t.scopeNote}</p>
+        <p className="hint">{t.appliesOnApply}</p>
 
         <div className="settings-drawer-panel">
           <div {...tabPanelProps(tabsId, 'profile')} hidden={category !== 'profile'}>
             <>
               <fieldset className="field-group settings-card-group">
                 <legend>{t.presetLabel}</legend>
-                <p className="hint settings-card-tag">{t.appliesOnApply}</p>
                 <OptionCards
                   label={t.presetLabel}
                   value={currentProfile ?? 'custom'}
@@ -863,7 +864,6 @@ export function ExtendedSettingsPanel({
 
               <fieldset className="field-group settings-card-group">
                 <legend>{t.zodiacHousesLegend}</legend>
-                <p className="hint settings-card-tag">{t.appliesOnApply}</p>
                 <p className="hint">{t.zodiacFrameSubtitle}</p>
 
                 {/* Zodiac */}
@@ -932,7 +932,6 @@ export function ExtendedSettingsPanel({
 
               <fieldset className="field-group settings-card-group">
                 <legend>{t.rulersLegend}</legend>
-                <p className="hint settings-card-tag">{t.appliesOnApply}</p>
                 <p className="hint">{t.rulersSubtitle}</p>
                 <RulershipSetting value={rulers} onChange={setRulers} />
                 <p className="settings-card-note">
@@ -953,7 +952,6 @@ export function ExtendedSettingsPanel({
               >
                 <fieldset className="field-group settings-card-group">
                   <legend>{t.allHouseSystemsLegend}</legend>
-                  <p className="hint settings-card-tag">{t.appliesOnApply}</p>
                   <Select
                     label={t.allHouseSystemsLabel}
                     value={draft.houseSystem}
@@ -969,7 +967,6 @@ export function ExtendedSettingsPanel({
 
                 <fieldset className="field-group settings-card-group">
                   <legend>{t.schemeLegend}</legend>
-                  <p className="hint settings-card-tag">{t.appliesOnApply}</p>
                   <p className="hint">{t.schemeHint}</p>
                   <OptionCards
                     label={t.schemeLabel}
@@ -995,7 +992,6 @@ export function ExtendedSettingsPanel({
             <>
               <fieldset className="field-group settings-card-group">
                 <legend>{t.matrixLegend}</legend>
-                <p className="hint settings-card-tag">{t.appliesOnApply}</p>
                 <div className="settings-card-block">
                   <OptionCards
                     label={t.objectPresetLabel}
@@ -1072,7 +1068,6 @@ export function ExtendedSettingsPanel({
             <>
               <fieldset className="field-group settings-card-group">
                 <legend>{t.aspectsLegend}</legend>
-                <p className="hint settings-card-tag">{t.appliesOnApply}</p>
                 {advancedSummary('orbs') !== undefined && (
                   <p className="hint settings-card-customised">{advancedSummary('orbs')}</p>
                 )}
@@ -1196,7 +1191,6 @@ export function ExtendedSettingsPanel({
             <>
               <fieldset className="field-group settings-card-group">
                 <legend>{t.bodiesLegend}</legend>
-                <p className="hint settings-card-tag">{t.appliesOnApply}</p>
                 <Checkbox
                   label={t.midpoints}
                   checked={draft.midpointsVisible}
@@ -1216,7 +1210,6 @@ export function ExtendedSettingsPanel({
               >
                 <fieldset className="field-group settings-card-group">
                   <legend>{t.specialVariantsLegend}</legend>
-                  <p className="hint settings-card-tag">{t.appliesOnApply}</p>
                   <div className="settings-card-indent">
                     <div className="settings-card-choice-line">
                       <span>{t.lilithLabel}</span>
@@ -1339,7 +1332,6 @@ export function ExtendedSettingsPanel({
 
                 <fieldset className="field-group settings-card-group">
                   <legend>{t.motionLegend}</legend>
-                  <p className="hint settings-card-tag">{t.appliesOnApply}</p>
                   <Disclosure title={t.aboutMotion} showLabel={t.showDetails} hideLabel={t.hideDetails}>
                     <p className="hint">{t.motionHint}</p>
                     <p className="hint">{t.stationWindowHint}</p>
@@ -1389,7 +1381,6 @@ export function ExtendedSettingsPanel({
               {onFixedStarsChange !== undefined && (
                 <fieldset className="field-group settings-card-group">
                   <legend>{starT.heading}</legend>
-                  <p className="hint settings-card-tag">{t.appliesOnApply}</p>
                   <p className="hint">{starT.staged}</p>
                   {open && (
                     <FixedStarPicker
@@ -1405,7 +1396,6 @@ export function ExtendedSettingsPanel({
               {onCustomPointsChange !== undefined && (
                 <fieldset className="field-group settings-card-group">
                   <legend>{t.formulaHeading}</legend>
-                  <p className="hint settings-card-tag">{t.appliesOnApply}</p>
                   <p className="hint">{t.formulaStaged}</p>
                   <FormulaPointsSection
                     rows={formulaRows}
@@ -1431,7 +1421,6 @@ export function ExtendedSettingsPanel({
             <>
               <fieldset className="field-group settings-card-group">
                 <legend>{t.wheelLegend}</legend>
-                <p className="hint settings-card-tag">{t.appliesOnApply}</p>
                 <Checkbox
                   label={t.rainbowColorZodiac}
                   checked={draft.rainbowZodiac}
@@ -1443,6 +1432,7 @@ export function ExtendedSettingsPanel({
 
               <fieldset className="field-group settings-card-group">
                 <legend>{t.symbolsFrameSubtitle}</legend>
+                <Badge>{t.livePreview}</Badge>
                 <p className="hint settings-card-tag">{t.devicePreview}</p>
                 <SymbolSetting />
               </fieldset>
