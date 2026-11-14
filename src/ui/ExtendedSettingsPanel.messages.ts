@@ -363,7 +363,7 @@ const nl: typeof en = {
   userAyanamsaOption: 'Zelf bepaald',
   zodiacFrameSubtitle: 'Hoe de dierenriem en huizen worden berekend',
   tropicalDescription:
-    'De Tropische dierenriem is vastgesteld aan de seizoenen. Het voorjaarsevenwicht (Lente) is altijd 0° Boogschutter, ongeacht waar de achtergrondsterren zijn verschoven. Dit is de standaard in westerse astrologie en de meeste populaire software.',
+    'De Tropische dierenriem is vastgesteld aan de seizoenen. Het voorjaarsevenwicht (Lente) is altijd 0° Ram, ongeacht waar de achtergrondsterren zijn verschoven. Dit is de standaard in westerse astrologie en de meeste populaire software.',
   siderealDescription:
     'De Siderische dierenriem is vastgesteld aan de achtergrondsterren zoals ze nu zijn. Omdat de sterren ongeveer 24° zijn voorgeprecessed sinds de tropische dierenriem werd gedefinieerd, je Zonneteken in siderische astrologie is meestal één teken eerder dan in tropische (bijv. westerse Boogschutter wordt Waterman in siderisch). Dit is de standaard in Vedische astrologie.',
   houseSystemDescription: (system: string) => {
