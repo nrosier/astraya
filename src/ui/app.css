@@ -7396,7 +7396,8 @@ button.primitive-button-compact {
 .primitive-option-card {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: var(--space-1) var(--space-3);
+  /* Title and description stack with a 4px row gap (#1544, owner decision): exact px, not --space-1, which follows the root size. */
+  gap: 4px var(--space-3);
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);

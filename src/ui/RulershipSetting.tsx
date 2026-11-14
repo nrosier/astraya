@@ -21,9 +21,12 @@ import { errorDetail } from './api-error.js';
 export function RulershipSetting({
   value,
   onChange,
+  showExplanation = true,
 }: {
   readonly value: RulershipChoice;
   readonly onChange: (choice: RulershipChoice) => void | Promise<void>;
+  /** When false the consequence line and the hint are not rendered (the caller shows the explanation itself). Default true. */
+  readonly showExplanation?: boolean;
 }): React.JSX.Element {
   const t = useMessages(rulershipSettingMessages);
   const [error, setError] = useState<string | undefined>(undefined);
@@ -50,10 +53,12 @@ export function RulershipSetting({
           if (isRulershipChoice(next)) choose(next);
         }}
       />
-      <p className="hint rulership-setting-consequence">{t.consequences[value]}</p>
-      <p className="hint">
-        <GlossaryText text={t.hint} />
-      </p>
+      {showExplanation && <p className="hint rulership-setting-consequence">{t.consequences[value]}</p>}
+      {showExplanation && (
+        <p className="hint">
+          <GlossaryText text={t.hint} />
+        </p>
+      )}
       {error !== undefined && <StatusMessage kind="error">{t.saveFailed(error)}</StatusMessage>}
     </div>
   );

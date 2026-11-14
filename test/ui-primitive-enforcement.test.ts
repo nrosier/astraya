@@ -62,6 +62,11 @@ describe('spacing tokens (#1074)', () => {
       value: '0.35rem var(--space-3)',
       reason: 'fine-pointer table rows (#513), between two tokens; the #895 Consultation balance is measured with it',
     },
+    {
+      selector: /^\.primitive-option-card$/,
+      value: '4px var(--space-3)',
+      reason: 'owner decision 2026-11-14, #1544, exact 4px row gap',
+    },
   ];
 
   function allowed(value: string, selector: string): boolean {
