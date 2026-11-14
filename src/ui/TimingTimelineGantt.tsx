@@ -1,16 +1,17 @@
 /**
  * @module ui/TimingTimelineGantt
- * @purpose The timing timeline's Gantt chart (#1237): one labelled row per technique over the shared date axis, a bar for each period, a tick for each point event, an orb window as a bar with its exact date marked and its pass number labelled (#1401), and a vertical line at the target date.
+ * @purpose The timing timeline's Gantt chart (#1237): one labelled row per technique over the shared date axis, a bar for each period, a tick for each point event, an orb window as a bar with its exact date marked and its pass number labelled (#1401), and a vertical line at the target date. Each orb-window bar carries its own pass number inside it (#1401).
  * @conventions Drawn as one small SVG per row (viewBox 0 0 1000 24, stretched to the row's width, strokes non-scaling) beside an HTML label, so the track names and the year labels stay readable at any width. Colours are tokens only: each row carries its technique colour as `--tech` (#1442), the target date is in the solar colour. A bar's white label is HTML laid over the stretched SVG, drawn only when the bar is wide enough and clipped to it. The chart is a picture of the events the table below it lists, so each row is an image with a name that counts its events and each bar carries a title; the table is the text equivalent. No calculation: positions come from `timeline-gantt.ts`.
  * @exports TimingTimelineGantt
  */
 import type { JulianDayUT } from '../ephemeris/types.js';
 import type { TimingTimelineEvent, TimingTimelineTrack } from '../domain/timing-timeline.js';
-import { useLayoutEffect, useRef, useState } from 'react';
+import { Fragment, useLayoutEffect, useRef, useState } from 'react';
 import {
   BAR_GAP_PX,
   barSpan,
   visibleBarLabels,
+  passBarPlacements,
   forecastBand,
   ganttFraction,
   techniqueColorVar,
@@ -223,32 +224,55 @@ export function TimingTimelineGantt({
                 </line>
               </svg>
               {(() => {
-                const shown = visibleBarLabels(
-                  drawn.map((mark) => ({
-                    mark,
-                    text: barLabel(mark.event),
-                    ...(mark.exact !== undefined && mark.event.pass !== undefined
-                      ? { passText: passLabel(mark.event.pass.number, mark.event.pass.count) }
-                      : {}),
-                  })),
-                  plot.width,
-                  plot.fontPx,
-                );
+                const candidates = drawn.map((mark) => ({
+                  mark,
+                  text: barLabel(mark.event),
+                  ...(mark.exact !== undefined && mark.event.pass !== undefined
+                    ? { passText: passLabel(mark.event.pass.number, mark.event.pass.count) }
+                    : {}),
+                }));
+                const shown = visibleBarLabels(candidates, plot.width, plot.fontPx);
+                const passPlaced = passBarPlacements(candidates, shown, plot.width, plot.fontPx);
                 return drawn.map((mark) => {
                   // A dimmed bar draws no label; it returns when the bar is hovered (owner decision on #1442).
                   const dimmed = hoveredKey !== undefined && hoveredKey !== mark.key;
-                  return dimmed || !shown.has(mark.key) ? null : (
-                    <span
-                      key={`${mark.key}-label`}
-                      className="gantt-bar-label"
-                      style={{
-                        left: `${String(mark.start * 100)}%`,
-                        width: `${String((mark.end - mark.start) * 100)}%`,
-                      }}
-                      aria-hidden="true"
-                    >
-                      {barLabel(mark.event)}
-                    </span>
+                  if (dimmed) return null;
+                  // Before the plot is measured there is nothing to collide with, so the number sits at the bar's right end.
+                  const passAt = plot.width > 0 ? passPlaced.get(mark.key) : 'end';
+                  const showPass =
+                    passAt !== undefined &&
+                    mark.exact !== undefined &&
+                    mark.event.pass !== undefined &&
+                    !mark.point &&
+                    !mark.sub;
+                  return (
+                    <Fragment key={mark.key}>
+                      {shown.has(mark.key) && (
+                        <span
+                          className="gantt-bar-label"
+                          style={{
+                            left: `${String(mark.start * 100)}%`,
+                            width: `${String((mark.end - mark.start) * 100)}%`,
+                          }}
+                          aria-hidden="true"
+                        >
+                          {barLabel(mark.event)}
+                        </span>
+                      )}
+                      {showPass && mark.event.pass !== undefined && (
+                        <span
+                          className="gantt-bar-pass"
+                          style={
+                            passAt === 'start'
+                              ? { left: `calc(${String(mark.start * 100)}% + var(--space-2))` }
+                              : { right: `calc(${String((1 - mark.end) * 100)}% + var(--space-2))` }
+                          }
+                          aria-hidden="true"
+                        >
+                          {passLabel(mark.event.pass.number, mark.event.pass.count)}
+                        </span>
+                      )}
+                    </Fragment>
                   );
                 });
               })()}
