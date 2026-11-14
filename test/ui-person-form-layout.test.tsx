@@ -467,6 +467,41 @@ describe('Life events summary card and drawer (#1439)', () => {
     expect(stored()).toEqual([]);
   });
 
+  it('exports the events as a CSV with the import columns, in date order (#1439)', async () => {
+    await seed([
+      { id: 'a', date: '2002-02-02', time: '10:00', label: 'Wedding, outdoors', category: 'marriage' },
+      { id: 'b', date: '2001-01-01', label: 'First move' },
+    ]);
+    const blobs: Blob[] = [];
+    const downloads: { name: string; href: string }[] = [];
+    const createUrl = vi.spyOn(URL, 'createObjectURL').mockImplementation((blob: Blob | MediaSource) => {
+      blobs.push(blob as Blob);
+      return 'blob:life-events';
+    });
+    const revokeUrl = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    const anchorClick = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
+      downloads.push({ name: this.download, href: this.href });
+    });
+    try {
+      openDrawer();
+      click(buttonByText(drawer(), td.exportButton));
+      expect(downloads).toEqual([{ name: 'life-events.csv', href: 'blob:life-events' }]);
+      expect(blobs).toHaveLength(1);
+      expect(blobs[0]?.type).toBe('text/csv;charset=utf-8');
+      expect(await blobs[0]?.text()).toBe(
+        'date,time,category,description\r\n' +
+          '2001-01-01,,,First move\r\n' +
+          '2002-02-02,10:00,marriage,"Wedding, outdoors"\r\n',
+      );
+    } finally {
+      anchorClick.mockRestore();
+      createUrl.mockRestore();
+      revokeUrl.mockRestore();
+    }
+  });
+
   it('imports a CSV into the draft, rejects a malformed file with a clear error and changes nothing', async () => {
     openDrawer();
     const file = drawer().querySelector<HTMLInputElement>('input[type="file"]');
