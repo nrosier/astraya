@@ -114,6 +114,7 @@ export function TimingTimelineGantt({
           <div
             key={row.track}
             className="gantt-row"
+            data-track={row.track}
             style={{ '--tech': techniqueColorVar(row.track) } as React.CSSProperties}
           >
             <span className="gantt-label">{trackLabels[row.track]}</span>

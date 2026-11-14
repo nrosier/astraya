@@ -89,6 +89,7 @@
 
   --glow-a: rgb(139 156 255 / 18%);
   --glow-b: rgb(229 181 103 / 8%);
+  --gantt-bar-text: var(--bg);
 
   --radius: 0.625rem;
   --radius-sm: 0.375rem;
@@ -228,6 +229,7 @@
     --color-tech-transit: #0794d2;
 
     --glow-a: rgb(59 73 223 / 8%);
+    --gantt-bar-text: white;
     --glow-b: rgb(131 82 8 / 7%);
   }
 }
@@ -289,6 +291,7 @@
 
   --glow-a: rgb(139 156 255 / 18%);
   --glow-b: rgb(229 181 103 / 8%);
+  --gantt-bar-text: var(--bg);
 }
 
 :root[data-theme='light'] {
@@ -336,6 +339,7 @@
 
   --glow-a: rgb(59 73 223 / 8%);
   --glow-b: rgb(131 82 8 / 7%);
+  --gantt-bar-text: white;
 }
 
 /*
@@ -9408,6 +9412,11 @@ a.quiet,
 }
 
 /* A bar's name in white (issue 1442), laid over the bar and clipped to it; only drawn when the bar is wide enough to hold it. */
+/* PD keeps white text in dark theme: dark text on its purple fill measures 3.92:1, white 4.96:1 (owner decision, #1401). */
+.gantt-row[data-track='primary-directions'] {
+  --gantt-bar-text: white;
+}
+
 .gantt-bar-label {
   position: absolute;
   top: 50%;
@@ -9415,7 +9424,7 @@ a.quiet,
   box-sizing: border-box;
   padding: 0 var(--space-2);
   overflow: hidden;
-  color: white;
+  color: var(--gantt-bar-text);
   font-size: var(--text-2xs);
   line-height: 1;
   white-space: nowrap;
@@ -9426,7 +9435,7 @@ a.quiet,
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  color: white;
+  color: var(--gantt-bar-text);
   font-size: var(--text-2xs);
   line-height: 1;
   white-space: nowrap;
