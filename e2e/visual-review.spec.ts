@@ -15,7 +15,7 @@ import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { build } from '../server/index.ts';
 import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
-import { choosePill, gotoAndSettle, openNatalChart } from './support.ts';
+import { choosePill, gotoAndSettle, openNatalChart, setLanguage } from './support.ts';
 
 const OUT = process.env.VISUAL_REVIEW_OUT;
 const SIZES = [
@@ -27,10 +27,15 @@ const THEMES = ['light', 'dark'] as const;
 
 test.skip(OUT === undefined, 'Set VISUAL_REVIEW_OUT to capture the visual review screenshots');
 
-async function shoot(page: Page, slug: string, ready?: () => Promise<void>): Promise<void> {
+async function shoot(
+  page: Page,
+  slug: string,
+  ready?: () => Promise<void>,
+  sizes: readonly (typeof SIZES)[number][] = SIZES,
+): Promise<void> {
   for (const theme of THEMES) {
     await page.emulateMedia({ colorScheme: theme });
-    for (const size of SIZES) {
+    for (const size of sizes) {
       await page.setViewportSize({ width: size.w, height: size.h });
       await page.waitForTimeout(350);
       // A screen whose open state does not survive a resize reopens itself here.
@@ -121,6 +126,25 @@ test('capture the screens of the visual review', async ({ browser }) => {
   await page.getByRole('tab', { name: 'Transits', exact: true }).click();
   await page.getByRole('table', { name: 'Contacts' }).waitFor({ timeout: 60_000 });
   await shoot(page, '08-transits');
+
+  // #1508: the Change filters dialog. It is a dialog at desktop widths and a bottom sheet below 40rem. It closes on resize,
+  // so reopen it before each shot.
+  const transitsUrl = page.url();
+  const filterDialog = page.getByRole('dialog', { name: 'Change filters', exact: true });
+  const reopenFilters = async (): Promise<void> => {
+    if (await filterDialog.isVisible()) return;
+    await page.getByRole('button', { name: 'Change filters', exact: true }).click();
+    await filterDialog.waitFor({ state: 'visible' });
+    await page.waitForTimeout(400);
+  };
+  await reopenFilters();
+  await shoot(page, '41-transits-filter-open', reopenFilters);
+  await shoot(page, '45-transits-filter-phone-sheet', reopenFilters, [SIZES[0]]);
+  await shoot(page, '47-filter-overhaul-desktop', reopenFilters, [SIZES[1], SIZES[2]]);
+  await shoot(page, '48-filter-overhaul-phone', reopenFilters, [SIZES[0]]);
+  await page.keyboard.press('Escape');
+  await filterDialog.waitFor({ state: 'hidden' });
+
   await page.getByRole('tab', { name: 'Forecast', exact: true }).click();
   await page.getByRole('heading', { name: 'Daily', level: 2 }).waitFor({ timeout: 60_000 });
   await shoot(page, '09-forecast-daily');
@@ -199,6 +223,8 @@ test('capture the screens of the visual review', async ({ browser }) => {
     await page.waitForTimeout(400);
   };
   await shoot(page, '21-chart-overlay-settings', reopenOverlays);
+  // #1508: the same drawer, shot at phone width as the second multi-row sheet (the drawer is still open from 21).
+  await shoot(page, '46-overlay-settings-phone-sheet', reopenOverlays, [SIZES[0]]);
 
   // #1190: a consultation preset that adds lines to the Selection card.
   await openSharedPerson(page, baseUrl, EINSTEIN);
@@ -233,6 +259,19 @@ test('capture the screens of the visual review', async ({ browser }) => {
   await page.getByRole('heading', { level: 1 }).first().waitFor();
   await page.waitForTimeout(800);
   await shoot(page, '25-rectification');
+
+  // #1508: the same phone sheet in Dutch, last so the language switch cannot change the English shots above.
+  await setLanguage(page, 'NL');
+  await page.goto(transitsUrl);
+  const dutchFilterDialog = page.getByRole('dialog', { name: 'Filters wijzigen', exact: true });
+  const reopenDutchFilters = async (): Promise<void> => {
+    if (await dutchFilterDialog.isVisible()) return;
+    await page.getByRole('button', { name: 'Filters wijzigen', exact: true }).click();
+    await dutchFilterDialog.waitFor({ state: 'visible' });
+    await page.waitForTimeout(400);
+  };
+  await reopenDutchFilters();
+  await shoot(page, '49-filter-overhaul-dutch-phone', reopenDutchFilters, [SIZES[0]]);
 
   await app.close();
 });
