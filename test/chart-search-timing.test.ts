@@ -501,10 +501,12 @@ describe('solar-arc scope (#1486, cited to Tebbs, provisional)', () => {
     const { subject, asOfJd } = found;
     const contact = subject.solarArc?.angleContacts[0];
     if (contact === undefined) throw new Error('unreachable');
+    const angle = contact.angle;
+    if (angle !== 'asc' && angle !== 'mc') throw new Error(`a solar-arc angle contact to ${angle}`);
 
     // The directed body is the natal body moved by the true solar arc; the target is the natal angle from the engine.
     const natalHouses = await engine.houses(natalJd, PLACE, 'P');
-    const natalAngle = contact.angle === 'asc' ? natalHouses.ascendant : natalHouses.mc;
+    const natalAngle = angle === 'asc' ? natalHouses.ascendant : natalHouses.midheaven;
     const directed = (longitudeIn(subject.chart.positions, contact.body) + (await arcAt(asOfJd))) % 360;
     const separation = angularSeparation(directed, natalAngle);
     expect(Math.abs(separation - contact.aspect.angle)).toBeLessThanOrEqual(contact.allowedOrb);
@@ -514,7 +516,7 @@ describe('solar-arc scope (#1486, cited to Tebbs, provisional)', () => {
       scope: 'solarArc',
       body: contact.body,
       aspectKey: contact.aspect.key,
-      target: { kind: 'angle', angle: contact.angle },
+      target: { kind: 'angle', angle },
     };
     expect(evaluateCondition(inOrb, subject).outcome).toBe('matched');
     // An aspect whose angle is farther from the separation than any orb the app uses (10 degrees at most).
