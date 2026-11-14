@@ -13,26 +13,32 @@
  * carries its `lift` over the average candidate — a time that scores only like the average has
  * explained nothing. The screen says so too.
  *
- * **Citation pending.** The scoring method below (Solar Arc directed angles and slow-planet transits
- * to the angles) has no verified published source yet (#1445). The only verified source is Huber's
- * rectification article, and it supports only the principle of rectifying against dated events
- * (dates accurate to within a month; at least five dates for a margin up to 30 minutes, ten up to two
- * hours); its own method is the apex/prime point, not this one. The convention is stated, not hidden:
+ * **Sources (#1445, owner decisions of 2026-11-14).** The principle, testing candidate times against
+ * dated events, is cited to Carter (*Symbolic Directions in Modern Astrology*, 1929, PDF pages 8, 15 and 26) and to
+ * Huber's rectification article (dates accurate to within a month; at least five dates for a margin up to 30
+ * minutes, ten up to two hours; its own method is the apex/prime point, not this one). The two orbs are cited
+ * below. Everything else in the scoring is Astraya's own convention, and is labelled as such: the closeness curve,
+ * the equal weights, the transit bodies, the window-average baseline and the 1.0 lift threshold.
  *
  * - **Solar-arc directions**: the secondary-progressed Sun's arc since birth, applied to a point,
  *   carries it forward about a degree a year. A contact counts when a directed angle (Ascendant or
  *   Midheaven) falls on a natal planet, or a directed planet on a natal angle, by conjunction,
  *   square or opposition. An opposition to the Ascendant or Midheaven is a contact with the
  *   Descendant or Imum Coeli.
- * - **Transits to the angles**: Jupiter, Saturn, Uranus, Neptune, Pluto and the mean lunar node —
- *   the slow bodies, whose contact lasts long enough to line up with a dated event — conjunct,
- *   square or opposite the natal Ascendant or Midheaven.
- * - **Orb** (owner decision, #1445; Tebbs): one limit of 3 degrees for every contact (`RECTIFICATION_ORB_LIMIT`), which Tebbs gives only as the outer limit when building the natal hook; her directed-contact orb is 1 degree, a pending change (#1445). Previously the existing transit orb of the body involved (`orbLimitFor` on
- *   the daily transit preset of `transit-importance.ts`); no orb is invented here.
- * - **Weight** (owner decision, #1445, revised 2026-11-11): equal across contact types, scaled by
+ * - **Transits to the angles** (Astraya convention): Jupiter, Saturn, Uranus, Neptune, Pluto and the
+ *   mean lunar node — the slow bodies, whose contact lasts long enough to line up with a dated event —
+ *   conjunct, square or opposite the natal Ascendant or Midheaven.
+ * - **Orb, directed contacts**: 1 degree (`RECTIFICATION_DIRECTED_ORB_LIMIT`). Tyl, *Solar Arcs*: the
+ *   orb for the arc is one degree, or one year. Tebbs (*The Complete Book of Chart Rectification*, 2008,
+ *   provisional) gives the same 1 degree for directions and progressions, as support.
+ * - **Orb, transit contacts**: 3 degrees (`RECTIFICATION_ORB_LIMIT`). Tebbs's outer limit: consider exact
+ *   contacts first, then within 1, 2 and up to 3 degrees, the closer the more important. Tebbs states this
+ *   limit for building the natal hook; applying it to transit contacts is Astraya's reading of her rule.
+ * - **Weight** (Astraya convention; owner decision, #1445, revised 2026-11-11): equal across contact types, scaled by
  *   closeness. A contact adds `1 − orb / limit`: 1 at exact, falling in a straight line to 0 at its
  *   orb limit, and a contact outside the orb adds nothing. This is the same orb multiplier the transit
- *   importance score uses (`transit-importance.ts`), so the fall-off is not a new number either.
+ *   importance score uses (`transit-importance.ts`), so the fall-off is not a new number either; Tebbs's
+ *   "the closer the orb, the more important" is the idea, not the curve.
  *   Every event counts equally; the user chooses which events to include.
  *
  * Planets are taken at the candidate's own birth moment, so the Moon — which moves a degree every
@@ -42,7 +48,7 @@
 /**
  * @module Rectification
  * @purpose Narrows an uncertain birth time by scoring candidate birth moments against dated life events using solar-arc and slow-body transit contacts to the angles.
- * @conventions Scoring method citation pending (#1445). Each contact (conjunction, square or opposition) adds an equal-weight, closeness-scaled score (`contactPoints`: 1 − orb/limit, the transit importance orb multiplier; nothing outside the orb, no type weights); its orb is the body's existing transit orb (`orbLimitFor` on the daily transit preset), so none is new; transits come from Jupiter to Pluto and the mean lunar node; results report a `lift` over the mean candidate score via `rectification-lift.ts`; contacts keep their event index so a subset of events can be re-scored without a new search; capped at MAX_RECTIFICATION_CANDIDATES.
+ * @conventions Sources per #1445 (2026-11-14): the event-dating principle cites Carter and Huber; the 1 degree directed orb cites Tyl, with Tebbs as support; the 3 degree transit limit is Tebbs's outer limit, applied to transits as Astraya's reading; the rest is Astraya convention. Each contact (conjunction, square or opposition) adds an equal-weight, closeness-scaled score (`contactPoints`: 1 − orb/limit, the transit importance orb multiplier; nothing outside the orb, no type weights); transits come from Jupiter to Pluto and the mean lunar node; results report a `lift` over the mean candidate score via `rectification-lift.ts`; contacts keep their event index so a subset of events can be re-scored without a new search; capped at MAX_RECTIFICATION_CANDIDATES.
  * @exports contactOrbLimit, contactOrb, contactPoints, scoreCandidate, MAX_RECTIFICATION_CANDIDATES, rectify
  */
 import { bodyByKey } from './bodies.js';
@@ -50,20 +56,18 @@ import { ageInYears } from './progressions.js';
 import { liftOf, windowAverage } from './rectification-lift.js';
 import type { BodyId, Degrees, EphemerisProvider, GeoPosition, HouseSystem, JulianDayUT } from '../ephemeris/types.js';
 
-/** The daily transit rule set, whose per-body orbs the contacts use (no orb of this tool's own). */
-
 /**
- * The orb limit for every contact, Solar Arc or transit, for any body. Tebbs (Complete Book of Chart Rectification)
- * says to consider exact contacts first, then within 1, 2 and up to 3 degrees, and that the closer the orb the more
- * important the contact. The score falls in a straight line from 1 at exact to 0 at this limit.
- * Tebbs gives 1 degree for directions and progressions, and 3 degrees only as the outer limit when building the
- * natal hook. Directed contacts now use the 1 degree limit (#1445); transit contacts keep this 3 degree limit.
+ * The orb limit for transit contacts, for any body: Tebbs's outer limit (*The Complete Book of Chart Rectification*,
+ * 2008, provisional): consider exact contacts first, then within 1, 2 and up to 3 degrees, the closer the more
+ * important. Tebbs states it for building the natal hook; using it for transit contacts is Astraya's reading (owner
+ * decision, #1445, 2026-11-14). The score falls in a straight line from 1 at exact to 0 at this limit.
  */
 export const RECTIFICATION_ORB_LIMIT: Degrees = 3;
 
 /**
- * The orb limit for directed (Solar Arc) contacts: 1 degree, Tebbs's directed-contact orb (owner decision, #1445,
- * 2026-11-11). The 3 degree `RECTIFICATION_ORB_LIMIT` stays the transit limit, since no decision moved it.
+ * The orb limit for directed (Solar Arc) contacts: 1 degree. Tyl, *Solar Arcs*: the orb for the arc is one degree, or
+ * one year; Tebbs gives the same 1 degree for directions and progressions, as support (owner decision, #1445,
+ * 2026-11-14).
  */
 export const RECTIFICATION_DIRECTED_ORB_LIMIT: Degrees = 1;
 
@@ -106,7 +110,7 @@ export interface RectificationContact {
   readonly aspect: 'conjunction' | 'square' | 'opposition';
   /** Distance from exact, in degrees. */
   readonly orb: Degrees;
-  /** The orb limit this contact was admitted under (the body's transit orb). */
+  /** The orb limit this contact was admitted under (1 degree directed, 3 degrees transit). */
   readonly orbLimit: Degrees;
   /** What the contact adds to the raw score: {@link contactPoints} of its orb and limit. */
   readonly points: number;

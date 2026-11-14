@@ -1211,7 +1211,7 @@
     "status": "extracted",
     "copyrighted": true,
     "provisional": true,
-    "used_by": [],
+    "used_by": ["src/astrology/rectification.ts"],
     "notes": "Title page confirmed by OCR. Passages used for rectification are on PDF pages 8, 15 and 26 (PDF page numbers; printed page numbers not confirmed). Supports the event-dating and directions-to-events principle; does not give the 1 degree Solar Arc orb or the closeness curve used in code."
   },
   {
@@ -1251,7 +1251,7 @@
     "status": "extracted",
     "copyrighted": true,
     "provisional": true,
-    "used_by": ["src/domain/chart-search-timing.ts"],
+    "used_by": ["src/astrology/rectification.ts", "src/domain/chart-search-timing.ts"],
     "notes": "Llewellyn Publications imprint on title page. Copyright year not found on the pages checked. The file name is misleading; the content is the Tebbs book. Text layer present."
   },
   {
@@ -1411,7 +1411,7 @@
     "status": "extracted",
     "copyrighted": true,
     "provisional": true,
-    "used_by": [],
+    "used_by": ["src/astrology/rectification.ts"],
     "notes": "Publisher Llewellyn Worldwide confirmed on a page-5 notice. No printed year found on the pages checked, so the record is undated and provisional. The file was made from an .mobi and is not a print copy."
   }
 ]
