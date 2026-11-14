@@ -4,7 +4,7 @@
  */
 /**
  * @module ChartTypes.messages
- * @purpose English/Dutch i18n strings naming each chart type (natal, draconic, harmonic, solar/lunar return) for the type selector.
+ * @purpose English/Dutch i18n strings naming each chart type (natal, draconic, harmonic, heliocentric, solar/lunar return, relocated) for the type selector.
  * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via `useMessages(chartTypesMessages)`; `nl` is typed as `typeof en`.
  * @exports chartTypesMessages
  */
@@ -16,6 +16,7 @@ const en = {
     natal: 'Natal',
     draconic: 'Draconic',
     harmonic: 'Harmonic',
+    heliocentric: 'Heliocentric',
     'solar-return': 'Solar return',
     'lunar-return': 'Lunar return',
     relocated: 'Relocated',
@@ -28,6 +29,7 @@ const nl: typeof en = {
     natal: 'Geboortehoroscoop',
     draconic: 'Draconisch',
     harmonic: 'Harmonisch',
+    heliocentric: 'Heliocentrisch',
     'solar-return': 'Zonneterugkeer',
     'lunar-return': 'Maanterugkeer',
     relocated: 'Verplaatst',

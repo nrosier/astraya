@@ -202,6 +202,14 @@ const BODY_GLYPHS: Readonly<Record<string, GlyphDefinition>> = {
     path('M40 14 L40 86 M40 14 L52 14 C62 14 68 20 68 29 C68 38 62 44 52 44 L40 44 M28 62 L52 62'),
   ]),
 
+  // Astraya's own simple drawing (#1407): the Earth as a circle quartered by a cross (⊕), the form astronomy and
+  // heliocentric astrology use; Kerykeion's classic theme has no Earth artwork to port.
+  earth: glyph('earth', [
+    path(
+      'M86 50 C86 69.88 69.88 86 50 86 C30.12 86 14 69.88 14 50 C14 30.12 30.12 14 50 14 C69.88 14 86 30.12 86 50 M50 14 L50 86 M14 50 L86 50',
+    ),
+  ]),
+
   ceres: glyph('ceres', [
     path(
       'M37.5 20.55 C42.56 15.51 50.15 14 56.75 16.73 C63.35 19.47 67.65 25.91 67.65 33.05 C67.65 42.79 59.74 50.7 50 50.7 L50 86 M32.35 68.35 L67.65 68.35',

@@ -54,6 +54,7 @@ const CompositeView = lazy(async () => ({ default: (await personScreens()).Compo
 const ConsultationView = lazy(async () => ({ default: (await personScreens()).ConsultationView }));
 const DraconicView = lazy(async () => ({ default: (await personScreens()).DraconicView }));
 const HarmonicView = lazy(async () => ({ default: (await personScreens()).HarmonicView }));
+const HeliocentricView = lazy(async () => ({ default: (await personScreens()).HeliocentricView }));
 const Overview = lazy(async () => ({ default: (await personScreens()).Overview }));
 const PeriodicTransitView = lazy(async () => ({ default: (await personScreens()).PeriodicTransitView }));
 const PersonForm = lazy(async () => ({ default: (await personScreens()).PersonForm }));
@@ -526,6 +527,8 @@ function renderChart(parsed: Extract<Route, { kind: 'chart' }>): React.JSX.Eleme
       return <DraconicView key={personId} personId={personId} view={view} compareType={compareType} />;
     case 'harmonic':
       return <HarmonicView key={personId} personId={personId} view={view} compareType={compareType} />;
+    case 'heliocentric':
+      return <HeliocentricView key={personId} personId={personId} view={view} compareType={compareType} />;
     case 'solar-return':
       return (
         <ReturnView key={personId} personId={personId} kind="solar-return" view={view} compareType={compareType} />
