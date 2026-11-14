@@ -12,6 +12,7 @@ Shared UI primitives for the #506 UI/UX overhaul (Phase 1, #508). Business logic
 - `NumberField.tsx` — Numeric input with the standard Decrease/Increase stepper via `Field`; reports the raw typed string, not a coerced number. Deps: `./Field`.
 - `DateField.tsx` — Native `<input type="date">` via `Field` — deliberately not a hand-built calendar grid. Deps: `./Field`.
 - `Select.tsx` — Styled native `<select>` via `Field` for 5-12 item choices. Deps: `./Field`.
+- `PillSelect.tsx` — Single-choice pill that opens a non-modal radio card (#1545); custom radios so arrows only move focus. Deps: `ui/use-exclusive-open`, `./Select`.
 - `Badge.tsx` — Small static label chip for a fact beside a heading (e.g. a placement's sign and house), with an optional colour tone from existing tokens. Deps: none.
 - `StatList.tsx` — Definition list of label/value stat tiles inside the existing global `dl` card surface (#826); no consumer yet. Deps: none.
 - `EmptyState.tsx` — Shared "nothing here" block for an empty list or panel: message prop plus optional follow-up children, on the existing `.empty` look. Deps: none.
