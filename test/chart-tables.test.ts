@@ -256,7 +256,7 @@ describe('aspectRows (#44)', () => {
     const aspect: Aspect = {
       bodyA: SUN,
       bodyB: MARS,
-      aspect: { key: 'square', name: 'Square', angle: 90, family: 'major' },
+      aspect: { key: 'square', name: 'Square', angle: 90, family: 'major', tone: 'hard' },
       separation: 91,
       orb: 1,
       allowedOrb: 8,
@@ -324,7 +324,7 @@ describe('crossAspectRows (#172)', () => {
     const aspect: Aspect = {
       bodyA: SUN,
       bodyB: MOON,
-      aspect: { key: 'trine', name: 'Trine', angle: 120, family: 'major' },
+      aspect: { key: 'trine', name: 'Trine', angle: 120, family: 'major', tone: 'soft' },
       separation: 119,
       orb: 1,
       allowedOrb: 8,
@@ -783,7 +783,7 @@ describe('chartWheelRing (#52)', () => {
     const aspect: Aspect = {
       bodyA: SUN,
       bodyB: MARS,
-      aspect: { key: 'square', name: 'Square', angle: 90, family: 'major' },
+      aspect: { key: 'square', name: 'Square', angle: 90, family: 'major', tone: 'hard' },
       separation: 91,
       orb: 1,
       allowedOrb: 8,
@@ -826,7 +826,7 @@ describe('chartWheelRing (#52)', () => {
     const major: Aspect = {
       bodyA: SUN,
       bodyB: MARS,
-      aspect: { key: 'square', name: 'Square', angle: 90, family: 'major' },
+      aspect: { key: 'square', name: 'Square', angle: 90, family: 'major', tone: 'hard' },
       separation: 91,
       orb: 1,
       allowedOrb: 8,
@@ -835,7 +835,7 @@ describe('chartWheelRing (#52)', () => {
     const minor: Aspect = {
       bodyA: SUN,
       bodyB: MOON,
-      aspect: { key: 'quincunx', name: 'Quincunx', angle: 150, family: 'minor' },
+      aspect: { key: 'quincunx', name: 'Quincunx', angle: 150, family: 'minor', tone: 'minor' },
       separation: 149,
       orb: 1,
       allowedOrb: 8,
@@ -857,7 +857,7 @@ describe('chartWheelRing (#52)', () => {
     const aspect: Aspect = {
       bodyA: SUN,
       bodyB: CHIRON,
-      aspect: { key: 'square', name: 'Square', angle: 90, family: 'major' },
+      aspect: { key: 'square', name: 'Square', angle: 90, family: 'major', tone: 'hard' },
       separation: 91,
       orb: 1,
       allowedOrb: 8,
@@ -889,7 +889,7 @@ describe('chartSheetInput', () => {
   const aspect: Aspect = {
     bodyA: SUN,
     bodyB: MARS,
-    aspect: { key: 'square', name: 'Square', angle: 90, family: 'major' },
+    aspect: { key: 'square', name: 'Square', angle: 90, family: 'major', tone: 'hard' },
     separation: 91,
     orb: 1,
     allowedOrb: 8,
@@ -944,7 +944,7 @@ describe('chartSheetInput', () => {
         {
           angle: 'asc',
           body: SUN,
-          aspect: { key: 'sextile', name: 'Sextile', angle: 60, family: 'major' },
+          aspect: { key: 'sextile', name: 'Sextile', angle: 60, family: 'major', tone: 'soft' },
           separation: 58.5,
           orb: 1.5,
           allowedOrb: 8,
@@ -1197,7 +1197,7 @@ describe('receptionRows (#548)', () => {
     const linkedAspect: Aspect = {
       bodyA: MARS,
       bodyB: MOON,
-      aspect: { key: 'opposition', name: 'Opposition', angle: 180, family: 'major' },
+      aspect: { key: 'opposition', name: 'Opposition', angle: 180, family: 'major', tone: 'hard' },
       separation: 120,
       orb: 10,
       allowedOrb: 8,

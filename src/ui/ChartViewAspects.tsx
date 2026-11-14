@@ -2,11 +2,11 @@
  * @module ChartViewAspects
  * @purpose Renders the Aspects chart view tables (aspects, antiscia, declinations, midpoints) and their columns.
  * @conventions Moved out of ChartView.tsx (#817); the aspects table shows Applying as a dot plus label and the family as muted text on screen only (#815), while `render` stays plain text for copy, CSV and the PDF; takes the chart data and message bundle as arguments and never imports ChartView. The fixed-stars table moved to ChartViewPlacements (#815).
- * @exports AspectState, AspectContactFilter, isContactFilterActive, EmptyFilterNote, filterAspectRowsByContactFilter, aspectColumns, declinationColumns, antisciaColumns, midpointTreeColumns, allMidpointsColumns, renderAspectsTable
+ * @exports AspectIcon, AspectState, AspectContactFilter, isContactFilterActive, EmptyFilterNote, filterAspectRowsByContactFilter, aspectColumns, declinationColumns, antisciaColumns, midpointTreeColumns, allMidpointsColumns, renderAspectsTable
  */
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { formatOrb } from './format.js';
-import { aspectHarmonicFamily } from '../astrology/aspects.js';
+import { aspectByKey, aspectHarmonicFamily, aspectTone, type AspectTone } from '../astrology/aspects.js';
 import {
   allMidpointsRows,
   antisciaRows,
@@ -35,6 +35,69 @@ import type { Locale } from '../interpretation/schema.js';
 function familyText(row: AspectRow): string {
   const family = aspectHarmonicFamily(row.aspectKey);
   return family === undefined ? '' : `H${String(family)}`;
+}
+
+/**
+ * The aspect marks (#1532), keyed by the `ASPECTS` keys. Each mark is drawn in a 24-unit box with `currentColor`
+ * strokes; its tone (`aspect-icon--<tone>`) comes from `aspectTone`, as the wheel's `data-tone` does.
+ */
+const ASPECT_ICONS: Readonly<Record<string, { readonly shapes: React.ReactNode }>> = {
+  conjunction: {
+    shapes: (
+      <>
+        <circle cx="12" cy="12" r="4" />
+        <line x1="12" y1="4" x2="12" y2="1" />
+      </>
+    ),
+  },
+  sextile: {
+    shapes: (
+      <>
+        <line x1="12" y1="3" x2="12" y2="21" />
+        <line x1="4.2" y1="7.5" x2="19.8" y2="16.5" />
+        <line x1="4.2" y1="16.5" x2="19.8" y2="7.5" />
+      </>
+    ),
+  },
+  square: { shapes: <rect x="6" y="6" width="12" height="12" /> },
+  trine: { shapes: <polygon points="12,5 19,18 5,18" /> },
+  opposition: {
+    shapes: (
+      <>
+        <circle cx="5" cy="12" r="3" />
+        <circle cx="19" cy="12" r="3" />
+        <line x1="8" y1="12" x2="16" y2="12" />
+      </>
+    ),
+  },
+  quincunx: {
+    shapes: (
+      <>
+        <line x1="4" y1="7" x2="20" y2="7" />
+        <line x1="12" y1="7" x2="6" y2="19" />
+        <line x1="12" y1="7" x2="18" y2="19" />
+      </>
+    ),
+  },
+};
+
+/** The aspect's mark before its name on screen (#1532); no mark for an aspect outside the six, and `aria-hidden` since the name is already in the cell. The tone comes from `aspectTone`. */
+export function AspectIcon({ aspectKey }: { readonly aspectKey: string }): React.JSX.Element | null {
+  const icon = ASPECT_ICONS[aspectKey];
+  if (icon === undefined) return null;
+  return (
+    <svg
+      className={`aspect-icon aspect-icon--${aspectTone(aspectKey)}`}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      aria-hidden="true"
+      focusable="false"
+    >
+      {icon.shapes}
+    </svg>
+  );
 }
 
 /** The dot-plus-label Applying/Separating marker (#815); the Consultation transit table reuses it. */
@@ -87,6 +150,13 @@ export function aspectColumns(
       labelHelp: { text: t.aspectTooltip },
       valueOf: (row) => row.aspect,
       render: (row) => aspectDisplayName(row.aspectKey, locale),
+      // Screen only: the mark sits before the name (#1532); copy, CSV and the PDF keep the plain name from `render`.
+      renderCell: (row) => (
+        <>
+          <AspectIcon aspectKey={row.aspectKey} />
+          {aspectDisplayName(row.aspectKey, locale)}
+        </>
+      ),
     },
     {
       key: 'bodyBName',
@@ -226,18 +296,37 @@ export function allMidpointsColumns(
   ];
 }
 
-/** The wheel's own contact filter (#1063, #1333): the aspect families, the orb caps and the preset's minor-natal switch. */
+/**
+ * The wheel's own contact filter (#1063, #1333): the aspect families, the orb caps, the preset's minor-natal switch and
+ * the instrument bar's Hard, Soft and Minor pills (#1532), so the Aspects table lists what the wheel draws.
+ */
 export interface AspectContactFilter {
   readonly families: ReadonlySet<AspectFamilyKey>;
   readonly orbCaps?: OrbCaps | undefined;
   readonly suppressMinorNatal?: boolean | undefined;
+  /** The tones the wheel draws; absent or all three means no tone filter. */
+  readonly tones?: ReadonlySet<AspectTone> | undefined;
+}
+
+/** True when a pill is off, so some tone is hidden from the wheel (#1532). */
+function tonesFilter(filter: AspectContactFilter): boolean {
+  return filter.tones !== undefined && filter.tones.size < 3;
+}
+
+/** A key outside the catalogue has no tone, so the pills never hide it. */
+function toneShown(aspectKey: string, tones: ReadonlySet<AspectTone> | undefined): boolean {
+  const tone = aspectByKey(aspectKey)?.tone;
+  return tones === undefined || tone === undefined || tones.has(tone);
 }
 
 /** True when the families, orb caps or the preset's major-only switch can remove contacts. */
 export function isContactFilterActive(filter: AspectContactFilter | undefined): boolean {
   return (
     filter !== undefined &&
-    (filter.families.size > 0 || filter.orbCaps !== undefined || filter.suppressMinorNatal === true)
+    (filter.families.size > 0 ||
+      filter.orbCaps !== undefined ||
+      filter.suppressMinorNatal === true ||
+      tonesFilter(filter))
   );
 }
 
@@ -259,7 +348,8 @@ export function filterAspectRowsByContactFilter(
         filter.families,
         filter.orbCaps,
       ) &&
-      (filter.suppressMinorNatal !== true || isMajorAspect(row.aspectKey)),
+      (filter.suppressMinorNatal !== true || isMajorAspect(row.aspectKey)) &&
+      toneShown(row.aspectKey, filter.tones),
   );
 }
 

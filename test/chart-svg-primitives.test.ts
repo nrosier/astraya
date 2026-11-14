@@ -9,7 +9,19 @@
  * as a class name or a `<title>` attribute.
  */
 import { describe, expect, it } from 'vitest';
-import { escapeXml, text } from '../src/chart/svg-primitives.js';
+import { escapeXml, rect, text } from '../src/chart/svg-primitives.js';
+
+describe('rect', () => {
+  it('writes the same markup as before when no attributes are passed', () => {
+    expect(rect(1, 2.5, 10, 20, 'cell')).toBe('<rect x="1.00" y="2.50" width="10.00" height="20.00" class="cell" />');
+  });
+
+  it('serialises an attributes object as extra attributes after class', () => {
+    expect(rect(1, 2, 10, 20, 'cell', { 'data-tone': 'hard' })).toBe(
+      '<rect x="1.00" y="2.00" width="10.00" height="20.00" class="cell" data-tone="hard" />',
+    );
+  });
+});
 
 describe('escapeXml', () => {
   it('escapes the markup characters that end a text node', () => {

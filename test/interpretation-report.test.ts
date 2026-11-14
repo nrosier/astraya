@@ -105,6 +105,7 @@ function makeAspect(bodyAKey: string, bodyBKey: string, angle: number, orb: numb
       name: 'x',
       angle,
       family: 'major',
+      tone: angle === 120 ? 'soft' : 'hard',
     },
     separation: angle + orb,
     orb,

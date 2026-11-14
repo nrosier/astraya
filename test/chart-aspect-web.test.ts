@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Aspect } from '../src/astrology/aspects.js';
-import { aspectByKey } from '../src/astrology/aspects.js';
+import { aspectByKey, aspectTone } from '../src/astrology/aspects.js';
 import { pointOnCircle, wheelAngle } from '../src/chart/wheel.js';
 import { filterAspectsForDisplay, renderAspectWebSvg, renderCrossRingAspectWebSvg } from '../src/chart/aspect-web.js';
 
@@ -113,6 +113,18 @@ describe('renderAspectWebSvg (#42)', () => {
     const clockwise = renderAspectWebSvg(aspects, longitudeOf, 0, 300, 300, 200, { sweep: 'clockwise' });
     expect(ariesUp).not.toBe(defaultOrientation);
     expect(clockwise).not.toBe(defaultOrientation);
+  });
+});
+
+describe('aspect chords carry data-tone from aspectTone (#1532)', () => {
+  it('marks a chord with the tone of its aspect key', () => {
+    const longitudes = new Map<number, number>([
+      [1, 10],
+      [2, 100],
+    ]);
+    const longitudeOf = (body: number): number => longitudes.get(body) ?? 0;
+    const svg = renderAspectWebSvg([aspect('square', 1, 2, 0.5, true)], longitudeOf, 0, 300, 300, 200);
+    expect(svg).toContain(`data-tone="${aspectTone('square')}"`);
   });
 });
 

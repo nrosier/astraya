@@ -5,7 +5,7 @@ Pure astrological calculation (no DOM/React): bodies, aspects, houses, dignities
 - `almuten.ts` — Ibn Ezra's Almuten Figuris (essential-dignity scoring). Deps: `bodies`, `bounds`, `decans`, `rulership`, `sect`, `triplicity`.
 - `antiscia.ts` — Antiscia/contra-antiscia ("hidden conjunctions") reflection + detection. Deps: `aspects`.
 - `arabic-parts.ts` — Arabic/Hermetic lots (Part of Fortune/Spirit). Deps: `sect`.
-- `aspects.ts` — Shared aspect-finding engine (Ptolemaic/minor, orbs, applying/separating). Deps: `bodies`.
+- `aspects.ts` — Shared aspect-finding engine (Ptolemaic/minor, orbs, applying/separating) and the per-aspect tone table (hard/soft/minor). Deps: `bodies`.
 - `aspect-patterns.ts` — Stellium, Grand Trine, T-Square, Grand Cross, Yod, Cradle, Mystic Rectangle from a chart's own aspects, per Astrolog 8.00 (#640); Kite from the registry (#741). Deps: `./aspects`, `./kite-registry`.
 - `astrocartography.ts` — ACG + Local Space line calculation (MC/IC/AC/DC + great circles). Deps: `fixed-stars`.
 - `ayanamsas.ts` — UI's sidereal-mode picker list. Deps: `ephemeris/generated-constants`.

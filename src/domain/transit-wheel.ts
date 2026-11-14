@@ -33,7 +33,7 @@ export function transitWheelInput(
     aspects: filterAspectsForDisplay(ring.aspects ?? [], { visibleAspectKeys: filter.aspects }),
   });
   return {
-    natalRing: follow(chartWheelRing(data.natal, labels.natal)),
-    transitRing: follow(chartWheelRing(data.transit, labels.transit)),
+    natalRing: { ...follow(chartWheelRing(data.natal, labels.natal)), role: 'natal' },
+    transitRing: { ...follow(chartWheelRing(data.transit, labels.transit)), role: 'transit' },
   };
 }

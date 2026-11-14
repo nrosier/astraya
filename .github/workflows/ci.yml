@@ -128,7 +128,7 @@ jobs:
     # `playwright install --with-deps` stalled for over 8 minutes on one shard of PR #1245. The tag must match the
     # @playwright/test version in package-lock.json (Playwright says so, and fails, when the browser is missing).
     container:
-      image: mcr.microsoft.com/playwright:v1.65.0-noble
+      image: mcr.microsoft.com/playwright:v1.65.1-noble
       options: --ipc=host
     strategy:
       fail-fast: false
