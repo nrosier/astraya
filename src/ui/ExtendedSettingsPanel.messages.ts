@@ -199,6 +199,10 @@ const en = {
     'lilly-1647-first-v1': 'Lilly (1647), first column',
     'lilly-1647-second-v1': 'Lilly (1647), second column',
   },
+  citedOrbPresetSummaries: {
+    'lilly-1647-first-v1': 'Classical moiety-of-orb rules per planet (Christian Astrology, 1647).',
+    'lilly-1647-second-v1': 'Lilly’s second set of per-planet moieties (Christian Astrology, 1647).',
+  },
   citedOrbPresetNotes: {
     'lilly-1647-first-v1':
       'William Lilly’s own orbs per planet, Christian Astrology (1647), Book I, p. 107: Saturn 10°, Jupiter 12°, Mars 7°30′, Sun 17°, Venus 8°, Mercury 7°, Moon 12°30′. Two planets are in aspect within half of each orb added together. Uranus, Neptune and Pluto have no orb of his, so they use the standard tiers. For the Ascendant, each planet’s contact uses that planet’s own half-orb (Lilly, Book II, p. 208: “within the moyity of his owne Orbs”). Astraya extends the same rule to the Midheaven, Vertex, Part of Fortune and Part of Spirit; that extension is not Lilly’s. A body without a half-orb uses the standard tiers for these points.',
@@ -502,6 +506,10 @@ const nl: typeof en = {
   citedOrbPresetOptions: {
     'lilly-1647-first-v1': 'Lilly (1647), eerste kolom',
     'lilly-1647-second-v1': 'Lilly (1647), tweede kolom',
+  },
+  citedOrbPresetSummaries: {
+    'lilly-1647-first-v1': 'Klassieke halve-orbisregels per planeet (Christian Astrology, 1647).',
+    'lilly-1647-second-v1': 'Lilly’s tweede set halve orbissen per planeet (Christian Astrology, 1647).',
   },
   citedOrbPresetNotes: {
     'lilly-1647-first-v1':
