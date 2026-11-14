@@ -900,6 +900,10 @@
       .fill-surface {
         fill: var(--surface);
       }
+      .transit-band {
+        fill: color-mix(in oklab, var(--accent) 18%, transparent);
+        stroke: none;
+      }
       .st-line {
         stroke: var(--line);
       }
@@ -1661,6 +1665,11 @@
         `<line x1="${f(x1)}" y1="${f(y1)}" x2="${f(x2)}" y2="${f(y2)}" class="${cls}" stroke-width="${w}" ${extra}/>`;
       const circle = (r, fillCls, strokeCls, w) =>
         `<circle cx="${CENTER}" cy="${CENTER}" r="${f(r)}" class="${fillCls} ${strokeCls}" stroke-width="${w}"/>`;
+      const annulus = (ro, ri) => {
+        const ring = (r) =>
+          `M${f(CENTER - r)},${f(CENTER)}a${f(r)},${f(r)} 0 1,0 ${f(2 * r)},0a${f(r)},${f(r)} 0 1,0 ${f(-2 * r)},0Z`;
+        return ring(ro) + ring(ri);
+      };
       const useGlyph = (pt, size, id, cls) =>
         `<use href="#${id}" x="${f(pt.x - size / 2)}" y="${f(pt.y - size / 2)}" width="${size}" height="${size}" class="${cls}"/>`;
       const txt = (pt, size, cls, str) =>
@@ -1691,6 +1700,8 @@
         s += circle(RADII.zodiacInner, 'fill-bg', 'st-line', 1);
         s += circle(RADII.vernierInner, 'fill-surface', 'st-line', 1);
         if (two) s += circle(RADII.natalOuter, 'fill-surface', 'st-line', 1);
+        if (two)
+          s += `<path d="${annulus(RADII.vernierInner, RADII.natalOuter)}" fill-rule="evenodd" class="transit-band"/>`;
         s += circle(RADII.houseCollar, 'fill-surface', 'st-line', 0.75);
         s += circle(RADII.core, 'fill-bg', 'st-line', 1);
         for (let i = 0; i < 12; i++) {

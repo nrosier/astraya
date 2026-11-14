@@ -244,3 +244,38 @@ describe('hard-coded palette copies match app.css (issue 1532)', () => {
     expect(lightTokens()).toContain(`--glow-b: rgb(${rgb(light('solar'))} /`);
   });
 });
+
+describe('transit ring fill (issue 1532, owner decision 2026-11-14: accent at 18%)', () => {
+  const dark = (name: string): string => {
+    const start = css.indexOf(':root {');
+    const open = css.indexOf('{', start);
+    const m = new RegExp(`--${name}:\\s*(#[0-9a-fA-F]{6});`).exec(css.slice(open + 1, css.indexOf('}', open)));
+    if (m?.[1] === undefined) throw new Error(`--${name} missing in dark`);
+    return m[1];
+  };
+
+  it('draws one filled annulus for the transit band, and none without a transit ring', () => {
+    const doc = parse(renderMultiWheelSvg([natal(pair(10, 100)), transit(pair(20, 200))], [], { size: 800 }));
+    const bands = doc.querySelectorAll('path.chart-ring-band-transit');
+    expect(bands).toHaveLength(1);
+    expect(bands[0]?.getAttribute('fill-rule')).toBe('evenodd');
+    const plain = parse(renderMultiWheelSvg([natal(pair(10, 100))], [], { size: 800 }));
+    expect(plain.querySelectorAll('path.chart-ring-band-transit')).toHaveLength(0);
+  });
+
+  it('fills with --accent at 18%, a token that resolves in both themes', () => {
+    expect(declarationsOf(css, '.chart-ring-band-transit')).toContain(
+      'fill: color-mix(in oklab, var(--accent) 18%, transparent)',
+    );
+    expect(dark('accent')).toBe('#8b9cff');
+    expect(light('accent')).toBe('#3b49df');
+  });
+
+  it('carries the light accent at 18% in the standalone export', () => {
+    const style = standaloneSvg('<svg></svg>');
+    const start = style.indexOf('.chart-ring-band-transit');
+    const rule = style.slice(style.indexOf('{', start), style.indexOf('}', start));
+    expect(rule).toContain(`fill: ${light('accent')}`);
+    expect(rule).toContain('fill-opacity: 0.18');
+  });
+});

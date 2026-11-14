@@ -820,7 +820,11 @@ export function ChartDataView({
           contacts?: readonly Aspect[],
         ): void => {
           overlays.set(source, {
-            ring: chartWheelRing(data, label, pointVisibility),
+            // The transit ring carries its role so the wheel fills its band and tints its glyphs (#1532).
+            ring: {
+              ...chartWheelRing(data, label, pointVisibility),
+              ...(source === 'transit' ? { role: 'transit' as const } : {}),
+            },
             data,
             ...(contacts === undefined ? {} : { contacts }),
             provenance: snapshot,

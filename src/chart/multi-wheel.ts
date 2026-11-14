@@ -421,6 +421,16 @@ function renderBaseHousesSvg(
   return parts.join('');
 }
 
+/** The filled annulus of one ring's band (#1532: the transit band's fill), drawn under that ring's cusps and glyphs. */
+function renderRingBandFillSvg(geometry: SheetGeometry, band: RingBand, className: string): string {
+  const { cx, cy } = geometry;
+  const outer = band.outerRadius;
+  const inner = band.innerRadius;
+  const ring = (r: number): string =>
+    `M${fmt(cx - r)},${fmt(cy)}a${fmt(r)},${fmt(r)} 0 1,0 ${fmt(2 * r)},0a${fmt(r)},${fmt(r)} 0 1,0 ${fmt(-2 * r)},0Z`;
+  return `<path d="${ring(outer)}${ring(inner)}" fill-rule="evenodd" class="${className}" />`;
+}
+
 /** A non-base ring's own cusps, confined to its band so they don't collide with the base chart's spokes. */
 function renderRingCuspsSvg(
   houses: HousePositions,
@@ -596,6 +606,7 @@ export function renderMultiWheelSvg(
         : ring.role === 'natal'
           ? DEFAULT_MIN_SEPARATION_NATAL_DEG
           : DEFAULT_MIN_SEPARATION_TRANSIT_DEG);
+    if (ring.role === 'transit') parts.push(renderRingBandFillSvg(geometry, band, 'chart-ring-band-transit'));
     if (index > 0) {
       parts.push(
         renderRingCuspsSvg(ring.houses, ascendant, geometry, band, index, houseWedgeStyle, orientationOptions),
