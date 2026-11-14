@@ -15,7 +15,7 @@ import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { build } from '../server/index.ts';
 import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
-import { choosePill, gotoAndSettle, openNatalChart, setLanguage } from './support.ts';
+import { choosePill, gotoAndSettle, openChart, openNatalChart, setLanguage } from './support.ts';
 
 const OUT = process.env.VISUAL_REVIEW_OUT;
 const SIZES = [
@@ -53,7 +53,7 @@ async function shoot(
 }
 
 test('capture the screens of the visual review', async ({ browser }) => {
-  test.setTimeout(900_000);
+  test.setTimeout(1_800_000);
   mkdirSync(OUT ?? '', { recursive: true });
   process.env.LOG_LEVEL = 'silent';
   const app = await build({ dbPath: join(mkdtempSync(join(tmpdir(), 'visual-review-')), 'astraya.db') });
@@ -259,6 +259,70 @@ test('capture the screens of the visual review', async ({ browser }) => {
   await page.getByRole('heading', { level: 1 }).first().waitFor();
   await page.waitForTimeout(800);
   await shoot(page, '25-rectification');
+
+  // #1407: the Heliocentric chart type (no houses, the Earth for the Sun).
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  await openChart(page, 'Heliocentric');
+  await page.locator('div.chart-wheel').waitFor({ timeout: 60_000 });
+  await shoot(page, '51-charts-heliocentric');
+
+  // #1407: Extended settings with a user-defined ayanamsa (Sidereal, then User-defined). A resize closes the drawer and
+  // drops its draft, so each shot reopens it and chooses again.
+  await openNatalChart(page);
+  await page.locator('div.chart-wheel').waitFor();
+  const userAyanamsa = page.getByRole('group', { name: 'User-defined ayanamsa', exact: true });
+  const reopenUserAyanamsa = async (): Promise<void> => {
+    if (await userAyanamsa.isVisible()) return;
+    const actions = page.getByRole('button', { name: 'Chart actions', exact: true });
+    if (await actions.isVisible()) await actions.click();
+    await page.locator('button.extended-settings-trigger:visible').first().click();
+    const card = page.locator('dialog.settings-card');
+    await card.waitFor({ state: 'visible' });
+    await card.getByRole('radiogroup', { name: 'Zodiac', exact: true }).getByText('Sidereal', { exact: true }).click();
+    await card.getByLabel('Ayanamsa', { exact: true }).selectOption({ label: 'User-defined' });
+    await userAyanamsa.waitFor({ state: 'visible' });
+    await userAyanamsa.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(400);
+  };
+  await reopenUserAyanamsa();
+  await shoot(page, '50-extended-settings-user-ayanamsa', reopenUserAyanamsa);
+  await page.keyboard.press('Escape');
+  await page.locator('dialog.settings-card').waitFor({ state: 'hidden' });
+
+  // #1407: Progressions with the contacts measured to the transits, and Solar Arc directed in declination.
+  await page.getByRole('link', { name: 'Progressions & Directions', exact: true }).first().click();
+  await page.getByRole('tab', { name: 'Progressions', exact: true }).click();
+  await page.getByLabel('Contacts to', { exact: true }).selectOption('transit');
+  await page.getByRole('table', { name: 'Progressed positions' }).waitFor({ timeout: 60_000 });
+  await shoot(page, '52-progressions-contacts-transit');
+  await page.getByRole('tab', { name: 'Solar Arc', exact: true }).click();
+  await page.getByLabel('Directed in', { exact: true }).selectOption('declination');
+  await page.getByRole('table', { name: 'Directed declinations' }).waitFor({ timeout: 60_000 });
+  await shoot(page, '53-solar-arc-declination');
+
+  // #1401, #1356, #1545: the timing timeline (orb windows, pass numbers, technique tags on the bars).
+  await page.getByRole('tab', { name: 'Timing timeline', exact: true }).click();
+  await page.locator('.gantt').waitFor({ timeout: 60_000 });
+  await page.waitForTimeout(800);
+  await shoot(page, '54-timing-timeline');
+
+  // #1439, #1506: the Life Events card on the Birth record, then its management drawer (it closes on resize).
+  await page.getByRole('link', { name: 'Birth record', exact: true }).first().click();
+  await page.getByRole('heading', { name: /Identity and birth timestamp/ }).waitFor();
+  const manage = page.getByRole('button', { name: 'Manage Life Events', exact: true });
+  await manage.scrollIntoViewIfNeeded();
+  await shoot(page, '55-life-events-card');
+  const drawerHeading = page.getByRole('heading', { name: /^Life events, / });
+  const reopenLifeEvents = async (): Promise<void> => {
+    if (await drawerHeading.isVisible()) return;
+    await manage.scrollIntoViewIfNeeded();
+    await manage.click();
+    await drawerHeading.waitFor({ state: 'visible' });
+    await page.waitForTimeout(400);
+  };
+  await reopenLifeEvents();
+  await shoot(page, '56-life-events-drawer', reopenLifeEvents);
+  await page.keyboard.press('Escape');
 
   // #1508: the same phone sheet in Dutch, last so the language switch cannot change the English shots above.
   await setLanguage(page, 'NL');
