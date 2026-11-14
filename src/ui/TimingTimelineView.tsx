@@ -46,6 +46,7 @@ import type { TableColumn } from './table-sort.js';
 import { TimingTimelineGantt } from './TimingTimelineGantt.js';
 import { ganttRows, techniqueColorVar } from './timeline-gantt.js';
 import { useExclusiveOpen } from './use-exclusive-open.js';
+import { useLinkedScroll, type SelectionSource } from './use-linked-scroll.js';
 import { Badge } from './primitives/Badge.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
@@ -125,7 +126,7 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
   const chartRef = useRef<HTMLElement>(null);
   const tableRef = useRef<HTMLElement>(null);
   // Where the selection came from: a bar brings its row into view, a row brings its bar.
-  const selectionFrom = useRef<'chart' | 'table'>('chart');
+  const selectionFrom = useRef<SelectionSource>('chart');
   const target = useMemo(() => {
     const [year, month, day] = asOf.split('-').map(Number);
     return year === undefined || month === undefined || day === undefined ? undefined : { year, month, day };
@@ -264,20 +265,8 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
     setSelectedKey((key) => (key !== undefined && present.has(key) ? key : undefined));
     setHoveredKey((key) => (key !== undefined && present.has(key) ? key : undefined));
   }, [rows]);
-  // Selecting brings the other side's element into view: `nearest`, so nothing moves when it is already visible. The whole
-  // date range is always drawn, so a row's bar is inside the axis; only the page may need to scroll to it.
-  useEffect(() => {
-    if (selectedKey === undefined) return;
-    const from = selectionFrom.current;
-    const root = from === 'chart' ? tableRef.current : chartRef.current;
-    const attribute = from === 'chart' ? 'data-row-key' : 'data-mark-key';
-    const target = Array.from(root?.querySelectorAll(`[${attribute}]`) ?? []).find(
-      (candidate) => candidate.getAttribute(attribute) === selectedKey,
-    );
-    const reduceMotion =
-      typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    target?.scrollIntoView?.({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest' });
-  }, [selectedKey]);
+  // Selecting brings the other side's element into view (#1442).
+  useLinkedScroll(selectedKey, selectionFrom, chartRef, tableRef);
   useCsvExports(
     person === undefined || load.kind !== 'ready'
       ? undefined
