@@ -1954,11 +1954,11 @@
       function renderTabs() {
         document.getElementById('tabs').innerHTML = TABS.map(
           (t) =>
-            `<a class="chart-view-link" href="#" data-tab="${t}"${t === state.tab ? ' aria-current="page"' : ''}>${t.replace('&', '&amp;')}</a>`,
+            `<a class="chart-view-link" href="#" data-tab="${t}"${t === state.tab ? ' aria-current="page"' : ''}>${t.replace(/&/g, '&amp;')}</a>`,
         ).join('');
         const sel = document.getElementById('f-view');
         sel.innerHTML = TABS.map(
-          (t) => `<option${t === state.tab ? ' selected' : ''}>${t.replace('&', '&amp;')}</option>`,
+          (t) => `<option${t === state.tab ? ' selected' : ''}>${t.replace(/&/g, '&amp;')}</option>`,
         ).join('');
         const pane =
           state.tab === 'Wheel'
