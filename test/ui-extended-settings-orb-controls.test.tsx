@@ -169,3 +169,16 @@ describe('the minor aspects selector', () => {
     expect(applied.enabledMinorAspects).toEqual(DEFAULT_EXTENDED_SETTINGS.enabledMinorAspects);
   });
 });
+
+describe('the customised count on Orbs & aspects', () => {
+  it('shows the count on the tab when a minor aspect is changed, and nothing when none is', async () => {
+    const plain = await mount(DEFAULT_EXTENDED_SETTINGS);
+    openOrbsTab(plain);
+    expect(plain.textContent).not.toContain('customised');
+    unmount();
+
+    const changed = await mount({ ...DEFAULT_EXTENDED_SETTINGS, enabledMinorAspects: ['quincunx'] });
+    openOrbsTab(changed);
+    expect(changed.querySelector('.settings-card-customised')?.textContent).toBe('1 customised');
+  });
+});

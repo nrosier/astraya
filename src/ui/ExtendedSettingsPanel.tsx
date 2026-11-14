@@ -100,7 +100,7 @@ import type { TableColumn } from './table-sort.js';
 import { RulershipSetting } from './RulershipSetting.js';
 import { SymbolSetting } from './SymbolSetting.js';
 import { useAdvancedGroupOpen } from './advanced-groups-setting.js';
-import { customisedCount, ORB_SCALE_SEGMENTS, type AdvancedTab } from './settings-groups.js';
+import { customisedCount, ORB_SCALE_SEGMENTS, type CountTab } from './settings-groups.js';
 import { useGlyphVariants, type GlyphLook } from './glyph-variant-setting.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { VARIANT_BODIES } from '../chart/glyph-variants.js';
@@ -504,7 +504,7 @@ export function ExtendedSettingsPanel({
   // differ from the active profile's baseline. Nothing here touches the draft, so Apply keeps every hidden value.
   const [profileAdvancedOpen, setProfileAdvancedOpen] = useAdvancedGroupOpen('profile');
   const [specialAdvancedOpen, setSpecialAdvancedOpen] = useAdvancedGroupOpen('special');
-  const advancedSummary = (tab: AdvancedTab, extra = 0): string | undefined => {
+  const advancedSummary = (tab: CountTab, extra = 0): string | undefined => {
     const count = customisedCount(tab, effective, extra);
     return count === 0 ? undefined : t.advancedCustomised(String(count));
   };
@@ -1058,6 +1058,9 @@ export function ExtendedSettingsPanel({
               <fieldset className="field-group settings-card-group">
                 <legend>{t.aspectsLegend}</legend>
                 <p className="hint settings-card-tag">{t.appliesOnApply}</p>
+                {advancedSummary('orbs') !== undefined && (
+                  <p className="hint settings-card-customised">{advancedSummary('orbs')}</p>
+                )}
                 <div className="settings-card-block">
                   <label>
                     {t.scaleLabel}
