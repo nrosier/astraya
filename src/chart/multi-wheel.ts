@@ -79,6 +79,11 @@ const ANGULAR_HOUSES: readonly number[] = [1, 4, 7, 10];
 export interface WheelRingInput {
   /** Shown in the corner legend, e.g. "Natal" or "Solar return 2026". */
   readonly label: string;
+  /**
+   * The ring's part in a bi-wheel (#1532). `natal` spaces its glyphs 6 degrees apart and `transit` 7, and
+   * a transit ring's glyph groups carry `chart-glyph-transit`. Omitted, the count-based default applies.
+   */
+  readonly role?: 'natal' | 'transit';
   readonly houses: HousePositions;
   readonly bodies: readonly {
     readonly body: BodyId;
@@ -138,6 +143,9 @@ const DEFAULT_SIGN_WEDGE_STYLE: SignWedgeStyle = 'default';
 /** A single ring's radial stack (degree, sign, minutes) needs a little more room per body than a bare glyph. */
 const DEFAULT_MIN_SEPARATION_SINGLE_DEG = 7;
 const DEFAULT_MIN_SEPARATION_STACKED_DEG = 6;
+/** Spacing for rings with a declared role (#1532): natal glyphs 6 degrees apart, transit glyphs 7. */
+const DEFAULT_MIN_SEPARATION_NATAL_DEG = 6;
+const DEFAULT_MIN_SEPARATION_TRANSIT_DEG = 7;
 /** Degree step the rainbow wedge's arc edges are approximated with (a straight-edged polygon, per this module's `polygon` primitive). */
 const WEDGE_ARC_STEP_DEG = 3;
 /** Average advance width of a digit/label character, in ems — a pure renderer has no text metrics. */
@@ -556,9 +564,6 @@ export function renderMultiWheelSvg(
   const size = options?.size ?? DEFAULT_SIZE;
   const houseWedgeStyle = options?.houseWedgeStyle ?? DEFAULT_HOUSE_WEDGE_STYLE;
   const signWedgeStyle = options?.signWedgeStyle ?? DEFAULT_SIGN_WEDGE_STYLE;
-  const minSeparationDeg =
-    options?.minSeparationDeg ??
-    (rings.length === 1 ? DEFAULT_MIN_SEPARATION_SINGLE_DEG : DEFAULT_MIN_SEPARATION_STACKED_DEG);
   const bare = options?.bare ?? false;
   const orientationOptions: WheelOrientationOptions = {
     ...(options?.orientation !== undefined ? { orientation: options.orientation } : {}),
@@ -582,6 +587,15 @@ export function renderMultiWheelSvg(
   rings.forEach((ring, index) => {
     const band = bands[index];
     if (band === undefined) throw new Error('unreachable: resolveRingBands returns one band per ring');
+    const minSeparationDeg =
+      options?.minSeparationDeg ??
+      (ring.role === undefined
+        ? rings.length === 1
+          ? DEFAULT_MIN_SEPARATION_SINGLE_DEG
+          : DEFAULT_MIN_SEPARATION_STACKED_DEG
+        : ring.role === 'natal'
+          ? DEFAULT_MIN_SEPARATION_NATAL_DEG
+          : DEFAULT_MIN_SEPARATION_TRANSIT_DEG);
     if (index > 0) {
       parts.push(
         renderRingCuspsSvg(ring.houses, ascendant, geometry, band, index, houseWedgeStyle, orientationOptions),
@@ -613,17 +627,16 @@ export function renderMultiWheelSvg(
         ),
       );
     }
-    parts.push(
-      renderGlyphRingSvg(glyphInputs, ascendant, cx, cy, band.glyphRadius, band.trueRadius, {
-        ...orientationOptions,
-        minSeparationDeg,
-        glyphSize: geometry.bodyGlyphSize,
-        leaderEndRadius: Math.min(band.glyphRadius + geometry.bodyGlyphSize / 2, band.trueRadius),
-        retrogradeFontSize: geometry.retrogradeFontSize,
-        ring: index,
-        ...(mutedKeys !== undefined ? { mutedKeys } : {}),
-      }),
-    );
+    const glyphRing = renderGlyphRingSvg(glyphInputs, ascendant, cx, cy, band.glyphRadius, band.trueRadius, {
+      ...orientationOptions,
+      minSeparationDeg,
+      glyphSize: geometry.bodyGlyphSize,
+      leaderEndRadius: Math.min(band.glyphRadius + geometry.bodyGlyphSize / 2, band.trueRadius),
+      retrogradeFontSize: geometry.retrogradeFontSize,
+      ring: index,
+      ...(mutedKeys !== undefined ? { mutedKeys } : {}),
+    });
+    parts.push(ring.role === 'transit' ? `<g class="chart-glyph-transit">${glyphRing}</g>` : glyphRing);
     if (ring.aspects !== undefined && ring.aspects.length > 0) {
       const longitudeByBody = new Map(ring.bodies.map((b) => [b.body, b.longitude]));
       const longitudeOf = (body: BodyId): Degrees => {

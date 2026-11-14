@@ -4,6 +4,35 @@
  * @conventions Co-located i18n file exporting `{ en, nl }`; `nl` is typed as `typeof en`.
  * @exports aspectFamilyControlsMessages
  */
+import { aspectByKey } from '../astrology/aspects.js';
+import { ASPECT_FAMILIES, type AspectFamilyKey } from './aspect-family-filter.js';
+
+/** The `ASPECT_FAMILIES` keys of one group, so the group label names what the filter holds (#1532). */
+function groupKeys(key: AspectFamilyKey): readonly string[] {
+  return ASPECT_FAMILIES.find((family) => family.key === key)?.aspectKeys ?? [];
+}
+
+/** Dutch names of the aspects, keyed by `ASPECTS` key. */
+const dutchNames: Readonly<Record<string, string>> = {
+  conjunction: 'conjunctie',
+  sextile: 'sextiel',
+  square: 'kwadraat',
+  trine: 'driehoek',
+  opposition: 'oppositie',
+  semisquare: 'halfkwadraat',
+  sesquiquadrate: 'anderhalfkwadraat',
+  quincunx: 'quincunx',
+  semisextile: 'halfsextiel',
+  quintile: 'quintiel',
+  biquintile: 'biquintiel',
+  decile: 'deciel',
+  septile: 'septiel',
+  novile: 'noniel',
+};
+
+const englishName = (key: string): string => aspectByKey(key)?.name.toLowerCase() ?? key;
+const dutchName = (key: string): string => dutchNames[key] ?? key;
+
 const en = {
   familyLabel: 'Aspects shown',
   allAspects: 'All aspects',
@@ -17,10 +46,10 @@ const en = {
     dynamicSynastry: 'Dynamic synastry: major and nodal and angular, orb 6',
   },
   families: {
-    major: 'Major: conjunction, sextile, square, trine, opposition',
-    hardMinor: 'Hard minor: semisquare, sesquiquadrate, quincunx, semisextile',
-    softMinor: 'Soft minor: quintile, biquintile',
-    higherHarmonic: 'Higher harmonic: decile, septile, novile',
+    major: `Major: ${groupKeys('major').map(englishName).join(', ')}`,
+    hardMinor: `Hard minor: ${groupKeys('hardMinor').map(englishName).join(', ')}`,
+    softMinor: `Soft minor: ${groupKeys('softMinor').map(englishName).join(', ')}`,
+    higherHarmonic: `Higher harmonic: ${groupKeys('higherHarmonic').map(englishName).join(', ')}`,
     nodalAngular: 'Nodal and angular: contacts to the nodes, angles, Vertex and Fortune',
   },
 };
@@ -38,10 +67,10 @@ const nl: typeof en = {
     dynamicSynastry: 'Dynamische synastrie: hoofdaspecten en knopen en hoeken, orb 6',
   },
   families: {
-    major: 'Hoofdaspecten: conjunctie, sextiel, kwadraat, driehoek, oppositie',
-    hardMinor: 'Harde nevenaspecten: halfkwadraat, anderhalfkwadraat, quincunx, halfsextiel',
-    softMinor: 'Zachte nevenaspecten: quintiel, biquintiel',
-    higherHarmonic: 'Hogere harmonieken: deciel, septiel, noniel',
+    major: `Hoofdaspecten: ${groupKeys('major').map(dutchName).join(', ')}`,
+    hardMinor: `Harde nevenaspecten: ${groupKeys('hardMinor').map(dutchName).join(', ')}`,
+    softMinor: `Zachte nevenaspecten: ${groupKeys('softMinor').map(dutchName).join(', ')}`,
+    higherHarmonic: `Hogere harmonieken: ${groupKeys('higherHarmonic').map(dutchName).join(', ')}`,
     nodalAngular: 'Knopen en hoeken: contacten met de knopen, hoeken, Vertex en Fortuin',
   },
 };

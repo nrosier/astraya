@@ -78,7 +78,7 @@ const FIXTURE_CHART: ChartData = {
     {
       bodyA: SUN,
       bodyB: MOON,
-      aspect: { key: 'trine', name: 'Trine', angle: 120, family: 'major' },
+      aspect: { key: 'trine', name: 'Trine', angle: 120, family: 'major', tone: 'soft' },
       separation: 119,
       orb: 1,
       allowedOrb: 8,

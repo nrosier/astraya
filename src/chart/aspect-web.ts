@@ -20,11 +20,11 @@
 /**
  * @module chart/aspect-web
  * @purpose Renders computed aspects as chords across the wheel's inner circle, including a cross-ring variant for multi-ring wheels.
- * @conventions One `<line>` per `Aspect` at a fixed radius (the aspect circle, not wherever glyph collision-spreading moved a body); styling (aspect key, applying/separating, tight-orb) is carried only as CSS classes, never inline colour; each chord is wrapped in a `<g>` with a wide invisible hit line for clickability and `data-aspect-*`/`data-ring-*` attributes for click-to-isolate.
+ * @conventions One `<line>` per `Aspect` at a fixed radius (the aspect circle, not wherever glyph collision-spreading moved a body); styling (aspect key, applying/separating, tight-orb) is carried as CSS classes plus a `data-tone` attribute from `aspectTone`, never inline colour; each chord is wrapped in a `<g>` with a wide invisible hit line for clickability and `data-aspect-*`/`data-ring-*` attributes for click-to-isolate.
  * @exports filterAspectsForDisplay, renderAspectWebSvg, renderCrossRingAspectWebSvg, renderCrossRingAngleWebSvg, TIGHT_ORB_DEG; AspectDisplayFilter, CrossRingAngleAspect types.
  */
 import type { AspectFamily } from '../astrology/aspects.js';
-import type { Aspect, AspectMatch } from '../astrology/aspects.js';
+import { type Aspect, type AspectMatch, aspectTone } from '../astrology/aspects.js';
 import { bodyById } from '../astrology/bodies.js';
 import type { BodyId, Degrees } from '../ephemeris/types.js';
 import type { WheelOrientationOptions } from './wheel.js';
@@ -89,7 +89,7 @@ function aspectChord(
   return (
     `<g class="chart-aspect-link" data-aspect-key="${aspect.aspect.key}" data-aspect-body-a="${keyA}" data-aspect-body-b="${keyB}" data-ring-a="${String(ringA)}" data-ring-b="${String(ringB)}"${extraAttributes}>` +
     `<line ${coords} class="chart-hit-area" stroke="none" stroke-width="10" pointer-events="all" />` +
-    `<line ${coords} class="${className}" />` +
+    `<line ${coords} class="${className}" data-tone="${aspectTone(aspect.aspect.key)}" />` +
     `</g>`
   );
 }

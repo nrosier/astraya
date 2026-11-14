@@ -7,6 +7,7 @@ import { readFileSync } from 'node:fs';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { aspectTone } from '../src/astrology/aspects.js';
 import type { AspectMatrixInput } from '../src/chart/aspect-matrix.js';
 import { setSymbolClass } from '../src/chart/symbol-class.js';
 import { AspectMatrixGrid } from '../src/ui/AspectMatrixGrid.js';
@@ -106,17 +107,17 @@ describe('AspectMatrixGrid (#820)', () => {
     expect(el.querySelectorAll('.mgrid-diag')[3]?.textContent).toBe('AC');
   });
 
-  it('colours aspects by family and shows signed orb plus a or s', () => {
+  it('takes each aspect cell tone from aspectTone and shows signed orb plus a or s', () => {
     const el = mount();
     const square = el.querySelector('[aria-label="moon square sun"]');
-    expect(square?.closest('[role="cell"]')?.classList.contains('mgrid-hard')).toBe(true);
+    expect(square?.closest('[role="cell"]')?.getAttribute('data-tone')).toBe(aspectTone('square'));
     expect(square?.textContent).toBe('-0s');
     const trine = el.querySelector('[aria-label="saturn trine sun"]');
-    expect(trine?.closest('[role="cell"]')?.classList.contains('mgrid-soft')).toBe(true);
+    expect(trine?.closest('[role="cell"]')?.getAttribute('data-tone')).toBe(aspectTone('trine'));
     expect(trine?.textContent).toBe('1a');
     expect(
-      el.querySelector('[aria-label="asc quintile moon"]')?.closest('[role="cell"]')?.classList.contains('mgrid-minor'),
-    ).toBe(true);
+      el.querySelector('[aria-label="asc quintile moon"]')?.closest('[role="cell"]')?.getAttribute('data-tone'),
+    ).toBe(aspectTone('quintile'));
   });
 
   it('selects a pair on click and marks the selected one; unselectable pairs are not buttons', () => {
@@ -196,9 +197,13 @@ describe('AspectMatrixGrid (#820)', () => {
     expect(block).not.toMatch(/monospace/i);
     expect(block).not.toMatch(/double|tight/);
     expect(block).toMatch(/var\(--line\)/);
-    expect(block).toMatch(/var\(--aspect-soft\)/);
-    expect(block).toMatch(/var\(--aspect-hard\)/);
-    expect(block).toMatch(/var\(--aspect-minor\)/);
     expect(block).toMatch(/font-variant-numeric:\s*tabular-nums/);
+  });
+
+  it('colours the matrix cells by tone from the chart aspect tone stylesheet', () => {
+    const tones = readFileSync('src/ui/chart-aspect-tones.css', 'utf8');
+    expect(tones).toMatch(/\.mgrid \[data-tone='soft'\] \{[^}]*var\(--aspect-soft\)/);
+    expect(tones).toMatch(/\.mgrid \[data-tone='hard'\] \{[^}]*var\(--aspect-hard\)/);
+    expect(tones).toMatch(/\.mgrid \[data-tone='minor'\] \{[^}]*var\(--aspect-minor\)/);
   });
 });
