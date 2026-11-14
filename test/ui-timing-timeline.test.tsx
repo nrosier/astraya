@@ -370,3 +370,60 @@ describe('forecast band replaces the per-transit marks (owner review, round 11, 
     }
   });
 });
+
+describe('the pass number on each orb-window bar (#1401)', () => {
+  it('labels two adjacent windows with their own pass numbers and keeps each exact-date marker', () => {
+    const orbWindow = (start: number, end: number, exact: number, number: number): TimingTimelineEvent => ({
+      kind: 'periodic-transit',
+      startJd: start,
+      endJd: end,
+      exactJd: exact,
+      pass: { number, count: 2 },
+      subject: { kind: 'aspect', from: 'pluto', aspect: 'conjunction', to: 'saturn' },
+      sourceModule: 'domain/periodic-transit',
+    });
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root: Root = createRoot(container);
+    try {
+      act(() => {
+        root.render(
+          <TimingTimelineGantt
+            rows={ganttRows(
+              [{ track: 'periodic-transit', events: [orbWindow(10, 40, 20, 1), orbWindow(45, 90, 60, 2)] }],
+              0,
+              100,
+            )}
+            fromJd={0}
+            toJd={100}
+            targetJd={50}
+            label="axis"
+            trackLabels={labels}
+            rowLabel={(track, count) => `${track}: ${String(count)}`}
+            describe={(e) => timelineSubjectLabel(e.subject, 'en')}
+            barLabel={(e) => timelineSubjectLabel(e.subject, 'en')}
+            passLabel={(number, count) => `${String(number)}/${String(count)}`}
+            bandLabel={(count) => `${String(count)} exact`}
+            targetTitle="Centre date"
+          />,
+        );
+      });
+      expect([...container.querySelectorAll('.gantt-bar-pass')].map((node) => node.textContent)).toEqual([
+        '1/2',
+        '2/2',
+      ]);
+      expect(container.querySelectorAll('.gantt-bar')).toHaveLength(2);
+      expect([...container.querySelectorAll('.gantt-exact')].map((node) => node.getAttribute('x1'))).toEqual([
+        '200',
+        '600',
+      ]);
+      // The separate pass markers stay suppressed (owner decision, #1442).
+      expect(container.querySelectorAll('.gantt-pass')).toHaveLength(0);
+    } finally {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    }
+  });
+});

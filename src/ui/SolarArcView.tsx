@@ -15,11 +15,11 @@
  * @conventions Gated for unknown birth time like other angle-dependent screens; uses SolarArcView.messages.ts for en/nl text via useMessages().
  * @exports SolarArcView; positionRows, positionColumns, contactColumns, toContactRow, formatExactDate, ContactRow (reused by pdf-export-plan.ts)
  */
-import { DateField } from './primitives/DateField.js';
+import { DateAnimationBar } from './DateAnimationBar.js';
+import { useAsOfDate } from './use-as-of-date.js';
 import { LifeEventPicker } from './LifeEventPicker.js';
 import { signDegreeColumn } from './position-column.js';
 import { Tooltip } from './primitives/Tooltip.js';
-import { Button } from './primitives/Button.js';
 import { GlossaryText } from './GlossaryText.js';
 import { personHref } from './route.js';
 import { useEffect, useMemo, useState } from 'react';
@@ -37,7 +37,7 @@ import {
 } from '../domain/solar-arc-directions.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { civilFromJulianDay } from '../time/julian.js';
-import { formatFixed, formatOrb, todayInputValue } from './format.js';
+import { formatFixed, formatOrb } from './format.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { PersonNotFound } from './PersonNotFound.js';
@@ -185,7 +185,7 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
   const personMoment = useStableMoment(person?.moment);
   const t = useMessages(solarArcViewMessages);
   const [locale] = useLocale();
-  const [asOf, setAsOf] = useState(todayInputValue);
+  const [asOf, setAsOf] = useAsOfDate();
   const timingT = useMessages(timingBasisMessages);
   // Solar arc is calculated with the person's own settings (#1492) and its one key, the Sun's progressed arc.
   const {
@@ -309,22 +309,16 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
         basis={basisLine}
         basisEditHref={null}
       >
-        {/* The as-of date and Now sit in the header, to the right (#1234); Export stays in the page header (#887). */}
-        <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
+        {/* The life-event picker sits in the header; the date, stepping and Now are in the bar below (#1400); Export stays in the page header (#887). */}
         <LifeEventPicker
           events={person.lifeEvents}
           onPick={(event) => {
             setAsOf(event.date);
           }}
         />
-        <Button
-          onClick={() => {
-            setAsOf(todayInputValue());
-          }}
-        >
-          {t.nowLabel}
-        </Button>
       </PageHeader>
+      {/* A date selector with its steps only, as on Progressions: solar arc does not animate (#1400, #1442). */}
+      <DateAnimationBar date={asOf} onDateChange={setAsOf} mode="date" />
 
       {/* The result region: busy while the directions (re)calculate, as the Astrocartography map is. */}
       <div aria-busy={load.kind === 'loading'}>

@@ -9421,6 +9421,17 @@ a.quiet,
   pointer-events: none;
 }
 
+.gantt-bar-pass {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  color: white;
+  font-size: var(--text-2xs);
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
 .gantt-pass {
   position: absolute;
   top: 50%;
