@@ -171,7 +171,7 @@ test.describe('with the shared people (#799)', () => {
     await expect.poll(visibleLines).toBe(before);
   });
 
-  test('the Hard, Soft and Minor pills filter the wheel by tone, and the family Select filters the matrix (#1063, #1532)', async () => {
+  test('the Hard, Soft and Minor pills filter the wheel by tone, and the family pill filters the matrix (#1063, #1532)', async () => {
     test.setTimeout(90_000);
     await page.setViewportSize({ width: 1280, height: 800 });
     await openSharedPerson(page, baseUrl, EINSTEIN);
@@ -196,15 +196,14 @@ test.describe('with the shared people (#799)', () => {
     await hard.click();
     await expect.poll(async () => shown.count()).toBe(before);
 
-    // The matrix keeps the family Select.
+    // The matrix keeps the family pill.
     await page.getByRole('link', { name: 'Aspect matrix', exact: true }).click();
     const cells = page.locator('.mgrid-aspect');
     await expect(cells.first()).toBeVisible();
     const cellsBefore = await cells.count();
-    const filter = page.getByLabel('Aspects shown', { exact: true });
-    await filter.selectOption({ label: 'Hard minor: semisquare, sesquiquadrate, quincunx, semisextile' });
+    await choosePill(page, 'Aspects shown', 'Hard minor: semisquare, sesquiquadrate, quincunx, semisextile');
     await expect.poll(async () => cells.count()).toBeLessThan(cellsBefore);
-    await filter.selectOption({ label: 'All aspects' });
+    await choosePill(page, 'Aspects shown', 'All aspects');
     await expect.poll(async () => cells.count()).toBe(cellsBefore);
   });
 
@@ -307,10 +306,10 @@ test.describe('with the shared people (#799)', () => {
     await expect.poll(async () => shown.count()).toBeLessThanOrEqual(before);
     // The family Select is on the Matrix tab only (#1532); there it reads the preset's families.
     await page.getByRole('link', { name: 'Aspect matrix', exact: true }).click();
-    await expect(page.getByLabel('Aspects shown', { exact: true })).toContainText('Chosen families');
+    await expect(page.getByRole('button', { name: 'Aspects shown' })).toContainText('Chosen families');
 
     await choosePill(page, 'Consultation preset', 'No preset (default view)');
-    await expect(page.getByLabel('Aspects shown', { exact: true })).toHaveValue('all');
+    await expect(page.getByRole('button', { name: 'Aspects shown' })).toContainText('All aspects');
     await page.getByRole('link', { name: 'Wheel', exact: true }).click();
     await expect.poll(async () => shown.count()).toBe(before);
   });

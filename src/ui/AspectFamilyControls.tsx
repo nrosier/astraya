@@ -1,7 +1,7 @@
 /**
  * @module ui/AspectFamilyControls
- * @purpose The aspect-family filter shown above the wheel and the matrix (#1063), and the on-demand consultation preset Select.
- * @conventions Thin: the family logic is `aspect-family-filter.ts`. On the Wheel tab the Hard, Soft and Minor pills replace the family Select (`showFamily={false}`, #1532); the preset Select stays. "All aspects" is the default and clears the filter. A set of several families (from a preset) reads as "Chosen families".
+ * @purpose The aspect-family filter shown above the wheel and the matrix (#1063), and the on-demand consultation preset pill.
+ * @conventions Thin: the family logic is `aspect-family-filter.ts`. On the Wheel tab the Hard, Soft and Minor pills replace the family Select (`showFamily={false}`, #1532); the preset pill stays. "All aspects" is the default and clears the filter. A set of several families (from a preset) reads as "Chosen families".
  * @exports AspectFamilyControls
  */
 import {
@@ -13,7 +13,6 @@ import {
 import { aspectFamilyControlsMessages } from './AspectFamilyControls.messages.js';
 import { useMessages } from './messages.js';
 import { PillSelect } from './primitives/PillSelect.js';
-import { Select } from './primitives/Select.js';
 
 const ALL = 'all';
 const CUSTOM = 'custom';
@@ -40,7 +39,7 @@ export function AspectFamilyControls({
   return (
     <div className="aspect-family-filter">
       {showFamily && (
-        <Select
+        <PillSelect
           label={t.familyLabel}
           value={value}
           options={[
