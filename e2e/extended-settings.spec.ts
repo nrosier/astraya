@@ -430,7 +430,8 @@ test.describe('with the shared people (#799)', () => {
       const boxes = {
         group,
         segmented: group.getByRole('radiogroup', { name: 'Planetary rulers', exact: true }),
-        note: group.locator('p.settings-card-note'),
+        // The one explanation that remains: the modern, traditional or co-rulers text, found by its words (#1544).
+        note: group.getByText(/^(Modern rulership includes|Traditional rulership uses|Co-rulers shows)/),
       };
       const edges: Record<string, { x: number; right: number }> = {};
       for (const [name, locator] of Object.entries(boxes)) {
@@ -444,6 +445,38 @@ test.describe('with the shared people (#799)', () => {
       expect(edges.note?.right ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual((edges.group?.right ?? 0) + 1);
     });
   }
+
+  test('the planetary-rulers explanation appears once in the drawer, inside the bordered box (#1544)', async () => {
+    test.setTimeout(90_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    await openSettings(page, 'Profile & frame');
+    const card = page.locator('dialog.settings-card');
+    const group = card.locator('fieldset.settings-card-group', { hasText: 'Rulership' }).first();
+    // The bordered explanation is shown once; the consequence line and the hint beneath the strip are not.
+    await expect(group.getByText(/^Modern rulership includes/)).toBeVisible();
+    await expect(group.locator('.rulership-setting-consequence')).toHaveCount(0);
+    await expect(group.getByText(/^Only Scorpio, Aquarius and Pisces differ/)).toHaveCount(0);
+  });
+
+  test('a radio option card stacks its title above its description with a 4px row gap (#1544)', async () => {
+    test.setTimeout(90_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    await openSettings(page, 'Profile & frame');
+    const card = page.locator('dialog.settings-card');
+    await expect(
+      card
+        .getByRole('radiogroup', { name: 'Calculation profile', exact: true })
+        .locator('label.primitive-option-card')
+        .first(),
+    ).toBeVisible();
+    // --space-1 is 0.25rem; the px value follows the root font size, so this reads the computed value, not the token.
+    const rowGap = await page.evaluate<string>(
+      "getComputedStyle(document.querySelector('dialog.settings-card label.primitive-option-card')).rowGap",
+    );
+    expect(rowGap).toBe('4px');
+  });
 
   test('opening and cancelling the card keeps what is selected on the wheel (applying redraws, which clears it)', async () => {
     test.setTimeout(90_000);

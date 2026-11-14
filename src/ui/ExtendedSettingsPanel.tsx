@@ -1017,7 +1017,7 @@ export function ExtendedSettingsPanel({
               <fieldset className="field-group settings-card-group">
                 <legend>{t.rulersLegend}</legend>
                 <p className="hint">{t.rulersSubtitle}</p>
-                <RulershipSetting value={rulers} onChange={setRulers} />
+                <RulershipSetting value={rulers} onChange={setRulers} showExplanation={false} />
                 <p className="settings-card-note">
                   {/* Display reactive description based on rulers choice */}
                   {rulers === 'modern' && t.modernRulersDescription}
