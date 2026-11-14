@@ -67,6 +67,31 @@ test('a person with a known birth time gets a Progressions screen with technique
   await expect(page.getByRole('table', { name: 'Progressed positions' })).toBeVisible();
 });
 
+test('the contacts can be measured to the natal chart, the progressed chart or the transits (#1407)', async () => {
+  test.setTimeout(60_000);
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  await page.getByRole('link', { name: 'Progressions & Directions', exact: true }).click();
+  await page.getByRole('tab', { name: 'Progressions', exact: true }).click();
+  const target = page.getByLabel('Contacts to', { exact: true });
+  await expect(target).toHaveValue('natal');
+  // Each choice names its own table and its own columns; a choice with no contacts in orb says so instead.
+  for (const [value, caption, first, second] of [
+    ['natal', 'Progressed-to-natal contacts', 'Progressed', 'Natal'],
+    ['progressed', 'Progressed-to-progressed contacts', 'Progressed', 'Progressed'],
+    ['transit', 'Transit-to-progressed contacts', 'Transit', 'Progressed'],
+  ] as const) {
+    await target.selectOption(value);
+    const table = page.getByRole('table', { name: caption });
+    const empty = page.getByText(`No ${caption.charAt(0).toLowerCase()}${caption.slice(1)} within orb.`);
+    await expect(table.or(empty)).toBeVisible();
+    if (await table.isVisible()) {
+      const headers = table.getByRole('columnheader');
+      await expect(headers.nth(0)).toContainText(first);
+      await expect(headers.nth(2)).toContainText(second);
+    }
+  }
+});
+
 test('a person with an unknown birth time is told progressions need one', async () => {
   await openSharedPerson(page, baseUrl, MARIC);
 
