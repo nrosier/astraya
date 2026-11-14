@@ -33,7 +33,7 @@ import {
 } from '../chart/object-policy.js';
 import type { ChartCalculationOptions } from './chart-compute.js';
 import { DEFAULT_RULERSHIP_CHOICE, RULERSHIP_CHOICES, type RulershipChoice } from '../astrology/rulership.js';
-import { ayanamsaById } from '../astrology/ayanamsas.js';
+import { ayanamsaById, isValidUserAyanamsa, USER_AYANAMSA_ID } from '../astrology/ayanamsas.js';
 import { houseSystemByCode } from '../astrology/houses.js';
 import { aspectByKey } from '../astrology/aspects.js';
 import { validateOrbRules } from '../astrology/orb-profiles.js';
@@ -56,6 +56,8 @@ import { readCustomPoints, readFixedStars, type ChosenFixedStar, type CustomPoin
  * reads back unchanged and one with both off serializes byte for byte as before.
  * 4 (#860): adds `fixedStars`, the person's chosen catalogue stars, so a shared or exported chart checks the same
  * stars as the sender's. A v1-v3 snapshot has none and reads back with none (the seven-star preset).
+ * #1407's user-defined ayanamsa is not a bump: `zodiac.user` appears only with the new `SE_SIDM_USER` mode, so every
+ * existing snapshot reads back unchanged; a client that predates it refuses such a snapshot rather than misreading it.
  */
 export const CURRENT_SNAPSHOT_VERSION = 4;
 
@@ -172,9 +174,18 @@ function isRegisteredAyanamsa(value: unknown): value is number {
   return typeof value === 'number' && ayanamsaById(value) !== undefined;
 }
 
+/** A user-defined ayanamsa (#1407): `SE_SIDM_USER` with a valid definition, kept as only its two fields. */
+function userZodiac(value: Record<string, unknown>): Zodiac | undefined {
+  if (value.ayanamsa !== USER_AYANAMSA_ID || !isValidUserAyanamsa(value.user)) return undefined;
+  const { referenceDate, degrees } = value.user;
+  return { kind: 'sidereal', ayanamsa: USER_AYANAMSA_ID, user: { referenceDate, degrees } };
+}
+
 function parseZodiac(value: unknown): Zodiac {
-  if (isRecord(value) && value.kind === 'sidereal' && isRegisteredAyanamsa(value.ayanamsa)) {
-    return { kind: 'sidereal', ayanamsa: value.ayanamsa };
+  if (isRecord(value) && value.kind === 'sidereal') {
+    if (isRegisteredAyanamsa(value.ayanamsa)) return { kind: 'sidereal', ayanamsa: value.ayanamsa };
+    const user = userZodiac(value);
+    if (user !== undefined) return user;
   }
   return DEFAULT_EXTENDED_SETTINGS.zodiac;
 }
@@ -423,7 +434,10 @@ function invalidSettingFields(settings: Record<string, unknown>, requireAll = fa
   check('houseSystem', isValidHouseSystem);
   check('zodiac', (zodiac) => {
     const tropical = isRecord(zodiac) && zodiac.kind === 'tropical';
-    const sidereal = isRecord(zodiac) && zodiac.kind === 'sidereal' && isRegisteredAyanamsa(zodiac.ayanamsa);
+    const sidereal =
+      isRecord(zodiac) &&
+      zodiac.kind === 'sidereal' &&
+      ((isRegisteredAyanamsa(zodiac.ayanamsa) && zodiac.user === undefined) || userZodiac(zodiac) !== undefined);
     return tropical || sidereal;
   });
   check('orbScalePercent', isOrbScale);

@@ -6860,6 +6860,19 @@ svg text.chart-symbol-text-unicode {
   margin-left: var(--space-6);
 }
 
+/* The user-defined ayanamsa (#1407): the reference date, then degrees and minutes side by side, under the Select. */
+.user-ayanamsa-fields {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.user-ayanamsa-value {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
 /* An informational note on the setting just above it, same shape as .warning but without the alarm colour. */
 .settings-card-note {
   margin-top: var(--space-3);
