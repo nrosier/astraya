@@ -21,12 +21,10 @@ A Davison chart is one real chart, cast for a real moment and a real place: the 
 
 ## Steps
 
-1. **Time midpoint (p. 244; worked example pp. 246-247).** The book defines the midpoint in time as the point where the elder's progressed date meets the younger's converse date, which is the exact midpoint of the two birth instants. The book works in Local Mean Time: it takes the mean of the two births' LMTs and reads it as the LMT of the mean longitude λ̄. Since LMT = UT + λ/15°, that is exactly the midpoint of the two UT instants:
-
-   (LMT₁ + LMT₂)/2 − λ̄/15° = (UT₁ + UT₂)/2.
-
-   The code takes that UT midpoint directly, for both place methods (owner decision, #1406, 2026-11-14). The time therefore does not depend on where the chart is cast. Reading the LMT mean at the great-circle longitude λgc instead would move the time by (λ̄ − λgc)/15°, which can be several minutes, or more, for wide pairs at high latitude. Tests: "meets halfway in Local Mean Time (the book gives 1h 43 1/2m a.m. LMT, 22 June 1895)" (arithmetic method), and "is the exact UT midpoint whichever place method is used…".
-
+1. **Time midpoint (p. 244; worked example pp. 246-247).** The book defines the midpoint in time as the point where the elder's progressed date meets the younger's converse date, which is the exact midpoint of the two birth instants.
+   - The book works in Local Mean Time: it takes the mean of the two births' LMTs and reads it as the LMT of the mean longitude λ̄. Since LMT = UT + λ/15°, that is exactly the midpoint of the two UT instants: (LMT₁ + LMT₂)/2 − λ̄/15° = (UT₁ + UT₂)/2.
+   - The code takes that UT midpoint directly, for both place methods (owner decision, #1406, 2026-11-14), so the time does not depend on where the chart is cast. Reading the LMT mean at the great-circle longitude λgc instead would move the time by (λ̄ − λgc)/15°, which can be several minutes, or more, for wide pairs at high latitude.
+   - Tests: "meets halfway in Local Mean Time (the book gives 1h 43 1/2m a.m. LMT, 22 June 1895)" (arithmetic method), and "is the exact UT midpoint whichever place method is used…".
 2. **Place midpoint.**
    - Default, great circle (owner decision, 2026-11-09, "Great-circle default, book toggle"): both places become unit vectors, which are added and normalised, and the sum is converted back to latitude and longitude. Antipodal places have no unique midpoint and are refused.
    - Option, the book's arithmetic mean (p. 245, pp. 247-248): the mean of the two latitudes and the mean of the two longitudes. For opposite hemispheres the half difference is subtracted from the larger value. The book presents this as valid in its own right, not as an approximation.
@@ -35,7 +33,7 @@ A Davison chart is one real chart, cast for a real moment and a real place: the 
 4. **Midheaven adjustment (p. 247, opt-in).** The time midpoint does not quite give the mid-point of the two natal Midheavens. The book uses the time to choose which of the two opposite mid-points applies, then shifts the time by the small amount that produces it.
    - The target is the near-arc mid-point of the two natal Midheavens, or the opposite point when the unadjusted Midheaven is nearer to that (`midheavenTarget`).
    - The Midheaven depends only on the local sidereal time (RAMC) and the obliquity, not on geographic latitude. RAMC advances steadily, about 15.04° per hour, so the Midheaven rises monotonically with time and the target is reached at one nearby moment. The problem is well-posed.
-   - The code moves the cast time by the remaining gap divided by the sidereal rate (360.985647° a day), then repeats. Because the obliquity makes the Midheaven advance unevenly in longitude, it takes a few steps; it stops below 10⁻⁹°. A closed-form inverse (RAMC from the target Midheaven and the obliquity) would give the same moment.
+   - The code moves the cast time by the remaining gap divided by the sidereal rate (360.985647° a day), then repeats. Because the obliquity makes the Midheaven advance unevenly in longitude, it takes a few steps; it stops below 10⁻⁹°. Because it reads the ephemeris Midheaven in the chart's own zodiac, the same loop serves a sidereal chart, whose Midheaven carries the ayanamsa, with no separate correction.
 
 ## How it differs from the midpoint composite
 
