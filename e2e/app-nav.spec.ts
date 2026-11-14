@@ -334,6 +334,7 @@ test.describe('with the shared people (#799)', () => {
       'Natal',
       'Draconic',
       'Harmonic',
+      'Heliocentric',
       'Solar return',
       'Lunar return',
       'Relocated',
