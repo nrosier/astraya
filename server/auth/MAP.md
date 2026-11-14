@@ -13,3 +13,4 @@ Sessions, OIDC, password/argon2, roles (user/admin/super_admin), login throttlin
 - `routes.ts` — HTTP surface: `/api/auth/login`, `/api/auth/logout`, `/api/auth/me`, OIDC config/callback, `/api/setup`, `/api/auth/set-password`. Wires throttling, promotion, password checks, session creation. Deps: admin-promotion, bootstrap, identity, login-throttle, oidc, passwords, sessions.
 - `sessions.ts` — Session CRUD (create/lookup/throttled touch/revoke, sliding-expiry, OIDC shorter TTL) and the batched expired-session sweep; stamps `users.last_seen_at`. Revocation takes immediate effect. Stores only a hash of the cookie value. Deps: db, token-hash, node:timers/promises.
 - `token-hash.ts` — Single SHA-256 hex helper for bearer secrets stored at rest (session ids, set-password tokens). Deps: node:crypto.
+- `totp.ts` — Pure RFC 6238 TOTP primitives (SHA-1, 6 digits, ±1 step window, replay-checked verify, base32 secret). No storage or route. Deps: node:crypto.

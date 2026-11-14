@@ -62,16 +62,17 @@ test.describe('with the shared people (#799)', () => {
     const trigger = page.locator('button.extended-settings-trigger');
     await expect(trigger).toHaveText('Extended settings');
 
-    // The drawer: a right-anchored dialog with four categories, and the Profile & frame tab first.
+    // The drawer: a right-anchored dialog with five categories, and the Profile & frame tab first.
     await openSettings(page);
     const card = page.locator('dialog.settings-card');
     await expect(card).toHaveAttribute('data-placement', 'right');
     await expect(card.getByRole('heading', { name: 'Extended settings', level: 2 })).toBeVisible();
     await expect(card.getByRole('tab')).toHaveText([
       'Profile & frame',
-      'Bodies & orbs',
-      'Display & glyphs',
+      'Bodies',
+      'Orbs & aspects',
       'Special points',
+      'Display & glyphs',
     ]);
     await expect(card.getByRole('tab', { name: 'Profile & frame' })).toHaveAttribute('aria-selected', 'true');
     await expect(card.locator('fieldset.settings-card-group > legend').first()).toHaveText('Calculation profile');
@@ -117,8 +118,8 @@ test.describe('with the shared people (#799)', () => {
         .getByRole('radio', { name: /^Traditional Western/ }),
     ).toBeChecked();
 
-    // The orbs now in force are spelled out, not only a percentage (the orb scale is in Bodies & orbs).
-    await openSettingsTab(page, 'Bodies & orbs');
+    // The orbs now in force are spelled out, not only a percentage (the orb scale is in Orbs & aspects).
+    await openSettingsTab(page, 'Orbs & aspects');
     await card.getByRole('slider', { name: 'Orb scale' }).fill('-10');
     await expect(card.getByText(/major aspects 6[.,]3°/)).toBeVisible();
 
@@ -140,7 +141,7 @@ test.describe('with the shared people (#799)', () => {
     await openNatalChart(page);
     await expect(page.locator('div.chart-wheel')).toBeVisible();
 
-    await openSettings(page, 'Bodies & orbs');
+    await openSettings(page, 'Bodies');
     const card = page.locator('dialog.settings-card');
     // The visibility matrix (#824): one dense table, Object then Visible, Aspects and Reports checkboxes.
     const bodiesGroup = card.locator('fieldset.settings-card-group', { hasText: 'Object visibility' });
@@ -185,7 +186,7 @@ test.describe('with the shared people (#799)', () => {
     const card = page.locator('dialog.settings-card');
     await openSettings(page);
     // The tab bar sits in the header, outside the scrolling body.
-    await expect(card.locator('.settings-card-subheader').getByRole('tab')).toHaveCount(4);
+    await expect(card.locator('.settings-card-subheader').getByRole('tab')).toHaveCount(5);
     await expect(card.locator('.settings-card-body').getByRole('tab')).toHaveCount(0);
 
     // Tab many times: focus never leaves the dialog.
@@ -210,7 +211,7 @@ test.describe('with the shared people (#799)', () => {
     await expect(page.locator('div.chart-wheel')).toBeVisible();
 
     const card = page.locator('dialog.settings-card');
-    await openSettings(page, 'Bodies & orbs');
+    await openSettings(page, 'Bodies');
     const matrix = card.locator('fieldset.settings-card-group', { hasText: 'Object visibility' });
     await expect(matrix.locator('.data-table table thead th')).toHaveText([/Object/, /Visible/, /Aspects/, /Reports/]);
 
@@ -223,7 +224,9 @@ test.describe('with the shared people (#799)', () => {
     await allReports.check();
     await expect(matrix.getByLabel('Jupiter — included in the written report', { exact: true })).toBeChecked();
 
-    // The orb scale is a horizontal segmented control: a labelled radiogroup the arrow keys walk through.
+    // The orb scale is a horizontal segmented control on the Orbs & aspects tab: a labelled radiogroup the arrow keys
+    // walk through.
+    await openSettingsTab(page, 'Orbs & aspects');
     const scale = card.getByRole('radiogroup', { name: 'Orb scale step', exact: true });
     await expect(scale).toHaveClass(/primitive-choice-group-segmented/);
     await expect(scale.getByRole('radio')).toHaveCount(3);
@@ -411,15 +414,15 @@ test.describe('with the shared people (#799)', () => {
     const formulaSection = card.locator('fieldset.settings-card-group', { hasText: 'Custom formula points' });
     // A saved point is a row in the drawer's FormulaPointsSection list, not a wheel body (#817, moved to #824).
     const keptRow = (): Locator => formulaSection.locator('tbody tr td:first-child').filter({ hasText: 'Kept point' });
-    // The card is closed after Apply and Cancel, so the saved list is read by reopening the Bodies tab and closing again.
+    // The card is closed after Apply and Cancel, so the saved list is read by reopening the Special points tab and closing again.
     const expectSavedAfterClose = async (count: number): Promise<void> => {
-      await openSettings(page, 'Bodies & orbs');
+      await openSettings(page, 'Special points');
       await expect(keptRow()).toHaveCount(count);
       await closeSettings(page);
     };
 
     // Stage a new point and cancel: it never reaches the person, and the open page's own list stays empty.
-    await openSettings(page, 'Bodies & orbs');
+    await openSettings(page, 'Special points');
     await formulaSection.getByLabel('Name', { exact: true }).fill('Staged point');
     await formulaSection.getByLabel('Formula', { exact: true }).fill('Asc + Sun - MC');
     await formulaSection.getByRole('button', { name: 'Add formula point', exact: true }).click();
@@ -429,7 +432,7 @@ test.describe('with the shared people (#799)', () => {
     await card.getByRole('button', { name: 'Cancel', exact: true }).click();
     await expect(card).toBeHidden();
     await expectSavedAfterClose(0);
-    await openSettings(page, 'Bodies & orbs');
+    await openSettings(page, 'Special points');
     await expect(formulaSection.locator('tbody tr td:first-child').filter({ hasText: 'Staged point' })).toHaveCount(0);
 
     // Stage it again and Apply: now it is saved on the person.
@@ -441,20 +444,20 @@ test.describe('with the shared people (#799)', () => {
     await expectSavedAfterClose(1);
 
     // A delete is staged too: marked removed in the drawer, still saved until Apply, restored by Cancel.
-    await openSettings(page, 'Bodies & orbs');
+    await openSettings(page, 'Special points');
     await formulaSection.getByRole('button', { name: 'Remove Kept point', exact: true }).click();
     await expect(formulaSection.getByText('Removed, saved on Apply')).toBeVisible();
     await expect(keptRow()).toHaveCount(1);
     await card.getByRole('button', { name: 'Cancel', exact: true }).click();
     await expectSavedAfterClose(1);
-    await openSettings(page, 'Bodies & orbs');
+    await openSettings(page, 'Special points');
     await formulaSection.getByRole('button', { name: 'Remove Kept point', exact: true }).click();
     await card.getByRole('button', { name: 'Apply and redraw', exact: true }).click();
     await expect(card).toBeHidden();
     await expectSavedAfterClose(0);
   });
 
-  test('an Advanced group starts closed on Profile, Bodies and Special, none on Display, and the open state is remembered (#856)', async () => {
+  test('an Advanced group starts closed on Profile, Orbs and Special, none on Display, and the open state is remembered (#856)', async () => {
     test.setTimeout(90_000);
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await openNatalChart(page);
@@ -463,7 +466,7 @@ test.describe('with the shared people (#799)', () => {
     const card = page.locator('dialog.settings-card');
     const panel = card.locator('[role="tabpanel"]:not([hidden])');
     await openSettings(page);
-    for (const tab of ['Profile & frame', 'Bodies & orbs', 'Special points'] as const) {
+    for (const tab of ['Profile & frame', 'Orbs & aspects', 'Special points'] as const) {
       await card.getByRole('tab', { name: tab, exact: true }).click();
       await expect(panel.getByRole('button', { name: /^Advanced/ })).toHaveAttribute('aria-expanded', 'false');
     }
@@ -481,7 +484,7 @@ test.describe('with the shared people (#799)', () => {
     await openSettings(page);
     await card.getByRole('tab', { name: 'Profile & frame', exact: true }).click();
     await expect(panel.getByRole('button', { name: /^Advanced/ })).toHaveAttribute('aria-expanded', 'true');
-    await card.getByRole('tab', { name: 'Bodies & orbs', exact: true }).click();
+    await card.getByRole('tab', { name: 'Orbs & aspects', exact: true }).click();
     await expect(panel.getByRole('button', { name: /^Advanced/ })).toHaveAttribute('aria-expanded', 'false');
   });
 

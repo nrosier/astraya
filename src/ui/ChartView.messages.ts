@@ -231,7 +231,7 @@ const en = {
   matrixLabel: 'Aspect matrix: select a pair to show it on the chart',
   matrixNameLabel: 'Name',
   matrixFormulaLink: 'Custom formula points: open them in Extended settings',
-  compareFormulaLink: 'Custom formula points: open them in Extended settings (Bodies & orbs)',
+  compareFormulaLink: 'Custom formula points: open them in Extended settings (Special points)',
   emptyFilterNote:
     'No aspect contacts to show: the chart type, the chosen aspects or the preset filter them all out. Change one of them to see contacts again.',
   matrixHint:
@@ -585,7 +585,7 @@ const nl: typeof en = {
   matrixLabel: 'Aspectenmatrix: kies een paar om het op de horoscoop te tonen',
   matrixNameLabel: 'Naam',
   matrixFormulaLink: 'Aangepaste formulepunten: open ze in Uitgebreide instellingen',
-  compareFormulaLink: 'Aangepaste formulepunten: open ze in Uitgebreide instellingen (Hemellichamen en orbs)',
+  compareFormulaLink: 'Aangepaste formulepunten: open ze in Uitgebreide instellingen (Speciale punten)',
   emptyFilterNote:
     'Geen aspectcontacten om te tonen: het grafiektype, de gekozen aspecten of de preset filteren ze allemaal weg. Pas een van deze aan om weer contacten te zien.',
   matrixHint:

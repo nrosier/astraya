@@ -152,7 +152,7 @@ describe('Advanced groups start closed (#856)', () => {
   it('shows no Advanced control until a group is opened, on each of the three tabs', async () => {
     const container = await mount(DEFAULT_EXTENDED_SETTINGS);
     openCard(container);
-    for (const tab of ['Profile & frame', 'Bodies & orbs', 'Special points']) {
+    for (const tab of ['Profile & frame', 'Orbs & aspects', 'Special points']) {
       act(() => {
         tabButton(container, tab).click();
       });
@@ -160,7 +160,14 @@ describe('Advanced groups start closed (#856)', () => {
     }
     // A control that lives in an Advanced group is not in the page while its group is closed.
     expect(container.querySelector('input[type="range"]')).toBeNull();
-    expect(container.querySelector('table')).toBeNull();
+    // The visibility matrix is no longer Advanced: it is the Bodies tab's first screen (#1544).
+    act(() => {
+      tabButton(container, 'Bodies').click();
+    });
+    expect(visiblePanel(container).querySelector('table')).not.toBeNull();
+    expect(visiblePanel(container).querySelector('.primitive-disclosure-title')?.textContent ?? '').not.toMatch(
+      /^Advanced/,
+    );
     expect(container.textContent).not.toContain('Every house system');
   });
 
@@ -226,7 +233,7 @@ describe('the customised marker', () => {
       return advancedTrigger(container).querySelector('.primitive-disclosure-summary')?.textContent ?? '';
     };
     expect(summaryOf('Profile & frame')).toBe('1 customised');
-    expect(summaryOf('Bodies & orbs')).toBe('2 customised');
+    expect(summaryOf('Orbs & aspects')).toBe('2 customised');
     expect(summaryOf('Special points')).toBe('2 customised');
   });
 
@@ -234,7 +241,7 @@ describe('the customised marker', () => {
     const traditional = applyCalculationProfile(DEFAULT_EXTENDED_SETTINGS, 'traditional-western-v1');
     const container = await mount(traditional, vi.fn(), 'traditional');
     openCard(container);
-    for (const tab of ['Profile & frame', 'Bodies & orbs', 'Special points']) {
+    for (const tab of ['Profile & frame', 'Orbs & aspects', 'Special points']) {
       act(() => {
         tabButton(container, tab).click();
       });
@@ -313,7 +320,7 @@ describe('the open state', () => {
     expect(JSON.parse(localStorage.getItem(ADVANCED_GROUPS_KEY) ?? 'null')).toEqual(['special']);
     // Another tab's group is still closed.
     act(() => {
-      tabButton(container, 'Bodies & orbs').click();
+      tabButton(container, 'Orbs & aspects').click();
     });
     expect(advancedTrigger(container).getAttribute('aria-expanded')).toBe('false');
 
