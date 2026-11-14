@@ -399,7 +399,7 @@ Use these mappings in the current product and in new work:
 - **Consultation preset:** a labelled pill button that shows the current preset and opens a card of exclusive preset choices. It follows the same open direction and bottom-sheet rule as Chart type.
 - **Chart view:** one row of six ordinary route links on desktop and one shared labelled Select on narrow screens. Preserve chart type and view in the URL; do not render these route links with tab semantics.
 - **Primary Directions time key:** two-choice segmented control for Naibod/Ptolemy. Put the selected rate and a concise explanation below the group; use option cards if translated labels make the segment too wide.
-- **Planetary rulers:** option cards for Modern, Traditional, and Both. The default lives in Preferences → Astrology defaults. A chart Advanced settings dialog may stage a chart-only override, but it must not silently change the user's default.
+- **Planetary rulers:** a segmented pill for Modern, Traditional, and Both. The default lives in Preferences → Astrology defaults. A chart Advanced settings dialog may stage a chart-only override, but it must not silently change the user's default.
 - **Which transits to show:** visible compact preset choices for Important, Outer, Personal, and All; a summary such as **Important · 12 of 48 shown**; and one **Change filters** action. When advanced values differ from every preset, show **Custom · 12 of 48 shown**. Do not add a separate Show all button beside an All preset.
 - **Advanced transit filters:** segmented Tight/Balanced/Wide orb choice, clearly grouped checkboxes for aspects and bodies, group-level All/Clear actions, and a sticky modal footer. Do not place the global Planetary rulers preference inside this staged dialog.
 - **Astrocartography:** one Map settings right slide-over drawer (`StagedDialog`, #978) containing Line types, Primary and Additional bodies, Local Space, and Relocation. Show only the applied summary on the page and recalculate once after Apply.
@@ -442,6 +442,15 @@ Use this pattern for the Chart type and Consultation preset controls (§2, Targe
 - On screens 640px and below, the card becomes a bottom sheet.
 - Independent toggles are pills with checkbox semantics, so several may be selected at once. They are not radio buttons.
 - The card uses the same surface and border tokens as the Filters card. Pills and cards use existing tokens only; do not add feature-specific colours, radii, or heights.
+
+#### Shape: pill or rounded rectangle
+
+Single-line, inline action, filter, or selection controls are pills with a 999px radius (use the pill radius, `--radius-full` once it is added). These include tabs, buttons, dropdown triggers, segmented toggles, search bars, and tags. Search fields are pills, including the Fixed Stars search box. The bulk All and Clear buttons beside PLANETS, MINOR PLANETS, and POINTS are small pill buttons, and so is the "Use the seven-star preset" button. Multi-line, stacked, or tabular containers (popovers, drawers, radio description cards, accordions, and matrices) are rounded rectangles with an 8px to 12px radius. Keep these rounded:
+
+- Multi-line radio option cards.
+- Popovers, menus, and accordions. An open panel stays rounded, and only its closed trigger is a pill.
+- Data grids and matrices, which keep straight vertical edges.
+- Multi-field form inputs such as Name and Formula, at 8px, so their labels align flush-left.
 
 ## 7. Design every state, including unhappy paths
 
