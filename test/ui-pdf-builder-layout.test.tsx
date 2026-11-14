@@ -62,8 +62,36 @@ describe('the Documents page is the PDF builder (#916)', () => {
     const actions = container.querySelector('.pdf-build-actions');
     expect(actions?.closest('.pdf-primary-bar')).not.toBeNull();
     expect(actions?.closest('.page-header-row')).toBeNull();
-    expect(container.querySelector('.pdf-header-preset select')).not.toBeNull();
+    expect(container.querySelector('.pdf-header-preset .primitive-pill-select-pill')).not.toBeNull();
     expect(container.querySelector('a[href="#/people"]')).toBeNull();
+  });
+
+  it('offers the starting point as a pill with the same options, and choosing one selects that preset (#1545)', async () => {
+    const container = await render();
+    const t = pdfExportMessages.en;
+    const pill = container.querySelector<HTMLButtonElement>('.pdf-header-preset button[aria-haspopup="dialog"]');
+    expect(pill?.textContent).toContain(t.presetOptions.custom);
+    act(() => {
+      pill?.click();
+    });
+    const labels = [...container.querySelectorAll('[role="radio"]')].map((radio) => radio.textContent);
+    expect(labels).toEqual([
+      t.presetOptions.custom,
+      t.presetOptions['executive-summary'],
+      t.presetOptions['complete-archive'],
+      t.presetOptions['full-predictive-report'],
+    ]);
+    const full = [...container.querySelectorAll<HTMLButtonElement>('[role="radio"]')].find(
+      (radio) => radio.textContent === t.presetOptions['full-predictive-report'],
+    );
+    act(() => {
+      full?.click();
+    });
+    // The preset the select used to hold is now the pill's value: the selection matches it, so the pill shows it.
+    expect(container.querySelector('.pdf-header-preset button[aria-haspopup="dialog"]')?.textContent).toContain(
+      t.presetOptions['full-predictive-report'],
+    );
+    expect(container.querySelector('.pdf-header-preset [role="dialog"]')).toBeNull();
   });
 
   it('starts every advanced group collapsed', async () => {
