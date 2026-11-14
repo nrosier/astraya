@@ -18,6 +18,7 @@ import { Radio } from './primitives/Radio.js';
 import type { GlossaryTermId } from './astro-glossary.messages.js';
 import { formatFixed } from './format.js';
 import { Button } from './primitives/Button.js';
+import { PillSelect } from './primitives/PillSelect.js';
 import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
 import { useSymbolClass } from './symbol-setting.js';
@@ -350,7 +351,7 @@ export function CyclesView(): React.JSX.Element {
       <div className="tool-layout">
         <section className="tool-card tool-form" aria-labelledby="cycles-search-heading">
           <h2 id="cycles-search-heading">{t.searchHeading}</h2>
-          <Select
+          <PillSelect
             label={t.presetLabel}
             value={presetKey}
             options={[

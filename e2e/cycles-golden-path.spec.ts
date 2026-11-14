@@ -11,7 +11,7 @@ import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { gotoAndSettle, openTool } from './support.ts';
+import { choosePill, gotoAndSettle, openTool } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -50,8 +50,8 @@ test('the cycles screen lists the great conjunctions with a diagram, and narrows
   await expect(page.locator('svg.cycle-diagram .cycle-point').first()).toBeVisible();
 
   // The Venus pentagram preset keeps only the retrograde (inferior) conjunctions.
-  await page.getByLabel('Cycle', { exact: true }).selectOption('venus-pentagram');
-  await expect(page.getByLabel('Cycle', { exact: true })).toHaveValue('venus-pentagram');
+  await choosePill(page, 'Cycle', 'Venus–Sun inferior conjunctions (the pentagram, 8 years)');
+  await expect(page.getByRole('button', { name: /^Cycle Venus–Sun inferior conjunctions/ })).toBeVisible();
   // The motion filter is a radio group (#901), so the retrograde choice is the checked radio, not a select value.
   await expect(page.getByRole('radio', { name: 'Retrograde only (e.g. Venus’s inferior conjunctions)' })).toBeChecked();
   await expect(table.getByRole('row').nth(1)).toContainText('Venus');
@@ -115,7 +115,7 @@ test('a diagram point and its table row select each other (#418)', async ({ page
     .locator('.cycle-hit-area')
     .click();
   await expect(page.locator('svg.cycle-diagram .cycle-selected')).toHaveCount(1);
-  await page.getByLabel('Cycle', { exact: true }).selectOption('venus-pentagram');
+  await choosePill(page, 'Cycle', 'Venus–Sun inferior conjunctions (the pentagram, 8 years)');
   await expect(page.locator('svg.cycle-diagram .cycle-selected')).toHaveCount(0);
 });
 
