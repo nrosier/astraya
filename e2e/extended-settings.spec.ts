@@ -224,20 +224,20 @@ test.describe('with the shared people (#799)', () => {
     await allReports.check();
     await expect(matrix.getByLabel('Jupiter — included in the written report', { exact: true })).toBeChecked();
 
-    // The orb scale is a horizontal segmented control on the Orbs & aspects tab: a labelled radiogroup the arrow keys
-    // walk through.
+    // The orb scale is one slider with three detent chips under it on the Orbs & aspects first screen (#1544).
     await openSettingsTab(page, 'Orbs & aspects');
-    const scale = card.getByRole('radiogroup', { name: 'Orb scale step', exact: true });
-    await expect(scale).toHaveClass(/primitive-choice-group-segmented/);
-    await expect(scale.getByRole('radio')).toHaveCount(3);
-    await scale.getByRole('radio', { name: '0%', exact: true }).check();
-    await scale.getByRole('radio', { name: '0%', exact: true }).focus();
-    await page.keyboard.press('ArrowRight');
-    await expect(scale.getByRole('radio', { name: '+40%', exact: true })).toBeChecked();
-    await page.keyboard.press('ArrowLeft');
-    await expect(scale.getByRole('radio', { name: '0%', exact: true })).toBeChecked();
-    const labels = scale.locator('label');
-    const tops = await Promise.all([0, 1, 2].map(async (index) => (await labels.nth(index).boundingBox())?.y ?? -1));
+    const chips = card.getByRole('group', { name: 'Orb scale steps', exact: true });
+    await expect(chips.getByRole('button')).toHaveCount(3);
+    await chips.getByRole('button', { name: 'Wide +40%', exact: true }).click();
+    await expect(chips.getByRole('button', { name: 'Wide +40%', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await chips.getByRole('button', { name: 'Standard 0%', exact: true }).click();
+    await expect(chips.getByRole('button', { name: 'Standard 0%', exact: true })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    const tops = await Promise.all(
+      [0, 1, 2].map(async (index) => (await chips.getByRole('button').nth(index).boundingBox())?.y ?? -1),
+    );
     expect(new Set(tops.map((top) => Math.round(top))).size).toBe(1);
 
     // The 42rem cap holds on a wide screen.

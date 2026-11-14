@@ -59,10 +59,10 @@ function checkboxLabeled(container: HTMLElement, text: string): HTMLInputElement
   return input;
 }
 
-// These tests drive controls inside the Advanced groups, so each starts with all three open (#856); the tests of the
+// These tests drive controls inside the Advanced groups, so each starts with both open (#856); the tests of the
 // closed state itself are in ui-extended-settings-advanced.test.tsx.
 beforeEach(() => {
-  localStorage.setItem(ADVANCED_GROUPS_KEY, JSON.stringify(['profile', 'orbs', 'special']));
+  localStorage.setItem(ADVANCED_GROUPS_KEY, JSON.stringify(['profile', 'special']));
   resetAdvancedGroupsForTests();
 });
 
