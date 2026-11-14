@@ -213,6 +213,14 @@ function chooseRulers(container: HTMLElement, index: number): void {
   });
 }
 
+const PLANETS = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'] as const;
+
+/** One of the Planets group's All / Clear / None buttons (#1544). */
+const groupButton = (container: HTMLElement, name: string): HTMLButtonElement | undefined =>
+  Array.from(container.querySelectorAll('[role="group"][aria-label="Planets"] button')).find(
+    (button): button is HTMLButtonElement => button instanceof HTMLButtonElement && button.textContent === name,
+  );
+
 describe('ExtendedSettingsPanel', () => {
   it('shows a button, opens a modal card from it, and resolves house-system names asynchronously', async () => {
     const { container, root } = await mount(fakeProvider(), vi.fn());
@@ -359,6 +367,50 @@ describe('ExtendedSettingsPanel', () => {
     });
     expect(onRedraw).toHaveBeenLastCalledWith(DEFAULT_EXTENDED_SETTINGS, 'modern');
     unmount(again.container, again.root);
+  });
+
+  it('None on the Planets group turns its Visible, Aspects and Reports off (#1544)', async () => {
+    const onRedraw = vi.fn();
+    const { container, root } = await mount(fakeProvider(), onRedraw);
+    openCard(container);
+    act(() => {
+      groupButton(container, 'None')?.click();
+    });
+    act(() => {
+      buttonNamed(container, 'Apply and redraw')?.click();
+    });
+    const settings = (onRedraw.mock.lastCall as [ExtendedSettings, string])[0];
+    for (const key of PLANETS) {
+      expect(settings.objectPolicies[key]).toEqual({ visible: false, aspectParticipant: false, interpreted: false });
+    }
+    expect(settings.objectPolicies.ceres).toEqual(DEFAULT_EXTENDED_SETTINGS.objectPolicies.ceres);
+    unmount(container, root);
+  });
+
+  it('keeps the object matrix header in view: the matrix scrolls in the tall frame the sticky rule targets (#1544)', async () => {
+    const { container, root } = await mount(fakeProvider(), vi.fn());
+    openCard(container);
+    const frame = container.querySelector('.data-table-scroll-tall');
+    expect(frame?.querySelector('thead th')).not.toBeNull();
+    expect(frame?.textContent).toContain('Mars');
+    unmount(container, root);
+  });
+
+  it('Clear on the Planets group still leaves its Reports value unchanged (#721)', async () => {
+    const onRedraw = vi.fn();
+    const { container, root } = await mount(fakeProvider(), onRedraw);
+    openCard(container);
+    act(() => {
+      groupButton(container, 'Clear')?.click();
+    });
+    act(() => {
+      buttonNamed(container, 'Apply and redraw')?.click();
+    });
+    const settings = (onRedraw.mock.lastCall as [ExtendedSettings, string])[0];
+    for (const key of PLANETS) {
+      expect(settings.objectPolicies[key]).toEqual({ visible: false, aspectParticipant: false });
+    }
+    unmount(container, root);
   });
 
   it('toggles the Midpoints checkbox and applies it set', async () => {
