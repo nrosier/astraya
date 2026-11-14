@@ -16,6 +16,7 @@ import type { CustomPointDefinition } from '../src/domain/person.js';
 import type { EphemerisProvider } from '../src/ephemeris/types.js';
 import type { RulershipChoice } from '../src/astrology/rulership.js';
 import { ExtendedSettingsPanel } from '../src/ui/ExtendedSettingsPanel.js';
+import { extendedSettingsPanelMessages } from '../src/ui/ExtendedSettingsPanel.messages.js';
 import type { FormulaProblem } from '../src/ui/custom-point-problem.js';
 import { writeRulershipChoice } from '../src/ui/rulership-setting.js';
 
@@ -346,6 +347,33 @@ describe('the drawer width (#824, D-824c)', () => {
     const rule = /\.primitive-staged-dialog\[data-placement='right'\] \.data-table td \{([^}]*)\}/.exec(css);
     expect(rule?.[1]).toMatch(/white-space:\s*normal;/);
     expect(rule?.[1]).toMatch(/overflow-wrap:\s*anywhere;/);
+  });
+});
+
+describe('the apply statement and the live preview pill (#1544)', () => {
+  it('states that changes apply on Apply once in the drawer, not above each section', async () => {
+    const { container, root } = await mount(undefined, vi.fn());
+    openDrawer(container);
+    const statement = extendedSettingsPanelMessages.en.appliesOnApply;
+    const statements = Array.from(drawer(container).querySelectorAll('p')).filter(
+      (paragraph) => paragraph.textContent.trim() === statement,
+    );
+    expect(statements).toHaveLength(1);
+    expect(statements[0]?.closest('fieldset')).toBeNull();
+    unmount(container, root);
+  });
+
+  it('shows the Live preview pill only on the immediate-update Symbols control', async () => {
+    const { container, root } = await mount(undefined, vi.fn());
+    openDrawer(container);
+    const pills = Array.from(drawer(container).querySelectorAll('.primitive-badge')).filter(
+      (badge) => badge.textContent.trim() === extendedSettingsPanelMessages.en.livePreview,
+    );
+    expect(pills).toHaveLength(1);
+    expect(pills[0]?.closest('fieldset')?.querySelector('legend')?.textContent).toBe(
+      extendedSettingsPanelMessages.en.symbolsFrameSubtitle,
+    );
+    unmount(container, root);
   });
 });
 
