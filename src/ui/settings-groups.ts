@@ -13,8 +13,8 @@
 /**
  * @module ui/settings-groups
  * @purpose Pure placement of each Extended setting on a first screen, in a tab's Advanced group or on the Display tab, and the per-tab count of Advanced values that differ from the active profile's baseline.
- * @conventions No React, no storage. `PLACEMENT` is exhaustive over `keyof ExtendedSettings` at compile time. A value is compared as canonical JSON. The orb scale counts only when it sits between the three named steps, because on a step the first-screen segment already shows it.
- * @exports AdvancedTab, ADVANCED_TABS, isAdvancedTab, SettingPlacement, PLACEMENT, advancedFields, ORB_SCALE_SEGMENTS, baselineSettings, customisedCount
+ * @conventions No React, no storage. `PLACEMENT` is exhaustive over `keyof ExtendedSettings` at compile time. A value is compared as canonical JSON. The orb scale and the minor aspects sit on the Orbs & aspects first screen (#1544), not in an Advanced group, but their customised count is kept under the `orbs` count tab. The orb scale counts only when it sits between the three named steps, because on a step the first-screen chips already show it.
+ * @exports AdvancedTab, ADVANCED_TABS, isAdvancedTab, SettingPlacement, PLACEMENT, advancedFields, CountTab, ORB_SCALE_SEGMENTS, baselineSettings, customisedCount
  */
 import {
   applyCalculationProfile,
@@ -24,7 +24,7 @@ import {
 import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from '../chart/extended-settings.js';
 
 /** The tabs of the Extended settings drawer that have an Advanced group. The Display tab has none (it is appearance). */
-export const ADVANCED_TABS = ['profile', 'orbs', 'special'] as const;
+export const ADVANCED_TABS = ['profile', 'special'] as const;
 export type AdvancedTab = (typeof ADVANCED_TABS)[number];
 
 export function isAdvancedTab(value: unknown): value is AdvancedTab {
@@ -45,8 +45,8 @@ export const PLACEMENT: Readonly<Record<keyof ExtendedSettings, SettingPlacement
   midpointsVisible: 'first',
   rainbowZodiac: 'display',
   boundsScheme: 'profile',
-  orbScalePercent: 'orbs',
-  enabledMinorAspects: 'orbs',
+  orbScalePercent: 'first',
+  enabledMinorAspects: 'first',
   objectPolicies: 'first',
   lilithVariant: 'special',
   nodeVariant: 'special',
@@ -65,7 +65,13 @@ export function advancedFields(tab: AdvancedTab): readonly (keyof ExtendedSettin
   return (Object.keys(PLACEMENT) as (keyof ExtendedSettings)[]).filter((field) => PLACEMENT[field] === tab);
 }
 
-/** The orb scale's three named steps (#824): the first-screen segment's values, and the only ones it can show. */
+/** The tabs `customisedCount` counts for: the Advanced groups, and `orbs`, whose two settings sit on its first screen. */
+export type CountTab = AdvancedTab | 'orbs';
+
+/** The settings on the Orbs & aspects first screen that are counted as customised when they differ from the baseline (#1544). */
+const ORBS_FIRST_SCREEN_COUNTED: readonly (keyof ExtendedSettings)[] = ['orbScalePercent', 'enabledMinorAspects'];
+
+/** The orb scale's three named steps (#824): the detent chips' values under the first-screen slider. */
 export const ORB_SCALE_SEGMENTS = [
   { value: 'tight', label: '-50%', percent: -50 },
   { value: 'standard', label: '0%', percent: 0 },
@@ -124,9 +130,10 @@ export function baselineSettings(draft: ExtendedSettings): ExtendedSettings {
  * How many values in a tab's Advanced group differ from the baseline, plus `extra` (values kept outside the settings
  * object, such as values kept beside the settings object). Zero means the closed group hides nothing customised.
  */
-export function customisedCount(tab: AdvancedTab, draft: ExtendedSettings, extra = 0): number {
+export function customisedCount(tab: CountTab, draft: ExtendedSettings, extra = 0): number {
   const baseline = baselineSettings(draft);
-  const hidden = advancedFields(tab).filter((field) => {
+  const fields = tab === 'orbs' ? ORBS_FIRST_SCREEN_COUNTED : advancedFields(tab);
+  const hidden = fields.filter((field) => {
     if (
       field === 'orbScalePercent' &&
       ORB_SCALE_SEGMENTS.some((segment) => segment.percent === draft.orbScalePercent)
