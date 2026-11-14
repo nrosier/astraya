@@ -191,3 +191,70 @@ test('dragging the slider during playback pauses it and the slider stays where i
   expect(await slider.inputValue()).toBe(putAt);
   expect(await page.getByLabel('As of', { exact: true }).first().inputValue()).toBe(date);
 });
+
+const DAY_MS = 86_400_000;
+
+/** The slider's value for a YYYY-MM-DD date: whole days since 1970-01-01 UTC, as the bar computes it. */
+function sliderValueOf(iso: string): number {
+  return Date.UTC(Number(iso.slice(0, 4)), Number(iso.slice(5, 7)) - 1, Number(iso.slice(8, 10))) / DAY_MS;
+}
+
+/** The date a slider value stands for, as the bar formats it (YYYY-MM-DD, UTC). */
+function isoOfSliderValue(days: number): string {
+  return new Date(days * DAY_MS).toISOString().slice(0, 10);
+}
+
+/** Today in the browser's local calendar, as the Now button uses it (YYYY-MM-DD). */
+function localToday(): string {
+  const now = new Date();
+  const pad = (value: number): string => String(value).padStart(2, '0');
+  return `${String(now.getFullYear())}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
+test.describe('the slider and Now move the date and the chart (#1440)', () => {
+  test('dragging the slider while paused moves the date and the chart to the position dragged to', async () => {
+    test.setTimeout(90_000);
+    await openTransits();
+    const dateField = page.getByLabel('As of', { exact: true }).first();
+    const slider = page.getByRole('slider');
+    const wheel = page.locator('div.chart-wheel');
+    const wheelBefore = await wheel.innerHTML();
+    const dateBefore = await dateField.inputValue();
+
+    const box = await slider.boundingBox();
+    if (box === null) throw new Error('slider has no box');
+    await page.mouse.move(box.x + box.width * 0.25, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.up();
+
+    // The thumb stands on the dragged day, and the date shown is the one that day maps to.
+    await expect(dateField).not.toHaveValue(dateBefore);
+    const dragged = Number(await slider.inputValue());
+    await expect(dateField).toHaveValue(isoOfSliderValue(dragged));
+    // The chart is recalculated for the new date.
+    await expect.poll(() => wheel.innerHTML()).not.toBe(wheelBefore);
+  });
+
+  test('pressing Now after the date was moved away returns the date and the slider to today', async () => {
+    test.setTimeout(90_000);
+    await openTransits();
+    const dateField = page.getByLabel('As of', { exact: true }).first();
+    const slider = page.getByRole('slider');
+    const wheel = page.locator('div.chart-wheel');
+    const today = localToday();
+    const box = await slider.boundingBox();
+    if (box === null) throw new Error('slider has no box');
+
+    await page.mouse.move(box.x + box.width * 0.25, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.up();
+    await expect(dateField).not.toHaveValue(today);
+    const wheelAway = await wheel.innerHTML();
+
+    await page.getByRole('button', { name: 'Now', exact: true }).click();
+
+    await expect(dateField).toHaveValue(today);
+    await expect(slider).toHaveValue(String(sliderValueOf(today)));
+    await expect.poll(() => wheel.innerHTML()).not.toBe(wheelAway);
+  });
+});
