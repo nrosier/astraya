@@ -145,10 +145,22 @@ export async function openTool(page: Page, name: string): Promise<void> {
   await page.getByRole('tablist', { name: 'Tools subtabs' }).getByRole('tab', { name, exact: true }).click();
 }
 
-/** Opens one kind of chart (`Natal`, `Draconic`, `Harmonic`, `Solar return` or `Lunar return`): the header's Charts link, then the page's Chart type select (#511). */
+/**
+ * Chooses one option of a pill control (#1545): opens the pill by its accessible name (its label plus the current
+ * value, so the match is a substring), then clicks the matching radio in the card, which commits and closes it.
+ */
+export async function choosePill(page: Page, label: string, optionText: string): Promise<void> {
+  await page.getByRole('button', { name: label }).click();
+  await page
+    .getByRole('radiogroup', { name: label, exact: true })
+    .getByRole('radio', { name: optionText, exact: true })
+    .click();
+}
+
+/** Opens one kind of chart (`Natal`, `Draconic`, `Harmonic`, `Solar return` or `Lunar return`): the header's Charts link, then the page's Chart type pill (#511, #1545). */
 export async function openChart(page: Page, type: string): Promise<void> {
   await page.getByRole('banner').getByRole('link', { name: 'Charts', exact: true }).click();
-  await page.getByLabel('Chart type', { exact: true }).selectOption({ label: type });
+  await choosePill(page, 'Chart type', type);
 }
 
 /**

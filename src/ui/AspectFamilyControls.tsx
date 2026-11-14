@@ -12,6 +12,7 @@ import {
 } from './aspect-family-filter.js';
 import { aspectFamilyControlsMessages } from './AspectFamilyControls.messages.js';
 import { useMessages } from './messages.js';
+import { PillSelect } from './primitives/PillSelect.js';
 import { Select } from './primitives/Select.js';
 
 const ALL = 'all';
@@ -56,7 +57,7 @@ export function AspectFamilyControls({
         />
       )}
       {onPreset !== undefined && (
-        <Select
+        <PillSelect
           label={t.presetLabel}
           value={presetKey ?? NO_PRESET}
           options={[
