@@ -66,6 +66,21 @@ describe('AspectFamilyControls family pill (#1545)', () => {
     expect(options(element)[0]?.getAttribute('aria-checked')).toBe('true');
   });
 
+  it('pins the en option labels as literal strings, so a removed or relabelled family fails', () => {
+    const element = mount(new Set(), () => undefined);
+    act(() => {
+      pill(element).click();
+    });
+    expect(options(element).map((option) => option.textContent)).toEqual([
+      'All aspects',
+      'Major: conjunction, sextile, square, trine, opposition',
+      'Hard minor: semisquare, sesquiquadrate, quincunx, semisextile',
+      'Soft minor: quintile, biquintile',
+      'Higher harmonic: decile, novile, septile',
+      'Nodal and angular: contacts to the nodes, angles, Vertex and Fortune',
+    ]);
+  });
+
   it('reports the same family set the select reported', () => {
     const calls: ReadonlySet<AspectFamilyKey>[] = [];
     const element = mount(new Set(), (next) => calls.push(next));
