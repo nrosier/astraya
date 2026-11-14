@@ -149,17 +149,21 @@ afterEach(() => {
 });
 
 describe('Advanced groups start closed (#856)', () => {
-  it('shows no Advanced control until a group is opened, on each of the three tabs', async () => {
+  it('shows no Advanced control until a group is opened, on each of the two tabs that have one', async () => {
     const container = await mount(DEFAULT_EXTENDED_SETTINGS);
     openCard(container);
-    for (const tab of ['Profile & frame', 'Orbs & aspects', 'Special points']) {
+    for (const tab of ['Profile & frame', 'Special points']) {
       act(() => {
         tabButton(container, tab).click();
       });
       expect(advancedTrigger(container).getAttribute('aria-expanded'), tab).toBe('false');
     }
-    // A control that lives in an Advanced group is not in the page while its group is closed.
-    expect(container.querySelector('input[type="range"]')).toBeNull();
+    // Orbs & aspects has no Advanced group: the orb scale and minor aspects are on its first screen (#1544).
+    act(() => {
+      tabButton(container, 'Orbs & aspects').click();
+    });
+    expect(() => advancedTrigger(container)).toThrow('no Advanced group');
+    expect(visiblePanel(container).querySelector('input[type="range"]')).not.toBeNull();
     // The visibility matrix is no longer Advanced: it is the Bodies tab's first screen (#1544).
     act(() => {
       tabButton(container, 'Bodies').click();
@@ -233,7 +237,11 @@ describe('the customised marker', () => {
       return advancedTrigger(container).querySelector('.primitive-disclosure-summary')?.textContent ?? '';
     };
     expect(summaryOf('Profile & frame')).toBe('1 customised');
-    expect(summaryOf('Orbs & aspects')).toBe('2 customised');
+    // The orb scale and minor aspects are first-screen settings now (#1544): no Advanced group counts them.
+    act(() => {
+      tabButton(container, 'Orbs & aspects').click();
+    });
+    expect(visiblePanel(container).querySelector('.primitive-disclosure-summary')).toBeNull();
     expect(summaryOf('Special points')).toBe('2 customised');
   });
 
@@ -241,7 +249,7 @@ describe('the customised marker', () => {
     const traditional = applyCalculationProfile(DEFAULT_EXTENDED_SETTINGS, 'traditional-western-v1');
     const container = await mount(traditional, vi.fn(), 'traditional');
     openCard(container);
-    for (const tab of ['Profile & frame', 'Orbs & aspects', 'Special points']) {
+    for (const tab of ['Profile & frame', 'Special points']) {
       act(() => {
         tabButton(container, tab).click();
       });
@@ -320,7 +328,7 @@ describe('the open state', () => {
     expect(JSON.parse(localStorage.getItem(ADVANCED_GROUPS_KEY) ?? 'null')).toEqual(['special']);
     // Another tab's group is still closed.
     act(() => {
-      tabButton(container, 'Orbs & aspects').click();
+      tabButton(container, 'Profile & frame').click();
     });
     expect(advancedTrigger(container).getAttribute('aria-expanded')).toBe('false');
 

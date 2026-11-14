@@ -29,11 +29,11 @@ describe('the Advanced groups open state', () => {
   });
 
   it('opens and closes one tab at a time, and remembers it in this browser', () => {
-    writeAdvancedGroupOpen('orbs', true);
+    writeAdvancedGroupOpen('profile', true);
     writeAdvancedGroupOpen('special', true);
-    expect(readOpenAdvancedGroups()).toEqual(['orbs', 'special']);
-    expect(JSON.parse(localStorage.getItem(ADVANCED_GROUPS_KEY) ?? 'null')).toEqual(['orbs', 'special']);
-    writeAdvancedGroupOpen('orbs', false);
+    expect(readOpenAdvancedGroups()).toEqual(['profile', 'special']);
+    expect(JSON.parse(localStorage.getItem(ADVANCED_GROUPS_KEY) ?? 'null')).toEqual(['profile', 'special']);
+    writeAdvancedGroupOpen('profile', false);
     expect(readOpenAdvancedGroups()).toEqual(['special']);
   });
 
@@ -57,9 +57,13 @@ describe('the Advanced groups open state', () => {
       resetAdvancedGroupsForTests();
       expect(readOpenAdvancedGroups(), stored).toEqual([]);
     }
-    localStorage.setItem(ADVANCED_GROUPS_KEY, '["orbs","nope","orbs"]');
+    localStorage.setItem(ADVANCED_GROUPS_KEY, '["profile","nope","profile"]');
     resetAdvancedGroupsForTests();
-    expect(readOpenAdvancedGroups()).toEqual(['orbs']);
+    expect(readOpenAdvancedGroups()).toEqual(['profile']);
+    // The Orbs & aspects group was removed (#1544): a saved entry for it is ignored, and is not a setting.
+    localStorage.setItem(ADVANCED_GROUPS_KEY, '["orbs","special"]');
+    resetAdvancedGroupsForTests();
+    expect(readOpenAdvancedGroups()).toEqual(['special']);
   });
 
   it('holds a choice for this page when the browser refuses to store it', () => {
