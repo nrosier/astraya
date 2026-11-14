@@ -8814,13 +8814,9 @@ a.quiet,
  * viewport, respecting the iOS safe area. The fixed bar is not inside the layout container, since containment would
  * trap a fixed element.
  */
-.pdf-header-preset .primitive-field {
+.pdf-header-preset .primitive-pill-select {
   margin: 0;
   min-width: 0;
-}
-
-.pdf-header-preset .primitive-field select {
-  min-width: 18rem;
 }
 
 /* Issue 1075: the starting point and Build PDF sit together under the title and context line (guidelines §5), with the hint beside the action it explains. */
@@ -8938,11 +8934,6 @@ a.quiet,
 @media (max-width: 63.99rem) {
   .pdf-builder {
     padding-bottom: 9rem;
-  }
-
-  .pdf-header-preset .primitive-field select {
-    min-width: 0;
-    width: 100%;
   }
 
   .pdf-builder .pdf-build-actions {

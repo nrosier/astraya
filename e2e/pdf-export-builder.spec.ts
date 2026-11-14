@@ -15,7 +15,7 @@ import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
-import { createPerson, gotoAndSettle, pdfTextRuns, signIn } from './support.ts';
+import { choosePill, createPerson, gotoAndSettle, pdfTextRuns, signIn } from './support.ts';
 
 const BOOTSTRAP_TOKEN = 'e2e-pdf-builder-bootstrap-token';
 const USERNAME = 'pdf-reader';
@@ -88,9 +88,7 @@ test('the header’s PDF-builder link opens the PDF builder, and a preset downlo
   await expect(page.getByRole('link', { name: '← Back' })).toHaveCount(0);
 
   await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
-  await page
-    .getByLabel('Starting point', { exact: true })
-    .selectOption({ label: 'Executive summary (natal wheel, positions, interpretation)' });
+  await choosePill(page, 'Starting point', 'Executive summary (natal wheel, positions, interpretation)');
 
   const buildButton = page.getByRole('button', { name: 'Build PDF', exact: true });
   await expect(buildButton).toBeEnabled();
@@ -195,7 +193,7 @@ test('the Documents page keeps its starting point and Build PDF in the header, w
   await gotoAndSettle(page, `${baseUrl}/#/documents`);
   // The starting point and Build PDF sit in the primary bar under the title and context line (#1075).
   const header = page.locator('.pdf-primary-bar');
-  await expect(header.getByLabel('Starting point', { exact: true })).toBeVisible();
+  await expect(header.getByRole('button', { name: 'Starting point' })).toBeVisible();
   await expect(header.getByRole('button', { name: 'Build PDF', exact: true })).toBeVisible();
   // Desktop: the summary column sits to the right of the selection, and no Build bar is pinned.
   const selection = await page.getByRole('heading', { name: 'Document sections', level: 2 }).boundingBox();
@@ -439,9 +437,7 @@ test.describe('with the shared people (#799)', () => {
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await page.goto(`${baseUrl}/#/documents/pdf`);
     await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Albert Einstein' });
-    await page
-      .getByLabel('Starting point', { exact: true })
-      .selectOption({ label: 'Full predictive report (natal wheel, transits, progressions, solar arc)' });
+    await choosePill(page, 'Starting point', 'Full predictive report (natal wheel, transits, progressions, solar arc)');
 
     await openGroup(page, 'Progressions, solar arc, profections & astrocartography');
 
@@ -546,9 +542,7 @@ test.describe('with the shared people (#799)', () => {
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await gotoAndSettle(page, `${baseUrl}/#/documents`);
     await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Albert Einstein' });
-    await page
-      .getByLabel('Starting point', { exact: true })
-      .selectOption({ label: 'Executive summary (natal wheel, positions, interpretation)' });
+    await choosePill(page, 'Starting point', 'Executive summary (natal wheel, positions, interpretation)');
 
     // The option appears with the written report, and starts from the device setting, which is on by default: the PDF
     // matches the Report on screen until the reader changes it here.
