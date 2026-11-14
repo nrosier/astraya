@@ -14,7 +14,7 @@
  * @conventions Thin wiring over table-sort.ts's sorting/serialization logic; `memoizeRows` (#1440) re-renders a plain row only when its displayed text changes and table-column-width.ts's width arithmetic; uses SortableTable.messages.ts for en/nl text via useMessages(). Column widths are component state only (session-only, owner decision on #1301): never persisted, reset by the Reset action or a fresh mount.
  * @exports SortableTable, CsvExportTable, csvExportTable, useCsvExports
  */
-import { memo, useId, useLayoutEffect, useRef, useState } from 'react';
+import { Fragment, memo, useId, useLayoutEffect, useRef, useState } from 'react';
 import { downloadText } from './download.js';
 import { type GlossaryTermId } from './astro-glossary.messages.js';
 import { GlossaryTerm } from './GlossaryTerm.js';
@@ -162,6 +162,7 @@ export function SortableTable<T>({
   captionTerm,
   linking,
   memoizeRows = false,
+  rowGroups,
 }: {
   readonly caption: string;
   readonly columns: readonly TableColumn<T>[];
@@ -185,6 +186,16 @@ export function SortableTable<T>({
   readonly linking?: RowLinking<T> | undefined;
   /** True for a table that redraws often with mostly unchanged rows (a playing animation, #1440): a row then re-renders only when its displayed text changes. Not with `linking`; a cell built by `renderCell` must be fully described by its `render` text. */
   readonly memoizeRows?: boolean;
+  /**
+   * Partitions the rows under group header rows (#1544). `of` names a row's group; a header row spanning every column is
+   * drawn before the first row of each run, a cell holding `header`'s content, and the rows of a `collapsed` group are left out.
+   * Use it with a table that is not sorted, so each group stays one run.
+   */
+  readonly rowGroups?: {
+    readonly of: (row: T) => string;
+    readonly header: (group: string) => React.ReactNode;
+    readonly collapsed: ReadonlySet<string>;
+  };
 }): React.JSX.Element {
   const t = useMessages(sortableTableMessages);
   const [sort, setSort] = useState<SortState>();
@@ -396,10 +407,28 @@ export function SortableTable<T>({
             </tr>
           </thead>
           <tbody>
-            {sorted.map((row) => {
+            {sorted.map((row, index) => {
               const rowKey = getRowKey(row);
+              const previous = sorted[index - 1];
+              const group = rowGroups?.of(row);
+              const groupRow =
+                rowGroups !== undefined &&
+                group !== undefined &&
+                (previous === undefined || rowGroups.of(previous) !== group) ? (
+                  <tr key={`group:${group}`} className="data-table-group-row">
+                    <td colSpan={columns.length} className="data-table-group-cell">
+                      {rowGroups.header(group)}
+                    </td>
+                  </tr>
+                ) : undefined;
+              if (rowGroups !== undefined && group !== undefined && rowGroups.collapsed.has(group)) return groupRow;
               if (memoizeRows && linking === undefined && selectedRowKey === undefined) {
-                return <MemoRow key={rowKey} row={row} rowKey={rowKey} columns={columns} aligns={aligns} />;
+                return (
+                  <Fragment key={rowKey}>
+                    {groupRow}
+                    <MemoRow row={row} rowKey={rowKey} columns={columns} aligns={aligns} />
+                  </Fragment>
+                );
               }
               const selected = selectedRowKey === rowKey;
               const linkedClass =
@@ -410,53 +439,55 @@ export function SortableTable<T>({
                 .filter((value) => value !== undefined)
                 .join(' ');
               return (
-                <tr
-                  key={rowKey}
-                  data-row-key={rowKey}
-                  className={className === '' ? undefined : className}
-                  aria-current={selected ? 'true' : undefined}
-                  {...(linking === undefined
-                    ? {}
-                    : {
-                        tabIndex: 0,
-                        style:
-                          linking.tint === undefined
-                            ? undefined
-                            : ({ '--tech': linking.tint(row) } as React.CSSProperties),
-                        onMouseEnter: () => {
-                          linking.onHover(rowKey);
-                        },
-                        onMouseLeave: () => {
-                          linking.onHover(undefined);
-                        },
-                        onFocus: () => {
-                          linking.onHover(rowKey);
-                        },
-                        onBlur: () => {
-                          linking.onHover(undefined);
-                        },
-                        onClick: () => {
-                          linking.onSelect(rowKey);
-                        },
-                        onKeyDown: (event: React.KeyboardEvent<HTMLTableRowElement>) => {
-                          // Only the row itself: Enter or Space on a control inside it keeps its own meaning.
-                          if (event.target !== event.currentTarget || (event.key !== 'Enter' && event.key !== ' '))
-                            return;
-                          event.preventDefault();
-                          linking.onSelect(rowKey);
-                        },
-                      })}
-                >
-                  {columns.map((column) => (
-                    <td
-                      key={column.key}
-                      data-align={aligns.get(column.key)}
-                      className={column.wrapText ? 'data-table-cell-wrap' : undefined}
-                    >
-                      {column.renderCell ? column.renderCell(row) : screenText(column, row)}
-                    </td>
-                  ))}
-                </tr>
+                <Fragment key={rowKey}>
+                  {groupRow}
+                  <tr
+                    data-row-key={rowKey}
+                    className={className === '' ? undefined : className}
+                    aria-current={selected ? 'true' : undefined}
+                    {...(linking === undefined
+                      ? {}
+                      : {
+                          tabIndex: 0,
+                          style:
+                            linking.tint === undefined
+                              ? undefined
+                              : ({ '--tech': linking.tint(row) } as React.CSSProperties),
+                          onMouseEnter: () => {
+                            linking.onHover(rowKey);
+                          },
+                          onMouseLeave: () => {
+                            linking.onHover(undefined);
+                          },
+                          onFocus: () => {
+                            linking.onHover(rowKey);
+                          },
+                          onBlur: () => {
+                            linking.onHover(undefined);
+                          },
+                          onClick: () => {
+                            linking.onSelect(rowKey);
+                          },
+                          onKeyDown: (event: React.KeyboardEvent<HTMLTableRowElement>) => {
+                            // Only the row itself: Enter or Space on a control inside it keeps its own meaning.
+                            if (event.target !== event.currentTarget || (event.key !== 'Enter' && event.key !== ' '))
+                              return;
+                            event.preventDefault();
+                            linking.onSelect(rowKey);
+                          },
+                        })}
+                  >
+                    {columns.map((column) => (
+                      <td
+                        key={column.key}
+                        data-align={aligns.get(column.key)}
+                        className={column.wrapText ? 'data-table-cell-wrap' : undefined}
+                      >
+                        {column.renderCell ? column.renderCell(row) : screenText(column, row)}
+                      </td>
+                    ))}
+                  </tr>
+                </Fragment>
               );
             })}
           </tbody>

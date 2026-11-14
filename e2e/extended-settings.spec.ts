@@ -246,6 +246,62 @@ test.describe('with the shared people (#799)', () => {
     await closeSettings(page);
   });
 
+  for (const [width, height] of [
+    [1280, 800],
+    [390, 844],
+  ] as const) {
+    test(`the matrix groups its rows and keeps its column header at the top of its scroll frame at ${String(width)}x${String(height)} (#1544)`, async () => {
+      test.setTimeout(90_000);
+      await page.setViewportSize({ width, height });
+      await openSharedPerson(page, baseUrl, EINSTEIN);
+      if (width < 500) {
+        await page.getByRole('button', { name: 'Menu', exact: true }).click();
+        await page.getByRole('link', { name: 'Charts', exact: true }).click();
+        await expect(page.locator('div.chart-wheel')).toBeVisible();
+      } else {
+        await openNatalChart(page);
+        await expect(page.locator('div.chart-wheel')).toBeVisible();
+      }
+      await openSettings(page, 'Bodies');
+      const card = page.locator('dialog.settings-card');
+      const matrix = card.locator('fieldset.settings-card-group', { hasText: 'Object visibility' });
+
+      // Three groups, each with its own All, Clear and None.
+      for (const group of ['Planets', 'Asteroids', 'Points']) {
+        const actions = matrix.getByRole('group', { name: group, exact: true });
+        await expect(actions.getByRole('button', { name: 'All', exact: true })).toBeVisible();
+        await expect(actions.getByRole('button', { name: 'None', exact: true })).toBeVisible();
+      }
+      // None on Asteroids clears only the asteroids.
+      await matrix
+        .getByRole('group', { name: 'Asteroids', exact: true })
+        .getByRole('button', { name: 'None', exact: true })
+        .click();
+      await expect(matrix.getByLabel('Ceres — visible', { exact: true })).not.toBeChecked();
+      await expect(matrix.getByLabel('Sun — visible', { exact: true })).toBeChecked();
+
+      // Scroll the matrix: the column header row stays at the top of the scroll container.
+      const frame = matrix.locator('.data-table-scroll-tall');
+      await expect(frame).toBeVisible();
+      const measured = JSON.parse(
+        await page.evaluate(`(() => {
+          const frame = document.querySelector('dialog.settings-card .data-table-scroll-tall');
+          frame.scrollTop = frame.scrollHeight;
+          const header = frame.querySelector('thead th');
+          return JSON.stringify({
+            scrolled: frame.scrollTop,
+            offset: header.getBoundingClientRect().top - frame.getBoundingClientRect().top,
+          });
+        })()`),
+      ) as { scrolled: number; offset: number };
+      expect(measured.scrolled).toBeGreaterThan(0);
+      const offset = measured.offset;
+      // The frame's own 1px border sits above the header, which is pinned at the top of its padding box.
+      expect(Math.abs(offset - 1)).toBeLessThanOrEqual(1);
+      await closeSettings(page);
+    });
+  }
+
   test('the Apply button enables when only Symbols are changed (#459)', async () => {
     test.setTimeout(90_000);
     await openSharedPerson(page, baseUrl, EINSTEIN);
