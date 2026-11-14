@@ -39,10 +39,10 @@ const WORDS: Record<'en' | 'nl', BasisWords> = {
 describe('buildCalculationBasisLine (#1059)', () => {
   it('prints zodiac, house system, rulers and orbs for the shipped defaults', () => {
     expect(buildCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, 'modern', WORDS.en)).toBe(
-      'Tropical · Placidus · Modern rulers · Standard orbs',
+      'Tropical · Placidus · Mean node · Modern rulers · Standard orbs',
     );
     expect(buildCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, 'traditional', WORDS.nl)).toBe(
-      'Tropisch · Placidus · Traditioneel heersers · Standaard orbs',
+      'Tropisch · Placidus · Gemiddelde maansknoop · Traditioneel heersers · Standaard orbs',
     );
   });
 
@@ -53,7 +53,7 @@ describe('buildCalculationBasisLine (#1059)', () => {
       houseSystem: 'W' as const,
     };
     const line = buildCalculationBasisLine(settings, 'both', WORDS.en);
-    expect(line).toMatch(/^Sidereal · .+ · Both rulers · Standard orbs$/);
+    expect(line).toMatch(/^Sidereal · .+ · Mean node · Both rulers · Standard orbs$/);
     expect(line).not.toContain('Placidus');
   });
 
@@ -63,27 +63,40 @@ describe('buildCalculationBasisLine (#1059)', () => {
         houses: 'whole-sign',
         orbs: false,
       }),
-    ).toBe('Tropical · Whole-sign houses · Traditional rulers');
+    ).toBe('Tropical · Whole-sign houses · Mean node · Traditional rulers');
     expect(
       buildCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, 'traditional', WORDS.nl, undefined, {
         houses: 'whole-sign',
         orbs: false,
       }),
-    ).toBe('Tropisch · Hele-tekenhuizen · Traditioneel heersers');
+    ).toBe('Tropisch · Hele-tekenhuizen · Gemiddelde maansknoop · Traditioneel heersers');
     expect(buildCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, 'modern', WORDS.en, undefined, { rulers: false })).toBe(
-      'Tropical · Placidus · Standard orbs',
+      'Tropical · Placidus · Mean node · Standard orbs',
     );
     expect(
       buildCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, 'modern', WORDS.en, undefined, {
         rulers: false,
         orbs: false,
       }),
-    ).toBe('Tropical · Placidus');
+    ).toBe('Tropical · Placidus · Mean node');
+  });
+
+  it('names the lunar node model the settings calculate with, on every line (#1407)', () => {
+    const trueNode = { ...DEFAULT_EXTENDED_SETTINGS, nodeVariant: 'true' as const };
+    expect(buildCalculationBasisLine(trueNode, 'modern', WORDS.en)).toBe(
+      'Tropical · Placidus · True node · Modern rulers · Standard orbs',
+    );
+    expect(buildCalculationBasisLine(trueNode, 'modern', WORDS.nl)).toBe(
+      'Tropisch · Placidus · Ware maansknoop · Modern heersers · Standaard orbs',
+    );
+    expect(
+      buildCalculationBasisLine(trueNode, 'modern', WORDS.en, undefined, { houses: 'whole-sign', orbs: false }),
+    ).toBe('Tropical · Whole-sign houses · True node · Modern rulers');
   });
 
   it("states the person's Traditional rulers with the transit orbs for the Transits view", () => {
     const line = buildCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, 'traditional', WORDS.en, 'My house style');
-    expect(line).toBe('Tropical · Placidus · Traditional rulers · My house style orbs');
+    expect(line).toBe('Tropical · Placidus · Mean node · Traditional rulers · My house style orbs');
     expect(line).not.toContain('Modern');
   });
 

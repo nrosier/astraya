@@ -4,7 +4,7 @@
  */
 /**
  * @module ui/calculation-basis
- * @purpose Builds the full calculation-basis line a calculated page states under its title (#1059): "Tropical · Placidus · Modern rulers · Standard orbs".
+ * @purpose Builds the full calculation-basis line a calculated page states under its title (#1059): "Tropical · Placidus · Mean node · Modern rulers · Standard orbs". The house system and node model are on every line (#1407).
  * @conventions `buildCalculationBasisLine` is pure (settings, rulers and an explicit vocabulary in; text out); the hooks only gather the translated vocabulary. `useCalculationBasisLine` takes a person's own settings; `useEngineBasisLine` takes the engine defaults plus a chart type's own orbs and rulers. Orbs are named by the device orb profile when one applies, else the built-in profile the scale matches, else "Custom".
  * @exports BasisParts, orbSourceName, BasisWords, buildCalculationBasisLine, withBasisItems, useCalculationBasisLine, useEngineBasisLine
  */
@@ -57,8 +57,8 @@ function houseSystemName(code: string): string {
 }
 
 /**
- * "Tropical · Placidus · Modern rulers · Standard orbs": the zodiac, house system, rulership and orbs `settings`
- * resolve to. `deviceOrbProfile` is the name of an orb profile the device applies on top of the card's own orbs
+ * "Tropical · Placidus · Mean node · Modern rulers · Standard orbs": the zodiac, house system, lunar node model (#1407),
+ * rulership and orbs `settings` resolve to. `deviceOrbProfile` is the name of an orb profile the device applies on top of the card's own orbs
  * (#806); it names the orbs when present. Orbs edited on the card, or matching no built-in profile, read "Custom".
  */
 export function buildCalculationBasisLine(
@@ -72,12 +72,13 @@ export function buildCalculationBasisLine(
   const builtIn = settings.orbRules === undefined ? matchOrbProfile(settings.orbScalePercent) : undefined;
   const zodiac = settings.zodiac.kind === 'sidereal' ? t.sidereal : t.tropical;
   const houses = parts.houses === 'whole-sign' ? t.wholeSign : houseSystemName(settings.houseSystem);
+  const node = settings.nodeVariant === 'true' ? t.trueNode : t.meanNode;
   const rulers = t.rulers(words.rulerTitles[rulership]);
   const orbs = t.orbs(deviceOrbProfile ?? words.orbProfileTitles[builtIn ?? 'custom']);
   if (parts.houses === undefined && parts.rulers !== false && parts.orbs !== false) {
-    return t.line(zodiac, houses, rulers, orbs);
+    return t.line(zodiac, houses, node, rulers, orbs);
   }
-  return [zodiac, houses, parts.rulers === false ? '' : rulers, parts.orbs === false ? '' : orbs]
+  return [zodiac, houses, node, parts.rulers === false ? '' : rulers, parts.orbs === false ? '' : orbs]
     .filter((item) => item !== '')
     .join(' · ');
 }

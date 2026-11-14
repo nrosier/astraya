@@ -45,7 +45,9 @@ const EDIT_LINK = 'Edit calculation basis in Preferences';
 for (const [tool, houses] of TOOLS) {
   test(`the ${tool} page states its calculation basis without an Edit link`, async ({ page }) => {
     await gotoAndSettle(page, `${baseUrl}/#/explore/${tool}`);
-    await expect(page.locator('.page-header-basis')).toHaveText(`Tropical · ${houses} · Modern rulers · Standard orbs`);
+    await expect(page.locator('.page-header-basis')).toHaveText(
+      `Tropical · ${houses} · Mean node · Modern rulers · Standard orbs`,
+    );
     await expect(page.getByRole('link', { name: EDIT_LINK })).toHaveCount(0);
   });
 
@@ -64,7 +66,7 @@ for (const [tool, houses] of TOOLS) {
     // Horary does follow the device rulers (#806); every other part of its line, and all of the others', stays shipped.
     const rulers = tool === 'horary' ? 'Traditional' : 'Modern';
     await expect(page.locator('.page-header-basis')).toHaveText(
-      `Tropical · ${houses} · ${rulers} rulers · Standard orbs`,
+      `Tropical · ${houses} · Mean node · ${rulers} rulers · Standard orbs`,
     );
     await expect(page.getByRole('link', { name: EDIT_LINK })).toHaveCount(0);
   });
