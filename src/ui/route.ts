@@ -32,7 +32,7 @@
  * @module ui/route
  * @purpose Pure hash-route parsing and construction for every screen in the app, on the one canonical scheme, plus one-time-token query extraction (set-password, setup).
  * @conventions Pure and separate from components so it is tested without a DOM; hash routing since the built app is static files with no server rewrite rule; ids are validated with domain/id.js's isPersonId rather than accepted as any string; an unknown, obsolete or malformed hash falls back to Home with no redirect or alias; `parseRoute(routeHref(r))` round-trips for every route.
- * @exports Route, ExportBuilderSection, PreferencesSection, PREFERENCES_SECTIONS, parseRoute, routeHref, chartHref, hashDate, hashWithDate, personHref, routeShowsBackLink, setPasswordToken, setupToken
+ * @exports Route, OverlayRingKey, OverlayRingDates, hashWithOverlayDates, ExportBuilderSection, PreferencesSection, PREFERENCES_SECTIONS, parseRoute, routeHref, chartHref, hashDate, hashWithDate, personHref, routeShowsBackLink, setPasswordToken, setupToken
  */
 import { isPersonId } from '../domain/id.js';
 import { chartViewFromHash, isChartType, isChartView, type ChartType, type ChartViewKind } from './chart-sections.js';
@@ -70,6 +70,8 @@ export type Route =
       readonly view?: ChartViewKind;
       readonly compareType?: ChartType;
       readonly date?: string;
+      /** The other extra rings' dates (#1400): `?progressed=`, `?directed=`, `?solararc=`, `?return=`. `date` above is the transit ring's (`?transit=`, or the older `?date=`). */
+      readonly ringDates?: OverlayRingDates;
     }
   // The written report (#271): Interpretation in the navigation.
   | { readonly kind: 'report'; readonly personId: string }
@@ -181,7 +183,9 @@ function personSubRoute(personId: string, rest: readonly string[], hash: string)
     const query = new URLSearchParams(hash.split('?')[1] ?? '');
     const compareParam = query.get('compare');
     const compare = isChartType(compareParam) ? compareParam : undefined;
-    const date = chartDateParam(query.get('date'));
+    // `?transit=` is the transit ring's own date; the older `?date=` (#800) keeps opening the same ring.
+    const date = chartDateParam(query.get('transit')) ?? chartDateParam(query.get('date'));
+    const ringDates = ringDatesOf(query);
     return {
       kind: 'chart',
       personId,
@@ -189,6 +193,7 @@ function personSubRoute(personId: string, rest: readonly string[], hash: string)
       view: third,
       ...(compare === undefined ? {} : { compareType: compare }),
       ...(date === undefined ? {} : { date }),
+      ...(ringDates === undefined ? {} : { ringDates }),
     };
   }
   if (rest.length !== 2) return undefined;
@@ -352,6 +357,10 @@ export function routeHref(route: Route): string {
       const query = [
         ...(route.compareType === undefined ? [] : [`compare=${route.compareType}`]),
         ...(route.date === undefined ? [] : [`date=${route.date}`]),
+        ...OVERLAY_RING_KEYS.flatMap((key) => {
+          const value = route.ringDates?.[key];
+          return value === undefined ? [] : [`${OVERLAY_RING_PARAMS[key]}=${value}`];
+        }),
       ];
       return query.length === 0 ? base : `${base}?${query.join('&')}`;
     }
@@ -392,6 +401,7 @@ export function chartHref(
   type?: ChartType,
   compareType?: ChartType,
   date?: string,
+  ringDates?: OverlayRingDates,
 ): string {
   return routeHref({
     kind: 'chart',
@@ -400,6 +410,7 @@ export function chartHref(
     ...(view === undefined ? {} : { view }),
     ...(compareType === undefined ? {} : { compareType }),
     ...(date === undefined ? {} : { date }),
+    ...(ringDates === undefined ? {} : { ringDates }),
   });
 }
 
@@ -411,6 +422,48 @@ function chartDateParam(value: string | null): string | undefined {
   return probe.getUTCFullYear() === year && probe.getUTCMonth() === month - 1 && probe.getUTCDate() === day
     ? value
     : undefined;
+}
+
+/** The extra rings with a date of their own in the chart URL (#1400); the transit ring's is `date`. */
+export type OverlayRingKey = 'progressed' | 'directed' | 'solarArc' | 'return';
+export type OverlayRingDates = Partial<Record<OverlayRingKey, string>>;
+const OVERLAY_RING_KEYS: readonly OverlayRingKey[] = ['progressed', 'directed', 'solarArc', 'return'];
+/** The query parameter of each ring's date (#1400); the transit ring's is `transit`. */
+const OVERLAY_RING_PARAMS: Readonly<Record<OverlayRingKey | 'transit', string>> = {
+  transit: 'transit',
+  progressed: 'progressed',
+  directed: 'directed',
+  solarArc: 'solararc',
+  return: 'return',
+};
+
+function ringDatesOf(query: URLSearchParams): OverlayRingDates | undefined {
+  const found: { -readonly [K in OverlayRingKey]?: string } = {};
+  for (const key of OVERLAY_RING_KEYS) {
+    const value = chartDateParam(query.get(OVERLAY_RING_PARAMS[key]));
+    if (value !== undefined) found[key] = value;
+  }
+  return Object.keys(found).length === 0 ? undefined : found;
+}
+
+/**
+ * `hash` with the applied extra-ring dates (#1400): one query value per ring, a ring that is off dropped, the older
+ * `date` value replaced by `transit`, the path and every other query value kept.
+ */
+export function hashWithOverlayDates(
+  hash: string,
+  dates: { readonly transit?: string | undefined } & OverlayRingDates,
+): string {
+  const [path = '', queryString = ''] = hash.split('?');
+  const query = new URLSearchParams(queryString);
+  query.delete('date');
+  for (const key of ['transit', ...OVERLAY_RING_KEYS] as const) {
+    const value = dates[key];
+    if (value === undefined) query.delete(OVERLAY_RING_PARAMS[key]);
+    else query.set(OVERLAY_RING_PARAMS[key], value);
+  }
+  const text = query.toString();
+  return text === '' ? path : `${path}?${text}`;
 }
 
 /** The `?date=YYYY-MM-DD` of a hash (#1400), or undefined when it is absent or not a real calendar day. */

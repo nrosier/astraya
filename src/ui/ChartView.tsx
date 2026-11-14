@@ -125,7 +125,14 @@ import {
   type ChartType,
 } from './chart-sections.js';
 import { chartTypesMessages } from './ChartTypes.messages.js';
-import { chartHref, personHref, routeHref, type ExportBuilderSection } from './route.js';
+import {
+  chartHref,
+  hashWithOverlayDates,
+  personHref,
+  routeHref,
+  type ExportBuilderSection,
+  type OverlayRingDates,
+} from './route.js';
 import { CHART_CONTROLS_SLOT_CLASS, ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
 import { ChartViewNav } from './ChartViewNav.js';
 import { usePageActionsTarget } from './page-actions-slot.js';
@@ -631,6 +638,7 @@ export function ChartDataView({
   typeSelector,
   overlayContext,
   initialTransitDate,
+  initialRingDates,
   chartType,
   personId,
   frameHasHouses = true,
@@ -704,6 +712,12 @@ export function ChartDataView({
    */
   readonly initialTransitDate?: string | undefined;
   /**
+   * The other extra rings' dates from the route (#1400, `?progressed=`, `?directed=`, `?solararc=`, `?return=`): each
+   * names a ring that opens switched on at that day. Passing this (even empty) also makes Apply write the applied ring
+   * dates back to the URL; left out, the URL is never touched (every chart type but the natal one).
+   */
+  readonly initialRingDates?: OverlayRingDates | undefined;
+  /**
    * What kind of chart this is, for the screens that show a chart derived from the natal one (#725). Anything but
    * natal makes the inspector say that natal-chart interpretations are being applied to a derived chart; left out,
    * no such note is shown (natal, shared, composite and horary charts).
@@ -740,13 +754,36 @@ export function ChartDataView({
   const [variants] = useGlyphVariants();
   const overlayT = useMessages(chartOverlaySettingsPanelMessages);
   const openingOverlaySettings = useMemo<ChartOverlaySettings>(
-    () =>
-      initialTransitDate === undefined
-        ? DEFAULT_CHART_OVERLAY_SETTINGS
-        : { ...DEFAULT_CHART_OVERLAY_SETTINGS, transit: true, transitDate: initialTransitDate },
-    [initialTransitDate],
+    () => ({
+      ...DEFAULT_CHART_OVERLAY_SETTINGS,
+      ...(initialTransitDate === undefined ? {} : { transit: true, transitDate: initialTransitDate }),
+      ...(initialRingDates?.progressed === undefined
+        ? {}
+        : { progressed: true, progressedDate: initialRingDates.progressed }),
+      ...(initialRingDates?.directed === undefined ? {} : { directed: true, directedDate: initialRingDates.directed }),
+      ...(initialRingDates?.solarArc === undefined ? {} : { solarArc: true, solarArcDate: initialRingDates.solarArc }),
+      ...(initialRingDates?.return === undefined ? {} : { return: true, returnDate: initialRingDates.return }),
+    }),
+    [initialTransitDate, initialRingDates],
   );
   const [overlaySettings, setOverlaySettings] = useState<ChartOverlaySettings>(openingOverlaySettings);
+  const writeOverlayDatesToUrl = (applied: ChartOverlaySettings): void => {
+    try {
+      window.history.replaceState(
+        window.history.state,
+        '',
+        hashWithOverlayDates(window.location.hash, {
+          ...(applied.transit ? { transit: applied.transitDate } : {}),
+          ...(applied.progressed ? { progressed: applied.progressedDate } : {}),
+          ...(applied.directed ? { directed: applied.directedDate } : {}),
+          ...(applied.solarArc ? { solarArc: applied.solarArcDate } : {}),
+          ...(applied.return ? { return: applied.returnDate } : {}),
+        }),
+      );
+    } catch {
+      // A browser that refuses the rewrite leaves the URL as it was.
+    }
+  };
   const [overlayLoad, setOverlayLoad] = useState<OverlayLoad>({ kind: 'idle' });
   // The instrument bar under the wheel (#1532): the Hard, Soft and Minor pills (all on by default) and the view-only
   // Natal only switch, which hides the transit ring here without changing the saved overlay settings.
@@ -1317,7 +1354,11 @@ export function ChartDataView({
         value={overlaySettings}
         baseLabel={overlayContext.baseLabel}
         unavailableSources={overlayContext.baseSource === undefined ? [] : [overlayContext.baseSource]}
-        onApply={setOverlaySettings}
+        onApply={(next) => {
+          setOverlaySettings(next);
+          // Only Apply writes the URL (#1400): one value per ring that is on, none for a ring that is off.
+          if (initialRingDates !== undefined) writeOverlayDatesToUrl(next);
+        }}
       />
     ) : null;
   const settingsPanel =
@@ -1509,17 +1550,23 @@ export function ChartDataView({
   );
 }
 
+/** A stable empty set of ring dates, so the natal chart's opening settings do not change identity each render. */
+const NO_RING_DATES: OverlayRingDates = {};
+
 export function ChartView({
   personId,
   view,
   compareType,
   date,
+  ringDates,
 }: {
   personId: string;
   view?: ChartViewKind | undefined;
   compareType?: ChartType | undefined;
-  /** The day the wheel opens on (#800), from the route's `?date=`. */
+  /** The day the transit ring opens on (#800), from the route's `?transit=` or the older `?date=`. */
   date?: string | undefined;
+  /** The other extra rings' dates (#1400), from the route. */
+  ringDates?: OverlayRingDates | undefined;
 }): React.JSX.Element {
   const state = useStoreState();
   const person = state.people.get(personId);
@@ -1860,8 +1907,9 @@ export function ChartView({
         onViewChange={(next) => {
           changeChartView(personId, 'natal', next);
         }}
-        buildViewHref={(next) => chartHref(personId, next, 'natal', undefined, date)}
+        buildViewHref={(next) => chartHref(personId, next, 'natal', undefined, date, ringDates)}
         initialTransitDate={date}
+        initialRingDates={ringDates ?? NO_RING_DATES}
         overlayContext={natalOverlayContext}
       />
     </main>
