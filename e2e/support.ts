@@ -160,8 +160,8 @@ export async function openNatalChart(page: Page, view = 'Wheel'): Promise<void> 
   if (view !== 'Wheel') await page.getByRole('link', { name: view, exact: true }).click();
 }
 
-/** The Extended settings drawer's four categories (#824), by their visible names. */
-export type SettingsTab = 'Profile & frame' | 'Bodies & orbs' | 'Display & glyphs' | 'Special points';
+/** The Extended settings drawer's five categories (#824, #1544), by their visible names. */
+export type SettingsTab = 'Profile & frame' | 'Bodies' | 'Orbs & aspects' | 'Special points' | 'Display & glyphs';
 
 /**
  * Opens the chart's Extended settings drawer (a right-anchored dialog, #824) from its trigger, if it is not open
@@ -195,8 +195,9 @@ export async function openSettingsTab(page: Page, tab: SettingsTab): Promise<voi
     await dialog.getByRole('combobox', { name: 'Category', exact: true }).selectOption({ label: tab });
   }
   // Fine-tuning controls sit in a collapsed Advanced group on three of the tabs (#856). A spec that asks for a tab
-  // wants the controls in it, so open the group; a spec about the collapsed state clicks the tabs itself.
-  if (tab !== 'Display & glyphs') await openAdvancedGroup(page);
+  // wants the controls in it, so open the group; a spec about the collapsed state clicks the tabs itself. Bodies and
+  // Display & glyphs have no Advanced group (#1544).
+  if (tab !== 'Display & glyphs' && tab !== 'Bodies') await openAdvancedGroup(page);
 }
 
 /** Opens the open tab's Advanced group (#856), if it is closed. */

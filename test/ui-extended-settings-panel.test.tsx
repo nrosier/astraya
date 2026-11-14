@@ -62,7 +62,7 @@ function checkboxLabeled(container: HTMLElement, text: string): HTMLInputElement
 // These tests drive controls inside the Advanced groups, so each starts with all three open (#856); the tests of the
 // closed state itself are in ui-extended-settings-advanced.test.tsx.
 beforeEach(() => {
-  localStorage.setItem(ADVANCED_GROUPS_KEY, JSON.stringify(['profile', 'bodies', 'special']));
+  localStorage.setItem(ADVANCED_GROUPS_KEY, JSON.stringify(['profile', 'orbs', 'special']));
   resetAdvancedGroupsForTests();
 });
 
@@ -415,7 +415,7 @@ describe('ExtendedSettingsPanel', () => {
     openCard(container);
     // Long explanations sit behind a Disclosure (#824), so the text is in the DOM only once opened.
     act(() => {
-      tabButton(container, 'Bodies & orbs').click();
+      tabButton(container, 'Bodies').click();
     });
     openDisclosure(container, 'About these points');
     act(() => {

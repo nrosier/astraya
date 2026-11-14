@@ -73,7 +73,7 @@ test.describe('with the shared people (#799)', () => {
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await openNatalChart(page, 'Placements');
     // Part of Spirit is hidden until switched on (#542), like Part of Fortune.
-    await openSettings(page, 'Bodies & orbs');
+    await openSettings(page, 'Bodies');
     // The checkbox's accessible name now disambiguates visible/participates in aspects (#585).
     await page
       .locator('dialog.settings-card')

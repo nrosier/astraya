@@ -24,7 +24,7 @@ import {
 import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from '../chart/extended-settings.js';
 
 /** The tabs of the Extended settings drawer that have an Advanced group. The Display tab has none (it is appearance). */
-export const ADVANCED_TABS = ['profile', 'bodies', 'special'] as const;
+export const ADVANCED_TABS = ['profile', 'orbs', 'special'] as const;
 export type AdvancedTab = (typeof ADVANCED_TABS)[number];
 
 export function isAdvancedTab(value: unknown): value is AdvancedTab {
@@ -45,9 +45,9 @@ export const PLACEMENT: Readonly<Record<keyof ExtendedSettings, SettingPlacement
   midpointsVisible: 'first',
   rainbowZodiac: 'display',
   boundsScheme: 'profile',
-  orbScalePercent: 'bodies',
-  enabledMinorAspects: 'bodies',
-  objectPolicies: 'bodies',
+  orbScalePercent: 'orbs',
+  enabledMinorAspects: 'orbs',
+  objectPolicies: 'first',
   lilithVariant: 'special',
   nodeVariant: 'special',
   antisciaVisible: 'special',
@@ -122,7 +122,7 @@ export function baselineSettings(draft: ExtendedSettings): ExtendedSettings {
 
 /**
  * How many values in a tab's Advanced group differ from the baseline, plus `extra` (values kept outside the settings
- * object, such as the formula points on the Bodies tab). Zero means the closed group hides nothing customised.
+ * object, such as values kept beside the settings object). Zero means the closed group hides nothing customised.
  */
 export function customisedCount(tab: AdvancedTab, draft: ExtendedSettings, extra = 0): number {
   const baseline = baselineSettings(draft);

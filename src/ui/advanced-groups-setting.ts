@@ -5,7 +5,7 @@
  */
 /**
  * @module ui/advanced-groups-setting
- * @purpose Reads, saves and subscribes to the set of open Advanced groups (profile, bodies, special) of the Extended settings drawer, kept in this browser.
+ * @purpose Reads, saves and subscribes to the set of open Advanced groups (profile, orbs, special) of the Extended settings drawer, kept in this browser.
  * @conventions One localStorage key holding a JSON list of open tab keys; every group starts closed. A malformed or unknown stored value reads as all closed. Storage is best-effort (a blocked store means "not remembered", the choice still holds for this page). External store for `useSyncExternalStore`, with a stable snapshot until the stored text changes.
  * @exports ADVANCED_GROUPS_KEY, readOpenAdvancedGroups, writeAdvancedGroupOpen, useAdvancedGroupOpen, resetAdvancedGroupsForTests
  */
