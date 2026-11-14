@@ -1294,6 +1294,14 @@ footer {
   gap: var(--space-4);
 }
 
+/* The cycle-search pills (#1545) stack one per row with the same --space-3 gap, so the form card stays within the 90% height balance of the diagram card beside it (e2e/tool-page-layout.spec.ts). */
+.tool-pill-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
 /* Three short fields on one row (latitude, longitude and an interval), wrapping to fewer per row when narrow. */
 .tool-field-row--three {
   grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
@@ -2777,6 +2785,15 @@ label.stacked {
   min-width: min(100%, 12rem);
 }
 
+/* The pills are as wide as their label and value, not a 20rem Select slot, so the gap between neighbours is the row's one
+   --space-3 gap and nothing more (#1545 owner review). */
+.chart-controls-row > .chart-type-select:has(.primitive-pill-select) {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+}
+
 .chart-controls-row .aspect-family-filter .primitive-field {
   gap: var(--space-1);
   margin: 0;
@@ -2812,6 +2829,16 @@ label.stacked {
   display: block;
   max-width: 20rem;
   margin: 0 0 var(--space-4);
+}
+
+/* Pills carry their own width, so on the matrix and the wheel they sit in a wrapping row with the same --space-3 gap as the chart-type row. */
+.chart-workbench-dial > .aspect-family-filter:has(.primitive-pill-select),
+#chart-view-matrix > .aspect-family-filter:has(.primitive-pill-select) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-3);
+  max-width: none;
 }
 
 .data-table td[data-align='center'] {
@@ -10011,12 +10038,18 @@ a.quiet,
   left: 0;
   z-index: 20;
   box-sizing: border-box;
+  /* Wide enough for its longest option; an option wraps only past the max width. */
+  width: max-content;
   min-width: 12rem;
   max-width: min(100vw - 2 * var(--space-4), 24rem);
   padding: var(--space-2);
-  border: 1px solid var(--line);
+  /* Distinct from whatever it opens over, the page (--bg) or a --surface card (#1545 owner review): the raised
+     --surface-hover colour, a --muted edge (past the 3:1 non-text rule on --bg, --surface and --surface-hover in both
+     themes) and the shared popover shadow. */
+  border: 1px solid var(--muted);
   border-radius: var(--radius);
-  background: var(--surface);
+  background: var(--surface-hover);
+  box-shadow: var(--shadow-popover);
 }
 
 .primitive-pill-select-card [role='radiogroup'] {
@@ -10040,12 +10073,13 @@ a.quiet,
   font: inherit;
   font-size: var(--text-sm);
   text-align: left;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
   cursor: pointer;
 }
 
 .primitive-pill-select-card [role='radio']:hover:not(:disabled) {
-  background: var(--surface-hover);
+  /* --surface-hover is the card itself, so the hovered option steps to the line colour. */
+  background: var(--line);
 }
 
 .primitive-pill-select-card [role='radio']:focus-visible {
