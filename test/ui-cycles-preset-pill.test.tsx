@@ -64,6 +64,29 @@ function pillOf(container: HTMLElement): HTMLButtonElement {
 }
 
 describe('the cycle-search preset pill (#1545)', () => {
+  it('pins the preset keys and the en labels the pill shows, as literal strings', () => {
+    expect(CYCLE_PRESETS.map((preset) => preset.key)).toEqual([
+      'jupiter-saturn',
+      'saturn-uranus',
+      'saturn-neptune',
+      'saturn-pluto',
+      'venus-pentagram',
+    ]);
+    const container = mount();
+    act(() => {
+      pillOf(container).click();
+    });
+    const labels = Array.from(container.querySelectorAll('[role="radio"]')).map((radio) => radio.textContent);
+    expect(labels).toEqual([
+      'Custom',
+      'Jupiter–Saturn conjunctions (the great conjunction, ~20 years)',
+      'Saturn–Uranus conjunctions (~45 years)',
+      'Saturn–Neptune conjunctions (~36 years)',
+      'Saturn–Pluto conjunctions (~33 years)',
+      'Venus–Sun inferior conjunctions (the pentagram, 8 years)',
+    ]);
+  });
+
   it('offers Custom and every preset, in order, as radios in one radiogroup named Cycle', () => {
     const container = mount();
     const pill = pillOf(container);

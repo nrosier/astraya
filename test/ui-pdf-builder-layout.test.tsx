@@ -94,6 +94,21 @@ describe('the Documents page is the PDF builder (#916)', () => {
     expect(container.querySelector('.pdf-header-preset [role="dialog"]')).toBeNull();
   });
 
+  it('pins the four starting-point options and their en labels as literal strings (#1545)', async () => {
+    const container = await render();
+    const pill = container.querySelector<HTMLButtonElement>('.pdf-header-preset button[aria-haspopup="dialog"]');
+    act(() => {
+      pill?.click();
+    });
+    const labels = [...container.querySelectorAll('[role="radio"]')].map((radio) => radio.textContent);
+    expect(labels).toEqual([
+      'Custom',
+      'Executive summary (natal wheel, positions, interpretation)',
+      'Complete archive (every chart, every table, interpretation)',
+      'Full predictive report (natal wheel, transits, progressions, solar arc)',
+    ]);
+  });
+
   it('starts every advanced group collapsed', async () => {
     const container = await render();
     const triggers = [...container.querySelectorAll<HTMLButtonElement>('.primitive-disclosure-trigger')];
