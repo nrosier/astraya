@@ -188,7 +188,11 @@ interface DeviceSnapshot {
 interface MatrixRow {
   readonly key: ObjectKey;
   readonly label: string;
+  readonly group: MatrixGroup;
 }
+
+/** The three groups the visibility matrix's rows sit under (#1544). */
+type MatrixGroup = 'planets' | 'asteroids' | 'points';
 
 /** A formula point as the drawer holds it: saved, new, or marked for removal, until Apply commits the list. */
 interface FormulaDraftRow {
@@ -247,6 +251,7 @@ export function ExtendedSettingsPanel({
   // so a half-typed number never reaches the chart. `draft.orbRules` is not read; `effective` below is the draft.
   const [rulesText, setRulesText] = useState<OrbRulesDraft>(() => orbRulesDraftFrom(value.orbRules));
   // Custom minor aspects (#1544): display-only, so choosing it never writes a setting. A set that matches no preset shows it too.
+  const [collapsedGroups, setCollapsedGroups] = useState<ReadonlySet<MatrixGroup>>(new Set());
   const [minorCustomOpen, setMinorCustomOpen] = useState(() => minorSetFor(value.enabledMinorAspects) === 'custom');
   const minorSetShown = minorCustomOpen ? 'custom' : minorSetFor(draft.enabledMinorAspects);
   // The planetary rulers are edited in the draft with everything else and written only on Apply (#806).
@@ -329,14 +334,15 @@ export function ExtendedSettingsPanel({
 
   /** The visibility matrix's rows (#824), in the order the card lists them: planets, minor planets, Chiron, Lilith, the nodes, the points. */
   const matrixRows: readonly MatrixRow[] = [
-    ...PLANET_KEYS.map((key) => ({ key, label: bodyDisplayName(key, locale) })),
-    ...ASTEROID_KEYS.map((key) => ({ key, label: bodyDisplayName(key, locale) })),
-    { key: 'chiron' as const, label: t.chiron },
-    { key: lilithPointKey(draft.lilithVariant), label: t.lilithObjectName },
-    { key: nodePointKey(draft.nodeVariant), label: t.lunarNodesObjectName },
+    ...PLANET_KEYS.map((key) => ({ key, label: bodyDisplayName(key, locale), group: 'planets' as const })),
+    ...ASTEROID_KEYS.map((key) => ({ key, label: bodyDisplayName(key, locale), group: 'asteroids' as const })),
+    { key: 'chiron' as const, label: t.chiron, group: 'asteroids' as const },
+    { key: lilithPointKey(draft.lilithVariant), label: t.lilithObjectName, group: 'points' as const },
+    { key: nodePointKey(draft.nodeVariant), label: t.lunarNodesObjectName, group: 'points' as const },
     ...POINT_KEYS.map((key) => ({
       key,
       label: key === 'vertex' ? t.vertex : key === 'partOfFortune' ? t.partOfFortune : t.spirit,
+      group: 'points' as const,
     })),
   ];
 
@@ -414,36 +420,62 @@ export function ExtendedSettingsPanel({
   const everyRow = (read: (policy: ObjectPolicy) => boolean): boolean =>
     matrixRows.every((row) => read(draft.objectPolicies[row.key]));
 
-  /** One group's All / Clear (the long-list convention, `docs/ui/UI-UX_GUIDELINES.md`), kept beside the matrix rather than inside it. */
-  const groupActions = (legend: string, keys: readonly ObjectKey[]): React.JSX.Element => (
-    <div className="settings-card-matrix-actions" role="group" aria-label={legend}>
-      <span>{legend}</span>
-      <Button
-        size="compact"
-        onClick={() => {
-          setGroupPolicy(keys, { visible: true, aspectParticipant: true });
-        }}
-      >
-        {t.groupAll}
-      </Button>
-      <Button
-        size="compact"
-        onClick={() => {
-          setGroupPolicy(keys, { visible: false, aspectParticipant: false });
-        }}
-      >
-        {t.groupClear}
-      </Button>
-      <Button
-        size="compact"
-        onClick={() => {
-          setGroupNone(keys);
-        }}
-      >
-        {t.groupNone}
-      </Button>
-    </div>
-  );
+  const groupLabels: Readonly<Record<MatrixGroup, string>> = {
+    planets: t.planetsGroupLabel,
+    asteroids: t.asteroidsGroupLabel,
+    points: t.pointsGroupLabel,
+  };
+
+  /** A group's header row (#1544): a collapse toggle with the group's name, and its All / Clear / None (the long-list convention, `docs/ui/UI-UX_GUIDELINES.md`). */
+  const groupHeader = (group: string): React.JSX.Element => {
+    const id = group as MatrixGroup;
+    const legend = groupLabels[id];
+    const keys = matrixRows.filter((row) => row.group === id).map((row) => row.key);
+    const collapsed = collapsedGroups.has(id);
+    return (
+      <div className="settings-card-matrix-actions" role="group" aria-label={legend}>
+        <Button
+          variant="plain"
+          className="settings-card-matrix-group-toggle"
+          aria-expanded={!collapsed}
+          onClick={() => {
+            setCollapsedGroups((current) => {
+              const next = new Set(current);
+              if (!next.delete(id)) next.add(id);
+              return next;
+            });
+          }}
+        >
+          <span aria-hidden="true">{collapsed ? '▸ ' : '▾ '}</span>
+          {legend}
+        </Button>
+        <Button
+          size="compact"
+          onClick={() => {
+            setGroupPolicy(keys, { visible: true, aspectParticipant: true });
+          }}
+        >
+          {t.groupAll}
+        </Button>
+        <Button
+          size="compact"
+          onClick={() => {
+            setGroupPolicy(keys, { visible: false, aspectParticipant: false });
+          }}
+        >
+          {t.groupClear}
+        </Button>
+        <Button
+          size="compact"
+          onClick={() => {
+            setGroupNone(keys);
+          }}
+        >
+          {t.groupNone}
+        </Button>
+      </div>
+    );
+  };
 
   const setMinorAspect = (key: string, enabled: boolean): void => {
     patch({
@@ -1073,11 +1105,6 @@ export function ExtendedSettingsPanel({
                     String(Object.keys(draft.objectPolicies).length),
                   )}
                 </StatusMessage>
-                <div className="settings-card-matrix-toolbar">
-                  {groupActions(t.planetsGroupLabel, PLANET_KEYS)}
-                  {groupActions(t.minorPlanetsLegend, ASTEROID_KEYS)}
-                  {groupActions(t.pointsGroupLabel, POINT_KEYS)}
-                </div>
                 <div className="settings-card-matrix-bulk" role="group" aria-label={t.matrixBulkLabel}>
                   <Checkbox
                     label={t.matrixAllVisible}
@@ -1106,6 +1133,7 @@ export function ExtendedSettingsPanel({
                   columns={matrixColumns}
                   rows={matrixRows}
                   getRowKey={(row) => row.key}
+                  rowGroups={{ of: (row) => row.group, header: groupHeader, collapsed: collapsedGroups }}
                 />
                 <Disclosure title={t.aboutPoints} showLabel={t.showDetails} hideLabel={t.hideDetails}>
                   <p className="hint">{t.vertexHelp}</p>
@@ -1178,11 +1206,21 @@ export function ExtendedSettingsPanel({
                       ...CITED_ORB_PRESET_IDS.map((id) => ({
                         value: id,
                         title: t.citedOrbPresetOptions[id],
-                        consequence: t.citedOrbPresetNotes[id],
+                        consequence: t.citedOrbPresetSummaries[id],
                       })),
                     ]}
                     onChange={chooseOrbProfile}
                   />
+                  {CITED_ORB_PRESET_IDS.map((id) => (
+                    <Disclosure
+                      key={id}
+                      title={t.citedOrbPresetOptions[id]}
+                      showLabel={t.showDetails}
+                      hideLabel={t.hideDetails}
+                    >
+                      <p className="settings-card-note">{t.citedOrbPresetNotes[id]}</p>
+                    </Disclosure>
+                  ))}
                 </div>
                 {effective.orbRules === undefined && (
                   <p className="hint" aria-live="polite">

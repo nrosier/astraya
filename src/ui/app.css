@@ -6646,12 +6646,10 @@ svg text.chart-symbol-text-unicode {
   }
 }
 
-/* The visibility matrix (#824) is a SortableTable; these rules only place its group actions and centre its checks. */
-.settings-card-matrix-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-4);
-  margin-bottom: var(--space-3);
+/* The visibility matrix (#824) is a SortableTable; these rules only place its group header rows (#1544) and centre its checks. */
+.data-table .data-table-group-row .data-table-group-cell {
+  background: color-mix(in oklab, var(--surface) 70%, transparent);
+  border-bottom: 1px solid var(--line);
 }
 
 .settings-card-matrix-bulk {
@@ -6668,11 +6666,14 @@ svg text.chart-symbol-text-unicode {
   gap: var(--space-2);
 }
 
-.settings-card-matrix-actions > span {
+.settings-card-matrix-group-toggle {
+  width: auto;
   color: var(--muted);
   font-size: var(--text-xs);
+  font-weight: 650;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  cursor: pointer;
 }
 
 .primitive-staged-dialog[data-placement='right'] .data-table {
