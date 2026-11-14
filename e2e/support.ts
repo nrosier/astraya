@@ -147,10 +147,11 @@ export async function openTool(page: Page, name: string): Promise<void> {
 
 /**
  * Chooses one option of a pill control (#1545): opens the pill by its accessible name (its label plus the current
- * value, so the match is a substring), then clicks the matching radio in the card, which commits and closes it.
+ * value, so the match is anchored at the start of the name: a tooltip button that merely contains the label does not match), then clicks the matching radio in the card, which commits and closes it.
  */
 export async function choosePill(page: Page, label: string, optionText: string): Promise<void> {
-  await page.getByRole('button', { name: label }).click();
+  const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  await page.getByRole('button', { name: new RegExp(`^${escaped}`) }).click();
   await page
     .getByRole('radiogroup', { name: label, exact: true })
     .getByRole('radio', { name: optionText, exact: true })
