@@ -36,7 +36,7 @@ function aspect(bodyA: number, bodyB: number, applying: boolean, orb = 1): Aspec
   return {
     bodyA,
     bodyB,
-    aspect: { key: 'trine', name: 'Trine', angle: 120, family: 'major' },
+    aspect: { key: 'trine', name: 'Trine', angle: 120, family: 'major', tone: 'soft' },
     separation: 120 + orb,
     orb,
     allowedOrb: 8,

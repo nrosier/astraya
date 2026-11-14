@@ -51,8 +51,10 @@ interface Measure {
 async function measure(page: Page, screen: string, width: number, height: number): Promise<Measure> {
   await page.setViewportSize({ width, height });
   const wheel = await page.locator('.chart-workbench-dial .chart-wheel svg').first().boundingBox();
+  // The card frames the wheel and the instrument bar under it (#1532): below is measured from the bar's bottom.
+  const stack = await page.locator('.chart-workbench-dial .chart-wheel-stack').first().boundingBox();
   const card = await page.locator('.chart-workbench .selection-inspector').first().boundingBox();
-  if (wheel === null || card === null)
+  if (wheel === null || stack === null || card === null)
     throw new Error(`${screen}: no wheel or card box at ${String(width)}x${String(height)}`);
   const token = Number(
     await page.evaluate(
@@ -64,7 +66,7 @@ async function measure(page: Page, screen: string, width: number, height: number
     width,
     height,
     above: wheel.y - card.y,
-    below: card.y + card.height - (wheel.y + wheel.height),
+    below: card.y + card.height - (stack.y + stack.height),
     token,
     wheelH: wheel.height,
     cardH: card.height,

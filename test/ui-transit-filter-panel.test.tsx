@@ -259,9 +259,13 @@ describe('TransitFilterPanel (#416)', () => {
     await openCard(container);
     const minor = checkboxUnder(container, 'Aspects', 'Minor');
     expect(minor.checked).toBe(false);
-    expect(checkboxUnder(container, 'Aspects', 'Hard').checked).toBe(true);
+    const hardDefault = checkboxUnder(container, 'Aspects', 'Hard');
+    expect(hardDefault.checked).toBe(false);
+    expect(hardDefault.indeterminate).toBe(true);
     await check(container, 'Aspects', 'Minor');
     expect(checkboxUnder(container, 'Aspects', 'Minor').checked).toBe(true);
+    await check(container, 'Aspects', 'Hard');
+    expect(checkboxUnder(container, 'Aspects', 'Hard').checked).toBe(true);
     await check(container, 'Aspects', 'Hard');
     expect(checkboxUnder(container, 'Aspects', 'Hard').checked).toBe(false);
     expect(checkboxUnder(container, 'Aspects', 'Soft').checked).toBe(true);

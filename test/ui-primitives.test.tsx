@@ -9,6 +9,7 @@ import { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it } from 'vitest';
 import { Button } from '../src/ui/primitives/Button.js';
+import { Checkbox } from '../src/ui/primitives/Checkbox.js';
 import { DateField } from '../src/ui/primitives/DateField.js';
 import { NumberField } from '../src/ui/primitives/NumberField.js';
 import { Select } from '../src/ui/primitives/Select.js';
@@ -219,5 +220,15 @@ describe('the form-only primitives (#508)', () => {
     const label = host.querySelector('label');
     expect(label?.className).toBe('sr-only');
     expect(label?.getAttribute('for')).toBe(host.querySelector('textarea')?.id);
+  });
+
+  it('Checkbox sets the input indeterminate property from its indeterminate prop', () => {
+    const host = mount(<Checkbox label="Hard" checked={false} indeterminate onChange={noop} />);
+    const input = host.querySelector('input');
+    expect(input?.indeterminate).toBe(true);
+    act(() => {
+      root?.render(<Checkbox label="Hard" checked={false} onChange={noop} />);
+    });
+    expect(input?.indeterminate).toBe(false);
   });
 });

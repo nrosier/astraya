@@ -10,6 +10,7 @@ import { App } from './ui/App.js';
 import './ui/appearance-settings.js';
 import { applyTheme, readStoredTheme } from './ui/theme-dom.js';
 import './ui/app.css';
+import './ui/chart-aspect-tones.css';
 
 // Applied here, before React ever renders, so a stored light/dark override (#70) never
 // flashes the OS-default theme first.

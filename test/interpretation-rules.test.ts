@@ -188,7 +188,7 @@ describe('derivePlacements (#60)', () => {
     const aspect: Aspect = {
       bodyA: bodyId('venus'),
       bodyB: bodyId('mars'),
-      aspect: { key: 'trine', name: 'Trine', angle: 120, family: 'major' },
+      aspect: { key: 'trine', name: 'Trine', angle: 120, family: 'major', tone: 'soft' },
       separation: 121,
       orb: 1,
       allowedOrb: 8,
@@ -203,7 +203,7 @@ describe('derivePlacements (#60)', () => {
     const tightAspect: Aspect = {
       bodyA: bodyId('venus'),
       bodyB: bodyId('mars'),
-      aspect: { key: 'trine', name: 'Trine', angle: 120, family: 'major' },
+      aspect: { key: 'trine', name: 'Trine', angle: 120, family: 'major', tone: 'soft' },
       separation: 120.1,
       orb: 0.1,
       allowedOrb: 8,
@@ -239,7 +239,7 @@ describe('derivePlacements (#60)', () => {
         {
           bodyA: bodyId('sun'),
           bodyB: bodyId('moon'),
-          aspect: { key: 'square', name: 'Square', angle: 90, family: 'major' },
+          aspect: { key: 'square', name: 'Square', angle: 90, family: 'major', tone: 'hard' },
           separation: 90,
           orb: 0,
           allowedOrb: 8,
@@ -256,7 +256,7 @@ describe('derivePlacements (#60)', () => {
     const trine = {
       bodyA: bodyId('venus'),
       bodyB: bodyId('mars'),
-      aspect: { key: 'trine', name: 'Trine', angle: 120, family: 'major' },
+      aspect: { key: 'trine', name: 'Trine', angle: 120, family: 'major', tone: 'soft' },
       separation: 126,
       orb: 6,
       applying: false,

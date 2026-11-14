@@ -32,7 +32,7 @@
   --muted: #a09dc0;
 
   /* Structural accent. */
-  --accent: #a390fb;
+  --accent: #8b9cff;
   /* Issue 966 names these tokens; they alias the existing ones, so no new visual value (and they follow the theme overrides). */
   --bg-surface: var(--surface);
   --border-subtle: var(--line);
@@ -74,7 +74,7 @@
   --color-tech-sa: #fb923c;
   --color-tech-transit: #38bdf8;
   /* Attention accent: warnings, and the sun in anything we draw. */
-  --solar: #f2b75e;
+  --solar: #e5b567;
   /*
    * A multi-ring chart's second and third rings (#448: transits, synastry, composite — one
    * to three charts drawn as concentric rings, `chart/multi-wheel.ts`). Ring 0 keeps using
@@ -86,8 +86,8 @@
   --ring-1-color: #4fd1c5;
   --ring-2-color: #ff8ad1;
 
-  --glow-a: rgb(124 92 255 / 18%);
-  --glow-b: rgb(242 183 94 / 8%);
+  --glow-a: rgb(139 156 255 / 18%);
+  --glow-b: rgb(229 181 103 / 8%);
 
   --radius: 0.625rem;
   --radius-sm: 0.375rem;
@@ -193,23 +193,23 @@
     --fg: #16152b;
     --muted: #5c5878;
 
-    --accent: #5b3fd4;
-    --solar: #8f5a0e;
+    --accent: #3b49df;
+    --solar: #835208;
     --ring-1-color: #0f766e;
     --ring-2-color: #9d174d;
     --aspect-hard: #b3261e;
     --aspect-soft: #1857c4;
     --aspect-minor: #0a4d28;
-    --element-fire: #c62828;
-    --element-earth: #2e7d32;
-    --element-air: #b7791f;
+    --element-fire: #b92323;
+    --element-earth: #236827;
+    --element-air: #7d510b;
     --element-water: #1d4ed8;
     /* Graphic ephemeris series (#1404): the data-viz categorical slots 1-8 in fixed order, light steps. */
     --series-1: #2a78d6;
-    --series-2: #eb6834;
-    --series-3: #1baf7a;
-    --series-4: #eda100;
-    --series-5: #e87ba4;
+    --series-2: #ea612b;
+    --series-3: #199f6f;
+    --series-4: #bd8000;
+    --series-5: #e35d90;
     --series-6: #008300;
     --series-7: #6250d6;
     --series-8: #e34948;
@@ -226,8 +226,8 @@
     --color-tech-sa: #e16805;
     --color-tech-transit: #0794d2;
 
-    --glow-a: rgb(124 92 255 / 8%);
-    --glow-b: rgb(242 183 94 / 7%);
+    --glow-a: rgb(59 73 223 / 8%);
+    --glow-b: rgb(131 82 8 / 7%);
   }
 }
 
@@ -253,8 +253,8 @@
   --fg: #eceafa;
   --muted: #a09dc0;
 
-  --accent: #a390fb;
-  --solar: #f2b75e;
+  --accent: #8b9cff;
+  --solar: #e5b567;
   --ring-1-color: #4fd1c5;
   --ring-2-color: #ff8ad1;
   --aspect-hard: #ff8189;
@@ -286,8 +286,8 @@
   --color-tech-sa: #fb923c;
   --color-tech-transit: #38bdf8;
 
-  --glow-a: rgb(124 92 255 / 18%);
-  --glow-b: rgb(242 183 94 / 8%);
+  --glow-a: rgb(139 156 255 / 18%);
+  --glow-b: rgb(229 181 103 / 8%);
 }
 
 :root[data-theme='light'] {
@@ -300,23 +300,23 @@
   --fg: #16152b;
   --muted: #5c5878;
 
-  --accent: #5b3fd4;
-  --solar: #8f5a0e;
+  --accent: #3b49df;
+  --solar: #835208;
   --ring-1-color: #0f766e;
   --ring-2-color: #9d174d;
   --aspect-hard: #b3261e;
   --aspect-soft: #1857c4;
   --aspect-minor: #0a4d28;
-  --element-fire: #c62828;
-  --element-earth: #2e7d32;
-  --element-air: #b7791f;
+  --element-fire: #b92323;
+  --element-earth: #236827;
+  --element-air: #7d510b;
   --element-water: #1d4ed8;
   /* Graphic ephemeris series (#1404): the data-viz categorical slots 1-8 in fixed order, light steps. */
   --series-1: #2a78d6;
-  --series-2: #eb6834;
-  --series-3: #1baf7a;
-  --series-4: #eda100;
-  --series-5: #e87ba4;
+  --series-2: #ea612b;
+  --series-3: #199f6f;
+  --series-4: #bd8000;
+  --series-5: #e35d90;
   --series-6: #008300;
   --series-7: #6250d6;
   --series-8: #e34948;
@@ -333,8 +333,8 @@
   --color-tech-sa: #e16805;
   --color-tech-transit: #0794d2;
 
-  --glow-a: rgb(124 92 255 / 8%);
-  --glow-b: rgb(242 183 94 / 7%);
+  --glow-a: rgb(59 73 223 / 8%);
+  --glow-b: rgb(131 82 8 / 7%);
 }
 
 /*
@@ -2726,6 +2726,27 @@ label.stacked {
   background: transparent;
 }
 
+/* The aspect mark before the name in the Aspects table (#1532): the family colour from the existing aspect tokens. */
+.aspect-icon {
+  display: inline-block;
+  width: 1.45em;
+  height: 1.45em;
+  margin-right: var(--space-2);
+  vertical-align: -0.35em;
+}
+
+.aspect-icon--hard {
+  color: var(--aspect-hard);
+}
+
+.aspect-icon--soft {
+  color: var(--aspect-soft);
+}
+
+.aspect-icon--minor {
+  color: var(--aspect-minor);
+}
+
 /* An aspect line the aspect-family filter has hidden (#1063); the markup keeps it so clearing the filter restores it. */
 .chart-wheel .chart-aspect-link.chart-aspect-filtered {
   display: none;
@@ -3833,15 +3854,121 @@ label.stacked {
   margin-top: 0;
   margin-bottom: 0;
   /*
-   * Height cap (#801): the wheel is square, so its width is its height. 27rem is
+   * Height cap (#801): the wheel is square, so its width is its height. 30.5rem is
    * the chrome above the SVG (header, chart type, nav row, card top, hint; the chart type
-   * block above the nav row added 3rem in #981), so the SVG bottom
+   * block above the nav row added 3rem in #981) plus the 3.5rem instrument bar under the wheel (#1532), so the bar's bottom
    * lands at or above the viewport bottom; 26rem (364px at a 14px root) is the floor
    * where glyphs and hit targets stay legible. Wider than the cap the wheel keeps
    * its 7/12 column width; the cap binds only on short viewports. 55rem is the upper
    * bound: the widest the wheel is drawn, so a tall viewport never grows it past that.
    */
-  max-width: min(55rem, max(26rem, calc(100vh - 27rem)));
+  max-width: min(55rem, max(26rem, calc(100vh - 30.5rem)));
+}
+
+/*
+ * The instrument bar under the natal wheel (#1532, owner-approved mockup 2026-11-13): one pill-shaped bar centred on the
+ * wheel's MC-IC axis. The wheel and the bar share the dial's second grid track through .chart-wheel-stack, so the wheel's
+ * height cap keeps room for the bar.
+ */
+.chart-wheel-stack {
+  display: block;
+}
+
+.chart-instrument-bar {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: fit-content;
+  max-width: 100%;
+  margin: var(--space-3) auto 0;
+  padding: var(--space-1);
+  border: var(--border-hairline) solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.chart-instrument-bar .primitive-choice-group-segmented {
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.chart-instrument-bar .primitive-choice-group-segmented .primitive-choice {
+  min-height: var(--control-height-compact);
+  border-radius: 999px;
+}
+
+.chart-instrument-bar .primitive-choice-group-segmented .primitive-choice + .primitive-choice {
+  border-left: 0;
+}
+
+.chart-instrument-bar-divider {
+  align-self: stretch;
+  width: var(--border-hairline);
+  background: var(--line);
+}
+
+.chart-instrument-bar-tones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+/* Each pill's border is its tone's chord style: hard solid, soft dashed, minor dotted, in the tone's own token. */
+.chart-tone-pill {
+  min-height: var(--control-height-compact);
+  padding: 0 var(--space-3);
+  border: 2px solid;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--fg);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.chart-tone-pill--hard {
+  border-style: solid;
+  border-color: var(--aspect-hard);
+}
+
+.chart-tone-pill--soft {
+  border-style: dashed;
+  border-color: var(--aspect-soft);
+}
+
+.chart-tone-pill--minor {
+  border-style: dotted;
+  border-color: var(--aspect-minor);
+}
+
+.chart-tone-pill[aria-pressed='false'] {
+  color: var(--muted);
+  font-weight: 400;
+  opacity: 0.6;
+}
+
+.chart-tone-pill:hover {
+  background: var(--surface-hover);
+}
+
+.chart-tone-pill:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Narrow (40rem): the bar keeps the normal corner radius, the divider goes, and the two groups wrap. */
+@media (max-width: 40rem) {
+  .chart-instrument-bar {
+    flex-wrap: wrap;
+    border-radius: var(--radius);
+  }
+
+  .chart-instrument-bar-divider {
+    display: none;
+  }
 }
 
 .chart-workbench-dial .chart-wheel-hint {
@@ -4095,11 +4222,17 @@ dl.metric-cards {
   fill: var(--muted);
 }
 
-.wheel-ring-outer,
-.wheel-ring-zodiac,
-.chart-multiwheel-ring {
+.wheel-ring-zodiac {
   fill: none;
   stroke: var(--line);
+  stroke-width: 1.5;
+}
+
+/* The outer dial circle is the wheel's boundary: `--muted`, not the faint `--line` of the inner structural rings. */
+.wheel-ring-outer,
+.chart-multiwheel-ring {
+  fill: none;
+  stroke: var(--muted);
   stroke-width: 1.5;
 }
 
@@ -4282,7 +4415,7 @@ dl.metric-cards {
 
 /* Horizon and meridian: the two lines a reader orients the whole chart by. */
 .chart-multiwheel-axis {
-  stroke: var(--accent);
+  stroke: var(--solar);
   stroke-width: 2.5;
 }
 
@@ -4295,7 +4428,7 @@ dl.metric-cards {
 }
 
 .chart-multiwheel-cusp-angle {
-  stroke: var(--accent);
+  stroke: var(--solar);
   stroke-width: 2;
 }
 
@@ -4339,6 +4472,21 @@ dl.metric-cards {
 .chart-glyph .glyph-fill {
   fill: var(--fg);
   stroke: none;
+}
+
+/* Transit glyphs (#1532): the same vector-glyph treatment as a natal body, in the transit ring's colour. */
+.chart-glyph-transit {
+  color: var(--ring-1-color);
+}
+
+.chart-glyph-transit circle,
+.chart-glyph-transit path,
+.chart-glyph-transit rect {
+  stroke: var(--ring-1-color);
+}
+
+.chart-glyph-transit .glyph-fill {
+  fill: var(--ring-1-color);
 }
 
 /* The Unicode and text symbol classes (#419): the same symbol written as text in the glyph's own 0-100
@@ -4385,35 +4533,17 @@ svg text.chart-symbol-text-unicode {
   fill: var(--muted);
 }
 
-.chart-aspect-glyph-semisquare text.chart-symbol-text,
-.chart-aspect-glyph-square text.chart-symbol-text,
-.chart-aspect-glyph-sesquiquadrate text.chart-symbol-text,
-.chart-aspect-glyph-opposition text.chart-symbol-text {
-  fill: var(--aspect-hard);
-}
-
-.chart-aspect-glyph-conjunction text.chart-symbol-text,
-.chart-aspect-glyph-semisextile text.chart-symbol-text,
-.chart-aspect-glyph-sextile text.chart-symbol-text,
-.chart-aspect-glyph-trine text.chart-symbol-text {
-  fill: var(--aspect-soft);
-}
-
-.chart-aspect-glyph-quintile text.chart-symbol-text,
-.chart-aspect-glyph-biquintile text.chart-symbol-text,
-.chart-aspect-glyph-decile text.chart-symbol-text,
-.chart-aspect-glyph-novile text.chart-symbol-text,
-.chart-aspect-glyph-septile text.chart-symbol-text,
-.chart-aspect-glyph-quincunx text.chart-symbol-text {
-  fill: var(--aspect-minor);
-}
-
 /* A symbol in a data table cell (#419): a small drawn glyph, or the Unicode or text form, in the row. */
 .table-symbol {
   display: inline-block;
   width: 1.25rem;
   height: 1.25rem;
   vertical-align: middle;
+}
+
+/* A sign's drawn glyph before its name in the Placements table (#1532). */
+.table-symbol--sign {
+  margin-right: var(--space-2);
 }
 
 .table-symbol-text {
@@ -4517,35 +4647,6 @@ svg text.chart-symbol-text-unicode {
  * distinction a reader looks for first, and two colour axes on one line read
  * as neither.
  */
-.chart-aspect-semisquare,
-.chart-aspect-square,
-.chart-aspect-sesquiquadrate,
-.chart-aspect-opposition {
-  stroke: var(--aspect-hard);
-  stroke-width: 2;
-  opacity: 0.75;
-}
-
-.chart-aspect-conjunction,
-.chart-aspect-semisextile,
-.chart-aspect-sextile,
-.chart-aspect-trine {
-  stroke: var(--aspect-soft);
-  stroke-width: 1.5;
-  opacity: 0.7;
-}
-
-.chart-aspect-quintile,
-.chart-aspect-biquintile,
-.chart-aspect-decile,
-.chart-aspect-novile,
-.chart-aspect-septile,
-.chart-aspect-quincunx {
-  stroke: var(--aspect-minor);
-  stroke-width: 1.5;
-  opacity: 0.6;
-}
-
 .chart-aspect.chart-aspect-applying {
   opacity: 0.95;
 }
@@ -4919,98 +5020,6 @@ svg text.chart-symbol-text-unicode {
   stroke-linejoin: round;
 }
 
-/*
- * The grid repeats the wheel's family colouring, so "is this chart full of
- * squares?" is answerable from either one.
- */
-.chart-matrix-cell-semisquare,
-.chart-matrix-cell-square,
-.chart-matrix-cell-sesquiquadrate,
-.chart-matrix-cell-opposition {
-  fill: color-mix(in oklab, var(--aspect-hard) 12%, transparent);
-}
-
-.chart-matrix-cell-conjunction,
-.chart-matrix-cell-semisextile,
-.chart-matrix-cell-sextile,
-.chart-matrix-cell-trine {
-  fill: color-mix(in oklab, var(--aspect-soft) 12%, transparent);
-}
-
-.chart-matrix-cell-quintile,
-.chart-matrix-cell-biquintile,
-.chart-matrix-cell-decile,
-.chart-matrix-cell-novile,
-.chart-matrix-cell-septile,
-.chart-matrix-cell-quincunx {
-  fill: color-mix(in oklab, var(--aspect-minor) 12%, transparent);
-}
-
-.chart-aspect-glyph-semisquare circle,
-.chart-aspect-glyph-semisquare path,
-.chart-aspect-glyph-semisquare rect,
-.chart-aspect-glyph-semisquare line,
-.chart-aspect-glyph-square circle,
-.chart-aspect-glyph-square path,
-.chart-aspect-glyph-square rect,
-.chart-aspect-glyph-square line,
-.chart-aspect-glyph-sesquiquadrate circle,
-.chart-aspect-glyph-sesquiquadrate path,
-.chart-aspect-glyph-sesquiquadrate rect,
-.chart-aspect-glyph-sesquiquadrate line,
-.chart-aspect-glyph-opposition circle,
-.chart-aspect-glyph-opposition path,
-.chart-aspect-glyph-opposition rect,
-.chart-aspect-glyph-opposition line {
-  stroke: var(--aspect-hard);
-}
-
-.chart-aspect-glyph-conjunction circle,
-.chart-aspect-glyph-conjunction path,
-.chart-aspect-glyph-conjunction rect,
-.chart-aspect-glyph-conjunction line,
-.chart-aspect-glyph-semisextile circle,
-.chart-aspect-glyph-semisextile path,
-.chart-aspect-glyph-semisextile rect,
-.chart-aspect-glyph-semisextile line,
-.chart-aspect-glyph-trine circle,
-.chart-aspect-glyph-trine path,
-.chart-aspect-glyph-trine rect,
-.chart-aspect-glyph-trine line,
-.chart-aspect-glyph-sextile circle,
-.chart-aspect-glyph-sextile path,
-.chart-aspect-glyph-sextile rect,
-.chart-aspect-glyph-sextile line {
-  stroke: var(--aspect-soft);
-}
-
-.chart-aspect-glyph-quintile circle,
-.chart-aspect-glyph-quintile path,
-.chart-aspect-glyph-quintile rect,
-.chart-aspect-glyph-quintile line,
-.chart-aspect-glyph-biquintile circle,
-.chart-aspect-glyph-biquintile path,
-.chart-aspect-glyph-biquintile rect,
-.chart-aspect-glyph-biquintile line,
-.chart-aspect-glyph-decile circle,
-.chart-aspect-glyph-novile circle,
-.chart-aspect-glyph-septile circle,
-.chart-aspect-glyph-quincunx circle,
-.chart-aspect-glyph-decile path,
-.chart-aspect-glyph-novile path,
-.chart-aspect-glyph-septile path,
-.chart-aspect-glyph-quincunx path,
-.chart-aspect-glyph-decile rect,
-.chart-aspect-glyph-novile rect,
-.chart-aspect-glyph-septile rect,
-.chart-aspect-glyph-quincunx rect,
-.chart-aspect-glyph-decile line,
-.chart-aspect-glyph-novile line,
-.chart-aspect-glyph-septile line,
-.chart-aspect-glyph-quincunx line {
-  stroke: var(--aspect-minor);
-}
-
 .chart-emphasis-total {
   fill: var(--fg);
 }
@@ -5295,48 +5304,6 @@ svg text.chart-symbol-text-unicode {
   .data-table caption {
     break-after: avoid;
     page-break-after: avoid;
-  }
-
-  /*
-   * Monochrome-safe aspect lines (#564): on screen, aspect family is colour-coded (see the
-   * `.chart-aspect-*` rules above, by design hue-only — "two colour axes on one line read as
-   * neither"). A printed, especially grayscale, page has no such guarantee: most consumer
-   * printers render colour as a flattened gray, and the soft/minor families already share one
-   * stroke-width on screen, so without a non-colour cue they can become visually
-   * indistinguishable in print. Printing forces black ink plus a distinct dash pattern per
-   * family instead — solid for hard aspects, dashed for soft, dotted for minor — so a reader
-   * can tell them apart by shape alone, not by trusting a printer's colour rendering.
-   */
-  .chart-aspect-semisquare,
-  .chart-aspect-square,
-  .chart-aspect-sesquiquadrate,
-  .chart-aspect-opposition {
-    stroke: #000;
-    stroke-width: 2;
-    stroke-dasharray: none;
-    opacity: 0.85;
-  }
-
-  .chart-aspect-conjunction,
-  .chart-aspect-semisextile,
-  .chart-aspect-sextile,
-  .chart-aspect-trine {
-    stroke: #000;
-    stroke-width: 1.5;
-    stroke-dasharray: 5 3;
-    opacity: 0.75;
-  }
-
-  .chart-aspect-quintile,
-  .chart-aspect-biquintile,
-  .chart-aspect-decile,
-  .chart-aspect-novile,
-  .chart-aspect-septile,
-  .chart-aspect-quincunx {
-    stroke: #000;
-    stroke-width: 1;
-    stroke-dasharray: 1 2;
-    opacity: 0.65;
   }
 
   /* A screen-only affordance — the on-page provenance footer (#564) is a `position: fixed`
@@ -8408,8 +8375,8 @@ dl.consultation-tiles {
 /* The on-screen aspect matrix (#820): a CSS grid of flat cells, the app's 1px --line border on a low-opacity --surface
    fill, no shadows and no nested container border. Screen only; the sheet and PDF keep the SVG drawing. No monospace
    token exists (#826), so numbers use tabular numerals in the inherited family. Aspect colours reach the glyphs through
-   the .chart-aspect-glyph-* rules above: cool for conjunction, sextile and trine, warm for the hard aspects, --aspect-minor
-   for the quintile family. */
+   the data-tone rules above: --aspect-hard for the hard aspects, --aspect-soft for the soft ones, --aspect-minor
+   for the minor ones. */
 .mgrid-scroll {
   /* The positioned ancestor of the headers' `.sr-only` spans: without it they escape this clip and stretch the page sideways on a phone. */
   position: relative;
@@ -8535,29 +8502,6 @@ dl.consultation-tiles {
   color: var(--muted);
 }
 
-.mgrid-symbol-text.chart-aspect-glyph-semisquare,
-.mgrid-symbol-text.chart-aspect-glyph-square,
-.mgrid-symbol-text.chart-aspect-glyph-sesquiquadrate,
-.mgrid-symbol-text.chart-aspect-glyph-opposition {
-  color: var(--aspect-hard);
-}
-
-.mgrid-symbol-text.chart-aspect-glyph-conjunction,
-.mgrid-symbol-text.chart-aspect-glyph-semisextile,
-.mgrid-symbol-text.chart-aspect-glyph-sextile,
-.mgrid-symbol-text.chart-aspect-glyph-trine {
-  color: var(--aspect-soft);
-}
-
-.mgrid-symbol-text.chart-aspect-glyph-quintile,
-.mgrid-symbol-text.chart-aspect-glyph-biquintile,
-.mgrid-symbol-text.chart-aspect-glyph-decile,
-.mgrid-symbol-text.chart-aspect-glyph-novile,
-.mgrid-symbol-text.chart-aspect-glyph-septile,
-.mgrid-symbol-text.chart-aspect-glyph-quincunx {
-  color: var(--aspect-minor);
-}
-
 .mgrid-retro {
   font-size: var(--text-xs);
   color: var(--muted);
@@ -8606,18 +8550,6 @@ button.mgrid-pair:focus-visible {
 
 .mgrid-dir {
   color: var(--muted);
-}
-
-.mgrid .mgrid-soft {
-  background: color-mix(in oklab, var(--aspect-soft) 9%, transparent);
-}
-
-.mgrid .mgrid-hard {
-  background: color-mix(in oklab, var(--aspect-hard) 9%, transparent);
-}
-
-.mgrid .mgrid-minor {
-  background: color-mix(in oklab, var(--aspect-minor) 9%, transparent);
 }
 
 /* 40rem and below (#826's one breakpoint): the Name and House columns drop; orb and a/s hide (glyph only). */
