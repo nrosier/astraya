@@ -70,7 +70,8 @@ export function buildCalculationBasisLine(
 ): string {
   const { t } = words;
   const builtIn = settings.orbRules === undefined ? matchOrbProfile(settings.orbScalePercent) : undefined;
-  const zodiac = settings.zodiac.kind === 'sidereal' ? t.sidereal : t.tropical;
+  const zodiac =
+    settings.zodiac.kind === 'tropical' ? t.tropical : settings.zodiac.user === undefined ? t.sidereal : t.siderealUser;
   const houses = parts.houses === 'whole-sign' ? t.wholeSign : houseSystemName(settings.houseSystem);
   const node = settings.nodeVariant === 'true' ? t.trueNode : t.meanNode;
   const rulers = t.rulers(words.rulerTitles[rulership]);

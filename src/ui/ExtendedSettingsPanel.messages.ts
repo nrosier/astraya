@@ -52,6 +52,7 @@ const en = {
   tropical: 'Tropical',
   sidereal: 'Sidereal',
   ayanamsaLabel: 'Ayanamsa',
+  userAyanamsaOption: 'User-defined',
   zodiacFrameSubtitle: 'How the zodiac and houses are calculated',
   tropicalDescription:
     'The Tropical zodiac is fixed to the seasons. The vernal equinox (Spring) is always at 0° Aries, regardless of where the background stars have moved. This is the standard in Western astrology and most popular software.',
@@ -359,6 +360,7 @@ const nl: typeof en = {
   tropical: 'Tropisch',
   sidereal: 'Siderisch',
   ayanamsaLabel: 'Ayanamsa',
+  userAyanamsaOption: 'Zelf bepaald',
   zodiacFrameSubtitle: 'Hoe de dierenriem en huizen worden berekend',
   tropicalDescription:
     'De Tropische dierenriem is vastgesteld aan de seizoenen. Het voorjaarsevenwicht (Lente) is altijd 0° Boogschutter, ongeacht waar de achtergrondsterren zijn verschoven. Dit is de standaard in westerse astrologie en de meeste populaire software.',

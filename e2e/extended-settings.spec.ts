@@ -176,6 +176,45 @@ test.describe('with the shared people (#799)', () => {
     expect(results.violations.map((v) => v.id)).toEqual([]);
   });
 
+  test('a user-defined ayanamsa starts from the current one, then moves the chart by the degrees given (#1407)', async () => {
+    test.setTimeout(90_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page, 'Placements');
+    const sunRow = page.locator('#chart-view-placements tbody tr').first();
+    const card = page.locator('dialog.settings-card');
+    const apply = card.getByRole('button', { name: 'Apply and redraw', exact: true });
+
+    // Sidereal, Lahiri (the default sidereal mode), applied first.
+    await openSettings(page);
+    await card.getByRole('radiogroup', { name: 'Zodiac', exact: true }).getByText('Sidereal', { exact: true }).click();
+    await apply.click();
+    await expect(card).toBeHidden();
+    const lahiriSun = await sunRow.textContent();
+
+    // User-defined starts from Lahiri's mean value today, so the chart does not move.
+    await openSettings(page);
+    await card.getByLabel('Ayanamsa', { exact: true }).selectOption({ label: 'User-defined' });
+    const fields = card.getByRole('group', { name: 'User-defined ayanamsa', exact: true });
+    await expect(fields.getByLabel('Reference date', { exact: true })).not.toHaveValue('');
+    const degrees = fields.getByRole('spinbutton', { name: /^Degrees/ });
+    await expect(degrees).not.toHaveValue('');
+    await apply.click();
+    await expect(card).toBeHidden();
+    await expect(page.locator('.page-header-basis')).toContainText(/^Sidereal \(user-defined\) · /);
+    await expect(sunRow).toHaveText(lahiriSun ?? '');
+
+    // One more degree of ayanamsa moves the Sun a degree back in the zodiac.
+    await openSettings(page);
+    const shown = Number(await degrees.inputValue());
+    await degrees.fill(String(shown + 1));
+    await apply.click();
+    await expect(card).toBeHidden();
+    await expect(sunRow).not.toHaveText(lahiriSun ?? '');
+    await openSettings(page);
+    await expect(degrees).toHaveValue(String(shown + 1));
+    await closeSettings(page);
+  });
+
   test('the drawer opens focused inside, traps Tab, closes on Escape and returns focus to its trigger (#824)', async () => {
     test.setTimeout(90_000);
     await openSharedPerson(page, baseUrl, EINSTEIN);

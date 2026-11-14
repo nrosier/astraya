@@ -142,7 +142,10 @@ export function applyCalculationProfile(settings: ExtendedSettings, id: Calculat
 }
 
 function sameZodiac(a: ExtendedSettings['zodiac'], b: ExtendedSettings['zodiac']): boolean {
-  return a.kind === b.kind && (a.kind !== 'sidereal' || (b.kind === 'sidereal' && a.ayanamsa === b.ayanamsa));
+  if (a.kind === 'tropical' || b.kind === 'tropical') return a.kind === b.kind;
+  return (
+    a.ayanamsa === b.ayanamsa && a.user?.referenceDate === b.user?.referenceDate && a.user?.degrees === b.user?.degrees
+  );
 }
 
 /**

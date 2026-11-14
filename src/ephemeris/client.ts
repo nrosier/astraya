@@ -217,8 +217,8 @@ export class WorkerEphemerisProvider implements EphemerisProvider {
     return this.#call('houseSystemName', [system]);
   }
 
-  ayanamsa(jd: JulianDayUT, mode: number): Promise<Degrees> {
-    return this.#call('ayanamsa', [jd, mode]);
+  ayanamsa(jd: JulianDayUT, mode: number, options?: { readonly mean?: boolean }): Promise<Degrees> {
+    return this.#call('ayanamsa', options === undefined ? [jd, mode] : [jd, mode, options]);
   }
 
   ayanamsaName(mode: number): Promise<string> {
