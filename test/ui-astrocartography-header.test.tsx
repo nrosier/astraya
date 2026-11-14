@@ -81,7 +81,7 @@ describe('Astrocartography header (#978)', () => {
   it('states the person’s calculation profile in the header basis line', async () => {
     const { container, unmount } = await renderView();
     const basis = container.querySelector('.page-header > .page-header-basis-row > .page-header-basis');
-    expect(basis?.textContent).toBe('Tropical · Placidus · Modern rulers · Standard orbs');
+    expect(basis?.textContent).toBe('Tropical · Placidus · Mean node · Modern rulers · Standard orbs');
     unmount();
   });
 

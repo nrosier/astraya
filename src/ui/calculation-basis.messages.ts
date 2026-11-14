@@ -7,8 +7,11 @@
 import type { Locale } from '../interpretation/schema.js';
 
 const en = {
-  line: (zodiac: string, houses: string, rulers: string, orbs: string) => `${zodiac} · ${houses} · ${rulers} · ${orbs}`,
+  line: (zodiac: string, houses: string, node: string, rulers: string, orbs: string) =>
+    `${zodiac} · ${houses} · ${node} · ${rulers} · ${orbs}`,
   wholeSign: 'Whole-sign houses',
+  meanNode: 'Mean node',
+  trueNode: 'True node',
   tropical: 'Tropical',
   sidereal: 'Sidereal',
   rulers: (title: string) => `${title} rulers`,
@@ -20,8 +23,11 @@ const en = {
 };
 
 const nl: typeof en = {
-  line: (zodiac: string, houses: string, rulers: string, orbs: string) => `${zodiac} · ${houses} · ${rulers} · ${orbs}`,
+  line: (zodiac: string, houses: string, node: string, rulers: string, orbs: string) =>
+    `${zodiac} · ${houses} · ${node} · ${rulers} · ${orbs}`,
   wholeSign: 'Hele-tekenhuizen',
+  meanNode: 'Gemiddelde maansknoop',
+  trueNode: 'Ware maansknoop',
   tropical: 'Tropisch',
   sidereal: 'Siderisch',
   rulers: (title: string) => `${title} heersers`,
