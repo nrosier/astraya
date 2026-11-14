@@ -875,6 +875,42 @@ describe('the traditional-scheme quick-pick (#549)', () => {
   });
 
   describe('the cited Lilly orb presets (#590)', () => {
+    it('shows a one-line summary on each Lilly card, with the full text hidden behind Show details', async () => {
+      const { container, root } = await mount(fakeProvider(), vi.fn());
+      openCard(container);
+      const fullFirst = 'William Lilly’s own orbs per planet';
+      const fullSecond = 'Lilly’s second set, same page';
+      const summaryFirst = 'Classical moiety-of-orb rules per planet (Christian Astrology, 1647).';
+      const summarySecond = 'Lilly’s second set of per-planet moieties (Christian Astrology, 1647).';
+      const cardFor = (title: string): Element | undefined =>
+        Array.from(
+          container.querySelectorAll('[role="radiogroup"][aria-label="Orb profile"] .primitive-option-card'),
+        ).find((candidate) => candidate.querySelector('.primitive-option-card-title')?.textContent === title);
+      expect(
+        cardFor('Lilly (1647), first column')?.querySelector('.primitive-option-card-consequence')?.textContent,
+      ).toBe(summaryFirst);
+      expect(
+        cardFor('Lilly (1647), second column')?.querySelector('.primitive-option-card-consequence')?.textContent,
+      ).toBe(summarySecond);
+      expect(container.textContent).not.toContain(fullFirst);
+      expect(container.textContent).not.toContain(fullSecond);
+
+      const disclosureFor = (title: string): HTMLElement | undefined =>
+        Array.from(container.querySelectorAll<HTMLElement>('.primitive-disclosure')).find(
+          (candidate) => candidate.querySelector('.primitive-disclosure-title')?.textContent === title,
+        );
+      const firstToggle = disclosureFor('Lilly (1647), first column')?.querySelector('button');
+      expect(firstToggle?.getAttribute('aria-expanded')).toBe('false');
+      expect(firstToggle?.textContent).toContain('Show details');
+      act(() => {
+        firstToggle?.click();
+      });
+      expect(firstToggle?.getAttribute('aria-expanded')).toBe('true');
+      expect(container.textContent).toContain(fullFirst);
+      expect(container.textContent).not.toContain(fullSecond);
+      unmount(container, root);
+    });
+
     it('applies Lilly’s moieties at scale 0, and reads back as that preset', async () => {
       const onRedraw = vi.fn();
       const { container, root } = await mount(fakeProvider(), onRedraw);

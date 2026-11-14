@@ -1206,11 +1206,21 @@ export function ExtendedSettingsPanel({
                       ...CITED_ORB_PRESET_IDS.map((id) => ({
                         value: id,
                         title: t.citedOrbPresetOptions[id],
-                        consequence: t.citedOrbPresetNotes[id],
+                        consequence: t.citedOrbPresetSummaries[id],
                       })),
                     ]}
                     onChange={chooseOrbProfile}
                   />
+                  {CITED_ORB_PRESET_IDS.map((id) => (
+                    <Disclosure
+                      key={id}
+                      title={t.citedOrbPresetOptions[id]}
+                      showLabel={t.showDetails}
+                      hideLabel={t.hideDetails}
+                    >
+                      <p className="settings-card-note">{t.citedOrbPresetNotes[id]}</p>
+                    </Disclosure>
+                  ))}
                 </div>
                 {effective.orbRules === undefined && (
                   <p className="hint" aria-live="polite">
