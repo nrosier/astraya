@@ -59,6 +59,15 @@ test('a person with a known birth time gets a Solar Arc screen with directed pos
 
   await expect(page.getByRole('table', { name: 'Directed positions' })).toBeVisible();
   await expect(page.getByText(/^Arc: /)).toBeVisible();
+
+  // The date stepper (#1400): stepping forward a day changes the as-of date and writes it to the URL.
+  const bar = page.getByRole('group', { name: 'Date and animation' });
+  const date = bar.getByLabel('As of');
+  const before = await date.inputValue();
+  await bar.getByRole('button', { name: 'Step forward one day' }).click();
+  await expect(date).not.toHaveValue(before);
+  const after = await date.inputValue();
+  await expect.poll(() => page.url()).toContain(`date=${after}`);
 });
 
 test('a person with an unknown birth time is told solar arc directions need one', async () => {
