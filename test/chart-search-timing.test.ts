@@ -489,6 +489,40 @@ describe('solar-arc scope (#1486, cited to Tebbs, provisional)', () => {
     );
   }, 120_000);
 
+  it('a directed body reaches the natal Ascendant or Midheaven within the orb, read independently from the engine', async () => {
+    // The first half-year step from the birth whose solar-arc reference has a contact to a natal angle.
+    let found: { subject: SearchSubject; asOfJd: JulianDayUT } | undefined;
+    for (let step = 1; step <= 180 && found === undefined; step++) {
+      const asOfJd = natalJd + step * 182.625;
+      const subject = await subjectFor(['solarArc'], asOfJd);
+      if ((subject.solarArc?.angleContacts.length ?? 0) > 0) found = { subject, asOfJd };
+    }
+    if (found === undefined) throw new Error('no solar-arc contact to a natal angle in 90 years');
+    const { subject, asOfJd } = found;
+    const contact = subject.solarArc?.angleContacts[0];
+    if (contact === undefined) throw new Error('unreachable');
+
+    // The directed body is the natal body moved by the true solar arc; the target is the natal angle from the engine.
+    const natalHouses = await engine.houses(natalJd, PLACE, 'P');
+    const natalAngle = contact.angle === 'asc' ? natalHouses.ascendant : natalHouses.mc;
+    const directed = (longitudeIn(subject.chart.positions, contact.body) + (await arcAt(asOfJd))) % 360;
+    const separation = angularSeparation(directed, natalAngle);
+    expect(Math.abs(separation - contact.aspect.angle)).toBeLessThanOrEqual(contact.allowedOrb);
+
+    const inOrb: AspectCondition = {
+      kind: 'aspect',
+      scope: 'solarArc',
+      body: contact.body,
+      aspectKey: contact.aspect.key,
+      target: { kind: 'angle', angle: contact.angle },
+    };
+    expect(evaluateCondition(inOrb, subject).outcome).toBe('matched');
+    // An aspect whose angle is farther from the separation than any orb the app uses (10 degrees at most).
+    const farAspect = ASPECTS.find((a) => a.family === 'major' && Math.abs(separation - a.angle) > 10);
+    if (farAspect === undefined) throw new Error('every major aspect is within 10 degrees');
+    expect(evaluateCondition({ ...inOrb, aspectKey: farAspect.key }, subject).outcome).toBe('not-matched');
+  }, 300_000);
+
   it('a scope that was not computed is not-evaluable with timing-unavailable', async () => {
     const subject = await subjectFor([], asOf());
     const result = evaluateCondition({ kind: 'sign', scope: 'solarArc', body: SUN, sign: 0 }, subject);
