@@ -81,6 +81,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `EventSearchView.tsx` + `EventSearchView.messages.ts` — UTC batch ephemeris research and reproducible CSV tool. States its calculation basis in the header (#1059). Deps: `domain/event-search`, `EphemerisProviderContext`.
 - `DegreeSymbolSetting.tsx` + `DegreeSymbolSetting.messages.ts` — Named, explained controlled checkbox (`show`/`onChange`, #802) for Sabian symbol visibility, owned by ReportView; same shape as `RulershipSetting`. Deps: `./DegreeSymbolSetting.messages`, `./primitives/Checkbox`.
 - `DraconicView.tsx` + `DraconicView.messages.ts` — Draconic chart screen (positions from North Node). Deps: `domain/draconic`.
+- `HeliocentricView.tsx` + `HeliocentricView.messages.ts` — Heliocentric chart screen (#1407): Earth to Pluto and Chiron seen from the Sun, wheel without houses. Deps: `domain/heliocentric`, `ChartView`.
 - `EclipsesView.tsx` + `EclipsesView.messages.ts` — Eclipses tool (solar/lunar search + natal contacts). States its calculation basis in the header (#1059). Deps: `astrology/eclipses`, `domain/chart-compute`.
 - `ElectionalView.tsx` + `ElectionalView.messages.ts` — Electional Search tool (best-time-to-begin ranking). States its calculation basis in the header (#1059). Deps: `astrology/electional`, `BirthPlaceSearch`.
 - `EntryLabel.tsx` — Renders corpus keys as human-readable placement names (admin UI). Deps: `./placement-label`.

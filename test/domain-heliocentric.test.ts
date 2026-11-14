@@ -4,6 +4,8 @@
  */
 import { beforeAll, describe, expect, it } from 'vitest';
 import { bodyByKey } from '../src/astrology/bodies.js';
+import { housesAreDefined } from '../src/domain/chart-compute.js';
+import { positionRows } from '../src/domain/chart-tables.js';
 import { computeHeliocentric, HELIOCENTRIC_BODY_KEYS } from '../src/domain/heliocentric.js';
 import type { SwissEphemerisEngine } from '../src/ephemeris/engine.js';
 import { SE } from '../src/ephemeris/generated-constants.js';
@@ -60,6 +62,13 @@ describe('computeHeliocentric (#1407)', () => {
     expect(helioMars?.longitude).toBe(direct.longitude);
     // Mars seen from the Sun and from the Earth differ by its parallax, many degrees for an inner-system body.
     expect(Math.abs(arcsecondsBetween(helioMars?.longitude ?? 0, geoMars?.longitude ?? 0))).toBeGreaterThan(3600);
+  });
+
+  it('has no houses: every cusp and angle is undefined, so no body is given a house', async () => {
+    const { heliocentric } = await computeHeliocentric(NATAL, engine);
+    expect(housesAreDefined(heliocentric.houses)).toBe(false);
+    expect(Number.isNaN(heliocentric.houses.ascendant)).toBe(true);
+    expect(positionRows(heliocentric).every((row) => row.house === undefined)).toBe(true);
   });
 
   it('finds its own aspects between heliocentric bodies only, with the given orbs', async () => {

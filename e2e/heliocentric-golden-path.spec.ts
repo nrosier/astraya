@@ -65,6 +65,9 @@ test('a person with a known birth time gets a Heliocentric chart: Earth for the 
   await expect(table.getByRole('cell', { name: 'Mars', exact: true })).toBeVisible();
   await expect(table.getByRole('cell', { name: 'Sun', exact: true })).toHaveCount(0);
   await expect(table.getByRole('cell', { name: 'Moon', exact: true })).toHaveCount(0);
+  // No body is given a house: the House column reads a dash on every row.
+  const earthRow = table.locator('tbody tr', { has: page.getByRole('cell', { name: 'Earth', exact: true }) });
+  await expect(earthRow).toContainText('—');
   await page.screenshot({ path: 'test-results/heliocentric-placements.png', fullPage: false });
   await page.getByRole('link', { name: 'Wheel', exact: true }).click();
   await expect(wheel).toBeVisible();

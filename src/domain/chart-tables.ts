@@ -1134,26 +1134,33 @@ export function chartSheetInput(
       retrograde: position.retrograde,
     };
   });
-  const rows = new Map(positionRows(data, options, true).map((row) => [row.bodyKey, row]));
-  const angleBodies = [
-    { key: 'asc', label: 'AC', name: 'ASC', longitude: data.houses.ascendant },
-    { key: 'mc', label: 'MC', name: 'MC', longitude: data.houses.midheaven },
-  ];
+  // Without usable houses (a polar birthplace, #378, or the heliocentric chart, #1407) there is no Ascendant, so the
+  // angles, the Vertex and the two lots, which are all measured from it, get no row.
+  const anglesKnown = housesAreDefined(data.houses);
+  const rows = new Map(positionRows(data, options, anglesKnown).map((row) => [row.bodyKey, row]));
+  const angleBodies = anglesKnown
+    ? [
+        { key: 'asc', label: 'AC', name: 'ASC', longitude: data.houses.ascendant },
+        { key: 'mc', label: 'MC', name: 'MC', longitude: data.houses.midheaven },
+      ]
+    : [];
   // The Vertex and the two parts get a matrix row exactly when the user has made them visible
   // (#542) — previously this was driven by whether the point happened to have an aspect at all
   // (`data.angleAspects`), which meant a visible point with no aspects never got a row (unlike
   // every ordinary body, which always gets one), and a hidden point *with* an aspect still did.
-  const extraPoints = [
-    ...(pointVisible('vertex', options)
-      ? [{ key: 'vertex', label: 'VX', name: 'Vertex', longitude: data.houses.vertex }]
-      : []),
-    ...(pointVisible('partOfFortune', options)
-      ? [{ key: 'partOfFortune', label: 'PF', name: 'Fortune', longitude: data.partOfFortune }]
-      : []),
-    ...(pointVisible('partOfSpirit', options)
-      ? [{ key: 'partOfSpirit', label: 'PS', name: 'Spirit', longitude: data.partOfSpirit }]
-      : []),
-  ];
+  const extraPoints = !anglesKnown
+    ? []
+    : [
+        ...(pointVisible('vertex', options)
+          ? [{ key: 'vertex', label: 'VX', name: 'Vertex', longitude: data.houses.vertex }]
+          : []),
+        ...(pointVisible('partOfFortune', options)
+          ? [{ key: 'partOfFortune', label: 'PF', name: 'Fortune', longitude: data.partOfFortune }]
+          : []),
+        ...(pointVisible('partOfSpirit', options)
+          ? [{ key: 'partOfSpirit', label: 'PS', name: 'Spirit', longitude: data.partOfSpirit }]
+          : []),
+      ];
   const keyOf = (body: BodyId): string => bodyById(body)?.key ?? String(body);
   return {
     metaLines,
