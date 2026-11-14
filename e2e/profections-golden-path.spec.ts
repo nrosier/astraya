@@ -53,7 +53,9 @@ test('a person with a known birth time gets a Profections screen with a Year/Mon
   await page.getByRole('link', { name: 'Progressions & Directions', exact: true }).click();
   await page.getByRole('tab', { name: 'Profections', exact: true }).click();
   await expect(page.getByRole('heading', { name: /profections/i, level: 2 })).toBeVisible();
-  await expect(page.locator('.page-header-basis')).toHaveText('Tropical · Whole-sign houses · Modern rulers');
+  await expect(page.locator('.page-header-basis')).toHaveText(
+    'Tropical · Whole-sign houses · Mean node · Modern rulers',
+  );
   await expect(page.locator('.page-header-basis')).not.toContainText(/Placidus|orbs/);
 
   // The age sits in its own card, title inside, with the birth date beside it (#1300).
@@ -66,7 +68,9 @@ test('a person with a known birth time gets a Profections screen with a Year/Mon
     .getByRole('radiogroup', { name: 'Planetary rulers', exact: true })
     .getByRole('radio', { name: /^Traditional/ })
     .click();
-  await expect(page.locator('.page-header-basis')).toHaveText('Tropical · Whole-sign houses · Traditional rulers');
+  await expect(page.locator('.page-header-basis')).toHaveText(
+    'Tropical · Whole-sign houses · Mean node · Traditional rulers',
+  );
   await expect(page.getByRole('cell', { name: 'Year' })).toBeVisible();
   await expect(page.getByRole('cell', { name: 'Month' })).toBeVisible();
 
@@ -88,7 +92,7 @@ test('a person with a known birth time gets a Profections screen with a Year/Mon
   await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).click();
   await page.getByRole('tab', { name: 'Transits', exact: true }).click();
   await expect(page.locator('.page-header-basis')).toHaveText(
-    'Tropical · Placidus · Traditional rulers · Standard orbs',
+    'Tropical · Placidus · Mean node · Traditional rulers · Standard orbs',
   );
 });
 

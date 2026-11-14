@@ -53,7 +53,9 @@ test('a person with a known birth time gets a Forecast screen with all four tier
   await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).click();
   await page.getByRole('tab', { name: 'Forecast', exact: true }).click();
   await expect(page.getByRole('heading', { name: /forecast/i, level: 2 })).toBeVisible();
-  await expect(page.locator('.page-header-basis')).toHaveText('Tropical · Placidus · Modern rulers · Standard orbs');
+  await expect(page.locator('.page-header-basis')).toHaveText(
+    'Tropical · Placidus · Mean node · Modern rulers · Standard orbs',
+  );
 
   // The periods are tabs (#1227): one is shown at a time, and each tab shows its own heading.
   const periods = page.getByRole('tablist', { name: 'Forecast period' });
