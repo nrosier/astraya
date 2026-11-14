@@ -121,6 +121,8 @@ test('a cited Lilly preset is offered on the card, applies, and can be chosen fo
   const card = page.locator('dialog.settings-card');
   const orbGroup = card.getByRole('radiogroup', { name: 'Orb profile' });
   await expect(orbGroup.getByRole('radio', { name: /^Lilly \(1647\), first column/ })).toBeVisible();
+  // The full citation sits behind the preset's Show details disclosure (#1544), so open it before asserting.
+  await card.getByRole('button', { name: /^Lilly \(1647\), first column.*Show details/ }).click();
   await expect(card.getByText(/Christian Astrology \(1647\), Book I, p\. 107/).first()).toBeVisible();
   await orbGroup.getByRole('radio', { name: /^Lilly \(1647\), first column/ }).check();
   await card.getByRole('button', { name: 'Apply and redraw', exact: true }).click();
