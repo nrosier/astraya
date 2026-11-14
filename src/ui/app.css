@@ -1294,11 +1294,11 @@ footer {
   gap: var(--space-4);
 }
 
-/* Pill controls carry their own width, so they wrap in a row with the same --space-3 gap as the chart controls (#1545). */
+/* The cycle-search pills (#1545) stack one per row with the same --space-3 gap, so the form card stays within the 90% height balance of the diagram card beside it (e2e/tool-page-layout.spec.ts). */
 .tool-pill-row {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   gap: var(--space-3);
 }
 

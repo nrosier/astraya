@@ -351,16 +351,16 @@ export function CyclesView(): React.JSX.Element {
       <div className="tool-layout">
         <section className="tool-card tool-form" aria-labelledby="cycles-search-heading">
           <h2 id="cycles-search-heading">{t.searchHeading}</h2>
-          <PillSelect
-            label={t.presetLabel}
-            value={presetKey}
-            options={[
-              { value: 'custom', label: t.presetCustom },
-              ...CYCLE_PRESETS.map((preset) => ({ value: preset.key, label: t.presets[preset.key] ?? preset.key })),
-            ]}
-            onChange={choosePreset}
-          />
           <div className="tool-pill-row">
+            <PillSelect
+              label={t.presetLabel}
+              value={presetKey}
+              options={[
+                { value: 'custom', label: t.presetCustom },
+                ...CYCLE_PRESETS.map((preset) => ({ value: preset.key, label: t.presets[preset.key] ?? preset.key })),
+              ]}
+              onChange={choosePreset}
+            />
             <PillSelect
               label={t.bodyALabel}
               value={params.bodyA}
