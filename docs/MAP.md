@@ -16,6 +16,7 @@ Topic folders:
 - `ui/views/horary-view.md` — Target design for the horary screen: location search, Set to Now action, and secondary settings disclosure. Deps: `src/ui/HoraryView.tsx`, `src/ui/BirthPlaceSearch.tsx`, `src/ui/primitives/Disclosure.tsx`.
 - `archive/UI-UX_REVIEW.md` — Archived, dated (2026-10-09) code-grounded design and usability audit; a snapshot, not current guidance. Deps: `src/ui`, `e2e/accessibility.spec.ts`.
 - `ASTROLOGY_TERMS.md` — Combined 573-term astrology/astronomy glossary merged from six draft sources, staged as source material for #456's glossary tooltip content. Deps: none yet (not wired into `src/ui` — pending integration).
+- `domain/DAVISON.md` — Davison relationship chart architect note: method, inputs, difference from the midpoint composite, sources and open points (#1406). Deps: `src/domain/davison.ts`, `src/domain/composite.ts`.
 - `domain/CORPUS_KEYS.md` — Corpus key-shape reference (which placements get which key format). Deps: `src/interpretation/schema.ts`.
 - `domain/CHART_OVERLAYS.md` — Supported chart-overlay contexts, intentional relationship-chart exceptions, interaction, and export behavior. Deps: `src/ui/ChartView.tsx`, `src/ui/SynastryView.tsx`, `src/chart/multi-wheel.ts`.
 - `domain/AAF_INTERCHANGE.md` — AAF birth-record interchange: the AAF'97 source, the field mapping, the Astraya extension chunk, and what is not claimed (#591). Deps: `src/domain/aaf.ts`, `src/domain/aaf-people.ts`, `references/aaf-chunks.references.json`.

@@ -891,7 +891,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
-    "used_by": [],
+    "used_by": ["src/domain/davison.ts"],
     "notes": "Title page and copyright page checked. The filename carries third-party mirror names; the Internet Archive digitisation is the traceable source. Text stays local. Owner to confirm the local copy is legitimately held before any quotation is used."
   },
   {
