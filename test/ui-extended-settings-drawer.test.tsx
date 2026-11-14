@@ -177,15 +177,14 @@ describe('the drawer structure (#824)', () => {
     unmount(container, root);
   });
 
-  it('pins Save and Reset on the left, and Cancel and Apply on the right of one footer', async () => {
+  it('pins a Defaults menu on the left, and Cancel and Apply on the right of one footer (#1544)', async () => {
     const { container, root } = await mount(undefined, vi.fn());
     openDrawer(container);
     const footer = drawer(container).querySelector('.settings-card-footer');
     expect(footer).not.toBeNull();
     const [left, right] = Array.from(footer?.querySelectorAll(':scope > .settings-card-footer-group') ?? []);
     expect(Array.from(left?.querySelectorAll('button') ?? []).map((button) => button.textContent.trim())).toEqual([
-      'Save as my default',
-      'Reset to my default',
+      'Defaults ▾',
     ]);
     expect(Array.from(right?.querySelectorAll('button') ?? []).map((button) => button.textContent.trim())).toEqual([
       'Cancel',
@@ -215,6 +214,11 @@ describe('the drawer structure (#824)', () => {
   it('has a single Reset to my default button, not a factory-reset menu', async () => {
     const { container, root } = await mount(undefined, vi.fn());
     openDrawer(container);
+    act(() => {
+      Array.from(drawer(container).querySelectorAll('button'))
+        .find((button) => button.textContent.startsWith('Defaults'))
+        ?.click();
+    });
     const resets = Array.from(drawer(container).querySelectorAll('button')).filter((button) =>
       button.textContent.includes('Reset'),
     );

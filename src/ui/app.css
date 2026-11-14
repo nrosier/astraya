@@ -6564,6 +6564,52 @@ svg text.chart-symbol-text-unicode {
   white-space: nowrap;
 }
 
+/* The Defaults menu (#1544): the button keeps the footer's control height; its menu opens upward from the footer, like the profile popover. */
+.settings-card-defaults {
+  position: relative;
+}
+
+.settings-card-defaults-menu {
+  position: absolute;
+  bottom: calc(100% + var(--space-2));
+  left: 0;
+  z-index: 26;
+  display: flex;
+  flex-direction: column;
+  min-width: max-content;
+  padding: var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--fg);
+  font-size: var(--text-sm-compact);
+  box-shadow: var(--shadow-popover);
+}
+
+.settings-card-defaults-item {
+  display: flex;
+  align-items: center;
+  min-height: var(--control-height);
+  padding: 0 var(--space-2);
+  border: none;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  text-align: start;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.settings-card-defaults-item:hover:not(:disabled) {
+  background: var(--bg-hover);
+}
+
+.settings-card-defaults-item:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 /* When the two groups share a row they sit at opposite ends; when the drawer is too narrow for one row, Cancel and Apply keep to the right. */
 .settings-card-footer-group:last-child {
   margin-left: auto;
@@ -6588,17 +6634,15 @@ svg text.chart-symbol-text-unicode {
     display: block;
   }
 
-  /* One row per group on a phone: the right drawer and the centred phone sheet (#1508) stack the two groups. */
+  /* Three controls fit one row on a phone (#1544): Defaults at the left, Cancel and Apply at the right, never wrapping. */
   .primitive-staged-dialog[data-placement='right'] .settings-card-footer,
   .primitive-staged-dialog[data-sheet='phone'] .settings-card-footer {
-    flex-direction: column;
-    flex-wrap: wrap;
-    align-items: stretch;
+    flex-wrap: nowrap;
+    align-items: center;
   }
 
   .settings-card-footer-group {
-    flex-wrap: wrap;
-    justify-content: space-between;
+    flex-wrap: nowrap;
   }
 }
 
