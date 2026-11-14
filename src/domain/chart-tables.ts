@@ -82,6 +82,7 @@ const BODY_SYMBOLS: Readonly<Record<string, string>> = {
   interpolatedLilith: '⚸',
   chiron: '⚷',
   pholus: '⯛',
+  earth: '⊕',
   ceres: '⚳',
   pallas: '⚴',
   juno: '⚵',

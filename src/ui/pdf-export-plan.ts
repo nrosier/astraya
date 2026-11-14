@@ -57,6 +57,7 @@ import {
   type ChartData,
 } from '../domain/chart-compute.js';
 import { computeDraconic } from '../domain/draconic.js';
+import { computeHeliocentric } from '../domain/heliocentric.js';
 import { computeRelocatedChart } from '../domain/relocated-chart.js';
 import { computeHarmonic } from '../domain/harmonic.js';
 import { computeSolarReturnChart, computeLunarReturnChart } from '../domain/return-chart.js';
@@ -625,6 +626,8 @@ export function sectionCalculationOptions(
     case 'harmonic':
     case 'relocated':
       return { rulership, ...orbsOf(settings), ...customPoints };
+    case 'heliocentric':
+      return { rulership, ...orbsOf(settings) };
   }
 }
 
@@ -673,6 +676,10 @@ async function computeSectionChartData(
       const result = await computeRelocatedChart(person.moment, relocationPlace, provider, calcOptions);
       return result.relocated;
     }
+    case 'heliocentric':
+      // Not selectable from PdfExportBuilder's own UI either (PDF_CHART_TYPES omits it, #1407); here so the switch
+      // stays exhaustive over the full ChartType union, as `relocated` is.
+      return (await computeHeliocentric(person.moment, provider, calcOptions)).heliocentric;
   }
 }
 
