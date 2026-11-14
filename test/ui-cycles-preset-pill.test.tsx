@@ -8,7 +8,8 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { EphemerisProvider } from '../src/ephemeris/types.js';
-import { CYCLE_PRESETS } from '../src/ui/cycles.js';
+import { bodyDisplayName } from '../src/ui/astro-names.messages.js';
+import { CYCLE_BODY_KEYS, CYCLE_PRESETS } from '../src/ui/cycles.js';
 import { cyclesViewMessages } from '../src/ui/CyclesView.messages.js';
 import { getEngine } from './engine-harness.js';
 
@@ -116,7 +117,57 @@ describe('the cycle-search preset pill (#1545)', () => {
     });
     expect(pillOf(container).textContent).toContain(t.presets['venus-pentagram']);
     expect(container.querySelector('[role="dialog"]')).toBeNull();
-    const bodies = Array.from(container.querySelectorAll('select')).map((select) => select.value);
-    expect(bodies.slice(0, 2)).toEqual(['venus', 'sun']);
+    const pills = Array.from(container.querySelectorAll('button.primitive-pill-select-pill')).map(
+      (pill) => pill.textContent,
+    );
+    expect(pills[1]).toContain(bodyName('venus'));
+    expect(pills[2]).toContain(bodyName('sun'));
+  });
+});
+
+function bodyName(key: string): string {
+  return bodyDisplayName(key, 'en');
+}
+
+describe('the first and second body pills (#1545)', () => {
+  function bodyPill(container: HTMLElement, index: number): HTMLButtonElement {
+    const pill = container.querySelectorAll<HTMLButtonElement>('button.primitive-pill-select-pill')[index];
+    if (pill === undefined) throw new Error(`no pill ${String(index)}`);
+    return pill;
+  }
+
+  it('labels both pills and lists every body, in the order the selects did', () => {
+    const container = mount();
+    const labels = Array.from(container.querySelectorAll('.primitive-pill-select-label')).map((l) => l.textContent);
+    expect(labels).toEqual([t.presetLabel, t.bodyALabel, t.bodyBLabel]);
+    expect(container.querySelectorAll('.tool-form select').length).toBe(1);
+    for (const index of [1, 2]) {
+      act(() => {
+        bodyPill(container, index).click();
+      });
+      const radios = Array.from(container.querySelectorAll('[role="radio"]')).map((radio) => radio.textContent);
+      expect(radios).toEqual(CYCLE_BODY_KEYS.map((key) => bodyName(key)));
+      act(() => {
+        bodyPill(container, index).click();
+      });
+    }
+  });
+
+  it('choosing a body sets that pill, closes the card and moves the preset to Custom', async () => {
+    const container = mount();
+    act(() => {
+      bodyPill(container, 1).click();
+    });
+    const option = Array.from(container.querySelectorAll<HTMLButtonElement>('[role="radio"]')).find(
+      (radio) => radio.textContent === bodyName('mars'),
+    );
+    await act(async () => {
+      option?.click();
+      await Promise.resolve();
+    });
+    expect(bodyPill(container, 1).textContent).toContain(bodyName('mars'));
+    expect(bodyPill(container, 2).textContent).not.toContain(bodyName('mars'));
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
+    expect(bodyPill(container, 0).textContent).toContain(t.presetCustom);
   });
 });
