@@ -6,7 +6,7 @@
  */
 import { useRef, useState } from 'react';
 import { StagedDialog } from './primitives/StagedDialog.js';
-import { DateField } from './primitives/DateField.js';
+import { DateAnimationBar } from './DateAnimationBar.js';
 import { NumberField } from './primitives/NumberField.js';
 import { ChoiceGroup } from './primitives/ChoiceGroup.js';
 import { Checkbox } from './primitives/Checkbox.js';
@@ -282,11 +282,14 @@ function OverlayDraft({
             update({ transit });
           }}
         >
-          <DateField
+          <DateAnimationBar
+            mode="date"
+            showHint={false}
+            keyboard={false}
             label={t.transitDate}
-            value={draft.transitDate}
+            date={draft.transitDate}
             disabled={!draft.transit}
-            onChange={(transitDate) => {
+            onDateChange={(transitDate) => {
               update({ transitDate });
             }}
           />
@@ -313,11 +316,14 @@ function OverlayDraft({
             update({ progressed });
           }}
         >
-          <DateField
+          <DateAnimationBar
+            mode="date"
+            showHint={false}
+            keyboard={false}
             label={t.progressedDate}
-            value={draft.progressedDate}
+            date={draft.progressedDate}
             disabled={!draft.progressed}
-            onChange={(progressedDate) => {
+            onDateChange={(progressedDate) => {
               update({ progressedDate });
             }}
           />
@@ -330,11 +336,14 @@ function OverlayDraft({
             update({ directed });
           }}
         >
-          <DateField
+          <DateAnimationBar
+            mode="date"
+            showHint={false}
+            keyboard={false}
             label={t.directedDate}
-            value={draft.directedDate}
+            date={draft.directedDate}
             disabled={!draft.directed}
-            onChange={(directedDate) => {
+            onDateChange={(directedDate) => {
               update({ directedDate });
             }}
           />
@@ -347,11 +356,14 @@ function OverlayDraft({
             update({ solarArc });
           }}
         >
-          <DateField
+          <DateAnimationBar
+            mode="date"
+            showHint={false}
+            keyboard={false}
             label={t.solarArcDate}
-            value={draft.solarArcDate}
+            date={draft.solarArcDate}
             disabled={!draft.solarArc}
-            onChange={(solarArcDate) => {
+            onDateChange={(solarArcDate) => {
               update({ solarArcDate });
             }}
           />
@@ -393,11 +405,14 @@ function OverlayDraft({
               }}
             />
           </div>
-          <DateField
+          <DateAnimationBar
+            mode="date"
+            showHint={false}
+            keyboard={false}
             label={t.returnDate}
-            value={draft.returnDate}
+            date={draft.returnDate}
             disabled={!draft.return}
-            onChange={(returnDate) => {
+            onDateChange={(returnDate) => {
               update({ returnDate });
             }}
           />

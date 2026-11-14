@@ -125,6 +125,20 @@ describe('stepping', () => {
   });
 });
 
+describe('layout (#1400, owner answer A2)', () => {
+  it('puts the Day / Month / Year control beside the date field, not in the speed slot', () => {
+    mount();
+    const group = find('[role="radiogroup"]', HTMLElement);
+    expect(group.getAttribute('aria-label')).toBe(t.intervalLabel);
+    const children = [...find('.date-animation-bar', HTMLElement).children];
+    const interval = children.findIndex((child) => child.contains(group));
+    const date = children.findIndex((child) => child.querySelector('input[type="date"]') !== null);
+    const speed = children.findIndex((child) => child.querySelector('select') !== null);
+    expect(Math.abs(interval - date)).toBe(1);
+    expect(Math.abs(interval - speed)).toBeGreaterThan(1);
+  });
+});
+
 describe('playback and keyboard', () => {
   it('starts paused and advances once per second at 1x after Play, stopping on Pause', () => {
     mount();
@@ -156,6 +170,25 @@ describe('playback and keyboard', () => {
     expect(seen.length).toBeGreaterThanOrEqual(29);
     expect(seen.length).toBeLessThanOrEqual(31);
   });
+
+  it.each([
+    ['10', 10],
+    ['30', 30],
+  ])(
+    'at %sx recalculates at most 60 times a second and still advances the date by the speed (#1400 A3)',
+    (speed, days) => {
+      mount();
+      setNative(find('select', HTMLSelectElement), speed, 'change');
+      click(button(t.play));
+      act(() => {
+        vi.advanceTimersByTime(1000);
+      });
+      expect(seen.length).toBeLessThanOrEqual(60);
+      const advanced = (Date.parse(dateValue()) - Date.parse('2026-11-10')) / 86_400_000;
+      expect(advanced).toBeGreaterThanOrEqual(days - 1);
+      expect(advanced).toBeLessThanOrEqual(days + 1);
+    },
+  );
 
   it('reduced motion starts paused and never advances by itself, but Play still works', () => {
     vi.stubGlobal(

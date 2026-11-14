@@ -55,6 +55,9 @@ export function DateAnimationBar({
   onPlayingChange,
   mode = 'full',
   showHint = true,
+  label,
+  disabled = false,
+  keyboard = true,
 }: {
   readonly date: string;
   readonly onDateChange: (date: string) => void;
@@ -67,6 +70,12 @@ export function DateAnimationBar({
   readonly mode?: 'full' | 'date';
   /** False when the screen carries this text in its own explainer (Transits, #1400/#1440). */
   readonly showHint?: boolean;
+  /** Names the group and its date field when the screen has several bars or its own word for the date (the overlay drawer's extra rings, #1400). Default: the bar's own labels. */
+  readonly label?: string;
+  /** Greys out every control, for a ring that is switched off in the overlay drawer. */
+  readonly disabled?: boolean;
+  /** False when other controls share the page and the window-wide Space and arrow keys must not step this bar. Default true. */
+  readonly keyboard?: boolean;
 }): React.JSX.Element {
   const playable = mode === 'full';
   const t = useMessages(dateAnimationBarMessages);
@@ -144,6 +153,7 @@ export function DateAnimationBar({
     }
   });
   useEffect(() => {
+    if (!keyboard) return undefined;
     const listener = (event: KeyboardEvent): void => {
       onKey(event);
     };
@@ -151,7 +161,7 @@ export function DateAnimationBar({
     return () => {
       window.removeEventListener('keydown', listener);
     };
-  }, []);
+  }, [keyboard]);
 
   // A date outside the ten years shown re-centres the slider on its year.
   const current = dayNumber(date);
@@ -168,7 +178,11 @@ export function DateAnimationBar({
   const intervalName = t.intervalNames[interval];
   return (
     <div className="date-animation-bar-wrap">
-      <div className="date-animation-bar" role="group" aria-label={t.groupLabel}>
+      <div
+        className="date-animation-bar"
+        role="group"
+        aria-label={label === undefined ? t.groupLabel : t.groupLabelFor(label)}
+      >
         {playable && (
           <Button
             variant="primary"
@@ -185,7 +199,7 @@ export function DateAnimationBar({
         <Button
           className="date-animation-step"
           aria-label={t.stepBack(intervalName)}
-          disabled={!valid}
+          disabled={disabled || !valid}
           onClick={() => {
             stepBy(-1);
           }}
@@ -195,6 +209,7 @@ export function DateAnimationBar({
         <ChoiceGroup
           segmented
           label={t.intervalLabel}
+          disabled={disabled}
           value={interval}
           options={STEP_INTERVALS.map((value) => ({ value, label: t.intervalOptions[value] }))}
           onChange={(value) => {
@@ -202,11 +217,11 @@ export function DateAnimationBar({
             if (next !== undefined) setInterval_(next);
           }}
         />
-        <DateField label={t.dateLabel} value={date} onChange={onDateChange} hideLabel />
+        <DateField label={label ?? t.dateLabel} value={date} onChange={onDateChange} disabled={disabled} hideLabel />
         <Button
           className="date-animation-step"
           aria-label={t.stepForward(intervalName)}
-          disabled={!valid}
+          disabled={disabled || !valid}
           onClick={() => {
             stepBy(1);
           }}
@@ -270,6 +285,7 @@ export function DateAnimationBar({
         )}
         <Button
           className="date-animation-now"
+          disabled={disabled}
           onClick={() => {
             onDateChange(todayInputValue());
           }}
