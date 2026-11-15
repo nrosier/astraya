@@ -20,7 +20,7 @@ export interface TextFieldProps {
   readonly optional?: boolean | undefined;
   readonly placeholder?: string | undefined;
   readonly size?: ButtonSize;
-  /** `pill` is the full-radius search shape with side padding (#1545 P2, #1600); everything else stays `field`. */
+  /** `pill` (the default since #1600 WP7) is the full-radius single-line shape with side padding; `field` is the opt-out square shape. */
   readonly shape?: 'field' | 'pill' | undefined;
   readonly disabled?: boolean | undefined;
   /** The label stays for assistive technology but is not drawn, e.g. a field inside a table cell (#1439). */
@@ -45,7 +45,7 @@ export function TextField({
   optional,
   placeholder,
   size = 'standard',
-  shape = 'field',
+  shape = 'pill',
   disabled,
   hideLabel,
   autoComplete,

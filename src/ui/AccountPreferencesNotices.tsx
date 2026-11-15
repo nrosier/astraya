@@ -113,6 +113,8 @@ function ReconcileDialog({ prompt }: { readonly prompt: AccountReconcilePrompt }
       footer={
         <>
           <Button
+            shape="capsule"
+            className="primitive-button-form-action"
             busy={busy}
             busyLabel={t.saving}
             onClick={() => {

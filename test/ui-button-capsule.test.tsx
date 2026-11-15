@@ -60,14 +60,37 @@ describe('.primitive-button-capsule', () => {
   });
 });
 
+/** The inline actions (#1600 WP4) plus the Cancel, Apply and Save buttons of forms and drawers (#1600 WP7). */
+const EXPECTED_CAPSULE_FILES = [
+  'AccountPreferencesNotices.tsx',
+  'AdminPanel.tsx',
+  'BirthPlaceSearch.tsx',
+  'ChartOverlaySettingsPanel.tsx',
+  'CorpusCorrectionEditor.tsx',
+  'CorpusOverridesPanel.tsx',
+  'CorpusSubmissionsSection.tsx',
+  'ExtendedSettingsPanel.tsx',
+  'FixedStarPicker.tsx',
+  'LifeEventsDrawer.tsx',
+  'MapSettingsDialog.tsx',
+  'OrbLibraryEditor.tsx',
+  'PersonFileActions.tsx',
+  'PersonForm.tsx',
+  'RelocatedChartView.tsx',
+  'SavedChartSearches.tsx',
+  'SavedQueries.tsx',
+  'SuggestCorrectionDialog.tsx',
+  'TransitFilterPanel.tsx',
+];
+
 describe('capsule call sites', () => {
   const files = readdirSync('src/ui')
     .filter((name) => name.endsWith('.tsx'))
     .map((name) => ({ name, source: readFileSync(`src/ui/${name}`, 'utf-8') }));
 
-  it('is passed only in the matrix, transit filter and fixed-star picker', () => {
+  it('is passed only by the inline actions and the form action buttons (#1600 WP7)', () => {
     const using = files.filter((f) => f.source.includes('shape="capsule"')).map((f) => f.name);
-    expect(using.sort()).toEqual(['ExtendedSettingsPanel.tsx', 'FixedStarPicker.tsx', 'TransitFilterPanel.tsx']);
+    expect(using.sort()).toEqual(EXPECTED_CAPSULE_FILES);
   });
 
   it('never gives an Export, Defaults or Techniques button the capsule shape', () => {

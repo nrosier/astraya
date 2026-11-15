@@ -306,6 +306,8 @@ export function LifeEventsDrawer({
             </div>
             <div className="settings-card-footer-group">
               <Button
+                shape="capsule"
+                className="primitive-button-form-action"
                 variant="primary"
                 busy={saving}
                 busyLabel={t.saving}

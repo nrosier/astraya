@@ -169,7 +169,13 @@ function Panel({
         autoComplete="off"
       />
       <div className="tool-actions">
-        <Button variant="primary" disabled={!store.writable || nameError !== undefined} onClick={save}>
+        <Button
+          shape="capsule"
+          className="primitive-button-form-action"
+          variant="primary"
+          disabled={!store.writable || nameError !== undefined}
+          onClick={save}
+        >
           {t.saveButton}
         </Button>
       </div>

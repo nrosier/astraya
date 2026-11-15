@@ -219,6 +219,8 @@ export function CorpusSubmissionsSection(): React.JSX.Element {
                         {pending.decision === 'approve' ? t.confirmApproveButton : t.confirmRejectButton}
                       </Button>{' '}
                       <Button
+                        shape="capsule"
+                        className="primitive-button-form-action"
                         type="button"
                         variant="quiet"
                         onClick={() => {

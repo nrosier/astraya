@@ -1586,11 +1586,12 @@ footer {
   flex-grow: 1;
 }
 
-/* The left column's last card carries one --space-1 of extra bottom padding (issue 1354): the 1rem h3 spec left the left
-   column 874px against the right's 972px (0.899) at 1280x800 and 3440x1440, under the 90% rule (895). One --space-1
-   (3.5px) is the smallest token step that clears 0.90 (877.5 / 972 = 0.903). The slack still lands in this card. */
+/* The left column's last card carries extra bottom padding (issue 1354, #1600 WP7): the 1rem h3 spec left the left
+   column 874px against the right's 972px (0.899) at 1280x800 and 3440x1440, under the 90% rule (895). Pill inputs at 2.75rem
+   (38.5px, down from 40.3px) took another 8px off the left column (866 against 970, 0.893), so the extra is now one --space-4
+   (14px, the smallest token step that clears it with margin): 876.5 / 970 = 0.904. The slack still lands in this card. */
 .birth-record-column:first-child > :last-child {
-  padding-block-end: calc(var(--space-4) + var(--space-1));
+  padding-block-end: calc(var(--space-4) + var(--space-4));
 }
 
 .birth-record-save {
@@ -6932,7 +6933,7 @@ svg text.chart-symbol-text-unicode {
 /*
  * The Overlay settings drawer layout (#1615, owner spec 2026-11-15, on the app's own tokens): each ring is a two-zone
  * row, the toggle, title and reorder buttons on the left, the parameters on the right, labels above their fields.
- * Fields, buttons and the close button share --control-height-compact (the --target-min floor on a coarse pointer).
+ * Fields, buttons and the close button share 2.75rem (#1600 WP7; the --target-min floor on a coarse pointer).
  */
 .chart-overlay-draft .settings-card-tag {
   display: inline-flex;
@@ -6969,7 +6970,7 @@ svg text.chart-symbol-text-unicode {
 
 .chart-overlay-row-inputs .primitive-field input:not([type='checkbox']):not([type='radio']) {
   box-sizing: border-box;
-  height: max(var(--control-height-compact), var(--target-min));
+  height: max(2.75rem, var(--target-min));
   min-height: 0;
 }
 
@@ -7026,7 +7027,7 @@ svg text.chart-symbol-text-unicode {
 }
 
 .chart-overlay-drawer .settings-card-footer-group button {
-  height: max(var(--control-height-compact), var(--target-min));
+  height: max(2.75rem, var(--target-min));
   min-height: 0;
 }
 
@@ -7183,6 +7184,11 @@ svg text.chart-symbol-text-unicode {
   padding-right: var(--space-12);
 }
 
+/* The pill rule sets padding-inline, so the toggle clearance is restated at a higher specificity (#1600 WP7). */
+.primitive-field .signin-password input.primitive-field-pill:not([type='checkbox']):not([type='radio']) {
+  padding-inline-end: var(--space-12);
+}
+
 .signin-password-toggle {
   position: absolute;
   top: 0;
@@ -7334,7 +7340,7 @@ button.primitive-button-capsule {
 }
 
 /* Every native select is a pill (#1600 WP5, owner answer A1): its label stays above it. The wider side padding keeps the
-   text and the platform caret clear of the curve. Text, number and date fields stay square. */
+   text and the platform caret clear of the curve. Text, number and date inputs are pills too (WP7). */
 .primitive-field select {
   border-radius: var(--radius-full);
   padding-inline: var(--space-4);
@@ -7399,11 +7405,35 @@ button.primitive-button-capsule {
   font-size: var(--text-sm);
 }
 
-/* The pill shape of a search field (#1545 P2, #1600): full radius and --space-4 side padding (the mockup's 1rem). Height
-   stays --control-height from the base rule. The selector repeats the base rule's :not() pair so it wins on specificity. */
+/* The pill shape of every single-line text, number, date, time and search input (#1545 P2, #1600 WP7, owner answer):
+   full radius, --space-4 side padding so text, the date-picker icon and number spinners clear the curve, and the one
+   2.75rem control height shared with selects and PillSelect. The selector repeats the base rule's :not() pair so it wins
+   on specificity. Textareas and checkboxes keep the small radius. */
 .primitive-field input.primitive-field-pill:not([type='checkbox']):not([type='radio']) {
   padding-inline: var(--space-4);
   border-radius: var(--radius-full);
+  min-height: 2.75rem;
+}
+
+/* A top-stacked label lines up with the text inside the capsule below it (#1600 WP7, owner rule 3). */
+.primitive-field:has(> input.primitive-field-pill, > select, > .primitive-number-field) > label:not(.sr-only) {
+  padding-inline-start: var(--space-4);
+}
+
+/* Cancel, Apply and Save in forms and drawers are capsules at the shared 2.75rem height (#1600 WP7, owner rule 4);
+   Export, Defaults, Techniques and the person switcher are menu triggers and keep the small radius. */
+.primitive-button-form-action,
+button.primitive-button-form-action {
+  min-height: 2.75rem;
+}
+
+/* A touch target (#1073): on a coarse pointer the pills and form action buttons keep the 44px floor, as selects do. */
+@media (pointer: coarse) {
+  .primitive-field input.primitive-field-pill:not([type='checkbox']):not([type='radio']),
+  .primitive-button-form-action,
+  button.primitive-button-form-action {
+    min-height: max(2.75rem, var(--target-min));
+  }
 }
 
 /* `SymbolSetting.tsx`'s reactive explanation of the current symbol-class/weight choice — same

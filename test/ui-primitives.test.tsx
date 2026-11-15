@@ -111,11 +111,11 @@ describe('the compact size', () => {
     expect(host.querySelectorAll('.primitive-control-compact')).toHaveLength(3);
   });
 
-  it('renders the pill class for shape="pill" and none for the default field shape (#1600)', () => {
+  it('renders the pill class by default and none for shape="field" (#1600 WP7)', () => {
     const host = mount(
       <>
-        <TextField label="P" value="" onChange={noop} shape="pill" />
-        <TextField label="F" value="" onChange={noop} />
+        <TextField label="P" value="" onChange={noop} />
+        <TextField label="F" value="" onChange={noop} shape="field" />
       </>,
     );
     expect(host.querySelectorAll('.primitive-field-pill')).toHaveLength(1);

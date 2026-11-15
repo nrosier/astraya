@@ -353,6 +353,8 @@ export function AdminPanel(): React.JSX.Element {
               {t.deletePermanentlyButton}
             </Button>{' '}
             <Button
+              shape="capsule"
+              className="primitive-button-form-action"
               type="button"
               variant="quiet"
               onClick={() => {

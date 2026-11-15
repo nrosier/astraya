@@ -251,8 +251,12 @@ export function TransitFilterButton({
               </Button>
             </div>
             <div className="settings-card-footer-group">
-              <Button onClick={closeCard}>{t.cancelButton}</Button>
+              <Button shape="capsule" className="primitive-button-form-action" onClick={closeCard}>
+                {t.cancelButton}
+              </Button>
               <Button
+                shape="capsule"
+                className="primitive-button-form-action"
                 variant="primary"
                 disabled={!dirty}
                 aria-label={dirty ? t.applyButton : `${t.applyButton} — ${t.nothingChanged}`}

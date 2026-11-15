@@ -217,6 +217,8 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
       >
         <div className="birth-record-save">
           <Button
+            shape="capsule"
+            className="primitive-button-form-action"
             variant={dirty ? 'primary' : 'quiet'}
             onClick={save}
             disabled={saving || !dirty || moment === undefined}
