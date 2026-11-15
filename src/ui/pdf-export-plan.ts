@@ -452,6 +452,8 @@ function shapeSummaryOf(
   const phase =
     sunLongitude === undefined || moonLongitude === undefined ? undefined : lunarPhaseOf(moonLongitude, sunLongitude);
   const almuten = almutenOfAscendant(data, boundsScheme);
+  const almutenNames = (keys: readonly string[]): string =>
+    keys.length === 0 ? t.noAlmuten : keys.map((key) => bodyDisplayName(key, locale)).join(', ');
   const parts: string[] = [
     shape === undefined
       ? t.shapeCannotBeWorkedOut
@@ -472,7 +474,7 @@ function shapeSummaryOf(
   }
   if (housesRenderable) parts.push(`${t.sectKeyLabel}: ${data.sect === 'day' ? t.dayChart : t.nightChart}`);
   if (almuten !== undefined) {
-    parts.push(`${t.almutenKeyLabel}: ${almuten.almutens.map((key) => bodyDisplayName(key, locale)).join(', ')}`);
+    parts.push(`${t.almutenKeyLabel}: ${almutenNames(almuten.almutens)}`);
   }
   return parts.join(' ');
 }
@@ -720,11 +722,12 @@ async function buildChartSectionPlan(
 
   // Always traditional (#545) — almutenOfAscendant no longer takes a rulership/display-choice parameter.
   const almuten = almutenOfAscendant(data, settings.boundsScheme);
+  const almutenNames = (keys: readonly string[]): string =>
+    keys.length === 0 ? t.noAlmuten : keys.map((key) => bodyDisplayName(key, locale)).join(', ');
   const almutenHint =
     almuten === undefined
       ? undefined
-      : t.almutenOfAscendantSentence(almuten.almutens.map((key) => bodyDisplayName(key, locale)).join(', ')) +
-        ` ${t.almutenScopeNote}`;
+      : t.almutenOfAscendantSentence(almutenNames(almuten.almutens)) + ` ${t.almutenScopeNote}`;
   // The D10 convention caveat (#725), in the document's language, as the Harmonic screen shows it for the same chart.
   const d10Hint =
     options.type === 'harmonic' && (options.harmonicN ?? 5) === 10 ? harmonicViewMessages[locale].d10Note : undefined;
