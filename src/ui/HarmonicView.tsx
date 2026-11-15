@@ -46,6 +46,7 @@ import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
 import { orbsOf } from '../chart/extended-settings.js';
 import { useStableBy, useStableMoment } from './use-stable-moment.js';
 import { PageHeader } from './PageHeader.js';
+import { ChartHelpTooltip } from './ChartHelpTooltip.js';
 
 type Load =
   | { readonly kind: 'idle' }
@@ -209,6 +210,7 @@ export function HarmonicView({
       <PageHeader
         title={person.displayName ? t.heading(person.displayName) : t.headingFallback}
         titleTerm="harmonic"
+        titleAside={<ChartHelpTooltip explanation={t.hint} />}
         basis={basisLine}
       >
         <PdfCreatorLink href={creatorHref} />
@@ -217,6 +219,7 @@ export function HarmonicView({
       {nValid && load.kind !== 'idle' && (
         <>
           <ChartDataView
+            wheelHint={false}
             personId={personId}
             chartType="harmonic"
             load={load}
@@ -233,11 +236,6 @@ export function HarmonicView({
           />
         </>
       )}
-
-      {/* Below the wheel and the Selection card (#1013): the inputs and explanations never push the chart down. */}
-      <p className="hint">
-        <GlossaryText text={t.hint} />
-      </p>
 
       <div className="field-grid">
         <Select

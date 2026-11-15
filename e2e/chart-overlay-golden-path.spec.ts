@@ -77,20 +77,11 @@ test('a natal, transit, and progressed triwheel is independently configurable (#
   await expect(page.locator('[data-ring-legend="0"]')).toContainText('Natal');
   await expect(page.locator('[data-ring-legend="1"]')).toContainText('Transit');
   await expect(page.locator('[data-ring-legend="2"]')).toContainText('Secondary progressed ring');
-  // The disclosure keeps one spacing step clear of the hint line under it (owner visual review 2026-11-07, #1190).
-  const diagnostics = await page.locator('.chart-diagnostics').boundingBox();
-  const hint = await page.locator('.chart-wheel-hint').boundingBox();
-  if (diagnostics === null || hint === null)
-    throw new Error('expected the disclosure and the hint to have a layout box');
-  const step = await page.evaluate<number>(`(() => {
-    const unit = document.createElement('div');
-    unit.style.height = 'var(--space-3)';
-    document.body.append(unit);
-    const px = unit.getBoundingClientRect().height;
-    unit.remove();
-    return px;
-  })()`);
-  expect(hint.y - (diagnostics.y + diagnostics.height)).toBeGreaterThanOrEqual(step - 0.5);
+  // The usage line no longer sits above the wheel: it is in the heading's help tooltip, after the chart's explanation
+  // (owner decision 2026-11-15, #1407/#1532), so the disclosure has no hint line to keep clear of.
+  await expect(page.locator('.chart-diagnostics')).toBeVisible();
+  await expect(page.locator('.chart-wheel-hint')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'About this chart', exact: true })).toBeVisible();
   // The ring calculation basis is behind a Calculation disclosure, closed by default (#1232).
   await expect(page.getByRole('region', { name: 'Ring calculation basis' })).toHaveCount(0);
   await page.getByRole('button', { name: /^Calculation/ }).click();

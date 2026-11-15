@@ -153,6 +153,7 @@ import type { EphemerisProvider } from '../ephemeris/types.js';
 import type { Locale } from '../interpretation/schema.js';
 import type { BirthMomentInput } from '../time/types.js';
 import { Disclosure } from './primitives/Disclosure.js';
+import { ChartHelpTooltip } from './ChartHelpTooltip.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import {
   ChartOverlaySettingsPanel,
@@ -642,6 +643,7 @@ export function ChartDataView({
   chartType,
   personId,
   frameHasHouses = true,
+  wheelHint = true,
 }: {
   readonly load: Load;
   readonly displayName: string;
@@ -652,6 +654,11 @@ export function ChartDataView({
    * unknown birth time, which draws no wheel and says why. Defaults to true.
    */
   readonly frameHasHouses?: boolean;
+  /**
+   * False on a chart-type page, whose heading carries the usage line in its help tooltip (#1407, #1532; owner decision
+   * 2026-11-15). Defaults to true, so the composite, horary and shared charts keep the line above the wheel.
+   */
+  readonly wheelHint?: boolean;
   /**
    * Header lines for the sheet. Passed in rather than derived here because only
    * the caller holds the birth moment the date/place lines come from; omitted,
@@ -1275,7 +1282,13 @@ export function ChartDataView({
         <div className="chart-workbench-shell">
           <div className="chart-workbench">
             <div className="chart-workbench-dial">
-              <p className="hint chart-wheel-hint">{t.wheelClickHint}</p>
+              {/* Row 1 of the dial's subgrid (the card sits on row 2, with the wheel): the usage line, or an empty slot
+                  when the page's help tooltip carries it (#1407, #1532), so the card still frames the wheel. */}
+              {wheelHint ? (
+                <p className="hint chart-wheel-hint">{t.wheelClickHint}</p>
+              ) : (
+                <span className="chart-wheel-hint-slot" aria-hidden="true" />
+              )}
               {/* The wheel and its instrument bar share one grid track, so the bar stays directly beneath the wheel (#1532). */}
               <div className="chart-wheel-stack">
                 <div
@@ -1818,7 +1831,7 @@ export function ChartView({
 
     return (
       <main className="shell shell--wide">
-        <PageHeader title={pageTitle} basis={basisLine}>
+        <PageHeader title={pageTitle} basis={basisLine} titleAside={<ChartHelpTooltip />}>
           <PdfCreatorLink href={creatorHref} />
         </PageHeader>
         <div className="comparison-container comparison-layout">
@@ -1826,6 +1839,7 @@ export function ChartView({
             <h2>{t.natalLabel}</h2>
             <ChartDataView
               typeSelector={<ChartTypeSelector personId={personId} type="natal" view={view} />}
+              wheelHint={false}
               personId={personId}
               load={load}
               displayName={person.displayName}
@@ -1883,11 +1897,12 @@ export function ChartView({
 
   return (
     <main className="shell shell--wide">
-      <PageHeader title={pageTitle} basis={basisLine}>
+      <PageHeader title={pageTitle} basis={basisLine} titleAside={<ChartHelpTooltip />}>
         <PdfCreatorLink href={creatorHref} />
       </PageHeader>
       <ChartDataView
         typeSelector={<ChartTypeSelector personId={personId} type="natal" view={view} />}
+        wheelHint={false}
         personId={personId}
         load={load}
         displayName={person.displayName}

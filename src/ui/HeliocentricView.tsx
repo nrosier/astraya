@@ -24,6 +24,7 @@ import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
 import { orbsOf } from '../chart/extended-settings.js';
 import { useStableBy, useStableMoment } from './use-stable-moment.js';
 import { PageHeader } from './PageHeader.js';
+import { ChartHelpTooltip } from './ChartHelpTooltip.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -99,9 +100,14 @@ export function HeliocentricView({
   const displayName = person.displayName ? `${person.displayName} — ${t.headingFallback}` : t.headingFallback;
   return (
     <main className="shell shell--wide">
-      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.headingFallback} basis={basisLine} />
+      <PageHeader
+        title={person.displayName ? t.heading(person.displayName) : t.headingFallback}
+        titleAside={<ChartHelpTooltip explanation={t.hint} />}
+        basis={basisLine}
+      />
       <ChartTypeSelector personId={personId} type="heliocentric" view={view} />
       <ChartDataView
+        wheelHint={false}
         personId={personId}
         chartType="heliocentric"
         load={load}
@@ -116,9 +122,6 @@ export function HeliocentricView({
         }}
         buildViewHref={(next) => chartHref(personId, next, 'heliocentric')}
       />
-      <p className="hint">
-        <GlossaryText text={t.hint} />
-      </p>
     </main>
   );
 }

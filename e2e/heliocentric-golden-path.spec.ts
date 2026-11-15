@@ -53,6 +53,17 @@ test('a person with a known birth time gets a Heliocentric chart: Earth for the 
   // The basis line names the frame, with no house system and no node model.
   await expect(page.locator('.page-header-basis')).toHaveText(/^Heliocentric · .+ rulers · .+ orbs$/);
 
+  // The explanation and the usage line are one tooltip beside the heading, explanation first (owner decision
+  // 2026-11-15, #1407); nothing sits below the wheel to overlap the Hard, Soft and Minor bar.
+  const help = page.getByRole('button', { name: 'About this chart', exact: true });
+  await help.click();
+  const popup = page.locator('.primitive-tooltip-popup').first();
+  await expect(popup).toBeVisible();
+  await expect(popup).toHaveText(/^The planets as seen from the Sun.*Click a planet, sign or aspect line/);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.chart-wheel-hint')).toHaveCount(0);
+  await expect(page.getByText('The planets as seen from the Sun', { exact: false })).toHaveCount(0);
+
   // The wheel has bodies but no house cusps or angle axes.
   const wheel = page.locator('div.chart-wheel');
   await expect(wheel).toBeVisible();
