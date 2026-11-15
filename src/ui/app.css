@@ -553,7 +553,7 @@ a.corner-pill.active {
   width: 18rem;
   max-width: calc(100vw - 2rem);
   padding: var(--space-4);
-  border-radius: 0.5rem;
+  border-radius: var(--radius);
   border: 1px solid var(--line);
   background: var(--surface);
   color: var(--fg);
@@ -643,7 +643,7 @@ a.corner-pill.active {
   z-index: 26;
   width: min(18rem, calc(100vw - 2rem));
   padding: var(--space-4);
-  border-radius: 0.5rem;
+  border-radius: var(--radius);
   border: 1px solid var(--line);
   background: var(--surface);
   color: var(--fg);
@@ -3118,9 +3118,9 @@ label.stacked {
   width: max(16rem, 100%);
   max-height: 60vh;
   padding: var(--space-3);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  background: var(--surface-hover);
+  border: 1px solid var(--muted);
+  border-radius: var(--radius);
   box-shadow: var(--shadow-popover);
 }
 
@@ -3140,12 +3140,13 @@ label.stacked {
   text-decoration: none;
 }
 
+/* --surface-hover is the popup itself, so hover and active step to the line colour. */
 .person-switcher-item:hover {
-  background: var(--surface-hover);
+  background: var(--line);
 }
 
 .person-switcher-item.active {
-  background: var(--surface-hover);
+  background: var(--line);
   font-weight: 600;
 }
 
@@ -3215,9 +3216,9 @@ label.stacked {
   gap: 0.1rem;
   min-width: 100%;
   padding: var(--space-1);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  background: var(--surface-hover);
+  border: 1px solid var(--muted);
+  border-radius: var(--radius);
   box-shadow: var(--shadow-popover);
 }
 
@@ -3235,13 +3236,14 @@ label.stacked {
   white-space: nowrap;
 }
 
+/* --surface-hover is the menu itself, so hover and active step to the line colour. */
 .app-nav-menu-item:hover:not(.active, .disabled) {
   color: var(--fg);
-  background: var(--surface-hover);
+  background: var(--line);
 }
 
 .app-nav-menu-item.active {
-  background: var(--surface-hover);
+  background: var(--line);
   color: var(--fg);
   font-weight: 600;
 }
@@ -6621,9 +6623,9 @@ svg text.chart-symbol-text-unicode {
   flex-direction: column;
   min-width: max-content;
   padding: var(--space-2);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  background: var(--surface);
+  border: 1px solid var(--muted);
+  border-radius: var(--radius);
+  background: var(--surface-hover);
   color: var(--fg);
   font-size: var(--text-sm-compact);
   box-shadow: var(--shadow-popover);
@@ -6645,7 +6647,8 @@ svg text.chart-symbol-text-unicode {
 }
 
 .settings-card-defaults-item:hover:not(:disabled) {
-  background: var(--bg-hover);
+  /* --surface-hover is the menu itself, so the hovered item steps to the line colour (as the PillSelect card does). */
+  background: var(--line);
 }
 
 .settings-card-defaults-item:disabled {
@@ -7682,9 +7685,9 @@ button.primitive-button-capsule {
   width: max-content;
   max-width: min(24rem, 90vw);
   padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
+  border: 1px solid var(--muted);
+  border-radius: var(--radius);
+  background: var(--surface-hover);
   box-shadow: var(--shadow-popover);
   font-size: var(--text-sm);
   font-weight: 400;
@@ -7888,9 +7891,9 @@ button.primitive-button-capsule {
   gap: 0.1rem;
   min-width: 14rem;
   padding: var(--space-1);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  background: var(--surface-hover);
+  border: 1px solid var(--muted);
+  border-radius: var(--radius);
   box-shadow: var(--shadow-popover);
 }
 
@@ -7911,7 +7914,8 @@ button.primitive-button-capsule {
 
 .page-header-export-item:hover:not(:disabled) {
   color: var(--fg);
-  background: var(--surface-hover);
+  /* --surface-hover is the menu itself, so the hovered item steps to the line colour. */
+  background: var(--line);
 }
 
 .page-header-export-item:disabled {
@@ -9691,10 +9695,11 @@ a.quiet,
   min-width: min(15rem, calc(100vw - 2rem));
   max-width: calc(100vw - 2rem);
   padding: var(--space-3);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  background: var(--surface);
+  border: 1px solid var(--muted);
+  border-radius: var(--radius);
+  background: var(--surface-hover);
   color: var(--fg);
+  box-shadow: var(--shadow-popover);
 }
 
 /* The technique filter: one checkbox per line, in the Techniques popover. */
