@@ -13,8 +13,8 @@
  *   the significator advances to the promissor's mundane place. Every resulting arc is in [0, 360).
  * - **Placidus semi-arc system.** "Mundane place" is the Placidian one: two points are conjunct
  *   when they lie in the same quadrant at the same ratio of meridian distance to semi-arc (Bob
- *   Makransky, *Primary Directions: A Primer of Calculation*, 1988, ch. VII, "The Correct
- *   Placidus Method"). Not Regiomontanus, whose house circles divide the equator instead and give
+ *   Makransky, *Primary Directions: A Primer of Calculation*, rev. ed. 1992, ch. VII, "The Correct
+ *   Placidus Method", p. 77; `makransky-primary-directions-1992`). Not Regiomontanus, whose house circles divide the equator instead and give
  *   different arcs for every significator off the angles. At the four angles the two agree:
  *   directions to the MC are by right ascension, to the Ascendant by oblique ascension.
  * - **In zodiaco and in mundo.** The default takes both points at ecliptic latitude 0. The
@@ -22,8 +22,8 @@
  *   semi-arc calculation; an aspect point keeps its promissor's latitude. Angles remain fixed by
  *   definition. Both modes follow the Placidus convention rather than mixing house-circle schools.
  * - **Time keys.** Naibod: 0°59′08.33″ of right ascension per year — the mean Sun's daily
- *   motion, `NAIBOD_DAILY_MOTION` in progressions.ts, 360 / 365.2425 = 0.985647° (Makransky 1988
- *   ch. III gives the same rate as 1.0146 years per degree). Ptolemy: 1° per year.
+ *   motion, `NAIBOD_DAILY_MOTION` in progressions.ts, 360 / 365.2425 = 0.985647° (Makransky rev. ed.
+ *   1992, ch. III, p. 28, gives 365.25 / 360 = 1.0145, used as 1.0146 years per degree). Ptolemy: 1° per year.
  *
  * The spherical trigonometry, with ε the obliquity, φ the geographic latitude and RAMC the
  * right ascension of the midheaven, all taken from the ephemeris:
@@ -50,7 +50,7 @@
  * Verified in `test/primary-directions.test.ts` against two published worked examples, to the
  * arcminute: John Gadbury's direction of Henry II of France's Ascendant to Mars (*Collection of
  * Nativities*, 1661, as reworked by Deborah Houlding, "An Easy Introduction to Primary
- * Directions", Skyscript, 2009) and Makransky's 1988 Prince Charles speculum.
+ * Directions", Skyscript, 2009) and Makransky's Prince Charles speculum (rev. ed. 1992, p. 19).
  */
 
 /**
@@ -179,7 +179,7 @@ function hourAngle(rightAscension: Degrees, ramc: Degrees): Degrees {
   return norm180(ramc - rightAscension);
 }
 
-/** The Placidian 0–360 scale from an hour angle and the point's own semi-arcs (Makransky 1988 ch. VII). */
+/** The Placidian 0–360 scale from an hour angle and the point's own semi-arcs (Makransky rev. ed. 1992, ch. VII). */
 function mundanePositionFromHourAngle(hour: Degrees, arcs: SemiArcs): Degrees {
   const { diurnal, nocturnal } = arcs;
   // Upper east (houses 12-10): MC 270 rising to ASC 360.

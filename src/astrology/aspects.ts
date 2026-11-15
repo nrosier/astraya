@@ -13,7 +13,8 @@
  * the `higher-harmonic` family (#1184), angles exact as 360/n.
  *
  * `harmonicFamilyOf` (#557) is a second, distinct grouping from the major/minor
- * `AspectFamily` above: John Addey's harmonic theory ("Harmonics in Astrology", 1976) groups
+ * `AspectFamily` above: John Addey's harmonic theory (*Harmonics in Astrology*, 1976, ch. 9, "Harmonics in the
+ * Aspect Circle", pp. 67-68; `addey-harmonics-in-astrology-1976`) groups
  * every aspect by the smallest division of the circle it is a multiple of — conjunction = H1,
  * opposition = H2, trine = H3, square = H4, quintile/biquintile = H5 (both multiples of 72°),
  * sextile = H6, semisquare/sesquiquadrate = H8, semisextile/quincunx = H12 — rather than the
@@ -86,7 +87,7 @@ export function aspectKeysByTone(tone: AspectTone): readonly string[] {
 }
 
 /**
- * Addey's harmonic number for an aspect angle (#557): the smallest `n` such that `angle` is a
+ * Addey's harmonic number for an aspect angle (#557; Addey 1976, ch. 9, pp. 67-68): the smallest `n` such that `angle` is a
  * whole-number multiple of `360/n` — e.g. a 90° square is H4 (`360/4 = 90`), a 72° quintile and
  * a 144° biquintile are both H5, and the septile (360/7, not a whole number of degrees) is H7
  * (#1184). A 0° conjunction is a multiple of the whole circle, so it comes back as H1. The test
