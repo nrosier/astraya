@@ -6,7 +6,7 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it } from 'vitest';
-import { ASPECTS, type Aspect } from '../src/astrology/aspects.js';
+import { ASPECTS, type Aspect, type AspectTone } from '../src/astrology/aspects.js';
 import { bodyByKey } from '../src/astrology/bodies.js';
 import type { ChartData } from '../src/domain/chart-compute.js';
 import type { BodyId, BodyPosition, HousePositions } from '../src/ephemeris/types.js';
@@ -137,5 +137,71 @@ describe('the empty-filter note (#1333)', () => {
     );
     expect(view.textContent).not.toContain(t.emptyFilterNote);
     expect(view.querySelector('[role="table"]')).not.toBeNull();
+  });
+
+  it('follows the instrument bar tones like the Aspects table: the soft trine goes when only Hard and Minor are on (#1532)', () => {
+    const matrix = (tones: ReadonlySet<AspectTone>) =>
+      mount(renderMatrixView(DATA, 'Test', {}, t, 'en', undefined, undefined, new Set(), undefined, false, tones));
+    const off = matrix(new Set<AspectTone>(['hard', 'minor']));
+    expect(off.textContent).toContain(t.emptyFilterNote);
+    expect(off.querySelector('.mgrid-aspect')).toBeNull();
+    act(() => {
+      root?.unmount();
+    });
+    document.body.innerHTML = '';
+    const on = matrix(new Set<AspectTone>(['soft']));
+    expect(on.textContent).not.toContain(t.emptyFilterNote);
+    expect(on.querySelector('.mgrid-aspect')).not.toBeNull();
+    act(() => {
+      root?.unmount();
+    });
+    document.body.innerHTML = '';
+    const all = matrix(new Set<AspectTone>(['hard', 'soft', 'minor']));
+    expect(all.querySelector('.mgrid-aspect')).not.toBeNull();
+  });
+
+  it('puts the given bar under the grid, and keeps it when the pills leave no cells (#1532)', () => {
+    const bar = <div data-testid="bar" />;
+    const withGrid = mount(
+      renderMatrixView(
+        DATA,
+        'Test',
+        {},
+        t,
+        'en',
+        undefined,
+        bar,
+        new Set(),
+        undefined,
+        false,
+        new Set<AspectTone>(['soft']),
+      ),
+    );
+    const grid = withGrid.querySelector('[role="table"]');
+    const barEl = withGrid.querySelector('[data-testid="bar"]');
+    expect(grid).not.toBeNull();
+    expect(barEl).not.toBeNull();
+    expect(grid?.compareDocumentPosition(barEl as Node) ?? 0).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    act(() => {
+      root?.unmount();
+    });
+    document.body.innerHTML = '';
+    const empty = mount(
+      renderMatrixView(
+        DATA,
+        'Test',
+        {},
+        t,
+        'en',
+        undefined,
+        bar,
+        new Set(),
+        undefined,
+        false,
+        new Set<AspectTone>(['hard']),
+      ),
+    );
+    expect(empty.textContent).toContain(t.emptyFilterNote);
+    expect(empty.querySelector('[data-testid="bar"]')).not.toBeNull();
   });
 });

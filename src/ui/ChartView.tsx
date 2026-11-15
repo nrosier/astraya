@@ -179,6 +179,8 @@ import {
   allMidpointsColumns,
   renderAspectsTable,
   EmptyFilterNote,
+  isToneFilterActive,
+  toneShown,
   type AspectContactFilter,
 } from './ChartViewAspects.js';
 import { emphasisColumns, renderElementsView } from './ChartViewElements.js';
@@ -369,15 +371,17 @@ export function renderMatrixView(
   t: typeof chartViewMessages.en,
   locale: Locale,
   selection?: TableSelection,
-  onOpenFormulas?: () => void,
+  bar?: React.ReactNode,
   families: ReadonlySet<AspectFamilyKey> = new Set(),
   orbCaps?: OrbCaps,
   suppressMinorNatal = false,
+  tones?: ReadonlySet<AspectTone>,
 ): React.ReactNode {
   const full = chartSheetInput(data, [], displayName, pointVisibility, (bodyKey) => bodyShortName(bodyKey, locale));
-  // The aspect-family filter (#1063): with none chosen the matrix is the sheet's own, unchanged.
+  // The aspect-family filter (#1063) and the instrument bar's tone pills (#1532), the rule the Aspects table uses (#1333):
+  // with none chosen the matrix is the sheet's own, unchanged.
   const input =
-    families.size === 0 && orbCaps === undefined && !suppressMinorNatal
+    families.size === 0 && orbCaps === undefined && !suppressMinorNatal && !isToneFilterActive(tones)
       ? full
       : {
           ...full,
@@ -385,7 +389,9 @@ export function renderMatrixView(
             ...full.matrix,
             aspects: full.matrix.aspects.filter(
               (aspect) =>
-                isContactShown(aspect, families, orbCaps) && (!suppressMinorNatal || isMajorAspect(aspect.aspectKey)),
+                isContactShown(aspect, families, orbCaps) &&
+                (!suppressMinorNatal || isMajorAspect(aspect.aspectKey)) &&
+                toneShown(aspect.aspectKey, tones),
             ),
           },
         };
@@ -425,11 +431,7 @@ export function renderMatrixView(
           }
         />
       )}
-      {onOpenFormulas !== undefined && (
-        <p className="hint">
-          <Button onClick={onOpenFormulas}>{t.matrixFormulaLink}</Button>
-        </p>
-      )}
+      {bar}
     </>
   );
 }
@@ -746,11 +748,6 @@ export function ChartDataView({
   const presetSwitches = CONSULTATION_PRESETS.find((preset) => preset.key === presetKey)?.switches;
   // Predictive and Timing hides the minor aspects between natal bodies (owner decision on #1190, 2026-11-07).
   const suppressMinorNatal = presetSwitches?.suppressMinorNatal === true;
-  // The matrix view's formula link opens the drawer on Bodies and orbs (#815); the drawer counts the requests.
-  const [ownFormulaRequests, setOwnFormulaRequests] = useState(0);
-  const openFormulaDrawer = (): void => {
-    setOwnFormulaRequests((count) => count + 1);
-  };
   const activeTab: ChartViewKind = view ?? ownTab;
   const setActiveTab = (next: ChartViewKind): void => {
     setOwnTab(next);
@@ -1106,7 +1103,7 @@ export function ChartDataView({
     <AspectFamilyControls
       families={aspectFamilies}
       onChange={changeFamilies}
-      showFamily={activeTab !== 'wheel'}
+      showFamily={activeTab !== 'wheel' && activeTab !== 'matrix'}
       presetKey={presetKey}
       onPreset={choosePreset}
     />
@@ -1386,7 +1383,7 @@ export function ChartDataView({
         checkFormula={checkFormula}
         fixedStars={fixedStarsSaved}
         onFixedStarsChange={onFixedStarsChange}
-        openRequest={openSettingsRequest + ownFormulaRequests}
+        openRequest={openSettingsRequest}
       />
     ) : null;
 
@@ -1524,10 +1521,18 @@ export function ChartDataView({
                       t,
                       locale,
                       tableSelection,
-                      settingsPanel === null ? undefined : openFormulaDrawer,
+                      // The same instrument bar as under the wheel, on the same state (#1532); no ring toggle here.
+                      <ChartInstrumentBar
+                        tones={wheelTones}
+                        onTonesChange={setWheelTones}
+                        transitRing={false}
+                        natalOnly={natalOnly}
+                        onNatalOnlyChange={setNatalOnly}
+                      />,
                       aspectFamilies,
                       orbCaps,
                       suppressMinorNatal,
+                      wheelTones,
                     )}
                   {currentTab === 'elements' && renderElementsView(load.data, displayName, pointVisibility, t, locale)}
                   {currentTab === 'placements' &&

@@ -2,7 +2,7 @@
  * @module ChartViewAspects
  * @purpose Renders the Aspects chart view tables (aspects, antiscia, declinations, midpoints) and their columns.
  * @conventions Moved out of ChartView.tsx (#817); the aspects table shows Applying as a dot plus label and the family as muted text on screen only (#815), while `render` stays plain text for copy, CSV and the PDF; takes the chart data and message bundle as arguments and never imports ChartView. The fixed-stars table moved to ChartViewPlacements (#815).
- * @exports AspectIcon, AspectState, AspectContactFilter, isContactFilterActive, EmptyFilterNote, filterAspectRowsByContactFilter, aspectColumns, declinationColumns, antisciaColumns, midpointTreeColumns, allMidpointsColumns, renderAspectsTable
+ * @exports AspectIcon, AspectState, AspectContactFilter, isContactFilterActive, isToneFilterActive, toneShown, EmptyFilterNote, filterAspectRowsByContactFilter, aspectColumns, declinationColumns, antisciaColumns, midpointTreeColumns, allMidpointsColumns, renderAspectsTable
  */
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { formatOrb } from './format.js';
@@ -309,12 +309,12 @@ export interface AspectContactFilter {
 }
 
 /** True when a pill is off, so some tone is hidden from the wheel (#1532). */
-function tonesFilter(filter: AspectContactFilter): boolean {
-  return filter.tones !== undefined && filter.tones.size < 3;
+export function isToneFilterActive(tones: ReadonlySet<AspectTone> | undefined): boolean {
+  return tones !== undefined && tones.size < 3;
 }
 
 /** A key outside the catalogue has no tone, so the pills never hide it. */
-function toneShown(aspectKey: string, tones: ReadonlySet<AspectTone> | undefined): boolean {
+export function toneShown(aspectKey: string, tones: ReadonlySet<AspectTone> | undefined): boolean {
   const tone = aspectByKey(aspectKey)?.tone;
   return tones === undefined || tone === undefined || tones.has(tone);
 }
@@ -326,7 +326,7 @@ export function isContactFilterActive(filter: AspectContactFilter | undefined): 
     (filter.families.size > 0 ||
       filter.orbCaps !== undefined ||
       filter.suppressMinorNatal === true ||
-      tonesFilter(filter))
+      isToneFilterActive(filter.tones))
   );
 }
 
