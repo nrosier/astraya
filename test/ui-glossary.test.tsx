@@ -403,35 +403,11 @@ const proseTerms: readonly {
     node: () => <SynastryView personId="p1" />,
   },
   {
-    view: 'DraconicView',
-    term: 'houses',
-    visible: { en: 'houses', nl: 'huizen' },
-    node: () => <DraconicView personId="p1" view="wheel" compareType={undefined} />,
-  },
-  {
     // The rectification intro is a heading tooltip (owner review, #1445), so the prose that names the terms is the method body.
     view: 'RectificationView',
     term: 'midheaven',
     visible: { en: 'Midheaven', nl: 'Midheaven' },
     node: () => <RectificationView />,
-  },
-  {
-    view: 'RelocatedChartView',
-    term: 'ascendant',
-    visible: { en: 'Ascendant', nl: 'Ascendant' },
-    node: () => <RelocatedChartView personId="p1" view="wheel" compareType={undefined} />,
-  },
-  {
-    view: 'RelocatedChartView',
-    term: 'houses',
-    visible: { en: 'houses', nl: 'huizen' },
-    node: () => <RelocatedChartView personId="p1" view="wheel" compareType={undefined} />,
-  },
-  {
-    view: 'DraconicView',
-    term: 'ascendant',
-    visible: { en: 'Ascendant', nl: 'Ascendant' },
-    node: () => <DraconicView personId="p1" view="wheel" compareType={undefined} />,
   },
   {
     view: 'ProfectionsView',
@@ -478,6 +454,8 @@ const proseTerms: readonly {
   },
 ];
 
+// The Draconic and Relocated explanations moved into the chart heading's plain-text help tooltip (owner decision
+// 2026-11-15, #1407 "Plain text in the tooltip"), so their Ascendant and houses cases were removed from proseTerms.
 describe('inline glossary tooltips on view prose (#901)', () => {
   afterEach(() => {
     setLocale('en');

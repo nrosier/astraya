@@ -53,6 +53,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `BiWheelSelectionPanel.tsx` + `BiWheelSelectionPanel.messages.ts` — Bi-wheel click-to-inspect panel (body/sign/aspect info). Deps: `./bi-wheel-selection`, `astro-names.messages`.
 - `BirthPlaceSearch.tsx` + `BirthPlaceSearch.messages.ts` — Geocoding place-name search field. Deps: `./forward-geocode`, `./geocode-provider`.
 - `Changelog.tsx` + `Changelog.messages.ts` — In-app CHANGELOG.md viewer. Deps: `./markdown`.
+- `ChartHelpTooltip.tsx` + `ChartHelpTooltip.messages.ts` — The "?" beside a chart page heading (#1407, #1532): the chart explanation, then the wheel usage line, in one tooltip. Deps: `ChartView.messages`, `primitives/Tooltip`.
 - `ChartTypeSelector.tsx` — Chart-type pill (natal/draconic/harmonic/returns) in the Charts page header, plus a pill-less controls row for composite (#1303), with the slot the aspect and preset controls join (#1224). Deps: `./chart-sections`, `primitives/PillSelect`.
 - `ChartTypes.messages.ts` — i18n labels for all chart types.
 - `ChartViewNav.tsx` — Chart screen's view navigation under the title row (#801, #818, #976): ordinary links in the shared `ScrollingTabRow` (wide) or a labelled Select (narrow), never ARIA tabs; view links only, with the page actions (Overlay settings, Extended settings) in the PageHeader on desktop and the Chart actions sheet at 640px and below. Deps: `./chart-sections`, `./ScrollingTabRow`, `./primitives/Select`.

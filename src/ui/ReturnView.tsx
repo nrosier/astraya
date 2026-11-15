@@ -50,6 +50,7 @@ import type { TableColumn } from './table-sort.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useStableBy, useStableMoment } from './use-stable-moment.js';
 import { PageHeader } from './PageHeader.js';
+import { ChartHelpTooltip } from './ChartHelpTooltip.js';
 
 type Load =
   | { readonly kind: 'idle' }
@@ -304,7 +305,13 @@ export function ReturnView({
 
   return (
     <main className="shell shell--wide">
-      <PageHeader title={heading} titleTerm="solarReturn" basis={basisLine} variant="return">
+      <PageHeader
+        title={heading}
+        titleTerm="solarReturn"
+        titleAside={<ChartHelpTooltip explanation={solar ? t.solarHint : t.lunarHint} />}
+        basis={basisLine}
+        variant="return"
+      >
         <PdfCreatorLink href={creatorHref} />
       </PageHeader>
       <ChartTypeSelector personId={personId} type={kind} view={view} />
@@ -314,6 +321,7 @@ export function ReturnView({
 
         {load.kind !== 'idle' && (
           <ChartDataView
+            wheelHint={false}
             personId={personId}
             chartType={kind}
             load={chartLoad}
@@ -340,10 +348,7 @@ export function ReturnView({
         )}
       </div>
 
-      {/* Below the wheel and the Selection card (#1013): the inputs and explanations never push the chart down. */}
-      <p className="hint">
-        <GlossaryText text={solar ? t.solarHint : t.lunarHint} />
-      </p>
+      {/* Below the wheel and the Selection card (#1013): the inputs never push the chart down. */}
 
       <div className="field-grid">
         {solar ? (
