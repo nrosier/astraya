@@ -1484,5 +1484,25 @@
     "copyrighted": true,
     "used_by": ["src/astrology/aspects.ts"],
     "notes": "Title verso checked. PDF page = printed page + 8. Ch. 9 'Harmonics in the Aspect Circle' starts on printed p. 67 (PDF 75). The file name carries third-party mirror names; owner to confirm the copy is legitimately held before any quotation is used."
+  },
+  {
+    "id": "gansten-primary-directions-ch1-extract-2009",
+    "title": "Primary Directions: Astrology's Old Master Technique, chapter 1 'The Basics: What Are Primary Directions?' (author's online extract)",
+    "author": "Martin Gansten",
+    "year": 2009,
+    "edition": "Chapter 1 only, 9 pages, as published online at www.skyscript.co.uk/primaries.html, May 2009 (page footer); the book is The Wessex Astrologer, 2009",
+    "licence": "Copyrighted; the footer says it is made available for private, non-commercial use and may not be reproduced without the author's permission. Text kept local.",
+    "access_route": "Skyscript, www.skyscript.co.uk/primaries.html (page footer); supplied by the owner in docs/references/new/ on 2026-11-15.",
+    "original_name": "PD_Skyscript_extract_ch1.pdf",
+    "processed_path": "docs/references/sources/pdf/gansten-primary-directions-ch1-extract-2009.pdf",
+    "sha256": "bdbf92f9142dba5284f093c0981e5cefdf2ca1f686c7be419cb90e8b4a96eccf",
+    "text_path": "docs/references/text/gansten-primary-directions-ch1-extract-2009.txt",
+    "pages_path": "docs/references/text/gansten-primary-directions-ch1-extract-2009.pages.tsv",
+    "page_count": 9,
+    "status": "extracted",
+    "provisional": false,
+    "copyrighted": true,
+    "used_by": ["src/astrology/primary-directions.ts", "src/domain/primary-directions.ts"],
+    "notes": "Every 'Gansten 2009 ch. 1' claim in the code is in this extract (checked 2026-11-15, #1602): the five hylegiacal points, ar-Rijal on Parts directed converse, the opposition to the Descendant, the promissors quote, 'each degree of rotation ... corresponds to one year of life', direct and converse motion, dexter and sinister aspects. The extract's page numbers are its own; book page numbers are not shown. The rest of the book is not held."
   }
 ]
