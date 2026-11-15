@@ -17,7 +17,7 @@ Layout (2026-11-05, #864): the real layout is `docs/references/sources/` (origin
 - `text_path` — Repo-root-relative path of the extracted text under `docs/references/text/`.
 - `pages_path` — Path of per-page text, or null when none exists.
 - `page_count` — Number of pages, or null when unknown.
-- `status` — One of `extracted`, `ocr-needed`, `provisional`, `archived-record`, `missing`. `missing` marks a record whose file is absent, with null `processed_path` and `sha256`. The Placidus PDF, Valens PDF and Yemen verification CSV are recorded as `missing` and are never reconstructed.
+- `status` — One of `extracted`, `ocr-needed`, `provisional`, `archived-record`, `missing`, `unheld-reference`. `missing` marks a record whose file is absent, with null `processed_path` and `sha256`. `unheld-reference` marks a work cited in the code as provenance that is not held: no file, hash, text or page numbers, and not verified against a copy (#1602).
 - `copyrighted` — Whether the work is under copyright; its text stays local only.
 - `provisional` — Whether the record is provisional and awaiting confirmation.
 - `used_by` — Array of repo-root-relative paths of the code, test or doc that reads the source.

@@ -47,7 +47,7 @@ Citation status: verified on 2026-10-20 against the published IAU 1976 value (Li
 
 ## Verification
 
-- Every entry's longitude must match the transcription in `/tmp/yemen-verify/transcription.csv`, which is local and not in the repo. Keep a copy of the CSV's values in the test fixture, so the test does not depend on `/tmp`.
+- Every entry's longitude must match `test/fixtures/yemen-star-longitudes.json`, an independent transcription of column V from the page images (#1602). `test/astrology-fixed-star-registry.test.ts` checks every entry and row 33's variant against it.
 - Pages 167, 168 and 169 were checked by eye against the page images. Any value changed later needs a fresh check of its page.
 - No position has been checked against a second catalogue. The registry's tests can check internal consistency (count, duplicates, sign ranges, degree and minute ranges), not agreement with another source.
 
