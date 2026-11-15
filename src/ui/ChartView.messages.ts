@@ -185,11 +185,14 @@ const en = {
 
   almutenOfAscendantSentence: (names: string) => `Almuten of the Ascendant: ${names}`,
   almutenTooltip:
-    'The almuten is the planet with the most essential-dignity points at a chart point — found by scoring every dignity (rulership, exaltation, triplicity, bound/term, face) a planet holds there and taking the highest total.',
+    'The almuten is the planet with the most essential-dignity points at a chart point — found by scoring every dignity (rulership, exaltation, triplicity, bound/term, face) a planet holds there, subtracting detriment and fall, and taking the highest total. Mutual reception is shown, not scored.',
   almutenTooltipLabel: 'About the almuten',
   almutenScopeNote:
     'This is the Almuten of the Ascendant, scored by essential-dignity points only (5/4/3/2/1 for rulership, exaltation, triplicity, bound and face, as in Lilly\u2019s fortitudes table). It does not include the planetary hour or the prenatal syzygy that some authors add to an Almuten Figuris.',
   almutenBreakdownCaption: 'Almuten candidates',
+  noAlmuten: 'No almuten (no planet scores above 0)',
+  yesLabel: 'Yes',
+  noLabel: 'No',
   // Jones' own seven pattern names (#35, #398) have no established Dutch astrological
   // vocabulary, the same out-of-scope treatment house-system names and "Harmonic"/"Solar
   // return" already get (#158's glossary) — kept untranslated in both locales.
@@ -541,11 +544,14 @@ const nl: typeof en = {
 
   almutenOfAscendantSentence: (names: string) => `Almuten van de Ascendant: ${names}`,
   almutenTooltip:
-    'De almuten is de planeet met de meeste essentiële waardigheidspunten op een chartpunt — gevonden door elke waardigheid (heerschappij, exaltatie, triplicitair, grens/term, decanaat) die een planeet daar heeft te scoren en de hoogste totaalscore te nemen.',
+    'De almuten is de planeet met de meeste essentiële waardigheidspunten op een chartpunt — gevonden door elke waardigheid (heerschappij, exaltatie, triplicitair, grens/term, decanaat) die een planeet daar heeft te scoren, detriment en val ervan af te trekken en de hoogste totaalscore te nemen. Wederzijdse ontvangst wordt getoond, niet meegeteld.',
   almutenTooltipLabel: 'Over de almuten',
   almutenScopeNote:
     'Dit is de almuten van de Ascendant, uitsluitend gescoord met essentiële waardigheidspunten (5/4/3/2/1 voor heerschappij, exaltatie, triplicitair, grens en decanaat, zoals in Lilly\u2019s fortitudes-tabel). Het omvat niet het planetaire uur of de prenatale syzygie die sommige auteurs toevoegen aan een Almuten Figuris.',
   almutenBreakdownCaption: 'Almuten-kandidaten',
+  noAlmuten: 'Geen almuten (geen planeet scoort boven 0)',
+  yesLabel: 'Ja',
+  noLabel: 'Nee',
   jonesShapeLabels: {
     bundle: 'Bundle',
     bowl: 'Bowl',

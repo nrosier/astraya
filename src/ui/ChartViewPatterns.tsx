@@ -118,6 +118,8 @@ export function almutenCandidateColumns(
   t: typeof chartViewMessages.en,
   locale: Locale,
 ): readonly TableColumn<AlmutenCandidateRow>[] {
+  const mutualReceptionText = (row: AlmutenCandidateRow): string =>
+    row.mutualReception === null ? '—' : row.mutualReception ? t.yesLabel : t.noLabel;
   return [
     {
       key: 'bodyName',
@@ -160,7 +162,29 @@ export function almutenCandidateColumns(
       align: 'center',
       render: (row) => (row.face ? '✓' : ''),
     },
+    {
+      key: 'detriment',
+      label: t.detrimentLabel,
+      valueOf: (row) => row.detriment,
+      align: 'center',
+      render: (row) => (row.detriment ? '✓' : ''),
+    },
+    {
+      key: 'fall',
+      label: t.fallLabel,
+      valueOf: (row) => row.fall,
+      align: 'center',
+      render: (row) => (row.fall ? '✓' : ''),
+    },
     { key: 'points', label: t.dignityPointsLabel, valueOf: (row) => row.points },
+    // Shown, never scored (#1609): mutual reception with the Ascendant's ruler. `null` is the ruler's own row.
+    {
+      key: 'mutualReception',
+      label: t.mutualReceptionLabel,
+      valueOf: mutualReceptionText,
+      align: 'center',
+      render: mutualReceptionText,
+    },
   ];
 }
 
@@ -482,7 +506,9 @@ function renderShapeSection(
             <div className="flat-card">
               <dt>{t.almutenKeyLabel}</dt>
               <dd className="almuten-summary">
-                {almuten.almutens.map((key) => bodyDisplayName(key, locale)).join(', ')}{' '}
+                {almuten.almutens.length === 0
+                  ? t.noAlmuten
+                  : almuten.almutens.map((key) => bodyDisplayName(key, locale)).join(', ')}{' '}
                 <Tooltip text={t.almutenTooltip} label={t.almutenTooltipLabel} className="primitive-tooltip-icon">
                   ?
                 </Tooltip>
