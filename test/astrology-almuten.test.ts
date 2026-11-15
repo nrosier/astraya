@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { almutenFigurisOf, almutenOf, essentialDignityScoreOf } from '../src/astrology/almuten.js';
+import {
+  almutenFigurisOf,
+  almutenOf,
+  essentialDignityScoreOf,
+  pickAlmutens,
+  type EssentialDignityScore,
+} from '../src/astrology/almuten.js';
 import { bodyByKey } from '../src/astrology/bodies.js';
 
 function id(key: string): number {
@@ -107,5 +113,92 @@ describe('almutenFigurisOf (#27)', () => {
 
   it('rejects an empty vital-point list rather than silently returning a meaningless result', () => {
     expect(() => almutenFigurisOf([], 'day')).toThrow(RangeError);
+  });
+});
+
+const ARIES_10 = 10;
+const VIRGO_10 = 160;
+
+// Lilly, Christian Astrology Book I, p. 115: detriment −5 and fall −4, subtracted in the almuten
+// tally only (owner decision, #1609). The plain dignity score keeps them out.
+describe('detriment and fall in the almuten tally (#1609)', () => {
+  it('subtracts detriment (−5) for Venus at 10 Aries only when includeDebilities is on', () => {
+    // Venus holds bound (2) at 10 Aries and is in detriment there (Aries is opposite Libra).
+    const plain = essentialDignityScoreOf(id('venus'), ARIES_10, 'day');
+    expect(plain.detriment).toBe(true);
+    expect(plain.points).toBe(2);
+    const net = essentialDignityScoreOf(id('venus'), ARIES_10, 'day', { includeDebilities: true });
+    expect(net.points).toBe(2 - 5);
+    expect(net.detriment).toBe(true);
+  });
+
+  it('subtracts fall (−4) for Saturn at 10 Aries only when includeDebilities is on', () => {
+    // Saturn is in fall in Aries, and holds no dignity at 10 Aries, so points are 0 before the debility.
+    const plain = essentialDignityScoreOf(id('saturn'), ARIES_10, 'day');
+    expect(plain.fall).toBe(true);
+    expect(plain.points).toBe(0);
+    const net = essentialDignityScoreOf(id('saturn'), ARIES_10, 'day', { includeDebilities: true });
+    expect(net.points).toBe(0 - 4);
+    expect(net.fall).toBe(true);
+  });
+
+  it('nets a dignity against a fall: Venus at 10 Virgo holds 6 and is in fall (−4)', () => {
+    const plain = essentialDignityScoreOf(id('venus'), VIRGO_10, 'day');
+    expect(plain.fall).toBe(true);
+    expect(plain.points).toBe(6);
+    const net = essentialDignityScoreOf(id('venus'), VIRGO_10, 'day', { includeDebilities: true });
+    expect(net.points).toBe(6 - 4);
+    expect(net.peregrine).toBe(false);
+  });
+
+  it('keeps peregrine true for a planet with no dignity even when its net points are −5', () => {
+    // Venus at 0 Aries: in detriment, no dignity held. Peregrine is about dignity, not the net score.
+    const net = essentialDignityScoreOf(id('venus'), 0, 'day', { includeDebilities: true });
+    expect(net.points).toBe(-5);
+    expect(net.detriment).toBe(true);
+    expect(net.peregrine).toBe(true);
+  });
+
+  it('almutenOf scores the debilities: Venus at 10 Aries is netted to −3, the Sun still wins', () => {
+    const result = almutenOf(ARIES_10, 'day');
+    expect(result.scores.find((s) => s.body === id('venus'))?.points).toBe(2 - 5);
+    expect(result.almutens).toEqual([id('sun')]);
+  });
+});
+
+describe('pickAlmutens no-almuten guard (#1609)', () => {
+  /** A hand-made score with only the fields the tally reads. */
+  function scoreWith(body: number, points: number): EssentialDignityScore {
+    return {
+      body,
+      ruler: false,
+      exalted: false,
+      triplicity: false,
+      bound: false,
+      face: false,
+      detriment: false,
+      fall: false,
+      points,
+      peregrine: points === 0,
+    };
+  }
+
+  it('returns no almuten when every planet scores 0 or below', () => {
+    const result = pickAlmutens([scoreWith(1, 0), scoreWith(2, -4), scoreWith(3, -5)]);
+    expect(result.almutens).toEqual([]);
+    expect(result.points).toBe(0);
+    expect(result.scores).toHaveLength(3);
+  });
+
+  it('returns no almuten when the best score is negative', () => {
+    const result = pickAlmutens([scoreWith(1, -1), scoreWith(2, -4)]);
+    expect(result.almutens).toEqual([]);
+    expect(result.points).toBe(-1);
+  });
+
+  it('still returns every tied planet when the tied score is above 0', () => {
+    const result = pickAlmutens([scoreWith(1, 3), scoreWith(2, 3), scoreWith(3, 1), scoreWith(4, -5)]);
+    expect(result.almutens).toEqual([1, 2]);
+    expect(result.points).toBe(3);
   });
 });
