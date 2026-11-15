@@ -16,7 +16,7 @@
  *    Instruction: 40. 324. 7 [years. days. hours]". Inputs per Houlding: Ascendant 3° Gemini, Mars
  *    13°03′ Cancer, latitude 48°N, obliquity 23°30′. Mars is taken by "the declination of the
  *    degree" — its zodiacal place at latitude 0, this module's own convention.
- * 2. **Prince Charles**, from Bob Makransky, *Primary Directions: A Primer of Calculation* (1988;
+ * 2. **Prince Charles**, from Bob Makransky, *Primary Directions: A Primer of Calculation* (rev. ed. 1992;
  *    scan at archive.org, item bob-makransky-primary-directions-a-primer-of-calculations-i):
  *    14 November 1948, 21h14m39s GMT, London, φ = 51°30′N, ε = 23.4459, RAMC = 12.37, all in
  *    decimal degrees. Ch. II "Zodiacal directions to the MC and IC" and "... to the Ascendant and
@@ -28,7 +28,7 @@
  * The gate feeds each example's own published inputs to the engine rather than a fresh Swiss
  * Ephemeris chart. For Prince Charles the book's RAMC is 12.37°; Swiss Ephemeris's ARMC for the
  * same instant and place is 12.40° (the book's sidereal time is about 8 s of time earlier) — a 2′
- * difference that would swamp a 1′ tolerance and test a 1988 sidereal-time calculation rather
+ * difference that would swamp a 1′ tolerance and test the book's own sidereal-time calculation rather
  * than the direction math. The Swiss Ephemeris tests further down then hold the same math to the
  * real ephemeris (via `engine-harness.ts`, no mocks): its Placidus cusps must be this engine's
  * mundane positions 0°, 30° … 330° to the arcsecond, and the published arcs must come back once
@@ -118,7 +118,7 @@ describe('verification gate: Henry II of France (Gadbury 1661, via Houlding 2009
   });
 });
 
-describe('verification gate: Prince Charles (Makransky 1988)', () => {
+describe('verification gate: Prince Charles (Makransky rev. ed. 1992)', () => {
   const frame: SphereFrame = { ramc: 12.37, obliquity: 23.4459, geoLatitude: 51.5 };
   const longitudes = { sun: 232.42, moon: 30.44, jupiter: 269.89, pluto: 136.56 };
 
@@ -207,7 +207,7 @@ describe('time keys', () => {
 describe('direct/converse and zodiacal/in-mundo variants (#553)', () => {
   it('keeps all four Placidus variants reproducible from the Makransky semi-arc frame', () => {
     // The frame is the Prince Charles Placidus speculum documented in the verification gate
-    // above (Makransky 1988, ch. VII). Non-zero latitudes exercise the in-mundo branch.
+    // above (Makransky rev. ed. 1992, ch. VII). Non-zero latitudes exercise the in-mundo branch.
     const frame: SphereFrame = { ramc: 12.37, obliquity: 23.4459, geoLatitude: 51.5 };
     const significator = { key: 'sun', longitude: 232.42, latitude: 0.35 } as const;
     const promissor = { key: 'moon', longitude: 30.44, latitude: 4.9 } as const;

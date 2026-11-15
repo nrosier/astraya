@@ -19,7 +19,8 @@ const en = {
 
   heading: (name: string) => `${name}’s Primary Directions`,
   hint: 'Primary directions turn the whole birth sky by its daily rotation: every degree of right ascension it turns after birth stands for about a year of life. Choose direct or converse motion and zodiacal or in-mundo latitude under the Placidus semi-arc method. The outer ring is available for direct directions only, because converse directions carry the selected significator rather than one whole sky.',
-  source: 'Method: Bob Makransky, Primary Directions: A Primer of Calculation (1988), ch. VII (Placidian semi-arcs).',
+  source:
+    'Method: Bob Makransky, Primary Directions: A Primer of Calculation (rev. ed. 1992), ch. VII (Placidian semi-arcs).',
   lockedNotice:
     'Primary directions are always calculated with a locked Placidus house system and tropical zodiac. They do not follow this person’s other calculation settings, such as the house system, zodiac or rulership chosen for their charts.',
   mismatchNotice: (differences: string) =>
@@ -94,7 +95,7 @@ const nl: typeof en = {
   heading: (name: string) => `Primaire directies van ${name}`,
   hint: 'Primaire directies draaien de hele geboortehemel met zijn dagelijkse omwenteling: elke graad rechte klimming die hij na de geboorte draait, staat voor ongeveer een levensjaar. Kies directe of converse beweging en zodiakale of in-mundo-breedte binnen de methode met Placidus-semi-bogen. De buitenste ring is alleen beschikbaar voor directe directies, omdat converse directies de gekozen significator dragen en niet één volledige hemel.',
   source:
-    'Methode: Bob Makransky, Primary Directions: A Primer of Calculation (1988), hfst. VII (Placidus-semi-bogen).',
+    'Methode: Bob Makransky, Primary Directions: A Primer of Calculation (herz. uitg. 1992), hfst. VII (Placidus-semi-bogen).',
   lockedNotice:
     'Primaire directies worden altijd berekend met een vast Placidus-huizenstelsel en een tropische dierenriem. Ze volgen de andere berekeningsinstellingen van deze persoon niet, zoals het huizenstelsel, de dierenriem of de heerserschap die voor hun horoscopen is gekozen.',
   mismatchNotice: (differences: string) =>

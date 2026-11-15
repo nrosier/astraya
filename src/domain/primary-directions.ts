@@ -16,7 +16,7 @@
  *   directed.
  * - **Promissors: Sun through Pluto.** "The traditional promissors are mainly the seven planets
  *   and their aspects" (Gansten 2009 ch. 1); the three modern planets are directed as well, as
- *   twentieth-century authors do (Makransky 1988 directs Uranus and Pluto). A body is never
+ *   twentieth-century authors do (Makransky, rev. ed. 1992, directs Uranus and Pluto). A body is never
  *   directed to itself.
  * - **Orb as a window in arc.** A direction is listed as active while the arc for the chosen age
  *   is within `orb` degrees of right ascension of its own arc. The default, 1°, is one year at

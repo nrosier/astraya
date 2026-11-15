@@ -1439,5 +1439,50 @@
     "provisional": false,
     "used_by": ["src/astrology/fixed-star-registry.ts"],
     "notes": "Recorded for the general precession rate 5029.0966 arcseconds per Julian century (IAU 1976) used by the fixed-star registry (owner decision on #1602, 2026-11-15). Not held; the value was verified against the published IAU 1976 constant on 2026-10-20. Status unheld-reference on owner instruction (#1602, 2026-11-15)."
+  },
+  {
+    "id": "makransky-primary-directions-1992",
+    "title": "Primary Directions: A Primer of Calculation",
+    "author": "Bob Makransky",
+    "year": 1992,
+    "edition": "Revised (1992) edition (preface heading); original publication date not stated in this copy",
+    "licence": "Copyrighted book; text kept local.",
+    "access_route": "Supplied by the owner in docs/references/new/ on 2026-11-15; test/primary-directions.test.ts names the archive.org item bob-makransky-primary-directions-a-primer-of-calculations-i.",
+    "original_name": "++Bob Makransky Primary Directions_A Primer of Calculations I.pdf",
+    "processed_path": "docs/references/sources/pdf/makransky-primary-directions-1992.pdf",
+    "sha256": "2b564f7345210d448e6c64a1a7ad4616b4eae41d1ca8700deb52c28e99ea48c7",
+    "text_path": "docs/references/text/makransky-primary-directions-1992.txt",
+    "pages_path": "docs/references/text/makransky-primary-directions-1992.pages.tsv",
+    "page_count": 162,
+    "status": "extracted",
+    "provisional": false,
+    "copyrighted": true,
+    "used_by": [
+      "src/astrology/primary-directions.ts",
+      "src/domain/primary-directions.ts",
+      "src/ui/PrimaryDirectionsView.messages.ts",
+      "test/primary-directions.test.ts"
+    ],
+    "notes": "PDF page numbers equal printed page numbers. Checked: Prince Charles speculum p. 19; ch. III p. 28 (Naibod, 365.25 / 360 = 1.0145, examples use 1.0146); ch. VII 'The Correct Placidus Method' p. 77. Text layer has OCR errors (letters misread). The code cited it as 1988 until the owner decision on #1602 (2026-11-15) to cite this held edition."
+  },
+  {
+    "id": "addey-harmonics-in-astrology-1976",
+    "title": "Harmonics in Astrology: An Introductory Textbook to the New Understanding of an Old Science",
+    "author": "John M. Addey",
+    "year": 1976,
+    "edition": "Cambridge Circle, Green Bay, Wisconsin; second printing 1977; copyright John M. Addey 1976 (title verso)",
+    "licence": "Copyrighted book; text kept local.",
+    "access_route": "Supplied by the owner in docs/references/new/ on 2026-11-15.",
+    "original_name": "Harmonics in Astrology An Introductory Textbook to the New Understanding of an Old Science (John M. Addey) (z-library.sk, 1lib.sk, z-lib.sk).pdf",
+    "processed_path": "docs/references/sources/pdf/addey-harmonics-in-astrology-1976.pdf",
+    "sha256": "87cf36276598e6598ea5cc8d0ecabf4fb710913cd26def49f766879e6e3ca1e7",
+    "text_path": "docs/references/text/addey-harmonics-in-astrology-1976.txt",
+    "pages_path": "docs/references/text/addey-harmonics-in-astrology-1976.pages.tsv",
+    "page_count": 278,
+    "status": "extracted",
+    "provisional": false,
+    "copyrighted": true,
+    "used_by": ["src/astrology/aspects.ts"],
+    "notes": "Title verso checked. PDF page = printed page + 8. Ch. 9 'Harmonics in the Aspect Circle' starts on printed p. 67 (PDF 75). The file name carries third-party mirror names; owner to confirm the copy is legitimately held before any quotation is used."
   }
 ]
