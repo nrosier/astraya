@@ -871,7 +871,7 @@
     "status": "extracted",
     "provisional": true,
     "copyrighted": true,
-    "used_by": [],
+    "used_by": ["src/domain/solar-arc-declination.ts"],
     "notes": "Author is the publisher; the manual names no person, so the product name is the title. Year not determinable from the PDF (copyright 1994-2005; PDF creation date 2016 is not bibliographic); undated and provisional. Text layer present. Astrologer comparison is a read-only review, not wired into code."
   },
   {
