@@ -171,7 +171,7 @@ test.describe('with the shared people (#799)', () => {
     await expect.poll(visibleLines).toBe(before);
   });
 
-  test('the Hard, Soft and Minor pills filter the wheel by tone, and the family pill filters the matrix (#1063, #1532)', async () => {
+  test('the Hard, Soft and Minor pills filter the wheel by tone, and the same pills filter the matrix (#1063, #1532)', async () => {
     test.setTimeout(90_000);
     await page.setViewportSize({ width: 1280, height: 800 });
     await openSharedPerson(page, baseUrl, EINSTEIN);
@@ -196,15 +196,52 @@ test.describe('with the shared people (#799)', () => {
     await hard.click();
     await expect.poll(async () => shown.count()).toBe(before);
 
-    // The matrix keeps the family pill.
+    // The matrix has the same bar, on the same state, and no family Select (owner, 2026-11-15). Moved from the family
+    // pill: the matrix half of this test now turns Hard off and on through the tone pills.
     await page.getByRole('link', { name: 'Aspect matrix', exact: true }).click();
+    await expect(page.getByLabel('Aspects shown', { exact: true })).toHaveCount(0);
     const cells = page.locator('.mgrid-aspect');
     await expect(cells.first()).toBeVisible();
     const cellsBefore = await cells.count();
-    await choosePill(page, 'Aspects shown', 'Hard minor: semisquare, sesquiquadrate, quincunx, semisextile');
+    const matrixHard = page
+      .getByRole('group', { name: 'Aspect families on the wheel', exact: true })
+      .getByRole('button', { name: 'Hard', exact: true });
+    await expect(matrixHard).toHaveAttribute('aria-pressed', 'true');
+    await matrixHard.click();
     await expect.poll(async () => cells.count()).toBeLessThan(cellsBefore);
-    await choosePill(page, 'Aspects shown', 'All aspects');
+    await expect(page.locator('.mgrid-aspect[data-tone="hard"]')).toHaveCount(0);
+    await matrixHard.click();
     await expect.poll(async () => cells.count()).toBe(cellsBefore);
+  });
+
+  test('the matrix and the wheel share one selection: Soft off on the Wheel tab hides the soft cells on the matrix (#1532)', async () => {
+    test.setTimeout(90_000);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    // The default settings draw no minor aspects, so Soft is the tone with cells to hide here (the brief named Minor); every tone goes through the same rule.
+    const soft = page
+      .getByRole('group', { name: 'Aspect families on the wheel', exact: true })
+      .getByRole('button', { name: 'Soft', exact: true });
+    await soft.click();
+    await expect(soft).toHaveAttribute('aria-pressed', 'false');
+
+    await page.getByRole('link', { name: 'Aspect matrix', exact: true }).click();
+    await expect(page.locator('.mgrid-aspect').first()).toBeVisible();
+    await expect(page.locator('.mgrid-aspect[data-tone="soft"]')).toHaveCount(0);
+    // The bar under the matrix shows the same state, and has no ring toggle.
+    await expect(soft).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.getByRole('radiogroup', { name: 'Rings on the wheel', exact: true })).toHaveCount(0);
+
+    // Turning it back on from the matrix brings the cells back, and the wheel follows.
+    await soft.click();
+    await expect(page.locator('.mgrid-aspect[data-tone="soft"]').first()).toBeVisible();
+    await page.getByRole('link', { name: 'Wheel', exact: true }).click();
+    await expect(
+      page
+        .getByRole('group', { name: 'Aspect families on the wheel', exact: true })
+        .getByRole('button', { name: 'Soft', exact: true }),
+    ).toHaveAttribute('aria-pressed', 'true');
   });
 
   test('the instrument bar sits centred directly under the wheel, one dial draws both wheels, and Natal only hides the transit ring for this view (#1532)', async () => {
@@ -304,12 +341,21 @@ test.describe('with the shared people (#799)', () => {
 
     await choosePill(page, 'Consultation preset', 'Predictive and timing: major and hard minor');
     await expect.poll(async () => shown.count()).toBeLessThanOrEqual(before);
-    // The family Select is on the Matrix tab only (#1532); there it reads the preset's families.
+    // The matrix has no family Select (#1532, owner 2026-11-15); its bar's pills read the preset: Predictive and timing
+    // names no minor-only family beyond hard minor, so all three pills stay on.
     await page.getByRole('link', { name: 'Aspect matrix', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Aspects shown' })).toContainText('Chosen families');
+    await expect(page.getByRole('button', { name: 'Aspects shown' })).toHaveCount(0);
+    const matrixPills = page.getByRole('group', { name: 'Aspect families on the wheel', exact: true });
+    await expect(matrixPills.getByRole('button', { name: 'Hard', exact: true })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
 
     await choosePill(page, 'Consultation preset', 'No preset (default view)');
-    await expect(page.getByRole('button', { name: 'Aspects shown' })).toContainText('All aspects');
+    await expect(matrixPills.getByRole('button', { name: 'Minor', exact: true })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
     await page.getByRole('link', { name: 'Wheel', exact: true }).click();
     await expect.poll(async () => shown.count()).toBe(before);
   });

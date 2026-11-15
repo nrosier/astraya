@@ -1,6 +1,6 @@
 /**
  * @module ui/ChartInstrumentBar
- * @purpose The instrument bar centred under the natal wheel (#1532): a Natal + transit / Natal only ring toggle and the
+ * @purpose The instrument bar centred under the natal wheel and under the Aspect matrix grid (#1532): a Natal + transit / Natal only ring toggle and the
  * Hard, Soft and Minor aspect pills.
  * @conventions Thin and stateless: the caller owns the tones and the ring choice. The ring toggle shows only while a
  * transit ring is on (owner decision, 2026-11-13); it hides that ring for this view and never changes the saved overlay

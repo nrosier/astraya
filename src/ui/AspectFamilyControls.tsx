@@ -1,7 +1,7 @@
 /**
  * @module ui/AspectFamilyControls
- * @purpose The aspect-family filter shown above the wheel and the matrix (#1063), and the on-demand consultation preset pill.
- * @conventions Thin: the family logic is `aspect-family-filter.ts`. On the Wheel tab the Hard, Soft and Minor pills replace the family Select (`showFamily={false}`, #1532); the preset pill stays. "All aspects" is the default and clears the filter. A set of several families (from a preset) reads as "Chosen families".
+ * @purpose The aspect-family filter (#1063), and the on-demand consultation preset pill.
+ * @conventions Thin: the family logic is `aspect-family-filter.ts`. On the Wheel and Aspect matrix tabs the instrument bar's Hard, Soft and Minor pills replace the family Select (`showFamily={false}`, #1532); the preset pill stays. "All aspects" is the default and clears the filter. A set of several families (from a preset) reads as "Chosen families".
  * @exports AspectFamilyControls
  */
 import {
@@ -30,7 +30,7 @@ export function AspectFamilyControls({
   /** The preset the reader chose, if any; presets are offered only where `onPreset` is given (#1063). */
   readonly presetKey?: ConsultationPreset['key'] | undefined;
   readonly onPreset?: ((preset: ConsultationPreset | undefined) => void) | undefined;
-  /** False on the Wheel tab, where the instrument bar's tone pills are the aspect filter (#1532). */
+  /** False on the Wheel and Aspect matrix tabs, where the instrument bar's tone pills are the aspect filter (#1532). */
   readonly showFamily?: boolean | undefined;
 }): React.JSX.Element {
   const t = useMessages(aspectFamilyControlsMessages);
