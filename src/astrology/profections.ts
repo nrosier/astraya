@@ -3,6 +3,10 @@
  * one of the oldest Hellenistic timing techniques and distinct from progressions, solar arc
  * and returns (all M6) — none of those move the Ascendant by whole signs on a fixed schedule.
  *
+ * Source: Brennan, Hellenistic Astrology (2017), ch. 17 "Annual Profections", pp. 536-537 (record
+ * `brennan-hellenistic-astrology-2017`): count one sign per year from the rising sign, the rising sign itself for the first
+ * year of life, returning to it when the native turns twelve (owner decision on #1602, 2026-11-15).
+ *
  * Convention, documented here since sources disagree (the issue's own last checklist item):
  *
  * - Year zero (birth to the first birthday) profects the Ascendant's own sign — the technique

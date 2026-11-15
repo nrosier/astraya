@@ -249,7 +249,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `preset-overlay-settings.ts` — Applies a consultation preset's layer, chart-facts and transit/solar-arc orb switches to a chart's overlay settings (#1190). Deps: `ChartOverlaySettingsPanel`, `aspect-family-filter`.
 - `AspectFamilyControls.tsx` — The aspect-family and consultation-preset pills, shown beside the chart type for the wheel and matrix (#1063, #1224, #1545); the family pill is hidden on the Wheel tab (#1532). Deps: `./aspect-family-filter`, `./AspectFamilyControls.messages`, `./primitives/PillSelect`.
 - `AspectFamilyControls.messages.ts` — en/nl strings for the aspect-family and preset pills (#1063). Deps: none.
-- `ChartInstrumentBar.tsx` — Instrument bar under the natal wheel: Natal + transit / Natal only toggle and Hard, Soft, Minor tone pills (#1532). Deps: `./ChartInstrumentBar.messages`, `./primitives/Button`, `./primitives/ChoiceGroup`, `astrology/aspects`.
+- `ChartInstrumentBar.tsx` — Instrument bar under the natal wheel and the Aspect matrix grid: Natal + transit / Natal only toggle and Hard, Soft, Minor tone pills (#1532). Deps: `./ChartInstrumentBar.messages`, `./primitives/Button`, `./primitives/ChoiceGroup`, `astrology/aspects`.
 - `ChartInstrumentBar.messages.ts` — en/nl strings for the wheel's instrument bar (#1532). Deps: `astrology/aspects`.
 - `wheel-selection.ts` — Composes wheel-selection heading text. Deps: `astrology/signs`, `interpretation/schema`, `./astro-names.messages`.
 - `workspace-rail-setting.ts` — Device preference for whether the desktop workspace rail is collapsed (#506/#509). Deps: none.

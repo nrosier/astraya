@@ -54,7 +54,8 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
-    "notes": "Cited in docs/domain/EXPORT_SCHEMA.md for mean daily speeds and the motion score."
+    "notes": "Cited in docs/domain/EXPORT_SCHEMA.md for mean daily speeds and the motion score.",
+    "used_by": ["src/astrology/houses.ts"]
   },
   {
     "id": "bonatti-liber-astronomiae-tr-1-2-1-1994",
@@ -263,7 +264,8 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
-    "notes": "Reading use only."
+    "notes": "Reading use only.",
+    "used_by": ["src/astrology/profections.ts"]
   },
   {
     "id": "collier-celebrating-the-quality-of-four-2009",
@@ -1413,5 +1415,25 @@
     "provisional": false,
     "used_by": ["src/astrology/rectification.ts"],
     "notes": "The copyright page reads First Edition, First Printing, 2001 (Llewellyn Publications, ISBN 0-7387-0054-2), so the id was renamed from tyl-solar-arcs-undated to tyl-solar-arcs-2001 and the record is no longer provisional (owner decision on #1604, 2026-11-15). The file was made from an .mobi and is not a print copy."
+  },
+  {
+    "id": "lieske-precession-quantities-1977",
+    "title": "Expressions for the Precession Quantities Based upon the IAU (1976) System of Astronomical Constants",
+    "author": "J. H. Lieske, T. Lederle, W. Fricke and B. Morando",
+    "year": 1977,
+    "edition": "Astronomy and Astrophysics 58, 1-16 (1977). The full reference is the one the Swiss Ephemeris source gives for its IAU 1976 precession (swephlib.c).",
+    "licence": "Journal article; copyrighted; not held locally.",
+    "access_route": "Astronomy and Astrophysics 58, 1-16 (1977); implemented by the Swiss Ephemeris, Astraya's engine.",
+    "original_name": null,
+    "processed_path": null,
+    "sha256": null,
+    "text_path": null,
+    "pages_path": null,
+    "page_count": null,
+    "status": "missing",
+    "copyrighted": true,
+    "provisional": false,
+    "used_by": ["src/astrology/fixed-star-registry.ts"],
+    "notes": "Recorded for the general precession rate 5029.0966 arcseconds per Julian century (IAU 1976) used by the fixed-star registry (owner decision on #1602, 2026-11-15). Not held; the value was verified against the published IAU 1976 constant on 2026-10-20."
   }
 ]

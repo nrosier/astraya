@@ -1177,7 +1177,7 @@ export function registryLongitude(star: RegistryStar): Degrees {
 
 /**
  * General precession in longitude, 5029.0966 arcseconds per Julian century (IAU 1976; Lieske et al. 1977).
- * Verified 2026-10-20 against the published IAU 1976 value (Lieske et al. 1977, Astronomy and Astrophysics 58); no copy of that paper is in docs/references/. See docs/domain/FIXED_STAR_REGISTRY.md, Precession section.
+ * Verified 2026-10-20 against the published IAU 1976 value (Lieske et al. 1977, Astronomy and Astrophysics 58); recorded as `lieske-precession-quantities-1977` in docs/references/sources.json (a journal article, not held locally; the Swiss Ephemeris implements it). See docs/domain/FIXED_STAR_REGISTRY.md, Precession section.
  * Applied linearly from the epoch; the rate itself varies slowly over centuries, so for spans of several centuries the shift is an approximation of order 0.02°.
  */
 export const PRECESSION_DEG_PER_YEAR = 5029.0966 / 3600 / 100;
