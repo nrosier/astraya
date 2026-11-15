@@ -1395,23 +1395,23 @@
     "notes": "Title page and copyright page confirmed by OCR. The scanned file is a 123-page OCR copy (ABBYY FineReader 14). Directions and rectification chapters are the relevant parts; not yet checked against any Astraya code."
   },
   {
-    "id": "tyl-solar-arcs-undated",
+    "id": "tyl-solar-arcs-2001",
     "title": "Solar Arcs: Astrology's Most Successful Predictive System",
     "author": "Noel Tyl",
     "year": 2001,
-    "edition": "Llewellyn Worldwide. Printed edition year not confirmed on the pages checked. Received as a 475-page scanned PDF made from an .mobi file.",
+    "edition": "Llewellyn Publications, First Edition, First Printing, 2001 (copyright page; ISBN 0-7387-0054-2). Received as a 475-page scanned PDF made from an .mobi file.",
     "licence": "Copyright status unconfirmed; treated as copyrighted, text kept local only.",
-    "access_route": "Local file docs/references/sources/pdf/tyl-solar-arcs-undated.pdf",
+    "access_route": "Local file docs/references/sources/pdf/tyl-solar-arcs-2001.pdf",
     "original_name": "feismo.com-noel-tyl-solar-arcs-pr_c75efb8ca9b1f9f179da74bf01a25466.pdf",
-    "processed_path": "docs/references/sources/pdf/tyl-solar-arcs-undated.pdf",
+    "processed_path": "docs/references/sources/pdf/tyl-solar-arcs-2001.pdf",
     "sha256": "d89e8c051c2750b7b3fba0e08b2ffe09fafddfed6be745fb5e14ce835234c435",
-    "text_path": "docs/references/text/tyl-solar-arcs-undated.txt",
+    "text_path": "docs/references/text/tyl-solar-arcs-2001.txt",
     "pages_path": null,
     "page_count": 475,
     "status": "extracted",
     "copyrighted": true,
-    "provisional": true,
+    "provisional": false,
     "used_by": ["src/astrology/rectification.ts"],
-    "notes": "Publisher Llewellyn Worldwide confirmed on a page-5 notice. No printed year found on the pages checked, so the record is undated and provisional. The file was made from an .mobi and is not a print copy. Copyright page: 2001 (Llewellyn, first printing; ISBN 0-7387-0054-2)."
+    "notes": "The copyright page reads First Edition, First Printing, 2001 (Llewellyn Publications, ISBN 0-7387-0054-2), so the id was renamed from tyl-solar-arcs-undated to tyl-solar-arcs-2001 and the record is no longer provisional (owner decision on #1604, 2026-11-15). The file was made from an .mobi and is not a print copy."
   }
 ]
