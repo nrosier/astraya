@@ -15,6 +15,11 @@
  * `swe_house_name` at the ephemeris boundary. That keeps exactly one source of
  * truth for the text instead of a second copy here that could drift from it.
  *
+ * Sources (owner decision on #1602, 2026-11-15): the implemented definition of every system is the Swiss Ephemeris
+ * house routine Astraya runs (`swe_houses_ex2`, Astrodienst's swehouse.c, which names each code); the classical
+ * descriptions of the quadrant systems are in Avelar, On the Heavenly Spheres (2010), house division, p. 232 (record
+ * `avelar-on-the-heavenly-spheres-2010`).
+ *
  * `'E'` is excluded: `swe_house_name` reports it as identical to `'A'`
  * ("equal") — verified empirically, not merely assumed from the letter gap in
  * the alphabet — so it is a legacy alias rather than a distinct system.
