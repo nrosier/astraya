@@ -28,7 +28,7 @@
  * - **Transits to the angles** (Astraya convention): Jupiter, Saturn, Uranus, Neptune, Pluto and the
  *   mean lunar node — the slow bodies, whose contact lasts long enough to line up with a dated event —
  *   conjunct, square or opposite the natal Ascendant or Midheaven.
- * - **Orb, directed contacts**: 1 degree (`RECTIFICATION_DIRECTED_ORB_LIMIT`). Tyl, *Solar Arcs*: the
+ * - **Orb, directed contacts**: 1 degree (`RECTIFICATION_DIRECTED_ORB_LIMIT`). Tyl, *Solar Arcs* (2001): the
  *   orb is one degree, or one year, split six months before and six months after (PDF 33); direct arcs
  *   also use "six months (30') of time-arc past and future" (PDF 120). Tebbs (*The Complete Book of Chart Rectification*, 2008,
  *   provisional) gives the same 1 degree for directions and progressions, as support.
@@ -66,7 +66,7 @@ import type { BodyId, Degrees, EphemerisProvider, GeoPosition, HouseSystem, Juli
 export const RECTIFICATION_ORB_LIMIT: Degrees = 3;
 
 /**
- * The orb limit for directed (Solar Arc) contacts: 1 degree. Tyl, *Solar Arcs*: the orb is one degree, or one year,
+ * The orb limit for directed (Solar Arc) contacts: 1 degree. Tyl, *Solar Arcs* (2001): the orb is one degree, or one year,
  * split six months before and six months after (PDF 33); direct arcs also use "six months (30') of time-arc past and
  * future" (PDF 120). Tebbs gives the same 1 degree for directions and progressions, as support (owner decision, #1445,
  * 2026-11-14).
