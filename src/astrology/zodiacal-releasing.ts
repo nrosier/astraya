@@ -21,7 +21,8 @@ import type { BodyId, Degrees, JulianDayUT } from '../ephemeris/types.js';
 /**
  * Valens' Level-1 sign periods, Aries through Pisces. Capricorn's 27-year term is sign-specific:
  * it must not be flattened into Saturn's 30-year Aquarius term. The same numbers become months
- * for Level 2. See Valens, *Anthology* IV, the table summarized by Schmidt and Holden.
+ * for Level 2. See Valens, *Anthology* 4, 4: 3-4, as tabulated in Brennan, *Hellenistic Astrology*
+ * (2017), ch. 18, printed p. 555 (`brennan-hellenistic-astrology-2017`).
  */
 export const ZODIACAL_RELEASING_SIGN_YEARS = [15, 8, 20, 25, 19, 20, 8, 15, 12, 27, 30, 12] as const;
 

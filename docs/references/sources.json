@@ -265,7 +265,7 @@
     "provisional": false,
     "copyrighted": true,
     "notes": "Reading use only.",
-    "used_by": ["src/astrology/profections.ts"]
+    "used_by": ["src/astrology/profections.ts", "src/astrology/zodiacal-releasing.ts"]
   },
   {
     "id": "collier-celebrating-the-quality-of-four-2009",
@@ -743,6 +743,26 @@
     "notes": "Not on disk. Formerly listed in docs/references/MAP.md."
   },
   {
+    "id": "placidus-primum-mobile-ms-ljs202-1675",
+    "title": "Primum mobile (English manuscript translation, Penn LJS 202)",
+    "author": "Placidus de Titis (attributed); translator unknown",
+    "year": "1675",
+    "edition": "Manuscript, England, 1675 (University of Pennsylvania Rare Book & Manuscript Library, LJS 202); English translation of a Latin work published in Padua in 1657",
+    "licence": "Public domain (Public Domain Mark 1.0, per the archive.org item)",
+    "access_route": "archive.org ljs202 (University of Pennsylvania Libraries, OPenn)",
+    "original_name": "ljs202.pdf",
+    "processed_path": "docs/references/sources/pdf/placidus-primum-mobile-ms-ljs202-1675.pdf",
+    "sha256": "0bcb4835c1b73277ed3ac740782d85f17abf2a0a4114a1eda92cee77ff2469bb",
+    "text_path": null,
+    "pages_path": null,
+    "page_count": 177,
+    "status": "ocr-needed",
+    "provisional": true,
+    "copyrighted": false,
+    "used_by": [],
+    "notes": "Handwritten page images with no text layer; machine OCR is not reliable for this hand. Contents per the Penn catalogue description: 70 theses (pp. 5-17), 42 canons for the tables (pp. 19-65), 30 example nativities (pp. 66-151), index (pp. 152-158). The catalogue names no author; the attribution to Placidus rests on the title and the Padua 1657 original, and is unverified against the manuscript. Not Cooper's 1814 translation (placidus-primum-mobile-1814): the catalogue says it differs substantially from the 18th- and 19th-century English translations, so it cannot back the Cooper p. 46 and p. 308 claims. Added on owner decision, #1602, 2026-11-15."
+  },
+  {
     "id": "smith-one-cosmic-day-2003",
     "title": "One Cosmic Day: An AstroMemoir",
     "author": "Wanda Smith",
@@ -809,14 +829,14 @@
     "access_route": "Not recorded; filename suggests a free-PDF site",
     "original_name": "bil-tierney-all-around-the-zodiac-pdf-free.pdf",
     "processed_path": "docs/references/sources/pdf/tierney-all-around-the-zodiac-undated.pdf",
-    "sha256": "45b7c8f91c9a8ad6cf6f7c3cc85e028da8072afeb49437daa9c034fa6b20aeb1",
+    "sha256": "72bae71d89ab0e38b5fcd1a645b509acddee29dec906dcb869b3790a7786ed96",
     "text_path": "docs/references/text/tierney-all-around-the-zodiac-undated.txt",
     "pages_path": "docs/references/text/tierney-all-around-the-zodiac-undated.pages.tsv",
     "page_count": 84,
-    "status": "provisional",
-    "provisional": false,
+    "status": "extracted",
+    "provisional": true,
     "copyrighted": true,
-    "notes": "Text layer degraded (words run together, letters misread). Author \"Bil Tierney\" and title \"All Around the Zodiac\" appear only in the filename; first pages begin \"Chapter One Signs & Elements\" with no title page. PDF is a partial scan, book pp. 15-181 as 84 two-page spreads; no title or imprint printed. Open Library gives Bil Tierney, Llewellyn, first published 2001, edition unverified."
+    "notes": "Text layer degraded (words run together, letters misread). Author \"Bil Tierney\" and title \"All Around the Zodiac\" appear only in the filename; first pages begin \"Chapter One Signs & Elements\" with no title page. PDF is a partial scan, book pp. 15-181 as 84 two-page spreads; no title or imprint printed. Open Library gives Bil Tierney, Llewellyn, first published 2001, edition unverified. Re-OCRed on 2026-11-15 (ocrmypdf --force-ocr, Tesseract 5, eng; owner decision on #1602): words are now separated, some letters still misread. Still provisional: no title or imprint page, so author, publisher and year remain unverified."
   },
   {
     "id": "valens-anthologiarum-libri-1908",
@@ -827,15 +847,16 @@
     "licence": "Public domain",
     "access_route": "archive.org bub_gb_OQ_gAAAAMAAJ",
     "original_name": "bub_gb_OQ_gAAAAMAAJ.pdf",
-    "processed_path": null,
-    "sha256": null,
-    "text_path": null,
-    "pages_path": null,
-    "page_count": null,
-    "status": "missing",
+    "processed_path": "docs/references/sources/pdf/valens-anthologiarum-libri-1908.pdf",
+    "sha256": "ee31e15722c395c747d26c16b7f7faf5803e21b008e15a4f4441f8a02cedd117",
+    "text_path": "docs/references/text/valens-anthologiarum-libri-1908.txt",
+    "pages_path": "docs/references/text/valens-anthologiarum-libri-1908.pages.tsv",
+    "page_count": 441,
+    "status": "extracted",
     "provisional": false,
     "copyrighted": false,
-    "notes": "Not on disk. Needed pages: Book II ch. 17-21 (printed pp. 79-85, PDF 98-104) and Book IV ch. 4 (printed p. 160, PDF 179)."
+    "used_by": ["docs/references/derived-points.references.json"],
+    "notes": "Fetched again from archive.org bub_gb_OQ_gAAAAMAAJ on 2026-11-15 (owner approval on #1602). Page headers checked: PDF 98 is printed p. 79 (Liber II cap. XVII), PDF 104 is p. 85 (cap. XXI), PDF 179 is p. 160 (Liber IV cap. IV). The scan's text layer reads the Greek as Latin letters, so it is unusable for quotation; transcribe from the page images, as derived-points.references.json does."
   },
   {
     "id": "wenck-click-horoscopes-2005",
@@ -1326,15 +1347,15 @@
     "access_route": "Local file docs/references/sources/pdf/paulus-alexandrinus-olympiodorus-with-scholia-greenbaum-2011.pdf",
     "original_name": "toaz.info-paulus-alexandrinus-and-olympiodorus-with-scholia-dorian-gieseler-greenbaum-pr_fad380bd190b95fd64c9db5df9103ccd.pdf",
     "processed_path": "docs/references/sources/pdf/paulus-alexandrinus-olympiodorus-with-scholia-greenbaum-2011.pdf",
-    "sha256": "dffa2a86e2a8c13135b1fc9e68b798224a25464e617fa221a7551b5be08b605a",
+    "sha256": "b744795e1d51199cdb063dcb65ac12ecced94b7c3f95392ece9814c3fdff26f6",
     "text_path": "docs/references/text/paulus-alexandrinus-olympiodorus-with-scholia-greenbaum-2011.txt",
-    "pages_path": null,
+    "pages_path": "docs/references/text/paulus-alexandrinus-olympiodorus-with-scholia-greenbaum-2011.pages.tsv",
     "page_count": 93,
-    "status": "ocr-needed",
+    "status": "extracted",
     "copyrighted": true,
     "provisional": false,
     "used_by": [],
-    "notes": "Scanned (1-bit CCITT, no fonts); OCR working copy kept outside the repository. Year is the PDF creation year (2011); the translation year is not on the title page. Title page: Late Classical Astrology, translated by Dorian Gieseler Greenbaum (ARHAT), foreword by Robert Hand."
+    "notes": "Scanned (1-bit CCITT, no fonts). Year is the PDF creation year (2011); the translation year is not on the title page. Title page: Late Classical Astrology, translated by Dorian Gieseler Greenbaum (ARHAT), foreword by Robert Hand. OCR text layer added on 2026-11-15 (ocrmypdf --deskew, Tesseract 5, eng; owner decision on #1602); the PDF in sources/pdf is now the OCRed copy."
   },
   {
     "id": "paulus-alexandrinus-introductory-matters-schmidt-hand-undated",
