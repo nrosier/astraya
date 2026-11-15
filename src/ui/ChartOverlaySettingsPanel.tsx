@@ -2,7 +2,7 @@
  * @module ChartOverlaySettingsPanel
  * @purpose Staged Overlay settings for configuring additional rings in the canonical chart wheel, opened from the chart row's Overlays trigger as a modal right slide-over drawer (#817, #824, #1080).
  * @conventions Owns only a draft that exists while the drawer is open (`StagedDialog placement="right"`); callers receive one confirmed settings object through `onApply`, so recalculation occurs once and Cancel, Escape and × retain the visible chart. The drawer is modal like Extended settings (#1080): focus is trapped inside, the page behind is inert, and Escape, Cancel, × and Apply return focus to the trigger (on a phone, to the Chart actions toggle, via ScrollingTabRow).
- * @exports ChartOverlaySettingsPanel, ChartOverlaySettings, ChartOverlaySource, ChartOverlayReturnKind, DEFAULT_CHART_OVERLAY_SETTINGS, orderedChartOverlaySources
+ * @exports ChartOverlaySettingsPanel, ChartOverlaySettings, ChartOverlaySource, ChartOverlayReturnKind, DEFAULT_CHART_OVERLAY_SETTINGS, orderedChartOverlaySources, MAX_OVERLAY_RINGS
  */
 import { useRef, useState } from 'react';
 import { StagedDialog } from './primitives/StagedDialog.js';
@@ -127,6 +127,12 @@ function isSelected(settings: ChartOverlaySettings, source: ChartOverlaySource):
 }
 
 /** Returns active optional sources in their user-selected radial order, repairing a future/old draft's missing ids. */
+/**
+ * At most this many overlay rings beside the base chart: four rings in all, as Solar Fire's quadri-wheel (Solar Fire
+ * Deluxe v6 §16.2; owner decisions on #1407, 2026-11-11 "Up to four" and 2026-11-15 "Four in all, natal included").
+ */
+export const MAX_OVERLAY_RINGS = 3;
+
 export function orderedChartOverlaySources(settings: ChartOverlaySettings): readonly ChartOverlaySource[] {
   const order = [...settings.order, ...OVERLAY_SOURCES.filter((source) => !settings.order.includes(source))];
   return order.filter((source) => isSelected(settings, source));
@@ -228,6 +234,9 @@ function OverlayDraft({
     update({ order });
   };
   const selected = orderedChartOverlaySources(draft);
+  // Four rings in all (#1407): with three overlay rings ticked, an unticked source cannot be added until one is unticked.
+  const atRingCap = selected.length >= MAX_OVERLAY_RINGS;
+  const capped = (source: ChartOverlaySource): boolean => atRingCap && !selected.includes(source);
   const rowControls = (
     source: ChartOverlaySource,
     label: string,
@@ -255,11 +264,12 @@ function OverlayDraft({
     <div className="chart-overlay-draft">
       <p className="settings-card-tag">{t.baseChart(baseLabel)}</p>
       <p className="hint">{t.hint}</p>
+      {atRingCap && <p className="hint chart-overlay-ring-cap">{t.ringCapNote}</p>}
       <div className="chart-overlay-rows">
         <OverlayRow
           label={t.natal}
           checked={draft.natal}
-          disabled={unavailable('natal')}
+          disabled={unavailable('natal') || capped('natal')}
           {...rowControls('natal', t.natal)}
           onChange={(natal) => {
             update({ natal });
@@ -268,7 +278,7 @@ function OverlayDraft({
         <OverlayRow
           label={t.draconic}
           checked={draft.draconic}
-          disabled={unavailable('draconic')}
+          disabled={unavailable('draconic') || capped('draconic')}
           {...rowControls('draconic', t.draconic)}
           onChange={(draconic) => {
             update({ draconic });
@@ -277,6 +287,7 @@ function OverlayDraft({
         <OverlayRow
           label={t.transit}
           checked={draft.transit}
+          disabled={capped('transit')}
           {...rowControls('transit', t.transit)}
           onChange={(transit) => {
             update({ transit });
@@ -311,6 +322,7 @@ function OverlayDraft({
         <OverlayRow
           label={t.progressed}
           checked={draft.progressed}
+          disabled={capped('progressed')}
           {...rowControls('progressed', t.progressed)}
           onChange={(progressed) => {
             update({ progressed });
@@ -331,6 +343,7 @@ function OverlayDraft({
         <OverlayRow
           label={t.directed}
           checked={draft.directed}
+          disabled={capped('directed')}
           {...rowControls('directed', t.directed)}
           onChange={(directed) => {
             update({ directed });
@@ -351,6 +364,7 @@ function OverlayDraft({
         <OverlayRow
           label={t.solarArc}
           checked={draft.solarArc}
+          disabled={capped('solarArc')}
           {...rowControls('solarArc', t.solarArc)}
           onChange={(solarArc) => {
             update({ solarArc });
@@ -385,6 +399,7 @@ function OverlayDraft({
         <OverlayRow
           label={t.return}
           checked={draft.return}
+          disabled={capped('return')}
           {...rowControls('return', t.return)}
           onChange={(returnRing) => {
             update({ return: returnRing });
@@ -420,6 +435,7 @@ function OverlayDraft({
         <OverlayRow
           label={t.relocated}
           checked={draft.relocated}
+          disabled={capped('relocated')}
           {...rowControls('relocated', t.relocated)}
           onChange={(relocated) => {
             update({ relocated });
