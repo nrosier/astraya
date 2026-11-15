@@ -1,7 +1,7 @@
 /**
  * The shared date stepper and the date in the URL (#1400): on Transits, Progressions and Solar Arc a URL carrying
  * `?date=` reopens on that date, and stepping the date writes the new day to the URL; on the Chart view the transit
- * ring's date opens from `?transit=`, and a stepped ring date reaches the URL when Apply is pressed. Progressions also
+ * ring's date opens from `?transit=`, and an edited ring date reaches the URL when Apply is pressed. Progressions also
  * gets its stepper proven: one month forward moves the date field and the table.
  */
 import { mkdtempSync, rmSync } from 'node:fs';
@@ -97,7 +97,7 @@ test('Progressions: stepping forward a month moves the date field and the progre
   await expect.poll(async () => table.innerText()).not.toBe(before);
 });
 
-test('Chart: ?transit= opens the transit ring on that date, and a stepped ring date reaches the URL on Apply (#1400)', async () => {
+test('Chart: ?transit= opens the transit ring on that date, and an edited ring date reaches the URL on Apply (#1400)', async () => {
   test.setTimeout(90_000);
   await openSharedPerson(page, baseUrl, EINSTEIN);
   await openNatalChart(page);
@@ -112,12 +112,11 @@ test('Chart: ?transit= opens the transit ring on that date, and a stepped ring d
   const date = dialog.getByLabel('Transit date', { exact: true });
   await expect(date).toHaveValue('2020-01-01');
 
-  await dialog
-    .getByRole('group', { name: 'Transit date stepper' })
-    .getByRole('button', { name: 'Step forward one day' })
-    .click();
+  // A plain date field, no stepper (owner decision 2026-11-15): the date is typed in.
+  await expect(dialog.getByRole('group', { name: 'Transit date stepper' })).toHaveCount(0);
+  await date.fill('2020-01-02');
   await expect(date).toHaveValue('2020-01-02');
-  // A stepped ring date is only a draft until Apply (owner decision, #1400).
+  // An edited ring date is only a draft until Apply (owner decision, #1400).
   expect(page.url()).not.toContain('2020-01-02');
   await dialog.getByRole('button', { name: 'Apply overlays', exact: true }).click();
   await expect(dialog).toBeHidden();

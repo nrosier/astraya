@@ -466,6 +466,7 @@ describe('the segmented controls (#824, box D)', () => {
     expect(zodiac?.querySelectorAll('input[type="radio"]')).toHaveLength(2);
     const css = readFileSync(join(process.cwd(), 'src/ui/app.css'), 'utf-8');
     expect(css).toMatch(/\.primitive-choice-group-segmented \{[^}]*display:\s*inline-flex;/);
+    expect(css).toMatch(/\.primitive-choice-group-segmented \{[^}]*width:\s*fit-content;/);
     unmount(container, root);
   });
 

@@ -8,16 +8,19 @@
  */
 /**
  * @module ui/primitives/Button
- * @purpose Shared button primitive: primary/quiet/danger/plain variants, standard/compact sizes, busy-label support.
+ * @purpose Shared button primitive: primary/quiet/danger/plain variants, standard/compact sizes, default/capsule shapes, busy-label support.
  * @conventions A thin wrapper over a real <button>; variant/size map onto existing app.css classes (.quiet, .danger) plus a new .primitive-button-primary for the previously-missing emphasized default, and `plain` (no class) for the bare button look. An optional `className` is appended after the variant/size classes for a control's own placement or identity class (#1161). `ref` is an ordinary prop (React 19), so a caller can focus or measure the button. Compact returns to standard touch sizing on coarse-pointer/touch layouts via CSS, not JS.
- * @exports Button
+ * @exports Button, ButtonShape
  */
 export type ButtonVariant = 'primary' | 'quiet' | 'danger' | 'plain';
 export type ButtonSize = 'standard' | 'compact';
+export type ButtonShape = 'default' | 'capsule';
 
 export interface ButtonProps extends React.ComponentPropsWithRef<'button'> {
   readonly variant?: ButtonVariant;
   readonly size?: ButtonSize;
+  /** `capsule` is the full-radius shape for small inline actions (#1600); independent of size. */
+  readonly shape?: ButtonShape;
   /** Shown instead of children while a submitted action is in flight, e.g. "Building PDF…". */
   readonly busyLabel?: string;
   readonly busy?: boolean;
@@ -34,6 +37,7 @@ const VARIANT_CLASS: Readonly<Record<ButtonVariant, string | undefined>> = {
 export function Button({
   variant = 'quiet',
   size = 'standard',
+  shape = 'default',
   busy = false,
   busyLabel,
   disabled,
@@ -43,9 +47,11 @@ export function Button({
   ...rest
 }: ButtonProps): React.JSX.Element {
   const sizeClass = size === 'compact' ? 'primitive-button-compact' : undefined;
+  const shapeClass = shape === 'capsule' ? 'primitive-button-capsule' : undefined;
   const className =
-    [VARIANT_CLASS[variant], sizeClass, extraClass].filter((value) => value !== undefined && value !== '').join(' ') ||
-    undefined;
+    [VARIANT_CLASS[variant], sizeClass, shapeClass, extraClass]
+      .filter((value) => value !== undefined && value !== '')
+      .join(' ') || undefined;
   return (
     <button
       type={type}

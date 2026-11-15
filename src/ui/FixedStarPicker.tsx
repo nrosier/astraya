@@ -130,6 +130,7 @@ export function FixedStarPicker({
           {stars.length === 0 ? t.noneChosen(PRESET_STAR_NAMES.join(', ')) : t.chosenCount(stars.length)}
         </StatusMessage>
         <Button
+          shape="capsule"
           disabled={catalogue === undefined}
           onClick={() => {
             if (catalogue !== undefined) onChange(withPresetStars(stars, catalogue.entries, catalogue.sha256));
@@ -147,6 +148,7 @@ export function FixedStarPicker({
         help={t.searchHelp}
         value={query}
         onChange={setQuery}
+        shape="pill"
         disabled={catalogue === undefined}
         autoComplete="off"
         inputMode="search"

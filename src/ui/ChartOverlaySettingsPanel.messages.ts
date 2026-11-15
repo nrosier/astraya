@@ -7,7 +7,7 @@
 const en = {
   trigger: 'Overlay settings',
   baseChart: (label: string) => `Base chart: ${label}`,
-  hint: 'Choose the additional rings to draw. Changes stay in this panel until you apply them.',
+  hint: 'Choose the additional rings to draw. Optional orb limits (°) override default aspect orbs. Changes stay in this panel until applied.',
   ringCapNote: 'Up to four rings: untick one to add another.',
   ringProvenance: 'Ring calculation basis',
   diagnosticsTitle: 'Calculation',
@@ -51,7 +51,7 @@ const en = {
 const nl: typeof en = {
   trigger: 'Overlayinstellingen',
   baseChart: (label: string) => `Basishoroscoop: ${label}`,
-  hint: 'Kies de extra ringen om te tekenen. Wijzigingen blijven in dit paneel tot je ze toepast.',
+  hint: 'Kies de extra ringen om te tekenen. Optionele orblimieten (°) gaan vóór op de standaardorbs van de aspecten. Wijzigingen blijven in dit paneel tot ze worden toegepast.',
   ringCapNote: 'Hoogstens vier ringen: vink er een uit om een andere toe te voegen.',
   ringProvenance: 'Berekeningsbasis per ring',
   diagnosticsTitle: 'Berekening',

@@ -6,7 +6,7 @@
  */
 import { useRef, useState } from 'react';
 import { StagedDialog } from './primitives/StagedDialog.js';
-import { DateAnimationBar } from './DateAnimationBar.js';
+import { DateField } from './primitives/DateField.js';
 import { NumberField } from './primitives/NumberField.js';
 import { ChoiceGroup } from './primitives/ChoiceGroup.js';
 import { Checkbox } from './primitives/Checkbox.js';
@@ -264,6 +264,7 @@ function OverlayDraft({
     <div className="chart-overlay-draft">
       <p className="settings-card-tag">{t.baseChart(baseLabel)}</p>
       <p className="hint">{t.hint}</p>
+      <p className="hint">{t.orbHelp}</p>
       {atRingCap && <p className="hint chart-overlay-ring-cap">{t.ringCapNote}</p>}
       <div className="chart-overlay-rows">
         <OverlayRow
@@ -293,20 +294,16 @@ function OverlayDraft({
             update({ transit });
           }}
         >
-          <DateAnimationBar
-            mode="date"
-            showHint={false}
-            keyboard={false}
+          <DateField
             label={t.transitDate}
-            date={draft.transitDate}
+            value={draft.transitDate}
             disabled={!draft.transit}
-            onDateChange={(transitDate) => {
+            onChange={(transitDate) => {
               update({ transitDate });
             }}
           />
           <NumberField
             label={t.transitOrb}
-            help={t.orbHelp}
             unit="°"
             optional
             value={draft.transitOrb}
@@ -328,14 +325,11 @@ function OverlayDraft({
             update({ progressed });
           }}
         >
-          <DateAnimationBar
-            mode="date"
-            showHint={false}
-            keyboard={false}
+          <DateField
             label={t.progressedDate}
-            date={draft.progressedDate}
+            value={draft.progressedDate}
             disabled={!draft.progressed}
-            onDateChange={(progressedDate) => {
+            onChange={(progressedDate) => {
               update({ progressedDate });
             }}
           />
@@ -349,14 +343,11 @@ function OverlayDraft({
             update({ directed });
           }}
         >
-          <DateAnimationBar
-            mode="date"
-            showHint={false}
-            keyboard={false}
+          <DateField
             label={t.directedDate}
-            date={draft.directedDate}
+            value={draft.directedDate}
             disabled={!draft.directed}
-            onDateChange={(directedDate) => {
+            onChange={(directedDate) => {
               update({ directedDate });
             }}
           />
@@ -370,20 +361,16 @@ function OverlayDraft({
             update({ solarArc });
           }}
         >
-          <DateAnimationBar
-            mode="date"
-            showHint={false}
-            keyboard={false}
+          <DateField
             label={t.solarArcDate}
-            date={draft.solarArcDate}
+            value={draft.solarArcDate}
             disabled={!draft.solarArc}
-            onDateChange={(solarArcDate) => {
+            onChange={(solarArcDate) => {
               update({ solarArcDate });
             }}
           />
           <NumberField
             label={t.solarArcOrb}
-            help={t.orbHelp}
             unit="°"
             optional
             value={draft.solarArcOrb}
@@ -420,14 +407,11 @@ function OverlayDraft({
               }}
             />
           </div>
-          <DateAnimationBar
-            mode="date"
-            showHint={false}
-            keyboard={false}
+          <DateField
             label={t.returnDate}
-            date={draft.returnDate}
+            value={draft.returnDate}
             disabled={!draft.return}
-            onDateChange={(returnDate) => {
+            onChange={(returnDate) => {
               update({ returnDate });
             }}
           />
@@ -465,22 +449,24 @@ function OverlayDraft({
           />
         </OverlayRow>
       </div>
-      <Checkbox
-        label={t.interRingAspects}
-        checked={draft.interRingAspects}
-        disabled={!hasChartOverlays(draft)}
-        onChange={(interRingAspects) => {
-          update({ interRingAspects });
-        }}
-      />
-      <Checkbox
-        label={t.chartFacts}
-        checked={draft.chartFacts}
-        onChange={(chartFacts) => {
-          update({ chartFacts });
-        }}
-      />
-      <p className="hint">{t.chartFactsHint}</p>
+      <div className="chart-overlay-globals">
+        <Checkbox
+          label={t.interRingAspects}
+          checked={draft.interRingAspects}
+          disabled={!hasChartOverlays(draft)}
+          onChange={(interRingAspects) => {
+            update({ interRingAspects });
+          }}
+        />
+        <Checkbox
+          label={t.chartFacts}
+          checked={draft.chartFacts}
+          onChange={(chartFacts) => {
+            update({ chartFacts });
+          }}
+        />
+        <p className="hint chart-overlay-globals-hint">{t.chartFactsHint}</p>
+      </div>
     </div>
   );
 }

@@ -173,29 +173,38 @@ describe('ChartOverlaySettingsPanel', () => {
     expect(radios.every((radio) => radio.disabled)).toBe(true);
   });
 
-  it('puts the shared date stepper beside each of the five extra-ring dates, and stepping changes only the draft (#1400 A1)', async () => {
+  it('gives each of the five extra-ring dates a plain date field with no stepper, and a typed date is only a draft until Apply (#1400, owner decision 2026-11-15)', async () => {
     const container = await mount();
     await click(must(container.querySelector('button.chart-overlay-trigger')));
-    const groups = [...container.querySelectorAll<HTMLElement>('.date-animation-bar[role="group"]')];
-    expect(groups.map((group) => group.getAttribute('aria-label'))).toEqual([
-      'Transit date stepper',
-      'Progressed to date stepper',
-      'Directed to date stepper',
-      'Solar arc to date stepper',
-      'Return date stepper',
+    // The drawer carries no stepper: no step buttons and no stepper group.
+    expect(container.querySelector('.date-animation-bar')).toBeNull();
+    expect(container.querySelector('button[aria-label^="Step "]')).toBeNull();
+    const dates = [...container.querySelectorAll<HTMLInputElement>('input[type="date"]')];
+    expect(dates.map((input) => input.labels?.[0]?.textContent)).toEqual([
+      'Transit date',
+      'Progressed to date',
+      'Directed to date',
+      'Solar arc to date',
+      'Return date',
     ]);
-    // A ring that is off keeps its stepper disabled, as its date field was.
-    expect(groups.every((group) => [...group.querySelectorAll('button')].every((b) => b.disabled))).toBe(true);
+    // A ring that is off keeps its date field disabled.
+    expect(dates.every((input) => input.disabled)).toBe(true);
     const checkboxes = container.querySelectorAll<HTMLInputElement>('input[type="checkbox"]');
-    await click(must(checkboxes.item(3)));
-    const progressed = must(groups[1]);
-    const dateInput = must(progressed.querySelector<HTMLInputElement>('input[type="date"]'));
-    const before = dateInput.value;
-    const forward = must(progressed.querySelector<HTMLButtonElement>('button[aria-label^="Step forward"]'));
-    expect(forward.disabled).toBe(false);
-    await click(forward);
-    expect(dateInput.value).not.toBe(before);
+    await click(must(checkboxes.item(2)));
+    const transit = must(dates[0]);
+    expect(transit.disabled).toBe(false);
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(transit, '2020-01-02');
+      transit.dispatchEvent(new Event('input', { bubbles: true }));
+      await Promise.resolve();
+    });
+    expect(transit.value).toBe('2020-01-02');
     // Nothing is applied until Apply.
     expect(container.querySelector('output')?.textContent).toBe('false');
+    const apply = must(
+      [...container.querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent === 'Apply overlays'),
+    );
+    await click(apply);
+    expect(container.querySelector('output')?.textContent).toBe('true');
   });
 });

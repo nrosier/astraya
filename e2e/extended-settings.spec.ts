@@ -458,7 +458,7 @@ test.describe('with the shared people (#799)', () => {
     { width: 1920, height: 1080 },
     { width: 1280, height: 800 },
   ]) {
-    test(`the planetary-rule strip and description box share left and right edges at ${String(size.width)}x${String(size.height)} (#1305)`, async () => {
+    test(`the planetary-rule strip starts on the description box's left edge at ${String(size.width)}x${String(size.height)} (#1305)`, async () => {
       test.setTimeout(90_000);
       await page.setViewportSize(size);
       await openSharedPerson(page, baseUrl, EINSTEIN);
@@ -478,9 +478,9 @@ test.describe('with the shared people (#799)', () => {
         if (box === null) throw new Error(`${name} has no box`);
         edges[name] = { x: box.x, right: box.x + box.width };
       }
-      // The strip and the description box start and end on the same vertical lines, and stay inside the group.
+      // The strip is a content-hugging pill (#1508, #1600): it starts on the description box's left line and ends inside it.
       expect(edges.segmented?.x).toBeCloseTo(edges.note?.x ?? Number.NaN, 0);
-      expect(edges.segmented?.right).toBeCloseTo(edges.note?.right ?? Number.NaN, 0);
+      expect(edges.segmented?.right ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual((edges.note?.right ?? 0) + 1);
       expect(edges.note?.right ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual((edges.group?.right ?? 0) + 1);
     });
   }

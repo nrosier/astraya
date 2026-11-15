@@ -111,6 +111,31 @@ describe('the compact size', () => {
     expect(host.querySelectorAll('.primitive-control-compact')).toHaveLength(3);
   });
 
+  it('renders the pill class for shape="pill" and none for the default field shape (#1600)', () => {
+    const host = mount(
+      <>
+        <TextField label="P" value="" onChange={noop} shape="pill" />
+        <TextField label="F" value="" onChange={noop} />
+      </>,
+    );
+    expect(host.querySelectorAll('.primitive-field-pill')).toHaveLength(1);
+  });
+
+  it('keeps a class passed in inputProps next to the component classes (#1600)', () => {
+    const host = mount(
+      <TextField label="K" value="" onChange={noop} size="compact" shape="pill" inputProps={{ className: 'caller' }} />,
+    );
+    const input = host.querySelector('input');
+    expect(input?.classList.contains('caller')).toBe(true);
+    expect(input?.classList.contains('primitive-control-compact')).toBe(true);
+    expect(input?.classList.contains('primitive-field-pill')).toBe(true);
+  });
+
+  it('draws the pill with var(--radius-full)', () => {
+    const css = readFileSync('src/ui/app.css', 'utf-8');
+    expect(css).toMatch(/\.primitive-field-pill[^{]*\{[^}]*border-radius: var\(--radius-full\)/);
+  });
+
   it('returns to the standard touch size on a coarse pointer, for buttons and controls alike', () => {
     const css = readFileSync('src/ui/app.css', 'utf-8');
     // Each compact rule is followed, inside a `(pointer: coarse)` block, by one that restores the base size.
