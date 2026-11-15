@@ -412,7 +412,7 @@ Every field and selection control must come from the shared component layer. A f
 - `TextField`, `DateField`, `NumberField`, `Select`, and `Combobox` share label placement, control height, padding, radius, border, surface, typography, focus ring, disabled treatment, help spacing, and error placement. Textarea height may differ; its surrounding anatomy does not.
 - Checkbox and radio controls share one size, stroke, selected color, focus ring, label gap, disabled treatment, and minimum row target. A checkmark and radio dot communicate different semantics within the same visual family.
 - Select triggers use the same field surface as text entry. Their chevron, clear action, popup radius, option padding, selected mark, and focus treatment come from the shared Select component.
-- **Segmented control (#1508, owner decisions 2026-11-12).** The container is a pill: it uses the full-radius token `--radius-full` (equal to the existing 999px value; the code step adds the token), and the options inside are fully rounded pills too. Only segmented containers, small inline action buttons and single-line search fields take this radius; other buttons and fields keep `--radius-sm`. The active segment has a solid accent fill with the background-colour label, which passes contrast in both themes. A selected state must also stay distinguishable in forced-colours mode, so give the active segment an outline or a system colour and do not rely on a background-only fill. The outer strip keeps the standard control height on touch (44px) and its inner pills are smaller. Every segmented control uses the shared standard height.
+- **Segmented control (#1508, owner decisions 2026-11-12).** The container is a pill: it uses the full-radius token `--radius-full` (`--radius-full` exists since PR #1625), and the options inside are fully rounded pills too. The pill radius applies to segmented containers, single-line inputs, selects, search fields, form action buttons and the small bulk buttons listed under Shape: pill or rounded rectangle; menu and popover triggers, tabs, multi-line fields and cards keep their own shapes. The active segment has a solid accent fill with the background-colour label, which passes contrast in both themes. A selected state must also stay distinguishable in forced-colours mode, so give the active segment an outline or a system colour and do not rely on a background-only fill. The outer strip keeps the standard control height on touch (44px) and its inner pills are smaller. Every segmented control uses the shared standard height.
 - Checkbox rows may be compact (24px) on dense desktop dialogs and return to the 44px target on touch layouts.
 - Use `standard` and, only for dense desktop data tools, `compact` size variants. Do not create feature-specific heights, radii, or padding. Compact controls return to standard sizing on coarse-pointer/touch layouts.
 - Labels, required/optional state, units, help, errors, and character/range limits occupy defined slots in the `Field` component. Reserve error space where validation is likely so controls do not jump vertically.
@@ -436,7 +436,7 @@ The shared date field must remain directly editable. The calendar opens from a s
 
 Use this pattern for the Chart type and Consultation preset controls (§2, Target chart page) and for independent aspect-family and tone toggles.
 
-- Pill radius is `999px`. The label sits inline before its pill, for example **Chart type: [Draconic ▾]**.
+- Pill radius is `--radius-full`. The label sits inline before its pill, for example **Chart type: [Draconic ▾]**.
 - An exclusive choice pill opens a card of radio options anchored to it. Only one card is open at a time. Escape closes the card, a click outside closes it, and focus returns to the pill.
 - The card opens downward when the pill sits at the top of the page (Chart type and Consultation preset). The Filters card below the instrument bar opens upward.
 - On screens 640px and below, the card becomes a bottom sheet.
@@ -445,12 +445,28 @@ Use this pattern for the Chart type and Consultation preset controls (§2, Targe
 
 #### Shape: pill or rounded rectangle
 
-Single-line, inline action, filter, or selection controls are pills with a 999px radius (use the pill radius, `--radius-full` once it is added). These include tabs, small inline action buttons, dropdown triggers, segmented toggles, search bars, and tags. Search fields are pills, including the Fixed Stars search box. The bulk All and Clear buttons beside PLANETS, MINOR PLANETS, and POINTS are small pill buttons, and so is the "Use the seven-star preset" button. Multi-line, stacked, or tabular containers (popovers, drawers, radio description cards, accordions, and matrices) are rounded rectangles with an 8px to 12px radius. Keep these rounded:
+Every single-line control is a pill with the `--radius-full` radius, at the shared height of 2.75rem (owner answers on #1600, 2026-11-15; touch layouts keep the 44px target). These are:
+
+- Single-line text, number, date, time and password inputs, with `--space-4` horizontal padding so text, date-picker icons and steppers stay clear of the curved edge. A stacked label above the field aligns with the input text through the same inline padding.
+- Native selects (label above the box, `appearance: none` with a drawn chevron inset like the text) and PillSelect pills.
+- Every single-line search bar. This supersedes the earlier answer (A4) that only the Fixed Stars search is a pill.
+- Segmented toggles and tags.
+- Form action buttons such as Cancel, Apply overlays and Save in forms and drawers, as capsules at the shared height.
+- The bulk All, Clear and None buttons beside section labels (PLANETS, MINOR PLANETS, POINTS) and the "Use the seven-star preset" button, as capsules (#1545, P3).
+
+These stay at the small radius (`--radius-sm`) and are not pills:
+
+- Tabs, which keep the underline style (A3).
+- Menu and popover trigger buttons (Export, Defaults, Techniques, person switcher) (A2).
+- Large buttons.
+- Multi-line textareas, checkboxes, and container cards, because full rounding on tall boxes turns them into ovals.
+
+Multi-line, stacked, or tabular containers (popovers, drawers, radio description cards, accordions, and matrices) are rounded rectangles with an 8px to 12px radius. Keep these rounded:
 
 - Multi-line radio option cards.
-- Popovers, menus, and accordions. An open panel stays rounded, and only its closed trigger is a pill.
+- Popovers, menus, and accordions. An open panel stays rounded, and its closed trigger keeps its own shape: a pill for a PillSelect, the small radius for a menu or popover trigger button. A popover or menu that opens over a card uses the PillSelect card surface (`--surface-hover` fill, 1px `--muted` border) and `--radius` (8px to 12px).
 - Data grids and matrices, which keep straight vertical edges.
-- Multi-field form inputs such as Name and Formula, at 8px, so their labels align flush-left.
+- Multi-line fields such as a notes textarea, at the small radius. Single-line fields such as Name are pills.
 
 ## 7. Design every state, including unhappy paths
 
@@ -556,7 +572,7 @@ A tool page (a screen that takes inputs and returns results, such as Planetary c
 ## 11. Use the design system rather than local styling
 
 - Use the spacing, type, semantic-color, radius, elevation, and motion tokens in `app.css`.
-- **Radius.** `--radius`, `--radius-sm`, `--radius-md` and `--radius-lg` cover boxes, buttons and fields. A full-radius token, `--radius-full` (equal to 999px), is for segmented-control containers and their inner pills. Small inline action buttons and single-line search fields also use the pill radius (999px, `--radius-full` once it is added), and the rest of the buttons and fields keep `--radius-sm`.
+- **Radius.** `--radius`, `--radius-sm`, `--radius-md` and `--radius-lg` cover boxes, buttons and fields. A full-radius token, `--radius-full` (equal to 999px), is for segmented-control containers and their inner pills, single-line inputs, selects, search fields, form action buttons and the bulk buttons. Tabs, menu and popover triggers, large buttons, textareas, checkboxes and cards keep `--radius-sm` or the box radii.
 - **Type scale (#1353).** The major-second scale in `:root` is `--text-xs` 0.79rem, `--text-sm` 0.889rem, `--text-base` 1rem, `--text-lg` 1.125rem, `--text-xl` 1.266rem and `--text-2xl` 1.424rem. Three further sizes have their own tokens, so no literal is needed for them: `--text-2xs` 0.75rem, `--text-caption` 0.85rem and `--text-md` 1.05rem.
 - **Headings (#1354).** One h2 spec and one h3 spec apply to cards, prose and pages. The h2 is `--h2-size` (`--text-lg`, 1.125rem), `--h2-weight` 600 and `--h2-margin` 0. The h3 is `--h3-size` (`--text-base`, 1rem), `--h3-weight` 600 and `--h3-margin` 0. The six tokens are defined once in `:root` and every heading rule in `app.css` reads them. Prose h2 and h3 follow the same spec as cards (owner decision 2026-11-11: no prose exception). Space around a heading comes from the container's gap or from padding on the heading, never from heading margin.
   - **Exceptions** (identity only; none changes size, weight or margin): `.shell > h2` keeps its uppercase, 0.11em tracking and accent colour; `.birth-record-card h3` keeps its uppercase, 0.04em tracking and muted colour; `.prose h2` keeps its -0.015em tracking; `.focus-interpretation h3` and `.relationship-summary h3` keep their accent colour; `.pdf-summary-card h2` and `.page-header--section` h2 keep `--fg` colour and (page header) a 1.2 line height; `.admin-stack > h2` keeps its tight line height.
