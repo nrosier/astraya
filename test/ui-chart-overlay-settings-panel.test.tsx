@@ -10,6 +10,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   ChartOverlaySettingsPanel,
   DEFAULT_CHART_OVERLAY_SETTINGS,
+  MAX_OVERLAY_RINGS,
   orderedChartOverlaySources,
   type ChartOverlaySettings,
 } from '../src/ui/ChartOverlaySettingsPanel.js';
@@ -71,6 +72,28 @@ describe('ChartOverlaySettingsPanel', () => {
         order: ['return', 'directed', 'progressed', 'transit', 'natal', 'draconic', 'relocated'],
       }),
     ).toEqual(['return', 'directed', 'progressed', 'transit']);
+  });
+
+  it('allows four rings in all: with three overlays ticked the rest are disabled until one is unticked (#1407)', async () => {
+    expect(MAX_OVERLAY_RINGS).toBe(3);
+    const container = await mount();
+    await click(must(container.querySelector<HTMLButtonElement>('button.chart-overlay-trigger')));
+    const row = (index: number): HTMLInputElement =>
+      must(container.querySelectorAll<HTMLInputElement>('.chart-overlay-rows input[type="checkbox"]').item(index));
+    // Rows: natal (unavailable on a natal base), draconic, transit, progressed, directed, solar arc, return, relocated.
+    expect(row(0).disabled).toBe(true);
+    await click(row(1));
+    await click(row(2));
+    expect(container.querySelector('.chart-overlay-ring-cap')).toBeNull();
+    await click(row(3));
+    expect([1, 2, 3].map((index) => row(index).disabled)).toEqual([false, false, false]);
+    expect([4, 5, 6, 7].map((index) => row(index).disabled)).toEqual([true, true, true, true]);
+    expect(container.querySelector('.chart-overlay-ring-cap')?.textContent).toBe(
+      'Up to four rings: untick one to add another.',
+    );
+    await click(row(2));
+    expect([4, 5, 6, 7].map((index) => row(index).disabled)).toEqual([false, false, false, false]);
+    expect(container.querySelector('.chart-overlay-ring-cap')).toBeNull();
   });
 
   it('keeps inputs inactive until their overlay is selected and commits only on Apply', async () => {
