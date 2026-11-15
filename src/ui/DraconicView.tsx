@@ -34,6 +34,7 @@ import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
 import { orbsOf } from '../chart/extended-settings.js';
 import { useStableBy, useStableMoment } from './use-stable-moment.js';
 import { PageHeader } from './PageHeader.js';
+import { ChartHelpTooltip } from './ChartHelpTooltip.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -149,12 +150,14 @@ export function DraconicView({
       <PageHeader
         title={person.displayName ? t.heading(person.displayName) : t.headingFallback}
         titleTerm="draconic"
+        titleAside={<ChartHelpTooltip explanation={t.hint} />}
         basis={basisLine}
       >
         <PdfCreatorLink href={creatorHref} />
       </PageHeader>
       <ChartTypeSelector personId={personId} type="draconic" view={view} />
       <ChartDataView
+        wheelHint={false}
         personId={personId}
         chartType="draconic"
         load={load}
@@ -175,11 +178,6 @@ export function DraconicView({
           <GlossaryText text={t.housesUndefined} />
         </StatusMessage>
       )}
-
-      {/* Below the wheel (#1013): the explanation never pushes the chart down. */}
-      <p className="hint">
-        <GlossaryText text={t.hint} />
-      </p>
     </main>
   );
 }

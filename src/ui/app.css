@@ -4007,6 +4007,15 @@ label.stacked {
   margin: 0 0 var(--space-2);
 }
 
+/*
+ * The dial subgrid's first row when the usage line is in the page's help tooltip (#1407, #1532): empty, and exactly the
+ * card's --space-6 overhang tall, so the card's top edge meets the workbench's top instead of rising into the row above.
+ */
+.chart-wheel-hint-slot {
+  display: block;
+  height: var(--space-6);
+}
+
 /* The Sabian (degree symbol) tier of the Selection card (#817): a compact flat container below the placement header. */
 .selection-sabian {
   margin-top: var(--space-3);

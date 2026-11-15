@@ -48,6 +48,7 @@ import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
 import { orbsOf } from '../chart/extended-settings.js';
 import { useStableBy, useStableMoment } from './use-stable-moment.js';
 import { PageHeader } from './PageHeader.js';
+import { ChartHelpTooltip } from './ChartHelpTooltip.js';
 import { Button } from './primitives/Button.js';
 import { errorDetail } from './api-error.js';
 
@@ -312,11 +313,12 @@ export function RelocatedChartView({
 
   return (
     <main className="shell shell--wide">
-      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.headingFallback} basis={basisLine} />
+      <PageHeader
+        title={person.displayName ? t.heading(person.displayName) : t.headingFallback}
+        titleAside={<ChartHelpTooltip explanation={t.hint} />}
+        basis={basisLine}
+      />
       <ChartTypeSelector personId={personId} type="relocated" view={view} />
-      <p className="hint">
-        <GlossaryText text={t.hint} />
-      </p>
 
       <div className="relocation-saved-places">
         <Select
@@ -386,6 +388,7 @@ export function RelocatedChartView({
       {relocationPlace !== undefined && load.kind !== 'idle' && (
         <>
           <ChartDataView
+            wheelHint={false}
             personId={personId}
             chartType="relocated"
             load={chartLoad}
