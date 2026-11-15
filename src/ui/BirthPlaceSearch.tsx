@@ -237,6 +237,8 @@ export function BirthPlaceSearch({
           <Button
             type="submit"
             variant="quiet"
+            shape="capsule"
+            className="primitive-button-form-action"
             disabled={searchStatus === 'searching' || searchQuery.trim() === '' || !online}
           >
             {searchStatus === 'searching' ? t.searching : t.search}

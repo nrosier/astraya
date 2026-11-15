@@ -64,6 +64,7 @@ describe('.primitive-button-capsule', () => {
 const EXPECTED_CAPSULE_FILES = [
   'AccountPreferencesNotices.tsx',
   'AdminPanel.tsx',
+  'BirthPlaceSearch.tsx',
   'ChartOverlaySettingsPanel.tsx',
   'CorpusCorrectionEditor.tsx',
   'CorpusOverridesPanel.tsx',
