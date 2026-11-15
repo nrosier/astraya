@@ -19,6 +19,7 @@ import { bodyById, bodyByKey } from '../astrology/bodies.js';
 import { customPointByBody } from './custom-point.js';
 import type { BoundsScheme } from '../astrology/bounds.js';
 import { declinationContacts, isOutOfBounds } from '../astrology/declinations.js';
+import { rulerOf } from '../astrology/dignities.js';
 import { dispositorChain, isMutualReception } from '../astrology/dispositors.js';
 import { elementBalance, houseOf, modalityBalance } from '../astrology/emphasis.js';
 import { fixedStarConjunctions } from '../astrology/fixed-stars.js';
@@ -685,6 +686,12 @@ export interface AlmutenCandidateRow {
   readonly face: boolean;
   readonly points: number;
   readonly peregrine: boolean;
+  /** Detriment held (#1609); shown, and counted in `points` only by the almuten tally. */
+  readonly detriment: boolean;
+  /** Fall held (#1609); shown, and counted in `points` only by the almuten tally. */
+  readonly fall: boolean;
+  /** Mutual reception with the Ascendant's domicile ruler, under the Reception table's own rule (#1609). `null` for that ruler's own row or when a position is missing. Never changes `points`. */
+  readonly mutualReception: boolean | null;
 }
 
 /**
@@ -706,10 +713,26 @@ export function almutenOfAscendant(
 ): { readonly almutens: readonly string[]; readonly candidates: readonly AlmutenCandidateRow[] } | undefined {
   if (!housesAreDefined(data.houses)) return undefined;
   const result = almutenOf(data.houses.ascendant, data.sect, { rulershipScheme: 'traditional', boundsScheme });
+  // The Ascendant's traditional domicile ruler: the body each candidate's mutual reception is checked against (#1609).
+  const ascendantRuler = rulerOf(signIndex(data.houses.ascendant), 'traditional');
+  const rulerPosition = data.positions.find((p) => p.body === ascendantRuler);
   return {
     almutens: result.almutens.map((id) => bodyById(id)?.key ?? String(id)),
     candidates: result.scores.map((score) => {
       const body = bodyById(score.body);
+      const candidatePosition = data.positions.find((p) => p.body === score.body);
+      const mutualReception =
+        score.body === ascendantRuler || candidatePosition === undefined || rulerPosition === undefined
+          ? null
+          : mutualReceptionBetween(
+              score.body,
+              candidatePosition.longitude,
+              ascendantRuler,
+              rulerPosition.longitude,
+              data.sect,
+              'traditional',
+              boundsScheme,
+            ).kind === 'mutual';
       return {
         bodyKey: body?.key ?? String(score.body),
         bodyName: body?.name ?? String(score.body),
@@ -720,6 +743,9 @@ export function almutenOfAscendant(
         face: score.face,
         points: score.points,
         peregrine: score.peregrine,
+        detriment: score.detriment,
+        fall: score.fall,
+        mutualReception,
       };
     }),
   };

@@ -451,11 +451,81 @@ describe('almutenOfAscendant (#398)', () => {
       face: true,
       points: 8,
       peregrine: false,
+      detriment: false,
+      fall: false,
+      // No positions in this fixture, so the mutual reception check has nothing to read (#1609).
+      mutualReception: null,
     });
     expect(mars?.ruler).toBe(true);
     expect(mars?.points).toBe(5);
     expect(moon?.peregrine).toBe(true);
     expect(moon?.points).toBe(0);
+  });
+
+  it('sets detriment on Venus and fall on Saturn at 10 Aries, and nowhere else (#1609)', () => {
+    const data: ChartData = {
+      positions: [],
+      houses: HOUSES, // 10 Aries Ascendant
+      aspects: [],
+      dignities: new Map(),
+      sect: 'day',
+      partOfFortune: 0,
+      partOfSpirit: 0,
+    };
+    const candidates = almutenOfAscendant(data)?.candidates ?? [];
+    const venus = candidates.find((row) => row.bodyKey === 'venus');
+    const saturn = candidates.find((row) => row.bodyKey === 'saturn');
+    const sun = candidates.find((row) => row.bodyKey === 'sun');
+    expect(venus).toMatchObject({ detriment: true, fall: false });
+    expect(saturn).toMatchObject({ detriment: false, fall: true });
+    expect(sun).toMatchObject({ detriment: false, fall: false });
+    expect(candidates.filter((row) => row.detriment).map((row) => row.bodyKey)).toEqual(['venus']);
+    expect(candidates.filter((row) => row.fall).map((row) => row.bodyKey)).toEqual(['saturn']);
+  });
+
+  it('marks mutual reception with the Ascendant ruler true, not-mutual false, and the ruler’s own row null (#1609)', () => {
+    // 10 Aries Ascendant: the traditional ruler is Mars. Mars at 15 Taurus (Venus’s domicile) and
+    // Venus at 10 Aries (Mars’s domicile) receive each other by domicile: mutual reception.
+    // Saturn at 20 Libra gets nothing from Mars there, so it is not in mutual reception with Mars.
+    const data: ChartData = {
+      positions: [position(MARS, 45), position(VENUS, 10), position(SATURN, 200)],
+      houses: HOUSES,
+      aspects: [],
+      dignities: new Map(),
+      sect: 'day',
+      partOfFortune: 0,
+      partOfSpirit: 0,
+    };
+    const candidates = almutenOfAscendant(data)?.candidates ?? [];
+    expect(candidates.find((row) => row.bodyKey === 'venus')?.mutualReception).toBe(true);
+    expect(candidates.find((row) => row.bodyKey === 'saturn')?.mutualReception).toBe(false);
+    expect(candidates.find((row) => row.bodyKey === 'mars')?.mutualReception).toBe(null);
+    // A missing position gives null, not false.
+    const withoutVenus: ChartData = { ...data, positions: [position(MARS, 45), position(SATURN, 200)] };
+    expect(almutenOfAscendant(withoutVenus)?.candidates.find((row) => row.bodyKey === 'venus')?.mutualReception).toBe(
+      null,
+    );
+  });
+
+  it('mutual reception never changes a candidate’s points, detriment or fall (#1609)', () => {
+    const base: ChartData = {
+      positions: [],
+      houses: HOUSES,
+      aspects: [],
+      dignities: new Map(),
+      sect: 'day',
+      partOfFortune: 0,
+      partOfSpirit: 0,
+    };
+    const withPositions: ChartData = {
+      ...base,
+      positions: [position(MARS, 45), position(VENUS, 10), position(SATURN, 200)],
+    };
+    const without = almutenOfAscendant(base)?.candidates ?? [];
+    const withMutual = almutenOfAscendant(withPositions)?.candidates ?? [];
+    expect(withMutual.map((row) => [row.bodyKey, row.points, row.detriment, row.fall])).toEqual(
+      without.map((row) => [row.bodyKey, row.points, row.detriment, row.fall]),
+    );
   });
 
   it('is undefined when houses have no valid solution (#378)', () => {
