@@ -1398,7 +1398,7 @@
     "id": "tyl-solar-arcs-undated",
     "title": "Solar Arcs: Astrology's Most Successful Predictive System",
     "author": "Noel Tyl",
-    "year": null,
+    "year": 2001,
     "edition": "Llewellyn Worldwide. Printed edition year not confirmed on the pages checked. Received as a 475-page scanned PDF made from an .mobi file.",
     "licence": "Copyright status unconfirmed; treated as copyrighted, text kept local only.",
     "access_route": "Local file docs/references/sources/pdf/tyl-solar-arcs-undated.pdf",
@@ -1412,6 +1412,6 @@
     "copyrighted": true,
     "provisional": true,
     "used_by": ["src/astrology/rectification.ts"],
-    "notes": "Publisher Llewellyn Worldwide confirmed on a page-5 notice. No printed year found on the pages checked, so the record is undated and provisional. The file was made from an .mobi and is not a print copy."
+    "notes": "Publisher Llewellyn Worldwide confirmed on a page-5 notice. No printed year found on the pages checked, so the record is undated and provisional. The file was made from an .mobi and is not a print copy. Copyright page: 2001 (Llewellyn, first printing; ISBN 0-7387-0054-2)."
   }
 ]
