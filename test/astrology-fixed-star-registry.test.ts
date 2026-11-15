@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   REGISTRY_EPOCH_JULIAN_DAY,
@@ -195,6 +196,53 @@ describe('searchYemenStars (#739)', () => {
       const index = YEMEN_FIXED_STARS.indexOf(star);
       expect(index).toBeGreaterThan(previous);
       previous = index;
+    }
+  });
+});
+
+interface PrintedLongitudes {
+  readonly entries: Readonly<Record<string, string>>;
+  readonly variants: Readonly<Record<string, string>>;
+}
+
+const SIGN_ABBREVIATIONS = ['Ari', 'Tau', 'Gem', 'Cnc', 'Leo', 'Vir', 'Lib', 'Sco', 'Sgr', 'Cap', 'Aqr', 'Psc'];
+
+/** "Ari 5;1" as printed, in the registry's sign/degree/minute terms. */
+function parsePrinted(text: string): { signIndex: number; degree: number; minute: number } {
+  const match = /^([A-Z][a-z]{2}) (\d+);(\d+)$/.exec(text);
+  if (!match) throw new Error(`test fixture bug: unparsable longitude "${text}"`);
+  const [, sign = '', degree = '', minute = ''] = match;
+  return { signIndex: SIGN_ABBREVIATIONS.indexOf(sign), degree: Number(degree), minute: Number(minute) };
+}
+
+// The fixture is an independent transcription of Kunitzsch & Langermann pp. 167-169 (#1602).
+const printed = JSON.parse(
+  readFileSync(new URL('fixtures/yemen-star-longitudes.json', import.meta.url), 'utf8'),
+) as PrintedLongitudes;
+
+describe('YEMEN_FIXED_STARS against the printed table (#1602)', () => {
+  it('has exactly the entries of the transcription', () => {
+    expect(YEMEN_FIXED_STARS.map((s) => s.id).sort()).toEqual(Object.keys(printed.entries).sort());
+  });
+
+  it('matches every printed longitude', () => {
+    for (const star of YEMEN_FIXED_STARS) {
+      const text = printed.entries[star.id] ?? '';
+      expect({ id: star.id, ...parsePrinted(text) }).toEqual({
+        id: star.id,
+        signIndex: star.signIndex,
+        degree: star.degree,
+        minute: star.minute,
+      });
+    }
+  });
+
+  it('matches the folded variant of row 33', () => {
+    const variants = byId('33').variantLongitudes;
+    expect(variants.map((v) => v.id)).toEqual(Object.keys(printed.variants));
+    for (const variant of variants) {
+      const { id, ...longitude } = variant;
+      expect(longitude).toEqual(parsePrinted(printed.variants[id] ?? ''));
     }
   });
 });

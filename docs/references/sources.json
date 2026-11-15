@@ -1,43 +1,5 @@
 [
   {
-    "id": "astraya-lilly-book2-records-undated",
-    "title": "Local passage records from Lilly, Christian Astrology Book II (page-image verified)",
-    "author": "Astraya project (records of William Lilly passages)",
-    "year": null,
-    "edition": "Project record; its source field names the mithras93 web transcription",
-    "licence": "Project record quoting Lilly 1647 passages; mithras93 provenance to be checked before redistribution",
-    "access_route": "Project-authored, git-excluded",
-    "original_name": "lilly-christian-astrology-book2.local.json",
-    "processed_path": null,
-    "sha256": "579f06620ae772cf01f471418eed5aded45ea30b740f16a76e24f7725cecd776",
-    "text_path": null,
-    "pages_path": null,
-    "page_count": null,
-    "status": "missing",
-    "provisional": false,
-    "copyrighted": false,
-    "notes": "Archived as a record, not a source; no extracted text. Original not on disk (recorded in originals/ by the restructure, but absent): docs/references/processed/originals/lilly-christian-astrology-book2.local.json."
-  },
-  {
-    "id": "astraya-yemen-star-verification-csv-undated",
-    "title": "Yemen star table longitude verification transcription (CSV)",
-    "author": "Astraya project",
-    "year": null,
-    "edition": null,
-    "licence": "Project work",
-    "access_route": "/tmp/yemen-verify/transcription.csv (temporary location, absent)",
-    "original_name": "transcription.csv",
-    "processed_path": null,
-    "sha256": null,
-    "text_path": null,
-    "pages_path": null,
-    "page_count": null,
-    "status": "missing",
-    "provisional": false,
-    "copyrighted": false,
-    "notes": "Not on disk. Referenced by docs/domain/FIXED_STAR_REGISTRY.md. Not reconstructed."
-  },
-  {
     "id": "avelar-on-the-heavenly-spheres-2010",
     "title": "On the Heavenly Spheres: A Treatise on Traditional Astrology",
     "author": "Helena Avelar; Luis Ribeiro",
@@ -1472,10 +1434,10 @@
     "text_path": null,
     "pages_path": null,
     "page_count": null,
-    "status": "missing",
+    "status": "unheld-reference",
     "copyrighted": true,
     "provisional": false,
     "used_by": ["src/astrology/fixed-star-registry.ts"],
-    "notes": "Recorded for the general precession rate 5029.0966 arcseconds per Julian century (IAU 1976) used by the fixed-star registry (owner decision on #1602, 2026-11-15). Not held; the value was verified against the published IAU 1976 constant on 2026-10-20."
+    "notes": "Recorded for the general precession rate 5029.0966 arcseconds per Julian century (IAU 1976) used by the fixed-star registry (owner decision on #1602, 2026-11-15). Not held; the value was verified against the published IAU 1976 constant on 2026-10-20. Status unheld-reference on owner instruction (#1602, 2026-11-15)."
   }
 ]
