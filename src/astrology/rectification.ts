@@ -29,7 +29,8 @@
  *   mean lunar node — the slow bodies, whose contact lasts long enough to line up with a dated event —
  *   conjunct, square or opposite the natal Ascendant or Midheaven.
  * - **Orb, directed contacts**: 1 degree (`RECTIFICATION_DIRECTED_ORB_LIMIT`). Tyl, *Solar Arcs*: the
- *   orb for the arc is one degree, or one year. Tebbs (*The Complete Book of Chart Rectification*, 2008,
+ *   orb is one degree, or one year, split six months before and six months after (PDF 33); direct arcs
+ *   also use "six months (30') of time-arc past and future" (PDF 120). Tebbs (*The Complete Book of Chart Rectification*, 2008,
  *   provisional) gives the same 1 degree for directions and progressions, as support.
  * - **Orb, transit contacts**: 3 degrees (`RECTIFICATION_ORB_LIMIT`). Tebbs's outer limit: consider exact
  *   contacts first, then within 1, 2 and up to 3 degrees, the closer the more important. Tebbs states this
@@ -65,8 +66,9 @@ import type { BodyId, Degrees, EphemerisProvider, GeoPosition, HouseSystem, Juli
 export const RECTIFICATION_ORB_LIMIT: Degrees = 3;
 
 /**
- * The orb limit for directed (Solar Arc) contacts: 1 degree. Tyl, *Solar Arcs*: the orb for the arc is one degree, or
- * one year; Tebbs gives the same 1 degree for directions and progressions, as support (owner decision, #1445,
+ * The orb limit for directed (Solar Arc) contacts: 1 degree. Tyl, *Solar Arcs*: the orb is one degree, or one year,
+ * split six months before and six months after (PDF 33); direct arcs also use "six months (30') of time-arc past and
+ * future" (PDF 120). Tebbs gives the same 1 degree for directions and progressions, as support (owner decision, #1445,
  * 2026-11-14).
  */
 export const RECTIFICATION_DIRECTED_ORB_LIMIT: Degrees = 1;
