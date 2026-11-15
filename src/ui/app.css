@@ -2814,7 +2814,7 @@ label.stacked {
 .chart-controls-row .aspect-family-filter .primitive-field select {
   box-sizing: border-box;
   /* The same height as the chart-type Select beside them. */
-  height: 2.68rem;
+  height: 2.75rem;
   min-height: 0;
 }
 
@@ -6098,7 +6098,7 @@ svg text.chart-symbol-text-unicode {
 /*
  * The Charts page's chart-type Select, on every chart page (natal, draconic, harmonic, solar return, lunar return,
  * relocated; #981, owner decision 2026-11-01: all charts share one design). The select is as tall as the view bar
- * under it (the 37.5px tab row viewport, 2.68rem at the 14px root).
+ * under it; since #1600 WP5 the pills and every native select are 2.75rem.
  */
 .chart-type-select {
   max-width: 20rem;
@@ -6117,9 +6117,8 @@ svg text.chart-symbol-text-unicode {
 
 .chart-type-select .primitive-field select {
   box-sizing: border-box;
-  /* Matches the view bar beside it (#511), not the standard control height: an owner-approved pairing that the
-     chart workspace's fold budget (#1013) is measured against. */
-  height: 2.68rem;
+  /* The same 2.75rem as every native select and PillSelect pill (#1600 WP5, owner answer): one control height. */
+  height: 2.75rem;
   min-height: 0;
 }
 
@@ -7331,6 +7330,27 @@ button.primitive-button-capsule {
   min-height: var(--control-height);
 }
 
+/* Every native select is a pill (#1600 WP5, owner answer A1): its label stays above it. The wider side padding keeps the
+   text and the platform caret clear of the curve. Text, number and date fields stay square. */
+.primitive-field select {
+  border-radius: var(--radius-full);
+  padding-inline: var(--space-4);
+  /* The same height as the PillSelect pill (#1600 WP5, owner answer: 2.75rem for both). */
+  min-height: 2.75rem;
+  /* The platform caret hugs the curve, so the caret is drawn here with the same inset as the text (two small triangles
+     that read as a chevron, in the text colour); the end padding keeps the text clear of it. */
+  appearance: none;
+  padding-inline-end: calc(var(--space-4) + var(--space-4));
+  background-image:
+    linear-gradient(45deg, transparent 50%, currentcolor 50%),
+    linear-gradient(135deg, currentcolor 50%, transparent 50%);
+  background-position:
+    calc(100% - var(--space-4) - 0.3rem) 50%,
+    calc(100% - var(--space-4)) 50%;
+  background-size: 0.3rem 0.3rem;
+  background-repeat: no-repeat;
+}
+
 .primitive-field textarea {
   padding-block: var(--space-2);
   resize: vertical;
@@ -8026,6 +8046,17 @@ button.primitive-disclosure-trigger:hover:not(:disabled) {
   font-size: var(--text-sm);
 }
 
+/* A touch target (#1073): on a coarse pointer a select keeps the 44px floor, as the pill does through --target-min. */
+@media (pointer: coarse) {
+  .primitive-field select {
+    min-height: var(--control-height);
+  }
+}
+
+:root[data-density='compact'] .primitive-field select {
+  padding-inline: var(--space-4) calc(var(--space-4) + var(--space-4));
+}
+
 :root[data-density='compact'] .data-table th,
 :root[data-density='compact'] .data-table td {
   padding: var(--space-1) var(--space-2);
@@ -8043,6 +8074,10 @@ button.primitive-disclosure-trigger:hover:not(:disabled) {
     min-height: var(--control-height);
     padding: var(--space-1) var(--field-padding-x);
     font-size: var(--text-base);
+  }
+
+  :root[data-density='compact'] .primitive-field select {
+    padding-inline: var(--space-4) calc(var(--space-4) + var(--space-4));
   }
 
   :root[data-density='compact'] .data-table th,
@@ -10080,7 +10115,7 @@ a.quiet,
   align-items: center;
   gap: var(--space-2);
   box-sizing: border-box;
-  height: 2.68rem;
+  height: 2.75rem;
   min-width: 0;
   max-width: 16rem;
   padding: 0 var(--space-3);
@@ -10095,7 +10130,7 @@ a.quiet,
   cursor: pointer;
 }
 
-/* A touch target (#1073): 44px on a coarse pointer through the shared --target-min; desktop keeps 2.68rem. */
+/* A touch target (#1073): 44px on a coarse pointer through the shared --target-min; desktop keeps 2.75rem. */
 @media (pointer: coarse) {
   .primitive-pill-select-pill {
     min-height: var(--target-min);
