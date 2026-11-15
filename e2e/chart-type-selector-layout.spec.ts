@@ -99,7 +99,7 @@ for (const viewport of [
     }
 
     for (const type of CHART_TYPE_LABELS) {
-      test(`${type}: the chart type select is the same height as the view bar`, async () => {
+      test(`${type}: the chart type pill is 2.75rem tall, the same as a native select`, async () => {
         await openSharedPerson(page, baseUrl, EINSTEIN);
         await openChart(page, type);
 
@@ -109,10 +109,15 @@ for (const viewport of [
           expect.soft(type, 'only Relocated has no view bar').toBe('Relocated');
           return;
         }
+        // #1600 WP5 (owner answer): the pill and every native select are 2.75rem; the view bar keeps its own height, so the
+        // pill is no longer pinned to it. The pill is checked against the 2.75rem token instead.
+        const token = Number(
+          await page.evaluate('2.75 * parseFloat(getComputedStyle(document.documentElement).fontSize)'),
+        );
         expect
           .soft(
-            Math.abs(metrics.selectHeight - metrics.viewBarHeight),
-            `${type} at ${String(viewport.width)}: select height (${String(metrics.selectHeight)}) equals view bar (${String(metrics.viewBarHeight)})`,
+            Math.abs(metrics.selectHeight - token),
+            `${type} at ${String(viewport.width)}: pill height (${String(metrics.selectHeight)}) equals 2.75rem (${String(token)})`,
           )
           .toBeLessThanOrEqual(0.5);
       });
