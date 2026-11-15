@@ -125,7 +125,13 @@ export function SavedChartSearches({ draft, onOpen }: SavedChartSearchesProps): 
           autoComplete="off"
           disabled={!writable}
         />
-        <Button variant="quiet" disabled={!writable || nameError !== undefined} onClick={save}>
+        <Button
+          shape="capsule"
+          className="primitive-button-form-action"
+          variant="quiet"
+          disabled={!writable || nameError !== undefined}
+          onClick={save}
+        >
           {t.saveSearch}
         </Button>
       </div>

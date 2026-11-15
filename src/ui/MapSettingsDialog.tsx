@@ -117,13 +117,17 @@ export function MapSettingsDialog({
         footer={
           <>
             <Button
+              shape="capsule"
+              className="primitive-button-form-action"
               disabled={!dirty || invalid}
               aria-label={dirty && !invalid ? t.apply : t.applyNothing}
               onClick={apply}
             >
               {t.apply}
             </Button>
-            <Button onClick={discard}>{t.cancel}</Button>
+            <Button shape="capsule" className="primitive-button-form-action" onClick={discard}>
+              {t.cancel}
+            </Button>
           </>
         }
       >

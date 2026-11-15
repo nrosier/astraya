@@ -222,7 +222,7 @@ export function PersonFileActions({
                 <Button variant="danger" busy={saving} busyLabel={t.applying} onClick={confirm}>
                   {t.confirm}
                 </Button>{' '}
-                <Button onClick={cancel} disabled={saving}>
+                <Button shape="capsule" className="primitive-button-form-action" onClick={cancel} disabled={saving}>
                   {t.cancel}
                 </Button>
               </p>

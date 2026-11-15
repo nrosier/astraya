@@ -857,6 +857,8 @@ export function ExtendedSettingsPanel({
       </div>
       <div className="settings-card-footer-group">
         <Button
+          shape="capsule"
+          className="primitive-button-form-action"
           onClick={() => {
             closeCard();
           }}
@@ -864,6 +866,8 @@ export function ExtendedSettingsPanel({
           {t.cancelButton}
         </Button>
         <Button
+          shape="capsule"
+          className="primitive-button-form-action"
           variant="primary"
 
           disabled={!dirty || !rulesValid}

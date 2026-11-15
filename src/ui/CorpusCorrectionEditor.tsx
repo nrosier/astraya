@@ -141,10 +141,23 @@ export function CorpusCorrectionEditor({
               )}
             </div>
             <div className="settings-card-footer-group">
-              <Button type="button" variant="quiet" onClick={onClose}>
+              <Button
+                shape="capsule"
+                className="primitive-button-form-action"
+                type="button"
+                variant="quiet"
+                onClick={onClose}
+              >
                 {t.cancel}
               </Button>
-              <Button type="button" variant="primary" disabled={busy} onClick={save}>
+              <Button
+                shape="capsule"
+                className="primitive-button-form-action"
+                type="button"
+                variant="primary"
+                disabled={busy}
+                onClick={save}
+              >
                 {busy ? t.saving : t.save}
               </Button>
             </div>

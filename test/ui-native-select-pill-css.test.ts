@@ -1,6 +1,6 @@
 /**
  * Every native select is a pill (#1600 WP5, owner answer A1): the shared `.primitive-field select` rule uses the
- * full-pill radius token and a wider inline padding, and text, number and date fields keep the square radius.
+ * full-pill radius token and a wider inline padding, and text, number and date fields became pills in WP7.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -32,7 +32,7 @@ describe('native select pill shape (#1600 WP5)', () => {
     expect(others.map((m) => m[1]?.trim())).toEqual([]);
   });
 
-  it('the shared text-field rule keeps the square radius', () => {
+  it('the shared text-field group keeps the small radius for textarea', () => {
     expect(css).toMatch(
       /\.primitive-field textarea \{\s*padding: var\(--space-1\) var\(--field-padding-x\);\s*border: 1px solid var\(--line\);\s*border-radius: var\(--radius-sm\);/,
     );

@@ -74,6 +74,7 @@ export function PasswordField({
   const input = (
     <input
       id={ids.inputId}
+      className="primitive-field-pill"
       type={revealable && shown ? 'text' : 'password'}
       value={value}
       disabled={disabled}

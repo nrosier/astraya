@@ -221,6 +221,8 @@ export function OrbLibraryEditor({
               {existing === undefined ? t.saveNew : t.saveRevision(nextRevision(existing))}
             </Button>{' '}
             <Button
+              shape="capsule"
+              className="primitive-button-form-action"
               onClick={() => {
                 setDraft(undefined);
                 setError(undefined);

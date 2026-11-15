@@ -44,6 +44,7 @@ export function TimeField({
       <input
         id={ids.inputId}
         type="time"
+        className="primitive-field-pill"
         step={step}
         value={value}
         disabled={disabled}

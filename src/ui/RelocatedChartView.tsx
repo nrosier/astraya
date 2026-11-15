@@ -374,7 +374,12 @@ export function RelocatedChartView({
       </div>
       <div className="relocation-save-place">
         <TextField label={t.saveLocationName} value={locationName} onChange={setLocationName} />
-        <Button disabled={relocationPlace === undefined || locationName.trim() === ''} onClick={saveLocation}>
+        <Button
+          shape="capsule"
+          className="primitive-button-form-action"
+          disabled={relocationPlace === undefined || locationName.trim() === ''}
+          onClick={saveLocation}
+        >
           {t.saveLocation}
         </Button>
       </div>

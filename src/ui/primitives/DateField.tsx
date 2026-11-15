@@ -51,6 +51,7 @@ export function DateField({
       <input
         id={ids.inputId}
         type="date"
+        className="primitive-field-pill"
         value={value}
         min={min}
         max={max}
