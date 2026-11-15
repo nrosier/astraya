@@ -20,6 +20,8 @@ export interface TextFieldProps {
   readonly optional?: boolean | undefined;
   readonly placeholder?: string | undefined;
   readonly size?: ButtonSize;
+  /** `pill` is the full-radius search shape with side padding (#1545 P2, #1600); everything else stays `field`. */
+  readonly shape?: 'field' | 'pill' | undefined;
   readonly disabled?: boolean | undefined;
   /** The label stays for assistive technology but is not drawn, e.g. a field inside a table cell (#1439). */
   readonly hideLabel?: boolean | undefined;
@@ -43,6 +45,7 @@ export function TextField({
   optional,
   placeholder,
   size = 'standard',
+  shape = 'field',
   disabled,
   hideLabel,
   autoComplete,
@@ -58,7 +61,15 @@ export function TextField({
         id={ids.inputId}
         ref={inputRef}
         type="text"
-        className={size === 'compact' ? 'primitive-control-compact' : undefined}
+        className={
+          [
+            inputProps?.className,
+            size === 'compact' ? 'primitive-control-compact' : undefined,
+            shape === 'pill' ? 'primitive-field-pill' : undefined,
+          ]
+            .filter((name) => name !== undefined && name !== '')
+            .join(' ') || undefined
+        }
         value={value}
         placeholder={placeholder}
         disabled={disabled}

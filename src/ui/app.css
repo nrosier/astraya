@@ -7370,6 +7370,13 @@ button.primitive-button-compact {
   font-size: var(--text-sm);
 }
 
+/* The pill shape of a search field (#1545 P2, #1600): full radius and --space-4 side padding (the mockup's 1rem). Height
+   stays --control-height from the base rule. The selector repeats the base rule's :not() pair so it wins on specificity. */
+.primitive-field input.primitive-field-pill:not([type='checkbox']):not([type='radio']) {
+  padding-inline: var(--space-4);
+  border-radius: var(--radius-full);
+}
+
 /* `SymbolSetting.tsx`'s reactive explanation of the current symbol-class/weight choice — same
    box this used to be as a hand-written inline style, moved here once the control itself moved
    onto the shared `Select` primitive. */
