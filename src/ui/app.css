@@ -7280,6 +7280,12 @@ button.primitive-button-compact {
   }
 }
 
+/* A small inline action (All, Clear, None, a preset) is a capsule (#1600); shape only, colours and heights unchanged. */
+.primitive-button-capsule,
+button.primitive-button-capsule {
+  border-radius: var(--radius-full);
+}
+
 .primitive-field,
 .primitive-choice-field {
   display: flex;

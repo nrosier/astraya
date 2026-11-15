@@ -191,6 +191,7 @@ export function TransitFilterButton({
         <div className="transit-filter-card-actions">
           <Button
             size="compact"
+            shape="capsule"
             onClick={() => {
               setDraft({ ...draft, [field]: [...keys] });
             }}
@@ -199,6 +200,7 @@ export function TransitFilterButton({
           </Button>
           <Button
             size="compact"
+            shape="capsule"
             onClick={() => {
               setDraft({ ...draft, [field]: [] });
             }}
