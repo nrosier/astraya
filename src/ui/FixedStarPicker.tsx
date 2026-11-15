@@ -147,6 +147,7 @@ export function FixedStarPicker({
         help={t.searchHelp}
         value={query}
         onChange={setQuery}
+        shape="pill"
         disabled={catalogue === undefined}
         autoComplete="off"
         inputMode="search"
