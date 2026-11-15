@@ -452,6 +452,7 @@ export function ExtendedSettingsPanel({
         </Button>
         <Button
           size="compact"
+          shape="capsule"
           onClick={() => {
             setGroupPolicy(keys, { visible: true, aspectParticipant: true });
           }}
@@ -460,6 +461,7 @@ export function ExtendedSettingsPanel({
         </Button>
         <Button
           size="compact"
+          shape="capsule"
           onClick={() => {
             setGroupPolicy(keys, { visible: false, aspectParticipant: false });
           }}
@@ -468,6 +470,7 @@ export function ExtendedSettingsPanel({
         </Button>
         <Button
           size="compact"
+          shape="capsule"
           onClick={() => {
             setGroupNone(keys);
           }}
