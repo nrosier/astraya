@@ -6945,13 +6945,6 @@ svg text.chart-symbol-text-unicode {
   gap: var(--space-3);
 }
 
-/* The date stepper takes a row of its own in the drawer (#1615): at 52rem and up the shared bar is one nowrap row, wider than an
-   auto-fit column, so it ran over the orb field beside it. Scoped here, so the bar on Transits, Progressions and Solar Arc is unchanged. */
-.chart-overlay-row-inputs > .date-animation-bar-wrap {
-  grid-column: 1 / -1;
-  margin-bottom: 0;
-}
-
 .chart-overlay-row-toggle {
   display: flex;
   align-items: center;
