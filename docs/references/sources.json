@@ -743,6 +743,26 @@
     "notes": "Not on disk. Formerly listed in docs/references/MAP.md."
   },
   {
+    "id": "placidus-primum-mobile-ms-ljs202-1675",
+    "title": "Primum mobile (English manuscript translation, Penn LJS 202)",
+    "author": "Placidus de Titis (attributed); translator unknown",
+    "year": "1675",
+    "edition": "Manuscript, England, 1675 (University of Pennsylvania Rare Book & Manuscript Library, LJS 202); English translation of a Latin work published in Padua in 1657",
+    "licence": "Public domain (Public Domain Mark 1.0, per the archive.org item)",
+    "access_route": "archive.org ljs202 (University of Pennsylvania Libraries, OPenn)",
+    "original_name": "ljs202.pdf",
+    "processed_path": "docs/references/sources/pdf/placidus-primum-mobile-ms-ljs202-1675.pdf",
+    "sha256": "0bcb4835c1b73277ed3ac740782d85f17abf2a0a4114a1eda92cee77ff2469bb",
+    "text_path": null,
+    "pages_path": null,
+    "page_count": 177,
+    "status": "ocr-needed",
+    "provisional": true,
+    "copyrighted": false,
+    "used_by": [],
+    "notes": "Handwritten page images with no text layer; machine OCR is not reliable for this hand. Contents per the Penn catalogue description: 70 theses (pp. 5-17), 42 canons for the tables (pp. 19-65), 30 example nativities (pp. 66-151), index (pp. 152-158). The catalogue names no author; the attribution to Placidus rests on the title and the Padua 1657 original, and is unverified against the manuscript. Not Cooper's 1814 translation (placidus-primum-mobile-1814): the catalogue says it differs substantially from the 18th- and 19th-century English translations, so it cannot back the Cooper p. 46 and p. 308 claims. Added on owner decision, #1602, 2026-11-15."
+  },
+  {
     "id": "smith-one-cosmic-day-2003",
     "title": "One Cosmic Day: An AstroMemoir",
     "author": "Wanda Smith",
