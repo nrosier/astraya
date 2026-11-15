@@ -10,7 +10,7 @@ const css = readFileSync(join(process.cwd(), 'src/ui/app.css'), 'utf-8');
 
 /** The declaration block of the rule whose selector is exactly `selector`. */
 function block(selector: string): string {
-  const escaped = selector.replace(/[.[\]()]/g, '\\$&');
+  const escaped = selector.replace(/[\\.[\]()]/g, '\\$&');
   const m = new RegExp(`(?:^|\\n)${escaped} \\{([^}]*)\\}`).exec(css);
   if (m?.[1] === undefined) throw new Error(`no rule for ${selector}`);
   return m[1];
