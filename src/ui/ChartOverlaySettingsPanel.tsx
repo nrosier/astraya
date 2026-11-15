@@ -184,8 +184,12 @@ export function ChartOverlaySettingsPanel({
         returnFocusTo={triggerRef}
         footer={
           <div className="settings-card-footer-group">
-            <Button onClick={close}>{t.cancel}</Button>
+            <Button shape="capsule" className="primitive-button-form-action" onClick={close}>
+              {t.cancel}
+            </Button>
             <Button
+              shape="capsule"
+              className="primitive-button-form-action"
               variant="primary"
 
               disabled={sameSettings(draft, value)}

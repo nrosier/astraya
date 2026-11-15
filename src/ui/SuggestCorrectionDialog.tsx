@@ -97,7 +97,13 @@ export function SuggestCorrectionDialog({
           <>
             <div className="settings-card-footer-group" />
             <div className="settings-card-footer-group">
-              <Button type="button" variant="quiet" onClick={onClose}>
+              <Button
+                shape="capsule"
+                className="primitive-button-form-action"
+                type="button"
+                variant="quiet"
+                onClick={onClose}
+              >
                 {t.cancel}
               </Button>
               <Button type="button" variant="primary" disabled={busy || !accepted} onClick={submit}>

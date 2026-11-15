@@ -78,7 +78,11 @@ export function NumberField({
           id={ids.inputId}
           type="number"
           inputMode="decimal"
-          className={['primitive-number-input', size === 'compact' ? 'primitive-control-compact' : undefined]
+          className={[
+            'primitive-number-input',
+            'primitive-field-pill',
+            size === 'compact' ? 'primitive-control-compact' : undefined,
+          ]
             .filter((v) => v !== undefined)
             .join(' ')}
           value={value}

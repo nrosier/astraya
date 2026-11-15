@@ -336,6 +336,8 @@ export function CorpusOverridesPanel(): React.JSX.Element {
           {t.resetPermanentlyButton}
         </Button>{' '}
         <Button
+          shape="capsule"
+          className="primitive-button-form-action"
           type="button"
           variant="quiet"
           onClick={() => {
@@ -444,7 +446,13 @@ export function CorpusOverridesPanel(): React.JSX.Element {
                   )}
                 </div>
                 <div className="settings-card-footer-group">
-                  <Button type="button" variant="quiet" onClick={cancelEdit}>
+                  <Button
+                    shape="capsule"
+                    className="primitive-button-form-action"
+                    type="button"
+                    variant="quiet"
+                    onClick={cancelEdit}
+                  >
                     {t.cancelButton}
                   </Button>
                   <Button variant="primary" type="button" disabled={busyKey === editing.key} onClick={save}>
