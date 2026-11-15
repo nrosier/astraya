@@ -18,10 +18,14 @@
  * Planets" (Christian Astrology, 1647, Book I, p. 115, read from the page
  * image; see docs/references/orb-conventions.references.json). That is a
  * strength-scoring table, not the almuten procedure, so it is a primary-source
- * confirmation of the weights and not of Ibn Ezra's use of them. A planet with none of the five at a
- * given degree is "peregrine" there (score 0) — traditionally read as
- * lacking any foothold of dignity, for better or worse depending on the
- * planet's other conditions.
+ * confirmation of the weights and not of Ibn Ezra's use of them. The same
+ * table prints the debilities: detriment −5 and fall −4 (Lilly, Book I, p. 115).
+ * The almuten tally subtracts them (owner decision, #1609); the plain dignity
+ * score does not. A planet that holds none of the five dignities at a given
+ * degree is "peregrine" — traditionally read as lacking any foothold of
+ * dignity, for better or worse depending on the planet's other conditions.
+ * Peregrine is decided by the dignities alone: a planet in detriment or fall
+ * can be peregrine too, and its debilities are not counted as a foothold.
  *
  * Only triplicity's sect-appropriate ruler counts (the day ruler in a day
  * chart, the night ruler in a night chart) — never the participating ruler,
@@ -49,8 +53,8 @@
 /**
  * @module Almuten
  * @purpose Scores a planet's essential dignity at a point/degree and determines the Almuten (dignity winner) and Almuten Figuris across multiple vital points.
- * @conventions Classical five-dignity weighting (5 ruler, 4 exaltation, 3 sect-appropriate triplicity, 2 bound, 1 face); only the essential-dignity component of Almuten Figuris is implemented (no planetary-hour/syzygy bonuses); triplicity counts only the sect-appropriate ruler, not the participating ruler.
- * @exports essentialDignityScoreOf, almutenOf, almutenFigurisOf
+ * @conventions Classical five-dignity weighting (5 ruler, 4 exaltation, 3 sect-appropriate triplicity, 2 bound, 1 face); the almuten tally also subtracts detriment (−5) and fall (−4) per Lilly p. 115 (owner decision, #1609), while the plain dignity score does not; peregrine means no dignity held and is not affected by debilities; no almuten when the best score is not above 0; only the essential-dignity component of Almuten Figuris is implemented (no planetary-hour/syzygy bonuses); triplicity counts only the sect-appropriate ruler, not the participating ruler.
+ * @exports essentialDignityScoreOf, almutenOf, almutenFigurisOf, pickAlmutens (@internal)
  */
 import { bodyByKey } from './bodies.js';
 import type { BodyId, Degrees } from '../ephemeris/types.js';
@@ -83,11 +87,17 @@ const EXALTATION_POINTS = 4;
 const TRIPLICITY_POINTS = 3;
 const BOUND_POINTS = 2;
 const FACE_POINTS = 1;
+/** Detriment: the sign opposite one's own domicile. Lilly, Christian Astrology Book I, p. 115 (`lilly-i-fortitudes-table`); subtracted in the almuten tally per the owner's decision on #1609. */
+const DETRIMENT_POINTS = -5;
+/** Fall: the sign opposite one's exaltation. Lilly, Christian Astrology Book I, p. 115 (`lilly-i-fortitudes-table`); subtracted in the almuten tally per the owner's decision on #1609. */
+const FALL_POINTS = -4;
 
 export interface EssentialDignityScoreOptions {
   /** Whose rulers count (#426). The candidates stay the seven classical planets whatever this is: the almuten is a medieval technique, and the outer planets have no triplicity, bound or face. */
   readonly rulershipScheme?: RulershipChoice;
   readonly boundsScheme?: BoundsScheme;
+  /** Subtract detriment and fall from `points` (the almuten tally, #1609). Off by default, so the plain dignity score stays positive. */
+  readonly includeDebilities?: boolean;
 }
 
 export interface EssentialDignityScore {
@@ -97,9 +107,11 @@ export interface EssentialDignityScore {
   readonly triplicity: boolean;
   readonly bound: boolean;
   readonly face: boolean;
-  /** Sum of the five weights above for whichever dignities are held. */
+  readonly detriment: boolean;
+  readonly fall: boolean;
+  /** Sum of the five dignity weights for whichever dignities are held, plus detriment and fall when `includeDebilities` is on. */
   readonly points: number;
-  /** True exactly when `points` is 0 — holds no essential dignity here. */
+  /** True exactly when the body holds none of the five dignities (debilities do not count). */
   readonly peregrine: boolean;
 }
 
@@ -117,13 +129,18 @@ export function essentialDignityScoreOf(
   const triplicity = triplicityRoleOf(body, longitude) === sect;
   const bound = boundRulerOf(longitude, boundsScheme) === body;
   const face = faceRulerOf(longitude) === body;
+  const detriment = dignities.detriment;
+  const fall = dignities.fall;
 
-  const points =
+  const dignityPoints =
     (dignities.ruler ? RULER_POINTS : 0) +
     (dignities.exalted ? EXALTATION_POINTS : 0) +
     (triplicity ? TRIPLICITY_POINTS : 0) +
     (bound ? BOUND_POINTS : 0) +
     (face ? FACE_POINTS : 0);
+  const debilityPoints = options.includeDebilities ? (detriment ? DETRIMENT_POINTS : 0) + (fall ? FALL_POINTS : 0) : 0;
+
+  const holdsDignity = dignities.ruler || dignities.exalted || triplicity || bound || face;
 
   return {
     body,
@@ -132,8 +149,10 @@ export function essentialDignityScoreOf(
     triplicity,
     bound,
     face,
-    points,
-    peregrine: points === 0,
+    detriment,
+    fall,
+    points: dignityPoints + debilityPoints,
+    peregrine: !holdsDignity,
   };
 }
 
@@ -142,19 +161,28 @@ export interface AlmutenResult {
   readonly scores: readonly EssentialDignityScore[];
   /** The winning point total. */
   readonly points: number;
-  /** Every planet that reached `points` — more than one entry on a tie. */
+  /** Every planet that reached `points` (more than one entry on a tie). Empty when no planet scores above 0. */
   readonly almutens: readonly BodyId[];
 }
 
-function pickAlmutens(scores: readonly EssentialDignityScore[]): AlmutenResult {
+/**
+ * Picks the almuten(s) from a set of scores: every planet at the top total, or none when that total is not above 0.
+ * @internal Exported so the no-almuten guard can be tested on hand-made scores; not a public entry point.
+ */
+export function pickAlmutens(scores: readonly EssentialDignityScore[]): AlmutenResult {
   const points = Math.max(...scores.map((s) => s.points));
+  if (!(points > 0)) return { scores, points, almutens: [] };
   const almutens = scores.filter((s) => s.points === points).map((s) => s.body);
   return { scores, points, almutens };
 }
 
-/** Which of the seven traditional planets holds the most essential dignity at one degree. */
+/** Which of the seven traditional planets holds the most essential dignity at one degree, net of detriment and fall. */
 export function almutenOf(longitude: Degrees, sect: Sect, options: EssentialDignityScoreOptions = {}): AlmutenResult {
-  return pickAlmutens(TRADITIONAL_PLANETS.map((body) => essentialDignityScoreOf(body, longitude, sect, options)));
+  return pickAlmutens(
+    TRADITIONAL_PLANETS.map((body) =>
+      essentialDignityScoreOf(body, longitude, sect, { ...options, includeDebilities: true }),
+    ),
+  );
 }
 
 /**
@@ -169,17 +197,26 @@ export function almutenFigurisOf(
 ): AlmutenResult {
   if (vitalPoints.length === 0) throw new RangeError('almutenFigurisOf requires at least one vital point');
   const scores = TRADITIONAL_PLANETS.map((body) => {
-    const perPoint = vitalPoints.map((longitude) => essentialDignityScoreOf(body, longitude, sect, options));
+    const perPoint = vitalPoints.map((longitude) =>
+      essentialDignityScoreOf(body, longitude, sect, { ...options, includeDebilities: true }),
+    );
     const points = perPoint.reduce((sum, s) => sum + s.points, 0);
+    const ruler = perPoint.some((s) => s.ruler);
+    const exalted = perPoint.some((s) => s.exalted);
+    const triplicity = perPoint.some((s) => s.triplicity);
+    const bound = perPoint.some((s) => s.bound);
+    const face = perPoint.some((s) => s.face);
     return {
       body,
-      ruler: perPoint.some((s) => s.ruler),
-      exalted: perPoint.some((s) => s.exalted),
-      triplicity: perPoint.some((s) => s.triplicity),
-      bound: perPoint.some((s) => s.bound),
-      face: perPoint.some((s) => s.face),
+      ruler,
+      exalted,
+      triplicity,
+      bound,
+      face,
+      detriment: perPoint.some((s) => s.detriment),
+      fall: perPoint.some((s) => s.fall),
       points,
-      peregrine: points === 0,
+      peregrine: !(ruler || exalted || triplicity || bound || face),
     };
   });
   return pickAlmutens(scores);
