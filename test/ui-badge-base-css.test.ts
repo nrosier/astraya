@@ -25,7 +25,7 @@ describe('badge base (issue 1356)', () => {
     expect(body).toMatch(/display: inline-block;/);
     expect(body).toMatch(/padding: 0\.1rem var\(--space-2\);/);
     expect(body).toMatch(/border: 1px solid var\(--line\);/);
-    expect(body).toMatch(/border-radius: 999px;/);
+    expect(body).toMatch(/border-radius: var\(--radius-full\);/);
   });
 
   it('keeps the Sabian tag block-level as its one documented display override', () => {
