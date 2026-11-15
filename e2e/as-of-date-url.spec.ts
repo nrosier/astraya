@@ -112,12 +112,10 @@ test('Chart: ?transit= opens the transit ring on that date, and a stepped ring d
   const date = dialog.getByLabel('Transit date', { exact: true });
   await expect(date).toHaveValue('2020-01-01');
 
-  // Dispatched on the button, not clicked at its coordinates: in the drawer at this viewport the stepper bar overflows
-  // its row and the orb field sits over the button, so a pointer click lands on the wrong element (reported on #1400).
   await dialog
     .getByRole('group', { name: 'Transit date stepper' })
     .getByRole('button', { name: 'Step forward one day' })
-    .dispatchEvent('click');
+    .click();
   await expect(date).toHaveValue('2020-01-02');
   // A stepped ring date is only a draft until Apply (owner decision, #1400).
   expect(page.url()).not.toContain('2020-01-02');
