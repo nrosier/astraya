@@ -6930,19 +6930,58 @@ svg text.chart-symbol-text-unicode {
   margin-top: var(--space-4);
 }
 
+/*
+ * The Overlay settings drawer layout (#1615, owner spec 2026-11-15, on the app's own tokens): each ring is a two-zone
+ * row, the toggle, title and reorder buttons on the left, the parameters on the right, labels above their fields.
+ * Fields, buttons and the close button share --control-height-compact (the --target-min floor on a coarse pointer).
+ */
+.chart-overlay-draft .settings-card-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-hover);
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: 550;
+}
+
 .chart-overlay-row {
   display: grid;
   grid-template-columns: minmax(12rem, 0.7fr) minmax(0, 1.3fr);
-  align-items: end;
-  gap: var(--space-3) var(--space-4);
+  align-items: start;
+  gap: var(--space-2) var(--space-4);
   padding: var(--space-3) 0;
   border-top: 1px solid var(--line);
 }
 
 .chart-overlay-row-inputs {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-  gap: var(--space-3);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--space-2) var(--space-4);
+}
+
+.chart-overlay-row-inputs > .primitive-field,
+.chart-overlay-row-inputs > .primitive-choice-field {
+  margin-bottom: 0;
+}
+
+.chart-overlay-row-inputs .primitive-field input:not([type='checkbox']):not([type='radio']) {
+  box-sizing: border-box;
+  height: max(var(--control-height-compact), var(--target-min));
+  min-height: 0;
+}
+
+/* The Return type radios: a compact vertical stack at the target floor, not the 2.75rem default rows. */
+.chart-overlay-row-inputs .primitive-choice-group {
+  flex-direction: column;
+  gap: 0;
+}
+
+.chart-overlay-row-inputs .primitive-choice {
+  min-height: var(--target-min);
 }
 
 .chart-overlay-row-toggle {
@@ -6950,11 +6989,51 @@ svg text.chart-symbol-text-unicode {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
+  padding-top: var(--space-1);
 }
 
 .chart-overlay-row-order {
   display: inline-flex;
   gap: var(--space-1);
+}
+
+.chart-overlay-row-order button,
+.chart-overlay-drawer .settings-card-header button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: max(var(--control-height-compact), var(--target-min));
+  height: max(var(--control-height-compact), var(--target-min));
+  min-height: 0;
+  padding: 0;
+  border-color: var(--line);
+  background: var(--surface-hover);
+}
+
+.chart-overlay-globals {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-6);
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
+}
+
+.chart-overlay-globals-hint {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+.chart-overlay-drawer .settings-card-footer-group button {
+  height: max(var(--control-height-compact), var(--target-min));
+  min-height: 0;
+}
+
+.chart-overlay-drawer .settings-card-footer-group button:not(.primitive-button-primary) {
+  border-color: var(--line);
+  background: var(--surface-hover);
 }
 
 .chart-overlay-provenance {
@@ -7004,6 +7083,20 @@ svg text.chart-symbol-text-unicode {
   .chart-overlay-row {
     grid-template-columns: 1fr;
     align-items: start;
+  }
+
+  /* The Progressed and Directed date fields are the only field in their row: full width on the phone sheet (owner answer A3, #1615). */
+  .chart-overlay-row-inputs > :only-child {
+    grid-column: 1 / -1;
+  }
+
+  .chart-overlay-globals {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .chart-overlay-globals-hint {
+    padding-left: var(--space-6);
   }
 }
 

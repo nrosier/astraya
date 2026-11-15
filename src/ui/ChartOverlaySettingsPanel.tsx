@@ -264,6 +264,7 @@ function OverlayDraft({
     <div className="chart-overlay-draft">
       <p className="settings-card-tag">{t.baseChart(baseLabel)}</p>
       <p className="hint">{t.hint}</p>
+      <p className="hint">{t.orbHelp}</p>
       {atRingCap && <p className="hint chart-overlay-ring-cap">{t.ringCapNote}</p>}
       <div className="chart-overlay-rows">
         <OverlayRow
@@ -303,7 +304,6 @@ function OverlayDraft({
           />
           <NumberField
             label={t.transitOrb}
-            help={t.orbHelp}
             unit="°"
             optional
             value={draft.transitOrb}
@@ -371,7 +371,6 @@ function OverlayDraft({
           />
           <NumberField
             label={t.solarArcOrb}
-            help={t.orbHelp}
             unit="°"
             optional
             value={draft.solarArcOrb}
@@ -450,22 +449,24 @@ function OverlayDraft({
           />
         </OverlayRow>
       </div>
-      <Checkbox
-        label={t.interRingAspects}
-        checked={draft.interRingAspects}
-        disabled={!hasChartOverlays(draft)}
-        onChange={(interRingAspects) => {
-          update({ interRingAspects });
-        }}
-      />
-      <Checkbox
-        label={t.chartFacts}
-        checked={draft.chartFacts}
-        onChange={(chartFacts) => {
-          update({ chartFacts });
-        }}
-      />
-      <p className="hint">{t.chartFactsHint}</p>
+      <div className="chart-overlay-globals">
+        <Checkbox
+          label={t.interRingAspects}
+          checked={draft.interRingAspects}
+          disabled={!hasChartOverlays(draft)}
+          onChange={(interRingAspects) => {
+            update({ interRingAspects });
+          }}
+        />
+        <Checkbox
+          label={t.chartFacts}
+          checked={draft.chartFacts}
+          onChange={(chartFacts) => {
+            update({ chartFacts });
+          }}
+        />
+        <p className="hint chart-overlay-globals-hint">{t.chartFactsHint}</p>
+      </div>
     </div>
   );
 }
