@@ -34,7 +34,7 @@
  * @conventions No sub-menus for sections: sub-views are tabs on the page (SectionNav). The person switcher keeps one `useExclusiveOpen`; folds behind a Menu button below 1024px; text comes from co-located `AppNav.messages.ts` via `useMessages()`.
  * @exports AppNav
  */
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { appNavMessages } from './AppNav.messages.js';
 import { useMessages } from './messages.js';
 import { activeFeatureKey, activePersonTabKey, activeToolKey } from './feature-registry.js';
@@ -46,6 +46,7 @@ import { TOOLS } from './tools-nav.js';
 import { useLastPersonId, writeLastPersonId } from './last-person.js';
 import { PersonSwitcher } from './PersonSwitcher.js';
 import { useExclusiveOpen, type ExclusiveOpen } from './use-exclusive-open.js';
+import { Button } from './primitives/Button.js';
 
 // Charts is one destination (#511): the chart type is chosen on the page, not in this navigation.
 // 'consultation' (#563) is here too, not in LEADING_KEYS below — it needs a complete birth
@@ -179,6 +180,89 @@ const KEEP_PERSON_SECTIONS_KINDS: ReadonlySet<Route['kind']> = new Set([
   'changelog',
 ]);
 
+/** Apple keyboards press Cmd, so the shortcut hint names ⌘K there and Ctrl K elsewhere (#1654). */
+function isApplePlatform(): boolean {
+  return /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+}
+
+/** True for a field the reader types in, where Ctrl+K belongs to the text and must not open the palette. */
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  if (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLSelectElement ||
+    target instanceof HTMLTextAreaElement
+  ) {
+    return true;
+  }
+  const editable = target.closest('[contenteditable]');
+  return editable !== null && editable.getAttribute('contenteditable') !== 'false';
+}
+
+// The palette loads on first open, so its code stays out of the header's first chunk (#1654).
+const LazyCommandPalette = lazy(() =>
+  import('./CommandPalette.js').then((module) => ({ default: module.CommandPalette })),
+);
+
+/**
+ * The search trigger (#1654): a pill on a wide screen, an icon-only circle beside the Menu button below
+ * 64rem. It opens the command palette, and Ctrl+K or Cmd+K opens it from anywhere outside a text field.
+ * The shortcut only calls `preventDefault` on its own key, so other keydown handlers still receive it.
+ * The palette is mounted only while open, and closing it returns focus here.
+ */
+function PaletteTrigger(): React.JSX.Element {
+  const t = useMessages(appNavMessages);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  function closePalette(): void {
+    setPaletteOpen(false);
+    triggerRef.current?.focus();
+  }
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (!(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey) return;
+      if (event.key.toLowerCase() !== 'k' || isEditableTarget(event.target)) return;
+      event.preventDefault();
+      setPaletteOpen(true);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, []);
+
+  return (
+    <>
+      <Button
+        variant="plain"
+        ref={triggerRef}
+        className="app-nav-search"
+        aria-label={`${t.searchPlaceholder} ${isApplePlatform() ? t.shortcutHintApple : t.shortcutHintOther}`}
+        aria-haspopup="dialog"
+        onClick={() => {
+          setPaletteOpen(true);
+        }}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="11" cy="11" r="7" />
+          <path d="M20 20l-3.5-3.5" />
+        </svg>
+        <span className="app-nav-search-text">{t.searchPlaceholder}</span>
+        <kbd className="app-nav-search-hint" aria-hidden="true">
+          {isApplePlatform() ? t.shortcutHintApple : t.shortcutHintOther}
+        </kbd>
+      </Button>
+      {paletteOpen && (
+        <Suspense fallback={null}>
+          <LazyCommandPalette open onClose={closePalette} returnFocusTo={triggerRef} />
+        </Suspense>
+      )}
+    </>
+  );
+}
+
 export function AppNav({ route }: { route: Route }): React.JSX.Element {
   const t = useMessages(appNavMessages);
   const store = useOptionalStore();
@@ -236,6 +320,7 @@ export function AppNav({ route }: { route: Route }): React.JSX.Element {
 
   return (
     <div className="app-nav-wrap">
+      <PaletteTrigger />
       {/* Only shown below 1024px (`app.css`), where the nav is a panel under the header. */}
       <button
         type="button"
