@@ -595,6 +595,21 @@ describe('the dialog’s footer (#1508, owner decision 2026-11-12)', () => {
     ]);
     expect([...right.querySelectorAll('button')].map((button) => button.textContent)).toEqual(['Cancel', 'Apply']);
   });
+
+  it('gives all four footer buttons the 2.75rem form-action class (#1650-8, owner answer 3)', async () => {
+    const container = await mount();
+    await openCard(container);
+    const buttons = [...container.querySelectorAll('dialog .settings-card-footer button')];
+    expect(buttons.map((button) => button.textContent)).toEqual([
+      'Reset to Default',
+      'Apply as Default',
+      'Cancel',
+      'Apply',
+    ]);
+    for (const button of buttons) {
+      expect(button.classList.contains('primitive-button-form-action')).toBe(true);
+    }
+  });
 });
 
 describe('the preset and orb rows (#1508, owner decisions 2026-11-12)', () => {
