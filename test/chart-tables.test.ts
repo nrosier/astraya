@@ -990,14 +990,14 @@ describe('chartSheetInput', () => {
       { key: 'mars', label: 'Mars', name: 'Mars', longitude: 101, retrograde: false, house: 4 },
     ]);
     expect(rows.slice(3)).toEqual([
-      { key: 'asc', label: 'AC', name: 'ASC', longitude: 10 },
+      { key: 'asc', label: 'AC', name: 'AC', longitude: 10 },
       { key: 'mc', label: 'MC', name: 'MC', longitude: 280 },
     ]);
   });
 
   it('localizes the positions table name through the supplied lookup, but not the angles', () => {
     const rows = chartSheetInput(data, [], 'Natal', {}, (key) => `<${key}>`).matrix.bodies;
-    expect(rows.map((row) => row.name)).toEqual(['<sun>', '<moon>', '<mars>', 'ASC', 'MC']);
+    expect(rows.map((row) => row.name)).toEqual(['<sun>', '<moon>', '<mars>', 'AC', 'MC']);
   });
 
   it('passes the engine aspects through by key with their signed orb, never re-deriving which aspect it is', () => {
