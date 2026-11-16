@@ -16,6 +16,7 @@
 import { almutenOf, essentialDignityScoreOf } from '../astrology/almuten.js';
 import { antiscialContacts, type AntiscialContact } from '../astrology/antiscia.js';
 import { bodyById, bodyByKey } from '../astrology/bodies.js';
+import { ANGLE_LABEL } from '../chart/angle-labels.js';
 import { customPointByBody } from './custom-point.js';
 import type { BoundsScheme } from '../astrology/bounds.js';
 import { declinationContacts, isOutOfBounds } from '../astrology/declinations.js';
@@ -285,8 +286,8 @@ export function positionRows(
   });
   if (!includeAngles) return bodyRows;
   const angles: readonly (readonly [string, string, string, Degrees])[] = [
-    ['asc', 'Ascendant', 'AC', data.houses.ascendant],
-    ['mc', 'Midheaven', 'MC', data.houses.midheaven],
+    ['asc', 'Ascendant', ANGLE_LABEL.asc, data.houses.ascendant],
+    ['mc', 'Midheaven', ANGLE_LABEL.mc, data.houses.midheaven],
   ];
   return [
     ...bodyRows,
@@ -1169,8 +1170,8 @@ export function chartSheetInput(
   const rows = new Map(positionRows(data, options, anglesKnown).map((row) => [row.bodyKey, row]));
   const angleBodies = anglesKnown
     ? [
-        { key: 'asc', label: 'AC', name: 'ASC', longitude: data.houses.ascendant },
-        { key: 'mc', label: 'MC', name: 'MC', longitude: data.houses.midheaven },
+        { key: 'asc', label: ANGLE_LABEL.asc, name: ANGLE_LABEL.asc, longitude: data.houses.ascendant },
+        { key: 'mc', label: ANGLE_LABEL.mc, name: ANGLE_LABEL.mc, longitude: data.houses.midheaven },
       ]
     : [];
   // The Vertex and the two parts get a matrix row exactly when the user has made them visible

@@ -2101,7 +2101,7 @@ pre {
 button {
   padding: var(--space-1) var(--control-padding-x);
   border: 1px solid color-mix(in oklab, var(--accent) 45%, var(--line));
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-full);
   background: color-mix(in oklab, var(--accent) 18%, var(--surface));
   color: var(--fg);
   font: inherit;
@@ -2351,7 +2351,7 @@ label.stacked {
   min-height: var(--control-height);
   padding: var(--space-1) var(--space-2);
   border: 1px solid var(--line);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-full);
   background: var(--surface);
   color: var(--fg);
   font: inherit;
@@ -3085,6 +3085,75 @@ label.stacked {
   align-items: center;
   justify-content: center;
   gap: 0.15rem;
+}
+
+/* The command palette trigger (#1654): a pill at the standard 2.75rem on a wide screen, and an icon-only
+   circle beside the Menu button at 390px. Pill and circle use `--radius-full`, as the guidelines set. */
+.app-nav-search {
+  /* It may shrink to fit the header, but never below a 2.75rem pill: the placeholder truncates first (#1073). */
+  flex: 0 1 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 2.75rem;
+  height: 2.75rem;
+  padding: 0 var(--space-3) 0 var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.app-nav-search svg {
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.app-nav-search-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-nav-search-hint {
+  flex: 0 0 auto;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-full);
+  font: inherit;
+  font-size: var(--text-xs);
+}
+
+.app-nav-search:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+@media (max-width: 40rem) {
+  /* Icon only: the circle has equal width and height, with the 44px touch target as its floor. */
+  .app-nav-search {
+    flex: 0 0 auto;
+    width: 2.25rem;
+    height: 2.25rem;
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
+    padding: 0;
+    border-radius: var(--radius-full);
+  }
+
+  .app-nav-search-text,
+  .app-nav-search-hint {
+    display: none;
+  }
 }
 
 .app-nav-person {
@@ -6481,7 +6550,7 @@ svg text.chart-symbol-text-unicode {
   max-width: 100%;
   padding: var(--space-1) var(--control-padding-x);
   border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-full);
   background: var(--surface);
   color: var(--fg);
   text-align: left;
@@ -7258,7 +7327,7 @@ svg text.chart-symbol-text-unicode {
 .primitive-button-primary {
   padding: var(--space-1) var(--control-padding-x);
   border: 1px solid var(--accent);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-full);
   background: var(--accent);
   color: var(--bg);
   font-weight: 600;
@@ -7301,6 +7370,18 @@ button.primitive-button-compact {
 /* A small inline action (All, Clear, None, a preset) is a capsule (#1600); shape only, colours and heights unchanged. */
 .primitive-button-capsule,
 button.primitive-button-capsule {
+  border-radius: var(--radius-full);
+}
+
+/* An icon-only control is a circle (#1650): equal width and height at the compact control height, which is 44px on a
+   coarse pointer (owner answer 2, 2026-11-16). Placed after the compact rules so its zero padding wins. */
+.primitive-button-circle,
+button.primitive-button-circle {
+  width: var(--control-height-compact);
+  height: var(--control-height-compact);
+  min-width: var(--control-height-compact);
+  min-height: var(--control-height-compact);
+  padding: 0;
   border-radius: var(--radius-full);
 }
 
@@ -7862,7 +7943,7 @@ button.primitive-button-form-action {
   gap: var(--space-1);
   padding: var(--space-1) var(--control-padding-x);
   border: 1px solid var(--accent);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-full);
   background: var(--accent);
   color: var(--bg);
   font-weight: 600;
@@ -7889,7 +7970,7 @@ button.primitive-button-form-action {
 .page-header-export-toggle {
   padding: var(--space-1) var(--control-padding-x);
   border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-full);
   background: var(--surface);
   color: var(--fg);
   font: inherit;

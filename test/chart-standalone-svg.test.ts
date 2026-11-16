@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { standaloneSvg } from '../src/chart/standalone-svg.js';
+import { renderMultiWheelSvg } from '../src/chart/multi-wheel.js';
+import type { HousePositions } from '../src/ephemeris/types.js';
 
 describe('standaloneSvg (#67)', () => {
   it('inserts a style element right after the opening svg tag', () => {
@@ -69,5 +71,26 @@ describe('standaloneSvg (#67)', () => {
     const result = standaloneSvg('<svg viewBox="0 0 1 1"></svg>');
     expect(result.match(/<svg/g)).toHaveLength(1);
     expect(result.match(/<\/svg>/g)).toHaveLength(1);
+  });
+
+  it('carries the AC, DC, MC and IC axis labels of the wheel, never ASC or DSC (#1649)', () => {
+    const houses: HousePositions = {
+      cusps: [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 0],
+      ascendant: 0,
+      midheaven: 270,
+      armc: 0,
+      vertex: 0,
+      equatorialAscendant: 0,
+      coAscendantKoch: 0,
+      coAscendantMunkasey: 0,
+      polarAscendant: 0,
+      system: 'A',
+    };
+    const svg = standaloneSvg(
+      renderMultiWheelSvg([{ label: 'Natal', houses, bodies: [{ body: 1, key: 'sun', longitude: 10 }] }]),
+    );
+    for (const label of ['AC', 'DC', 'MC', 'IC']) expect(svg).toContain(`>${label}<`);
+    expect(svg).not.toContain('>ASC<');
+    expect(svg).not.toContain('>DSC<');
   });
 });

@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 /**
  * The Button capsule shape (#1600): only small inline actions (matrix All/Clear/None, the transit
- * filter All/Clear, the seven-star preset) are capsules; menu and popover triggers keep the small radius.
+ * filter All/Clear, the seven-star preset) are capsules; menu and popover triggers are pills by CSS (#1650).
+ * The Button circle shape (#1650): an icon-only control, equal width and height at the compact control height.
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { act } from 'react';
@@ -50,6 +51,29 @@ describe('Button shape', () => {
     const button = mount(<Button>Export</Button>).querySelector('button');
     expect(button?.classList.contains('primitive-button-capsule')).toBe(false);
   });
+
+  it('adds the circle class for shape="circle" and no capsule class (#1650)', () => {
+    const button = mount(
+      <Button shape="circle" aria-label="Close">
+        ×
+      </Button>,
+    ).querySelector('button');
+    expect(button?.classList.contains('primitive-button-circle')).toBe(true);
+    expect(button?.classList.contains('primitive-button-capsule')).toBe(false);
+  });
+});
+
+describe('.primitive-button-circle', () => {
+  it('has equal width and height from the compact control height, with a full radius and no padding (#1650)', () => {
+    const css = readFileSync('src/ui/app.css', 'utf-8');
+    const rule = /\.primitive-button-circle,\s*button\.primitive-button-circle\s*\{([^}]*)\}/.exec(css);
+    const body = rule?.[1] ?? '';
+    expect(body).toMatch(/width:\s*var\(--control-height-compact\);/);
+    expect(body).toMatch(/height:\s*var\(--control-height-compact\);/);
+    expect(body).toMatch(/min-height:\s*var\(--control-height-compact\);/);
+    expect(body).toMatch(/padding:\s*0;/);
+    expect(body).toMatch(/border-radius:\s*var\(--radius-full\);/);
+  });
 });
 
 describe('.primitive-button-capsule', () => {
@@ -96,11 +120,14 @@ describe('capsule call sites', () => {
     expect(using.sort()).toEqual(EXPECTED_CAPSULE_FILES);
   });
 
-  it('never gives an Export or Techniques button the capsule shape', () => {
-    // Defaults left this list: the footer Defaults trigger is a capsule (#1600, owner answer A1, 2026-11-16).
-    for (const f of files) {
-      const blocks = f.source.match(/<Button\b[^>]*shape="capsule"[\s\S]*?<\/Button>/g) ?? [];
-      for (const block of blocks) expect(block).not.toMatch(/export|techniques/i);
+  it('gives the Export and Techniques triggers the pill radius by CSS (#1650, reverses A2 of #1600)', () => {
+    // The owner reversed A2 on 2026-11-16 (#1650 owner answers): menu and popover triggers (Export, Techniques,
+    // the person switcher) are pills. They take the full radius from app.css rather than the capsule class.
+    const css = readFileSync('src/ui/app.css', 'utf-8');
+    for (const selector of ['.chart-overlay-trigger', '.page-header-export-toggle', '.chart-pdf-link']) {
+      const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const rule = new RegExp(`(?:^|\\n)${escaped}\\s*\\{([^}]*)\\}`).exec(css);
+      expect(rule?.[1], selector).toMatch(/border-radius:\s*var\(--radius-full\);/);
     }
   });
 });
