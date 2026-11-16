@@ -104,6 +104,23 @@ describe('multi-row drawers are phone bottom sheets (#1508)', () => {
   });
 });
 
+describe('icon-only circles take the shared circle size (#1650)', () => {
+  it.each(['ChartOverlaySettingsPanel.tsx', 'DateAnimationBar.tsx', 'CorpusOverridesPanel.tsx'])(
+    '%s marks its icon-only buttons with shape="circle"',
+    (file) => {
+      const source = readFileSync(new URL(`../src/ui/${file}`, import.meta.url), 'utf8');
+      expect(source).toContain('shape="circle"');
+    },
+  );
+
+  it('sizes .primitive-button-circle from the compact control height, with no padding', () => {
+    const match = /button\.primitive-button-circle \{([^}]*)\}/.exec(css);
+    expect(match?.[1]).toContain('width: var(--control-height-compact);');
+    expect(match?.[1]).toContain('min-width: var(--control-height-compact);');
+    expect(match?.[1]).toContain('padding: 0;');
+  });
+});
+
 describe('date animation step buttons take the circle size (#1650)', () => {
   it('gives the step buttons no min-width from the step rule, so the circle class sets their size', () => {
     const match = /\.date-animation-bar \.date-animation-step \{([^}]*)\}/.exec(css);

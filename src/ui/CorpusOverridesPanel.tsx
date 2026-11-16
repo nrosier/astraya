@@ -514,6 +514,7 @@ export function CorpusOverridesPanel(): React.JSX.Element {
                         <Button
                           variant="quiet"
                           size="compact"
+                          shape="circle"
                           aria-label={t.removeTagLabel(tag)}
                           onClick={() => {
                             removeTag(tag);

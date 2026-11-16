@@ -61,6 +61,17 @@ async function click(element: Element): Promise<void> {
 }
 
 describe('ChartOverlaySettingsPanel', () => {
+  it('gives the reorder up and down buttons the circle class, keeping their labels (#1650)', async () => {
+    const container = await mount();
+    await click(must(container.querySelector<HTMLButtonElement>('button.chart-overlay-trigger')));
+    const orderButtons = Array.from(container.querySelectorAll<HTMLButtonElement>('.chart-overlay-row-order button'));
+    expect(orderButtons.length).toBeGreaterThan(0);
+    for (const button of orderButtons) {
+      expect(button.classList.contains('primitive-button-circle')).toBe(true);
+      expect(button.getAttribute('aria-label')).toBeTruthy();
+    }
+  });
+
   it('orders every selected optional source independently', () => {
     expect(
       orderedChartOverlaySources({

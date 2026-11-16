@@ -125,6 +125,17 @@ describe('stepping', () => {
   });
 });
 
+describe('step buttons are circles (#1650)', () => {
+  it('gives the back and forward step buttons the circle class, with their labels unchanged', () => {
+    mount();
+    for (const label of [t.stepBack('day'), t.stepForward('day')]) {
+      const step = button(label);
+      expect(step.classList.contains('primitive-button-circle')).toBe(true);
+      expect(step.classList.contains('date-animation-step')).toBe(true);
+    }
+  });
+});
+
 describe('layout (#1400, owner answer A2)', () => {
   it('puts the Day / Month / Year control beside the date field, not in the speed slot', () => {
     mount();
