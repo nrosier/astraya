@@ -53,6 +53,22 @@ Copy this table under a heading such as `### v0.40.0, 2026-11-02`.
 
 ## Past releases
 
+### v0.55.0, 2026-11-16
+
+Checked against the built release (tag `v0.55.0`, commit `2adb3312`). Automated coverage was checked on `main`; the manual checks were not run, because they need a person at the release build with assistive technology, a browser zoom, or a forced-colours or reduced-motion setting.
+
+| Check or task      | Result  | Who | What was seen / issue                                                                                                                                                                     |
+| ------------------ | ------- | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Screen reader      | Not run | -   | Needs VoiceOver on a People list, a natal chart and one form with an error. Not run by the release process.                                                                               |
+| Zoom 200 %         | Not run | -   | Needs browser zoom to 200 % on the release build. Not run by the release process.                                                                                                         |
+| Forced colours     | Not run | -   | No automated test on `main` covers `forced-colors` (checked: 0 hits in e2e and test). Needs a manual check of the segmented active state, which now has an outline (PR #1626).            |
+| Touch and keyboard | Not run | -   | Automated coverage exists for 44 px targets (e2e/touch-targets.spec.ts). The software-keyboard check needs a phone.                                                                       |
+| Reduced motion     | Not run | -   | No automated test on `main` covers `prefers-reduced-motion` (checked: 0 hits). The playback starts paused, so nothing moves until Play is pressed, but this is not verified on the build. |
+| Keyboard only      | Not run | -   | Escape closes dialogs in automated tests (27 e2e hits). Tab order and focus return need a person.                                                                                         |
+| Tasks 1 to 8       | Not run | -   | Tasks 1, 3, 4, 5 and 7 have e2e journeys on `main`. The 'easy to find' check needs one newer reader and one experienced astrology user, which was not arranged.                           |
+
+Release-candidate facts checked for this record: the About page shows the release (step 10 confirmed); the Docker image pulled and smoke-tested (`docker:smoke`, step 5).
+
 ### v0.43.0, 2026-10-30
 
 No manual UI/UX check was performed for this release. Every row is left for the owner to verify; none of the results below is a pass.
