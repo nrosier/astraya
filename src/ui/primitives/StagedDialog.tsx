@@ -139,7 +139,7 @@ export function StagedDialog({
         <>
           <div className="settings-card-header">
             <h2 id={headingId}>{heading}</h2>
-            <button type="button" className="quiet" aria-label={closeLabel} onClick={onDiscard}>
+            <button type="button" className="quiet primitive-button-circle" aria-label={closeLabel} onClick={onDiscard}>
               ×
             </button>
           </div>
