@@ -93,7 +93,7 @@ export function PasswordField({
           {input}
           <button
             type="button"
-            className="signin-password-toggle"
+            className="signin-password-toggle primitive-button-circle"
             aria-label={shown ? hideLabel : showLabel}
             aria-controls={ids.inputId}
             disabled={disabled}
