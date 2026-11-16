@@ -9895,9 +9895,13 @@ a.quiet,
   min-height: var(--control-height);
 }
 
-.date-animation-bar .date-animation-play,
-.date-animation-bar .date-animation-step {
+.date-animation-bar .date-animation-play {
   min-width: var(--control-height);
+  padding: 0;
+}
+
+/* The step buttons take their size from the shared circle class (#1650), so this rule sets no min-width. */
+.date-animation-bar .date-animation-step {
   padding: 0;
 }
 
