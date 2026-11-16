@@ -88,7 +88,10 @@ describe('the sidebar sections (#882)', () => {
     await mount(parseRoute('#/people'));
     expect(box().querySelector('nav[aria-label="Main"]')).not.toBeNull();
     expect(box().querySelector('.app-nav-group, .app-nav-menu, .app-nav-group-toggle')).toBeNull();
-    expect(Array.from(box().querySelectorAll('button')).map((b) => b.textContent)).toEqual(['Menu']);
+    // The palette trigger (#1654) is a button too; this case covers the menu buttons only.
+    expect(Array.from(box().querySelectorAll('button:not(.app-nav-search)')).map((b) => b.textContent)).toEqual([
+      'Menu',
+    ]);
     expect(linkNamed('Tools')?.getAttribute('href')).toBe('#/explore/cycles');
     expect(navLinks()).toEqual(['Tools', 'PDF']);
   });
