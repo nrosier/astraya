@@ -497,6 +497,37 @@ describe('the dialog’s card area (#1508)', () => {
   });
 });
 
+describe('the body symbols (#1642)', () => {
+  it('draws each body’s symbol before its name, hidden from assistive technology, leaving the name as the label', async () => {
+    const container = await mount();
+    await openCard(container);
+    for (const legend of ['Transiting planets', 'Natal points']) {
+      const group = [...container.querySelectorAll('fieldset')].find(
+        (fieldset) => fieldset.querySelector('legend')?.textContent === legend,
+      );
+      const rows = [...(group?.querySelectorAll('.transit-filter-checks label') ?? [])];
+      expect(rows.length).toBeGreaterThan(0);
+      for (const row of rows) {
+        const label = row.querySelector('input + span');
+        const symbol = row.querySelector('.transit-filter-symbol');
+        const isAngle = ['Ascendant', 'Midheaven'].includes(label?.textContent.trim() ?? '');
+        if (isAngle) {
+          // The angles have no drawn glyph: name only, no empty box.
+          expect(symbol).toBeNull();
+          continue;
+        }
+        // The symbol is the label's first child, before the name text, and decorative.
+        expect(symbol).not.toBeNull();
+        expect(label?.firstElementChild).toBe(symbol);
+        expect(symbol?.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
+        // The label's text, which is the checkbox's accessible name, is the body name alone.
+        expect(symbol?.textContent).toBe('');
+        expect(label?.textContent.trim()).toMatch(/^\p{L}[\p{L} ]*$/u);
+      }
+    }
+  });
+});
+
 describe('the dialog’s group actions (#513)', () => {
   it('All and Clear set every body in a group at once, as a draft', async () => {
     const container = await mount();
