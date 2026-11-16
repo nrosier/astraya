@@ -6908,6 +6908,11 @@ svg text.chart-symbol-text-unicode {
   display: inline-flex;
 }
 
+/* An option card is a grid (radio, title, consequence), so the plain-radio rule above must not turn it inline: that ran the title and its consequence together on one line (#1600 verdicts). */
+.settings-card-group [role='radiogroup'] label.primitive-option-card {
+  display: grid;
+}
+
 .settings-card-choices {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
@@ -7643,6 +7648,7 @@ button.primitive-button-form-action {
 }
 
 .primitive-option-card-title {
+  grid-column: 2;
   font-weight: 600;
 }
 
@@ -7989,7 +7995,7 @@ button.primitive-button-form-action {
   gap: var(--space-3);
   padding: var(--space-2) var(--space-3);
   border: 0;
-  border-radius: inherit;
+  border-radius: var(--radius-full);
   background: transparent;
   color: var(--fg);
   font: inherit;
