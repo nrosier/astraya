@@ -278,7 +278,14 @@ export function EventSearchView(): React.JSX.Element {
           </fieldset>
           {result.kind === 'error' && <StatusMessage kind="error">{result.message}</StatusMessage>}
           <div className="tool-actions">
-            <Button variant="primary" disabled={provider === undefined} busy={result.kind === 'loading'} onClick={run}>
+            <Button
+              shape="capsule"
+              className="primitive-button-form-action"
+              variant="primary"
+              disabled={provider === undefined}
+              busy={result.kind === 'loading'}
+              onClick={run}
+            >
               {t.searchButton}
             </Button>
           </div>
