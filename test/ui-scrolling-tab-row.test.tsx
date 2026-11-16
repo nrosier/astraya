@@ -67,6 +67,12 @@ describe('ScrollingTabRow', () => {
     return container;
   }
 
+  it('gives the Chart actions toggle the capsule shape (#1600, owner answer A2)', async () => {
+    const container = await mount();
+    const toggle = container.querySelector('.tab-row__actions-toggle button');
+    expect(toggle?.classList.contains('primitive-button-capsule')).toBe(true);
+  });
+
   it('renders a labelled nav holding the caller’s links', async () => {
     const container = await mount();
     const nav = container.querySelector('nav');
