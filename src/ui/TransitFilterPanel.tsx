@@ -262,8 +262,11 @@ export function TransitFilterButton({
         footer={
           <>
             <div className="settings-card-footer-group">
-              <Button onClick={resetToDefault}>{t.resetToDefaultButton}</Button>
+              <Button className="primitive-button-form-action" onClick={resetToDefault}>
+                {t.resetToDefaultButton}
+              </Button>
               <Button
+                className="primitive-button-form-action"
                 disabled={!dirty}
                 aria-label={dirty ? t.applyAsDefaultButton : `${t.applyAsDefaultButton} — ${t.nothingChanged}`}
                 onClick={applyAsDefault}
