@@ -28,7 +28,7 @@ Combined and categorized from `astrology_terms.md`, `astrology_terms.1.md`, `ast
 20. **Cusp** — The dividing line between two zodiac signs or two astrological houses.
 21. **Cuspal Degree** — The precise starting degree of a house or zodiac sign.
 22. **Declination (Dec)** — The angular distance of a celestial body north (+) or south (-) of the celestial equator.
-23. **Descendant (DSC)** — The sign and degree setting on the western horizon (180° opposite the Ascendant); defines the 7th house cusp.
+23. **Descendant (DC)** — The sign and degree setting on the western horizon (180° opposite the Ascendant); defines the 7th house cusp.
 24. **Diurnal Arc** — The path and time duration a celestial body spends above the horizon between rising and setting.
 25. **Duplicated Sign** — A sign containing two house cusps due to distortion in high-latitude quadrant house calculation.
 26. **Ecliptic** — The apparent path of the Sun across the celestial sphere over the course of a year; the central plane of the zodiac.
