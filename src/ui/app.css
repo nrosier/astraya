@@ -3090,11 +3090,12 @@ label.stacked {
 /* The command palette trigger (#1654): a pill at the standard 2.75rem on a wide screen, and an icon-only
    circle beside the Menu button at 390px. Pill and circle use `--radius-full`, as the guidelines set. */
 .app-nav-search {
+  /* It may shrink to fit the header, but never below a 2.75rem pill: the placeholder truncates first (#1073). */
   flex: 0 1 auto;
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  min-width: 0;
+  min-width: 2.75rem;
   height: 2.75rem;
   padding: 0 var(--space-3) 0 var(--space-3);
   border: 1px solid var(--line);
