@@ -103,3 +103,16 @@ describe('multi-row drawers are phone bottom sheets (#1508)', () => {
     );
   });
 });
+
+describe('date animation step buttons take the circle size (#1650)', () => {
+  it('gives the step buttons no min-width from the step rule, so the circle class sets their size', () => {
+    const match = /\.date-animation-bar \.date-animation-step \{([^}]*)\}/.exec(css);
+    expect(match).not.toBeNull();
+    expect(match?.[1]).not.toMatch(/min-width/);
+  });
+
+  it('keeps the min-width on the Play button, which has no circle class', () => {
+    const match = /\.date-animation-bar \.date-animation-play \{([^}]*)\}/.exec(css);
+    expect(match?.[1]).toContain('min-width: var(--control-height);');
+  });
+});
