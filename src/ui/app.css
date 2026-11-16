@@ -2977,10 +2977,10 @@ label.stacked {
    shared scrolling tab row (#818, `.tab-row--always` below), so the row scrolls sideways instead of wrapping. */
 .tab {
   white-space: nowrap;
+  min-height: var(--control-height-compact);
   padding: var(--space-2) var(--space-4);
   border: none;
-  border-bottom: 2px solid transparent;
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  border-radius: var(--radius-full);
   background: none;
   color: var(--muted);
   font-weight: 550;
@@ -2991,20 +2991,25 @@ label.stacked {
   color: var(--fg);
 }
 
-.tab.active {
-  color: var(--fg);
-  border-bottom-color: var(--accent);
+/* Solid accent fill with a background-colour label, as the segmented control; the outline keeps the active tab
+   visible in forced-colours mode, where background fills are dropped (#1650). The hover selector also lists the
+   active tab: the base `button:hover:not(:disabled)` tint would otherwise win on the tab under the pointer. */
+.tab.active,
+.tab.active:hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: 600;
+  outline: 2px solid var(--fg);
+  outline-offset: -2px;
 }
 
 /*
  * The "shelf" tab strip (#234): one bordered, rounded box (`.person-shelf`, wrapping the tab
  * bar and the person-scoped view together — see App.tsx) holds the tab row and its content
  * panel as a single unit, contained to the same width the page content used before rather than
- * running edge-to-edge. The box sits a step off the page background (`--surface`); the active
- * tab and the content panel underneath it share the exact same background (`--bg`), with the
- * seam between them closed by a negative margin rather than painted over, so the active tab
- * reads as fused into the panel below it — the same illusion a browser's own tab strip, or
- * Notion's, uses. `overflow: hidden` clips the tab row's and content's own square corners to
+ * running edge-to-edge. The box sits a step off the page background (`--surface`). The tabs are
+ * pills (#1650), so the active one is a solid accent pill inside the box rather than fused into
+ * the panel below it. `overflow: hidden` clips the tab row's and content's own square corners to
  * the box's rounding.
  *
  * `PersonNav`/the active person view's own `<main class="shell">` renders inside
@@ -6493,9 +6498,9 @@ svg text.chart-symbol-text-unicode {
 .tab-row__tabs > a {
   display: inline-flex;
   align-items: center;
+  min-height: var(--control-height-compact);
   padding: var(--space-2) var(--space-3);
-  border-bottom: 2px solid transparent;
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  border-radius: var(--radius-full);
   color: var(--muted);
   font-size: var(--text-sm);
   font-weight: 550;
@@ -6508,9 +6513,13 @@ svg text.chart-symbol-text-unicode {
   color: var(--fg);
 }
 
+/* The open route: the same solid accent pill as the active `.tab` above, with the forced-colours outline (#1650). */
 .tab-row__tabs > a[aria-current='page'] {
-  border-bottom-color: var(--accent);
-  color: var(--fg);
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: 600;
+  outline: 2px solid var(--fg);
+  outline-offset: -2px;
 }
 
 /* Inside the clipping scroller an outside outline would be cut at the row's top and bottom edges. */
