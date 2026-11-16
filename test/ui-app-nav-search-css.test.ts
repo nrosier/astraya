@@ -16,15 +16,17 @@ describe('command palette trigger CSS (#1654)', () => {
     expect(block).toContain('border-radius: var(--radius-full);');
   });
 
-  it('turns the trigger into a 2.25rem circle with a 44px touch floor at 390px', () => {
+  it('leaves the 390px circle size to the shared circle class, and hides the text and hint at 390px', () => {
     const start = css.indexOf('@media (max-width: 40rem) {\n  /* Icon only');
     expect(start).toBeGreaterThan(-1);
     const block = css.slice(start, css.indexOf('\n}\n', start) + 3);
-    expect(block).toContain('width: 2.25rem;');
-    expect(block).toContain('height: 2.25rem;');
-    expect(block).toContain('min-width: 44px;');
-    expect(block).toContain('min-height: 44px;');
-    expect(block).toContain('border-radius: var(--radius-full);');
+    expect(block).not.toContain('width: 2.25rem;');
+    expect(block).not.toContain('min-width: 44px;');
     expect(block).toContain('display: none;');
+    const shared = css.indexOf('.primitive-button-circle,\nbutton.primitive-button-circle {');
+    expect(shared).toBeGreaterThan(-1);
+    const sharedBlock = css.slice(shared, css.indexOf('\n}\n', shared) + 3);
+    expect(sharedBlock).toContain('width: var(--control-height-compact);');
+    expect(sharedBlock).toContain('border-radius: var(--radius-full);');
   });
 });
