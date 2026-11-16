@@ -98,6 +98,8 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `search-index.messages.ts` — en/nl keywords and one-line descriptions for the palette's search index (#1654). Deps: `./chart-sections`, `./feature-registry`, `./route`.
 - `feature-registry.ts` — #506/#509 typed registry of every user-facing feature's scope/group/order/href/prerequisites/settings-mode/export-capabilities, derived from `person-nav`/`tools-nav`/`admin-nav`. Deps: `./person-nav`, `./tools-nav`, `./admin-nav`, `./route`.
 - `search-score.ts` — Pure command-palette scorer (#1654): ranks entries by title, keyword, breadcrumb and description matches, accent-insensitive. Deps: none.
+- `CommandPalette.tsx` — Command palette dialog (#1654): modal search over the search index, arrow-key listbox, Enter to open, pin toggles, recents on an empty query. Deps: `search-index`, `search-score`, `palette-recents`, `last-person`, `store-context`, `primitives/StatusMessage`, `CommandPalette.messages`.
+- `CommandPalette.messages.ts` — en/nl strings for the command palette dialog (#1654): search label, group headings, no-match and pin labels. Deps: none.
 - `FocusInterpretation.tsx` + `FocusInterpretation.messages.ts` — Tier 2 AI-interpretation feature (consent + generate). Deps: `interpretation/tier2-client`, `interpretation/focus-context-schema`.
 - `HarmonicView.tsx` + `HarmonicView.messages.ts` — Harmonic & Varga divisional charts with radix-to-result provenance. Deps: `astrology/harmonics`, `domain/harmonic`, `SortableTable`.
 - `HoraryView.tsx` + `HoraryView.messages.ts` — Horary (question-chart) tool + considerations check. States its calculation basis in the header (#1059). Deps: `astrology/horary`, `domain/horary`.
