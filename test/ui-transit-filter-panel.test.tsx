@@ -24,6 +24,7 @@ import {
   getAccountPreferences,
   resetAccountPreferencesForTests,
 } from '../src/ui/account-preferences.js';
+import { bodyDisplayName } from '../src/ui/astro-names.messages.js';
 import { setLocale } from '../src/ui/locale.js';
 import { EVERY_BODY_KEY, TransitFilterPanel, useTransitFilter } from '../src/ui/TransitFilterPanel.js';
 import { transitFilterPanelMessages } from '../src/ui/TransitFilterPanel.messages.js';
@@ -136,6 +137,13 @@ async function choose(container: HTMLElement, group: 'Preset' | 'Orb tolerance',
 
 /** The preset the status line names ("Important · 12 of 87 shown"); the card shows the same choice while it is open. */
 const selectedPreset = (container: HTMLElement): string | undefined => count(container).split(' · ')[0];
+
+/** The name a screen reader reads for a checkbox label: its text without the aria-hidden symbol (#1649). */
+function spokenNameOf(label: Element): string {
+  const clone = label.cloneNode(true) as Element;
+  for (const hidden of clone.querySelectorAll('[aria-hidden="true"]')) hidden.remove();
+  return (clone.textContent ?? '').trim();
+}
 
 function checkboxUnder(container: HTMLElement, legend: string, label: string): HTMLInputElement {
   const group = [...container.querySelectorAll('fieldset')].find(
@@ -510,10 +518,13 @@ describe('the body symbols (#1642)', () => {
       for (const row of rows) {
         const label = row.querySelector('input + span');
         const symbol = row.querySelector('.transit-filter-symbol');
-        const isAngle = ['Ascendant', 'Midheaven'].includes(label?.textContent.trim() ?? '');
+        const isAngle = ['Ascendant', 'Midheaven'].includes(spokenNameOf(row));
         if (isAngle) {
-          // The angles have no drawn glyph: name only, no empty box.
-          expect(symbol).toBeNull();
+          // The angles carry their chart label (AC, MC) as text, before the name, hidden from assistive technology (#1649).
+          expect(symbol?.textContent).toMatch(/^(AC|MC)$/);
+          expect(symbol?.getAttribute('aria-hidden')).toBe('true');
+          expect(label?.firstElementChild).toBe(symbol);
+          expect(spokenNameOf(row)).toMatch(/^(Ascendant|Midheaven|Hemelmidden)$/);
           continue;
         }
         // The symbol is the label's first child, before the name text, and decorative.
@@ -522,7 +533,7 @@ describe('the body symbols (#1642)', () => {
         expect(symbol?.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
         // The label's text, which is the checkbox's accessible name, is the body name alone.
         expect(symbol?.textContent).toBe('');
-        expect(label?.textContent.trim()).toMatch(/^\p{L}[\p{L} ]*$/u);
+        expect(spokenNameOf(row)).toMatch(/^\p{L}[\p{L} ]*$/u);
       }
     }
   });
@@ -636,7 +647,7 @@ describe('the body grids (#1508)', () => {
     const group = [...container.querySelectorAll('fieldset')].find(
       (fieldset) => fieldset.querySelector('legend')?.textContent === legend,
     );
-    return [...(group?.querySelectorAll('label') ?? [])].map((label) => (label.textContent ?? '').trim());
+    return [...(group?.querySelectorAll('label') ?? [])].map((label) => spokenNameOf(label));
   };
 
   it('offers 16 transiting bodies without Lilith or Vesta, and 18 natal points including ASC and MC', async () => {
@@ -666,9 +677,7 @@ describe('the body grids use four equal columns (#1508)', () => {
     const group = [...container.querySelectorAll('fieldset')].find(
       (fieldset) => fieldset.querySelector('legend')?.textContent === legend,
     );
-    return [...(group?.querySelectorAll('.transit-filter-checks input') ?? [])].map(
-      (input) => input.closest('label')?.textContent.trim() ?? '',
-    );
+    return [...(group?.querySelectorAll('.transit-filter-checks label') ?? [])].map(spokenNameOf);
   };
 
   it('lays the checks out as four equal minmax(0, 1fr) columns, and two below 640px', () => {
@@ -696,6 +705,42 @@ describe('the body grids use four equal columns (#1508)', () => {
     expect(new Set(natal).size).toBe(18);
     expect(natal.filter((label) => !transiting.includes(label)).sort()).toEqual(['Ascendant', 'Midheaven']);
   });
+});
+
+describe('the angle labels on the filter card (#1649)', () => {
+  const groupOf = (container: HTMLElement, legend: string): HTMLElement | undefined =>
+    [...container.querySelectorAll('fieldset')].find(
+      (fieldset) => fieldset.querySelector('legend')?.textContent === legend,
+    );
+  const rowsOf = (group: HTMLElement | undefined): HTMLElement[] => [
+    ...(group?.querySelectorAll<HTMLElement>('.transit-filter-checks label') ?? []),
+  ];
+
+  it.each(['en', 'nl'] as const)(
+    'shows AC before Ascendant and MC before Midheaven in the natal points, and neither among the transiting planets (%s)',
+    async (locale) => {
+      const messages = transitFilterPanelMessages[locale];
+      const container = await mount(locale);
+      await openCard(container);
+      const natal = rowsOf(groupOf(container, messages.natalLegend));
+      const transiting = rowsOf(groupOf(container, messages.transitingLegend));
+      const ascRow = natal.find((row) => spokenNameOf(row) === bodyDisplayName('asc', locale));
+      const mcRow = natal.find((row) => spokenNameOf(row) === bodyDisplayName('mc', locale));
+      expect(ascRow?.querySelector('.transit-filter-symbol')?.textContent).toBe('AC');
+      expect(mcRow?.querySelector('.transit-filter-symbol')?.textContent).toBe('MC');
+      expect(ascRow?.querySelector('.transit-filter-symbol')?.getAttribute('aria-hidden')).toBe('true');
+      expect(mcRow?.querySelector('.transit-filter-symbol')?.getAttribute('aria-hidden')).toBe('true');
+      expect(transiting.some((row) => /^(AC|MC)$/.test(spokenNameOf(row)))).toBe(false);
+      expect(transiting.map(spokenNameOf)).not.toContain(bodyDisplayName('asc', locale));
+      expect(
+        transiting.some(
+          (row) =>
+            row.querySelector('.transit-filter-symbol') !== null &&
+            /^(AC|MC)$/.test(row.querySelector('.transit-filter-symbol')?.textContent ?? ''),
+        ),
+      ).toBe(false);
+    },
+  );
 });
 
 describe('every body can be chosen', () => {

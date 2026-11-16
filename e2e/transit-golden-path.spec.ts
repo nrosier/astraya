@@ -197,8 +197,8 @@ test.describe('with the shared people (#799)', () => {
     await choosePreset(page, 'Important');
     await page.getByRole('button', { name: 'Change filters', exact: true }).click();
     const natal = page.getByRole('group', { name: 'Natal points', exact: true });
-    await natal.getByLabel('Ascendant', { exact: true }).check();
-    await natal.getByLabel('Midheaven', { exact: true }).check();
+    await natal.getByRole('checkbox', { name: /Ascendant$/ }).check();
+    await natal.getByRole('checkbox', { name: /Midheaven$/ }).check();
     await page.getByRole('button', { name: 'Apply', exact: true }).click();
     await checkFilter('Important plus Ascendant and Midheaven');
   });
