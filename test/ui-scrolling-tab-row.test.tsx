@@ -96,7 +96,7 @@ describe('ScrollingTabRow', () => {
 
   it('gives every tab and tab-row link the full pill radius, not the small one (#1650)', () => {
     expect(ruleBody('.tab')).toMatch(/border-radius:\s*var\(--radius-full\);/);
-    expect(ruleBody('.tab.active')).toMatch(/outline:\s*2px solid var\(--fg\);/);
+    expect(ruleBody('.tab.active,\n.tab.active:hover:not(:disabled)')).toMatch(/outline:\s*2px solid var\(--fg\);/);
     expect(ruleBody('.tab-row__tabs > a')).toMatch(/border-radius:\s*var\(--radius-full\);/);
     expect(ruleBody('.tab-row__tabs > a')).not.toMatch(/border-bottom/);
   });

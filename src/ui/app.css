@@ -2992,8 +2992,10 @@ label.stacked {
 }
 
 /* Solid accent fill with a background-colour label, as the segmented control; the outline keeps the active tab
-   visible in forced-colours mode, where background fills are dropped (#1650). */
-.tab.active {
+   visible in forced-colours mode, where background fills are dropped (#1650). The hover selector also lists the
+   active tab: the base `button:hover:not(:disabled)` tint would otherwise win on the tab under the pointer. */
+.tab.active,
+.tab.active:hover:not(:disabled) {
   background: var(--accent);
   color: var(--bg);
   font-weight: 600;
