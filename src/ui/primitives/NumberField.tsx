@@ -102,7 +102,7 @@ export function NumberField({
           <div className="primitive-number-stepper">
             <button
               type="button"
-              className="quiet primitive-number-step"
+              className="quiet primitive-number-step primitive-button-circle"
               aria-label={decreaseLabel}
               disabled={(disabled ?? false) || atMin}
               onClick={() => {
@@ -113,7 +113,7 @@ export function NumberField({
             </button>
             <button
               type="button"
-              className="quiet primitive-number-step"
+              className="quiet primitive-number-step primitive-button-circle"
               aria-label={increaseLabel}
               disabled={(disabled ?? false) || atMax}
               onClick={() => {

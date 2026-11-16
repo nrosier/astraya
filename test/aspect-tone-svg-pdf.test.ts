@@ -4,7 +4,8 @@ import { type AspectMatrixInput, renderAspectMatrixSvg } from '../src/chart/aspe
 import { renderAspectWebSvg } from '../src/chart/aspect-web.js';
 import type { PanelLayout } from '../src/chart/sheet-geometry.js';
 import { standaloneSvg } from '../src/chart/standalone-svg.js';
-import { ASPECT_TONE } from '../src/ui/pdf-export-render.js';
+import { ASPECT_TONE, renderPdfPlan } from '../src/ui/pdf-export-render.js';
+import type { PdfPlan } from '../src/ui/pdf-export-plan.js';
 
 // svg2pdf.js's UMD bundle reads jsPDF at import time and fails under vitest. This file only reads
 // the PDF tone map, never draws a PDF, so the library is stubbed out.
@@ -93,4 +94,60 @@ describe('aspect tone in standalone SVG and PDF (#1532)', () => {
     expect(ASPECT_TONE[aspectTone('conjunction')]).toEqual([179, 38, 30]);
     expect(standaloneSvg('<svg></svg>')).toContain(".chart-aspect[data-tone='hard'] { stroke: #b3261e;");
   });
+});
+
+/**
+ * The fill colour in force for every filled-and-stroked path (`B`, the rounded panel) drawn on each page, read from the
+ * uncompressed page content streams in order. A page with no fill operator set falls back to `default`, which jsPDF
+ * reports as black.
+ */
+function panelFillsByPage(pdf: string): string[][] {
+  const streams = [...pdf.matchAll(/stream\r?\n([\s\S]*?)\r?\nendstream/g)].map((m) => m[1] ?? '');
+  return streams
+    .filter((stream) => /^B$/m.test(stream))
+    .map((stream) => {
+      const fills: string[] = [];
+      let fill = 'default';
+      for (const line of stream.split('\n')) {
+        const color = /^([\d.]+ [\d.]+ [\d.]+) rg$/.exec(line.trim());
+        if (color !== null) fill = color[1] ?? fill;
+        if (line.trim() === 'B') fills.push(fill);
+      }
+      return fills;
+    });
+}
+
+/** A fields section long enough to run over one page, so its continuation pages are drawn (#1648). */
+function longFieldsPlan(locale: 'en' | 'nl'): PdfPlan {
+  const fields = Array.from({ length: 60 }, (_, index) => ({
+    label: locale === 'en' ? `Meaning ${String(index + 1)}` : `Betekenis ${String(index + 1)}`,
+    value: locale === 'en' ? 'A short value that wraps onto a line.' : 'Een korte waarde.',
+  }));
+  return {
+    title: 'Chart',
+    cover: { name: 'Test', kind: 'Chart' },
+    coverGenerated: 'Generated',
+    contentsHeading: 'Contents',
+    personName: 'Test',
+    generatedAt: new Date('2026-01-01T00:00:00Z'),
+    sections: [{ kind: 'fields', heading: 'Meanings', fields }],
+    errors: [],
+  };
+}
+
+describe('the fields panel keeps its tint on continuation pages (#1648)', () => {
+  it.each(['en', 'nl'] as const)(
+    'draws every panel on a continuation page in the same tint as the first page, in %s',
+    async (locale) => {
+      const { blob } = await renderPdfPlan(longFieldsPlan(locale));
+      const pdf = Buffer.from(await blob.arrayBuffer()).toString('latin1');
+      const panelPages = panelFillsByPage(pdf).filter((page) => page.length > 0);
+      // The panel runs over more than one page, so there is at least one continuation page to check.
+      expect(panelPages.length).toBeGreaterThan(1);
+      // Every panel painted on every page (first and continuation) uses the tint, never the default black.
+      for (const page of panelPages) {
+        expect(page.every((fill) => fill === '0.95 0.95 0.98')).toBe(true);
+      }
+    },
+  );
 });
