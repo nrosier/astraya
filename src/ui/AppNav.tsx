@@ -208,16 +208,22 @@ const LazyCommandPalette = lazy(() =>
  * The search trigger (#1654): a pill on a wide screen, an icon-only circle beside the Menu button below
  * 64rem. It opens the command palette, and Ctrl+K or Cmd+K opens it from anywhere outside a text field.
  * The shortcut only calls `preventDefault` on its own key, so other keydown handlers still receive it.
- * The palette is mounted only while open, and closing it returns focus here.
+ * The palette loads on its first open and stays mounted after that, hidden while closed, so `StagedDialog`
+ * can return focus here when it closes (#1654). Unmounting on close would run that focus return too late.
  */
 function PaletteTrigger(): React.JSX.Element {
   const t = useMessages(appNavMessages);
+  const [paletteLoaded, setPaletteLoaded] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
+  function openPalette(): void {
+    setPaletteLoaded(true);
+    setPaletteOpen(true);
+  }
+
   function closePalette(): void {
     setPaletteOpen(false);
-    triggerRef.current?.focus();
   }
 
   useEffect(() => {
@@ -225,6 +231,7 @@ function PaletteTrigger(): React.JSX.Element {
       if (!(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey) return;
       if (event.key.toLowerCase() !== 'k' || isEditableTarget(event.target)) return;
       event.preventDefault();
+      setPaletteLoaded(true);
       setPaletteOpen(true);
     };
     window.addEventListener('keydown', onKeyDown);
@@ -241,9 +248,7 @@ function PaletteTrigger(): React.JSX.Element {
         className="app-nav-search"
         aria-label={`${t.searchPlaceholder} ${isApplePlatform() ? t.shortcutHintApple : t.shortcutHintOther}`}
         aria-haspopup="dialog"
-        onClick={() => {
-          setPaletteOpen(true);
-        }}
+        onClick={openPalette}
       >
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <circle cx="11" cy="11" r="7" />
@@ -254,9 +259,9 @@ function PaletteTrigger(): React.JSX.Element {
           {isApplePlatform() ? t.shortcutHintApple : t.shortcutHintOther}
         </kbd>
       </Button>
-      {paletteOpen && (
+      {paletteLoaded && (
         <Suspense fallback={null}>
-          <LazyCommandPalette open onClose={closePalette} returnFocusTo={triggerRef} />
+          <LazyCommandPalette open={paletteOpen} onClose={closePalette} returnFocusTo={triggerRef} />
         </Suspense>
       )}
     </>
