@@ -427,3 +427,15 @@ describe('the pass number on each orb-window bar (#1401)', () => {
     }
   });
 });
+
+describe('the timing timeline Now button (#1650)', () => {
+  it('carries the same class as the Transits Now button, so both are the same pill', async () => {
+    const { readFileSync } = await import('node:fs');
+    const timing = readFileSync(`${import.meta.dirname}/../src/ui/TimingTimelineView.tsx`, 'utf8');
+    const transits = readFileSync(`${import.meta.dirname}/../src/ui/DateAnimationBar.tsx`, 'utf8');
+    const nowClass = 'className="date-animation-now"';
+    // The class sits on the same <Button> whose body is the Now label, in each file.
+    expect(transits).toMatch(new RegExp(`${nowClass}[\\s\\S]*?\\{t\\.now\\}`));
+    expect(timing).toMatch(new RegExp(`${nowClass}[\\s\\S]*?\\{t\\.nowLabel\\}`));
+  });
+});
