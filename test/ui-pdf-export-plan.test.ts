@@ -189,7 +189,11 @@ describe('buildPdfPlan', () => {
     const [section] = plan.sections;
     if (section?.kind !== 'chart') throw new Error('expected a chart section');
     expect(section.svg?.markup).toContain('<svg');
-    expect(section.hint).toContain(chartViewMessages.en.almutenScopeNote);
+    // The scope note starts its own line in the PDF (#1646): line 0 is the name sentence, line 1 the note.
+    const hintLines = section.hint?.split('\n') ?? [];
+    expect(hintLines[0]?.startsWith(chartViewMessages.en.almutenOfAscendantSentence(''))).toBe(true);
+    expect(hintLines[0]).not.toContain(chartViewMessages.en.almutenScopeNote);
+    expect(hintLines[1]).toBe(chartViewMessages.en.almutenScopeNote);
     expect(section.tables.map((t) => t.caption)).toEqual(
       expect.arrayContaining([chartViewMessages.en.positionsCaption, chartViewMessages.en.aspectsCaption]),
     );
@@ -198,6 +202,33 @@ describe('buildPdfPlan', () => {
     // Every cell is already a plain string, the same conversion a CSV download uses.
     expect(positions?.body.every((row) => row.every((cell) => typeof cell === 'string'))).toBe(true);
   }, 30_000);
+
+  it('starts the almuten scope note on its own line, with the name line kept whole, in en and nl (#1646)', async () => {
+    const provider = await getEngine();
+    const selection: PdfSelection = {
+      personId: ADA.id,
+      ...EMPTY_SELECTION,
+      charts: [{ type: 'natal', wheel: true, tables: ['positions'] }],
+    };
+    for (const locale of ['en', 'nl'] as const) {
+      const context: PdfPlanContext = {
+        person: ADA,
+        provider,
+        settings: DEFAULT_EXTENDED_SETTINGS,
+        rulership: DEFAULT_RULERSHIP_CHOICE,
+        locale,
+        corpusFetch,
+      };
+      const plan = await buildPdfPlan(selection, context, chartViewMessages[locale], pdfExportMessages[locale]);
+      const [section] = plan.sections;
+      if (section?.kind !== 'chart') throw new Error('expected a chart section');
+      const lines = section.hint?.split('\n') ?? [];
+      expect(lines).toHaveLength(2);
+      expect(lines[0]?.startsWith(chartViewMessages[locale].almutenOfAscendantSentence(''))).toBe(true);
+      expect(lines[0]).not.toContain(chartViewMessages[locale].almutenScopeNote);
+      expect(lines[1]).toBe(chartViewMessages[locale].almutenScopeNote);
+    }
+  }, 60_000);
 
   it('builds a draconic chart from the same person without the Houses table it has no houses change for', async () => {
     const provider = await getEngine();

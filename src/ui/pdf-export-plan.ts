@@ -727,7 +727,7 @@ async function buildChartSectionPlan(
   const almutenHint =
     almuten === undefined
       ? undefined
-      : t.almutenOfAscendantSentence(almutenNames(almuten.almutens)) + ` ${t.almutenScopeNote}`;
+      : t.almutenOfAscendantSentence(almutenNames(almuten.almutens)) + `\n${t.almutenScopeNote}`;
   // The D10 convention caveat (#725), in the document's language, as the Harmonic screen shows it for the same chart.
   const d10Hint =
     options.type === 'harmonic' && (options.harmonicN ?? 5) === 10 ? harmonicViewMessages[locale].d10Note : undefined;
