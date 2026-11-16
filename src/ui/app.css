@@ -7304,6 +7304,18 @@ button.primitive-button-capsule {
   border-radius: var(--radius-full);
 }
 
+/* An icon-only control is a circle (#1650): equal width and height at the compact control height, which is 44px on a
+   coarse pointer (owner answer 2, 2026-11-16). Placed after the compact rules so its zero padding wins. */
+.primitive-button-circle,
+button.primitive-button-circle {
+  width: var(--control-height-compact);
+  height: var(--control-height-compact);
+  min-width: var(--control-height-compact);
+  min-height: var(--control-height-compact);
+  padding: 0;
+  border-radius: var(--radius-full);
+}
+
 .primitive-field,
 .primitive-choice-field {
   display: flex;

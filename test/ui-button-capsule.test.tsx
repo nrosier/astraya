@@ -2,6 +2,7 @@
 /**
  * The Button capsule shape (#1600): only small inline actions (matrix All/Clear/None, the transit
  * filter All/Clear, the seven-star preset) are capsules; menu and popover triggers are pills by CSS (#1650).
+ * The Button circle shape (#1650): an icon-only control, equal width and height at the compact control height.
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { act } from 'react';
@@ -49,6 +50,29 @@ describe('Button shape', () => {
   it('adds no capsule class by default', () => {
     const button = mount(<Button>Export</Button>).querySelector('button');
     expect(button?.classList.contains('primitive-button-capsule')).toBe(false);
+  });
+
+  it('adds the circle class for shape="circle" and no capsule class (#1650)', () => {
+    const button = mount(
+      <Button shape="circle" aria-label="Close">
+        ×
+      </Button>,
+    ).querySelector('button');
+    expect(button?.classList.contains('primitive-button-circle')).toBe(true);
+    expect(button?.classList.contains('primitive-button-capsule')).toBe(false);
+  });
+});
+
+describe('.primitive-button-circle', () => {
+  it('has equal width and height from the compact control height, with a full radius and no padding (#1650)', () => {
+    const css = readFileSync('src/ui/app.css', 'utf-8');
+    const rule = /\.primitive-button-circle,\s*button\.primitive-button-circle\s*\{([^}]*)\}/.exec(css);
+    const body = rule?.[1] ?? '';
+    expect(body).toMatch(/width:\s*var\(--control-height-compact\);/);
+    expect(body).toMatch(/height:\s*var\(--control-height-compact\);/);
+    expect(body).toMatch(/min-height:\s*var\(--control-height-compact\);/);
+    expect(body).toMatch(/padding:\s*0;/);
+    expect(body).toMatch(/border-radius:\s*var\(--radius-full\);/);
   });
 });
 
