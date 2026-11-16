@@ -81,6 +81,7 @@ const EXPECTED_CAPSULE_FILES = [
   'RelocatedChartView.tsx',
   'SavedChartSearches.tsx',
   'SavedQueries.tsx',
+  'ScrollingTabRow.tsx',
   'SuggestCorrectionDialog.tsx',
   'TransitFilterPanel.tsx',
 ];
@@ -95,10 +96,11 @@ describe('capsule call sites', () => {
     expect(using.sort()).toEqual(EXPECTED_CAPSULE_FILES);
   });
 
-  it('never gives an Export, Defaults or Techniques button the capsule shape', () => {
+  it('never gives an Export or Techniques button the capsule shape', () => {
+    // Defaults left this list: the footer Defaults trigger is a capsule (#1600, owner answer A1, 2026-11-16).
     for (const f of files) {
       const blocks = f.source.match(/<Button\b[^>]*shape="capsule"[\s\S]*?<\/Button>/g) ?? [];
-      for (const block of blocks) expect(block).not.toMatch(/export|defaults|techniques/i);
+      for (const block of blocks) expect(block).not.toMatch(/export|techniques/i);
     }
   });
 });

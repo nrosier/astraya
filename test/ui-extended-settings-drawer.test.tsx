@@ -193,6 +193,16 @@ describe('the drawer structure (#824)', () => {
     unmount(container, root);
   });
 
+  it('gives the footer Defaults trigger the capsule shape (#1600, owner answer A1)', async () => {
+    const { container, root } = await mount(undefined, vi.fn());
+    openDrawer(container);
+    const defaults = Array.from(drawer(container).querySelectorAll('button')).find((button) =>
+      button.textContent.startsWith('Defaults'),
+    );
+    expect(defaults?.classList.contains('primitive-button-capsule')).toBe(true);
+    unmount(container, root);
+  });
+
   it('has the five categories as tabs, in the order a chart is set up', async () => {
     const { container, root } = await mount(undefined, vi.fn());
     openDrawer(container);

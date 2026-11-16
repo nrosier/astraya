@@ -797,6 +797,7 @@ export function ExtendedSettingsPanel({
         >
           <Button
             ref={defaults.buttonRef(DEFAULTS_KEY)}
+            shape="capsule"
             aria-haspopup="true"
             aria-expanded={defaultsOpen}
             aria-controls={defaultsOpen ? defaultsMenuId : undefined}

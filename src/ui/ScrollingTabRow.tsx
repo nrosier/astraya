@@ -135,6 +135,7 @@ export function ScrollingTabRow({
           <span className="tab-row__actions-toggle">
             <Button
               size="compact"
+              shape="capsule"
               aria-expanded={menuOpen}
               aria-controls={panelId}
               data-tab-row-toggle=""

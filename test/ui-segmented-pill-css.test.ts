@@ -23,6 +23,16 @@ describe('segmented control pill shape (#1600 WP2)', () => {
     expect(container).toContain('max-width: 100%;');
   });
 
+  it('each option centres its label vertically in the pill (#1600, owner answer A3)', () => {
+    const option = rule('.primitive-choice-group-segmented .primitive-choice');
+    expect(option).toContain('align-items: center;');
+    expect(option).toContain('justify-content: center;');
+    // The settings card's plain-radio rule makes a label inline, which switches flex centring off; it is overridden.
+    expect(rule(".settings-card-group [role='radiogroup'].primitive-choice-group-segmented label")).toContain(
+      'display: inline-flex;',
+    );
+  });
+
   it('each option is a pill', () => {
     expect(rule('.primitive-choice-group-segmented .primitive-choice')).toContain('border-radius: var(--radius-full);');
   });

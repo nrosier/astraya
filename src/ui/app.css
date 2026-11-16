@@ -6903,6 +6903,11 @@ svg text.chart-symbol-text-unicode {
   display: inline;
 }
 
+/* A segmented option is a flex box so its label centres vertically in the pill; the plain-radio rule above must not turn it inline (#1600). */
+.settings-card-group [role='radiogroup'].primitive-choice-group-segmented label {
+  display: inline-flex;
+}
+
 .settings-card-choices {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
@@ -7561,6 +7566,8 @@ button.primitive-button-form-action {
 .primitive-choice-group-segmented .primitive-choice {
   position: relative;
   justify-content: center;
+  /* The label sits at the pill's vertical centre at every size, including a wrapped two-line label (#1600). */
+  align-items: center;
   /* The strip's own 1px border adds the other two pixels, so the outer pill is exactly one standard control tall. */
   min-height: calc(var(--control-height) - 2px);
   padding: 0 var(--space-3);
