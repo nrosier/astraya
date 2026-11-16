@@ -158,6 +158,51 @@ test.describe('with the shared people (#799)', () => {
     );
   });
 
+  test('the cross-ring lines equal the Contacts rows in three filters, and own-ring chords are logged (#1641)', async () => {
+    test.setTimeout(90_000);
+
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).click();
+    await page.getByRole('tab', { name: 'Transits', exact: true }).click();
+    await expect(page.locator('div.chart-wheel svg')).toHaveCount(1);
+
+    const rows = page.getByRole('table', { name: 'Contacts' }).locator('tbody tr');
+    const crossLines = page.locator('div.chart-wheel .chart-aspect-link[data-ring-a="1"][data-ring-b="0"]');
+    const ownChords = (ring: 0 | 1): Promise<number> =>
+      page
+        .locator(`div.chart-wheel .chart-aspect-link[data-ring-a="${String(ring)}"][data-ring-b="${String(ring)}"]`)
+        .count();
+
+    // Asserts the cross-ring lines equal the Contacts rows, and logs (does not assert) the own-ring chord counts.
+    const checkFilter = async (name: string): Promise<void> => {
+      // The table and the wheel re-render together after Apply, so wait until their counts agree before reading.
+      await expect.poll(async () => (await rows.count()) === (await crossLines.count())).toBe(true);
+      const contactRows = await rows.count();
+      // Guards against a vacuous 0 = 0 match before the filter has drawn anything.
+      expect(contactRows).toBeGreaterThan(0);
+      await expect(crossLines).toHaveCount(contactRows);
+      // Own-ring chords follow the filter but are not Contacts rows; the owner's answer 2 leaves them as they are (#1641).
+      test.info().annotations.push({
+        type: 'own-ring-chords',
+        description: `${name}: contacts ${String(contactRows)}, ring 0 ${String(await ownChords(0))}, ring 1 ${String(await ownChords(1))}`,
+      });
+    };
+
+    // 1. The Important default (#416).
+    await checkFilter('Important default');
+    // 2. The All preset.
+    await choosePreset(page, 'All');
+    await checkFilter('All preset');
+    // 3. Back to Important, then Ascendant and Midheaven ticked in Natal points.
+    await choosePreset(page, 'Important');
+    await page.getByRole('button', { name: 'Change filters', exact: true }).click();
+    const natal = page.getByRole('group', { name: 'Natal points', exact: true });
+    await natal.getByLabel('Ascendant', { exact: true }).check();
+    await natal.getByLabel('Midheaven', { exact: true }).check();
+    await page.getByRole('button', { name: 'Apply', exact: true }).click();
+    await checkFilter('Important plus Ascendant and Midheaven');
+  });
+
   test('a person with an unknown birth time is told transits need one', async () => {
     await openSharedPerson(page, baseUrl, MARIC);
 
