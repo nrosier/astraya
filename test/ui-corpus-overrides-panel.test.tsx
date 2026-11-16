@@ -800,6 +800,9 @@ describe('CorpusOverridesPanel export and drawer editor (#1335)', () => {
       'sun',
       'fire',
     ]);
+    const removeSun = container.querySelector(`button[aria-label="${t.removeTagLabel('sun')}"]`);
+    expect(removeSun?.classList.contains('primitive-button-circle')).toBe(true);
+    expect(removeSun?.textContent).toBe('×');
     await act(async () => {
       container.querySelector<HTMLButtonElement>(`button[aria-label="${t.removeTagLabel('sun')}"]`)?.click();
       await Promise.resolve();

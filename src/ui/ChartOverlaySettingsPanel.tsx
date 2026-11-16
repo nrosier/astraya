@@ -505,10 +505,10 @@ function OverlayRow({
       <div className="chart-overlay-row-toggle">
         <Checkbox label={label} checked={checked} disabled={disabled} onChange={onChange} />
         <span className="chart-overlay-row-order">
-          <Button aria-label={moveUpLabel} disabled={onMoveUp === undefined} onClick={onMoveUp}>
+          <Button shape="circle" aria-label={moveUpLabel} disabled={onMoveUp === undefined} onClick={onMoveUp}>
             ↑
           </Button>
-          <Button aria-label={moveDownLabel} disabled={onMoveDown === undefined} onClick={onMoveDown}>
+          <Button shape="circle" aria-label={moveDownLabel} disabled={onMoveDown === undefined} onClick={onMoveDown}>
             ↓
           </Button>
         </span>

@@ -197,6 +197,7 @@ export function DateAnimationBar({
           </Button>
         )}
         <Button
+          shape="circle"
           className="date-animation-step"
           aria-label={t.stepBack(intervalName)}
           disabled={disabled || !valid}
@@ -219,6 +220,7 @@ export function DateAnimationBar({
         />
         <DateField label={label ?? t.dateLabel} value={date} onChange={onDateChange} disabled={disabled} hideLabel />
         <Button
+          shape="circle"
           className="date-animation-step"
           aria-label={t.stepForward(intervalName)}
           disabled={disabled || !valid}
