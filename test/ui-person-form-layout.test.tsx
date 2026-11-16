@@ -355,7 +355,9 @@ describe('Life events summary card and drawer (#1439)', () => {
     expect(input(drawer(), 'form.life-events-quick input[type="date"]').value).toBe('');
     quick('1999-01-02', 'Graduated');
     await saveAndClose();
-    expect(stored()?.map((event) => event.label)).toEqual(['Graduated', 'Moved abroad']);
+    await vi.waitFor(() => {
+      expect(stored()?.map((event) => event.label)).toEqual(['Graduated', 'Moved abroad']);
+    });
     expect(store.outgoing().filter((op) => op.field === 'lifeEvents')).toHaveLength(1);
     const reopened = await openStore({ name: `astraya-person-form-layout-${String(counter)}` });
     try {
@@ -396,10 +398,13 @@ describe('Life events summary card and drawer (#1439)', () => {
     });
     click(buttonByText(drawer(), td.rowSave));
     await saveAndClose();
-    expect(stored()).toEqual([
-      { id: 'a', date: '2001-01-01', label: 'First, edited', category: 'marriage' },
-      { id: 'b', date: '2002-02-02', label: 'Second', category: 'career' },
-    ]);
+    // The save commits asynchronously; under load the store write can land after the fixed wait above.
+    await vi.waitFor(() => {
+      expect(stored()).toEqual([
+        { id: 'a', date: '2001-01-01', label: 'First, edited', category: 'marriage' },
+        { id: 'b', date: '2002-02-02', label: 'Second', category: 'career' },
+      ]);
+    });
   });
 
   it('searches the description, filters by category, sorts by date and offers Clear filters', async () => {
@@ -464,7 +469,9 @@ describe('Life events summary card and drawer (#1439)', () => {
       ).click();
       await new Promise((resolve) => setTimeout(resolve, 25));
     });
-    expect(stored()).toEqual([]);
+    await vi.waitFor(() => {
+      expect(stored()).toEqual([]);
+    });
   });
 
   it('exports the events as a CSV with the import columns, in date order (#1439)', async () => {
@@ -524,9 +531,11 @@ describe('Life events summary card and drawer (#1439)', () => {
     expect(drawer().textContent).toContain(td.importDone(1));
     expect(bodyRows()).toHaveLength(1);
     await saveAndClose();
-    expect(stored()).toEqual([
-      { id: expect.any(String) as string, date: '2020-02-02', time: '10:00', label: 'New job', category: 'career' },
-    ]);
+    await vi.waitFor(() => {
+      expect(stored()).toEqual([
+        { id: expect.any(String) as string, date: '2020-02-02', time: '10:00', label: 'New job', category: 'career' },
+      ]);
+    });
   });
 
   it('closes on Escape (cancel) without saving', () => {
