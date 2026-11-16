@@ -45,6 +45,7 @@ import { bodyDisplayName } from './astro-names.messages.js';
 import { useMessages } from './messages.js';
 import { Checkbox } from './primitives/Checkbox.js';
 import { bodyGlyph } from '../chart/glyphs.js';
+import { ANGLE_LABEL } from '../chart/angle-labels.js';
 import { symbolCell } from './ChartViewPlacements.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { FilterSummary } from './primitives/FilterSummary.js';
@@ -186,6 +187,10 @@ export function TransitFilterButton({
     setDraft({ ...draft, aspects });
   };
 
+  // The Ascendant and Midheaven rows carry their chart label (AC, MC) before the name (#1649).
+  const angleLabelOf = (key: string): string | undefined =>
+    key === 'asc' || key === 'mc' ? ANGLE_LABEL[key] : undefined;
+
   const bodyGroup = (legend: string, field: 'transiting' | 'natal') => {
     // The transiting grid offers the decided 16 bodies; the natal grid the same 16 plus ASC and MC (#1508).
     const keys = field === 'transiting' ? TRANSITING_GRID_KEYS : NATAL_GRID_KEYS;
@@ -220,6 +225,11 @@ export function TransitFilterButton({
                 <>
                   {bodyGlyph(key) !== undefined && (
                     <span className="transit-filter-symbol">{symbolCell(key, '', symbolClass)}</span>
+                  )}
+                  {angleLabelOf(key) !== undefined && (
+                    <span className="transit-filter-symbol" aria-hidden="true">
+                      {angleLabelOf(key)}
+                    </span>
                   )}
                   {bodyDisplayName(key, locale)}
                 </>
