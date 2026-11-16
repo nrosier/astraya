@@ -30,7 +30,7 @@ import { type AspectTone, aspectTone } from '../astrology/aspects.js';
 import { SIGNS } from '../astrology/signs.js';
 import { APP_VERSION } from '../version.js';
 import type { PdfParagraphGroupPlan, PdfPlan, PdfTablePlan } from './pdf-export-plan.js';
-import { flowLines, startBlock, type PageFlowArea } from './pdf-page-flow.js';
+import { flowLines, flowPanelRows, startBlock, type PageFlowArea } from './pdf-page-flow.js';
 import { fitSvgOnPage } from './pdf-svg-fit.js';
 import { normalizeSvgForPdf } from './pdf-svg-normalize.js';
 
@@ -315,18 +315,34 @@ export async function renderPdfPlan(plan: PdfPlan): Promise<{ blob: Blob; filena
         term: field.label,
         lines: splitLines(doc, field.value, valueWidth),
       }));
-      const height = rows.reduce((sum, row) => sum + Math.max(1, row.lines.length) * LINE, 0) + 6;
-      y = keepTogether(doc, y, height);
+      // The panel continues on the next page when it runs past the foot of this one, with its rows never split (#1648).
+      const segments = flowPanelRows(
+        rows.map((row) => Math.max(1, row.lines.length) * LINE),
+        y,
+        flowArea(doc),
+      );
       doc.setFillColor(...TINT);
       doc.setDrawColor(...RULE);
-      doc.roundedRect(SIDE_MARGIN, y - 4, contentWidth, height, 2, 2, 'FD');
-      y += 1;
-      for (const row of rows) {
-        font('normal', BODY_SIZE - 1, MUTED);
-        doc.text(pdfSafeText(doc, row.term), SIDE_MARGIN + 4, y);
-        font('normal', BODY_SIZE);
-        row.lines.forEach((line, index) => doc.text(line, SIDE_MARGIN + 4 + termWidth, y + index * LINE));
-        y += Math.max(1, row.lines.length) * LINE;
+      for (const segment of segments) {
+        if (segment.newPage) doc.addPage();
+        y = segment.top;
+        doc.roundedRect(SIDE_MARGIN, y - 4, contentWidth, segment.height, 2, 2, 'FD');
+        y += 1;
+        for (const row of rows.slice(segment.fromRow, segment.toRow)) {
+          font('normal', BODY_SIZE - 1, MUTED);
+          doc.text(pdfSafeText(doc, row.term), SIDE_MARGIN + 4, y);
+          font('normal', BODY_SIZE);
+          // A row taller than a page is the only one that can run past the margin; its lines start pages as they fall.
+          const lines = flowLines(row.lines.length, y, LINE, flowArea(doc));
+          row.lines.forEach((line, index) => {
+            const placement = lines.lines[index];
+            if (placement === undefined) return;
+            if (placement.newPage) doc.addPage();
+            doc.text(line, SIDE_MARGIN + 4 + termWidth, placement.y);
+          });
+          y = lines.y;
+          if (row.lines.length === 0) y += LINE;
+        }
       }
       y += 4;
       if (section.map !== undefined) {
