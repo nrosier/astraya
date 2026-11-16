@@ -16,11 +16,14 @@
  *   which no core font has, and jsPDF warns and falls back. Weights are mapped to the two faces
  *   the core fonts do have the way CSS font matching picks between them (CSS Fonts 4 §5.2: a
  *   desired weight above 500 prefers the heavier face, 500 or below the lighter one).
+ * - `paint-order: stroke`: svg2pdf.js ignores it and paints a text's stroke over its fill, so the
+ *   astrocartography labels' near-white halo covered their glyphs (#1647). Each halo is drawn as its
+ *   own twin text, under the label, instead.
  */
 /**
  * @module ui/pdf-svg-normalize
- * @purpose Rewrites a standalone chart SVG's CSS into the subset svg2pdf.js renders correctly (resolved `var()`, `rem` as px, weights as normal/bold) for the PDF export (#580, #581).
- * @conventions PDF-only and pure string rewriting, kept apart from pdf-export-render.ts so it can be unit-tested (that module's svg2pdf.js import does not load under Vitest). Never changes what the app or the SVG/PNG exports draw.
+ * @purpose Rewrites a standalone chart SVG's CSS into the subset svg2pdf.js renders correctly (resolved `var()`, `rem` as px, weights as normal/bold, astrocartography label halos under the text) for the PDF export (#580, #581, #1647).
+ * @conventions PDF-only and pure string rewriting, kept apart from pdf-export-render.ts so it can be unit-tested (that module's svg2pdf.js import does not load under Vitest). Never changes what the app or the SVG/PNG exports draw: the `.acg-label` halo moves to a `.acg-label-halo` twin placed before each label, with the same colour and width.
  * @exports normalizeSvgForPdf, ROOT_FONT_SIZE_PX, pdfFontWeight
  */
 
@@ -37,8 +40,38 @@ function formatPx(value: number): string {
   return `${String(Math.round(value * 100) / 100)}px`;
 }
 
+/** One astrocartography label's `<text>` element, whose content is escaped so it never holds a `<`. */
+const ACG_LABEL_ELEMENT = /<text\b[^>]*\bclass="acg-label [^"]*"[^>]*>[^<]*<\/text>/g;
+
+/** The `.acg-label` rule's declarations, minus the stroke that svg2pdf.js would paint over the glyphs. */
+const ACG_LABEL_RULE = /\.acg-label \{([^}]*)\}/;
+
+/** The halo's colour and width: the same as the screen's `.acg-label` stroke (`standalone-svg.ts`). */
+const ACG_LABEL_HALO_RULE =
+  '.acg-label-halo { fill: none; stroke: #fbfaff; stroke-width: 3px; stroke-linejoin: round; }';
+
+/**
+ * Moves each astrocartography label's halo out of the text's own paint. Every label gets a
+ * `acg-label-halo` twin with the same attributes and content, placed before it, so the halo is
+ * drawn underneath; the `.acg-label` rule loses its stroke and gains the halo rule.
+ */
+function haloAcgLabels(markup: string): string {
+  if (!ACG_LABEL_RULE.test(markup)) return markup;
+  const withTwins = markup.replace(ACG_LABEL_ELEMENT, (label) => {
+    const halo = label.replace('class="acg-label ', 'class="acg-label-halo ');
+    return `${halo}${label}`;
+  });
+  return withTwins.replace(ACG_LABEL_RULE, (_, body: string) => {
+    const kept = body
+      .split(';')
+      .map((declaration) => declaration.trim())
+      .filter((declaration) => declaration !== '' && !/^(paint-order|stroke)(-[\w]+)?\s*:/.test(declaration));
+    return `.acg-label { ${kept.join('; ')}; } ${ACG_LABEL_HALO_RULE}`;
+  });
+}
+
 export function normalizeSvgForPdf(markup: string): string {
-  return (
+  return haloAcgLabels(
     markup
       .replace(/var\(\s*--[\w-]+\s*,\s*([^)]+?)\s*\)/g, '$1')
       .replace(/(?<![\w.-])(\d*\.?\d+)rem\b/g, (_, value: string) => formatPx(parseFloat(value) * ROOT_FONT_SIZE_PX))
@@ -50,6 +83,6 @@ export function normalizeSvgForPdf(markup: string): string {
       .replace(
         /(font\s*:\s*)(\d{3})(\s)/g,
         (_, prefix: string, weight: string, space: string) => prefix + pdfFontWeight(Number(weight)) + space,
-      )
+      ),
   );
 }

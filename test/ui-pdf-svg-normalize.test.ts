@@ -5,7 +5,11 @@
  * against the real exported stylesheet, using svg2pdf.js's own font-size parsing rule.
  */
 import { describe, expect, it } from 'vitest';
+import { renderAcgMapSvg, type AcgMapInput } from '../src/chart/acg-map.js';
 import { standaloneSvg } from '../src/chart/standalone-svg.js';
+import type { AcgLine } from '../src/domain/astrocartography.js';
+import { SE } from '../src/ephemeris/generated-constants.js';
+import { acgMapLabels } from '../src/ui/acg-map-labels.js';
 import { normalizeSvgForPdf, pdfFontWeight, ROOT_FONT_SIZE_PX } from '../src/ui/pdf-svg-normalize.js';
 
 /** svg2pdf.js 2.x's `toPixels`: px, unitless and em parse; anything else (rem, pt, %) becomes 0. */
@@ -18,6 +22,42 @@ function fontSizesIn(markup: string): string[] {
   const longhand = [...markup.matchAll(/font-size\s*:\s*([^;}]+)/g)].map((m) => m[1] ?? '');
   const shorthand = [...markup.matchAll(/font\s*:\s*(?:[a-z]+\s+)*?([-0-9.]+[a-z%]*)\s/g)].map((m) => m[1] ?? '');
   return [...longhand, ...shorthand];
+}
+
+/** The astrocartography map as the PDF sees it: built with real lines and labels, then standalone. */
+function acgPdfMarkup(locale: 'en' | 'nl'): string {
+  const lines: AcgLine[] = [
+    { kind: 'MC', body: SE.SE_SUN, longitude: 10 },
+    { kind: 'IC', body: SE.SE_MOON, longitude: -170 },
+    {
+      kind: 'AC',
+      body: SE.SE_MARS,
+      segments: [
+        [
+          { latitude: 40, longitude: 20 },
+          { latitude: 2, longitude: 25 },
+          { latitude: -40, longitude: 30 },
+        ],
+      ],
+    },
+  ];
+  const input: AcgMapInput = {
+    lines,
+    localSpaceLines: [],
+    natalPlace: { latitude: 51.5, longitude: -0.13, altitude: 0 },
+  };
+  const map = renderAcgMapSvg(input, { width: 900, labels: acgMapLabels(locale) });
+  return standaloneSvg(map.markup);
+}
+
+/** Every astrocartography label `<text>` element, in document order. */
+function acgLabelElements(markup: string): string[] {
+  return [...markup.matchAll(/<text\b[^>]*\bclass="acg-label [^"]*"[^>]*>[^<]*<\/text>/g)].map((m) => m[0]);
+}
+
+/** Every legend text element, in document order. */
+function legendTextElements(markup: string): string[] {
+  return [...markup.matchAll(/<text\b[^>]*\bclass="acg-legend-text"[^>]*>[^<]*<\/text>/g)].map((m) => m[0]);
 }
 
 describe('normalizeSvgForPdf (#580, #581)', () => {
@@ -74,5 +114,54 @@ describe('normalizeSvgForPdf (#580, #581)', () => {
       '<g class="chart-emphasis"><rect x="1.00" y="2.00" width="3.00" height="4.00" class="chart-emphasis-cell" />' +
       '<text x="5.00" y="6.00" text-anchor="middle" font-size="12.50" class="chart-emphasis-total">4</text></g>';
     expect(normalizeSvgForPdf(drawing)).toBe(drawing);
+  });
+});
+
+describe('normalizeSvgForPdf astrocartography labels (#1647)', () => {
+  it.each(['en', 'nl'] as const)('%s: every label keeps its text', (locale) => {
+    const before = acgLabelElements(acgPdfMarkup(locale));
+    const after = acgLabelElements(normalizeSvgForPdf(acgPdfMarkup(locale)));
+    expect(before.length).toBeGreaterThan(0);
+    const textOf = (element: string): string => element.replace(/^<text[^>]*>|<\/text>$/g, '');
+    expect(after.map(textOf)).toEqual(before.map(textOf));
+  });
+
+  it.each(['en', 'nl'] as const)('%s: a font size svg2pdf.js reads applies to every label', (locale) => {
+    const after = normalizeSvgForPdf(acgPdfMarkup(locale));
+    expect(fontSizesIn(after).filter((size) => !svg2pdfReadsAsNonZero(size))).toEqual([]);
+  });
+
+  it.each(['en', 'nl'] as const)(
+    '%s: each label has its halo twin before it, and .acg-label has no stroke',
+    (locale) => {
+      const after = normalizeSvgForPdf(acgPdfMarkup(locale));
+      const labelCount = acgLabelElements(after).length;
+      // Each halo is the element immediately before its label, with the same attributes and content.
+      const pairs = [
+        ...after.matchAll(
+          /(<text\b[^>]*\bclass="acg-label-halo [^"]*"[^>]*>[^<]*<\/text>)(<text\b[^>]*\bclass="acg-label [^"]*"[^>]*>[^<]*<\/text>)/g,
+        ),
+      ];
+      expect(labelCount).toBeGreaterThan(0);
+      expect(pairs.length).toBe(labelCount);
+      for (const [, halo, label] of pairs) {
+        expect(halo?.replace('class="acg-label-halo ', 'class="acg-label ')).toBe(label);
+      }
+      const rule = /\.acg-label \{([^}]*)\}/.exec(after)?.[1] ?? '';
+      expect(rule).toMatch(/fill: #16152b/);
+      expect(rule).not.toMatch(/stroke|paint-order/);
+      expect(after).toContain(
+        '.acg-label-halo { fill: none; stroke: #fbfaff; stroke-width: 3px; stroke-linejoin: round; }',
+      );
+    },
+  );
+
+  it.each(['en', 'nl'] as const)('%s: the legend rule and its text elements are unchanged', (locale) => {
+    const before = acgPdfMarkup(locale);
+    const after = normalizeSvgForPdf(before);
+    expect(legendTextElements(after)).toEqual(legendTextElements(before));
+    expect(legendTextElements(before).length).toBeGreaterThan(0);
+    const legendRule = /\.acg-legend-text \{[^}]*\}/;
+    expect(legendRule.exec(after)?.[0]).toBe(legendRule.exec(before)?.[0]);
   });
 });
