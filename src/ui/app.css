@@ -3127,7 +3127,7 @@ label.stacked {
   flex: 0 0 auto;
   padding: 0 var(--space-2);
   border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-full);
   font: inherit;
   font-size: var(--text-xs);
 }
