@@ -7425,6 +7425,15 @@ button.primitive-button-capsule {
   min-height: 2.75rem;
 }
 
+/* The date and time pills never shrink below the width that shows a full date (or time) and its picker icon (#1653).
+   Measured on the system UI font: a date field's natural width is 156px at 1920 and 362px at 390; the 9rem quick-add
+   column squeezed it to 126px and the year ran under the icon. The icon sits inside the content box, so padding cannot
+   fix it. 11.25rem is 157.5px at the 14px root. */
+.primitive-field input.primitive-field-pill[type='date'],
+.primitive-field input.primitive-field-pill[type='time'] {
+  min-inline-size: 11.25rem;
+}
+
 /* A top-stacked label lines up with the text inside the capsule below it (#1600 WP7, owner rule 3). */
 .primitive-field:has(> input.primitive-field-pill, > select, > .primitive-number-field) > label:not(.sr-only) {
   padding-inline-start: var(--space-4);
@@ -9947,7 +9956,7 @@ a.quiet,
 
 .life-events-edit {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(11.25rem, 1fr));
   gap: var(--space-2);
 }
 
@@ -9970,7 +9979,7 @@ a.quiet,
   position: sticky;
   bottom: calc(-1 * var(--space-4));
   display: grid;
-  grid-template-columns: 9rem minmax(0, 1fr) auto;
+  grid-template-columns: max-content minmax(0, 1fr) auto;
   align-items: start;
   gap: var(--space-2);
   padding: var(--space-2) 0;

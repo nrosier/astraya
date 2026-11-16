@@ -9,6 +9,7 @@ Hand-rolled SVG rendering layer: chart wheels (single/bi-/tri-ring), aspect webs
 - `pdf-map-data.ts` — Generated Natural Earth 1:50m land and borders for the PDF birth-place map, loaded lazily (#711). Deps: none.
 - `birth-map.ts` — Draws the PDF birth-place map as SVG (±20° around the birthplace) with an unlabelled pin on the birth coordinates (#711). Deps: `./svg-primitives`.
 - `aspect-web.ts` — Aspect chord rendering (cross-ring variant for bi-/tri-wheels, plus body-to-ASC/MC angle lines, #1508). Deps: `astrology/aspects`, `astrology/bodies`, `./wheel`.
+- `angle-labels.ts` — Text labels AC/DC/MC/IC for the four chart angles, the one source for wheel, tables and PDF. Deps: none.
 - `astrochart-adapter.ts` — Interop with `@astrodraw/astrochart` library (dev-only reference wheel). Deps: `astrology/bodies`, `domain/chart-compute`.
 - `body-id.ts` — Multi-ring body identifier codec (`key@ring`). Deps: none (pure string codec).
 - `calculation-profiles.ts` — Three built-in, versioned calculation profiles (Modern Western/Traditional Western/Sidereal (Lahiri)) as complete settings+rulership snapshots (#506/#510). Deps: `astrology/ayanamsas`, `astrology/rulership`, `./extended-settings`, `./object-policy`.
@@ -24,7 +25,7 @@ Hand-rolled SVG rendering layer: chart wheels (single/bi-/tri-ring), aspect webs
 - `glyph-weight.ts` — Glyph stroke-weight setting (fine/regular/bold). Deps: none (module state).
 - `glyphs.ts` — Vector-path glyph registry (all bodies/signs/aspects) + `renderGlyph`. Deps: `./glyph-variants`, `./glyph-weight`, `./symbol-class`, `./symbol-text`.
 - `jones-shape-diagram.ts` — Jones chart-shape abstract diagram. Deps: `astrology/jones-shapes`, `./svg-primitives`, `./wheel`.
-- `multi-wheel.ts` — Main chart wheel renderer (a house-free mode for the heliocentric chart, #1407; single/bi-/tri-ring with shared anchor, glyphs, cusps, aspect webs, accessible legend, leader arrows). Deps: `astrology/aspects`, `astrology/signs`, `./aspect-web`, `./glyph-layout`, `./glyphs`, `./sheet-geometry`, `./wheel`.
+- `multi-wheel.ts` — Main chart wheel renderer (a house-free mode for the heliocentric chart, #1407; single/bi-/tri-ring with shared anchor, glyphs, cusps, aspect webs, accessible legend, leader arrows). Deps: `astrology/aspects`, `astrology/signs`, `./angle-labels`, `./aspect-web`, `./glyph-layout`, `./glyphs`, `./sheet-geometry`, `./wheel`.
 - `object-policy.ts` — Unified per-object visibility/aspect-participation policy (#585): every body (Pholus default off, #804) plus Vertex/Fortune/Spirit, keyed the same way everywhere, plus the Core/Traditional/All presets; `interpreted` flag (#721) feeds report exclusions, separate from display. Deps: none (plain data, documented against pre-#585 defaults it reproduces).
 - `overlay-options.ts` — Persisted overlay settings bridge (antiscia/declination/dial90/midpoint-tree). Deps: `store/ops` (JsonValue).
 - `sheet-geometry.ts` — Chart sheet layout authority (800px reference frame, linear scaling, per-ring planet bands). Deps: none (pure geometry).

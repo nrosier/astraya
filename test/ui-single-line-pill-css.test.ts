@@ -21,6 +21,22 @@ describe('single-line inputs are pills (#1600 WP7)', () => {
     expect(rule).toContain('min-height: 2.75rem;');
   });
 
+  it('the date and time pills have a minimum width that fits the date and the picker icon (#1653)', () => {
+    const rule =
+      /\.primitive-field input\.primitive-field-pill\[type='date'\],\s*\.primitive-field input\.primitive-field-pill\[type='time'\] \{([^}]*)\}/.exec(
+        css,
+      )?.[1];
+    expect(rule).toContain('min-inline-size: 11.25rem;');
+  });
+
+  it('the pill input rule keeps var(--space-4) left padding (#1653: width, not padding, fixes the icon)', () => {
+    const rule =
+      /\.primitive-field input\.primitive-field-pill:not\(\[type='checkbox'\]\):not\(\[type='radio'\]\) \{([^}]*)\}/.exec(
+        css,
+      )?.[1];
+    expect(rule).toContain('padding-inline: var(--space-4);');
+  });
+
   it('the select rule is a pill with var(--space-4) padding', () => {
     const rule = /\n\.primitive-field select \{([^}]*border-radius[^}]*)\}/.exec(css)?.[1];
     expect(rule).toContain('border-radius: var(--radius-full);');

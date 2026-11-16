@@ -10,6 +10,7 @@ import { aspectByKey } from '../src/astrology/aspects.js';
 import type { HousePositions } from '../src/ephemeris/types.js';
 import type { CrossRingAspects, WheelRingInput } from '../src/chart/multi-wheel.js';
 import { renderMultiWheelSvg } from '../src/chart/multi-wheel.js';
+import { ANGLE_LABEL } from '../src/chart/angle-labels.js';
 import { resolveRingBands, resolveSheetGeometry } from '../src/chart/sheet-geometry.js';
 
 function countClass(svg: string, className: string): number {
@@ -361,12 +362,24 @@ describe('renderMultiWheelSvg house structure', () => {
     const svg = renderMultiWheelSvg([
       { ...natalRing, houses: { ...NATAL_HOUSES, ascendant: 0.55, midheaven: 270.65 } },
     ]);
-    for (const label of ['ASC', 'DSC', 'MC', 'IC']) {
+    for (const label of ['AC', 'DC', 'MC', 'IC']) {
       expect(svg).toMatch(new RegExp(`class="chart-axis-label">${label}<`));
     }
     expect(countClass(svg, 'chart-axis-degree')).toBe(8);
     expect(svg).toContain(">33'<");
     expect(svg).toContain(">39'<");
+  });
+
+  it('labels every angle with two ASCII capitals and no alchemical symbol character (#1649)', () => {
+    const labels = Object.values(ANGLE_LABEL);
+    expect(labels).toEqual(['AC', 'DC', 'MC', 'IC']);
+    for (const label of labels) {
+      expect(label).toMatch(/^[A-Z]{2}$/);
+      for (const character of label) {
+        const code = character.codePointAt(0) ?? 0;
+        expect(code < 0x1f700 || code > 0x1f77f).toBe(true);
+      }
+    }
   });
 
   it("draws the axes from the true angles, so 'whole-sign' cusp snapping cannot move the horizon", () => {
