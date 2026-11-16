@@ -9,8 +9,10 @@ import { describe, expect, it } from 'vitest';
 
 const css = readFileSync(join(process.cwd(), 'src/ui/app.css'), 'utf-8');
 const rule = (selector: string): string => {
-  const escaped = selector.replace(/[.[\]()'=]/g, '\\$&');
-  return new RegExp(`\\n${escaped} \\{([^}]*)\\}`).exec(css)?.[1] ?? '';
+  const start = css.indexOf(`\n${selector} {`);
+  if (start === -1) return '';
+  const open = css.indexOf('{', start);
+  return css.slice(open + 1, css.indexOf('}', open));
 };
 
 describe('option card title and consequence on separate lines (#1600)', () => {
