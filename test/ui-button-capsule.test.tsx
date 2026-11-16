@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
  * The Button capsule shape (#1600): only small inline actions (matrix All/Clear/None, the transit
- * filter All/Clear, the seven-star preset) are capsules; menu and popover triggers keep the small radius.
+ * filter All/Clear, the seven-star preset) are capsules; menu and popover triggers are pills by CSS (#1650).
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { act } from 'react';
@@ -96,11 +96,14 @@ describe('capsule call sites', () => {
     expect(using.sort()).toEqual(EXPECTED_CAPSULE_FILES);
   });
 
-  it('never gives an Export or Techniques button the capsule shape', () => {
-    // Defaults left this list: the footer Defaults trigger is a capsule (#1600, owner answer A1, 2026-11-16).
-    for (const f of files) {
-      const blocks = f.source.match(/<Button\b[^>]*shape="capsule"[\s\S]*?<\/Button>/g) ?? [];
-      for (const block of blocks) expect(block).not.toMatch(/export|techniques/i);
+  it('gives the Export and Techniques triggers the pill radius by CSS (#1650, reverses A2 of #1600)', () => {
+    // The owner reversed A2 on 2026-11-16 (#1650 owner answers): menu and popover triggers (Export, Techniques,
+    // the person switcher) are pills. They take the full radius from app.css rather than the capsule class.
+    const css = readFileSync('src/ui/app.css', 'utf-8');
+    for (const selector of ['.chart-overlay-trigger', '.page-header-export-toggle', '.chart-pdf-link']) {
+      const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const rule = new RegExp(`(?:^|\\n)${escaped}\\s*\\{([^}]*)\\}`).exec(css);
+      expect(rule?.[1], selector).toMatch(/border-radius:\s*var\(--radius-full\);/);
     }
   });
 });
