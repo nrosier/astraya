@@ -8,6 +8,48 @@ feature and fixes is a minor release. See [docs/ops/RELEASING.md](docs/ops/RELEA
 
 ## [Unreleased]
 
+## [0.55.0] — 2026-11-16
+
+**A heliocentric chart, a user-defined ayanamsa, solar arcs in declination, an instrument bar with tone colours on the wheel and the Aspect matrix, a date stepper for each extra ring, and an almuten that accounts for detriment and fall. The settings drawer gets pill controls and a Defaults menu.**
+
+### Added
+
+- **Almuten with detriment, fall and mutual reception (#1609).** The almuten now subtracts detriment and fall, and there is none when no candidate scores above zero. The candidate table shows detriment, fall and mutual reception, and says so when there is no almuten.
+- **Heliocentric chart type (#1407).** The chart has no houses, and the chart sheet drops the rows that depend on the Ascendant.
+- **A user-defined ayanamsa (#1407),** entered as a reference date and the degrees at it.
+- **The Solar Arc screen can direct in declination (#1407),** and has a date stepper (#1400).
+- **Progressions contacts (#1407)** to the natal chart, the progressed chart or the transits.
+- **The basis line names the lunar node model (#1407)** on every calculated view.
+- **Four rings in all on the wheel, natal included (#1407),** each extra ring with its own stepper and a date in the URL in the Chart view (#1400). Playback is clamped at 60 steps per second, with the interval shown beside the date. A collapsible Transits explainer was added.
+- **Instrument bar on the natal wheel and the Aspect matrix (#1532).** A ring toggle and Hard, Soft and Minor pills, on the same selection in both places. A consultation preset sets the tone pills. Every aspect has one tone (hard, soft or minor) that colours the wheel chords, the matrix cells, the tables and the standalone SVG and PDF exports. Aspect and sign icons appear in the Aspects and Placements tables, and the colours were adjusted to meet WCAG AA contrast.
+- **Each chart page's explanation and the wheel usage line are one heading tooltip (#1407, #1532).**
+- **Transit contacts to the Ascendant and Midheaven (#1508).** They are drawn on the wheel and listed in the table and the CSV, the natal grid offers both angles, and the transiting grid offers 16 bodies. The aspects-shown filter applies to angle contacts and to ring-own chords.
+- **A redesigned Change filters dialog (#1508, #1544).** Five tabs, orb scale and minor aspects on the first screen, a visibility matrix with grouped rows and a sticky header, one-line summaries on Lilly preset cards, a customised count on the Orbs & aspects tab, and a footer with Save and Reset under a Defaults menu. Custom is a selectable preset that keeps your saved selection. Drawers with several rows become bottom sheets on phones.
+- **Pill controls (#1545)** for the chart type, the consultation preset, the aspect family, the cycle-search preset and bodies, and the PDF export preset. Each opens a card of options, and is 44 px tall on touch screens.
+- **Orb windows are labelled with their pass number (#1401).**
+- **Clicking a timing row pans the Gantt to its bar (#1442),** and the Techniques popover keeps the legend filter.
+- **Authenticator-app (TOTP) code engine (#1500).** The engine only; there is no sign-in change yet.
+
+### Changed
+
+- **Table headers and cells are aligned consistently (#1356, #1400, #1404):** dates and text left, numbers right, without the table band or the last-column separator.
+- **A compact text size (#1352)** is used wherever the interface had a hand-set 0.875rem.
+
+### Fixed
+
+- **The Davison time midpoint is the UT midpoint for both place methods (#1406),** and the note explains it.
+- **The Dutch tropical-zodiac text puts the vernal equinox at 0° Ram (#1592).**
+- **Dark text on orb-window bars in the dark theme (#1401).**
+- **The transits ring is filled with the decided colour (#1532),** the wheel with overlay rings is drawn by the same dial as the plain wheel, print chords keep black ink, and the conjunction is a hard aspect with its own icon.
+- **The transit orb field no longer covers the date stepper (#1615),** and the Overlay settings drawer follows the owner layout.
+- **Dutch labels:** Reset to Default is shortened to "Standaardwaarden" (#1508).
+- **The graphic ephemeris right-side symbols are easier to see (#1404).**
+- **The Life Events drawer fits its content, and is a bottom sheet on phones (#1506, #1439).**
+
+### Notes
+
+- No database migration and no new environment variables. The ephemeris files are unchanged (`npm run ephe:sync` reports no digest change).
+
 ## [0.54.0] — 2026-11-12
 
 **Search your stored charts by placement, a graphic ephemeris, life events with categories and CSV, a rectification that scores by lift, and coloured, cross-highlighted timing techniques. Solar-arc views now follow the person's zodiac setting, which fixes wrong sidereal positions.**
