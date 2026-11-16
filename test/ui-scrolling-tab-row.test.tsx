@@ -4,10 +4,21 @@
  * are hidden, pinned actions rendered outside the scroll viewport, and a vertical wheel turned into sideways
  * movement. jsdom does no layout, so the scroller's sizes are stubbed on the element prototype.
  */
+import { readFileSync } from 'node:fs';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ScrollingTabRow } from '../src/ui/ScrollingTabRow.js';
+
+/** The stylesheet with comments removed, so a rule is matched only by its selector and body. */
+const css = readFileSync('src/ui/app.css', 'utf-8').replace(/\/\*[\s\S]*?\*\//g, '');
+
+/** The body of the first rule whose selector list matches `selector` exactly. */
+function ruleBody(selector: string): string {
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = new RegExp(`(?:^|\\n)${escaped}\\s*\\{([^}]*)\\}`).exec(css);
+  return match?.[1] ?? '';
+}
 
 const SCROLL_WIDTH = 900;
 const CLIENT_WIDTH = 300;
@@ -71,6 +82,23 @@ describe('ScrollingTabRow', () => {
     const container = await mount();
     const toggle = container.querySelector('.tab-row__actions-toggle button');
     expect(toggle?.classList.contains('primitive-button-capsule')).toBe(true);
+  });
+
+  it('marks the open route link as selected, with the accent pill and the forced-colours outline (#1650)', async () => {
+    const container = await mount();
+    const current = container.querySelector('nav a[aria-current="page"]');
+    expect(current?.textContent).toBe('One');
+    expect(container.querySelector('nav a:not([aria-current])')?.textContent).toBe('Two');
+    const body = ruleBody(".tab-row__tabs > a[aria-current='page']");
+    expect(body).toMatch(/background:\s*var\(--accent\);/);
+    expect(body).toMatch(/outline:\s*2px solid var\(--fg\);/);
+  });
+
+  it('gives every tab and tab-row link the full pill radius, not the small one (#1650)', () => {
+    expect(ruleBody('.tab')).toMatch(/border-radius:\s*var\(--radius-full\);/);
+    expect(ruleBody('.tab.active,\n.tab.active:hover:not(:disabled)')).toMatch(/outline:\s*2px solid var\(--fg\);/);
+    expect(ruleBody('.tab-row__tabs > a')).toMatch(/border-radius:\s*var\(--radius-full\);/);
+    expect(ruleBody('.tab-row__tabs > a')).not.toMatch(/border-bottom/);
   });
 
   it('renders a labelled nav holding the caller’s links', async () => {
