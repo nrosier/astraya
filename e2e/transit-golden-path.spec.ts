@@ -124,6 +124,40 @@ test.describe('with the shared people (#799)', () => {
     expect(download.suggestedFilename()).toBe('albert-einstein-transit-contacts.csv');
   });
 
+  test('the filter is strict: only the selected bodies and their hard aspects stay on the wheel (#1641)', async () => {
+    test.setTimeout(60_000);
+
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).click();
+    await page.getByRole('tab', { name: 'Transits', exact: true }).click();
+    await expect(page.locator('div.chart-wheel svg')).toHaveCount(1);
+
+    await page.getByRole('button', { name: 'Change filters', exact: true }).click();
+    const transiting = page.getByRole('group', { name: 'Transiting planets', exact: true });
+    const natal = page.getByRole('group', { name: 'Natal points', exact: true });
+    await transiting.getByRole('button', { name: 'Clear', exact: true }).click();
+    await natal.getByRole('button', { name: 'Clear', exact: true }).click();
+    for (const name of ['Mars', 'Mercury']) await transiting.getByLabel(name, { exact: true }).check();
+    for (const name of ['Sun', 'Moon']) await natal.getByLabel(name, { exact: true }).check();
+    await page.getByRole('checkbox', { name: /^Soft/ }).uncheck();
+    await page.getByRole('checkbox', { name: /^Minor/ }).uncheck();
+    await page.getByRole('button', { name: 'Apply', exact: true }).click();
+
+    const bodies = async (ring: 0 | 1): Promise<string[]> => {
+      const stacks = await page.locator(`div.chart-wheel .chart-point[data-ring="${String(ring)}"]`).all();
+      const keys = await Promise.all(stacks.map((stack) => stack.getAttribute('data-body')));
+      return keys.map((key) => key ?? '').sort();
+    };
+    await expect.poll(() => bodies(0)).toEqual(['moon', 'sun']);
+    expect(await bodies(1)).toEqual(['mars', 'mercury']);
+
+    // The wheel's cross-ring lines match the Contacts table, and every one is a hard aspect between selected bodies.
+    const rows = page.getByRole('table', { name: 'Contacts' }).locator('tbody tr');
+    await expect(page.locator('div.chart-wheel .chart-aspect-link[data-ring-a="1"][data-ring-b="0"]')).toHaveCount(
+      await rows.count(),
+    );
+  });
+
   test('a person with an unknown birth time is told transits need one', async () => {
     await openSharedPerson(page, baseUrl, MARIC);
 
