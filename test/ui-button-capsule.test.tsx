@@ -60,7 +60,8 @@ describe('.primitive-button-capsule', () => {
   });
 });
 
-/** The inline actions (#1600 WP4) plus the Cancel, Apply and Save buttons of forms and drawers (#1600 WP7). */
+/** The inline actions (#1600 WP4) plus the Cancel, Apply and Save buttons of forms and drawers (#1600 WP7),
+ * and the Search events button of the Ephemeris research form (#1600 owner answer, 2026-11-16). */
 const EXPECTED_CAPSULE_FILES = [
   'AccountPreferencesNotices.tsx',
   'AdminPanel.tsx',
@@ -69,6 +70,7 @@ const EXPECTED_CAPSULE_FILES = [
   'CorpusCorrectionEditor.tsx',
   'CorpusOverridesPanel.tsx',
   'CorpusSubmissionsSection.tsx',
+  'EventSearchView.tsx',
   'ExtendedSettingsPanel.tsx',
   'FixedStarPicker.tsx',
   'LifeEventsDrawer.tsx',
