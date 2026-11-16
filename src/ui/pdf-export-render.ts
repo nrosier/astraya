@@ -321,10 +321,11 @@ export async function renderPdfPlan(plan: PdfPlan): Promise<{ blob: Blob; filena
         y,
         flowArea(doc),
       );
-      doc.setFillColor(...TINT);
-      doc.setDrawColor(...RULE);
       for (const segment of segments) {
+        // jsPDF starts a new page with the default fill, so the tint is set after each addPage, not once before the loop (#1648).
         if (segment.newPage) doc.addPage();
+        doc.setFillColor(...TINT);
+        doc.setDrawColor(...RULE);
         y = segment.top;
         doc.roundedRect(SIDE_MARGIN, y - 4, contentWidth, segment.height, 2, 2, 'FD');
         y += 1;
