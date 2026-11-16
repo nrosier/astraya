@@ -44,6 +44,9 @@ import { setAccountPreferences, useAccountPreferences } from './account-preferen
 import { bodyDisplayName } from './astro-names.messages.js';
 import { useMessages } from './messages.js';
 import { Checkbox } from './primitives/Checkbox.js';
+import { bodyGlyph } from '../chart/glyphs.js';
+import { symbolCell } from './ChartViewPlacements.js';
+import { useSymbolClass } from './symbol-setting.js';
 import { FilterSummary } from './primitives/FilterSummary.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { Button } from './primitives/Button.js';
@@ -129,6 +132,7 @@ export function TransitFilterButton({
   locale,
 }: Omit<Props, 'onChange' | 'shown' | 'total'>) {
   const t = useMessages(transitFilterPanelMessages);
+  const [symbolClass] = useSymbolClass();
 
   // The dialog's own draft (#489): every control inside edits this, not the live filter.
   const [draft, setDraft] = useState<TransitFilter>(filter);
@@ -212,7 +216,14 @@ export function TransitFilterButton({
           {keys.map((key) => (
             <Checkbox
               key={key}
-              label={bodyDisplayName(key, locale)}
+              label={
+                <>
+                  {bodyGlyph(key) !== undefined && (
+                    <span className="transit-filter-symbol">{symbolCell(key, '', symbolClass)}</span>
+                  )}
+                  {bodyDisplayName(key, locale)}
+                </>
+              }
               checked={draft[field].includes(key)}
               onChange={() => {
                 setDraft({ ...draft, [field]: toggled(draft[field], key) });

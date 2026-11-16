@@ -8215,6 +8215,11 @@ button.primitive-disclosure-trigger:hover:not(:disabled) {
   white-space: nowrap;
 }
 
+/* A body's symbol before its name in the filter card (#1642): the Placements table symbol, then a gap. */
+.transit-filter-symbol {
+  margin-right: var(--space-2);
+}
+
 .transit-filter-divider {
   clear: both;
   margin: var(--space-2) 0;
