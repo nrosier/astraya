@@ -51,6 +51,7 @@
  */
 import type { Aspect } from '../astrology/aspects.js';
 import { SIGNS, degreesInSign } from '../astrology/signs.js';
+import { ANGLE_LABEL } from './angle-labels.js';
 import type { BodyId, Degrees, HousePositions } from '../ephemeris/types.js';
 import {
   renderAspectWebSvg,
@@ -324,10 +325,10 @@ function renderBaseHousesSvg(
   }
 
   const axes = [
-    { label: 'ASC', longitude: houses.ascendant },
-    { label: 'DSC', longitude: houses.ascendant + 180 },
-    { label: 'MC', longitude: houses.midheaven },
-    { label: 'IC', longitude: houses.midheaven + 180 },
+    { label: ANGLE_LABEL.asc, longitude: houses.ascendant },
+    { label: ANGLE_LABEL.dsc, longitude: houses.ascendant + 180 },
+    { label: ANGLE_LABEL.mc, longitude: houses.midheaven },
+    { label: ANGLE_LABEL.ic, longitude: houses.midheaven + 180 },
   ];
   const degreeRadius = zodiacOuter - geometry.axisDegreeFontSize * 0.85;
   for (const axis of axes) {
