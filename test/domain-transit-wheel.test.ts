@@ -10,6 +10,8 @@ import {
   type TransitRuleContext,
 } from '../src/astrology/transit-importance.js';
 import { BODIES, bodyById } from '../src/astrology/bodies.js';
+import { filterAspectsForDisplay } from '../src/chart/aspect-web.js';
+import { renderMultiWheelSvg, type CrossRingAspects, type WheelRingInput } from '../src/chart/multi-wheel.js';
 import { chartWheelRing } from '../src/domain/chart-tables.js';
 import { computeTransit, type TransitData } from '../src/domain/transit.js';
 import { transitWheelInput } from '../src/domain/transit-wheel.js';
@@ -105,5 +107,34 @@ describe('transitWheelInput strict body filter (#1641)', () => {
     const { natalRing, transitRing } = transitWheelInput(d, transitPreset('all', RULES), LABELS);
     expect(natalRing.bodies).toEqual(chartWheelRing(d.natal, LABELS.natal).bodies);
     expect(transitRing.bodies).toEqual(chartWheelRing(d.transit, LABELS.transit).bodies);
+  });
+
+  // The pre-#1643 wheel: each ring limited by aspect type only, with no body filter. The All preset
+  // selects every body, so today's wheel must render byte-for-byte the same as that one (#1641).
+  it('the All preset draws the same wheel as before #1643, with every aspect and with hard aspects only', async () => {
+    const d = await data();
+    const referenceRing = (ring: WheelRingInput, filter: TransitFilter): WheelRingInput => ({
+      ...ring,
+      aspects: filterAspectsForDisplay(ring.aspects ?? [], { visibleAspectKeys: filter.aspects }),
+    });
+    for (const aspects of [transitPreset('all', RULES).aspects, [...HARD_ASPECT_KEYS]]) {
+      const filter: TransitFilter = { ...transitPreset('all', RULES), aspects: [...aspects] };
+      const before = [
+        { ...referenceRing(chartWheelRing(d.natal, LABELS.natal), filter), role: 'natal' as const },
+        { ...referenceRing(chartWheelRing(d.transit, LABELS.transit), filter), role: 'transit' as const },
+      ];
+      const { natalRing, transitRing } = transitWheelInput(d, filter, LABELS);
+      // Cross-ring lines are built the same way on both sides, so only the ring change is compared.
+      const crossAspects: CrossRingAspects[] = [
+        {
+          innerRingIndex: 0,
+          outerRingIndex: 1,
+          aspects: filterAspectsForDisplay(d.contacts, { visibleAspectKeys: filter.aspects }),
+        },
+      ];
+      const svg = renderMultiWheelSvg([natalRing, transitRing], crossAspects);
+      expect(svg).toContain('<svg');
+      expect(svg).toBe(renderMultiWheelSvg(before, crossAspects));
+    }
   });
 });
