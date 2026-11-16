@@ -203,6 +203,40 @@ describe('buildPdfPlan', () => {
     expect(positions?.body.every((row) => row.every((cell) => typeof cell === 'string'))).toBe(true);
   }, 30_000);
 
+  it('labels the angles AC and MC in the Positions table and the wheel AC, DC, MC, IC, in en and nl (#1649)', async () => {
+    const provider = await getEngine();
+    const selection: PdfSelection = {
+      personId: ADA.id,
+      ...EMPTY_SELECTION,
+      charts: [{ type: 'natal', wheel: true, tables: ['positions'] }],
+    };
+    for (const locale of ['en', 'nl'] as const) {
+      const context: PdfPlanContext = {
+        person: ADA,
+        provider,
+        settings: DEFAULT_EXTENDED_SETTINGS,
+        rulership: DEFAULT_RULERSHIP_CHOICE,
+        locale,
+        corpusFetch,
+      };
+      const plan = await buildPdfPlan(selection, context, chartViewMessages[locale], pdfExportMessages[locale]);
+      expect(plan.errors).toHaveLength(0);
+      const [section] = plan.sections;
+      if (section?.kind !== 'chart') throw new Error('expected a chart section');
+      const markup = section.svg?.markup ?? '';
+      for (const label of ['AC', 'DC', 'MC', 'IC']) expect(markup).toContain(`>${label}<`);
+      expect(markup).not.toContain('>ASC<');
+      expect(markup).not.toContain('>DSC<');
+      const positions = section.tables.find((t) => t.caption === chartViewMessages[locale].positionsCaption);
+      if (positions === undefined) throw new Error('expected a Positions table');
+      const glyphColumn = positions.head.indexOf(chartViewMessages[locale].symbolLabel);
+      expect(glyphColumn).toBeGreaterThanOrEqual(0);
+      const glyphs = positions.body.map((row) => row[glyphColumn]);
+      expect(glyphs).toContain('AC');
+      expect(glyphs).toContain('MC');
+    }
+  }, 60_000);
+
   it('starts the almuten scope note on its own line, with the name line kept whole, in en and nl (#1646)', async () => {
     const provider = await getEngine();
     const selection: PdfSelection = {
