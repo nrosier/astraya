@@ -12,7 +12,9 @@ import { Button } from '../src/ui/primitives/Button.js';
 import { Checkbox } from '../src/ui/primitives/Checkbox.js';
 import { DateField } from '../src/ui/primitives/DateField.js';
 import { NumberField } from '../src/ui/primitives/NumberField.js';
+import { PasswordField } from '../src/ui/primitives/PasswordField.js';
 import { Select } from '../src/ui/primitives/Select.js';
+import { StagedDialog } from '../src/ui/primitives/StagedDialog.js';
 import { TextAreaField } from '../src/ui/primitives/TextAreaField.js';
 import { TextField } from '../src/ui/primitives/TextField.js';
 import { TimeField } from '../src/ui/primitives/TimeField.js';
@@ -255,5 +257,61 @@ describe('the form-only primitives (#508)', () => {
       root?.render(<Checkbox label="Hard" checked={false} onChange={noop} />);
     });
     expect(input?.indeterminate).toBe(false);
+  });
+});
+
+describe('icon-only circle buttons (#1650)', () => {
+  it('gives the StagedDialog close (×) button the circle class and its aria-label', () => {
+    const returnFocusTo = { current: null };
+    const host = mount(
+      <StagedDialog
+        open
+        heading="Edit"
+        closeLabel="Close without applying"
+        onDiscard={noop}
+        returnFocusTo={returnFocusTo}
+        footer={null}
+      >
+        <p>body</p>
+      </StagedDialog>,
+    );
+    const close = host.querySelector('button[aria-label="Close without applying"]');
+    expect(close).toBeInstanceOf(HTMLButtonElement);
+    expect(close?.classList.contains('primitive-button-circle')).toBe(true);
+  });
+
+  it('gives the NumberField minus and plus steppers the circle class and their aria-labels', () => {
+    const host = mount(
+      <NumberField
+        label="Age"
+        value="5"
+        onChange={noop}
+        step={1}
+        decreaseLabel="Decrease age"
+        increaseLabel="Increase age"
+      />,
+    );
+    for (const name of ['Decrease age', 'Increase age']) {
+      const button = host.querySelector(`button[aria-label="${name}"]`);
+      expect(button).toBeInstanceOf(HTMLButtonElement);
+      expect(button?.classList.contains('primitive-button-circle')).toBe(true);
+    }
+  });
+
+  it('gives the PasswordField show/hide toggle the circle class and its aria-label', () => {
+    const host = mount(
+      <PasswordField
+        label="Password"
+        value=""
+        onChange={noop}
+        autoComplete="current-password"
+        revealable
+        showLabel="Show password"
+        hideLabel="Hide password"
+      />,
+    );
+    const toggle = host.querySelector('button[aria-label="Show password"]');
+    expect(toggle).toBeInstanceOf(HTMLButtonElement);
+    expect(toggle?.classList.contains('primitive-button-circle')).toBe(true);
   });
 });
