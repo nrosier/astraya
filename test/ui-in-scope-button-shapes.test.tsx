@@ -17,8 +17,8 @@ import { timingTimelineViewMessages } from '../src/ui/TimingTimelineView.message
 import { transitFilterPanelMessages } from '../src/ui/TransitFilterPanel.messages.js';
 
 /**
- * pill: a capsule or form-action button, radius 999px from its class or the base button rule.
- * circle: an icon-only control, radius 999px from the circle class.
+ * pill: a capsule, form-action or circle button (owner decision on #1650, 2026-11-17: the circle rows count), radius 999px from its class or the base button rule.
+ * circle: an icon-only control, radius 999px from the circle class, with equal width and height.
  * compact: an orb preset, asserted by its compact height (2.25rem), not by a radius.
  * now: a Now button, which carries date-animation-now, with its radius from the base button rule.
  */
@@ -396,12 +396,24 @@ function checkRow(row: ButtonRow): string[] {
   }
 
   if (row.kind === 'pill') {
-    if (!classes.includes('primitive-button-capsule') && !classes.includes('primitive-button-form-action')) {
-      problems.push(`${id}: carries ${classes.join(' ')}, neither the capsule nor the form-action class`);
+    if (
+      !classes.includes('primitive-button-capsule') &&
+      !classes.includes('primitive-button-form-action') &&
+      !classes.includes('primitive-button-circle')
+    ) {
+      problems.push(`${id}: carries ${classes.join(' ')}, none of the capsule, form-action or circle class`);
     }
   } else if (row.kind === 'circle') {
     if (!classes.includes('primitive-button-circle'))
       problems.push(`${id}: carries ${classes.join(' ')}, not the circle class`);
+    const width = classDeclaration(['primitive-button-circle'], 'width');
+    const height = classDeclaration(['primitive-button-circle'], 'height');
+    const resolvedWidth = width === undefined ? undefined : resolve(width);
+    const resolvedHeight = height === undefined ? undefined : resolve(height);
+    if (resolvedWidth === undefined || resolvedWidth !== resolvedHeight)
+      problems.push(
+        `${id}: circle width is ${String(resolvedWidth)} and height is ${String(resolvedHeight)}, expected equal`,
+      );
   } else if (row.kind === 'compact') {
     if (!classes.includes('primitive-button-compact'))
       problems.push(`${id}: carries ${classes.join(' ')}, not the compact class`);
