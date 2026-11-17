@@ -20,8 +20,8 @@ const PRIMITIVES = 'src/ui/primitives';
  * outside the G-05 scope, so it is recorded here rather than silently left in.
  */
 const ALLOWED_BARE_BUTTONS: Readonly<Record<string, number>> = {
-  // Nav-tab and nav-family items (disabled states) plus the narrow-viewport menu toggle: bespoke `app-nav-*` classes.
-  'src/ui/AppNav.tsx': 3,
+  // The disabled nav-tab entry helper (#1697, `disabledEntry`) plus the narrow-viewport menu toggle: bespoke `app-nav-*` classes.
+  'src/ui/AppNav.tsx': 2,
   // Corner-pill language switch: `corner-pill language-toggle`, not a shared action.
   'src/ui/LanguageToggle.tsx': 1,
   // Page-header export dropdown toggle and its item buttons: bespoke page-header classes, and a nav-style dropdown
