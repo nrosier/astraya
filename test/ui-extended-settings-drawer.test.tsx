@@ -345,6 +345,55 @@ describe('the staged formula draft (#824, D-824b)', () => {
   });
 });
 
+describe('the form-action class on the form buttons (#1650-9b, owner answer 3)', () => {
+  const FORM_ACTION = 'primitive-button-form-action';
+
+  /**
+   * The source of the `<Button` that owns the first occurrence of `marker`, from its opener to the marker. Fails if
+   * the marker is absent or if that span is not one button. Used for buttons rendered outside the drawer.
+   */
+  function buttonTagOf(relativePath: string, marker: string): string {
+    const source = readFileSync(join(process.cwd(), relativePath), 'utf-8');
+    const at = source.indexOf(marker);
+    expect(at, `${marker} not found in ${relativePath}`).toBeGreaterThan(-1);
+    const opener = [...source.slice(0, at).matchAll(/<Button\b/g)].at(-1);
+    expect(opener, `no <Button opens before ${marker}`).toBeDefined();
+    const tag = source.slice(opener?.index ?? 0, at + marker.length);
+    expect(tag.match(/<Button\b/g)?.length, `${marker} is not inside a single button`).toBe(1);
+    return tag;
+  }
+
+  it('gives Add formula point the form-action class', async () => {
+    const { container, root } = await mount(SAVED, vi.fn());
+    openDrawer(container);
+    expect(buttonNamed(container, 'Add formula point')?.classList.contains(FORM_ACTION)).toBe(true);
+    unmount(container, root);
+  });
+
+  it('does not give the Tight, Standard and Wide orb presets the form-action class', async () => {
+    const { container, root } = await mount(undefined, vi.fn());
+    openDrawer(container);
+    const chips = Array.from(container.querySelectorAll<HTMLButtonElement>('.settings-card-orb-chips button'));
+    expect(chips.map((chip) => chip.textContent.trim())).toEqual(['Tight -50%', 'Standard 0%', 'Wide +40%']);
+    for (const chip of chips) {
+      expect(chip.classList.contains(FORM_ACTION), chip.textContent).toBe(false);
+    }
+    unmount(container, root);
+  });
+
+  it('gives Add condition, Run search and Remove condition the form-action class, in their source', () => {
+    expect(buttonTagOf('src/ui/ChartSearchPanel.tsx', '{t.addCondition}')).toContain(`className="${FORM_ACTION}"`);
+    expect(buttonTagOf('src/ui/ChartSearchPanel.tsx', '{t.run}')).toContain(`className="${FORM_ACTION}"`);
+    expect(buttonTagOf('src/ui/ChartSearchConditionRow.tsx', 'data-remove={position}')).toContain(
+      `className="${FORM_ACTION}"`,
+    );
+  });
+
+  it('gives Add a person the form-action class, in its source', () => {
+    expect(buttonTagOf('src/ui/People.tsx', '{t.addPerson}')).toContain(`className="${FORM_ACTION}"`);
+  });
+});
+
 describe('the drawer width (#824, D-824c)', () => {
   it('caps the drawer at 42rem through the --drawer-max-width token, and is full width below it', () => {
     const css = readFileSync(join(process.cwd(), 'src/ui/app.css'), 'utf-8');

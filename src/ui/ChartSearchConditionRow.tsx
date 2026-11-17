@@ -186,6 +186,7 @@ export function ChartSearchConditionRow({
       <Button
         variant="quiet"
         size="compact"
+        className="primitive-button-form-action"
         disabled={disabled || !canRemove}
         aria-label={t.removeCondition(n)}
         data-remove={position}
