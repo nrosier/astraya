@@ -643,3 +643,29 @@ describe('focus and Escape (#824, box G)', () => {
     unmount(container, root);
   });
 });
+
+describe('the drawer deep link (#1667)', () => {
+  const CHART_DRAWER_HASH = '#/people/p-aaaaaaaaaaaaaaaa/charts/natal/wheel?drawer=extended-settings';
+
+  afterEach(() => {
+    window.history.replaceState(null, '', '#/');
+  });
+
+  it('opens the drawer on load when the chart hash requests drawer=extended-settings', async () => {
+    window.history.replaceState(null, '', CHART_DRAWER_HASH);
+    const { container, root } = await mount(undefined, vi.fn());
+    expect(drawer(container).hasAttribute('open')).toBe(true);
+    expect(window.location.hash).toBe(CHART_DRAWER_HASH);
+    unmount(container, root);
+  });
+
+  it('removes drawer from the hash when the drawer closes, keeping the path', async () => {
+    window.history.replaceState(null, '', CHART_DRAWER_HASH);
+    const { container, root } = await mount(undefined, vi.fn());
+    expect(drawer(container).hasAttribute('open')).toBe(true);
+    clickButton(container, 'Cancel');
+    expect(drawer(container).hasAttribute('open')).toBe(false);
+    expect(window.location.hash).toBe('#/people/p-aaaaaaaaaaaaaaaa/charts/natal/wheel');
+    unmount(container, root);
+  });
+});

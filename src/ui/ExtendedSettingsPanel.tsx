@@ -20,7 +20,7 @@
 /**
  * @module ExtendedSettingsPanel
  * @purpose Renders the chart's "Extended settings" drawer: five tabbed categories (profile and frame, bodies, orbs and aspects, special points, display and glyphs), the object visibility matrix, the custom formula points, the chosen fixed stars (#803), the planetary rulers and the symbol device preference, with a pinned Apply/Cancel footer.
- * @conventions Calculation/display settings, rulers, formula points and chosen fixed stars are edited in a local draft and only committed via "Apply and redraw" (every change needs a real recompute); the symbols are a device preference previewed live and put back by Cancel. The drawer is `StagedDialog placement="right"`. Tabs use the shared `Tabs` primitive, with a labelled Select below 40rem. Text comes from co-located `ExtendedSettingsPanel.messages.ts` via `useMessages()`.
+ * @conventions Calculation/display settings, rulers, formula points and chosen fixed stars are edited in a local draft and only committed via "Apply and redraw" (every change needs a real recompute); the symbols are a device preference previewed live and put back by Cancel. The drawer is `StagedDialog placement="right"`. Deep link (#1667): `?drawer=extended-settings` on the chart route opens it on load and closing removes `drawer` from the URL, via `useDrawerDeepLink`; Preferences never requests it. Tabs use the shared `Tabs` primitive, with a labelled Select below 40rem. Text comes from co-located `ExtendedSettingsPanel.messages.ts` via `useMessages()`.
  * @exports ExtendedSettingsPanel
  */
 import { Checkbox } from './primitives/Checkbox.js';
@@ -89,6 +89,7 @@ import { changedSettings, sameSettings } from './extended-settings-summary.js';
 import { orbRulesDraftFrom, orbRulesFromDraft, withOrbRules, type OrbRulesDraft } from './orb-rules-draft.js';
 import { OrbRulesFields } from './OrbRulesFields.js';
 import { useExclusiveOpen } from './use-exclusive-open.js';
+import { revealHiddenTrigger, useDrawerDeepLink } from './use-drawer-deep-link.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { Button } from './primitives/Button.js';
@@ -519,14 +520,26 @@ export function ExtendedSettingsPanel({
     setAtOpen(undefined);
   };
 
+  // The drawer deep link (#1667): `?drawer=extended-settings` on the chart route opens it on the default tab on load, and closing removes the parameter.
+  const deepLink = useDrawerDeepLink('extended-settings');
+  const openOnDeepLink = useEffectEvent((): void => {
+    revealHiddenTrigger(triggerRef.current);
+    openCard();
+  });
+  useEffect(() => {
+    if (deepLink.requested) openOnDeepLink();
+  }, [deepLink.requested]);
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    if (wasOpen.current && !open && deepLink.requested) deepLink.clear();
+    wasOpen.current = open;
+  }, [open, deepLink]);
+
   // An outside request (#815) opens the drawer on the Special points tab, where the formula points now live (#1544). When the trigger is hidden inside the
   // collapsed "Chart actions" panel (40rem and below), that panel is opened first, so the dialog has a box to show in.
   const handledRequest = useRef(openRequest);
   const openOnSpecial = useEffectEvent((): void => {
-    const trigger = triggerRef.current;
-    if (trigger !== null && trigger.getClientRects().length === 0) {
-      trigger.closest<HTMLElement>('.tab-row')?.querySelector<HTMLElement>('[data-tab-row-toggle]')?.click();
-    }
+    revealHiddenTrigger(triggerRef.current);
     openCard();
     setCategory('special');
   });
