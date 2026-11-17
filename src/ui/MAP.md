@@ -227,7 +227,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `relationship-summary-pdf-text.ts` — Flattens relationship summary to PDF-friendly paragraphs. Deps: `domain/relationship-themes`, `domain/house-overlays`, `domain/synastry`.
 - `report-provenance.ts` — Formats report paragraph provenance ("why this text?"). Deps: `astrology/bodies`, `astrology/aspects`, `astrology/signs`, `interpretation/report`.
 - `result-basis-label.ts` — Composes saved-interpretation basis phrase (kind + placement) and the short type label for the Past tab. Deps: `interpretation/result-basis`, `./placement-label`.
-- `route.ts` — Single source of truth for all hash routes (`export-builder` carries `person`, `section`, `view`). Deps: `domain/id`, `./chart-sections`.
+- `route.ts` — Single source of truth for all hash routes (`export-builder` carries `person`, `section`, `view`; chart, birth-record and astrocartography carry `drawer` #1667). Deps: `domain/id`, `./chart-sections`.
 - `rulership-setting.ts` — Default rulership (modern/traditional/both, an account preference since #1066): what new people start from and person-less screens (Horary, Composite) show (#806). Deps: `./account-preferences`, `astrology/rulership`.
 - `saved-time.ts` — Formats stored interpretation UTC instant as local written-out time. Deps: `interpretation/schema` (Locale type).
 - `session-context.tsx` — Owns account + store lifecycle + auth + sync-engine + anonymous-adoption prompt; binds the account preferences to every active store and keeps them out of adoption (#1066); binds sync to the signed-in account and stops it before logout (#1378). Deps: `store/store`, `store/account`, `sync/auth-client`, `sync/engine`, `./oidc-pkce`, `./account-preferences`.

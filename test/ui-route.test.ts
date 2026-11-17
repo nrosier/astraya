@@ -10,6 +10,7 @@ import { newId } from '../src/domain/id.js';
 import { CHART_TYPES, CHART_VIEWS } from '../src/ui/chart-sections.js';
 import {
   chartHref,
+  DRAWER_KEYS,
   PREFERENCES_SECTIONS,
   parseRoute,
   personHref,
@@ -346,6 +347,84 @@ describe('setupToken', () => {
 
   it('returns null when the query has no token', () => {
     expect(setupToken('#/setup?foo=bar')).toBeNull();
+  });
+});
+
+describe('drawer deep links (#1667)', () => {
+  /** The routes that host a drawer: the chart (Overlay and Extended settings), birth record (Life events), astrocartography (Map settings). */
+  type DrawerHost = Extract<Route, { readonly kind: 'chart' | 'person' | 'astrocartography' }>;
+  const HOSTS: readonly DrawerHost[] = [
+    { kind: 'chart', personId: ID, chartType: 'natal', view: 'wheel' },
+    { kind: 'chart', personId: ID, chartType: 'draconic', view: 'aspects', date: '2026-03-01' },
+    { kind: 'person', personId: ID },
+    { kind: 'astrocartography', personId: ID },
+  ];
+
+  it('has exactly the four drawer keys of the owner decision', () => {
+    expect(DRAWER_KEYS).toEqual(['overlays', 'extended-settings', 'life-events', 'map-settings']);
+  });
+
+  it('round-trips every host route with each allowed drawer key', () => {
+    for (const host of HOSTS) {
+      for (const drawer of DRAWER_KEYS) {
+        const route: Route = { ...host, drawer };
+        expect(parseRoute(routeHref(route)), routeHref(route)).toEqual(route);
+      }
+    }
+  });
+
+  it('writes the drawer as a drawer query value on the canonical hash', () => {
+    expect(routeHref({ kind: 'chart', personId: ID, chartType: 'natal', view: 'wheel', drawer: 'overlays' })).toBe(
+      `#/people/${ID}/charts/natal/wheel?drawer=overlays`,
+    );
+    expect(routeHref({ kind: 'person', personId: ID, drawer: 'life-events' })).toBe(
+      `#/people/${ID}/birth-record?drawer=life-events`,
+    );
+    expect(routeHref({ kind: 'astrocartography', personId: ID, drawer: 'map-settings' })).toBe(
+      `#/people/${ID}/location/astrocartography?drawer=map-settings`,
+    );
+  });
+
+  it('keeps the drawer alongside the other query values of a chart', () => {
+    const route: Route = {
+      kind: 'chart',
+      personId: ID,
+      chartType: 'natal',
+      view: 'wheel',
+      date: '2026-03-01',
+      drawer: 'extended-settings',
+    };
+    expect(routeHref(route)).toBe(`#/people/${ID}/charts/natal/wheel?date=2026-03-01&drawer=extended-settings`);
+    expect(parseRoute(routeHref(route))).toEqual(route);
+  });
+
+  it('leaves a route without a drawer parameter unchanged', () => {
+    expect(routeHref({ kind: 'person', personId: ID })).toBe(`#/people/${ID}/birth-record`);
+    expect(parseRoute(`#/people/${ID}/birth-record`)).toEqual({ kind: 'person', personId: ID });
+    expect(parseRoute(`#/people/${ID}/charts/natal/wheel`)).toEqual({
+      kind: 'chart',
+      personId: ID,
+      chartType: 'natal',
+      view: 'wheel',
+    });
+  });
+
+  it('drops an unknown drawer key, so the page opens with no drawer and no error', () => {
+    expect(parseRoute(`#/people/${ID}/charts/natal/wheel?drawer=nope`)).toEqual({
+      kind: 'chart',
+      personId: ID,
+      chartType: 'natal',
+      view: 'wheel',
+    });
+    expect(parseRoute(`#/people/${ID}/birth-record?drawer=`)).toEqual({ kind: 'person', personId: ID });
+    expect(parseRoute(`#/people/${ID}/location/astrocartography?drawer=Overlays`)).toEqual({
+      kind: 'astrocartography',
+      personId: ID,
+    });
+  });
+
+  it('does not read a drawer on a route that hosts none', () => {
+    expect(parseRoute(`#/people/${ID}/timing/transits?drawer=overlays`)).toEqual({ kind: 'transit', personId: ID });
   });
 });
 
