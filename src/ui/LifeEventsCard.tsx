@@ -75,6 +75,7 @@ export function LifeEventsCard({ personId, personName, events, unreadable }: Lif
           <div className="life-events-footer">
             {events.length > 0 && <span className="muted">{t.showing(events.length, LIFE_EVENTS_MAX)}</span>}
             <Button
+              className="primitive-button-form-action"
               variant="primary"
               onClick={(event) => {
                 opener.current = event.currentTarget;

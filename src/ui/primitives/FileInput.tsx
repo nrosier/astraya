@@ -24,6 +24,8 @@ export interface FileInputProps {
   readonly disabledReason?: string | undefined;
   /** The page's main action for its group (#966): the primary button style instead of the quiet default. */
   readonly primary?: boolean | undefined;
+  /** An extra class for the visible button (for a control's own placement or identity class, #1650). */
+  readonly className?: string | undefined;
 }
 
 export function FileInput({
@@ -33,8 +35,10 @@ export function FileInput({
   disabled,
   disabledReason,
   primary = false,
+  className,
 }: FileInputProps): React.JSX.Element {
   const inputRef = useRef<HTMLInputElement>(null);
+  const buttonClass = [primary ? 'primitive-button-primary' : undefined, className].filter(Boolean).join(' ');
   return (
     <>
       <input
@@ -51,7 +55,7 @@ export function FileInput({
       />
       <button
         type="button"
-        className={primary ? 'primitive-button-primary' : undefined}
+        className={buttonClass === '' ? undefined : buttonClass}
         disabled={disabled}
         aria-label={
           disabled === true && disabledReason !== undefined ? `${buttonLabel} — ${disabledReason}` : undefined

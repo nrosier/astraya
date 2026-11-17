@@ -284,8 +284,14 @@ export function LifeEventsDrawer({
         footer={
           <>
             <div className="settings-card-footer-group">
-              <FileInput buttonLabel={t.importButton} accept=".csv,text/csv" onChange={importFile} />
+              <FileInput
+                buttonLabel={t.importButton}
+                accept=".csv,text/csv"
+                className="primitive-button-form-action"
+                onChange={importFile}
+              />
               <Button
+                className="primitive-button-form-action"
                 onClick={() => {
                   downloadText('life-events.csv', serialiseLifeEvents(draft), 'text/csv;charset=utf-8');
                 }}
@@ -295,6 +301,7 @@ export function LifeEventsDrawer({
               </Button>
               <Button
                 ref={clearButton}
+                className="primitive-button-form-action"
                 variant="danger"
                 disabled={draft.length === 0 || saving}
                 onClick={() => {
@@ -351,6 +358,7 @@ export function LifeEventsDrawer({
             {view.direction === 'asc' ? t.sortAscending : t.sortDescending}
           </Button>
           <Button
+            className="primitive-button-form-action"
             variant="primary"
             disabled={atCap || editBlocks}
             aria-describedby={atCap || editBlocks ? statusId : undefined}
@@ -504,7 +512,7 @@ export function LifeEventsDrawer({
               setQuick({ ...quick, label });
             }}
           />
-          <Button variant="primary" type="submit" disabled={atCap}>
+          <Button className="primitive-button-form-action" variant="primary" type="submit" disabled={atCap}>
             {t.quickAddButton}
           </Button>
         </form>
@@ -604,10 +612,10 @@ function EditRow({ editing, errors, names, onChange, onSave, onCancel }: EditRow
             }}
           />
           <div className="life-events-edit-actions">
-            <Button variant="primary" size="compact" onClick={onSave}>
+            <Button className="primitive-button-form-action" variant="primary" size="compact" onClick={onSave}>
               {t.rowSave}
             </Button>
-            <Button size="compact" onClick={onCancel}>
+            <Button className="primitive-button-form-action" size="compact" onClick={onCancel}>
               {t.rowCancel}
             </Button>
           </div>
