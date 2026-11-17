@@ -192,6 +192,12 @@ describe('PersonForm card layout (#795)', () => {
     expect(card('danger').querySelector('button.danger')?.textContent).toBe(t.deleteButton('Ada Lovelace'));
   });
 
+  it('gives the delete button the 2.75rem form-action class and keeps the danger variant (#1650-7b)', () => {
+    const button = card('danger').querySelector('button.danger');
+    expect(button?.classList.contains('primitive-button-form-action')).toBe(true);
+    expect(button?.classList.contains('danger')).toBe(true);
+  });
+
   it('shows an unknown birth time as unset, not as the stored 00:00 (#795, owner 2026-10-30)', async () => {
     await act(async () => {
       await store.mutate([{ entity: 'person', entityId: 'ada', field: 'timeAccuracy', value: 'unknown' }]);
