@@ -101,6 +101,13 @@ describe('ScrollingTabRow', () => {
     expect(ruleBody('.tab-row__tabs > a')).not.toMatch(/border-bottom/);
   });
 
+  it('sizes every tab to the 2.25rem compact height, not the content height (#1650)', () => {
+    const tab = ruleBody('.tab');
+    expect(tab).toMatch(/height:\s*var\(--control-height-compact\);/);
+    expect(tab).toMatch(/padding:\s*0 var\(--space-4\);/);
+    expect(css).toMatch(/--control-height-compact:\s*2\.25rem;/);
+  });
+
   it('renders a labelled nav holding the caller’s links', async () => {
     const container = await mount();
     const nav = container.querySelector('nav');
