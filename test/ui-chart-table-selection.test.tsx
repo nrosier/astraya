@@ -324,8 +324,8 @@ describe('a table row selects on the wheel (#418)', () => {
     await open(container, 'positions');
     const button = showButton(container, 'Show Capricorn on the wheel');
     expect(button?.textContent).toBe('Show sign');
-    // Rendered through the primitive Button (#870): its quiet variant class, type button, no stray classes.
-    expect(button?.className).toBe('quiet');
+    // Rendered through the primitive Button (#870): its quiet variant class and, since #1650, the compact capsule pill.
+    expect(button?.className).toBe('quiet primitive-button-compact primitive-button-capsule');
     expect(button?.type).toBe('button');
     await press(button);
 

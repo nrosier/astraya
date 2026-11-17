@@ -272,10 +272,10 @@ export function SortableTable<T>({
           <div className="data-table-actions">
             {downloadFilename !== undefined && (
               <>
-                <Button variant="quiet" onClick={copy}>
+                <Button variant="quiet" size="compact" shape="capsule" onClick={copy}>
                   {copied ? t.copied : t.copy}
                 </Button>
-                <Button variant="quiet" onClick={download}>
+                <Button variant="quiet" size="compact" shape="capsule" onClick={download}>
                   {t.downloadCsv}
                 </Button>
               </>
