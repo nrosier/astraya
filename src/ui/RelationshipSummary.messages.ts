@@ -71,14 +71,14 @@ const nl: typeof en = {
     commitment: 'Toewijding en structuur',
     growth: 'Groei',
     identity: 'Identiteit',
-    angles: 'Contacten met de Ascendant en het Middenhemelpunt',
+    angles: 'Contacten met de Ascendant en het Hemelmidden',
     other: 'Overige contacten',
   } satisfies Record<RelationshipTheme, string>,
   seenFrom: (name: string) => `${name}’s`,
   contactSentence: (bodyA, aspect, bodyB, orb) => `${bodyA} ${aspect} ${bodyB} (orb ${orb})`,
   angleContactSentence: (name, body, aspect, angleName, otherName) =>
     `${name}’s ${body} ${aspect} ${otherName}’s ${angleName}`,
-  angleNames: { asc: 'Ascendant', mc: 'Middenhemelpunt' },
+  angleNames: { asc: 'Ascendant', mc: 'Hemelmidden' },
   houseOverlaySentence: (name, body, otherName, house, theme) =>
     `${name}’s ${body} valt in het ${house} huis van ${otherName} (${theme}).`,
   houseThemes: [

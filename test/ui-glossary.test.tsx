@@ -449,7 +449,7 @@ const proseTerms: readonly {
   {
     view: 'PrimaryDirectionsView',
     term: 'midheaven',
-    visible: { en: 'Midheaven', nl: 'Medium Coeli' },
+    visible: { en: 'Midheaven', nl: 'Hemelmidden' },
     node: () => <PrimaryDirectionsView personId="p1" />,
   },
 ];

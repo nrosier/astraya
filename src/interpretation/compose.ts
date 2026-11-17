@@ -218,7 +218,7 @@ function ordinal(n: number, locale: Locale): string {
 /** The angle an astrocartography line is drawn for, as a name (`astro-line:venus:MC` is Venus on the Midheaven line). */
 const ACG_ANGLE_NAMES: Readonly<Record<Locale, Readonly<Record<AcgAngle, string>>>> = {
   en: { AC: 'Ascendant', DC: 'Descendant', MC: 'Midheaven', IC: 'Imum Coeli' },
-  nl: { AC: 'Ascendant', DC: 'Descendant', MC: 'Medium Coeli', IC: 'Imum Coeli' },
+  nl: { AC: 'Ascendant', DC: 'Descendant', MC: 'Hemelmidden', IC: 'Imum Coeli' },
 };
 
 function capitalize(text: string): string {

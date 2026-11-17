@@ -79,8 +79,8 @@ const nl: typeof en = {
   mapCardLabel: 'Wereldkaart',
   hint: 'Waar op de wereld de hoeken (MC/IC/AC/DC) van elk hemellichaam nu op de horizon of meridiaan vallen, plus optionele Local Space-lijnen (azimutvectoren vanaf de geboorteplaats). Het lijntype wordt zowel door kleur als streeppatroon getoond, zodat het ook zonder kleur leesbaar blijft.',
 
-  mc: 'MC (Midheaven)',
-  ic: 'IC (Nadir)',
+  mc: 'MC (Hemelmidden)',
+  ic: 'IC (Imum Coeli)',
   ac: 'AC (Ascendant)',
   dc: 'DC (Descendant)',
   localSpaceLegend: 'Local Space',
