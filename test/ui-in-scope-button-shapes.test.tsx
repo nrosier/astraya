@@ -1,7 +1,7 @@
 /**
  * @module test/ui-in-scope-button-shapes
  * @purpose One list test for the in-scope buttons of #1650: each button is one row, grouped by surface, asserted for the class it carries on origin/main and its pill, circle or compact height from app.css.
- * @conventions Reads the source files and app.css the way the other button tests do, and takes labels from the en messages modules. Rows for a button that renders only after an action (opening a drawer or dialog, editing a row, a condition, the window toggle) are asserted from the source element that renders it, and the row's note says so. Owner decision on #1650 (2026-11-17, "Assert the real shape"): the test asserts the class each button carries now, with no source change. The orb presets and the Now buttons do not carry a capsule class, so the box stays open.
+ * @conventions Reads the source files and app.css the way the other button tests do, and takes labels from the en messages modules. Rows for a button that renders only after an action (opening a drawer or dialog, editing a row, a condition, the window toggle) are asserted from the source element that renders it, and the row's note says so. Owner decision on #1650 (2026-11-17, "Add capsule class in source (Recommended)"): the three orb presets and the two Now buttons carry shape="capsule", so their rows also assert the capsule class and its 999px radius.
  * @exports none
  */
 import { readFileSync } from 'node:fs';
@@ -36,6 +36,8 @@ interface ButtonRow {
   readonly wiredBy?: { readonly file: string; readonly anchor: string };
   /** Set when the button only renders after an action; the row is then asserted from source. */
   readonly note?: string;
+  /** Set when the button carries shape="capsule" in source; the row then asserts the capsule class and its 999px radius. */
+  readonly capsule?: true;
 }
 
 const DRAWER_NOTE =
@@ -181,6 +183,7 @@ const ROWS: readonly ButtonRow[] = [
     file: EXTENDED,
     anchor: '{t.orbScaleChips[segment.value]}',
     kind: 'compact',
+    capsule: true,
     note: `${EXTENDED_NOTE} One Button renders all three presets from ORB_SCALE_SEGMENTS.`,
   },
   {
@@ -189,6 +192,7 @@ const ROWS: readonly ButtonRow[] = [
     file: EXTENDED,
     anchor: '{t.orbScaleChips[segment.value]}',
     kind: 'compact',
+    capsule: true,
     note: `${EXTENDED_NOTE} One Button renders all three presets from ORB_SCALE_SEGMENTS.`,
   },
   {
@@ -197,6 +201,7 @@ const ROWS: readonly ButtonRow[] = [
     file: EXTENDED,
     anchor: '{t.orbScaleChips[segment.value]}',
     kind: 'compact',
+    capsule: true,
     note: `${EXTENDED_NOTE} One Button renders all three presets from ORB_SCALE_SEGMENTS.`,
   },
   // Extended settings: the eight Special points steppers (four NumberFields). The station window k pair renders only when the window is on.
@@ -241,6 +246,7 @@ const ROWS: readonly ButtonRow[] = [
     file: 'src/ui/TimingTimelineView.tsx',
     anchor: '{t.nowLabel}',
     kind: 'now',
+    capsule: true,
   },
   // Transits, Progressions and Solar Arc: the Now button and the step buttons of the date animation bar.
   {
@@ -249,6 +255,7 @@ const ROWS: readonly ButtonRow[] = [
     file: DATE_BAR,
     anchor: '{t.now}',
     kind: 'now',
+    capsule: true,
     note: DATE_NOTE,
   },
   {
@@ -401,15 +408,19 @@ function checkRow(row: ButtonRow): string[] {
   } else if (!classes.includes('date-animation-now')) {
     problems.push(`${id}: carries ${classes.join(' ')}, not date-animation-now`);
   }
+  if (row.capsule === true && !classes.includes('primitive-button-capsule')) {
+    problems.push(`${id}: carries ${classes.join(' ')}, not the capsule class`);
+  }
 
   if (row.kind === 'compact') {
     const height = classDeclaration(['primitive-button-compact'], 'min-height');
     const resolved = height === undefined ? undefined : resolve(height);
     if (resolved !== '2.25rem') problems.push(`${id}: compact min-height is ${String(resolved)}, expected 2.25rem`);
-  } else {
+  }
+  if (row.kind !== 'compact' || row.capsule === true) {
     // `now` takes its radius from the base button rule: the .date-animation-bar Now rule applies only inside the bar.
     const radius =
-      row.kind === 'now'
+      row.kind === 'now' && row.capsule !== true
         ? baseButtonDeclaration('border-radius')
         : (classDeclaration(classes, 'border-radius') ?? baseButtonDeclaration('border-radius'));
     const resolved = radius === undefined ? undefined : resolve(radius);

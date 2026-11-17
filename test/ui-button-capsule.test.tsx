@@ -94,6 +94,7 @@ const EXPECTED_CAPSULE_FILES = [
   'CorpusCorrectionEditor.tsx',
   'CorpusOverridesPanel.tsx',
   'CorpusSubmissionsSection.tsx',
+  'DateAnimationBar.tsx',
   'EventSearchView.tsx',
   'ExtendedSettingsPanel.tsx',
   'FixedStarPicker.tsx',
@@ -108,6 +109,7 @@ const EXPECTED_CAPSULE_FILES = [
   'ScrollingTabRow.tsx',
   'SortableTable.tsx',
   'SuggestCorrectionDialog.tsx',
+  'TimingTimelineView.tsx',
   'TransitFilterPanel.tsx',
   'table-selection.tsx',
 ];

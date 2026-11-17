@@ -1212,6 +1212,7 @@ export function ExtendedSettingsPanel({
                         key={segment.value}
                         variant="quiet"
                         size="compact"
+                        shape="capsule"
                         aria-pressed={draft.orbScalePercent === segment.percent}
                         onClick={() => {
                           replaceDraft({ ...withoutOrbRules(effective), orbScalePercent: segment.percent });
