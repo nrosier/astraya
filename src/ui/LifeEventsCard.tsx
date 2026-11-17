@@ -5,14 +5,15 @@
 /**
  * @module LifeEventsCard
  * @purpose Compact summary of a person's life events: a Manage (n) button, a read-only preview of the most recent few, the count against the 100-event cap, and the button that opens the management drawer.
- * @conventions Holds no input fields and writes nothing itself; the drawer writes through the person operation log; the Manage (n) button in the header and the primary button open the drawer, and focus returns to the button that opened it; the preview shows the latest 5 events by date, newest first; an unreadable stored list shows a warning and no buttons, so it is never overwritten; empty state is one line and the same button.
+ * @conventions Holds no input fields and writes nothing itself; the drawer writes through the person operation log; the Manage (n) button in the header and the primary button open the drawer, and focus returns to the button that opened it (a `drawer=life-events` deep link (#1667) opens it with the header Manage (n) button as the focus target, and closing removes `drawer` from the URL via `useDrawerDeepLink`); the preview shows the latest 5 events by date, newest first; an unreadable stored list shows a warning and no buttons, so it is never overwritten; empty state is one line and the same button.
  * @exports LifeEventsCard, LIFE_EVENTS_PREVIEW_MAX
  */
-import { useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { LIFE_EVENTS_MAX, sortLifeEvents, type LifeEvent } from '../domain/life-events.js';
 import { LifeEventsDrawer } from './LifeEventsDrawer.js';
 import { lifeEventsCardMessages } from './LifeEventsCard.messages.js';
 import { useMessages } from './messages.js';
+import { useDrawerDeepLink } from './use-drawer-deep-link.js';
 import { personFormMessages } from './PersonForm.messages.js';
 import { Button } from './primitives/Button.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
@@ -34,7 +35,20 @@ export function LifeEventsCard({ personId, personName, events, unreadable }: Lif
   const headingId = useId();
   // Whichever control opened the drawer gets focus back.
   const opener = useRef<HTMLElement | null>(null);
+  const manageButton = useRef<HTMLButtonElement | null>(null);
   const [open, setOpen] = useState(false);
+  // The drawer deep link (#1667): `?drawer=life-events` on the birth record opens it on load; an unreadable list opens nothing.
+  const deepLink = useDrawerDeepLink('life-events');
+  useEffect(() => {
+    if (!deepLink.requested || unreadable) return;
+    opener.current = manageButton.current;
+    setOpen(true);
+  }, [deepLink.requested, unreadable]);
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    if (wasOpen.current && !open && deepLink.requested) deepLink.clear();
+    wasOpen.current = open;
+  }, [open, deepLink]);
   const preview = sortLifeEvents(events).slice(-LIFE_EVENTS_PREVIEW_MAX).reverse();
 
   return (
@@ -51,6 +65,7 @@ export function LifeEventsCard({ personId, personName, events, unreadable }: Lif
           <div className="life-events-card-header">
             <h3 id={headingId}>{tPerson.lifeEventsHeading}</h3>
             <Button
+              ref={manageButton}
               size="compact"
               onClick={(event) => {
                 opener.current = event.currentTarget;
