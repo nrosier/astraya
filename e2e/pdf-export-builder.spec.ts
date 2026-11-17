@@ -200,7 +200,10 @@ test('the Documents page keeps its starting point and Build PDF in the header, w
   const summary = await page.getByRole('complementary', { name: 'Export summary' }).boundingBox();
   expect(selection && summary && summary.x > selection.x).toBe(true);
   // The advanced groups start collapsed (#916), and the Charts section has no checkbox of its own.
-  await expect(page.getByRole('button', { name: /^Charts/ })).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.getByRole('main').getByRole('button', { name: /^Charts/ })).toHaveAttribute(
+    'aria-expanded',
+    'false',
+  );
   await expect(page.getByRole('checkbox', { name: 'Charts', exact: true })).toHaveCount(0);
   // Consultation notes are off, and planned until #919.
   await expect(page.getByRole('checkbox', { name: 'Include consultation notes', exact: true })).toBeDisabled();
@@ -287,7 +290,10 @@ for (const viewport of [
       expect(share).toBeLessThan(0.63);
     }
     // The advanced groups start collapsed at every size.
-    await expect(page.getByRole('button', { name: /^Charts/ })).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.getByRole('main').getByRole('button', { name: /^Charts/ })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
   });
 }
 
