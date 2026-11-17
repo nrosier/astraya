@@ -1,10 +1,10 @@
 /**
  * @module ChartOverlaySettingsPanel
  * @purpose Staged Overlay settings for configuring additional rings in the canonical chart wheel, opened from the chart row's Overlays trigger as a modal right slide-over drawer (#817, #824, #1080).
- * @conventions Owns only a draft that exists while the drawer is open (`StagedDialog placement="right"`); callers receive one confirmed settings object through `onApply`, so recalculation occurs once and Cancel, Escape and × retain the visible chart. The drawer is modal like Extended settings (#1080): focus is trapped inside, the page behind is inert, and Escape, Cancel, × and Apply return focus to the trigger (on a phone, to the Chart actions toggle, via ScrollingTabRow).
+ * @conventions Deep link (#1667): `?drawer=overlays` on the wheel opens the drawer on load and closing removes `drawer` from the URL, via `useDrawerDeepLink`. Owns only a draft that exists while the drawer is open (`StagedDialog placement="right"`); callers receive one confirmed settings object through `onApply`, so recalculation occurs once and Cancel, Escape and × retain the visible chart. The drawer is modal like Extended settings (#1080): focus is trapped inside, the page behind is inert, and Escape, Cancel, × and Apply return focus to the trigger (on a phone, to the Chart actions toggle, via ScrollingTabRow).
  * @exports ChartOverlaySettingsPanel, ChartOverlaySettings, ChartOverlaySource, ChartOverlayReturnKind, DEFAULT_CHART_OVERLAY_SETTINGS, orderedChartOverlaySources, MAX_OVERLAY_RINGS
  */
-import { useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { StagedDialog } from './primitives/StagedDialog.js';
 import { DateField } from './primitives/DateField.js';
 import { NumberField } from './primitives/NumberField.js';
@@ -14,6 +14,7 @@ import { chartOverlaySettingsPanelMessages } from './ChartOverlaySettingsPanel.m
 import { todayInputValue } from './format.js';
 import { useMessages } from './messages.js';
 import { Button } from './primitives/Button.js';
+import { revealHiddenTrigger, useDrawerDeepLink } from './use-drawer-deep-link.js';
 
 export type ChartOverlaySource =
   'natal' | 'draconic' | 'transit' | 'progressed' | 'directed' | 'solarArc' | 'return' | 'relocated';
@@ -161,6 +162,20 @@ export function ChartOverlaySettingsPanel({
   const close = (): void => {
     setOpen(false);
   };
+  // The drawer deep link (#1667): `?drawer=overlays` on the wheel opens it on load and closing removes the parameter.
+  const deepLink = useDrawerDeepLink('overlays');
+  const openOnDeepLink = useEffectEvent((): void => {
+    revealHiddenTrigger(triggerRef.current);
+    openDrawer();
+  });
+  useEffect(() => {
+    if (deepLink.requested) openOnDeepLink();
+  }, [deepLink.requested]);
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    if (wasOpen.current && !open && deepLink.requested) deepLink.clear();
+    wasOpen.current = open;
+  }, [open, deepLink]);
 
   return (
     <div className="chart-overlay-settings">
