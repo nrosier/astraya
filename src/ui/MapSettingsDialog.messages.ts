@@ -47,7 +47,7 @@ const nl: typeof en = {
   localSpaceLegend: 'Local Space',
   showLocalSpaceLines: 'Toon Local Space-lijnen voor de aangevinkte hemellichamen',
   relocationLegend: 'Relocatie (optioneel)',
-  relocationHint: 'Berekent de Ascendant/Midheaven voor een andere plaats, zonder een lijn te wijzigen.',
+  relocationHint: 'Berekent de Ascendant/Hemelmidden voor een andere plaats, zonder een lijn te wijzigen.',
   latitudeLabel: 'Breedtegraad',
   longitudeLabel: 'Lengtegraad',
   errorRange: (min: string, max: string) => `Voer een getal in van ${min} tot ${max}.`,

@@ -406,7 +406,7 @@ const proseTerms: readonly {
     // The rectification intro is a heading tooltip (owner review, #1445), so the prose that names the terms is the method body.
     view: 'RectificationView',
     term: 'midheaven',
-    visible: { en: 'Midheaven', nl: 'Midheaven' },
+    visible: { en: 'Midheaven', nl: 'Hemelmidden' },
     node: () => <RectificationView />,
   },
   {

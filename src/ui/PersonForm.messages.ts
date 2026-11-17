@@ -196,7 +196,7 @@ const nl: typeof en = {
   timeUnavailableReason:
     'De tijd wordt niet gebruikt zolang die op Onbekend staat. Kies hierboven een andere optie om een tijd in te vullen.',
   unknownTimeHint:
-    'Zonder geboortetijd kunnen huizen, de Ascendant en de Midheaven helemaal niet worden berekend — ze zijn niet bij benadering, ze zijn onbepaald. Planeetposities blijven wel betekenisvol, en de Maan verplaatst ongeveer 13° per dag, dus haar teken kan onzeker zijn.',
+    'Zonder geboortetijd kunnen huizen, de Ascendant en het Hemelmidden helemaal niet worden berekend — ze zijn niet bij benadering, ze zijn onbepaald. Planeetposities blijven wel betekenisvol, en de Maan verplaatst ongeveer 13° per dag, dus haar teken kan onzeker zijn.',
 
   saving: 'Opslaan…',
   saveButton: 'Wijzigingen opslaan',
