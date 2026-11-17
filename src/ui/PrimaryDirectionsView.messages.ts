@@ -122,7 +122,7 @@ const nl: typeof en = {
   inMundoMethod: 'In mundo (werkelijke breedte)',
   significatorsPickerLabel: 'Significatoren',
   promissorsPickerLabel: 'Promissors',
-  angleLabels: { asc: 'Ascendant', mc: 'Medium Coeli', dsc: 'Descendant', ic: 'Imum Coeli' },
+  angleLabels: { asc: 'Ascendant', mc: 'Hemelmidden', dsc: 'Descendant', ic: 'Imum Coeli' },
   naibodKey: 'Naibod (0°59′08″ per jaar)',
   ptolemyKey: 'Ptolemaeus (1° per jaar)',
   calculating: 'Berekenen…',

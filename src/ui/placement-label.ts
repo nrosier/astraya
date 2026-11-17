@@ -88,7 +88,7 @@ const CATEGORY_LABELS: Readonly<Record<Locale, Readonly<Record<CorpusCategory, s
 
 const ANGLE_NAMES: Readonly<Record<Locale, Readonly<Record<string, string>>>> = {
   en: { AC: 'Ascendant', DC: 'Descendant', MC: 'Midheaven', IC: 'Imum Coeli' },
-  nl: { AC: 'Ascendant', DC: 'Descendant', MC: 'Medium Coeli', IC: 'Imum Coeli' },
+  nl: { AC: 'Ascendant', DC: 'Descendant', MC: 'Hemelmidden', IC: 'Imum Coeli' },
 };
 
 export function categoryLabel(category: CorpusCategory, locale: Locale): string {

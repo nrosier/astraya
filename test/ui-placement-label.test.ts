@@ -110,7 +110,7 @@ describe('labelForKey, Dutch (#428)', () => {
     expect(nl('dignity-state:venus:detriment')).toBe('Venus in detriment');
     expect(nl('dignity-state:saturn:fall')).toBe('Saturnus in val');
     expect(nl('profected-house:7')).toBe('Geprofecteerd 7e huis');
-    expect(nl('astro-line:moon:MC')).toBe('Maan op de Medium Coeli-lijn');
+    expect(nl('astro-line:moon:MC')).toBe('Maan op de Hemelmidden-lijn');
     expect(nl('pattern:bowl')).toBe('Horoscoopfiguur: bowl');
   });
 });
