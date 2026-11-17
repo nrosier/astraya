@@ -172,3 +172,29 @@ describe('Map settings drawer height (#1449)', () => {
     expect(rule?.[1]).toContain('max-height: calc(100dvh - 2 * var(--space-8));');
   });
 });
+
+describe('Map settings drawer deep link (#1667)', () => {
+  const MAP_DRAWER_HASH = '#/people/p-aaaaaaaaaaaaaaaa/location/astrocartography?drawer=map-settings';
+
+  afterEach(() => {
+    window.history.replaceState(null, '', '#/');
+  });
+
+  it('opens the Map settings drawer on load when the astrocartography hash requests drawer=map-settings', () => {
+    window.history.replaceState(null, '', MAP_DRAWER_HASH);
+    render(vi.fn());
+    expect(isOpen()).toBe(true);
+    expect(window.location.hash).toBe(MAP_DRAWER_HASH);
+  });
+
+  it('removes drawer from the hash when the drawer closes, keeping the path', () => {
+    window.history.replaceState(null, '', MAP_DRAWER_HASH);
+    render(vi.fn());
+    expect(isOpen()).toBe(true);
+    act(() => {
+      buttonWhere((button) => button.textContent === t.cancel, t.cancel).click();
+    });
+    expect(isOpen()).toBe(false);
+    expect(window.location.hash).toBe('#/people/p-aaaaaaaaaaaaaaaa/location/astrocartography');
+  });
+});

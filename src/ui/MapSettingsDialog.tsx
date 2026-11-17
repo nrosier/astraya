@@ -6,10 +6,10 @@
 /**
  * @module ui/MapSettingsDialog
  * @purpose Edits the map's settings as a draft inside a StagedDialog and hands the validated whole to the caller on Apply, so one commit triggers exactly one recalculation.
- * @conventions The draft is reset from the applied settings every time the dialog opens; Apply is disabled while nothing differs or the relocation is invalid; there is no nested "Extended" disclosure — additional bodies are a visible group in the same scrolling form as the primary ones.
+ * @conventions The draft is reset from the applied settings every time the dialog opens; Apply is disabled while nothing differs or the relocation is invalid; there is no nested "Extended" disclosure — additional bodies are a visible group in the same scrolling form as the primary ones. Deep link (#1667): `?drawer=map-settings` on the astrocartography route opens the drawer on load, and closing removes `drawer` from the URL, via `useDrawerDeepLink`.
  * @exports MapSettingsDialog
  */
-import { useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { EXTENDED_ACG_BODY_IDS, TRADITIONAL_ACG_BODY_IDS } from '../domain/astrocartography.js';
 import type { BodyId } from '../ephemeris/types.js';
 import { bodyDisplayName } from './astro-names.messages.js';
@@ -30,6 +30,7 @@ import { Checkbox } from './primitives/Checkbox.js';
 import { NumberField } from './primitives/NumberField.js';
 import { StagedDialog } from './primitives/StagedDialog.js';
 import { Button } from './primitives/Button.js';
+import { useDrawerDeepLink } from './use-drawer-deep-link.js';
 
 /** The map's applied basis as a read-only badge (#978): what is drawn, never a control. Placed on the map surface. */
 export function MapBasisBadge({ settings }: { readonly settings: MapSettings }): React.JSX.Element {
@@ -67,6 +68,24 @@ export function MapSettingsDialog({
   const invalid = errors.latitude !== undefined || errors.longitude !== undefined;
   const dirty = !sameMapSettings(draft, applied);
 
+  const openDrawer = (): void => {
+    setDraft(applied);
+    setOpen(true);
+  };
+  // The drawer deep link (#1667): `?drawer=map-settings` opens it on load and closing removes the parameter.
+  const deepLink = useDrawerDeepLink('map-settings');
+  const openOnDeepLink = useEffectEvent((): void => {
+    openDrawer();
+  });
+  useEffect(() => {
+    if (deepLink.requested) openOnDeepLink();
+  }, [deepLink.requested]);
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    if (wasOpen.current && !open && deepLink.requested) deepLink.clear();
+    wasOpen.current = open;
+  }, [open, deepLink]);
+
   const discard = (): void => {
     setOpen(false);
   };
@@ -92,16 +111,7 @@ export function MapSettingsDialog({
 
   return (
     <>
-      <Button
-        type="button"
-        ref={triggerRef}
-        variant="quiet"
-        aria-haspopup="dialog"
-        onClick={() => {
-          setDraft(applied);
-          setOpen(true);
-        }}
-      >
+      <Button type="button" ref={triggerRef} variant="quiet" aria-haspopup="dialog" onClick={openDrawer}>
         {t.trigger}
       </Button>
 
