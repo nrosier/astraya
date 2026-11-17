@@ -1754,7 +1754,11 @@ function FormulaPointsSection({
             onShown(value === 'show');
           }}
         />
-        <Button onClick={onAdd} disabled={name.trim() === '' || formula.trim() === ''}>
+        <Button
+          className="primitive-button-form-action"
+          onClick={onAdd}
+          disabled={name.trim() === '' || formula.trim() === ''}
+        >
           {t.formulaAdd}
         </Button>
       </div>

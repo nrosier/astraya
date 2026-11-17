@@ -135,7 +135,7 @@ export function ChartSearchPanel(): React.JSX.Element {
       )}
 
       <div className="add-row" ref={addButton}>
-        <Button variant="quiet" disabled={!writable || atCap} onClick={add}>
+        <Button variant="quiet" className="primitive-button-form-action" disabled={!writable || atCap} onClick={add}>
           {t.addCondition}
         </Button>
         {atCap ? (
@@ -159,6 +159,7 @@ export function ChartSearchPanel(): React.JSX.Element {
       <div className="tool-actions">
         <Button
           variant="primary"
+          className="primitive-button-form-action"
           disabled={!writable || running || count === 0 || asOfInvalid}
           busy={running}
           busyLabel={t.searching}
