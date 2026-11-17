@@ -63,12 +63,9 @@ function PersonMenu({
   route,
   dropdown,
   onNavigate,
-  history,
 }: {
   readonly personId: string;
   readonly route: Route;
-  /** True on a global tool page, where the person is only the way back, not the subject (docs/ui/UI-UX_GUIDELINES.md §2). */
-  readonly history: boolean;
   readonly dropdown: ExclusiveOpen<string>;
   readonly onNavigate: () => void;
 }): React.JSX.Element {
@@ -112,7 +109,6 @@ function PersonMenu({
   const name = person?.displayName ?? '';
   return (
     <>
-      {person !== undefined && history && <p className="app-nav-menu-heading app-nav-history">{t.returnToLabel}</p>}
       {person !== undefined && (
         <PersonSwitcher
           personId={personId}
@@ -344,13 +340,7 @@ export function AppNav({ route }: { route: Route }): React.JSX.Element {
       </button>
       <nav id="app-nav" className={`app-nav${menuOpen ? ' open' : ''}`} aria-label={t.mainNavAriaLabel}>
         {personId !== undefined && store !== undefined && (
-          <PersonMenu
-            personId={personId}
-            route={route}
-            dropdown={dropdown}
-            onNavigate={closeAll}
-            history={routePersonId === undefined}
-          />
+          <PersonMenu personId={personId} route={route} dropdown={dropdown} onNavigate={closeAll} />
         )}
         {/* One entry (#882): opens the first tool; the other tools are tabs on the page (`SectionNav`). */}
         <a
