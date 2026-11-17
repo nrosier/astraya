@@ -10006,6 +10006,11 @@ a.quiet,
   margin-bottom: var(--space-2);
 }
 
+/* Add new event keeps its 2.75rem form-action height instead of stretching to the standard-height Sort button in its row (#1650). */
+.life-events-toolbar > button.primitive-button-form-action {
+  align-self: center;
+}
+
 .life-events-hint {
   min-height: 1.5em;
   margin: 0;
