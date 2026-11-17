@@ -6682,6 +6682,12 @@ svg text.chart-symbol-text-unicode {
   white-space: nowrap;
 }
 
+/* A form action in a settings footer takes the form-action height (#1650); other footer buttons keep the standard height. */
+.settings-card-footer-group button.primitive-button-form-action {
+  height: max(2.75rem, var(--target-min));
+  min-height: 0;
+}
+
 /* The Defaults menu (#1544): the button keeps the footer's control height; its menu opens upward from the footer, like the profile popover. */
 .settings-card-defaults {
   position: relative;
@@ -7528,6 +7534,13 @@ button.primitive-button-circle {
 .primitive-button-form-action,
 button.primitive-button-form-action {
   min-height: 2.75rem;
+}
+
+/* A quiet, danger or primary form action keeps the form-action height over the standard control height (#1650). */
+.primitive-button-form-action.quiet,
+.primitive-button-form-action.danger,
+.primitive-button-form-action.primitive-button-primary {
+  min-height: max(2.75rem, var(--target-min));
 }
 
 /* A touch target (#1073): on a coarse pointer the pills and form action buttons keep the 44px floor, as selects do. */
