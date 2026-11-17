@@ -287,6 +287,7 @@ export function DateAnimationBar({
         )}
         <Button
           className="date-animation-now"
+          shape="capsule"
           disabled={disabled}
           onClick={() => {
             onDateChange(todayInputValue());

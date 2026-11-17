@@ -321,6 +321,7 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
         />
         <Button
           className="date-animation-now"
+          shape="capsule"
           onClick={() => {
             setAsOf(todayInputValue());
           }}
