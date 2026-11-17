@@ -70,7 +70,7 @@ test('a gated chart-type tab renders as a genuinely disabled control (#234)', as
   await expect(page.getByRole('heading', { name: 'New person' })).toBeVisible();
 
   // No birth data has been entered yet, so every tab but Birth record is gated.
-  await expect(page.getByRole('main').getByRole('button', { name: /^Charts/ })).toBeDisabled();
+  await expect(page.getByRole('banner').getByRole('button', { name: /^Charts/ })).toBeDisabled();
 
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
   expect(results.violations).toEqual([]);
