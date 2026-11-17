@@ -36,6 +36,13 @@ describe('form-action buttons are 2.75rem (#1650)', () => {
     );
   });
 
+  it('Add new event in the Life events toolbar keeps the 2.75rem form-action height instead of stretching to its row (#1650)', () => {
+    expect(ruleBody('.life-events-toolbar > button.primitive-button-form-action')).toContain('align-self: center;');
+    expect(ruleBody('.primitive-button-form-action,\nbutton.primitive-button-form-action')).toContain(
+      'min-height: 2.75rem;',
+    );
+  });
+
   it('the form-action footer rule is declared after the generic footer rule so it wins at equal specificity', () => {
     const generic = css.indexOf('.settings-card-footer-group button {');
     const formAction = css.indexOf('.settings-card-footer-group button.primitive-button-form-action {');
