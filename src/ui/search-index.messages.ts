@@ -12,7 +12,7 @@
  */
 import type { ChartType, ChartViewKind } from './chart-sections.js';
 import type { FeatureKey } from './feature-registry.js';
-import type { PreferencesSection } from './route.js';
+import type { DrawerKey, PreferencesSection } from './route.js';
 
 const en = {
   breadcrumbSeparator: ' › ',
@@ -128,6 +128,18 @@ const en = {
     astrology: 'House system, zodiac, orbs and rulers for new charts.',
     data: 'Export, restore and check your data.',
   } satisfies Record<PreferencesSection, string>,
+  drawerKeywords: {
+    overlays: ['overlay settings', 'overlays', 'rings', 'extra rings', 'orb limits'],
+    'extended-settings': ['extended settings', 'house system', 'zodiac', 'calculation profile', 'advanced settings'],
+    'life-events': ['life events', 'manage life events', 'events', 'csv', 'import'],
+    'map-settings': ['map settings', 'map basis', 'latitude', 'longitude', 'local space'],
+  } satisfies Record<DrawerKey, readonly string[]>,
+  drawerDescriptions: {
+    overlays: 'Additional rings, their order and orb limits for the chart wheel.',
+    'extended-settings': 'House system, zodiac, ayanamsa and display options for this person’s charts.',
+    'life-events': 'Add, edit and import dated life events for this person.',
+    'map-settings': 'The map basis and the latitude and longitude of the map.',
+  } satisfies Record<DrawerKey, string>,
 };
 
 const nl: typeof en = {
@@ -267,6 +279,18 @@ const nl: typeof en = {
     astrology: 'Huizensysteem, dierenriem, orbs en heersers voor nieuwe horoscopen.',
     data: 'Exporteer, herstel en controleer je gegevens.',
   } satisfies Record<PreferencesSection, string>,
+  drawerKeywords: {
+    overlays: ['overlayinstellingen', 'overlays', 'ringen', 'extra ringen', 'orbgrenzen'],
+    'extended-settings': ['uitgebreide instellingen', 'huizensysteem', 'dierenriem', 'rekenprofiel', 'geavanceerd'],
+    'life-events': ['levensgebeurtenissen', 'levensgebeurtenissen beheren', 'gebeurtenissen', 'csv', 'importeren'],
+    'map-settings': ['kaartinstellingen', 'kaartbasis', 'breedtegraad', 'lengtegraad', 'lokale ruimte'],
+  } satisfies Record<DrawerKey, readonly string[]>,
+  drawerDescriptions: {
+    overlays: 'Extra ringen, hun volgorde en orbgrenzen voor het horoscoopwiel.',
+    'extended-settings': 'Huizensysteem, dierenriem, ayanamsa en weergave voor de horoscopen van deze persoon.',
+    'life-events': 'Gedateerde levensgebeurtenissen van deze persoon toevoegen, bewerken en importeren.',
+    'map-settings': 'De kaartbasis en de breedte- en lengtegraad van de kaart.',
+  } satisfies Record<DrawerKey, string>,
 };
 
 export const searchIndexMessages = { en, nl };
