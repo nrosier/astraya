@@ -171,8 +171,8 @@ describe('the person sections on a route with no person (#914)', () => {
     await mount(parseRoute('#/documents'));
     expect(linkNamed('Overview')?.getAttribute('href')).toBe('#/people/p-abcdefghijklmnop/overview');
     expect(linkNamed('PDF')?.getAttribute('aria-current')).toBe('page');
-    // The person is the way back here, not the subject, so the "return to" heading shows (as on tool pages).
-    expect(box().querySelector('nav#app-nav .app-nav-history')).not.toBeNull();
+    // The sidebar is the same everywhere (#1696): no "Return to" heading, even though a person is shown.
+    expect(box().querySelector('nav#app-nav .app-nav-history')).toBeNull();
   });
 
   it('shows no person sections on the Documents route when no person was viewed', async () => {
@@ -416,5 +416,35 @@ describe('the sidebar on every route (#965)', () => {
     await mount(parseRoute(hash));
     expect(sidebarPairs(), hash).toEqual(EXPECTED_NO_PERSON_SIDEBAR);
     expect(linkNamed('Overview'), hash).toBeUndefined();
+  });
+});
+
+describe('no "Return to" heading in the sidebar (#1696)', () => {
+  afterEach(() => {
+    fakeStore.current = undefined;
+    window.localStorage.clear();
+  });
+
+  it.each([
+    ['a tool page', '#/explore/cycles'],
+    ['the PDF page', '#/documents'],
+    ['Preferences', '#/preferences'],
+    ['Admin', '#/admin'],
+    ['a person page', ROUTE_HASHES['person-overview']],
+  ])('renders no "Return to" text on %s, in English and in Dutch', async (_name, hash) => {
+    for (const locale of ['en', 'nl'] as const) {
+      setLocale(locale);
+      fakeStore.current = { state: { people: new Map([[ROUTE_PERSON, { displayName: 'Test' }]]) } };
+      writeLastPersonId(ROUTE_PERSON);
+      await mount(parseRoute(hash));
+      const text = box().querySelector('nav#app-nav')?.textContent ?? '';
+      expect(text, `${hash} (${locale})`).not.toContain('Return to');
+      expect(text, `${hash} (${locale})`).not.toContain('Terug naar');
+      act(() => {
+        mounted?.root.unmount();
+      });
+      mounted?.container.remove();
+      mounted = undefined;
+    }
   });
 });
