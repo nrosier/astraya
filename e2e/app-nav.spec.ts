@@ -125,8 +125,8 @@ test.describe('with the shared people (#799)', () => {
     await expect(page.getByRole('heading', { name: 'Planetary cycles', level: 2 })).toBeVisible();
     await expect(header.getByText('Albert Einstein', { exact: true })).toBeVisible();
     await expect(header.getByRole('link', { name: 'Charts', exact: true })).toBeVisible();
-    // On a tool page the person is history, not the subject: the rail says so (and does not on their own pages).
-    await expect(header.getByText('Return to', { exact: true })).toBeVisible();
+    // The sidebar is the same on a tool page as on the person's own pages: no "Return to" heading (#1696).
+    await expect(header.getByText('Return to', { exact: true })).toHaveCount(0);
     // None of the person's tabs is "current" on a tool page — it genuinely isn't one of them.
     await expect(header.getByRole('link', { name: 'Birth record', exact: true })).not.toHaveAttribute(
       'aria-current',
