@@ -3492,6 +3492,10 @@ label.stacked {
     flex-wrap: nowrap;
     align-items: stretch;
     justify-content: flex-start;
+    /* Fill the wrap's content box and shrink to it: a flex item's `min-width: auto` would keep the
+       nav at its widest label and run it past the rail's padding, under the `«` control (#1696). */
+    width: 100%;
+    min-width: 0;
   }
 
   .app-nav-item,
@@ -3503,6 +3507,7 @@ label.stacked {
 
   .app-nav-person {
     max-width: none;
+    min-width: 0;
     margin: 0 0 var(--space-2);
     padding: var(--space-2) var(--space-2) var(--space-2) 0;
     border-right: none;
