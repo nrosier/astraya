@@ -133,3 +133,51 @@ describe('date animation step buttons take the circle size (#1650)', () => {
     expect(match?.[1]).toContain('min-width: var(--control-height);');
   });
 });
+
+/**
+ * Task 1650-7a (#1650): every action button in the Life events drawer and its card is a 2.75rem form action, so each
+ * one carries `primitive-button-form-action`. Import CSV is rendered by FileInput, which takes the class through its
+ * `className` prop, so the class sits on the FileInput element in the drawer source.
+ */
+describe('Life events form action buttons take the form-action class (#1650)', () => {
+  const FORM_ACTION = 'primitive-button-form-action';
+  const drawerSource = readFileSync(new URL('../src/ui/LifeEventsDrawer.tsx', import.meta.url), 'utf8');
+  const cardSource = readFileSync(new URL('../src/ui/LifeEventsCard.tsx', import.meta.url), 'utf8');
+
+  /**
+   * The source of the element (`<Button` or `<FileInput`) that owns the first occurrence of `marker`. It runs from the
+   * nearest opener before the marker to the marker itself, or, when `closing` is given, to the first `closing` after the
+   * marker (a FileInput lists `className` after its label). Fails if the marker is absent or if the element is not one button.
+   */
+  function ownerTagOf(source: string, marker: string, closing?: string): string {
+    const at = source.indexOf(marker);
+    expect(at, `${marker} not found`).toBeGreaterThan(-1);
+    const opener = [...source.slice(0, at).matchAll(/<(Button|FileInput)\b/g)].at(-1);
+    expect(opener, `no button opens before ${marker}`).toBeDefined();
+    const end = closing === undefined ? at + marker.length : source.indexOf(closing, at) + closing.length;
+    const tag = source.slice(opener?.index ?? 0, end);
+    expect(tag.match(/<(Button|FileInput)\b/g)?.length, `${marker} is not inside a single button`).toBe(1);
+    return tag;
+  }
+
+  it.each([
+    ['Save row', 'rowSave'],
+    ['Cancel', 'rowCancel'],
+    ['Add', 'quickAddButton'],
+    ['Add new event', 'addNew'],
+    ['Clear all', 'clearAll'],
+    ['Export CSV', 'exportButton'],
+  ])('the drawer %s button carries the class', (_name, key) => {
+    expect(ownerTagOf(drawerSource, `{t.${key}}`)).toContain(`className="${FORM_ACTION}"`);
+  });
+
+  it('the Import CSV button, rendered by FileInput, carries the class through its className prop', () => {
+    const tag = ownerTagOf(drawerSource, 'buttonLabel={t.importButton}', '/>');
+    expect(tag).toMatch(/^<FileInput\b/);
+    expect(tag).toContain(`className="${FORM_ACTION}"`);
+  });
+
+  it('the card Manage Life Events button carries the class', () => {
+    expect(ownerTagOf(cardSource, '{t.manageButton}')).toContain(`className="${FORM_ACTION}"`);
+  });
+});
