@@ -6,6 +6,8 @@ import type { PanelLayout } from '../src/chart/sheet-geometry.js';
 import { standaloneSvg } from '../src/chart/standalone-svg.js';
 import { ASPECT_TONE, renderPdfPlan } from '../src/ui/pdf-export-render.js';
 import type { PdfPlan } from '../src/ui/pdf-export-plan.js';
+import { chartOverviewMessages } from '../src/ui/chart-overview.messages.js';
+import { pdfExportMessages } from '../src/ui/pdf-export.messages.js';
 
 // svg2pdf.js's UMD bundle reads jsPDF at import time and fails under vitest. This file only reads
 // the PDF tone map, never draws a PDF, so the library is stubbed out.
@@ -118,9 +120,13 @@ function panelFillsByPage(pdf: string): string[][] {
 }
 
 /** A fields section long enough to run over one page, so its continuation pages are drawn (#1648). */
-function longFieldsPlan(locale: 'en' | 'nl'): PdfPlan {
+function rowLabel(locale: 'en' | 'nl', index: number): string {
+  return `${locale === 'en' ? 'Meaning' : 'Betekenis'} ${String(index + 1)}`;
+}
+
+function longFieldsPlan(locale: 'en' | 'nl', heading = 'Meanings'): PdfPlan {
   const fields = Array.from({ length: 60 }, (_, index) => ({
-    label: locale === 'en' ? `Meaning ${String(index + 1)}` : `Betekenis ${String(index + 1)}`,
+    label: rowLabel(locale, index),
     value: locale === 'en' ? 'A short value that wraps onto a line.' : 'Een korte waarde.',
   }));
   return {
@@ -130,10 +136,87 @@ function longFieldsPlan(locale: 'en' | 'nl'): PdfPlan {
     contentsHeading: 'Contents',
     personName: 'Test',
     generatedAt: new Date('2026-01-01T00:00:00Z'),
-    sections: [{ kind: 'fields', heading: 'Meanings', fields }],
+    sections: [{ kind: 'fields', heading, fields }],
     errors: [],
   };
 }
+
+/** A text placement on a page: the string drawn and the baseline's y, in PDF points from the page foot. */
+interface TextPlacement {
+  readonly text: string;
+  readonly y: number;
+}
+
+/**
+ * The text drawn on each page, in order, read from the uncompressed page content streams (one stream per page). Each
+ * `Td` sets the baseline that the next `Tj` string is drawn at. Pages with no text are left out.
+ */
+function textByPage(pdf: string): TextPlacement[][] {
+  const streams = [...pdf.matchAll(/stream\r?\n([\s\S]*?)\r?\nendstream/g)].map((m) => m[1] ?? '');
+  const pages: TextPlacement[][] = [];
+  for (const stream of streams) {
+    const placements: TextPlacement[] = [];
+    let y = Number.NaN;
+    for (const raw of stream.split('\n')) {
+      const line = raw.trim();
+      const move = /^[\d.]+ ([\d.]+) Td$/.exec(line);
+      if (move !== null) {
+        y = Number(move[1]);
+        continue;
+      }
+      const shown = /^\((.*)\) Tj$/.exec(line);
+      if (shown !== null && shown[1] !== undefined) placements.push({ text: shown[1], y });
+    }
+    if (placements.length > 0) pages.push(placements);
+  }
+  return pages;
+}
+
+/** The bottom margin of the A4 page in PDF points: `PAGE_MARGIN` (15 mm) in `pdf-export-render.ts`, from the page foot. */
+const BOTTOM_MARGIN_PT = (15 * 72) / 25.4;
+
+/** The three sections that draw a meanings panel through the fields renderer, with the heading each one prints. */
+const PANEL_SECTIONS: readonly {
+  readonly name: string;
+  readonly heading: (locale: 'en' | 'nl') => string;
+}[] = [
+  { name: 'birth record', heading: (locale) => pdfExportMessages[locale].birthRecordLabel },
+  { name: 'chart overview', heading: (locale) => chartOverviewMessages[locale].heading },
+  { name: 'Profections meanings', heading: (locale) => pdfExportMessages[locale].meaningsLabel },
+];
+
+describe('the other PDF sections that use the meanings panel paginate it (#1648)', () => {
+  const cases = PANEL_SECTIONS.flatMap((section) =>
+    (['en', 'nl'] as const).map((locale) => ({ name: section.name, locale, heading: section.heading(locale) })),
+  );
+
+  it.each(cases)(
+    'keeps every row, in order, over more than one page for $name in $locale',
+    async ({ locale, heading }) => {
+      const labels = Array.from({ length: 60 }, (_, index) => rowLabel(locale, index));
+      const { blob } = await renderPdfPlan(longFieldsPlan(locale, heading));
+      const pages = textByPage(Buffer.from(await blob.arrayBuffer()).toString('latin1'));
+      const labelSet = new Set(labels);
+      // The panel spans more than one page: at least two pages carry its rows.
+      expect(pages.filter((page) => page.some((text) => labelSet.has(text.text))).length).toBeGreaterThan(1);
+      // Every row is printed exactly once and in order.
+      expect(
+        pages
+          .flat()
+          .map((text) => text.text)
+          .filter((text) => labelSet.has(text)),
+      ).toEqual(labels);
+    },
+  );
+
+  it.each(cases)('draws no text below the bottom margin for $name in $locale', async ({ locale, heading }) => {
+    const { blob } = await renderPdfPlan(longFieldsPlan(locale, heading));
+    const pages = textByPage(Buffer.from(await blob.arrayBuffer()).toString('latin1'));
+    // Guard: the parser read the panel's text (a label and a value per row), so the check below is not vacuous.
+    expect(pages.flat().length).toBeGreaterThanOrEqual(120);
+    expect(pages.flat().filter((text) => text.y < BOTTOM_MARGIN_PT - 0.01)).toEqual([]);
+  });
+});
 
 describe('the fields panel keeps its tint on continuation pages (#1648)', () => {
   it.each(['en', 'nl'] as const)(
