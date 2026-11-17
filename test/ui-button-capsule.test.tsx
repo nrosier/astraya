@@ -106,8 +106,10 @@ const EXPECTED_CAPSULE_FILES = [
   'SavedChartSearches.tsx',
   'SavedQueries.tsx',
   'ScrollingTabRow.tsx',
+  'SortableTable.tsx',
   'SuggestCorrectionDialog.tsx',
   'TransitFilterPanel.tsx',
+  'table-selection.tsx',
 ];
 
 describe('capsule call sites', () => {

@@ -69,6 +69,8 @@ export function selectColumn<T>(
       if (show !== undefined) {
         return (
           <Button
+            size="compact"
+            shape="capsule"
             aria-label={t.showOnWheel(nameOf(row))}
             onClick={() => {
               show(key);
