@@ -67,7 +67,7 @@ const nl: typeof en = {
     `${String(count)} ${count === 1 ? 'verduistering' : 'verduisteringen'}, ${String(from)}–${String(to)} (UTC).`,
   noBirthRecord: (name: string) =>
     `${name} heeft nog geen volledige geboortegegevens, dus er is geen geboortehoroscoop om mee te vergelijken.`,
-  anglesNote: 'De geboortetijd is onbekend, dus de Ascendant en Midheaven blijven buiten de vergelijking.',
+  anglesNote: 'De geboortetijd is onbekend, dus de Ascendant en Hemelmidden blijven buiten de vergelijking.',
   tableCaption: 'Verduisteringen',
   dateColumn: 'Maximale verduistering (UTC)',
   typeColumn: 'Soort',

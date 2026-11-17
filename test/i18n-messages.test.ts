@@ -70,3 +70,32 @@ describe('UI message catalogues stay in parity (#158)', () => {
     expect(problems).toEqual([]);
   });
 });
+
+/** Every string in a catalogue value, recursing into nested objects; functions are called with placeholder arguments. */
+function stringsOf(value: unknown): string[] {
+  if (typeof value === 'string') return [value];
+  if (typeof value === 'function') {
+    const args = Array.from({ length: value.length }, () => 'X');
+    return stringsOf((value as (...a: string[]) => unknown)(...args));
+  }
+  if (typeof value === 'object' && value !== null) {
+    return Object.values(value).flatMap(stringsOf);
+  }
+  return [];
+}
+
+describe('nl catalogues never show the English word Midheaven (#1649)', () => {
+  it('keeps the English word out of every nl value (en values may keep it)', async () => {
+    const files = messageFiles(SRC_ROOT);
+    const problems: string[] = [];
+    for (const file of files) {
+      const module = (await import(pathToFileURL(file).href)) as Record<string, unknown>;
+      for (const catalog of catalogsOf(module)) {
+        for (const text of stringsOf(catalog.nl)) {
+          if (/\bMidheaven\b/.test(text)) problems.push(`${relative(file)}: nl value still reads "${text}"`);
+        }
+      }
+    }
+    expect(problems).toEqual([]);
+  });
+});

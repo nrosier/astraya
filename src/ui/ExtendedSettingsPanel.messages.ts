@@ -458,7 +458,7 @@ const nl: typeof en = {
   nodeHelp: 'Gemiddeld en waar verschillen tot ongeveer 1,5°.',
   asteroidsGroupLabel: 'Asteroïden',
   aspectsToHint:
-    'De Ascendant en het Midheaven maken altijd aspecten met de lichamen. De Vertex en de twee punten doen dat hier, alleen met lichamen, nooit met elkaar of met de assen; een punt maakt geen aspect met het lichtgevend lichaam waaruit het is opgebouwd, omdat dat een Ascendant-aspect herhaalt.',
+    'De Ascendant en het Hemelmidden maken altijd aspecten met de lichamen. De Vertex en de twee punten doen dat hier, alleen met lichamen, nooit met elkaar of met de assen; een punt maakt geen aspect met het lichtgevend lichaam waaruit het is opgebouwd, omdat dat een Ascendant-aspect herhaalt.',
   antiscia: 'Antiscia en contra-antiscia op het wiel tonen',
   antisciaHint: 'Tekent één koord voor elk zichtbaar antiscion- of contra-antiscioncontact binnen de orb hieronder.',
   antisciaMaxOrbLabel: 'Antiscia-orb',
@@ -515,9 +515,9 @@ const nl: typeof en = {
   },
   citedOrbPresetNotes: {
     'lilly-1647-first-v1':
-      'De eigen orbissen per planeet van William Lilly, Christian Astrology (1647), Boek I, p. 107: Saturnus 10°, Jupiter 12°, Mars 7°30′, Zon 17°, Venus 8°, Mercurius 7°, Maan 12°30′. Twee planeten staan in aspect binnen de helft van elke orbis bij elkaar opgeteld. Uranus, Neptunus en Pluto hebben geen orbis van hem, dus gebruiken ze de standaardtiers. Voor de Ascendant gebruikt het contact van elke planeet de eigen halve orbis van die planeet (Lilly, Boek II, p. 208: “within the moyity of his owne Orbs”). Astraya past dezelfde regel toe op het Midheaven, de Vertex, het Fortuinpunt en het Geestpunt; die uitbreiding is niet van Lilly. Een lichaam zonder halve orbis gebruikt voor deze punten de standaardtiers.',
+      'De eigen orbissen per planeet van William Lilly, Christian Astrology (1647), Boek I, p. 107: Saturnus 10°, Jupiter 12°, Mars 7°30′, Zon 17°, Venus 8°, Mercurius 7°, Maan 12°30′. Twee planeten staan in aspect binnen de helft van elke orbis bij elkaar opgeteld. Uranus, Neptunus en Pluto hebben geen orbis van hem, dus gebruiken ze de standaardtiers. Voor de Ascendant gebruikt het contact van elke planeet de eigen halve orbis van die planeet (Lilly, Boek II, p. 208: “within the moyity of his owne Orbs”). Astraya past dezelfde regel toe op het Hemelmidden, de Vertex, het Fortuinpunt en het Geestpunt; die uitbreiding is niet van Lilly. Een lichaam zonder halve orbis gebruikt voor deze punten de standaardtiers.',
     'lilly-1647-second-v1':
-      'Lilly’s tweede reeks, zelfde pagina: Saturnus 9°, Jupiter 9°, Mars 7°, Zon 15°, Venus 7°, Mercurius 7°, Maan 12°. Twee planeten staan in aspect binnen de helft van elke orbis bij elkaar opgeteld. Uranus, Neptunus en Pluto gebruiken de standaardtiers. Voor de Ascendant gebruikt het contact van elke planeet de eigen halve orbis van die planeet (Lilly, Boek II, p. 208: “within the moyity of his owne Orbs”). Astraya past dezelfde regel toe op het Midheaven, de Vertex, het Fortuinpunt en het Geestpunt; die uitbreiding is niet van Lilly. Een lichaam zonder halve orbis gebruikt voor deze punten de standaardtiers.',
+      'Lilly’s tweede reeks, zelfde pagina: Saturnus 9°, Jupiter 9°, Mars 7°, Zon 15°, Venus 7°, Mercurius 7°, Maan 12°. Twee planeten staan in aspect binnen de helft van elke orbis bij elkaar opgeteld. Uranus, Neptunus en Pluto gebruiken de standaardtiers. Voor de Ascendant gebruikt het contact van elke planeet de eigen halve orbis van die planeet (Lilly, Boek II, p. 208: “within the moyity of his owne Orbs”). Astraya past dezelfde regel toe op het Hemelmidden, de Vertex, het Fortuinpunt en het Geestpunt; die uitbreiding is niet van Lilly. Een lichaam zonder halve orbis gebruikt voor deze punten de standaardtiers.',
   },
   orbProfileNotes: {
     custom: 'Je eigen orb-schaal, ingesteld met de schuifregelaar hieronder.',

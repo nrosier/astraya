@@ -202,7 +202,7 @@ const nl: Catalog = {
       'Het teken dat op het moment van de geboorte aan de oostelijke horizon opkomt. Het is het begin van het eerste huis en wordt gelezen als hoe iemand de wereld tegemoet treedt.',
   },
   midheaven: {
-    name: 'Midheaven',
+    name: 'Hemelmidden',
     definition:
       'Het punt waar de dierenriem de meridiaan boven de horizon snijdt. Het is het begin van het tiende huis en staat voor roeping en publieke positie.',
   },

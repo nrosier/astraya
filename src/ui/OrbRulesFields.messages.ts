@@ -31,7 +31,7 @@ const nl: typeof en = {
   showBodies: 'Lichaamsorbissen tonen',
   hideBodies: 'Lichaamsorbissen verbergen',
   bodiesHint:
-    'Een halve orbis voor een lichaam. Hebben beide lichamen van een paar er een, dan is de som de orbis voor dat paar. Leeg behoudt de ingebouwde waarde. Voor de Ascendant, het Midheaven, de Vertex en de twee punten gebruikt een planeet de eigen halve orbis (Lilly, Christian Astrology, Boek II, p. 208, onderbouwt dit voor de Ascendant; de andere punten zijn een uitbreiding van Astraya). Een lichaam zonder halve orbis gebruikt voor deze punten de ingebouwde tiers.',
+    'Een halve orbis voor een lichaam. Hebben beide lichamen van een paar er een, dan is de som de orbis voor dat paar. Leeg behoudt de ingebouwde waarde. Voor de Ascendant, het Hemelmidden, de Vertex en de twee punten gebruikt een planeet de eigen halve orbis (Lilly, Christian Astrology, Boek II, p. 208, onderbouwt dit voor de Ascendant; de andere punten zijn een uitbreiding van Astraya). Een lichaam zonder halve orbis gebruikt voor deze punten de ingebouwde tiers.',
 };
 
 export const orbRulesFieldsMessages = { en, nl };

@@ -90,7 +90,7 @@ const nl: typeof en = {
     'Wat elk aangevinkt hemellichaam traditioneel betekent op elk aangevinkt type lijn, als startpunt voor reflectie; astrocartografie is een interpretatieve traditie, geen voorspelling.',
 
   relocatedAscendantMidheaven: (ascendant: string, midheaven: string) =>
-    `Ascendant: ${ascendant} · Midheaven: ${midheaven}`,
+    `Ascendant: ${ascendant} · Hemelmidden: ${midheaven}`,
 
   calculating: 'Berekenen…',
   updating: 'Kaart wordt bijgewerkt…',
