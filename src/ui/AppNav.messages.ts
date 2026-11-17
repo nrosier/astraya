@@ -42,6 +42,8 @@ const en = {
   } satisfies Record<ToolGroupKey, string>,
   disabledTabSuffix: (label: string) => `${label} — complete the birth record first`,
   completeBirthRecordHint: 'Complete the birth record to unlock the other tabs.',
+  disabledNoPersonSuffix: (label: string) => `${label} — select a person first`,
+  selectPersonFirstHint: 'Select a person first',
   subtabsAriaLabel: (familyLabel: string) => `${familyLabel} subtabs`,
 
   tabLabels: {
@@ -99,6 +101,8 @@ const nl: typeof en = {
   } satisfies Record<ToolGroupKey, string>,
   disabledTabSuffix: (label: string) => `${label} — voltooi eerst de geboortegegevens`,
   completeBirthRecordHint: 'Vul de geboortegegevens in om de overige tabs te ontgrendelen.',
+  disabledNoPersonSuffix: (label: string) => `${label} — selecteer eerst een persoon`,
+  selectPersonFirstHint: 'Selecteer eerst een persoon',
   subtabsAriaLabel: (familyLabel: string) => `Subtabs van ${familyLabel}`,
 
   tabLabels: {

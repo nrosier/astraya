@@ -88,10 +88,11 @@ describe('the sidebar sections (#882)', () => {
     await mount(parseRoute('#/people'));
     expect(box().querySelector('nav[aria-label="Main"]')).not.toBeNull();
     expect(box().querySelector('.app-nav-group, .app-nav-menu, .app-nav-group-toggle')).toBeNull();
-    // The palette trigger (#1654) is a button too; this case covers the menu buttons only.
-    expect(Array.from(box().querySelectorAll('button:not(.app-nav-search)')).map((b) => b.textContent)).toEqual([
-      'Menu',
-    ]);
+    // The palette trigger (#1654) is a button too, and the disabled person entries (#1697) are buttons
+    // as well; this case covers the enabled menu buttons only, so no sub-menu button is among them.
+    expect(
+      Array.from(box().querySelectorAll('button:not(.app-nav-search):not(.disabled)')).map((b) => b.textContent),
+    ).toEqual(['Menu']);
     expect(linkNamed('Tools')?.getAttribute('href')).toBe('#/explore/cycles');
     expect(navLinks()).toEqual(['Tools', 'PDF']);
   });
@@ -410,12 +411,141 @@ describe('the sidebar on every route (#965)', () => {
     },
   );
 
-  it.each(EXPLICIT_NO_PERSON_SIDEBAR_KINDS)('shows only Tools and PDF on %s (deliberate, #914)', async (kind) => {
-    const hash = ROUTE_HASHES[kind];
-    openStoreWithLastPerson();
-    await mount(parseRoute(hash));
-    expect(sidebarPairs(), hash).toEqual(EXPECTED_NO_PERSON_SIDEBAR);
-    expect(linkNamed('Overview'), hash).toBeUndefined();
+  it.each(EXPLICIT_NO_PERSON_SIDEBAR_KINDS)(
+    'shows only Tools and PDF as enabled links on %s, with the person options disabled (#914, #1697)',
+    async (kind) => {
+      const hash = ROUTE_HASHES[kind];
+      openStoreWithLastPerson();
+      await mount(parseRoute(hash));
+      expect(sidebarPairs(), hash).toEqual(EXPECTED_NO_PERSON_SIDEBAR);
+      expect(linkNamed('Overview'), hash).toBeUndefined();
+      expect(disabledPersonLabels(), hash).toEqual(EXPECTED_PERSON_LABELS_EN);
+    },
+  );
+});
+
+// The person options the sidebar lists for a person, in English (`PERSON_TABS` that are not in a
+// family, then the three families), as `AppNav.tsx` renders them.
+const EXPECTED_PERSON_LABELS_EN = [
+  'Birth record',
+  'Overview',
+  'Consultation',
+  'Charts',
+  'Interpretation',
+  'Astrocartography',
+  'Transits & Forecast',
+  'Progressions & Directions',
+  'Relationship Charts',
+];
+const EXPECTED_PERSON_LABELS_NL = [
+  'Geboortegegevens',
+  'Overzicht',
+  'Consultatie',
+  'Horoscopen',
+  'Interpretatie',
+  'Astrocartografie',
+  'Transits & prognose',
+  'Progressies & directies',
+  'Relatiehoroscopen',
+];
+
+/** The person options rendered as disabled buttons in the sidebar, by their visible text. */
+const disabledPersonLabels = (): string[] =>
+  Array.from(box().querySelectorAll<HTMLButtonElement>('nav#app-nav button.disabled')).map((b) => b.textContent ?? '');
+
+describe('the person options with no person selected (#1697)', () => {
+  afterEach(() => {
+    fakeStore.current = undefined;
+    window.localStorage.clear();
+    setLocale('en');
+  });
+
+  it('shows every person option on the People page, disabled, with the tooltip (en)', async () => {
+    await mount(parseRoute('#/people'));
+    expect(disabledPersonLabels()).toEqual(EXPECTED_PERSON_LABELS_EN);
+    for (const button of Array.from(box().querySelectorAll<HTMLButtonElement>('nav#app-nav button.disabled'))) {
+      expect(button.disabled, button.textContent).toBe(true);
+      expect(button.getAttribute('title'), button.textContent).toBe('Select a person first');
+      expect(button.getAttribute('aria-label'), button.textContent).toContain('select a person first');
+    }
+    // Tools and PDF stay enabled links.
+    expect(navLinks()).toEqual(['Tools', 'PDF']);
+  });
+
+  it('shows the same options disabled with the Dutch tooltip in Dutch (nl)', async () => {
+    setLocale('nl');
+    await mount(parseRoute('#/people'));
+    expect(disabledPersonLabels()).toEqual(EXPECTED_PERSON_LABELS_NL);
+    for (const button of Array.from(box().querySelectorAll<HTMLButtonElement>('nav#app-nav button.disabled'))) {
+      expect(button.disabled, button.textContent).toBe(true);
+      expect(button.getAttribute('title'), button.textContent).toBe('Selecteer eerst een persoon');
+    }
+    expect(navLinks()).toEqual(['Hulpmiddelen', 'PDF']);
+  });
+
+  it('keeps the disabled person options off the enabled links, so none is reached by click', async () => {
+    await mount(parseRoute('#/people'));
+    expect(linkNamed('Overview')).toBeUndefined();
+    expect(linkNamed('Charts')).toBeUndefined();
+  });
+});
+
+describe('the person options with a person selected (#1697)', () => {
+  afterEach(() => {
+    fakeStore.current = undefined;
+    window.localStorage.clear();
+    setLocale('en');
+  });
+
+  const personId = 'p-abcdefghijklmnop';
+  // A person with a birth moment, so every tab is enabled (`isTabEnabled`).
+  const openStoreWithCompletePerson = (): void => {
+    fakeStore.current = {
+      state: { people: new Map([[personId, { displayName: 'Test', moment: {} }]]) },
+    };
+    writeLastPersonId(personId);
+  };
+
+  it('shows the same options enabled, with no tooltip, once a person is selected', async () => {
+    openStoreWithCompletePerson();
+    await mount(parseRoute(`#/people/${personId}/overview`));
+    expect(disabledPersonLabels()).toEqual([]);
+    const enabled = Array.from(box().querySelectorAll('nav#app-nav a')).map((a) => a.textContent);
+    for (const label of EXPECTED_PERSON_LABELS_EN) {
+      expect(enabled, label).toContain(label);
+    }
+    const tooltips = Array.from(box().querySelectorAll('nav#app-nav [title]')).map((el) => el.getAttribute('title'));
+    expect(tooltips).not.toContain('Select a person first');
+  });
+
+  it('shows the same options enabled in Dutch with no tooltip (nl)', async () => {
+    setLocale('nl');
+    openStoreWithCompletePerson();
+    await mount(parseRoute(`#/people/${personId}/overview`));
+    expect(disabledPersonLabels()).toEqual([]);
+    const enabled = Array.from(box().querySelectorAll('nav#app-nav a')).map((a) => a.textContent);
+    for (const label of EXPECTED_PERSON_LABELS_NL) {
+      expect(enabled, label).toContain(label);
+    }
+  });
+});
+
+describe('a deleted person does not linger after #1697 (#914)', () => {
+  afterEach(() => {
+    fakeStore.current = undefined;
+    window.localStorage.clear();
+  });
+
+  it('shows the person options disabled, not the deleted person’s enabled tabs, on a tool page', async () => {
+    const deleted = 'p-deletedperson0000';
+    // The store no longer holds this person, but it was the last one viewed.
+    fakeStore.current = { state: { people: new Map([['p-otherperson000000', { displayName: 'Other' }]]) } };
+    writeLastPersonId(deleted);
+    await mount(parseRoute('#/explore/cycles'));
+    expect(
+      Array.from(box().querySelectorAll('nav#app-nav a')).some((a) => (a.getAttribute('href') ?? '').includes(deleted)),
+    ).toBe(false);
+    expect(disabledPersonLabels()).toEqual(EXPECTED_PERSON_LABELS_EN);
   });
 });
 

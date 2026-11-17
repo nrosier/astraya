@@ -83,7 +83,10 @@ test.describe('with the shared people (#799)', () => {
     await exportLink.click();
     await expect(page).toHaveURL(/#\/documents\/pdf\?person=p-[^&]+&section=natal&view=placements$/);
     // The creator opens with the Placements tables ticked on the natal section, and not the Aspects table (#915).
-    await page.getByRole('button', { name: /^Charts/ }).click();
+    await page
+      .getByRole('main')
+      .getByRole('button', { name: /^Charts/ })
+      .click();
     const charts = page.getByRole('group', { name: 'Charts', exact: true });
     await expect(charts.getByRole('checkbox', { name: 'Positions', exact: true }).first()).toBeChecked();
     await expect(charts.getByRole('checkbox', { name: 'Fixed stars', exact: true }).first()).toBeChecked();

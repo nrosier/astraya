@@ -7,7 +7,8 @@
  *   record, Charts (one plain link; the chart type is chosen on the page by `ChartTypeSelector.tsx`:
  *   natal, draconic, harmonic, solar and lunar return),
  *   Interpretation, Astrocartography and the three sections (Transits & Forecast, Progressions &
- *   Directions, Relationship Charts), each one plain link to its first sub-view (#882);
+ *   Directions, Relationship Charts), each one plain link to its first sub-view (#882). With no person
+ *   selected these same entries are still shown, disabled with a "Select a person first" tooltip (#1697);
  * - **Tools**, on every screen: one plain link to the first calculator (#882). The sub-views of each
  *   section, tools included, are tabs on the page (`SectionNav.tsx`), not a sub-menu here;
  * - **Build custom PDF…**, on every screen: a plain link, not a dropdown — it is the only export
@@ -57,40 +58,58 @@ const UNGROUPED_KEYS = new Set(['overview', 'consultation', 'birth-record', 'cha
 // regardless of completeness. The order comes from PERSON_TABS, which is filtered below.
 const LEADING_KEYS = new Set(['overview', 'birth-record']);
 
-/** The person chip and that person's tabs. Needs the store, so it is only rendered once one is open. */
-function PersonMenu({
+/**
+ * A disabled sidebar entry (#1697, reusing the birth-record pattern): a `disabled` button with its own accessible
+ * name and the tooltip that says why it is off. Both the birth-record and the no-person cases render through it.
+ */
+function disabledEntry(
+  key: string,
+  label: string,
+  className: string,
+  accessibleName: string,
+  hint: string,
+): React.JSX.Element {
+  return (
+    <button
+      key={key}
+      type="button"
+      disabled
+      className={`${className} disabled`}
+      aria-label={accessibleName}
+      title={hint}
+    >
+      {label}
+    </button>
+  );
+}
+
+/**
+ * The person's tab entries (#1697). With no person (`personId` undefined, e.g. the People list) every
+ * entry is still shown, disabled, with the "Select a person first" tooltip, so the sidebar is the same
+ * on every screen. With a person, a tab that needs a complete birth record is disabled as before.
+ */
+function PersonTabEntries({
   personId,
+  hasBirthMoment,
   route,
-  dropdown,
   onNavigate,
 }: {
-  readonly personId: string;
+  readonly personId: string | undefined;
+  readonly hasBirthMoment: boolean;
   readonly route: Route;
-  readonly dropdown: ExclusiveOpen<string>;
   readonly onNavigate: () => void;
 }): React.JSX.Element {
   const t = useMessages(appNavMessages);
-  const state = useStoreState();
-  const person = state.people.get(personId);
-  const hasBirthMoment = person?.moment !== undefined;
   const active = activePersonTabKey(route);
   const tabsByKey = new Map(PERSON_TABS.map((tab) => [tab.key, tab]));
 
   function renderTab(tab: PersonTab, className: string): React.JSX.Element {
     const label = t.tabLabels[tab.key];
+    if (personId === undefined) {
+      return disabledEntry(tab.key, label, className, t.disabledNoPersonSuffix(label), t.selectPersonFirstHint);
+    }
     if (!isTabEnabled(tab.key, hasBirthMoment)) {
-      return (
-        <button
-          key={tab.key}
-          type="button"
-          disabled
-          className={`${className} disabled`}
-          aria-label={t.disabledTabSuffix(label)}
-          title={t.completeBirthRecordHint}
-        >
-          {label}
-        </button>
-      );
+      return disabledEntry(tab.key, label, className, t.disabledTabSuffix(label), t.completeBirthRecordHint);
     }
     const isActive = tab.key === active;
     return (
@@ -106,18 +125,8 @@ function PersonMenu({
     );
   }
 
-  const name = person?.displayName ?? '';
   return (
     <>
-      {person !== undefined && (
-        <PersonSwitcher
-          personId={personId}
-          name={name === '' ? t.unnamedPerson : name}
-          route={route}
-          dropdown={dropdown}
-          onNavigate={onNavigate}
-        />
-      )}
       {PERSON_TABS.filter((tab) => LEADING_KEYS.has(tab.key)).map((tab) => renderTab(tab, 'app-nav-item'))}
       {PERSON_TABS.filter((tab) => UNGROUPED_KEYS.has(tab.key) && !LEADING_KEYS.has(tab.key)).map((tab) =>
         renderTab(tab, 'app-nav-item'),
@@ -128,18 +137,22 @@ function PersonMenu({
         const first = firstKey === undefined ? undefined : tabsByKey.get(firstKey);
         if (first === undefined) throw new Error(`unreachable: family "${family.key}" always has a first member`);
         // One entry per section (#882): it opens the first sub-view, and `SectionNav` shows the rest as tabs.
+        if (personId === undefined) {
+          return disabledEntry(
+            family.key,
+            familyLabel,
+            'app-nav-item',
+            t.disabledNoPersonSuffix(familyLabel),
+            t.selectPersonFirstHint,
+          );
+        }
         if (!isTabEnabled(first.key, hasBirthMoment)) {
-          return (
-            <button
-              key={family.key}
-              type="button"
-              disabled
-              className="app-nav-item disabled"
-              aria-label={t.disabledTabSuffix(familyLabel)}
-              title={t.completeBirthRecordHint}
-            >
-              {familyLabel}
-            </button>
+          return disabledEntry(
+            family.key,
+            familyLabel,
+            'app-nav-item',
+            t.disabledTabSuffix(familyLabel),
+            t.completeBirthRecordHint,
           );
         }
         const familyActive = active !== null && family.members.includes(active);
@@ -159,11 +172,48 @@ function PersonMenu({
   );
 }
 
+/** The person chip, then that person's tabs. Needs the store, so it is only rendered once one is open. */
+function PersonMenu({
+  personId,
+  route,
+  dropdown,
+  onNavigate,
+}: {
+  readonly personId: string;
+  readonly route: Route;
+  readonly dropdown: ExclusiveOpen<string>;
+  readonly onNavigate: () => void;
+}): React.JSX.Element {
+  const t = useMessages(appNavMessages);
+  const state = useStoreState();
+  const person = state.people.get(personId);
+  const name = person?.displayName ?? '';
+  return (
+    <>
+      {person !== undefined && (
+        <PersonSwitcher
+          personId={personId}
+          name={name === '' ? t.unnamedPerson : name}
+          route={route}
+          dropdown={dropdown}
+          onNavigate={onNavigate}
+        />
+      )}
+      <PersonTabEntries
+        personId={personId}
+        hasBirthMoment={person?.moment !== undefined}
+        route={route}
+        onNavigate={onNavigate}
+      />
+    </>
+  );
+}
+
 // App-scoped screens that keep the last-viewed person's sections in the sidebar (#965), so the
 // sidebar is the same on every screen. The home screen (#/) is one of them (#965 owner decision,
-// reversing the #1058 Tools-and-PDF-only sidebar). Without a last-viewed person it shows no person
-// sections, like the People list. The People list (the person picker; a stale person's tabs must not
-// linger there, #914), shared charts and the sign-in/setup forms are deliberately not in this set.
+// reversing the #1058 Tools-and-PDF-only sidebar). Without a live last-viewed person, the person
+// entries are shown disabled with the "Select a person first" tooltip (#1697). The People list (the
+// person picker) is not in this set, so a stale person's enabled tabs never linger there (#914).
 const KEEP_PERSON_SECTIONS_KINDS: ReadonlySet<Route['kind']> = new Set([
   'home',
   'documents',
@@ -339,8 +389,11 @@ export function AppNav({ route }: { route: Route }): React.JSX.Element {
         {menuOpen ? t.menuButtonClose : t.menuButton}
       </button>
       <nav id="app-nav" className={`app-nav${menuOpen ? ' open' : ''}`} aria-label={t.mainNavAriaLabel}>
-        {personId !== undefined && store !== undefined && (
+        {/* Without a person the person entries stay, disabled with a tooltip (#1697), so the sidebar is the same on every screen. */}
+        {personId !== undefined && store !== undefined ? (
           <PersonMenu personId={personId} route={route} dropdown={dropdown} onNavigate={closeAll} />
+        ) : (
+          <PersonTabEntries personId={undefined} hasBirthMoment={false} route={route} onNavigate={closeAll} />
         )}
         {/* One entry (#882): opens the first tool; the other tools are tabs on the page (`SectionNav`). */}
         <a
