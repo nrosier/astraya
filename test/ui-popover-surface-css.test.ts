@@ -43,6 +43,10 @@ describe('popover and menu surfaces (#1600 WP6)', () => {
     expect(b).toContain('box-shadow: var(--shadow-popover);');
   });
 
+  it('the Defaults menu item keeps the small radius (#1650, owner decision 2026-11-17)', () => {
+    expect(block('.settings-card-defaults-item')).toContain('border-radius: var(--radius-sm);');
+  });
+
   it.each(radiusOnly)('%s container uses the radius token, not a literal', (selector) => {
     const b = block(selector);
     expect(b).toMatch(/border-radius: var\(--radius(-md)?\);/);

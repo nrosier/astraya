@@ -39,6 +39,8 @@ const SMALL_RADIUS_ALLOWLIST: Record<string, string> = {
     'form field (input, select, textarea); inputs are outside task 1650-2',
   '.primitive-option-card': 'option card, a container (owner answer 4 keeps the small radius on option containers)',
   '.page-header-export-item': 'menu item inside the open Export menu (owner answer 4)',
+  '.settings-card-defaults-item':
+    'menu item inside the open Defaults menu (owner decision on #1650, 2026-11-17: 5.25px)',
   '.primitive-disclosure': 'disclosure container',
   '.consultation-section, .consultation-glance': 'card, a container',
   '.consultation-context': 'card, a container',
