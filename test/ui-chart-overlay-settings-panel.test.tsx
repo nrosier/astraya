@@ -2,7 +2,8 @@
 /**
  * Staged Overlay settings contract (#569, #817): a trigger opens the panel as a right slide-over drawer (StagedDialog),
  * selecting a source enables its contextual input only in the draft, Cancel closes and drops the draft,
- * and Apply closes and commits it once; Escape discards; focus returns to the trigger.
+ * and Apply closes and commits it once; Escape discards; focus returns to the trigger. The `drawer=overlays` deep
+ * link (#1667) opens it on load and closing removes `drawer` from the URL.
  */
 import { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -33,6 +34,7 @@ function Harness(): React.JSX.Element {
 }
 
 afterEach(() => {
+  window.history.replaceState(null, '', '#/');
   if (mounted === undefined) return;
   act(() => {
     mounted?.root.unmount();
@@ -217,5 +219,33 @@ describe('ChartOverlaySettingsPanel', () => {
     );
     await click(apply);
     expect(container.querySelector('output')?.textContent).toBe('true');
+  });
+});
+
+describe('ChartOverlaySettingsPanel drawer deep link (#1667)', () => {
+  const WHEEL_DRAWER_HASH = '#/people/p-aaaaaaaaaaaaaaaa/charts/natal/wheel?drawer=overlays';
+
+  it('opens the overlay drawer on load when the wheel hash requests drawer=overlays', async () => {
+    window.history.replaceState(null, '', WHEEL_DRAWER_HASH);
+    const container = await mount();
+    const dialog = must(container.querySelector('dialog'));
+    expect(dialog.hasAttribute('open')).toBe(true);
+    expect(window.location.hash).toBe(WHEEL_DRAWER_HASH);
+  });
+
+  it('removes drawer from the hash when the drawer closes, keeping the path', async () => {
+    window.history.replaceState(null, '', WHEEL_DRAWER_HASH);
+    const container = await mount();
+    const dialog = must(container.querySelector('dialog'));
+    expect(dialog.hasAttribute('open')).toBe(true);
+    await click(
+      must(
+        [...container.querySelectorAll('.settings-card-footer button')].find(
+          (button) => button.textContent === 'Cancel',
+        ),
+      ),
+    );
+    expect(dialog.hasAttribute('open')).toBe(false);
+    expect(window.location.hash).toBe('#/people/p-aaaaaaaaaaaaaaaa/charts/natal/wheel');
   });
 });
