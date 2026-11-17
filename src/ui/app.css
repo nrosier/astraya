@@ -2977,8 +2977,8 @@ label.stacked {
    shared scrolling tab row (#818, `.tab-row--always` below), so the row scrolls sideways instead of wrapping. */
 .tab {
   white-space: nowrap;
-  min-height: var(--control-height-compact);
-  padding: var(--space-2) var(--space-4);
+  height: var(--control-height-compact);
+  padding: 0 var(--space-4);
   border: none;
   border-radius: var(--radius-full);
   background: none;
