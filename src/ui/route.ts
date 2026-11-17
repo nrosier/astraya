@@ -32,7 +32,7 @@
  * @module ui/route
  * @purpose Pure hash-route parsing and construction for every screen in the app, on the one canonical scheme, plus one-time-token query extraction (set-password, setup).
  * @conventions Pure and separate from components so it is tested without a DOM; hash routing since the built app is static files with no server rewrite rule; ids are validated with domain/id.js's isPersonId rather than accepted as any string; an unknown, obsolete or malformed hash falls back to Home with no redirect or alias; `parseRoute(routeHref(r))` round-trips for every route.
- * @exports Route, OverlayRingKey, OverlayRingDates, hashWithOverlayDates, ExportBuilderSection, PreferencesSection, PREFERENCES_SECTIONS, parseRoute, routeHref, chartHref, hashDate, hashWithDate, personHref, routeShowsBackLink, setPasswordToken, setupToken
+ * @exports Route, OverlayRingKey, OverlayRingDates, hashWithOverlayDates, ExportBuilderSection, PreferencesSection, PREFERENCES_SECTIONS, DrawerKey, DRAWER_KEYS, parseRoute, routeHref, chartHref, hashDate, hashWithDate, personHref, routeShowsBackLink, setPasswordToken, setupToken
  */
 import { isPersonId } from '../domain/id.js';
 import { chartViewFromHash, isChartType, isChartView, type ChartType, type ChartViewKind } from './chart-sections.js';
@@ -45,12 +45,30 @@ function isPreferencesSection(value: string | undefined): value is PreferencesSe
   return (PREFERENCES_SECTIONS as readonly (string | undefined)[]).includes(value);
 }
 
+/**
+ * The drawers that have a deep link (#1667): `?drawer=<key>` on the route that hosts them. Only these four keys are
+ * read; any other value is dropped, so the page opens with no drawer, as an unknown `date` is dropped.
+ */
+export const DRAWER_KEYS = ['overlays', 'extended-settings', 'life-events', 'map-settings'] as const;
+export type DrawerKey = (typeof DRAWER_KEYS)[number];
+
+function isDrawerKey(value: string | null | undefined): value is DrawerKey {
+  return (DRAWER_KEYS as readonly (string | null | undefined)[]).includes(value);
+}
+
+/** The `drawer` query value of a hash, or undefined when it is absent or not one of `DRAWER_KEYS`. */
+function drawerParam(hash: string): DrawerKey | undefined {
+  const value = new URLSearchParams(hash.split('?')[1] ?? '').get('drawer');
+  return isDrawerKey(value) ? value : undefined;
+}
+
 export type Route =
   | { readonly kind: 'home' }
   | { readonly kind: 'about' }
   | { readonly kind: 'changelog' }
   | { readonly kind: 'people' }
-  | { readonly kind: 'person'; readonly personId: string }
+  // `drawer` (#1667) is read on the birth-record route only, where Life events opens.
+  | { readonly kind: 'person'; readonly personId: string; readonly drawer?: DrawerKey }
   // A complete person's landing screen (#506/#509).
   | { readonly kind: 'person-overview'; readonly personId: string }
   // The consultation dashboard (#563): current transits, active timing techniques and chart
@@ -72,6 +90,8 @@ export type Route =
       readonly date?: string;
       /** The other extra rings' dates (#1400): `?progressed=`, `?directed=`, `?solararc=`, `?return=`. `date` above is the transit ring's (`?transit=`, or the older `?date=`). */
       readonly ringDates?: OverlayRingDates;
+      /** The drawer open on this chart (#1667): Overlay settings or Extended settings, as `?drawer=`. */
+      readonly drawer?: DrawerKey;
     }
   // The written report (#271): Interpretation in the navigation.
   | { readonly kind: 'report'; readonly personId: string }
@@ -103,7 +123,7 @@ export type Route =
   // Astrocartography/Local Space map (#171). No second parameter: line types, body picker,
   // Local Space toggle and relocation place are all picked in-screen, same reasoning as
   // periodic-transit's "as of" date above.
-  | { readonly kind: 'astrocartography'; readonly personId: string }
+  | { readonly kind: 'astrocartography'; readonly personId: string; readonly drawer?: DrawerKey }
   | { readonly kind: 'shared' }
   // The Documents workspace (#563): PDF export builder and saved charts. App-scoped, no person context.
   | { readonly kind: 'documents' }
@@ -175,7 +195,10 @@ function personSubRoute(personId: string, rest: readonly string[], hash: string)
   if (rest.length === 1) {
     if (area === 'overview') return { kind: 'person-overview', personId };
     if (area === 'consultation') return { kind: 'consultation', personId };
-    if (area === 'birth-record') return { kind: 'person', personId };
+    if (area === 'birth-record') {
+      const drawer = drawerParam(hash);
+      return { kind: 'person', personId, ...(drawer === undefined ? {} : { drawer }) };
+    }
     if (area === 'interpretation') return { kind: 'report', personId };
     return undefined;
   }
@@ -186,6 +209,7 @@ function personSubRoute(personId: string, rest: readonly string[], hash: string)
     // `?transit=` is the transit ring's own date; the older `?date=` (#800) keeps opening the same ring.
     const date = chartDateParam(query.get('transit')) ?? chartDateParam(query.get('date'));
     const ringDates = ringDatesOf(query);
+    const drawer = drawerParam(hash);
     return {
       kind: 'chart',
       personId,
@@ -194,6 +218,7 @@ function personSubRoute(personId: string, rest: readonly string[], hash: string)
       ...(compare === undefined ? {} : { compareType: compare }),
       ...(date === undefined ? {} : { date }),
       ...(ringDates === undefined ? {} : { ringDates }),
+      ...(drawer === undefined ? {} : { drawer }),
     };
   }
   if (rest.length !== 2) return undefined;
@@ -205,7 +230,10 @@ function personSubRoute(personId: string, rest: readonly string[], hash: string)
     const view = chartViewFromHash(hash);
     return { kind: 'composite', personId, ...(view === undefined ? {} : { view }) };
   }
-  if (area === 'location' && second === 'astrocartography') return { kind: 'astrocartography', personId };
+  if (area === 'location' && second === 'astrocartography') {
+    const drawer = drawerParam(hash);
+    return { kind: 'astrocartography', personId, ...(drawer === undefined ? {} : { drawer }) };
+  }
   return undefined;
 }
 
@@ -306,6 +334,16 @@ export function parseRoute(hash: string): Route {
   return { kind: 'home' };
 }
 
+/** The `drawer=` query part for a route's drawer (#1667), or nothing when it has none. */
+function drawerQuery(drawer: DrawerKey | undefined): string[] {
+  return drawer === undefined ? [] : [`drawer=${drawer}`];
+}
+
+/** `base` with `parts` as its query string, or `base` alone when there are none. */
+function withQuery(base: string, parts: readonly string[]): string {
+  return parts.length === 0 ? base : `${base}?${parts.join('&')}`;
+}
+
 /** The canonical hash for a route: the one place any link in the app is written. */
 export function routeHref(route: Route): string {
   const person = (id: string, ...tail: string[]): string => `#/people/${id}/${tail.join('/')}`;
@@ -349,20 +387,20 @@ export function routeHref(route: Route): string {
     case 'consultation':
       return person(route.personId, 'consultation');
     case 'person':
-      return person(route.personId, 'birth-record');
+      return withQuery(person(route.personId, 'birth-record'), drawerQuery(route.drawer));
     case 'report':
       return person(route.personId, 'interpretation');
     case 'chart': {
       const base = person(route.personId, 'charts', route.chartType ?? 'natal', route.view ?? 'wheel');
-      const query = [
+      return withQuery(base, [
         ...(route.compareType === undefined ? [] : [`compare=${route.compareType}`]),
         ...(route.date === undefined ? [] : [`date=${route.date}`]),
         ...OVERLAY_RING_KEYS.flatMap((key) => {
           const value = route.ringDates?.[key];
           return value === undefined ? [] : [`${OVERLAY_RING_PARAMS[key]}=${value}`];
         }),
-      ];
-      return query.length === 0 ? base : `${base}?${query.join('&')}`;
+        ...drawerQuery(route.drawer),
+      ]);
     }
     case 'profections':
     case 'timing-timeline':
@@ -379,7 +417,7 @@ export function routeHref(route: Route): string {
       return route.view === undefined || route.view === 'wheel' ? base : `${base}?view=${route.view}`;
     }
     case 'astrocartography':
-      return person(route.personId, 'location', 'astrocartography');
+      return withQuery(person(route.personId, 'location', 'astrocartography'), drawerQuery(route.drawer));
     case 'cycles':
     case 'graphic-ephemeris':
     case 'event-search':
