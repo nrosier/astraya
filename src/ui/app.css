@@ -6769,6 +6769,13 @@ svg text.chart-symbol-text-unicode {
   .settings-card-footer-group {
     flex-wrap: nowrap;
   }
+
+  /* The Life events footer wraps at phone width (#1666): its groups stack, and Save and close drops to its own row
+     at the right, so no button runs past the 390px viewport. Other drawers keep the nowrap rules above. */
+  .primitive-staged-dialog.life-events-drawer[data-sheet='phone'] .settings-card-footer,
+  .life-events-drawer .settings-card-footer-group {
+    flex-wrap: wrap;
+  }
 }
 
 /* The visibility matrix (#824) is a SortableTable; these rules only place its group header rows (#1544) and centre its checks. */
