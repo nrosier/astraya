@@ -36,6 +36,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 4604 lines and no page markers. Update 2026-11-07 (#864): text now carries \"=== p. N ===\" markers inserted before the page that follows each of the printed folio numbers on their own lines (62 footers, one inferred where the OCR misread 35 for 33); N is the printed folio, and page 1 holds all unnumbered front matter. The page index has 63 rows. The \"single entry\" and \"no page markers\" statements above are superseded."
   },
   {
@@ -55,6 +56,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 5785 lines and no page markers. Update 2026-11-07 (#864): text now carries \"=== p. N ===\" markers inserted before the page that follows each of the printed folio numbers on their own lines (95 footers, two inferred where the OCR misread the number); N is the printed folio, and page 1 holds all unnumbered front matter. The page index has 96 rows. The \"single entry\" and \"no page markers\" statements above are superseded."
   },
   {
@@ -74,6 +76,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 5576 lines and no page markers. Update 2026-11-07 (#864): text now carries \"=== p. N ===\" markers inserted before the page that follows each of the printed folio numbers on their own lines (71 footers, one inferred where the OCR misread 59); N is the printed folio, and page 1 holds all unnumbered front matter. The page index has 72 rows. The \"single entry\" and \"no page markers\" statements above are superseded."
   },
   {
@@ -93,6 +96,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 13050 lines and no page markers. Update 2026-11-07 (#864): no recoverable page breaks (the OCR has no page numbers, running heads or form feeds (page numbers appear only in the index entries)), so the text carries one \"=== p. 1 ===\" marker and the index stays a single row."
   },
   {
@@ -112,6 +116,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 3770 lines and no page markers. Update 2026-11-07 (#864): no recoverable page breaks (the OCR has no page numbers, running heads or form feeds), so the text carries one \"=== p. 1 ===\" marker and the index stays a single row."
   },
   {
@@ -131,6 +136,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 5147 lines and no page markers. Update 2026-11-07 (#864): text now carries \"=== p. N ===\" markers inserted before the page that follows each of the printed folio numbers on their own lines (77 footers); N is the printed folio, and page 1 holds all unnumbered front matter. The page index has 78 rows. The \"single entry\" and \"no page markers\" statements above are superseded."
   },
   {
@@ -150,6 +156,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 10053 lines and no page markers. Update 2026-11-07 (#864): no recoverable page breaks (the OCR has no page numbers, running heads or form feeds), so the text carries one \"=== p. 1 ===\" marker and the index stays a single row."
   },
   {
@@ -169,6 +176,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 4170 lines and no page markers. Update 2026-11-07 (#864): no recoverable page breaks (the OCR has no page numbers, running heads or form feeds), so the text carries one \"=== p. 1 ===\" marker and the index stays a single row."
   },
   {
@@ -188,6 +196,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 14023 lines and no page markers. Update 2026-11-07 (#864): no recoverable page breaks (the OCR has no page numbers, running heads or form feeds), so the text carries one \"=== p. 1 ===\" marker and the index stays a single row."
   },
   {
@@ -207,6 +216,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 3137 lines and no page markers. Update 2026-11-07 (#864): no recoverable page breaks (the running head \"INTRODUCTION <roman numeral>\" survives on only about 30 of roughly 60 pages and its numerals are garbled, so it is not reliable), so the text carries one \"=== p. 1 ===\" marker and the index stays a single row."
   },
   {
@@ -246,6 +256,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "PDF metadata (author \"barry\", creation dates) is not bibliographic. Marked copyrighted conservatively."
   },
   {
@@ -265,6 +276,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "PDF metadata (author \"barry\", creation dates) is not bibliographic. Marked copyrighted conservatively."
   },
   {
@@ -284,6 +296,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "PDF metadata (author \"barry\", creation dates) is not bibliographic. Marked copyrighted conservatively."
   },
   {
@@ -303,6 +316,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "PDF metadata (author \"barry\", creation dates) is not bibliographic. Marked copyrighted conservatively."
   },
   {
@@ -322,6 +336,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "PDF metadata (author \"barry\", creation dates) is not bibliographic. Marked copyrighted conservatively."
   },
   {
@@ -341,6 +356,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "PDF metadata (author \"barry\", creation dates) is not bibliographic. Marked copyrighted conservatively."
   },
   {
@@ -360,6 +376,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "PDF metadata (author \"barry\", creation dates) is not bibliographic. Marked copyrighted conservatively."
   },
   {
@@ -379,6 +396,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "PDF metadata (author \"barry\", creation dates) is not bibliographic. Marked copyrighted conservatively."
   },
   {
@@ -398,6 +416,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "PDF metadata (author \"barry\", creation dates) is not bibliographic. Marked copyrighted conservatively."
   },
   {
@@ -417,6 +436,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "PDF metadata (author \"barry\", creation dates) is not bibliographic. Marked copyrighted conservatively."
   },
   {
@@ -436,6 +456,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "PDF metadata (author \"barry\", creation dates) is not bibliographic. Marked copyrighted conservatively."
   },
   {
@@ -455,6 +476,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "PDF metadata (author \"barry\", creation dates) is not bibliographic. Marked copyrighted conservatively."
   },
   {
@@ -474,6 +496,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "PDF metadata (author \"barry\", creation dates) is not bibliographic. Marked copyrighted conservatively."
   },
   {
@@ -493,6 +516,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "PDF metadata (author \"barry\", creation dates) is not bibliographic. Marked copyrighted conservatively."
   },
   {
@@ -512,6 +536,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "PDF metadata (author \"barry\", creation dates) is not bibliographic. Marked copyrighted conservatively."
   },
   {
@@ -531,6 +556,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "Marked copyrighted conservatively: translation status unrecorded."
   },
   {
@@ -550,6 +576,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "PDF metadata (author \"barry\", creation dates) is not bibliographic. Marked copyrighted conservatively."
   },
   {
@@ -569,6 +596,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "PDF metadata (author \"barry\", creation dates) is not bibliographic. Marked copyrighted conservatively."
   },
   {
@@ -588,6 +616,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": ["test/fixtures/yemen-star-longitudes.json"],
     "notes": "Sole source of the shipped fixed-star table (docs/domain/FIXED_STAR_REGISTRY.md)."
   },
   {
@@ -607,6 +636,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "Year is the date of the work; the edition is Houlding 1999/2022."
   },
   {
@@ -626,6 +656,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": false,
+    "used_by": [],
     "notes": "Do not redistribute before provenance is checked. PDF page = printed page - 126 (printed 129-483) per lilly-christian-astrology-book2.local.json. Year 1659 read from the title page; flag the 1647 vs 1659 discrepancy."
   },
   {
@@ -645,6 +676,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "Long-s and planet glyphs garbled; tables unreadable. Source has no page breaks, so the page index is a single entry. Text has 81210 lines and no page markers. Update 2026-11-07 (#864): text/ now holds only the contents of the HTML <pre> element, HTML entities decoded, with one \"=== p. 1 ===\" marker and no page chrome; the original HTML is untouched in sources/. The HTML has no page anchors or form feeds and the OCR has no reliable folio numbers (about 6700 stray numeric lines), so the index stays a single row."
   },
   {
@@ -664,6 +696,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "PDF metadata (author \"barry\", creation dates) is not bibliographic. Marked copyrighted conservatively."
   },
   {
@@ -683,6 +716,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": false,
+    "used_by": [],
     "notes": "PDF metadata author reads \"Ptolemy, 2nd cent\"; the title page names Peters and Knobel."
   },
   {
@@ -762,6 +796,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "PDF metadata (author \"barry\", creation dates) is not bibliographic. Marked copyrighted conservatively."
   },
   {
@@ -781,6 +816,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "Scanned, no text layer; text OCR'd locally with ocrmypdf 17.13.0 / tesseract 5.5.4 (eng, --force-ocr), 135 pages, no empty pages. Two-column layout and symbol or chart pages are noisy (planet and sign glyphs misread). Title page: Aspect Pattern Astrology, Bruno & Louise Huber, Michael-Alexander Huber, HopeWell; 2nd revised edition 2019 (English first published 2005). Title and author from the copyright page. English edition first published 2005, revised 2019."
   },
   {
@@ -800,6 +836,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "Scanned, no text layer; text OCR'd locally with ocrmypdf 17.13.0 / tesseract 5.5.4 (eng, --force-ocr), 88 pages, no empty pages. Scan holds two book pages per PDF page, so the layout is noisy and column text interleaves. Printed title and author: The Art of Chart Interpretation, Tracy Marks (CRCS Publications, 1986)."
   },
   {
@@ -812,13 +849,14 @@
     "access_route": "Not recorded; filename suggests a free-PDF site",
     "original_name": "bil-tierney-all-around-the-zodiac-pdf-free.pdf",
     "processed_path": "docs/references/sources/pdf/tierney-all-around-the-zodiac-undated.pdf",
-    "sha256": "72bae71d89ab0e38b5fcd1a645b509acddee29dec906dcb869b3790a7786ed96",
+    "sha256": "45b7c8f91c9a8ad6cf6f7c3cc85e028da8072afeb49437daa9c034fa6b20aeb1",
     "text_path": "docs/references/text/tierney-all-around-the-zodiac-undated.txt",
     "pages_path": "docs/references/text/tierney-all-around-the-zodiac-undated.pages.tsv",
     "page_count": 84,
     "status": "extracted",
     "provisional": true,
     "copyrighted": true,
+    "used_by": [],
     "notes": "Text layer degraded (words run together, letters misread). Author \"Bil Tierney\" and title \"All Around the Zodiac\" appear only in the filename; first pages begin \"Chapter One Signs & Elements\" with no title page. PDF is a partial scan, book pp. 15-181 as 84 two-page spreads; no title or imprint printed. Open Library gives Bil Tierney, Llewellyn, first published 2001, edition unverified. Re-OCRed on 2026-11-15 (ocrmypdf --force-ocr, Tesseract 5, eng; owner decision on #1602): words are now separated, some letters still misread. Still provisional: no title or imprint page, so author, publisher and year remain unverified."
   },
   {
@@ -858,6 +896,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
+    "used_by": [],
     "notes": "PDF metadata (author \"barry\", creation dates) is not bibliographic. Marked copyrighted conservatively."
   },
   {
@@ -1330,7 +1369,7 @@
     "access_route": "Local file docs/references/sources/pdf/paulus-alexandrinus-olympiodorus-with-scholia-greenbaum-2011.pdf",
     "original_name": "toaz.info-paulus-alexandrinus-and-olympiodorus-with-scholia-dorian-gieseler-greenbaum-pr_fad380bd190b95fd64c9db5df9103ccd.pdf",
     "processed_path": "docs/references/sources/pdf/paulus-alexandrinus-olympiodorus-with-scholia-greenbaum-2011.pdf",
-    "sha256": "b744795e1d51199cdb063dcb65ac12ecced94b7c3f95392ece9814c3fdff26f6",
+    "sha256": "dffa2a86e2a8c13135b1fc9e68b798224a25464e617fa221a7551b5be08b605a",
     "text_path": "docs/references/text/paulus-alexandrinus-olympiodorus-with-scholia-greenbaum-2011.txt",
     "pages_path": "docs/references/text/paulus-alexandrinus-olympiodorus-with-scholia-greenbaum-2011.pages.tsv",
     "page_count": 93,
