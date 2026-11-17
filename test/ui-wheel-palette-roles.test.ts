@@ -155,6 +155,13 @@ describe('wheel colour roles in app.css (issue 1532)', () => {
     expect(declarationsOf(css, '.chart-multiwheel .chart-axis-label')).toContain('fill: var(--solar)');
   });
 
+  it('sets the axis labels and the degree labels to the chart-label size and weight (issue 1649)', () => {
+    const axis = declarationsOf(css, '.chart-multiwheel .chart-axis-label');
+    expect(axis).toContain('font-size: var(--text-2xs)');
+    expect(axis).toContain('font-weight: 700');
+    expect(declarationsOf(css, '.chart-multiwheel .chart-axis-degree')).toContain('font-size: var(--text-2xs)');
+  });
+
   it('uses only tokens in the wheel roles: no hex value in these rules', () => {
     for (const [selector] of roles) expect(declarationsOf(css, selector)).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
   });
