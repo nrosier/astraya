@@ -6,16 +6,16 @@
  * sub-tabs the registry does not list are added too: each chart type × chart view (the natal wheel
  * is the Charts entry itself, so it is not repeated), the non-wheel `?view=` variants of Horary and
  * Composite, and the three Preferences sections. Every href goes through `routeHref`, the same hash
- * the link would write, and `parseRoute` reads it back.
+ * the link would write, and `parseRoute` reads it back. Each drawer with a deep link (#1667) gets one
+ * entry whose href carries `drawer=` on its hosting route.
  *
  * Pure, so the index is tested without a DOM. Person entries are left out when the context has no
- * personId; the caller passes the last opened person (owner answer 2). No drawer entries are built,
- * because no drawer has a route yet (owner answer 1).
+ * personId; the caller passes the last opened person (owner answer 2).
  */
 /**
  * @module ui/search-index
  * @purpose Builds the command palette's searchable entries (#1654) from FEATURES, chart type × view, Horary/Composite view variants and Preferences sections, with titles from the menus' own catalogues and hrefs from routeHref.
- * @conventions Pure, no DOM, so it is tested without one. Titles reuse the menu labels so a palette row reads like its menu item. Keywords and descriptions live in search-index.messages.ts. Person entries need the context's personId and are dropped without one. An entry that needs a birth moment is disabled when the context says the person's birth moment is incomplete. No drawer entries.
+ * @conventions Pure, no DOM, so it is tested without one. Titles reuse the menu labels so a palette row reads like its menu item. Keywords and descriptions live in search-index.messages.ts. Person entries need the context's personId and are dropped without one. An entry that needs a birth moment is disabled when the context says the person's birth moment is incomplete. Drawer entries (#1667) link to the host route with `drawer=`, and their titles reuse the drawer's own trigger or heading label.
  * @exports SearchContext, SearchEntry, buildSearchIndex
  */
 import type { Locale } from '../interpretation/schema.js';
@@ -25,11 +25,15 @@ import { chartTypesMessages } from './ChartTypes.messages.js';
 import { adminNavMessages } from './AdminNav.messages.js';
 import { appNavMessages } from './AppNav.messages.js';
 import { preferencesViewMessages } from './PreferencesView.messages.js';
-import { PREFERENCES_SECTIONS, routeHref } from './route.js';
-import { FEATURES, type FeatureDefinition } from './feature-registry.js';
+import { DRAWER_KEYS, PREFERENCES_SECTIONS, routeHref, type DrawerKey } from './route.js';
+import { FEATURES, type FeatureDefinition, type FeatureKey } from './feature-registry.js';
 import { PERSON_TAB_FAMILIES } from './person-nav.js';
 import { TOOLS } from './tools-nav.js';
 import { searchIndexMessages } from './search-index.messages.js';
+import { chartOverlaySettingsPanelMessages } from './ChartOverlaySettingsPanel.messages.js';
+import { extendedSettingsPanelMessages } from './ExtendedSettingsPanel.messages.js';
+import { lifeEventsCardMessages } from './LifeEventsCard.messages.js';
+import { mapSettingsDialogMessages } from './MapSettingsDialog.messages.js';
 
 export interface SearchContext {
   readonly personId?: string | undefined;
@@ -208,9 +212,71 @@ function preferenceEntries(locale: Locale): SearchEntry[] {
   }));
 }
 
+/** The title of each drawer's entry: the label its own trigger shows, so the palette row reads like the control it opens. */
+function drawerTitle(key: DrawerKey, locale: Locale): string {
+  switch (key) {
+    case 'overlays':
+      return chartOverlaySettingsPanelMessages[locale].trigger;
+    case 'extended-settings':
+      return extendedSettingsPanelMessages[locale].heading;
+    case 'life-events':
+      return lifeEventsCardMessages[locale].manageButton;
+    case 'map-settings':
+      return mapSettingsDialogMessages[locale].heading;
+  }
+}
+
+/**
+ * One entry per drawer with a deep link (#1667), each on the route that hosts it. Overlay settings and
+ * Extended settings open from the Charts wheel, Life events from the birth record and Map settings from
+ * Astrocartography. Each entry is disabled where its host needs a complete birth moment, as the host tab is.
+ */
+function drawerEntries(context: SearchContext, locale: Locale): SearchEntry[] {
+  const { personId } = context;
+  if (personId === undefined) return [];
+  const app = appNavMessages[locale];
+  const messages = searchIndexMessages[locale];
+  const separator = messages.breadcrumbSeparator;
+  const hosts: Record<DrawerKey, { readonly place: string; readonly href: string; readonly feature: FeatureKey }> = {
+    overlays: {
+      place: app.tabLabels.chart,
+      href: routeHref({ kind: 'chart', personId, view: 'wheel', drawer: 'overlays' }),
+      feature: 'chart',
+    },
+    'extended-settings': {
+      place: app.tabLabels.chart,
+      href: routeHref({ kind: 'chart', personId, view: 'wheel', drawer: 'extended-settings' }),
+      feature: 'chart',
+    },
+    'life-events': {
+      place: app.tabLabels['birth-record'],
+      href: routeHref({ kind: 'person', personId, drawer: 'life-events' }),
+      feature: 'birth-record',
+    },
+    'map-settings': {
+      place: app.tabLabels.astrocartography,
+      href: routeHref({ kind: 'astrocartography', personId, drawer: 'map-settings' }),
+      feature: 'astrocartography',
+    },
+  };
+  return DRAWER_KEYS.map((key) => {
+    const host = hosts[key];
+    return {
+      id: `drawer:${key}`,
+      title: drawerTitle(key, locale),
+      breadcrumb: joinParts([context.personName ?? '', host.place], separator),
+      href: host.href,
+      keywords: messages.drawerKeywords[key],
+      description: messages.drawerDescriptions[key],
+      ...(isDisabled(featureNeedsBirthMoment(host.feature), context) ? { disabled: true as const } : {}),
+    };
+  });
+}
+
 /**
  * Every place the palette can open, in one list: the registry's features first (in registry order),
- * then the chart type × view entries, the Horary and Composite view variants, and the Preferences sections.
+ * then the chart type × view entries, the Horary and Composite view variants, the Preferences sections,
+ * and the drawer deep links (#1667).
  */
 export function buildSearchIndex(context: SearchContext, locale: Locale): readonly SearchEntry[] {
   return [
@@ -218,5 +284,6 @@ export function buildSearchIndex(context: SearchContext, locale: Locale): readon
     ...chartEntries(context, locale),
     ...viewVariantEntries(context, locale),
     ...preferenceEntries(locale),
+    ...drawerEntries(context, locale),
   ];
 }

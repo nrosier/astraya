@@ -112,6 +112,22 @@ describe('buildSearchIndex', () => {
     expect(incomplete.find((entry) => entry.id === 'feature:cycles')?.disabled).toBeUndefined();
   });
 
+  it('indexes each deep-linked drawer on its host route, with its drawer key in the link (#1667)', () => {
+    const index = buildSearchIndex(PERSON_CONTEXT, 'en');
+    const expected: Record<string, string> = {
+      'drawer:overlays': `#/people/${PERSON_ID}/charts/natal/wheel?drawer=overlays`,
+      'drawer:extended-settings': `#/people/${PERSON_ID}/charts/natal/wheel?drawer=extended-settings`,
+      'drawer:life-events': `#/people/${PERSON_ID}/birth-record?drawer=life-events`,
+      'drawer:map-settings': `#/people/${PERSON_ID}/location/astrocartography?drawer=map-settings`,
+    };
+    for (const [id, href] of Object.entries(expected)) {
+      expect(index.find((candidate) => candidate.id === id)?.href, id).toBe(href);
+    }
+    const drawerEntries = index.filter((entry) => entry.id.startsWith('drawer:'));
+    expect(drawerEntries.length).toBe(4);
+    expect(index.find((entry) => entry.id === 'drawer:life-events')?.breadcrumb).toBe('Ada › Birth record');
+  });
+
   it('uses the Dutch catalogue for Dutch titles and keeps Dutch keywords for every entry', () => {
     const en = buildSearchIndex(PERSON_CONTEXT, 'en');
     const nl = buildSearchIndex(PERSON_CONTEXT, 'nl');
@@ -134,6 +150,8 @@ describe('search-index.messages', () => {
       'chartViewKeywords',
       'preferencesSectionKeywords',
       'preferencesSectionDescriptions',
+      'drawerKeywords',
+      'drawerDescriptions',
     ] as const;
     for (const table of tables) {
       expect(Object.keys(nl[table]).sort(), table).toEqual(Object.keys(en[table]).sort());
