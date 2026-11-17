@@ -25,7 +25,6 @@ const en = {
   exportPdfBuilder: 'Build custom PDF…',
   exportPdfBuilderHint: "Choose what goes into one PDF document, with each section's own options.",
   toolsLabel: 'Tools',
-  returnToLabel: 'Return to',
   toolLabels: {
     cycles: 'Planetary cycles',
     'graphic-ephemeris': 'Graphic ephemeris',
@@ -83,7 +82,6 @@ const nl: typeof en = {
   exportPdfBuilder: 'PDF samenstellen…',
   exportPdfBuilderHint: 'Kies wat in één PDF-document komt, met de eigen opties van elk onderdeel.',
   toolsLabel: 'Hulpmiddelen',
-  returnToLabel: 'Terug naar',
   toolLabels: {
     cycles: 'Planetaire cycli',
     'graphic-ephemeris': 'Grafische efemeriden',
