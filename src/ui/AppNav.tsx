@@ -46,6 +46,7 @@ import { TOOLS } from './tools-nav.js';
 import { useLastPersonId, writeLastPersonId } from './last-person.js';
 import { PersonSwitcher } from './PersonSwitcher.js';
 import { useExclusiveOpen, type ExclusiveOpen } from './use-exclusive-open.js';
+import { useNarrowViewport } from './use-narrow-viewport.js';
 import { Button } from './primitives/Button.js';
 
 // Charts is one destination (#511): the chart type is chosen on the page, not in this navigation.
@@ -216,6 +217,8 @@ function PaletteTrigger(): React.JSX.Element {
   const [paletteLoaded, setPaletteLoaded] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  // At 40rem and below the trigger is the icon-only circle (#1650 shape), so it takes the shared circle class.
+  const narrow = useNarrowViewport();
 
   function openPalette(): void {
     setPaletteLoaded(true);
@@ -245,7 +248,7 @@ function PaletteTrigger(): React.JSX.Element {
       <Button
         variant="plain"
         ref={triggerRef}
-        className="app-nav-search"
+        className={narrow ? 'app-nav-search primitive-button-circle' : 'app-nav-search'}
         aria-label={`${t.searchPlaceholder} ${isApplePlatform() ? t.shortcutHintApple : t.shortcutHintOther}`}
         aria-haspopup="dialog"
         onClick={openPalette}

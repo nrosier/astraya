@@ -105,6 +105,31 @@ describe('the command palette trigger (#1654)', () => {
     expect(trigger().querySelector('kbd')?.textContent).toBe(appNavMessages.en.shortcutHintOther);
   });
 
+  it('uses the shared circle class at 390px and keeps the pill class on the wide trigger', () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query === '(max-width: 40rem)',
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    }));
+    render();
+    expect(trigger().classList.contains('primitive-button-circle')).toBe(true);
+    expect(trigger().classList.contains('app-nav-search')).toBe(true);
+    act(() => {
+      root.unmount();
+    });
+    root = createRoot(container);
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: false,
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    }));
+    render();
+    expect(trigger().classList.contains('app-nav-search')).toBe(true);
+    expect(trigger().classList.contains('primitive-button-circle')).toBe(false);
+  });
+
   it('shows the Cmd K hint on Apple platforms and Ctrl K elsewhere', () => {
     setPlatform('MacIntel');
     render();
