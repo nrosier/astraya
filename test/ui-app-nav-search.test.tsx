@@ -8,6 +8,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setLocale } from '../src/ui/locale.js';
+import { PageActionsProvider, usePageActionsRef } from '../src/ui/page-actions-slot.js';
 import { parseRoute, type Route } from '../src/ui/route.js';
 
 vi.mock('../src/ui/EphemerisProviderContext.js', () => ({
@@ -42,18 +43,35 @@ function setPlatform(platform: string): void {
   Object.defineProperty(navigator, 'platform', { configurable: true, value: platform });
 }
 
+/**
+ * Renders `AppNav` under a page header's action group, the way `App.tsx` mounts it (#1654): the desktop trigger
+ * portals into that group, so it is searched for in the document, not inside the nav's container.
+ */
+/** The action group a `PageHeader` publishes, so the desktop trigger has a page header to portal into. */
+function PageHeaderActions(): React.JSX.Element {
+  const actionsRef = usePageActionsRef();
+  return <div ref={actionsRef} className="page-header-actions" />;
+}
+
 function render(route: Route = home): void {
   act(() => {
-    root.render(<AppNav route={route} />);
+    root.render(
+      <PageActionsProvider>
+        <div className="page-header-row">
+          <PageHeaderActions />
+        </div>
+        <AppNav route={route} />
+      </PageActionsProvider>,
+    );
   });
 }
 
 const trigger = (): HTMLButtonElement => {
-  const found = container.querySelector<HTMLButtonElement>('button.app-nav-search');
+  const found = document.querySelector<HTMLButtonElement>('button.app-nav-search');
   if (found === null) throw new Error('fixture bug: no palette trigger');
   return found;
 };
-const paletteOpen = (): boolean => container.querySelector('dialog')?.hasAttribute('open') === true;
+const paletteOpen = (): boolean => document.querySelector('dialog')?.hasAttribute('open') === true;
 /** The palette loads lazily, so an open request shows once its chunk resolves: flush until it does. */
 async function expectOpen(open: boolean): Promise<void> {
   for (let attempt = 0; attempt < 50 && paletteOpen() !== open; attempt += 1) {
@@ -192,6 +210,24 @@ describe('the command palette trigger (#1654)', () => {
     pressKey(document.body, { key: 'k', ctrlKey: true, shiftKey: true });
     pressKey(document.body, { key: 'k', ctrlKey: true, altKey: true });
     expect(paletteOpen()).toBe(false);
+  });
+
+  it('renders the desktop trigger in the page header action group, after its actions, and not in the sidebar (#1654)', () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: false,
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    }));
+    render();
+    const group = document.querySelector('.page-header-actions');
+    if (group === null) throw new Error('fixture bug: no page header action group');
+    // The trigger is the group's last child, so it is the top-right element of the page header row.
+    expect(group.lastElementChild).toBe(trigger());
+    expect(trigger().closest('.page-header-row')).not.toBeNull();
+    // The sidebar holds no search control: no trigger inside the nav wrapper or the nav.
+    expect(document.querySelector('.app-nav-wrap .app-nav-search')).toBeNull();
+    expect(document.querySelector('nav.app-nav .app-nav-search')).toBeNull();
   });
 
   it('leaves the arrow keys for the date animation bar, which keeps its own listener', () => {

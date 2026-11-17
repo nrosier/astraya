@@ -9,6 +9,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setLocale } from '../src/ui/locale.js';
+import { PageActionsProvider, usePageActionsRef } from '../src/ui/page-actions-slot.js';
 import { parseRoute, type Route } from '../src/ui/route.js';
 
 vi.mock('../src/ui/EphemerisProviderContext.js', () => ({
@@ -38,14 +39,27 @@ function stubDialog(): void {
   });
 }
 
+/** The action group a `PageHeader` publishes: the desktop trigger portals into it (#1654). */
+function PageHeaderActions(): React.JSX.Element {
+  const actionsRef = usePageActionsRef();
+  return <div ref={actionsRef} className="page-header-actions" />;
+}
+
 function render(route: Route = home): void {
   act(() => {
-    root.render(<AppNav route={route} />);
+    root.render(
+      <PageActionsProvider>
+        <div className="page-header-row">
+          <PageHeaderActions />
+        </div>
+        <AppNav route={route} />
+      </PageActionsProvider>,
+    );
   });
 }
 
 const trigger = (): HTMLButtonElement => {
-  const found = container.querySelector<HTMLButtonElement>('button.app-nav-search');
+  const found = document.querySelector<HTMLButtonElement>('button.app-nav-search');
   if (found === null) throw new Error('fixture bug: no palette trigger');
   return found;
 };

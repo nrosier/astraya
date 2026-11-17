@@ -36,7 +36,9 @@
  * @exports AppNav
  */
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { appNavMessages } from './AppNav.messages.js';
+import { usePageActionsTarget } from './page-actions-slot.js';
 import { useMessages } from './messages.js';
 import { activeFeatureKey, activePersonTabKey, activeToolKey } from './feature-registry.js';
 import { isTabEnabled, PERSON_TAB_FAMILIES, PERSON_TABS } from './person-nav.js';
@@ -252,8 +254,9 @@ const LazyCommandPalette = lazy(() =>
 );
 
 /**
- * The search trigger (#1654): a pill on a wide screen, an icon-only circle beside the Menu button below
- * 64rem. It opens the command palette, and Ctrl+K or Cmd+K opens it from anywhere outside a text field.
+ * The search trigger (#1654): on a wide screen a pill at the top right of the page, in the page header's action
+ * group after Export (`PageHeader.tsx`, portalled through `page-actions-slot.tsx`), so the sidebar holds no search.
+ * At 40rem and below it is an icon-only circle beside the Menu button. It opens the command palette, and Ctrl+K or Cmd+K opens it from anywhere outside a text field.
  * The shortcut only calls `preventDefault` on its own key, so other keydown handlers still receive it.
  * The palette loads on its first open and stays mounted after that, hidden while closed, so `StagedDialog`
  * can return focus here when it closes (#1654). Unmounting on close would run that focus return too late.
@@ -265,6 +268,8 @@ function PaletteTrigger(): React.JSX.Element {
   const triggerRef = useRef<HTMLButtonElement>(null);
   // At 40rem and below the trigger is the icon-only circle (#1650 shape), so it takes the shared circle class.
   const narrow = useNarrowViewport();
+  // The page header's top-right action group, where the desktop trigger renders (#1654); null when no header is mounted.
+  const pageActions = usePageActionsTarget();
 
   function openPalette(): void {
     setPaletteLoaded(true);
@@ -289,30 +294,46 @@ function PaletteTrigger(): React.JSX.Element {
     };
   }, []);
 
+  const searchButton = (
+    <Button
+      variant="plain"
+      ref={triggerRef}
+      className={narrow ? 'app-nav-search primitive-button-circle' : 'app-nav-search'}
+      aria-label={`${t.searchPlaceholder} ${isApplePlatform() ? t.shortcutHintApple : t.shortcutHintOther}`}
+      aria-haspopup="dialog"
+      onClick={openPalette}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="11" cy="11" r="7" />
+        <path d="M20 20l-3.5-3.5" />
+      </svg>
+      <span className="app-nav-search-text">{t.searchPlaceholder}</span>
+      <kbd className="app-nav-search-hint" aria-hidden="true">
+        {isApplePlatform() ? t.shortcutHintApple : t.shortcutHintOther}
+      </kbd>
+    </Button>
+  );
+  const palette = paletteLoaded && (
+    <Suspense fallback={null}>
+      <LazyCommandPalette open={paletteOpen} onClose={closePalette} returnFocusTo={triggerRef} />
+    </Suspense>
+  );
+
+  // Below 40rem the trigger is the icon-only circle beside Menu, in the nav (#1650). On desktop it is the page
+  // header's top-right control, after its actions (#1654), so the sidebar holds no search. With no page header
+  // mounted there is no desktop trigger; Ctrl+K still opens the palette.
+  if (narrow) {
+    return (
+      <>
+        {searchButton}
+        {palette}
+      </>
+    );
+  }
   return (
     <>
-      <Button
-        variant="plain"
-        ref={triggerRef}
-        className={narrow ? 'app-nav-search primitive-button-circle' : 'app-nav-search'}
-        aria-label={`${t.searchPlaceholder} ${isApplePlatform() ? t.shortcutHintApple : t.shortcutHintOther}`}
-        aria-haspopup="dialog"
-        onClick={openPalette}
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <circle cx="11" cy="11" r="7" />
-          <path d="M20 20l-3.5-3.5" />
-        </svg>
-        <span className="app-nav-search-text">{t.searchPlaceholder}</span>
-        <kbd className="app-nav-search-hint" aria-hidden="true">
-          {isApplePlatform() ? t.shortcutHintApple : t.shortcutHintOther}
-        </kbd>
-      </Button>
-      {paletteLoaded && (
-        <Suspense fallback={null}>
-          <LazyCommandPalette open={paletteOpen} onClose={closePalette} returnFocusTo={triggerRef} />
-        </Suspense>
-      )}
+      {pageActions !== null && createPortal(searchButton, pageActions)}
+      {palette}
     </>
   );
 }
