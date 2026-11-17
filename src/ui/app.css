@@ -3481,10 +3481,18 @@ label.stacked {
     flex: 0 0 auto;
   }
 
+  /* The palette trigger (#1654) sits on its own row above the nav, and the nav takes the full rail
+     width (#1696): a shared row left the nav 78px, so its labels ran past their boxes. */
   .app-nav-wrap {
     flex: 1 1 auto;
+    flex-direction: column;
     align-items: stretch;
     justify-content: flex-start;
+    gap: var(--space-2);
+  }
+
+  .app-nav-search {
+    flex: 0 0 auto;
   }
 
   .app-nav {
