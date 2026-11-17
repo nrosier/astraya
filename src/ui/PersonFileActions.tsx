@@ -171,13 +171,13 @@ export function PersonFileActions({
         <h3 id="person-file-heading">{t.heading}</h3>
         <p className="hint">{t.exportHint}</p>
         <div className="birth-record-export-row" role="group" aria-label={t.exportGroupLabel}>
-          <Button size="compact" onClick={exportAaf}>
+          <Button size="compact" shape="capsule" onClick={exportAaf}>
             {t.exportAaf}
           </Button>
-          <Button size="compact" onClick={exportJson}>
+          <Button size="compact" shape="capsule" onClick={exportJson}>
             {t.exportJson}
           </Button>
-          <Button size="compact" onClick={exportCsv}>
+          <Button size="compact" shape="capsule" onClick={exportCsv}>
             {t.exportCsv}
           </Button>
         </div>
