@@ -40,8 +40,14 @@ const en = {
   retry: 'Retry',
   conditionCount: (n: string) => `${n} of 10 conditions`,
   capReached: 'Maximum of 10 conditions reached. Remove one to add another.',
-  firstUse: 'No search yet. Pick a scope, a condition and a body, then press Run search to list the people who match.',
   zeroResults: 'No one matches these conditions. Try removing a condition, or choose Match any.',
+  reset: 'Reset',
+  clear: 'Clear',
+  anyJoiner: ' or ',
+  allJoiner: ' · ',
+  showingMatching: (shown: string, total: string, conditions: string) =>
+    `Showing ${shown} of ${total} people matching ${conditions}.`,
+  noSavedShort: 'None yet.',
   searchFailed: 'The search did not finish. Your conditions are kept.',
   readOnly: 'Searches cannot be changed or saved on this device right now. Opening results still works.',
   asOfLabel: 'As-of date',
@@ -49,10 +55,8 @@ const en = {
   notEvaluableHeading: 'Could not be evaluated',
   notEvaluableNote: 'These people are not counted as matches or non-matches.',
   savedHeading: 'Saved searches',
-  savedEmpty: 'No saved searches yet. Save the conditions above to reopen them later.',
   deleted: (name: string) => `Deleted “${name}”.`,
   // Added with the card itself (#1405): the field labels, wording for results and saved searches that the first catalogue left out.
-  heading: 'Search charts',
   intro: 'Find people whose chart matches the conditions you set. Nothing runs until you press Run search.',
   conditionLabel: (n: string) => `Condition ${n}`,
   field: {
@@ -68,8 +72,6 @@ const en = {
   removeShort: 'Remove',
   asOfInvalid: 'Enter a valid date.',
   searchFailedDetail: 'The chart calculation is not available yet. Try again in a moment.',
-  matchesHeading: (n: string) => `Matches (${n})`,
-  foundSummary: (matches: string, total: string) => `${matches} of ${total} people match.`,
   describe: {
     sign: (scope: string, body: string, sign: string) => `${scope}: ${body} in ${sign}`,
     house: (scope: string, body: string, house: string) => `${scope}: ${body} in house ${house}`,
@@ -135,9 +137,14 @@ const nl: typeof en = {
   retry: 'Opnieuw proberen',
   conditionCount: (n: string) => `${n} van 10 voorwaarden`,
   capReached: 'Het maximum van 10 voorwaarden is bereikt. Verwijder er een om een andere toe te voegen.',
-  firstUse:
-    'Nog geen zoekopdracht. Kies een bereik, een voorwaarde en een hemellichaam en kies Zoeken om de passende personen te zien.',
   zeroResults: 'Niemand voldoet aan deze voorwaarden. Verwijder een voorwaarde of kies Minstens één voorwaarde.',
+  reset: 'Opnieuw beginnen',
+  clear: 'Wissen',
+  anyJoiner: ' of ',
+  allJoiner: ' · ',
+  showingMatching: (shown: string, total: string, conditions: string) =>
+    `${shown} van ${total} personen getoond die voldoen aan ${conditions}.`,
+  noSavedShort: 'Nog geen.',
   searchFailed: 'De zoekopdracht is niet afgerond. Je voorwaarden blijven bewaard.',
   readOnly:
     'Zoekopdrachten kunnen op dit apparaat nu niet worden gewijzigd of opgeslagen. Resultaten openen werkt nog wel.',
@@ -146,9 +153,7 @@ const nl: typeof en = {
   notEvaluableHeading: 'Niet te evalueren',
   notEvaluableNote: 'Deze personen tellen niet mee als wel of niet passend.',
   savedHeading: 'Opgeslagen zoekopdrachten',
-  savedEmpty: 'Nog geen opgeslagen zoekopdrachten. Sla de voorwaarden hierboven op om ze later opnieuw te openen.',
   deleted: (name: string) => `“${name}” verwijderd.`,
-  heading: 'Horoscopen doorzoeken',
   intro: 'Zoek personen wier horoscoop aan de voorwaarden voldoet. Er wordt niets uitgevoerd tot je Zoeken kiest.',
   conditionLabel: (n: string) => `Voorwaarde ${n}`,
   field: {
@@ -164,8 +169,6 @@ const nl: typeof en = {
   removeShort: 'Verwijderen',
   asOfInvalid: 'Vul een geldige datum in.',
   searchFailedDetail: 'De horoscoopberekening is nog niet beschikbaar. Probeer het zo opnieuw.',
-  matchesHeading: (n: string) => `Resultaten (${n})`,
-  foundSummary: (matches: string, total: string) => `${matches} van ${total} personen voldoen.`,
   describe: {
     sign: (scope: string, body: string, sign: string) => `${scope}: ${body} in ${sign}`,
     house: (scope: string, body: string, house: string) => `${scope}: ${body} in huis ${house}`,

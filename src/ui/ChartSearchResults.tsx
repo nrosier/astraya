@@ -1,18 +1,20 @@
 /**
  * @module ChartSearchResults
- * @purpose Results of a chart search on People (#1405): the matching people with the conditions that matched, then a separate "could not be evaluated" group with a stated reason for each person.
- * @conventions Nobody is dropped: a person whose chart cannot be evaluated (blocked before any condition, or every condition unreadable for them) is listed in the second group with reasons from the fixed copy list, never raw codes. People who simply do not match are not listed; the summary line counts them in the total. Each row links to the person with `personHref`. The run announcement itself is a `StatusMessage` owned by the card.
- * @exports ChartSearchResults, describeCondition, resultsSummary
+ * @purpose The chart query's result pieces on the one People list (#1405, #1731): the status line that says how many people the applied query leaves and which conditions it used, with Clear, and the "could not be evaluated" group with a stated reason for each person.
+ * @conventions Nobody is dropped: a person whose chart cannot be evaluated is listed in the group with reasons from the fixed copy list, never raw codes. The matches themselves are rendered by People as its ordinary rows, so only the parts that need the chart-search copy live here; this module stays in the lazy chart-search chunk. Each row links to the person with `personHref`. Every message goes through `StatusMessage`.
+ * @exports describeCondition, ChartQueryStatus, NotEvaluableList
  */
 import { bodyById } from '../astrology/bodies.js';
-import type { NotEvaluableReason, SearchCondition } from '../domain/chart-search.js';
+import type { ChartSearch, NotEvaluableReason, SearchCondition } from '../domain/chart-search.js';
 import { chartSearchPanelMessages } from './ChartSearchPanel.messages.js';
 import { aspectDisplayName, bodyDisplayName, signDisplayName } from './astro-names.messages.js';
 import { SIGNS } from '../astrology/signs.js';
-import type { PersonRunResult } from './chart-search-run.js';
-import type { ResultsGroups } from './chart-search-summary.js';
+import type { PersonRunBlockedReason } from './chart-search-run.js';
+import type { QueryNotEvaluable } from './people-query.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
+import { Button } from './primitives/Button.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 import { personHref } from './route.js';
 import type { Locale } from '../interpretation/schema.js';
 
@@ -34,8 +36,6 @@ export function describeCondition(condition: SearchCondition, t: Messages, local
   return t.describe.aspect(scope, body, aspectDisplayName(condition.aspectKey, locale), target);
 }
 
-export { resultsSummary } from './chart-search-summary.js';
-
 const REASONS: Readonly<
   Record<NotEvaluableReason, 'birthTimeUnknown' | 'housesUndefined' | 'bodyMissing' | 'timingUnavailable'>
 > = {
@@ -45,62 +45,70 @@ const REASONS: Readonly<
   'timing-unavailable': 'timingUnavailable',
 };
 
-export function ChartSearchResults({
-  groups,
-  unnamed,
+function reasonText(reason: NotEvaluableReason | PersonRunBlockedReason, t: Messages): string {
+  if (reason === 'settings-unreadable') return t.blocked.settingsUnreadable;
+  if (reason === 'birth-data-incomplete') return t.blocked.birthDataIncomplete;
+  return t.reason[REASONS[reason]];
+}
+
+/**
+ * "Showing 2 of 14 people matching …" for the applied query (#1731), with Clear. The conditions are joined with
+ * " · " for Match all and " or " for Match any. A query that leaves nobody uses the zero-result copy instead.
+ */
+export function ChartQueryStatus({
+  search,
+  shown,
+  total,
+  onClear,
 }: {
-  readonly groups: ResultsGroups;
-  readonly unnamed: string;
+  readonly search: ChartSearch;
+  readonly shown: number;
+  readonly total: number;
+  readonly onClear: () => void;
 }): React.JSX.Element {
   const t = useMessages(chartSearchPanelMessages);
   const [locale] = useLocale();
-  const name = (displayName: string): string => (displayName === '' ? unnamed : displayName);
-  const reasonsOf = (entry: PersonRunResult): string => {
-    if (entry.kind === 'not-evaluable') {
-      return entry.reason === 'settings-unreadable' ? t.blocked.settingsUnreadable : t.blocked.birthDataIncomplete;
-    }
-    return entry.result.notEvaluableReasons.map((reason) => t.reason[REASONS[reason]]).join(' ');
-  };
-
+  const conditions = search.conditions
+    .map((condition) => describeCondition(condition, t, locale))
+    .join(search.operator === 'and' ? t.allJoiner : t.anyJoiner);
   return (
-    <div className="results">
-      {groups.matches.length > 0 && (
-        <>
-          <h3>{t.matchesHeading(String(groups.matches.length))}</h3>
-          <ul className="people">
-            {groups.matches.map((entry) => (
-              <li key={entry.personId}>
-                <a className="person" href={personHref(entry.personId)}>
-                  <span className="name">{name(entry.displayName)}</span>
-                  <span className="summary">
-                    {entry.result.matchedConditions
-                      .map((condition) => describeCondition(condition, t, locale))
-                      .join('; ')}
-                  </span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
-      {groups.notEvaluable.length > 0 && (
-        <>
-          <h3 className="ne">
-            {t.notEvaluableHeading} ({groups.notEvaluable.length})
-          </h3>
-          <p className="hint">{t.notEvaluableNote}</p>
-          <ul className="people">
-            {groups.notEvaluable.map((entry) => (
-              <li key={entry.personId}>
-                <a className="person" href={personHref(entry.personId)}>
-                  <span className="name">{name(entry.displayName)}</span>
-                  <span className="summary incomplete">{reasonsOf(entry)}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
-    </div>
+    <StatusMessage kind={shown === 0 ? 'zero' : 'success'} className="people-query-status">
+      {shown === 0 ? t.zeroResults : t.showingMatching(String(shown), String(total), conditions)}{' '}
+      <Button size="compact" shape="capsule" onClick={onClear}>
+        {t.clear}
+      </Button>
+    </StatusMessage>
+  );
+}
+
+/** The people the applied query could not evaluate, under the matches (#1731 owner answer), each with its reason. */
+export function NotEvaluableList({
+  items,
+  unnamed,
+}: {
+  readonly items: readonly QueryNotEvaluable[];
+  readonly unnamed: string;
+}): React.JSX.Element | null {
+  const t = useMessages(chartSearchPanelMessages);
+  if (items.length === 0) return null;
+  return (
+    <section className="people-not-evaluable" aria-labelledby="people-not-evaluable-heading">
+      <h3 id="people-not-evaluable-heading">
+        {t.notEvaluableHeading} ({items.length})
+      </h3>
+      <p className="hint">{t.notEvaluableNote}</p>
+      <ul className="people">
+        {items.map(({ person, reasons }) => (
+          <li key={person.id}>
+            <a className="person" href={personHref(person.id)}>
+              <span className={person.displayName === '' ? 'name unnamed' : 'name'}>
+                {person.displayName === '' ? unnamed : person.displayName}
+              </span>
+              <span className="summary incomplete">{reasons.map((reason) => reasonText(reason, t)).join(' ')}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
