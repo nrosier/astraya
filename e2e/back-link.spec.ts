@@ -51,12 +51,12 @@ test('opened directly, a screen has no back link at all (#1225)', async ({ brows
   await context.close();
 });
 
-test('the bare #/ stays on #/ and Back never loops (#1058)', async ({ page }) => {
+test('the bare #/ becomes #/people and Back never loops (#1730, reverses #1058)', async ({ page }) => {
   await gotoAndSettle(page, `${baseUrl}/#/`);
-  await expect(page).toHaveURL(/#\/$/);
+  await expect(page).toHaveURL(/#\/people$/);
   await page.goto(`${baseUrl}/#/about`);
   await page.goBack();
-  await expect(page).toHaveURL(/#\/$/);
+  await expect(page).toHaveURL(/#\/people$/);
 });
 
 test.describe('with the shared people (#799)', () => {

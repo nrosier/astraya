@@ -9,6 +9,7 @@ import { describe, expect, it } from 'vitest';
 import { newId } from '../src/domain/id.js';
 import { CHART_TYPES, CHART_VIEWS } from '../src/ui/chart-sections.js';
 import {
+  canonicalPeopleHash,
   chartHref,
   DRAWER_KEYS,
   PREFERENCES_SECTIONS,
@@ -219,12 +220,24 @@ describe('parseRoute', () => {
     expect(parseRoute('#/people')).toEqual({ kind: 'people' });
   });
 
-  it('routes an empty hash home, as a browser leaves it', () => {
+  it('routes an empty hash to People (#1730), as a browser leaves it', () => {
     // A fresh visit, a bare '#' after an anchor click, and an explicit '#/' are the same
     // request. Any of them falling through to a 404 screen would be a bug nobody typed.
-    expect(parseRoute('')).toEqual({ kind: 'home' });
-    expect(parseRoute('#')).toEqual({ kind: 'home' });
-    expect(parseRoute('#/')).toEqual({ kind: 'home' });
+    expect(parseRoute('')).toEqual({ kind: 'people' });
+    expect(parseRoute('#')).toEqual({ kind: 'people' });
+    expect(parseRoute('#/')).toEqual({ kind: 'people' });
+  });
+
+  it('gives the hash the address bar should show for an empty or unknown hash (#1730)', () => {
+    expect(canonicalPeopleHash('')).toBe('#/people');
+    expect(canonicalPeopleHash('#')).toBe('#/people');
+    expect(canonicalPeopleHash('#/')).toBe('#/people');
+    expect(canonicalPeopleHash('#/no-such-screen')).toBe('#/people');
+  });
+
+  it('leaves a hash that is already canonical alone (#1730)', () => {
+    expect(canonicalPeopleHash('#/people')).toBeUndefined();
+    expect(canonicalPeopleHash('#/documents')).toBeUndefined();
   });
 
   it('keeps the query out of the match, and reads the view from it where a route has one', () => {
@@ -258,7 +271,7 @@ describe('parseRoute', () => {
       '#/people/../about',
       '#/people/../overview',
     ]) {
-      expect(parseRoute(hash), hash).toEqual({ kind: 'home' });
+      expect(parseRoute(hash), hash).toEqual({ kind: 'people' });
     }
   });
 
@@ -277,7 +290,7 @@ describe('parseRoute', () => {
       `#/people/${ID}/location/nope`,
       `#/people/${ID}/overview/extra`,
     ]) {
-      expect(parseRoute(hash), hash).toEqual({ kind: 'home' });
+      expect(parseRoute(hash), hash).toEqual({ kind: 'people' });
     }
   });
 
@@ -289,7 +302,7 @@ describe('parseRoute', () => {
       '#/preferences/nope',
       '#/documents/nope',
     ]) {
-      expect(parseRoute(hash), hash).toEqual({ kind: 'home' });
+      expect(parseRoute(hash), hash).toEqual({ kind: 'people' });
     }
   });
 
@@ -317,7 +330,7 @@ describe('parseRoute', () => {
       '#/rectification',
       '#/export',
     ]) {
-      expect(parseRoute(hash), hash).toEqual({ kind: 'home' });
+      expect(parseRoute(hash), hash).toEqual({ kind: 'people' });
     }
   });
 });

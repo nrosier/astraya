@@ -20,7 +20,7 @@ import { ExportRegistryProvider } from './export-registry.js';
 import { PageActionsProvider } from './page-actions-slot.js';
 import { PwaStatus } from './PwaStatus.js';
 import { SidebarFooter } from './SidebarFooter.js';
-import { parseRoute, routeShowsBackLink } from './route.js';
+import { canonicalPeopleHash, parseRoute, routeShowsBackLink } from './route.js';
 import { writeLastChart } from './last-chart.js';
 import { SessionProvider, useStoreStatus } from './session-context.js';
 import { AccountPreferencesNotices } from './AccountPreferencesNotices.js';
@@ -206,6 +206,16 @@ function AppShell(): React.JSX.Element {
       window.removeEventListener('hashchange', onHashChange);
     };
   }, []);
+
+  // The root (and any unknown hash) is the People page (#1730): show its canonical `#/people` in the address
+  // bar. `replaceState` adds no history entry, so Back still works; `canonicalPeopleHash` returns undefined
+  // for `#/people`, so the rewrite cannot loop.
+  useEffect(() => {
+    const canonical = canonicalPeopleHash(route);
+    if (canonical === undefined) return;
+    history.replaceState(history.state, '', canonical);
+    setRoute(canonical);
+  }, [route]);
 
   useEffect(() => {
     // A hash change swaps `<main>`'s entire contents for another screen's, but doesn't
@@ -489,7 +499,8 @@ function renderScreen(parsed: Route, seVersion: string | undefined): React.JSX.E
     return <Stored>{renderPersonView(parsed)}</Stored>;
   }
 
-  // `#/` and any unmatched hash: the last-viewed person's timing timeline, or a person picker (#1058). Rendered in place, never redirected (supersedes the #234 redirect to the people list).
+  // Unreachable for a parsed hash since #1730: `#/` and any unmatched hash parse to People (handled above).
+  // Removed with the old home screen in 1730-2.
   return (
     <Stored>
       <Home />

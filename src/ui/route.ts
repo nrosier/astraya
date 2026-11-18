@@ -11,9 +11,10 @@
  *
  * The canonical scheme (docs/ui/UI-UX_IMPLEMENTATION_PLAN.md §3) is the only one: `parseRoute` reads these
  * and `routeHref` writes them, so the old shapes (`#/person/:id`, `#/chart/:id?type=…`, `#/cycles`, …) are
- * simply unknown and fall back to Home. Nothing builds a hash by hand; every link goes through `routeHref`.
+ * simply unknown and fall back to People (#1730). Nothing builds a hash by hand; every link goes through `routeHref`.
  *
  *   #/people                                              People
+ *   #/                                                    People (#1730, reverses #1058), and any unknown hash
  *   #/people/:id/overview                                 Overview
  *   #/people/:id/consultation                             Consultation dashboard
  *   #/people/:id/birth-record                             Edit birth record
@@ -31,8 +32,8 @@
 /**
  * @module ui/route
  * @purpose Pure hash-route parsing and construction for every screen in the app, on the one canonical scheme, plus one-time-token query extraction (set-password, setup).
- * @conventions Pure and separate from components so it is tested without a DOM; hash routing since the built app is static files with no server rewrite rule; ids are validated with domain/id.js's isPersonId rather than accepted as any string; an unknown, obsolete or malformed hash falls back to Home with no redirect or alias; `parseRoute(routeHref(r))` round-trips for every route.
- * @exports Route, OverlayRingKey, OverlayRingDates, hashWithOverlayDates, ExportBuilderSection, PreferencesSection, PREFERENCES_SECTIONS, DrawerKey, DRAWER_KEYS, parseRoute, routeHref, chartHref, hashDate, hashWithDate, personHref, routeShowsBackLink, setPasswordToken, setupToken
+ * @conventions Pure and separate from components so it is tested without a DOM; hash routing since the built app is static files with no server rewrite rule; ids are validated with domain/id.js's isPersonId rather than accepted as any string; an unknown, obsolete or malformed hash falls back to People (#1730) with no alias; `canonicalPeopleHash` names the one rewrite (an empty or unknown hash to `#/people`); `parseRoute(routeHref(r))` round-trips for every route.
+ * @exports Route, OverlayRingKey, OverlayRingDates, hashWithOverlayDates, ExportBuilderSection, PreferencesSection, PREFERENCES_SECTIONS, DrawerKey, DRAWER_KEYS, parseRoute, canonicalPeopleHash, routeHref, chartHref, hashDate, hashWithDate, personHref, routeShowsBackLink, setPasswordToken, setupToken
  */
 import { isPersonId } from '../domain/id.js';
 import { chartViewFromHash, isChartType, isChartView, type ChartType, type ChartViewKind } from './chart-sections.js';
@@ -309,7 +310,7 @@ export function parseRoute(hash: string): Route {
   // ['#', 'explore', tool]
   if (segments[1] === 'explore' && segments.length === 3) {
     const tool = segments[2];
-    if (!isToolKind(tool)) return { kind: 'home' };
+    if (!isToolKind(tool)) return { kind: 'people' };
     if (tool === 'horary') {
       const view = chartViewFromHash(hash);
       return { kind: 'horary', ...(view === undefined ? {} : { view }) };
@@ -320,7 +321,7 @@ export function parseRoute(hash: string): Route {
     const section = segments[2];
     // `general` held only the language, which moved to Appearance (#650); an old link still lands somewhere sensible.
     if (section === 'general') return { kind: 'preferences', section: 'appearance' };
-    return isPreferencesSection(section) ? { kind: 'preferences', section } : { kind: 'home' };
+    return isPreferencesSection(section) ? { kind: 'preferences', section } : { kind: 'people' };
   }
   // Validated as one of our ids, not merely as "some characters after the slash". An
   // unparseable id would open the form on a person the store has no records for, which
@@ -328,10 +329,20 @@ export function parseRoute(hash: string): Route {
   // mistyped. Home is the honest answer.
   if (segments[1] === 'people' && segments.length >= 4) {
     const personId = segments[2];
-    if (isPersonId(personId)) return personSubRoute(personId, segments.slice(3), hash) ?? { kind: 'home' };
+    if (isPersonId(personId)) return personSubRoute(personId, segments.slice(3), hash) ?? { kind: 'people' };
   }
 
-  return { kind: 'home' };
+  return { kind: 'people' };
+}
+
+/**
+ * The hash the address bar should show for `hash`, or `undefined` when it already is canonical (#1730).
+ * An empty, bare or unknown hash parses to People, so it is rewritten to `#/people`; `#/people` itself is
+ * left alone, which is what stops the rewrite from looping.
+ */
+export function canonicalPeopleHash(hash: string): string | undefined {
+  if (parseRoute(hash).kind !== 'people' || hash === '#/people') return undefined;
+  return '#/people';
 }
 
 /** The `drawer=` query part for a route's drawer (#1667), or nothing when it has none. */

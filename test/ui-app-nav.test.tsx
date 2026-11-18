@@ -183,11 +183,20 @@ describe('the person sections on a route with no person (#914)', () => {
     expect(box().querySelector('nav#app-nav .app-nav-history')).toBeNull();
   });
 
-  it('shows no person sections on the People list even when a person was viewed', async () => {
+  it('shows the last-viewed person sections on the People list (#1730)', async () => {
     openStoreWithPerson('p-abcdefghijklmnop');
     writeLastPersonId('p-abcdefghijklmnop');
     await mount(parseRoute('#/people'));
+    expect(linkNamed('Overview')?.getAttribute('href')).toBe('#/people/p-abcdefghijklmnop/overview');
+  });
+
+  it('disables the person entries on the People list when the last-viewed person is gone (#1730, #1697)', async () => {
+    openStoreWithPerson('p-abcdefghijklmnop');
+    writeLastPersonId('p-zzzzzzzzzzzzzzzz');
+    await mount(parseRoute('#/people'));
     expect(linkNamed('Overview')).toBeUndefined();
+    expect(navLinks()).toEqual(['Tools', 'PDF']);
+    expect(disabledPersonLabels()).toEqual(EXPECTED_PERSON_LABELS_EN);
   });
 
   it('shows the person sections on the Documents route in English and in Dutch (#914)', async () => {
@@ -285,7 +294,7 @@ describe('the full sidebar on app-scoped screens (#965)', () => {
   it('shows no person sections on the person picker, shared, or sign-in screens', async () => {
     openStoreWithLastPerson();
     const render = await mount(parseRoute('#/people'));
-    for (const hash of ['#/people', '#/shared', '#/set-password', '#/setup']) {
+    for (const hash of ['#/shared', '#/set-password', '#/setup']) {
       await render(parseRoute(hash));
       expect(linkNamed('Overview'), hash).toBeUndefined();
     }
@@ -335,7 +344,7 @@ const ROUTE_HASHES: Record<Route['kind'], string> = {
   rectification: '#/explore/rectification',
 };
 
-const EXPLICIT_NO_PERSON_SIDEBAR_KINDS = ['people', 'shared', 'set-password', 'setup'] as const;
+const EXPLICIT_NO_PERSON_SIDEBAR_KINDS = ['shared', 'set-password', 'setup'] as const;
 const EXPECTED_NO_PERSON_SIDEBAR = [
   ['Tools', '#/explore/cycles'],
   ['PDF', '#/documents'],
@@ -356,6 +365,8 @@ describe('the sidebar on every route (#965)', () => {
 
   it('maps every route kind to a hash that parseRoute reads back as that kind', () => {
     for (const [kind, hash] of Object.entries(ROUTE_HASHES)) {
+      // `home` has no hash of its own since #1730: the root parses to people. Removed in 1730-2.
+      if (kind === 'home') continue;
       expect(parseRoute(hash).kind, hash).toBe(kind);
     }
     // The number of kinds in the Route union; a new kind must be added to ROUTE_HASHES and to this count.
@@ -363,10 +374,10 @@ describe('the sidebar on every route (#965)', () => {
   });
 
   it('keeps the exceptions to the person sidebar as exactly the #914 list', () => {
-    expect([...EXPLICIT_NO_PERSON_SIDEBAR_KINDS]).toEqual(['people', 'shared', 'set-password', 'setup']);
+    expect([...EXPLICIT_NO_PERSON_SIDEBAR_KINDS]).toEqual(['shared', 'set-password', 'setup']);
   });
 
-  it('shows the last-viewed person sections on the home screen (#/) (#965, reverses #1058)', async () => {
+  it('shows the last-viewed person sections on the People list, which the root is (#1730)', async () => {
     openStoreWithLastPerson();
     await mount(parseRoute('#/'));
     expect(sidebarPairs()).toContainEqual(['Overview', `${PERSON_HASH}/overview`]);
@@ -392,7 +403,7 @@ describe('the sidebar on every route (#965)', () => {
   });
 
   const sameSidebarKinds = (Object.keys(ROUTE_HASHES) as Route['kind'][]).filter(
-    (kind) => !(EXPLICIT_NO_PERSON_SIDEBAR_KINDS as readonly string[]).includes(kind),
+    (kind) => kind !== 'home' && !(EXPLICIT_NO_PERSON_SIDEBAR_KINDS as readonly string[]).includes(kind),
   );
   it.each(sameSidebarKinds)(
     'shows the same sidebar links, text and href, on %s as on a person page (#965)',

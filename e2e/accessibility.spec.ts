@@ -53,12 +53,12 @@ test.afterAll(async () => {
   delete process.env.ASTRAYA_BOOTSTRAP_TOKEN;
 });
 
-test('the bare landing page (the empty home) has no automatically detectable accessibility violations', async ({
+test('the bare landing page (the root, People) has no automatically detectable accessibility violations', async ({
   page,
 }) => {
-  // #/ renders the home screen in place (#1058); with nobody stored it is the first-use empty state.
+  // The root is the People page (#1730, reverses #1058); with nobody stored it is the first-use empty state.
   await gotoAndSettle(page, `${baseUrl}/`);
-  await expect(page.getByRole('heading', { name: 'Home' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'People' })).toBeVisible();
 
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
   expect(results.violations).toEqual([]);

@@ -212,12 +212,12 @@ function PersonMenu({
 }
 
 // App-scoped screens that keep the last-viewed person's sections in the sidebar (#965), so the
-// sidebar is the same on every screen. The home screen (#/) is one of them (#965 owner decision,
-// reversing the #1058 Tools-and-PDF-only sidebar). Without a live last-viewed person, the person
-// entries are shown disabled with the "Select a person first" tooltip (#1697). The People list (the
-// person picker) is not in this set, so a stale person's enabled tabs never linger there (#914).
+// sidebar is the same on every screen. The People list is one of them (#1730, owner answer 2026-11-18,
+// reversing the #914 exclusion): the root is now People, so it shows the last-viewed person's sections
+// as the root did. Without a live last-viewed person, the person entries are shown disabled with the
+// "Select a person first" tooltip (#1697).
 const KEEP_PERSON_SECTIONS_KINDS: ReadonlySet<Route['kind']> = new Set([
-  'home',
+  'people',
   'documents',
   'export-builder',
   'preferences',
