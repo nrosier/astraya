@@ -1665,8 +1665,15 @@ footer {
 
 /* The Export / Import card (#1732): the pills sit closer to the text, the Import File pill closer to its hint, and
    the tab row has no rule under it. Scoped to this card so the shared Tabs strip keeps its separator elsewhere. */
+/* One shared rounded track holds both tabs (owner verdict 2026-11-18): the strip sits flush with the card's top padding
+   (margin-top 0, overriding the shared --always spacing), and the 1px border gives the inactive tab a visible boundary. */
 .birth-record-card--files .tab-row {
+  margin-top: 0;
   margin-bottom: var(--space-3);
+  padding: var(--space-1);
+  border: var(--border-hairline) solid var(--line);
+  border-radius: var(--radius-full);
+  background: var(--surface-hover);
 }
 
 .birth-record-card--files .tab-row__viewport {
