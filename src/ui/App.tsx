@@ -67,7 +67,6 @@ const SolarArcView = lazy(async () => ({ default: (await personScreens()).SolarA
 const PrimaryDirectionsView = lazy(async () => ({ default: (await personScreens()).PrimaryDirectionsView }));
 const SynastryView = lazy(async () => ({ default: (await personScreens()).SynastryView }));
 const TransitView = lazy(async () => ({ default: (await personScreens()).TransitView }));
-const Home = lazy(async () => ({ default: (await personScreens()).Home }));
 const TimingTimelineView = lazy(async () => ({ default: (await personScreens()).TimingTimelineView }));
 const RectificationView = lazy(async () => ({ default: (await import('./RectificationView.js')).RectificationView }));
 const ElectionalView = lazy(async () => ({ default: (await import('./ElectionalView.js')).ElectionalView }));
@@ -500,10 +499,10 @@ function renderScreen(parsed: Route, seVersion: string | undefined): React.JSX.E
   }
 
   // Unreachable for a parsed hash since #1730: `#/` and any unmatched hash parse to People (handled above).
-  // Removed with the old home screen in 1730-2.
+  // People is the honest fallback, rendered the same way as the `people` branch.
   return (
     <Stored>
-      <Home />
+      <People />
     </Stored>
   );
 }
