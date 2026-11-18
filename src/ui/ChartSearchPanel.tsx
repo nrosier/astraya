@@ -1,15 +1,14 @@
 /**
  * @module ChartSearchPanel
- * @purpose The "Search charts" card above the People list (#1405): build up to 10 placement conditions, run them over every stored person on request, and list matches and the people who could not be evaluated; saved searches live in the same card.
- * @conventions EXPLICIT RUN ONLY: editing never computes; Run is disabled and reads "Searching…" while running and the last result stays on screen meanwhile. The draft model (`chart-search-draft`) owns every rule; this file only renders it. The as-of date shows only when a condition uses a timing scope, defaults to today and is never saved. Matches come first, then a separate not-evaluable group with reasons from the fixed copy list. All messages go through `StatusMessage`. A read-only store disables every control with a stated reason. Removing a condition returns focus to the Remove control now at that position (or Add when none is left to land on). Layout: one condition field per line at 40rem and below.
- * @exports ChartSearchPanel
+ * @purpose The Chart query panel on People (#1405, #1731): build up to 10 placement conditions, run them over every stored person on request, reset them, and save them. The run filters the People list itself, so this panel shows no results of its own; it re-exports the result pieces and the saved-search list, so People loads all of them through one lazy chunk.
+ * @conventions EXPLICIT RUN ONLY: editing never computes; Run is disabled and reads "Searching…" while running and the last result stays on screen meanwhile. The draft model (`chart-search-draft`) owns every rule; this file only renders it. The as-of date shows only when a condition uses a timing scope, defaults to today and is never saved. Reset puts the starting conditions back and clears the applied query (the page owns both). All messages go through `StatusMessage`. A read-only store disables every control with a stated reason. Removing a condition returns focus to the Remove control now at that position (or Add when none is left to land on). Layout: one condition field per line at 40rem and below.
+ * @exports ChartSearchPanel, ChartSearchPanelProps, ChartQueryStatus, NotEvaluableList, SavedChartSearchList
  */
 import { useEffect, useRef, useState } from 'react';
 import { MAX_SEARCH_CONDITIONS, type ChartSearch } from '../domain/chart-search.js';
 import { ChartSearchConditionRow } from './ChartSearchConditionRow.js';
 import { chartSearchPanelMessages } from './ChartSearchPanel.messages.js';
-import { ChartSearchResults, resultsSummary } from './ChartSearchResults.js';
-import type { ChartSearchRunState, PersonRunResult } from './chart-search-run.js';
+import type { ChartSearchRunState } from './chart-search-run.js';
 import {
   addDraftCondition,
   blankCondition,
@@ -25,26 +24,33 @@ import { useMessages } from './messages.js';
 import { Button } from './primitives/Button.js';
 import { ChoiceGroup } from './primitives/ChoiceGroup.js';
 import { DateField } from './primitives/DateField.js';
-import { EmptyState } from './primitives/EmptyState.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
-import { SavedChartSearches } from './SavedChartSearches.js';
+import { SaveChartSearchForm } from './SavedChartSearches.js';
 import { useStore } from './store-context.js';
+
+// One lazy chunk for everything the chart query draws on People (#1731).
+export { ChartQueryStatus, NotEvaluableList } from './ChartSearchResults.js';
+export { SavedChartSearchList } from './SavedChartSearches.js';
 
 export interface ChartSearchPanelProps {
   /** `undefined` until the first edit; the card then starts from `initialDraft()`. */
   readonly draft: ChartSearchDraft | undefined;
   readonly onDraftChange: (draft: ChartSearchDraft) => void;
   readonly runState: ChartSearchRunState;
-  readonly results: readonly PersonRunResult[] | undefined;
   readonly onRun: (search: ChartSearch, asOf: string) => void;
+  /** Back to the starting conditions, and the applied query cleared (#1731). */
+  readonly onReset: () => void;
+  /** The id of the Chart query toggle that names this panel. */
+  readonly labelledBy: string;
 }
 
 export function ChartSearchPanel({
   draft: storedDraft,
   onDraftChange,
   runState: state,
-  results,
   onRun,
+  onReset,
+  labelledBy,
 }: ChartSearchPanelProps): React.JSX.Element {
   const t = useMessages(chartSearchPanelMessages);
   // Fixed at mount, as before the lift: an untouched card keeps the as-of date it opened with.
@@ -88,12 +94,8 @@ export function ChartSearchPanel({
     setFocusAfterRemove(index);
   };
 
-  const groups = results === undefined ? undefined : resultsSummary(results);
-  const anyRun = results !== undefined;
-
   return (
-    <section className="tool-card chart-search" aria-labelledby="chart-search-heading">
-      <h2 id="chart-search-heading">{t.heading}</h2>
+    <section className="tool-card chart-search" aria-labelledby={labelledBy}>
       <p className="hint">{t.intro}</p>
       {!writable && <StatusMessage kind="offline">{t.readOnly}</StatusMessage>}
 
@@ -179,23 +181,18 @@ export function ChartSearchPanel({
         >
           {t.run}
         </Button>
+        <Button
+          variant="quiet"
+          shape="capsule"
+          className="primitive-button-form-action"
+          disabled={running}
+          onClick={onReset}
+        >
+          {t.reset}
+        </Button>
       </div>
 
-      {!anyRun && state.status !== 'error' && <EmptyState message={t.firstUse} />}
-      {groups !== undefined && (
-        <>
-          {groups.matches.length === 0 ? (
-            <StatusMessage kind="zero">{t.zeroResults}</StatusMessage>
-          ) : (
-            <StatusMessage kind="success">
-              {t.foundSummary(String(groups.matches.length), String(results?.length ?? 0))}
-            </StatusMessage>
-          )}
-          <ChartSearchResults groups={groups} unnamed={t.unnamed} />
-        </>
-      )}
-
-      <SavedChartSearches draft={draft} onOpen={onDraftChange} />
+      <SaveChartSearchForm draft={draft} />
     </section>
   );
 }

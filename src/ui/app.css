@@ -1384,8 +1384,7 @@ footer {
   max-width: 20rem;
 }
 
-.chart-search .saved,
-.chart-search .results {
+.chart-search .saved {
   display: grid;
   gap: var(--space-3);
 }
@@ -1393,11 +1392,6 @@ footer {
 .chart-search .saved {
   border-top: 1px solid var(--line);
   padding-top: var(--space-4);
-}
-
-.chart-search .saved h3,
-.chart-search .results h3 {
-  margin: 0;
 }
 
 @media (max-width: 40rem) {
@@ -1416,6 +1410,72 @@ footer {
   .chart-search .cond > button {
     justify-self: end;
   }
+}
+
+/* People toolbar (#1731): the quick filter, the Chart query toggle and the Saved searches dropdown in one wrapping row
+   above the one list. The filter takes the free width; the two pills keep their compact size. Tokens only. */
+.people-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-block: var(--space-4) var(--space-3);
+}
+
+.people-toolbar-filter {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+
+.people-toolbar-filter .primitive-field {
+  margin: 0;
+}
+
+.people-saved-searches {
+  position: relative;
+}
+
+/* The Saved searches card opens under its pill, with the popover surface the page-header Export menu uses. */
+.people-saved-searches-card {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  right: 0;
+  z-index: 25;
+  display: grid;
+  gap: var(--space-2);
+  width: min(26rem, calc(100vw - 2 * var(--space-4)));
+  padding: var(--space-3);
+  background: var(--surface-hover);
+  border: 1px solid var(--muted);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-popover);
+}
+
+/* `display: grid` above would otherwise beat the `hidden` attribute and leave the closed card on screen. */
+.people-saved-searches-card[hidden] {
+  display: none;
+}
+
+.people-saved-searches-card .saved-query-list {
+  margin: 0;
+}
+
+.people-query-panel {
+  margin-block-end: var(--space-3);
+}
+
+.people-query-status {
+  margin-block: var(--space-2);
+}
+
+.people-not-evaluable {
+  display: grid;
+  gap: var(--space-2);
+  margin-block-start: var(--space-4);
+}
+
+.people-not-evaluable h3 {
+  margin: 0;
 }
 
 .tool-actions {

@@ -8,13 +8,13 @@
  */
 /**
  * @module People
- * @purpose Renders the People list screen: the app's landing page, where people are created, selected, deleted (tombstoned) and restored.
- * @conventions A person is the primary entity (charts belong to people, not vice versa); a person with no birth moment is listed as exactly that rather than hidden or faked complete; deletes are tombstones, shown under "Deleted" with a restore option until purged. Text comes from co-located `People.messages.ts` via `useMessages()`.
+ * @purpose Renders the People list screen: the app's landing page, where people are created, selected, deleted (tombstoned) and restored, with a toolbar above the one list (#1731): a quick name-and-place filter, the Chart query toggle that opens the collapsed query panel, and the Saved searches dropdown.
+ * @conventions A person is the primary entity (charts belong to people, not vice versa); a person with no birth moment is listed as exactly that rather than hidden or faked complete; deletes are tombstones, shown under "Deleted" with a restore option until purged. A chart-query run filters the same list in place (matches, then a could-not-be-evaluated group with reasons), and the Chart query pill counts the conditions of the run that is filtering it; editing never runs the query. Everything that needs the chart-search code comes from one lazy chunk (`ChartSearchPanel.js`). Text comes from co-located `People.messages.ts` via `useMessages()`.
  * @exports People
  */
 import { personHref, routeHref } from './route.js';
 import { PageHeader } from './PageHeader.js';
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useEffect, useId, useRef, useState } from 'react';
 import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
 import { newId } from '../domain/id.js';
 import { newPersonCalculationMutations } from '../domain/person.js';
@@ -32,7 +32,12 @@ import { StatusMessage } from './primitives/StatusMessage.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import { clearNoteJournalsForPerson } from './use-note-autosave.js';
 import { errorDetail } from './api-error.js';
+import type { ChartSearch } from '../domain/chart-search.js';
 import type { ChartSearchDraft } from './chart-search-draft.js';
+import type { PersonRunResult } from './chart-search-run.js';
+import { applyChartQuery, quickFilterPeople } from './people-query.js';
+import { TextField } from './primitives/TextField.js';
+import { useExclusiveOpen } from './use-exclusive-open.js';
 import { useChartSearchRun } from './use-chart-search-run.js';
 
 /**
@@ -40,7 +45,17 @@ import { useChartSearchRun } from './use-chart-search-run.js';
  * stay out of the eager bundle, so the People list costs a first-time visitor nothing extra. Same
  * shape as the lazy screens in App.tsx.
  */
-const ChartSearchPanel = lazy(async () => ({ default: (await import('./ChartSearchPanel.js')).ChartSearchPanel }));
+const chartSearchChunk = () => import('./ChartSearchPanel.js');
+const ChartSearchPanel = lazy(async () => ({ default: (await chartSearchChunk()).ChartSearchPanel }));
+const ChartQueryStatus = lazy(async () => ({ default: (await chartSearchChunk()).ChartQueryStatus }));
+const NotEvaluableList = lazy(async () => ({ default: (await chartSearchChunk()).NotEvaluableList }));
+const SavedChartSearchList = lazy(async () => ({ default: (await chartSearchChunk()).SavedChartSearchList }));
+
+/** A finished run and the search that produced it: what filters the list until Clear or Reset (#1731). */
+interface AppliedQuery {
+  readonly search: ChartSearch;
+  readonly results: readonly PersonRunResult[];
+}
 
 export function People(): React.JSX.Element {
   const store = useStore();
@@ -56,8 +71,38 @@ export function People(): React.JSX.Element {
   // the panel builds the starting draft itself, so this file never loads the draft model eagerly.
   const [draft, setDraft] = useState<ChartSearchDraft | undefined>(undefined);
   const run = useChartSearchRun();
+  const [quick, setQuick] = useState('');
+  const [queryOpen, setQueryOpen] = useState(false);
+  const [applied, setApplied] = useState<AppliedQuery>();
+  // The search a run was started with, so the run's results are applied with the conditions that produced them.
+  const pendingSearch = useRef<ChartSearch | undefined>(undefined);
+  const saved = useExclusiveOpen<'saved'>('people-saved-searches');
+  const queryToggleId = useId();
+
+  // A run applies when it finishes, never while the query is edited; a failed run leaves the list unfiltered.
+  useEffect(() => {
+    const search = pendingSearch.current;
+    setApplied(run.results === undefined || search === undefined ? undefined : { search, results: run.results });
+  }, [run.results]);
+
+  const startRun = (search: ChartSearch, asOf: string): void => {
+    pendingSearch.current = search;
+    run.run(search, asOf);
+  };
+  const reset = (): void => {
+    setDraft(undefined);
+    setApplied(undefined);
+  };
+  const openSaved = (opened: ChartSearchDraft): void => {
+    setDraft(opened);
+    setQueryOpen(true);
+    saved.close();
+  };
 
   const people = ordered(state.people);
+  const filtered = quickFilterPeople(people, quick);
+  const query = applied === undefined ? undefined : applyChartQuery(filtered, applied.results);
+  const listed = query === undefined ? filtered : query.matches;
   trace('People', 'render', { deviceId: store.deviceId, people: people.length });
 
   const create = (): void => {
@@ -110,7 +155,18 @@ export function People(): React.JSX.Element {
 
   return (
     <main className="shell">
-      <PageHeader title={t.heading} />
+      <PageHeader title={t.heading}>
+        <Button
+          variant="plain"
+          type="button"
+          shape="capsule"
+          className="primitive-button-form-action"
+          onClick={create}
+          disabled={busy}
+        >
+          {t.addPerson}
+        </Button>
+      </PageHeader>
       <p className="tagline">{t.tagline}</p>
 
       {error !== undefined && (
@@ -119,21 +175,92 @@ export function People(): React.JSX.Element {
         </StatusMessage>
       )}
 
-      <p>
-        <Button variant="plain" type="button" className="primitive-button-form-action" onClick={create} disabled={busy}>
-          {t.addPerson}
-        </Button>
-      </p>
-
-      {/* The chart search sits above the list (#1405) and only when there is someone to search. */}
+      {/* The toolbar sits above the one list (#1731), and only when there is someone to find. */}
       {people.length > 0 && (
-        <Suspense fallback={<StatusMessage kind="loading">{tApp.loadingScreen}</StatusMessage>}>
-          <ChartSearchPanel
-            draft={draft}
-            onDraftChange={setDraft}
-            runState={run.state}
-            results={run.results}
-            onRun={run.run}
+        <div className="people-toolbar" role="search" aria-label={t.toolbarLabel}>
+          <div className="people-toolbar-filter">
+            <TextField
+              label={t.quickFilterLabel}
+              hideLabel
+              placeholder={t.quickFilterLabel}
+              value={quick}
+              onChange={setQuick}
+              inputMode="search"
+              autoComplete="off"
+            />
+          </div>
+          <Button
+            id={queryToggleId}
+            size="compact"
+            shape="capsule"
+            aria-expanded={queryOpen}
+            aria-controls="chart-query-panel"
+            onClick={() => {
+              setQueryOpen((open) => !open);
+            }}
+          >
+            {applied === undefined ? t.chartQuery : t.chartQueryCount(String(applied.search.conditions.length))}
+          </Button>
+          <div
+            className={saved.open === 'saved' ? 'people-saved-searches open' : 'people-saved-searches'}
+            ref={saved.groupRef('saved')}
+            onBlur={(event) => {
+              saved.onGroupBlur('saved', event);
+            }}
+          >
+            <Button
+              ref={saved.buttonRef('saved')}
+              size="compact"
+              shape="capsule"
+              aria-haspopup="dialog"
+              aria-expanded={saved.open === 'saved'}
+              aria-controls="people-saved-searches-card"
+              onClick={() => {
+                saved.toggle('saved');
+              }}
+            >
+              {t.savedSearches}
+            </Button>
+            <div
+              id="people-saved-searches-card"
+              className="people-saved-searches-card"
+              role="dialog"
+              aria-label={t.savedSearches}
+              hidden={saved.open !== 'saved'}
+            >
+              <Suspense fallback={<StatusMessage kind="loading">{tApp.loadingScreen}</StatusMessage>}>
+                <SavedChartSearchList draft={draft} onOpen={openSaved} />
+              </Suspense>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* The query panel opens between the toolbar and the list; it stays mounted while closed, so the draft survives. */}
+      {people.length > 0 && (
+        <div id="chart-query-panel" className="people-query-panel" hidden={!queryOpen}>
+          <Suspense fallback={<StatusMessage kind="loading">{tApp.loadingScreen}</StatusMessage>}>
+            <ChartSearchPanel
+              draft={draft}
+              onDraftChange={setDraft}
+              runState={run.state}
+              onRun={startRun}
+              onReset={reset}
+              labelledBy={queryToggleId}
+            />
+          </Suspense>
+        </div>
+      )}
+
+      {applied !== undefined && query !== undefined && (
+        <Suspense fallback={null}>
+          <ChartQueryStatus
+            search={applied.search}
+            shown={query.matches.length}
+            total={people.length}
+            onClear={() => {
+              setApplied(undefined);
+            }}
           />
         </Suspense>
       )}
@@ -149,20 +276,32 @@ export function People(): React.JSX.Element {
           </p>
         </EmptyState>
       ) : (
-        <ul className="people">
-          {people.map((person) => (
-            <li key={person.id}>
-              <a className="person" href={personHref(person.id)}>
-                <span className={person.displayName === '' ? 'name unnamed' : 'name'}>
-                  {person.displayName === '' ? t.unnamed : person.displayName}
-                </span>
-                <span className={person.moment === undefined ? 'summary incomplete' : 'summary'}>
-                  {summary(person, locale)}
-                </span>
-              </a>
-            </li>
-          ))}
-        </ul>
+        <>
+          {/* With a query applied, an empty match list is already said by the status line above. */}
+          {listed.length === 0 ? (
+            query === undefined && <StatusMessage kind="zero">{t.noFilterMatch}</StatusMessage>
+          ) : (
+            <ul className="people">
+              {listed.map((person) => (
+                <li key={person.id}>
+                  <a className="person" href={personHref(person.id)}>
+                    <span className={person.displayName === '' ? 'name unnamed' : 'name'}>
+                      {person.displayName === '' ? t.unnamed : person.displayName}
+                    </span>
+                    <span className={person.moment === undefined ? 'summary incomplete' : 'summary'}>
+                      {summary(person, locale)}
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+          {query !== undefined && query.notEvaluable.length > 0 && (
+            <Suspense fallback={null}>
+              <NotEvaluableList items={query.notEvaluable} unnamed={t.unnamed} />
+            </Suspense>
+          )}
+        </>
       )}
 
       {people.some(caveated) && (

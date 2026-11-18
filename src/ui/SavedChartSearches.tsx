@@ -1,8 +1,8 @@
 /**
  * @module SavedChartSearches
- * @purpose Saved searches section of the "Search charts" card (#1405): save the current conditions under a name, list saved searches, reopen one into the card, delete with Undo.
- * @conventions Thin: rules (validation, name cap, sort order, unreadable entries) live in `store/chart-searches` and `chart-search-draft`; writes go through `Store.mutate`/`remove`/`restore` so they reach the op-log. No rename in v1. Opening loads operator and conditions only and leaves the as-of date alone; it never runs the search. A refused save keeps the draft and shows the refusal code as copy. An unreadable or incomplete search is listed with its reason and can only be deleted. Every control is disabled while the store is not writable (the card states the reason once).
- * @exports SavedChartSearches
+ * @purpose Saved chart queries on People (#1405, #1731): `SaveChartSearchForm` saves the current conditions under a name from inside the query panel, and `SavedChartSearchList` lists saved searches in the Saved searches dropdown, reopens one into the query, and deletes with Undo.
+ * @conventions Thin: rules (validation, name cap, sort order, unreadable entries) live in `store/chart-searches` and `chart-search-draft`; writes go through `Store.mutate`/`remove`/`restore` so they reach the op-log. No rename in v1. Opening loads operator and conditions only and leaves the as-of date alone; it never runs the search. A refused save keeps the draft and shows the refusal code as copy. An unreadable or incomplete search is listed with its reason and can only be deleted. Every control is disabled while the store is not writable (the panel states the reason once). With nothing saved, the list says so in one short line rather than an empty-state box (#1731).
+ * @exports SaveChartSearchForm, SavedChartSearchList
  */
 import { useState } from 'react';
 import { newId } from '../domain/id.js';
@@ -16,53 +16,43 @@ import {
 import { SAVED_QUERY_NAME_MAX_CHARACTERS, isSavedQueryNameTooLong } from '../store/saved-queries.js';
 import { errorDetail } from './api-error.js';
 import { chartSearchPanelMessages } from './ChartSearchPanel.messages.js';
-import { draftFromDefinition, definitionFromDraft, type ChartSearchDraft } from './chart-search-draft.js';
+import { draftFromDefinition, definitionFromDraft, initialDraft, type ChartSearchDraft } from './chart-search-draft.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { Button } from './primitives/Button.js';
-import { EmptyState } from './primitives/EmptyState.js';
 import { Notice } from './primitives/Notice.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { TextField } from './primitives/TextField.js';
 import { useStore, useStoreState } from './store-context.js';
 
-export interface SavedChartSearchesProps {
-  /** The search being built: what Save search stores (operator and conditions, never the as-of date). */
-  readonly draft: ChartSearchDraft;
-  /** Replace the card's conditions with a saved search's; the as-of date in `draft.asOf` is kept. */
-  readonly onOpen: (draft: ChartSearchDraft) => void;
+type Messages = (typeof chartSearchPanelMessages)['en'];
+
+const MAX = String(SAVED_QUERY_NAME_MAX_CHARACTERS);
+
+/** The copy for a failed save, open or delete: a refusal says why, anything else says it did not save. */
+function failureText(cause: unknown, t: Messages): string {
+  if (cause instanceof ChartSearchRefusedError) {
+    return cause.refusal === 'name-too-long' ? t.nameTooLong(MAX) : t.invalidSearch;
+  }
+  return `${t.saveFailed} ${errorDetail(cause)}`;
 }
 
-export function SavedChartSearches({ draft, onOpen }: SavedChartSearchesProps): React.JSX.Element {
+/** Save search, inside the query panel: the name field and the button (#1731). */
+export function SaveChartSearchForm({ draft }: { readonly draft: ChartSearchDraft }): React.JSX.Element {
   const store = useStore();
-  const state = useStoreState();
   const t = useMessages(chartSearchPanelMessages);
-  const [locale] = useLocale();
   const [name, setName] = useState('');
   const [message, setMessage] = useState<string>();
   const [error, setError] = useState<string>();
-  const [lastDeleted, setLastDeleted] = useState<SavedChartSearch>();
-  const max = String(SAVED_QUERY_NAME_MAX_CHARACTERS);
   const writable = store.writable;
-
-  const searches = sortedChartSearches(state.chartSearches, locale);
-  const nameError = isSavedQueryNameTooLong(name) ? t.nameTooLong(max) : undefined;
-  const label = (search: SavedChartSearch): string => (search.name === '' ? t.unnamed : search.name);
-
-  const fail = (cause: unknown): void => {
-    setMessage(undefined);
-    if (cause instanceof ChartSearchRefusedError) {
-      setError(cause.refusal === 'name-too-long' ? t.nameTooLong(max) : t.invalidSearch);
-    } else {
-      setError(`${t.saveFailed} ${errorDetail(cause)}`);
-    }
-  };
+  const nameError = isSavedQueryNameTooLong(name) ? t.nameTooLong(MAX) : undefined;
 
   const save = (): void => {
     setError(undefined);
+    setMessage(undefined);
     const definition = definitionFromDraft(draft);
     if (!definition.ok) {
-      fail(new ChartSearchRefusedError('invalid'));
+      setError(failureText(new ChartSearchRefusedError('invalid'), t));
       return;
     }
     const trimmed = name.trim();
@@ -70,24 +60,78 @@ export function SavedChartSearches({ draft, onOpen }: SavedChartSearchesProps): 
       .mutate(chartSearchCreate(newId('s'), trimmed, definition.value))
       .then(() => {
         setName('');
-        setLastDeleted(undefined);
         setMessage(t.saved(trimmed === '' ? t.unnamed : trimmed));
       })
-      .catch(fail);
+      .catch((cause: unknown) => {
+        setError(failureText(cause, t));
+      });
+  };
+
+  return (
+    <div className="saved" role="group" aria-label={t.saveSearch}>
+      <div className="save-row">
+        <TextField
+          label={t.nameLabel}
+          value={name}
+          onChange={setName}
+          help={t.nameHelp(MAX)}
+          error={nameError}
+          autoComplete="off"
+          disabled={!writable}
+        />
+        <Button
+          shape="capsule"
+          className="primitive-button-form-action"
+          variant="quiet"
+          disabled={!writable || nameError !== undefined}
+          onClick={save}
+        >
+          {t.saveSearch}
+        </Button>
+      </div>
+      {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
+      {error === undefined && message !== undefined && <StatusMessage kind="success">{message}</StatusMessage>}
+    </div>
+  );
+}
+
+export interface SavedChartSearchListProps {
+  /** The search being built, or `undefined` before its first edit: its as-of date is kept when a saved search is reopened. */
+  readonly draft: ChartSearchDraft | undefined;
+  /** Replace the query's conditions with a saved search's; never runs it. */
+  readonly onOpen: (draft: ChartSearchDraft) => void;
+}
+
+/** The saved searches, in the Saved searches dropdown (#1731): reopen, delete with Undo, unreadable entries with their reason. */
+export function SavedChartSearchList({ draft, onOpen }: SavedChartSearchListProps): React.JSX.Element {
+  const store = useStore();
+  const state = useStoreState();
+  const t = useMessages(chartSearchPanelMessages);
+  const [locale] = useLocale();
+  const [message, setMessage] = useState<string>();
+  const [error, setError] = useState<string>();
+  const [lastDeleted, setLastDeleted] = useState<SavedChartSearch>();
+  const writable = store.writable;
+
+  const searches = sortedChartSearches(state.chartSearches, locale);
+  const label = (search: SavedChartSearch): string => (search.name === '' ? t.unnamed : search.name);
+  const fail = (cause: unknown): void => {
+    setMessage(undefined);
+    setError(failureText(cause, t));
   };
 
   const open = (search: SavedChartSearch): void => {
     if (search.status !== 'ready') return;
-    const opened = draftFromDefinition(search.definition, draft.asOf);
+    const opened = draftFromDefinition(search.definition, (draft ?? initialDraft()).asOf);
     if (!opened.ok) {
       setMessage(undefined);
       setError(t.unreadable.invalid);
       return;
     }
-    onOpen(opened.value);
     setError(undefined);
     setLastDeleted(undefined);
     setMessage(t.opened(label(search)));
+    onOpen(opened.value);
   };
 
   const remove = (search: SavedChartSearch): void => {
@@ -113,29 +157,7 @@ export function SavedChartSearches({ draft, onOpen }: SavedChartSearchesProps): 
   };
 
   return (
-    <div className="saved" role="group" aria-labelledby="chart-search-saved-heading">
-      <h3 id="chart-search-saved-heading">{t.savedHeading}</h3>
-      <div className="save-row">
-        <TextField
-          label={t.nameLabel}
-          value={name}
-          onChange={setName}
-          help={t.nameHelp(max)}
-          error={nameError}
-          autoComplete="off"
-          disabled={!writable}
-        />
-        <Button
-          shape="capsule"
-          className="primitive-button-form-action"
-          variant="quiet"
-          disabled={!writable || nameError !== undefined}
-          onClick={save}
-        >
-          {t.saveSearch}
-        </Button>
-      </div>
-
+    <div className="saved-search-list">
       {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
       {error === undefined && message !== undefined && (
         <StatusMessage kind="success">
@@ -153,9 +175,8 @@ export function SavedChartSearches({ draft, onOpen }: SavedChartSearchesProps): 
           )}
         </StatusMessage>
       )}
-
       {searches.length === 0 ? (
-        <EmptyState message={t.savedEmpty} />
+        <p className="hint">{t.noSavedShort}</p>
       ) : (
         <ul className="people saved-query-list">
           {searches.map((search) => (
@@ -176,6 +197,8 @@ export function SavedChartSearches({ draft, onOpen }: SavedChartSearchesProps): 
               {search.status === 'ready' && (
                 <Button
                   variant="quiet"
+                  size="compact"
+                  shape="capsule"
                   aria-label={t.reopenLabel(label(search))}
                   onClick={() => {
                     open(search);
@@ -186,6 +209,8 @@ export function SavedChartSearches({ draft, onOpen }: SavedChartSearchesProps): 
               )}
               <Button
                 variant="quiet"
+                size="compact"
+                shape="capsule"
                 aria-label={t.deleteLabel(label(search))}
                 disabled={!writable}
                 onClick={() => {
