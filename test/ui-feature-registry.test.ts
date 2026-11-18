@@ -100,7 +100,6 @@ describe('hrefFor', () => {
  * a route kind without deciding fails the type check here instead of leaving a page the registry never heard of.
  */
 const ROUTE_KIND_STATUS: Readonly<Record<Route['kind'], 'feature' | 'not a feature'>> = {
-  home: 'not a feature',
   about: 'not a feature',
   changelog: 'not a feature',
   people: 'not a feature',
