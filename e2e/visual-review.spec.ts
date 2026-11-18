@@ -339,3 +339,146 @@ test('capture the screens of the visual review', async ({ browser }) => {
 
   await app.close();
 });
+
+/**
+ * The M13 and M14 screens with no step above (#1641, #1654, #1668, #1730, #1731, #1732)
+ * (the PDFs are the next test).
+ */
+test('capture the M13 and M14 screens', async ({ browser }) => {
+  test.setTimeout(1_800_000);
+  mkdirSync(OUT ?? '', { recursive: true });
+  process.env.LOG_LEVEL = 'silent';
+  const app = await build({ dbPath: join(mkdtempSync(join(tmpdir(), 'visual-review-')), 'astraya.db') });
+  await app.listen({ port: 0, host: '127.0.0.1' });
+  const address = app.server.address();
+  if (address === null || typeof address === 'string') throw new Error('server did not bind to a port');
+  const baseUrl = `http://127.0.0.1:${String(address.port)}`;
+  const page = await (await newSeededContext(browser, baseUrl)).newPage();
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  await page.waitForURL(/#\/people\/[^/]+\//);
+
+  // #1732: the Export / Import card on its Import tab.
+  await page.getByRole('link', { name: 'Birth record', exact: true }).first().click();
+  const fileCard = page.getByRole('region', { name: 'Export and import', exact: true });
+  await fileCard.getByRole('tab', { name: 'Import', exact: true }).click();
+  const showImport = async (): Promise<void> => {
+    await fileCard.scrollIntoViewIfNeeded();
+  };
+  await showImport();
+  await shoot(page, '57-birth-record-import-tab', showImport);
+
+  // #1654: the command palette, opened with Ctrl+K and searched.
+  await page.getByRole('link', { name: 'Overview', exact: true }).first().click();
+  await page.getByText(/^Now: profected/).waitFor({ timeout: 60_000 });
+  const palette = page.getByRole('combobox', { name: 'Search features, charts and tabs', exact: true });
+  const openPalette = async (): Promise<void> => {
+    if (await palette.isVisible()) return;
+    await page.keyboard.press('Control+k');
+    await palette.waitFor({ state: 'visible' });
+    await palette.fill('solar return');
+    await page.waitForTimeout(300);
+  };
+  await openPalette();
+  await shoot(page, '61-command-palette', openPalette);
+  await page.keyboard.press('Escape');
+
+  // #1641: the wheel after a strict body filter (four transiting planets, four natal points, every aspect type), so it
+  // draws only those bodies and the lines between them.
+  await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).first().click();
+  await page.getByRole('tab', { name: 'Transits', exact: true }).click();
+  await page.getByRole('table', { name: 'Contacts' }).waitFor({ timeout: 60_000 });
+  await page.getByRole('button', { name: 'Change filters', exact: true }).click();
+  const transiting = page.getByRole('group', { name: 'Transiting planets', exact: true });
+  const natal = page.getByRole('group', { name: 'Natal points', exact: true });
+  await transiting.getByRole('button', { name: 'Clear', exact: true }).click();
+  await natal.getByRole('button', { name: 'Clear', exact: true }).click();
+  for (const name of ['Sun', 'Mars', 'Jupiter', 'Saturn']) await transiting.getByLabel(name, { exact: true }).check();
+  for (const name of ['Sun', 'Moon', 'Venus', 'Mars']) await natal.getByLabel(name, { exact: true }).check();
+  await page.getByRole('button', { name: 'Apply', exact: true }).click();
+  const filteredWheel = page.locator('div.chart-wheel').first();
+  await filteredWheel.waitFor();
+  const showWheel = async (): Promise<void> => {
+    await filteredWheel.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(400);
+  };
+  await showWheel();
+  await shoot(page, '63-transits-filtered-wheel', showWheel);
+
+  // #1731: the People list with the chart query open and a run applied (Sun in Pisces).
+  await page.goto(`${baseUrl}/#/people`);
+  await page.getByRole('button', { name: 'Chart query', exact: true }).click();
+  await page
+    .locator('#chart-query-panel li.cond')
+    .first()
+    .getByLabel('Sign', { exact: true })
+    .selectOption({ label: 'Pisces' });
+  await page.getByRole('button', { name: 'Run search', exact: true }).click();
+  await page.locator('.people-query-status').waitFor({ timeout: 60_000 });
+  await shoot(page, '58-people-query-run');
+
+  // #1730: the bare root, after a person was viewed: People at #/people, with that person's sections in the sidebar.
+  await page.goto(`${baseUrl}/`);
+  await page.getByRole('heading', { name: 'People', level: 1 }).waitFor();
+  await page.waitForURL(/#\/people$/);
+  await shoot(page, '59-root-people');
+
+  // #1668: the app icons as shipped (favicons, touch icon, PWA icons), on a plain page at one size.
+  await page.setContent(
+    `<body style="margin:24px;font:14px system-ui;display:flex;gap:24px;align-items:end;flex-wrap:wrap">` +
+      ['favicon-16.png', 'favicon-32.png', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'maskable-512.png']
+        .map(
+          (file) =>
+            `<figure style="margin:0;text-align:center"><img src="${baseUrl}/icons/${file}" alt="${file}" style="display:block;max-width:256px"><figcaption>${file}</figcaption></figure>`,
+        )
+        .join('') +
+      `</body>`,
+  );
+  await page.waitForTimeout(500);
+  await shoot(page, '60-app-icons', undefined, [SIZES[1]]);
+
+  await app.close();
+});
+
+/**
+ * The Complete archive PDF for Einstein in en and nl, for the PDF issues (#1646, #1647, #1648). Saved beside the JPEGs as
+ * `pdf-en.pdf` and `pdf-nl.pdf`; their pages are rendered to images outside this spec.
+ */
+test('capture the review PDFs', async ({ browser }) => {
+  test.setTimeout(1_200_000);
+  mkdirSync(OUT ?? '', { recursive: true });
+  process.env.LOG_LEVEL = 'silent';
+  const app = await build({ dbPath: join(mkdtempSync(join(tmpdir(), 'visual-review-')), 'astraya.db') });
+  await app.listen({ port: 0, host: '127.0.0.1' });
+  const address = app.server.address();
+  if (address === null || typeof address === 'string') throw new Error('server did not bind to a port');
+  const baseUrl = `http://127.0.0.1:${String(address.port)}`;
+  const page = await (await newSeededContext(browser, baseUrl)).newPage();
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  await page.waitForURL(/#\/people\/[^/]+\//);
+  // #1646, #1647, #1648: the Complete archive PDF for Einstein, in English and then in Dutch.
+  for (const code of ['EN', 'NL'] as const) {
+    if (code === 'NL') await setLanguage(page, 'NL');
+    await page.getByRole('banner').getByRole('link', { name: 'PDF', exact: true }).click();
+    await page.getByRole('heading', { level: 1 }).first().waitFor();
+    await page
+      .getByLabel(code === 'EN' ? 'Person' : 'Persoon', { exact: true })
+      .selectOption({ label: 'Albert Einstein' });
+    await choosePill(
+      page,
+      code === 'EN' ? 'Starting point' : 'Beginpunt',
+      code === 'EN'
+        ? 'Complete archive (every chart, every table, interpretation)'
+        : 'Volledig archief (elke horoscoop, elke tabel, interpretatie)',
+    );
+    const buildPdf = page.getByRole('button', { name: code === 'EN' ? 'Build PDF' : 'PDF samenstellen', exact: true });
+    const [download] = await Promise.all([
+      page.waitForEvent('download', { timeout: 600_000 }),
+      buildPdf.first().click(),
+    ]);
+    await download.saveAs(join(OUT ?? '', `pdf-${code.toLowerCase()}.pdf`));
+  }
+
+  await app.close();
+});
