@@ -4,7 +4,7 @@
  * separate not-evaluable group, the zero-results suggestion and the read-only store. Mocks only the store and the
  * ephemeris edges, as test/ui-composite-method.test.tsx does; the draft model and the run hook are real.
  */
-import { act } from 'react';
+import { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setLocale } from '../src/ui/locale.js';
@@ -12,6 +12,9 @@ import type * as RunModule from '../src/ui/chart-search-run.js';
 import type { PersonRunResult } from '../src/ui/chart-search-run.js';
 import { bodyByKey } from '../src/astrology/bodies.js';
 import type { PersonSearchResult, SearchCondition } from '../src/domain/chart-search.js';
+import { initialDraft, type ChartSearchDraft } from '../src/ui/chart-search-draft.js';
+import { useChartSearchRun } from '../src/ui/use-chart-search-run.js';
+import { ChartSearchPanel as HostPanel } from '../src/ui/ChartSearchPanel.js';
 
 const mocks = vi.hoisted(() => ({
   writable: true,
@@ -51,12 +54,33 @@ vi.mock('../src/ui/store-context.js', () => {
 let container: HTMLDivElement;
 let root: Root;
 
+/** Owns the draft and the run as People does (#1731), so the panel is rendered with the same props. */
+function Host(): React.JSX.Element {
+  const [draft, setDraft] = useState<ChartSearchDraft>(initialDraft);
+  const run = useChartSearchRun();
+  return (
+    <HostPanel draft={draft} onDraftChange={setDraft} runState={run.state} results={run.results} onRun={run.run} />
+  );
+}
+
 async function mount(): Promise<void> {
-  const { ChartSearchPanel } = await import('../src/ui/ChartSearchPanel.js');
   await act(async () => {
-    root.render(<ChartSearchPanel />);
+    root.render(<Host />);
     await Promise.resolve();
   });
+}
+
+/**
+ * Waits for the run to finish (#1731): the run engine loads through a dynamic import on the first run, so one
+ * microtask flush is not enough. Resolves once no Run control is busy, or after a bounded number of macrotasks.
+ */
+async function settle(): Promise<void> {
+  for (let i = 0; i < 50; i += 1) {
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    if (container.querySelector('button[aria-busy="true"]') === null) return;
+  }
 }
 
 const button = (name: string): HTMLButtonElement | undefined =>
@@ -114,9 +138,12 @@ describe('Search charts card (#1405)', () => {
     await click(button('Run search'));
     expect(button('Searching…')?.disabled).toBe(true);
     await act(async () => {
-      finish([]);
-      await Promise.resolve();
+      await import('../src/ui/chart-search-run.js');
     });
+    act(() => {
+      finish([]);
+    });
+    await settle();
     expect(button('Run search')?.disabled).toBe(false);
   });
 
@@ -127,9 +154,7 @@ describe('Search charts card (#1405)', () => {
     mocks.next = () => Promise.resolve(results);
     await mount();
     await click(button('Run search'));
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await settle();
     expect(container.textContent).toContain('Could not be evaluated');
     expect(container.textContent).toContain('Ada');
     expect(container.textContent).toContain('birth date, time or place is incomplete');
@@ -152,9 +177,7 @@ describe('Search charts card (#1405)', () => {
       Promise.resolve([{ kind: 'evaluated', personId: 'p-ada', displayName: 'Ada', result } satisfies PersonRunResult]);
     await mount();
     await click(button('Run search'));
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await settle();
     expect(container.textContent).toContain('Matches (1)');
     const row = container.querySelector('ul.people li');
     expect(row?.querySelector('.name')?.textContent).toBe('Ada');
@@ -176,9 +199,7 @@ describe('Search charts card (#1405)', () => {
       Promise.resolve([{ kind: 'evaluated', personId: 'p-bo', displayName: 'Bo', result } satisfies PersonRunResult]);
     await mount();
     await click(button('Zoeken'));
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await settle();
     expect(container.querySelector('ul.people .summary')?.textContent).toMatch(/in huis 7$/);
   });
 
@@ -186,9 +207,7 @@ describe('Search charts card (#1405)', () => {
     mocks.next = () => Promise.resolve([]);
     await mount();
     await click(button('Run search'));
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await settle();
     expect(container.textContent).toContain('No one matches these conditions. Try removing a condition');
   });
 
@@ -196,9 +215,7 @@ describe('Search charts card (#1405)', () => {
     mocks.next = () => Promise.reject(new Error('boom'));
     await mount();
     await click(button('Run search'));
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await settle();
     expect(container.textContent).toContain('The search did not finish. Your conditions are kept.');
     expect(button('Retry')).toBeDefined();
     expect(container.querySelectorAll('li.cond')).toHaveLength(1);
