@@ -10,6 +10,7 @@ import { chartSearchPanelMessages } from './ChartSearchPanel.messages.js';
 import { aspectDisplayName, bodyDisplayName, signDisplayName } from './astro-names.messages.js';
 import { SIGNS } from '../astrology/signs.js';
 import type { PersonRunResult } from './chart-search-run.js';
+import type { ResultsGroups } from './chart-search-summary.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { personHref } from './route.js';
@@ -33,21 +34,7 @@ export function describeCondition(condition: SearchCondition, t: Messages, local
   return t.describe.aspect(scope, body, aspectDisplayName(condition.aspectKey, locale), target);
 }
 
-export interface ResultsGroups {
-  readonly matches: readonly Extract<PersonRunResult, { kind: 'evaluated' }>[];
-  readonly notEvaluable: readonly PersonRunResult[];
-}
-
-/** Splits results into matches and the not-evaluable group; people who do not match fall in neither. */
-export function resultsSummary(results: readonly PersonRunResult[]): ResultsGroups {
-  const matches: Extract<PersonRunResult, { kind: 'evaluated' }>[] = [];
-  const notEvaluable: PersonRunResult[] = [];
-  for (const entry of results) {
-    if (entry.kind === 'not-evaluable' || entry.result.outcome === 'not-evaluable') notEvaluable.push(entry);
-    else if (entry.result.outcome === 'matched') matches.push(entry);
-  }
-  return { matches, notEvaluable };
-}
+export { resultsSummary } from './chart-search-summary.js';
 
 const REASONS: Readonly<
   Record<NotEvaluableReason, 'birthTimeUnknown' | 'housesUndefined' | 'bodyMissing' | 'timingUnavailable'>

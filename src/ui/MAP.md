@@ -190,7 +190,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `ChartSearchPanel.messages.ts` — en/nl copy for the Search charts card on People (#1405). Deps: none.
 - `ChartSearchPanel.tsx` — Search charts card above the People list (#1405): draft conditions, explicit run, results, saved searches. Deps: `chart-search-draft`, `use-chart-search-run`, `primitives`.
 - `ChartSearchConditionRow.tsx` — One editable condition row (scope, kind, body, sign/house/aspect, target, Remove) (#1405). Deps: `domain/chart-search`, `astro-names.messages`, `primitives/Select`.
-- `ChartSearchResults.tsx` — Matches and the separate could-not-be-evaluated group, with reasons from the fixed copy list (#1405). Deps: `chart-search-run`, `route`, `astro-names.messages`.
+- `ChartSearchResults.tsx` — Matches and the separate could-not-be-evaluated group, with reasons from the fixed copy list (#1405). Deps: `chart-search-summary`, `route`, `astro-names.messages`.
 - `SavedChartSearches.tsx` — Saved chart searches: save, list, reopen, delete with Undo (#1405). Deps: `store/chart-searches`, `chart-search-draft`, `store-context`, `primitives`.
 - `use-chart-search-run.ts` — Hook holding the chart-search run state; explicit runs with the app ephemeris provider (#1405). Deps: `chart-search-run`, `EphemerisProviderContext`, `store-context`.
 - `person-calculation-settings.ts` — Hook for one person's calculation settings and rulership (own registers, else device default profile / default rulership) and async setters (reject on write failure); flags an unreadable register (#806). Deps: `store-context`, `default-calculation-profile`, `rulership-setting`, `domain/person`.
@@ -219,6 +219,8 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `pdf-export.messages.ts` — en/nl for PDF export builder. Deps: `domain/pdf-export-sections`, `./chart-sections`.
 - `people-list.messages.ts` — en/nl for incomplete person-record descriptions. Deps: none.
 - `people-list.ts` — Sorts people + flags caveated resolutions + composes summaries. Deps: `time/resolve`, `domain/person`.
+- `people-query.ts` — Pure filters for the one people list (#1731): quick name/place filter and chart-query grouping into matches and a could-not-be-evaluated group, nobody dropped. Deps: `chart-search-summary`, `chart-search-run`, `domain/chart-search`, `domain/person`.
+- `chart-search-summary.ts` — Pure split of a chart-search run into matches and the could-not-be-evaluated group (#1405, #1731); no storage or React. Deps: `chart-search-run`.
 - `person-nav.ts` — Per-person tab bar + grouped subtab families. Deps: `route`.
 - `Home.tsx` + `Home.messages.ts` — Home screen at `#/` (#1058): last-viewed person's timing timeline, or a person picker with a first-use empty state; no redirect. Sidebar is full when a person is last-viewed (#965). Deps: `last-person`, `TimingTimelineView`, `people-list`, `store-context`, `primitives/Select`, `primitives/EmptyState`.
 - `person-screens.ts` — Barrel re-export for lazy-loading every person-scoped screen. Deps: all person-scoped screens.
