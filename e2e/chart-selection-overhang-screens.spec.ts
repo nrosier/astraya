@@ -50,6 +50,10 @@ interface Measure {
 
 async function measure(page: Page, screen: string, width: number, height: number): Promise<Measure> {
   await page.setViewportSize({ width, height });
+  // #1761: boundingBox() does not auto-wait, and the Suspense boundary hides the chart screen during a type switch, so wait for it first.
+  await expect(page.locator('.chart-workbench-dial .chart-wheel svg').first()).toBeVisible();
+  await expect(page.locator('.chart-wheel-stack').first()).toBeVisible();
+  await expect(page.locator('.selection-inspector').first()).toBeVisible();
   const wheel = await page.locator('.chart-workbench-dial .chart-wheel svg').first().boundingBox();
   // The card frames the wheel and the instrument bar under it (#1532): below is measured from the bar's bottom.
   const stack = await page.locator('.chart-workbench-dial .chart-wheel-stack').first().boundingBox();
