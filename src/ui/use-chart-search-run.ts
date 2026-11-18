@@ -8,12 +8,7 @@ import { useEffect, useRef, useState } from 'react';
 import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
 import type { ChartSearch } from '../domain/chart-search.js';
 import { errorDetail } from './api-error.js';
-import {
-  createSubjectCache,
-  runChartSearch,
-  type ChartSearchRunState,
-  type PersonRunResult,
-} from './chart-search-run.js';
+import type { ChartSearchRunState, PersonRunResult, SubjectCache } from './chart-search-run.js';
 import { useDefaultCalculationProfile } from './default-calculation-profile.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { useRulershipChoice } from './rulership-setting.js';
@@ -32,7 +27,8 @@ export function useChartSearchRun(): ChartSearchRunHook {
   const { people } = useStoreState();
   const [defaultProfile] = useDefaultCalculationProfile();
   const [rulership] = useRulershipChoice();
-  const [cache] = useState(createSubjectCache);
+  // The run engine (#1731) loads on the first run, so the People page does not carry it in its eager chunk.
+  const cache = useRef<SubjectCache | undefined>(undefined);
   const [state, setState] = useState<ChartSearchRunState>({ status: 'idle' });
   const [results, setResults] = useState<readonly PersonRunResult[]>();
   const sequence = useRef(0);
@@ -53,7 +49,13 @@ export function useChartSearchRun(): ChartSearchRunHook {
     void (async () => {
       try {
         if (provider === undefined) throw new Error(providerError ?? '');
-        const done = await runChartSearch({ search, people, asOf, defaults: { settings, rulership } }, provider, cache);
+        const engine = await import('./chart-search-run.js');
+        cache.current ??= engine.createSubjectCache();
+        const done = await engine.runChartSearch(
+          { search, people, asOf, defaults: { settings, rulership } },
+          provider,
+          cache.current,
+        );
         if (sequence.current !== mine) return;
         setResults(done);
         setState({ status: 'done', results: done });

@@ -6,13 +6,15 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { MAX_SEARCH_CONDITIONS, type ChartSearch } from '../domain/chart-search.js';
-import { ChartSearchConditionRow, blankCondition } from './ChartSearchConditionRow.js';
+import { ChartSearchConditionRow } from './ChartSearchConditionRow.js';
 import { chartSearchPanelMessages } from './ChartSearchPanel.messages.js';
 import { ChartSearchResults, resultsSummary } from './ChartSearchResults.js';
+import type { ChartSearchRunState, PersonRunResult } from './chart-search-run.js';
 import {
   addDraftCondition,
+  blankCondition,
   editDraftCondition,
-  newDraft,
+  initialDraft,
   parseAsOf,
   removeDraftCondition,
   setAsOf,
@@ -27,19 +29,29 @@ import { EmptyState } from './primitives/EmptyState.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { SavedChartSearches } from './SavedChartSearches.js';
 import { useStore } from './store-context.js';
-import { useChartSearchRun } from './use-chart-search-run.js';
 
-function initialDraft(): ChartSearchDraft {
-  const draft = addDraftCondition(newDraft(), blankCondition());
-  return draft.ok ? draft.value : newDraft();
+export interface ChartSearchPanelProps {
+  /** `undefined` until the first edit; the card then starts from `initialDraft()`. */
+  readonly draft: ChartSearchDraft | undefined;
+  readonly onDraftChange: (draft: ChartSearchDraft) => void;
+  readonly runState: ChartSearchRunState;
+  readonly results: readonly PersonRunResult[] | undefined;
+  readonly onRun: (search: ChartSearch, asOf: string) => void;
 }
 
-export function ChartSearchPanel(): React.JSX.Element {
+export function ChartSearchPanel({
+  draft: storedDraft,
+  onDraftChange,
+  runState: state,
+  results,
+  onRun,
+}: ChartSearchPanelProps): React.JSX.Element {
   const t = useMessages(chartSearchPanelMessages);
+  // Fixed at mount, as before the lift: an untouched card keeps the as-of date it opened with.
+  const [starting] = useState(initialDraft);
+  const draft = storedDraft ?? starting;
   const store = useStore();
   const writable = store.writable;
-  const [draft, setDraft] = useState<ChartSearchDraft>(initialDraft);
-  const { state, results, run } = useChartSearchRun();
   const list = useRef<HTMLOListElement>(null);
   const addButton = useRef<HTMLDivElement>(null);
   // The position whose Remove control takes focus after a removal; read in an effect once the row has re-rendered.
@@ -62,17 +74,17 @@ export function ChartSearchPanel(): React.JSX.Element {
 
   const search: ChartSearch = { operator: draft.operator, conditions: draft.conditions };
   const startRun = (): void => {
-    run(search, draft.asOf);
+    onRun(search, draft.asOf);
   };
 
   const add = (): void => {
     const next = addDraftCondition(draft, blankCondition());
-    if (next.ok) setDraft(next.value);
+    if (next.ok) onDraftChange(next.value);
   };
   const remove = (index: number): void => {
     const next = removeDraftCondition(draft, index);
     if (!next.ok) return;
-    setDraft(next.value);
+    onDraftChange(next.value);
     setFocusAfterRemove(index);
   };
 
@@ -95,7 +107,7 @@ export function ChartSearchPanel(): React.JSX.Element {
         ]}
         disabled={!writable}
         onChange={(value) => {
-          setDraft(setOperator(draft, value === 'all' ? 'and' : 'or'));
+          onDraftChange(setOperator(draft, value === 'all' ? 'and' : 'or'));
         }}
       />
 
@@ -110,7 +122,7 @@ export function ChartSearchPanel(): React.JSX.Element {
             canRemove={count > 1}
             onChange={(next) => {
               const edited = editDraftCondition(draft, index, next);
-              if (edited.ok) setDraft(edited.value);
+              if (edited.ok) onDraftChange(edited.value);
             }}
             onRemove={() => {
               remove(index);
@@ -128,7 +140,7 @@ export function ChartSearchPanel(): React.JSX.Element {
             error={asOfInvalid ? t.asOfInvalid : undefined}
             disabled={!writable}
             onChange={(value) => {
-              setDraft(setAsOf(draft, value));
+              onDraftChange(setAsOf(draft, value));
             }}
           />
         </div>
@@ -183,7 +195,7 @@ export function ChartSearchPanel(): React.JSX.Element {
         </>
       )}
 
-      <SavedChartSearches draft={draft} onOpen={setDraft} />
+      <SavedChartSearches draft={draft} onOpen={onDraftChange} />
     </section>
   );
 }
