@@ -32,7 +32,6 @@ describe('activeFeatureKey for the person tabs', () => {
 
   it('is null for routes with no tab of their own', () => {
     const nonPersonRoutes: Route[] = [
-      { kind: 'home' },
       { kind: 'about' },
       { kind: 'changelog' },
       { kind: 'people' },

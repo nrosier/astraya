@@ -346,7 +346,7 @@ export function AppNav({ route }: { route: Route }): React.JSX.Element {
   // Documents workspace is app-scoped like Preferences; its active state comes from the registry.
   const documentsActive = activeFeatureKey(route, 'global') === 'documents';
   const lastPersonId = useLastPersonId();
-  // Tool pages (#453), the Documents workspace (#914), the home screen (#965) and the other app-scoped
+  // Tool pages (#453), the Documents workspace (#914) and the other app-scoped
   // screens (#965: Preferences, Admin, PDF creator, About, Changelog) carry no person in their own route
   // (`route.ts`). On all of them, the last person seen is reused, so their nav tabs keep showing instead
   // of disappearing, and a link back to one of those tabs returns to the same person rather than

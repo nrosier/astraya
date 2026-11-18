@@ -77,8 +77,7 @@ describe('featureFor', () => {
     }
   });
 
-  it('is undefined for a route with no feature metadata (home, about, etc.)', () => {
-    expect(featureFor({ kind: 'home' })).toBeUndefined();
+  it('is undefined for a route with no feature metadata (about, etc.)', () => {
     expect(featureFor({ kind: 'about' })).toBeUndefined();
   });
 });
@@ -101,7 +100,6 @@ describe('hrefFor', () => {
  * a route kind without deciding fails the type check here instead of leaving a page the registry never heard of.
  */
 const ROUTE_KIND_STATUS: Readonly<Record<Route['kind'], 'feature' | 'not a feature'>> = {
-  home: 'not a feature',
   about: 'not a feature',
   changelog: 'not a feature',
   people: 'not a feature',
