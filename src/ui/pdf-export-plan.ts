@@ -17,7 +17,7 @@
  * @module ui/pdf-export-plan
  * @purpose Builds the PDF export feature's (#441) ordered, declarative `PdfPlan` content tree from a user's `PdfSelection`, reusing the same domain compute functions and table-column definitions the on-screen chart/synastry/composite views use.
  * @conventions Deliberately free of jsPDF/svg2pdf.js/jspdf-autotable — svg2pdf.js's UMD entry fails to load under Vitest/Node, so any top-level import of it here would break every test importing this module; the rendering half using those libraries lives in pdf-export-render.ts instead, covered by Playwright. Table cells are reduced to plain strings with `cellText` (`render`, else `valueOf`), the same text Copy and the CSV download use (#664).
- * @exports PdfTablePlan, PdfChartSectionPlan, PdfTextSectionPlan, PdfFieldsSectionPlan, PdfSectionPlan, PdfPlan, PdfPlanContext, almutenNameList, almutenHintText, sectionCalculationOptions, buildPdfPlan
+ * @exports PdfTablePlan, PdfChartSectionPlan, PdfTextSectionPlan, PdfFieldsSectionPlan, PdfSectionPlan, PdfPlan, PdfPlanContext, almutenNameList, almutenLeadText, sectionCalculationOptions, buildPdfPlan
  */
 import { bodyById, bodyByKey } from '../astrology/bodies.js';
 import { signIndex } from '../astrology/signs.js';
@@ -211,6 +211,8 @@ export interface PdfChartSectionPlan {
   readonly kind: 'chart';
   readonly heading: string;
   readonly svg?: { readonly markup: string; readonly width: number; readonly height: number };
+  /** A line printed in bold above `hint` (#1646): the Almuten of the Ascendant name line. */
+  readonly hintLead?: string;
   readonly hint?: string;
   /** The calculation's fingerprint line (#582) — the same one the chart screen prints — when one could be built. */
   readonly provenance?: string;
@@ -434,17 +436,19 @@ interface MatrixPairRow {
 }
 
 /**
- * The almuten of the Ascendant as printed in the PDF (#1646): the names joined with commas (or "no almuten"), and
- * the scope note on a line of its own. jsPDF's `splitTextToSize` breaks on the newline, so the renderer needs no
- * change. Tied almutens stay on the one name line.
+ * The almuten names as the PDF prints them (#1646): joined with commas, or "no almuten". Tied almutens stay on the
+ * one name line.
  */
 export function almutenNameList(keys: readonly string[], t: typeof chartViewMessages.en, locale: Locale): string {
   return keys.length === 0 ? t.noAlmuten : keys.map((key) => bodyDisplayName(key, locale)).join(', ');
 }
 
-/** The chart section's almuten hint (#1646): the name sentence, a newline, then the scope note. */
-export function almutenHintText(keys: readonly string[], t: typeof chartViewMessages.en, locale: Locale): string {
-  return `${t.almutenOfAscendantSentence(almutenNameList(keys, t, locale))}\n${t.almutenScopeNote}`;
+/**
+ * The chart section's almuten name line (#1646): "Almuten of the Ascendant: Venus, Moon". The renderer prints it
+ * in bold, above the regular hint that starts with the scope note (owner decision 2026-11-18).
+ */
+export function almutenLeadText(keys: readonly string[], t: typeof chartViewMessages.en, locale: Locale): string {
+  return t.almutenOfAscendantSentence(almutenNameList(keys, t, locale));
 }
 
 /**
@@ -734,7 +738,9 @@ async function buildChartSectionPlan(
 
   // Always traditional (#545) — almutenOfAscendant no longer takes a rulership/display-choice parameter.
   const almuten = almutenOfAscendant(data, settings.boundsScheme);
-  const almutenHint = almuten === undefined ? undefined : almutenHintText(almuten.almutens, t, locale);
+  // The name line is the section's bold lead (#1646); its scope note starts the regular hint below it.
+  const hintLead = almuten === undefined ? undefined : almutenLeadText(almuten.almutens, t, locale);
+  const almutenHint = almuten === undefined ? undefined : t.almutenScopeNote;
   // The D10 convention caveat (#725), in the document's language, as the Harmonic screen shows it for the same chart.
   const d10Hint =
     options.type === 'harmonic' && (options.harmonicN ?? 5) === 10 ? harmonicViewMessages[locale].d10Note : undefined;
@@ -753,6 +759,7 @@ async function buildChartSectionPlan(
     kind: 'chart',
     heading,
     ...(svg === undefined ? {} : { svg }),
+    ...(hintLead === undefined ? {} : { hintLead }),
     ...(hint === undefined ? {} : { hint }),
     ...(provenance === undefined ? {} : { provenance }),
     tables,

@@ -429,10 +429,16 @@ export async function renderPdfPlan(plan: PdfPlan): Promise<{ blob: Blob; filena
         }
       }
     } else {
+      // The almuten name line stands out in bold above its explanation (#1646, owner decision 2026-11-18).
+      if (section.hintLead !== undefined) {
+        font('bold', BODY_SIZE);
+        y = wrapAndPrint(doc, section.hintLead, SIDE_MARGIN, y, contentWidth);
+        font('normal', BODY_SIZE);
+      }
       if (section.hint !== undefined) {
         y = wrapAndPrint(doc, section.hint, SIDE_MARGIN, y, contentWidth);
-        y += 4;
       }
+      if (section.hintLead !== undefined || section.hint !== undefined) y += 4;
       if (section.provenance !== undefined) {
         font('normal', 8, MUTED);
         y = wrapAndPrint(doc, section.provenance, SIDE_MARGIN, y, contentWidth, 4);
