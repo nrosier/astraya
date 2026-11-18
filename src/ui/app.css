@@ -1564,14 +1564,15 @@ footer {
  * Birth record (#795, #896, #895): a single column on narrow screens and a 60/40 two-column grid from 64rem. The left
  * column holds identity and timestamp and place; the right column holds notes, the timezone details card, the
  * export, the replace-from-file card and the danger zone. Save changes sits in the page header, beside the title.
- * The bottom row shares one bottom edge (#895): both columns stretch to the row, and the slack lands in each
- * column's last card, as on the Consultation grid. Card chrome matches `.horary-card`; only tokens are used.
+ * Cards size to their content (#1729, owner decision 2026-11-18): the columns do not stretch to one shared bottom edge,
+ * and no card takes the column's slack. This reverses the #895 shared-bottom-edge rule for this page only; Consultation
+ * and Horary keep it. Card chrome matches `.horary-card`; only tokens are used.
  */
 .birth-record {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
-  align-items: stretch;
+  align-items: start;
 }
 
 .birth-record-column {
@@ -1579,19 +1580,6 @@ footer {
   flex-direction: column;
   gap: var(--space-4);
   min-width: 0;
-}
-
-/* The last card takes the column's slack, so a shorter column still ends on the shared bottom edge (#895). */
-.birth-record-column > :last-child {
-  flex-grow: 1;
-}
-
-/* The left column's last card carries extra bottom padding (issue 1354, #1600 WP7): the 1rem h3 spec left the left
-   column 874px against the right's 972px (0.899) at 1280x800 and 3440x1440, under the 90% rule (895). Pill inputs at 2.75rem
-   (38.5px, down from 40.3px) took another 8px off the left column (866 against 970, 0.893), so the extra is now one --space-4
-   (14px, the smallest token step that clears it with margin): 876.5 / 970 = 0.904. The slack still lands in this card. */
-.birth-record-column:first-child > :last-child {
-  padding-block-end: calc(var(--space-4) + var(--space-4));
 }
 
 .birth-record-save {
@@ -1831,8 +1819,8 @@ footer {
 }
 
 @media (min-width: 64rem) {
-  /* 60/40: identity and place (left) and notes, export, replace and danger (right). Both columns share the row's
-     bottom edge (#895); the shorter one's last card absorbs the difference. */
+  /* 60/40: identity and place (left) and notes, export, replace and danger (right). Each column sizes to its own
+     content (#1729): the bottom edges differ, and no card stretches to meet the other column. */
   .birth-record {
     grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   }
@@ -8465,8 +8453,7 @@ button.primitive-disclosure-trigger:hover:not(:disabled) {
 /* While a card in the row is open the row stops stretching (#1231, the expanded-state exception to §10.1 rule 1):
    the neighbouring column keeps its own height instead of filling with whitespace, and the bottom edges differ only
    until the card is closed again. The last card's slack grow has nothing to fill, so it needs no change. */
-.consultation-grid:has(.primitive-disclosure.open),
-.birth-record:has(.primitive-disclosure.open) {
+.consultation-grid:has(.primitive-disclosure.open) {
   align-items: start;
 }
 

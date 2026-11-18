@@ -34,6 +34,13 @@ describe('bottom-edge alignment of multi-card rows (#895)', () => {
     }
   });
 
+  it('sizes the birth record cards to their content, with no shared bottom edge (#1729)', () => {
+    expect(declarations('.birth-record')).toMatch(/align-items:\s*start/);
+    expect(declarations('.birth-record-column')).not.toMatch(/flex-grow/);
+    expect(css).not.toMatch(/\.birth-record-column\s*>\s*:last-child\s*\{/);
+    expect(css).not.toMatch(/\.birth-record:has\(\.primitive-disclosure\.open\)/);
+  });
+
   it('records the 90% standard in the UI guidelines', () => {
     expect(guidelines).toMatch(/Shorter column is at least about 90% of the taller column/);
   });
