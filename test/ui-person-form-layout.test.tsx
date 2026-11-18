@@ -85,7 +85,7 @@ describe('PersonForm card layout (#795)', () => {
     expect(container?.querySelector('p.tagline')).toBeNull();
   });
 
-  it('orders the cards identity, place, notes, timezone details, export, replace data, danger', () => {
+  it('orders the cards identity, place, notes, timezone details, export and import, danger', () => {
     const order = cards().map((element) =>
       [...element.classList].find((name) => name.startsWith('birth-record-card--')),
     );
@@ -96,7 +96,6 @@ describe('PersonForm card layout (#795)', () => {
       'birth-record-card--life-events',
       'birth-record-card--timezone',
       'birth-record-card--files',
-      'birth-record-card--replace',
       'birth-record-card--danger',
     ]);
   });
@@ -176,16 +175,25 @@ describe('PersonForm card layout (#795)', () => {
     expect(row.querySelector('.birth-record-overrides input')).not.toBeNull();
   });
 
-  it('has a replace card with the import control and a files card with the three download buttons (#896)', () => {
-    expect(card('replace').querySelector('input[type="file"]')).not.toBeNull();
-    expect(card('replace').querySelector('.birth-record-export-row')).toBeNull();
-    const row = card('files').querySelector('.birth-record-export-row');
-    expect([...(row?.querySelectorAll('button') ?? [])].map((button) => button.textContent)).toEqual([
+  it('has one export and import card: the Export tab shows the three download buttons, the Import tab the import control (#896)', () => {
+    const files = card('files');
+    expect(files.getAttribute('aria-label')).toBe(tFiles.cardLabel);
+    expect(files.querySelectorAll('input[type="file"]')).toHaveLength(0);
+    const exportRow = files.querySelector('.birth-record-export-row');
+    expect([...(exportRow?.querySelectorAll('button') ?? [])].map((button) => button.textContent)).toEqual([
       tFiles.exportAaf,
       tFiles.exportJson,
       tFiles.exportCsv,
     ]);
-    expect(card('files').querySelector('input[type="file"]')).toBeNull();
+    const importTab = [...files.querySelectorAll<HTMLButtonElement>('[role="tab"]')].at(1);
+    expect(importTab?.textContent).toBe(tFiles.replaceHeading);
+    act(() => {
+      importTab?.click();
+    });
+    expect(files.querySelector('input[type="file"]')).not.toBeNull();
+    expect(files.querySelector('button.primitive-button-form-action')?.textContent).toBe(tFiles.importButton);
+    expect(files.querySelector('.birth-record-export-row')).toBeNull();
+    expect([...files.querySelectorAll('button')].map((button) => button.textContent)).not.toContain(tFiles.exportAaf);
   });
 
   it('has a danger card with the delete button', () => {

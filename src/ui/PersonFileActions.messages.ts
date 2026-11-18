@@ -5,6 +5,8 @@
  * @exports personFileActionsMessages
  */
 const en = {
+  cardLabel: 'Export and import',
+  tabsLabel: 'Export or import',
   heading: 'Export',
   exportHint:
     'Download this person’s birth record. AAF is what other astrology programs read; Astraya JSON keeps everything; CSV is for spreadsheets.',
@@ -43,6 +45,8 @@ const en = {
 };
 
 const nl: typeof en = {
+  cardLabel: 'Exporteren en importeren',
+  tabsLabel: 'Exporteren of importeren',
   heading: 'Exporteren',
   exportHint:
     'Download de geboortegegevens van deze persoon. AAF lezen andere astrologieprogramma’s; Astraya JSON bewaart alles; CSV is voor spreadsheets.',

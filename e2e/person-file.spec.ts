@@ -50,8 +50,9 @@ test.describe('with the shared people (#799)', () => {
     test.setTimeout(90_000);
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await page.getByRole('link', { name: 'Birth record', exact: true }).click();
-    const section = page.locator('div.person-file-actions');
-    await expect(section.getByRole('heading', { name: 'Export', exact: true })).toBeVisible();
+    // One Export / Import card (#1732), found by its aria-label; Export is the default tab.
+    const section = page.getByRole('region', { name: 'Export and import', exact: true });
+    await expect(section.getByRole('tab', { name: 'Export', exact: true })).toHaveAttribute('aria-selected', 'true');
 
     const download = async (button: string) => {
       const [file] = await Promise.all([
@@ -69,9 +70,10 @@ test.describe('with the shared people (#799)', () => {
 
     await openSharedPerson(page, baseUrl, BORN);
     await page.getByRole('link', { name: 'Birth record', exact: true }).click();
-    // The replace flow lives in its own card, directly below the export card (#896).
-    const replace = page.locator('section.birth-record-card--replace');
-    await expect(replace.getByRole('heading', { name: 'Import' })).toBeVisible();
+    // The import flow lives in the same card as the export, behind the Import tab (#1732).
+    const replace = page.getByRole('region', { name: 'Export and import', exact: true });
+    await replace.getByRole('tab', { name: 'Import', exact: true }).click();
+    await expect(replace.getByRole('tab', { name: 'Import', exact: true })).toHaveAttribute('aria-selected', 'true');
     await replace.locator('input[type="file"]').setInputFiles(aafPath);
 
     // Nothing is saved before the reader confirms: the preview names each change.
@@ -162,13 +164,13 @@ test.describe('with the shared people (#799)', () => {
     );
     expect(saveBox.x).toBeGreaterThan(title.x + title.width - 1);
 
-    // Desktop: identity and place on the left (60%); notes, the export, replace and danger cards on the right (40%) (#895).
-    const [identity, location, notes, files, replace, danger] = await Promise.all(
-      ['identity', 'location', 'notes', 'files', 'replace', 'danger'].map(box),
+    // Desktop: identity and place on the left (60%); notes, the export and import card and danger on the right (40%) (#895, #1732).
+    const [identity, location, notes, files, danger] = await Promise.all(
+      ['identity', 'location', 'notes', 'files', 'danger'].map(box),
     );
-    if (!identity || !location || !notes || !files || !replace || !danger) throw new Error('missing card');
+    if (!identity || !location || !notes || !files || !danger) throw new Error('missing card');
     expect(Math.abs(location.x - identity.x)).toBeLessThan(1);
-    for (const right of [notes, files, replace, danger]) expect(Math.abs(right.x - files.x)).toBeLessThan(1);
+    for (const right of [notes, danger]) expect(Math.abs(right.x - files.x)).toBeLessThan(1);
     expect(files.x).toBeGreaterThan(identity.x + identity.width);
     // 60/40: the left column is about 1.5 times the right column (gap and padding allowed for).
     const ratio = identity.width / files.width;
@@ -195,8 +197,8 @@ test.describe('with the shared people (#799)', () => {
     const rightNatural = await naturalHeight(1);
     expect(Math.min(leftNatural, rightNatural) / Math.max(leftNatural, rightNatural)).toBeGreaterThanOrEqual(0.9);
     expect(notes.height).toBeLessThan(location.height);
-    expect(replace.y).toBeGreaterThan(notes.y);
-    expect(danger.y).toBeGreaterThan(replace.y);
+    expect(files.y).toBeGreaterThan(notes.y);
+    expect(danger.y).toBeGreaterThan(files.y);
     // Date, how the time is known, and the time share one row.
     const tops = await Promise.all(
       ['input[type="date"]', '.birth-record-timestamp select', 'input[type="time"]'].map(async (selector) => {
