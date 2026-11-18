@@ -203,6 +203,7 @@ export function PersonFileActions({
             <p>
               <FileInput
                 buttonLabel={t.importButton}
+                primary
                 className="primitive-button-capsule primitive-button-form-action"
                 accept="application/json,.json,.aaf,text/plain"
                 onChange={onFileChosen}
