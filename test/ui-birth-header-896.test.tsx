@@ -95,7 +95,7 @@ describe('birth record header Export (#896 part 3, owner 2026-11-02)', () => {
 
   it('keeps AAF, JSON and CSV in the EXPORT card in the right column', () => {
     const files = card('files');
-    expect(files.querySelector('h3')?.textContent).toBe(tFiles.heading);
+    expect(files.getAttribute('aria-label')).toBe(tFiles.cardLabel);
     expect([...files.querySelectorAll('.birth-record-export-row button')].map((button) => button.textContent)).toEqual([
       tFiles.exportAaf,
       tFiles.exportJson,

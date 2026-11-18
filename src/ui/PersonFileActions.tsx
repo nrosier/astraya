@@ -22,6 +22,7 @@ import { Button } from './primitives/Button.js';
 import { FileInput } from './primitives/FileInput.js';
 import { Select } from './primitives/Select.js';
 import { StatusMessage, type StatusKind } from './primitives/StatusMessage.js';
+import { Tabs, tabPanelProps } from './primitives/Tabs.js';
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
 import { useStore } from './store-context.js';
 import { useSymbolClass } from './symbol-setting.js';
@@ -57,6 +58,7 @@ export function PersonFileActions({
   const [candidates, setCandidates] = useState<readonly ExportedPerson[]>([]);
   const [chosen, setChosen] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [tab, setTab] = useState<'export' | 'import'>('export');
 
   const filename = (extension: string): string => deriveExportFilename(person.displayName, 'birth-record', extension);
 
@@ -167,68 +169,81 @@ export function PersonFileActions({
 
   return (
     <div className="person-file-actions">
-      <section className="birth-record-card birth-record-card--files" aria-labelledby="person-file-heading">
-        <h3 id="person-file-heading">{t.heading}</h3>
-        <p className="hint">{t.exportHint}</p>
-        <div className="birth-record-export-row" role="group" aria-label={t.exportGroupLabel}>
-          <Button size="compact" shape="capsule" onClick={exportAaf}>
-            {t.exportAaf}
-          </Button>
-          <Button size="compact" shape="capsule" onClick={exportJson}>
-            {t.exportJson}
-          </Button>
-          <Button size="compact" shape="capsule" onClick={exportCsv}>
-            {t.exportCsv}
-          </Button>
-        </div>
-        {exportStatus !== undefined && <StatusMessage kind={exportStatus.kind}>{exportStatus.text}</StatusMessage>}
-      </section>
-
-      <section className="birth-record-card birth-record-card--replace" aria-labelledby="person-replace-heading">
-        <h3 id="person-replace-heading">{t.replaceHeading}</h3>
-        <p className="hint">{t.importHint}</p>
-        <p>
-          <FileInput
-            buttonLabel={t.importButton}
-            accept="application/json,.json,.aaf,text/plain"
-            onChange={onFileChosen}
-          />
-        </p>
-        {candidates.length > 1 && (
-          <Select
-            label={t.choosePerson}
-            value={String(chosen)}
-            options={candidates.map((candidate, index) => ({ value: String(index), label: candidate.displayName }))}
-            onChange={(value) => {
-              setChosen(Number(value));
-            }}
-          />
-        )}
-        {staged !== undefined &&
-          (staged.changes.length === 0 ? (
-            <StatusMessage kind="zero">{t.noChanges}</StatusMessage>
-          ) : (
-            <div className="person-file-preview">
-              <h4>{t.changesHeading}</h4>
-              <dl>
-                {staged.changes.map((change) => (
-                  <Fragment key={change.field}>
-                    <dt>{t.fields[change.field]}</dt>
-                    <dd>{describe(change)}</dd>
-                  </Fragment>
-                ))}
-              </dl>
-              <p className="actions">
-                <Button variant="danger" busy={saving} busyLabel={t.applying} onClick={confirm}>
-                  {t.confirm}
-                </Button>{' '}
-                <Button shape="capsule" className="primitive-button-form-action" onClick={cancel} disabled={saving}>
-                  {t.cancel}
-                </Button>
-              </p>
+      <section className="birth-record-card birth-record-card--files" aria-label={t.cardLabel}>
+        <Tabs
+          idBase="person-file"
+          label={t.tabsLabel}
+          items={[
+            { key: 'export', label: t.heading },
+            { key: 'import', label: t.replaceHeading },
+          ]}
+          active={tab}
+          onSelect={setTab}
+        />
+        {tab === 'export' && (
+          <div {...tabPanelProps('person-file', 'export')}>
+            <p className="hint">{t.exportHint}</p>
+            <div className="birth-record-export-row" role="group" aria-label={t.exportGroupLabel}>
+              <Button size="compact" shape="capsule" onClick={exportAaf}>
+                {t.exportAaf}
+              </Button>
+              <Button size="compact" shape="capsule" onClick={exportJson}>
+                {t.exportJson}
+              </Button>
+              <Button size="compact" shape="capsule" onClick={exportCsv}>
+                {t.exportCsv}
+              </Button>
             </div>
-          ))}
-        {importStatus !== undefined && <StatusMessage kind={importStatus.kind}>{importStatus.text}</StatusMessage>}
+            {exportStatus !== undefined && <StatusMessage kind={exportStatus.kind}>{exportStatus.text}</StatusMessage>}
+          </div>
+        )}
+        {tab === 'import' && (
+          <div {...tabPanelProps('person-file', 'import')}>
+            <p className="hint">{t.importHint}</p>
+            <p>
+              <FileInput
+                buttonLabel={t.importButton}
+                accept="application/json,.json,.aaf,text/plain"
+                onChange={onFileChosen}
+              />
+            </p>
+            {candidates.length > 1 && (
+              <Select
+                label={t.choosePerson}
+                value={String(chosen)}
+                options={candidates.map((candidate, index) => ({ value: String(index), label: candidate.displayName }))}
+                onChange={(value) => {
+                  setChosen(Number(value));
+                }}
+              />
+            )}
+            {staged !== undefined &&
+              (staged.changes.length === 0 ? (
+                <StatusMessage kind="zero">{t.noChanges}</StatusMessage>
+              ) : (
+                <div className="person-file-preview">
+                  <h4>{t.changesHeading}</h4>
+                  <dl>
+                    {staged.changes.map((change) => (
+                      <Fragment key={change.field}>
+                        <dt>{t.fields[change.field]}</dt>
+                        <dd>{describe(change)}</dd>
+                      </Fragment>
+                    ))}
+                  </dl>
+                  <p className="actions">
+                    <Button variant="danger" busy={saving} busyLabel={t.applying} onClick={confirm}>
+                      {t.confirm}
+                    </Button>{' '}
+                    <Button shape="capsule" className="primitive-button-form-action" onClick={cancel} disabled={saving}>
+                      {t.cancel}
+                    </Button>
+                  </p>
+                </div>
+              ))}
+            {importStatus !== undefined && <StatusMessage kind={importStatus.kind}>{importStatus.text}</StatusMessage>}
+          </div>
+        )}
       </section>
     </div>
   );
