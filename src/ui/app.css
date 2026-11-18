@@ -1663,6 +1663,24 @@ footer {
   font-size: var(--text-base);
 }
 
+/* The Export / Import card (#1732): the pills sit closer to the text, the Import File pill closer to its hint, and
+   the tab row has no rule under it. Scoped to this card so the shared Tabs strip keeps its separator elsewhere. */
+.birth-record-card--files .tab-row {
+  margin-bottom: var(--space-3);
+}
+
+.birth-record-card--files .tab-row__viewport {
+  border-bottom: none;
+}
+
+.birth-record-card--files [role='tabpanel'] > .hint {
+  margin: 0 0 var(--space-2);
+}
+
+.birth-record-card--files [role='tabpanel'] > p:has(> input[type='file']) {
+  margin-top: 0;
+}
+
 .birth-record-card--danger {
   border-color: color-mix(in oklab, var(--color-danger) 45%, var(--line));
   background: color-mix(in oklab, var(--color-danger) 6%, var(--surface));
