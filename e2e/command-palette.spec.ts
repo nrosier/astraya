@@ -75,7 +75,9 @@ for (const viewport of VIEWPORTS) {
 
     test('Ctrl+K opens the palette from the page, and Ctrl+K typed in the search field does not reopen it', async () => {
       test.setTimeout(60_000);
-      await page.locator('body').click();
+      // Start from non-editable focus. A centre-of-body click can land on a field on this page, and Ctrl+K typed
+      // in a field is ignored by design, so blur whatever has focus and press the shortcut from the page itself.
+      await page.evaluate('document.activeElement instanceof HTMLElement && document.activeElement.blur()');
       await page.keyboard.press('Control+k');
       await expect(dialog(page)).toBeVisible();
       await expect(search(page)).toBeFocused();
