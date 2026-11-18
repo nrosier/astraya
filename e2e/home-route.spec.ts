@@ -1,6 +1,7 @@
 /**
- * The home route (#1058): `#/` renders in place. With a last-viewed person it is that person's timing timeline
- * and the full sidebar (#965); with nobody stored, or a stored id that is gone, it is a person picker; and Back and reload never loop.
+ * The root (#1730, reverses #1058): `#/` and any unknown hash are the People page, and the address bar shows
+ * `#/people` once the root loads. The People list keeps the last-viewed person's sections in the sidebar (#1730,
+ * reversing #914's exclusion). Back from the People page does not loop back to `/`.
  */
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -17,7 +18,7 @@ let baseUrl: string;
 
 /**
  * Waits until the person page's id is stored as the last-viewed person. AppNav writes it in an effect after
- * the page commits, so the URL changing is not enough: navigating away earlier lets `#/` read the seeded id.
+ * the page commits, so the URL changing is not enough: navigating away earlier lets `/` read the seeded id.
  */
 async function waitForLastPersonWritten(page: Page): Promise<void> {
   const match = /#\/people\/([^/]+)\//.exec(page.url());
@@ -42,68 +43,22 @@ test.afterAll(async () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-test('with nobody stored, #/ shows the first-use empty state and stays on #/', async ({ page }) => {
-  await gotoAndSettle(page, `${baseUrl}/#/`);
-  await expect(page.getByRole('heading', { name: 'Home', level: 1 })).toBeVisible();
-  await expect(page.getByText('Nobody yet.', { exact: false })).toBeVisible();
-  await expect(page).toHaveURL(/#\/$/);
+test('with nobody stored, / shows the People page and the address bar becomes #/people', async ({ page }) => {
+  await gotoAndSettle(page, `${baseUrl}/`);
+  await expect(page.getByRole('heading', { name: 'People', level: 1 })).toBeVisible();
+  await expect(page).toHaveURL(/#\/people$/);
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Home', level: 1 })).toBeVisible();
-  await expect(page).toHaveURL(/#\/$/);
+  await expect(page.getByRole('heading', { name: 'People', level: 1 })).toBeVisible();
+  await expect(page).toHaveURL(/#\/people$/);
 });
 
-test('with people but none viewed, #/ shows the picker; choosing one shows their timeline', async ({ browser }) => {
-  test.setTimeout(120_000);
-  const context = await newSeededContext(browser, baseUrl);
-  const page = await context.newPage();
-  try {
-    await gotoAndSettle(page, `${baseUrl}/#/`);
-    // The seeded state remembers a viewed person; clear it so nobody is "last viewed".
-    await page.evaluate("localStorage.removeItem('astraya:lastPersonId')");
-    await page.reload();
-    await expect(page.getByRole('heading', { name: 'Home', level: 1 })).toBeVisible();
-    await page.getByLabel('Person', { exact: true }).selectOption({ label: EINSTEIN.name });
-    await expect(page.getByRole('heading', { name: /timing timeline/i, level: 2 })).toContainText(EINSTEIN.name);
-    await expect(page).toHaveURL(/#\/$/);
-  } finally {
-    await context.close();
-  }
+test('an unknown hash also lands on the People page, at #/people (#1730)', async ({ page }) => {
+  await gotoAndSettle(page, `${baseUrl}/#/no-such-screen`);
+  await expect(page.getByRole('heading', { name: 'People', level: 1 })).toBeVisible();
+  await expect(page).toHaveURL(/#\/people$/);
 });
 
-test('on #/ with a last-viewed person, the person section links are in the sidebar (#965)', async ({ browser }) => {
-  test.setTimeout(120_000);
-  const context = await newSeededContext(browser, baseUrl);
-  const page = await context.newPage();
-  try {
-    await openSharedPerson(page, baseUrl, EINSTEIN);
-    await page.waitForURL(/#\/people\/[^/]+\//);
-    await waitForLastPersonWritten(page);
-    await page.goto(`${baseUrl}/#/`);
-    await expect(page.getByRole('heading', { name: /timing timeline/i, level: 2 })).toContainText(EINSTEIN.name);
-    const nav = page.locator('nav#app-nav');
-    await expect(nav.getByRole('link', { name: 'Overview', exact: true })).toBeVisible();
-    await expect(nav.getByRole('link', { name: 'Tools', exact: true })).toBeVisible();
-    await expect(nav.getByRole('link', { name: 'PDF', exact: true })).toBeVisible();
-  } finally {
-    await context.close();
-  }
-});
-
-test('a stored id that no longer exists falls back to the picker', async ({ browser }) => {
-  const context = await newSeededContext(browser, baseUrl);
-  const page = await context.newPage();
-  try {
-    await gotoAndSettle(page, `${baseUrl}/#/`);
-    await page.evaluate("localStorage.setItem('astraya:lastPersonId', 'p-zzzzzzzzzzzzzzzz')");
-    await page.reload();
-    await expect(page.getByRole('heading', { name: 'Home', level: 1 })).toBeVisible();
-    await expect(page.getByLabel('Person', { exact: true })).toBeVisible();
-  } finally {
-    await context.close();
-  }
-});
-
-test('after viewing a person, #/ shows their timeline, survives reload, and Back does not loop', async ({
+test('after viewing Einstein, / shows the People page and the sidebar keeps his sections (#1730)', async ({
   browser,
 }) => {
   test.setTimeout(120_000);
@@ -113,18 +68,72 @@ test('after viewing a person, #/ shows their timeline, survives reload, and Back
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await page.waitForURL(/#\/people\/[^/]+\//);
     await waitForLastPersonWritten(page);
-    await page.goto(`${baseUrl}/#/`);
-    const heading = page.getByRole('heading', { name: /timing timeline/i, level: 2 });
-    await expect(heading).toContainText(EINSTEIN.name);
-    await expect(page).toHaveURL(/#\/$/);
-    await page.reload();
-    await expect(heading).toContainText(EINSTEIN.name);
-    await expect(page).toHaveURL(/#\/$/);
-    await page.goto(`${baseUrl}/#/about`);
-    await page.goBack();
-    await expect(page).toHaveURL(/#\/$/);
-    await expect(heading).toContainText(EINSTEIN.name);
+    await page.goto(`${baseUrl}/`);
+    await expect(page.getByRole('heading', { name: 'People', level: 1 })).toBeVisible();
+    await expect(page).toHaveURL(/#\/people$/);
+    const nav = page.locator('nav#app-nav');
+    await expect(nav.getByRole('link', { name: 'Overview', exact: true })).toBeVisible();
+    await expect(nav.getByRole('link', { name: 'Tools', exact: true })).toBeVisible();
+    await expect(nav.getByRole('link', { name: 'PDF', exact: true })).toBeVisible();
   } finally {
     await context.close();
+  }
+});
+
+test('Back from the People page does not loop back to /, and a reload stays on #/people (#1730)', async ({
+  browser,
+}) => {
+  test.setTimeout(120_000);
+  const context = await newSeededContext(browser, baseUrl);
+  const page = await context.newPage();
+  try {
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.waitForURL(/#\/people\/[^/]+\//);
+    await waitForLastPersonWritten(page);
+    await page.goto(`${baseUrl}/`);
+    await expect(page).toHaveURL(/#\/people$/);
+    await page.reload();
+    await expect(page.getByRole('heading', { name: 'People', level: 1 })).toBeVisible();
+    await expect(page).toHaveURL(/#\/people$/);
+    await page.goto(`${baseUrl}/#/about`);
+    await page.goBack();
+    await expect(page).toHaveURL(/#\/people$/);
+    await expect(page.getByRole('heading', { name: 'People', level: 1 })).toBeVisible();
+  } finally {
+    await context.close();
+  }
+});
+
+test('#/people/<id>/timing/timeline still opens the timing timeline (#1730)', async ({ browser }) => {
+  test.setTimeout(120_000);
+  const context = await newSeededContext(browser, baseUrl);
+  const page = await context.newPage();
+  try {
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.waitForURL(/#\/people\/[^/]+\//);
+    const personId = /#\/people\/([^/]+)\//.exec(page.url())?.[1];
+    if (personId === undefined) throw new Error(`not on a person page: ${page.url()}`);
+    await gotoAndSettle(page, `${baseUrl}/#/people/${personId}/timing/timeline`);
+    await expect(page.getByRole('heading', { name: /timing timeline/i, level: 2 })).toContainText(EINSTEIN.name);
+  } finally {
+    await context.close();
+  }
+});
+
+test('the root People page renders at 390x844 and 1920x1080 (#1730)', async ({ browser }) => {
+  test.setTimeout(120_000);
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 1920, height: 1080 },
+  ]) {
+    const context = await newSeededContext(browser, baseUrl, { viewport });
+    const page = await context.newPage();
+    try {
+      await gotoAndSettle(page, `${baseUrl}/`);
+      await expect(page.getByRole('heading', { name: 'People', level: 1 })).toBeVisible();
+      await expect(page).toHaveURL(/#\/people$/);
+    } finally {
+      await context.close();
+    }
   }
 });

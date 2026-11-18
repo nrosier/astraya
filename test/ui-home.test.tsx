@@ -9,7 +9,6 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { readLastPersonId, writeLastPersonId } from '../src/ui/last-person.js';
 import { setLocale } from '../src/ui/locale.js';
-import { parseRoute } from '../src/ui/route.js';
 import { homeMessages } from '../src/ui/Home.messages.js';
 
 const fakeStore = vi.hoisted(() => ({
@@ -55,10 +54,6 @@ afterEach(() => {
 });
 
 describe('Home (#1058)', () => {
-  it('parses #/ as the home route', () => {
-    expect(parseRoute('#/').kind).toBe('home');
-  });
-
   it('renders the last-viewed person timeline in place, without moving the hash', () => {
     window.location.hash = '#/';
     fakeStore.people.set(ADA, { id: ADA, displayName: 'Ada' });

@@ -147,9 +147,9 @@ test.describe('with the shared people (#799)', () => {
     await expect(page).toHaveURL(/#\/people\/[^/]+\/birth-record$/);
     await expect(header.getByText('Albert Einstein', { exact: true })).toBeVisible();
 
-    // The People list itself is not a tool page: it should not show a stale person's tabs.
+    // The People list keeps the last-viewed person's tabs, as the root did (#1730, reverses #914).
     await gotoAndSettle(page, `${baseUrl}/#/people`);
-    await expect(header.getByText('Albert Einstein', { exact: true })).toHaveCount(0);
+    await expect(header.getByText('Albert Einstein', { exact: true })).toBeVisible();
 
     // Reopening a tool straight from the People list (no person page visited this time) still
     // remembers Einstein from before, since nothing has overwritten that memory in between.
@@ -368,10 +368,10 @@ test.describe('with the shared people (#799)', () => {
     const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
     expect(results.violations).toEqual([]);
 
-    // The old links to the draconic and harmonic screens are gone: they fall back to the home screen (#1058), not to a guess.
+    // The old links to the draconic and harmonic screens are gone: they fall back to the People page (#1730), not to a guess.
     const personId = /#\/people\/([^/]+)\/charts/.exec(page.url())?.[1];
     await page.goto(`${baseUrl}/#/draconic/${personId ?? ''}`);
-    await expect(page.getByRole('heading', { name: /timing timeline/i, level: 2 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'People', level: 1 })).toBeVisible();
     await page.goto(`${baseUrl}/#/people/${personId ?? ''}/charts/draconic/wheel`);
     await expect(page.getByRole('heading', { name: /draconic/i, level: 1 })).toBeVisible();
   });
