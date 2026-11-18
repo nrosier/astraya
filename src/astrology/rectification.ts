@@ -31,8 +31,9 @@
  * - **Orb, directed contacts**: 1 degree (`RECTIFICATION_DIRECTED_ORB_LIMIT`). Tyl, *Solar Arcs* (2001): the
  *   orb is one degree, or one year, split six months before and six months after (PDF 33); direct arcs
  *   also use "six months (30') of time-arc past and future" (PDF 120). Tebbs (*The Complete Book of Chart Rectification*, 2008,
- *   provisional) gives the same 1 degree for directions and progressions, as support.
- * - **Orb, transit contacts**: 3 degrees (`RECTIFICATION_ORB_LIMIT`). Tebbs's outer limit: consider exact
+ *   provisional) gives the same 1 degree for directions and progressions, as support: "The '1-degree orb' rule applies
+ *   to directions as well as progressions" (PDF page 135; printed page numbers are not in the scan).
+ * - **Orb, transit contacts**: 3 degrees (`RECTIFICATION_ORB_LIMIT`). Tebbs's outer limit (PDF page 77): consider exact
  *   contacts first, then within 1, 2 and up to 3 degrees, the closer the more important. Tebbs states this
  *   limit for building the natal hook; applying it to transit contacts is Astraya's reading of her rule.
  * - **Weight** (Astraya convention; owner decision, #1445, revised 2026-11-11): equal across contact types, scaled by
@@ -59,7 +60,7 @@ import type { BodyId, Degrees, EphemerisProvider, GeoPosition, HouseSystem, Juli
 
 /**
  * The orb limit for transit contacts, for any body: Tebbs's outer limit (*The Complete Book of Chart Rectification*,
- * 2008, provisional): consider exact contacts first, then within 1, 2 and up to 3 degrees, the closer the more
+ * 2008, provisional, PDF page 77): consider exact contacts first, then within 1, 2 and up to 3 degrees, the closer the more
  * important. Tebbs states it for building the natal hook; using it for transit contacts is Astraya's reading (owner
  * decision, #1445, 2026-11-14). The score falls in a straight line from 1 at exact to 0 at this limit.
  */
@@ -68,8 +69,8 @@ export const RECTIFICATION_ORB_LIMIT: Degrees = 3;
 /**
  * The orb limit for directed (Solar Arc) contacts: 1 degree. Tyl, *Solar Arcs* (2001): the orb is one degree, or one year,
  * split six months before and six months after (PDF 33); direct arcs also use "six months (30') of time-arc past and
- * future" (PDF 120). Tebbs gives the same 1 degree for directions and progressions, as support (owner decision, #1445,
- * 2026-11-14).
+ * future" (PDF 120). Tebbs gives the same 1 degree for directions and progressions, as support (PDF page 135; owner
+ * decision, #1445, 2026-11-14).
  */
 export const RECTIFICATION_DIRECTED_ORB_LIMIT: Degrees = 1;
 

@@ -40,12 +40,12 @@ Pure astrological calculation (no DOM/React): bodies, aspects, houses, dignities
 - `orb-library.ts` — The device's named, revisioned orb profiles and each context's choice of orb source (card or a profile), pure and validated as a whole (#590). Deps: `orb-profiles`.
 - `planetary-condition.ts` — Traditional condition (sect alignment, angularity, hayz, motion, besiegement) for the seven classical planets. Deps: `bodies`, `aspects`, `signs`, `sect`.
 - `planetary-returns.ts` — Return search (any body), demibirthday, progressed-lunar-return. Deps: `minor-progressions`, `progressions`, `ephemeris/generated-constants`.
-- `primary-directions.ts` — Primary directions engine (Placidus semi-arcs, in zodiaco at latitude 0, direct only; Naibod/Ptolemy keys). Deps: `aspects`, `progressions`.
+- `primary-directions.ts` — Primary directions engine (Placidus semi-arcs; direct and converse; in zodiaco at latitude 0 or in mundo with body latitude; Naibod/Ptolemy keys; Makransky rev. ed. 1992, Gansten 2009 ch. 1). Deps: `aspects`, `progressions`.
 - `profections.ts` — Annual/monthly profections (Hellenistic house-per-year). Deps: `signs`.
 - `progressions.ts` — Secondary progressions (day-for-year, quotidian/naibod/solarArc MC). Deps: `ephemeris/types`.
 - `reception.ts` — Essential-dignity reception across all five dignity types, including mutual and mixed reception (#548). Deps: `rulership`, `dignities`, `triplicity`, `bounds`, `decans`, `signs`, `sect`.
 - `rectification-lift.ts` — Rectification lift (#1445): window average, lift over it, the above-1.0 spike rule, and re-scoring for a chosen event subset. Deps: none.
-- `rectification.ts` — Birth-time rectification (equal-weight, closeness-scaled score per solar-arc/slow-body transit contact to the angles, existing transit orbs; citation pending, #1445). Deps: `bodies`, `progressions`, `transit-importance`, `./rectification-lift`.
+- `rectification.ts` — Birth-time rectification (equal-weight, closeness-scaled score per solar-arc/slow-body transit contact to the angles; 1° directed and 3° transit orbs, cited to Carter, Huber, Tyl and Tebbs, #1445). Deps: `bodies`, `progressions`, `./rectification-lift`.
 - `rulership.ts` — Single place for "who rules this sign" (modern/traditional/both), essential dignities. Deps: `dignities`, `signs`.
 - `sect.ts` — Sect (day/night) + Sun-proximity (oriental/occidental/cazimi/combust/under-beams). Deps: `aspects`.
 - `sign-ingress.ts` — Exact sign-ingress instant finder, sample-then-bisect (#562). Deps: `signs`, `ephemeris/types`.
