@@ -103,9 +103,17 @@ interface MultiCardPage {
   readonly cards: string;
   /** The grid whose left and right edges must match the page content width (#895). */
   readonly grid: string;
+  /**
+   * Whether the bottom row shares one bottom edge (#895). The birth record is exempt (#1729, owner decision 2026-11-18):
+   * its cards size to their content, so its columns end at different heights.
+   */
+  readonly sharedBottomEdge?: boolean;
 }
 
-/** The multi-card pages (#895): the Consultation columns, the Horary form cards and the Birth Record columns. */
+/**
+ * The multi-card pages (#895): the Consultation columns, the Horary form cards and the Birth Record columns. The birth
+ * record is exempt from the shared bottom edge only (#1729); its grid width and open-card checks still apply.
+ */
 function multiCardPages(personId: string): readonly MultiCardPage[] {
   return [
     {
@@ -128,6 +136,7 @@ function multiCardPages(personId: string): readonly MultiCardPage[] {
       ready: '.birth-record',
       cards: '.birth-record > .birth-record-column',
       grid: '.birth-record',
+      sharedBottomEdge: false,
     },
   ];
 }
@@ -140,7 +149,7 @@ for (const theme of THEMES) {
     await openSharedPerson(page, baseUrl, EINSTEIN);
     const id = /#\/people\/([^/]+)/.exec(page.url())?.[1];
     expect(id).toBeDefined();
-    const pages = multiCardPages(id ?? '');
+    const pages = multiCardPages(id ?? '').filter((target) => target.sharedBottomEdge !== false);
     for (const viewport of BOTTOM_EDGE_VIEWPORTS) {
       await page.setViewportSize(viewport);
       for (const target of pages) {
@@ -254,10 +263,13 @@ test('opening a card in a multi-card row leaves the neighbouring column its own 
       await trigger.click();
       await expect(trigger).toHaveAttribute('aria-expanded', 'false');
       const closed = await heights();
-      expect(
-        Math.max(...closed) - Math.min(...closed),
-        `${label}: bottom edges line up again once it is closed`,
-      ).toBeLessThanOrEqual(1);
+      // The birth record sizes to content and has no shared bottom edge to restore (#1729).
+      if (target.sharedBottomEdge !== false) {
+        expect(
+          Math.max(...closed) - Math.min(...closed),
+          `${label}: bottom edges line up again once it is closed`,
+        ).toBeLessThanOrEqual(1);
+      }
     }
   }
 });

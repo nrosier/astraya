@@ -178,8 +178,8 @@ test.describe('with the shared people (#799)', () => {
     expect(ratio).toBeLessThan(1.7);
     expect(location.y).toBeGreaterThan(identity.y);
     expect(notes.y).toBeLessThan(files.y);
-    // The bottom row shares one bottom edge (#895): the left column's last card and the right column's last card end together.
-    expect(Math.abs(location.y + location.height - (danger.y + danger.height))).toBeLessThanOrEqual(1);
+    // The birth record's cards size to their content and do not share one bottom edge (#1729, owner decision 2026-11-18),
+    // so the Location and Danger bottoms are not compared here.
     // The 90% rule (#895, H3): with the slack removed, the shorter column's content is at least 90% of the taller one's,
     // and the NOTES card keeps its natural height (it is never the card that absorbs the slack).
     await page.addStyleTag({ content: '.birth-record-column > :last-child { flex-grow: 0 !important; }' });
