@@ -90,7 +90,7 @@ function pressKey(target: EventTarget, init: KeyboardEventInit): KeyboardEvent {
   return event;
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   stubDialog();
   setLocale('en');
   setPlatform('Linux x86_64');
@@ -102,6 +102,9 @@ beforeEach(() => {
   container = document.createElement('div');
   document.body.append(container);
   root = createRoot(container);
+  // AppNav lazy-loads CommandPalette, so the first open in this file would wait on a cold dynamic import
+  // and outlast expectOpen's 50 ticks. Importing it here caches the chunk before any test opens the palette.
+  await import('../src/ui/CommandPalette.js');
 });
 
 afterEach(() => {
