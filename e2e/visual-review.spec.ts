@@ -89,6 +89,16 @@ test('capture the screens of the visual review', async ({ browser }) => {
     await page.locator(ready).first().waitFor({ timeout: 60_000 });
     await shoot(page, slug);
   }
+  // #1609: the almuten candidate table on Patterns & condition (Detriment, Fall and Mutual reception columns).
+  await page.getByRole('link', { name: 'Patterns & condition', exact: true }).click();
+  const almutenTable = page.getByRole('table', { name: 'Almuten candidates' });
+  await almutenTable.waitFor({ timeout: 60_000 });
+  const showAlmuten = async (): Promise<void> => {
+    await almutenTable.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(300);
+  };
+  await showAlmuten();
+  await shoot(page, '64-charts-almuten-candidates', showAlmuten);
   await page.getByRole('link', { name: 'Wheel', exact: true }).click();
   await page.locator('div.chart-wheel').waitFor();
   await page.locator('.chart-overlay-settings button.chart-overlay-trigger').click();
