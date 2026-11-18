@@ -1,7 +1,7 @@
 /**
  * @module ui/PersonFileActions
  * @purpose One Export / Import card with pill tabs (#1732): the Export tab holds one row of AAF, JSON and CSV downloads, and the Import tab replaces this person's birth data from an AAF or Astraya JSON file after a preview (#699, #896).
- * @conventions Reuses the backup's writers (`peopleToAaf`, `buildFullExport`, `peopleToCsv`) with one person, and `domain/person-file.ts` to read and stage; the store is written only on Replace, in one `store.mutate`. CSV is export only. Returns two sibling cards for the birth-record right-hand column. The header Export menu no longer lists these downloads (#896, owner 2026-11-02); the EXPORT card is the only place for them.
+ * @conventions Reuses the backup's writers (`peopleToAaf`, `buildFullExport`, `peopleToCsv`) with one person, and `domain/person-file.ts` to read and stage; the store is written only on Replace, in one `store.mutate`. CSV is export only. Returns one card for the birth-record right-hand column; the tabs use the shared `Tabs` primitive, Export is the default, and only the active panel is mounted while all state stays in this component, so switching tabs keeps an import preview. The header Export menu no longer lists these downloads (#896, owner 2026-11-02); the Export tab is the only place for them.
  * @exports PersonFileActions
  */
 import { Fragment, useState } from 'react';
