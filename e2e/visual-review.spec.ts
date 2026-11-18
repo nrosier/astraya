@@ -425,7 +425,7 @@ test('capture the M13 and M14 screens', async ({ browser }) => {
 
   // #1668: the app icons as shipped (favicons, touch icon, PWA icons), on a plain page at one size.
   await page.setContent(
-    `<body style="margin:24px;font:14px system-ui;display:flex;gap:24px;align-items:end;flex-wrap:wrap">` +
+    `<body style="margin:24px;font:14px system-ui;display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap">` +
       ['favicon-16.png', 'favicon-32.png', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'maskable-512.png']
         .map(
           (file) =>
@@ -434,7 +434,16 @@ test('capture the M13 and M14 screens', async ({ browser }) => {
         .join('') +
       `</body>`,
   );
-  await page.waitForTimeout(500);
+  // Shoot only once every icon has loaded (the first capture shot a blank page before they did, #1668 verdict).
+  const icons = page.locator('img');
+  await expect(icons).toHaveCount(6);
+  for (const icon of await icons.all()) {
+    await expect
+      .poll(() =>
+        icon.evaluate((image: { complete: boolean; naturalWidth: number }) => image.complete && image.naturalWidth > 0),
+      )
+      .toBe(true);
+  }
   await shoot(page, '60-app-icons', undefined, [SIZES[1]]);
 
   await app.close();
