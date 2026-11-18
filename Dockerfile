@@ -62,7 +62,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
 # ---- runtime ----------------------------------------------------------------
-FROM cgr.dev/chainguard/node:latest@sha256:862c7b01cf268adb550bc49f228115e132cac0d183395c92368bbb6c8eb7c098 AS runtime
+FROM cgr.dev/chainguard/node:latest@sha256:ecbb822a3d3a1dbdaffbb2cede80694de6c043b228fafddbb28ae6a03d42e78c AS runtime
 ARG GIT_REVISION=unknown
 LABEL org.opencontainers.image.revision=$GIT_REVISION
 WORKDIR /app
