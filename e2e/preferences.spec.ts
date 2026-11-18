@@ -188,6 +188,13 @@ test('the rulers choice changed here is the same one chart screens read, and sur
   const group = page.getByRole('radiogroup', { name: 'Planetary rulers', exact: true });
   await expect(group.getByRole('radio', { name: /^Modern/ })).toBeChecked();
   await group.getByRole('radio', { name: /^Traditional/ }).check();
+  // Wait for the durable save (#1763): the localStorage cache is written only after the IndexedDB op-log write resolves.
+  await page.waitForFunction(() =>
+    Object.keys(localStorage).some(
+      (key) =>
+        key.startsWith('astraya:accountSettingsCache:') && (localStorage.getItem(key) ?? '').includes('traditional'),
+    ),
+  );
 
   await reloadAndSettle(page);
   await expect(group.getByRole('radio', { name: /^Traditional/ })).toBeChecked();
