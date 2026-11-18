@@ -14,6 +14,7 @@ import {
   addDraftCondition,
   blankCondition,
   editDraftCondition,
+  initialDraft,
   parseAsOf,
   removeDraftCondition,
   setAsOf,
@@ -30,7 +31,8 @@ import { SavedChartSearches } from './SavedChartSearches.js';
 import { useStore } from './store-context.js';
 
 export interface ChartSearchPanelProps {
-  readonly draft: ChartSearchDraft;
+  /** `undefined` until the first edit; the card then starts from `initialDraft()`. */
+  readonly draft: ChartSearchDraft | undefined;
   readonly onDraftChange: (draft: ChartSearchDraft) => void;
   readonly runState: ChartSearchRunState;
   readonly results: readonly PersonRunResult[] | undefined;
@@ -38,13 +40,16 @@ export interface ChartSearchPanelProps {
 }
 
 export function ChartSearchPanel({
-  draft,
+  draft: storedDraft,
   onDraftChange,
   runState: state,
   results,
   onRun,
 }: ChartSearchPanelProps): React.JSX.Element {
   const t = useMessages(chartSearchPanelMessages);
+  // Fixed at mount, as before the lift: an untouched card keeps the as-of date it opened with.
+  const [starting] = useState(initialDraft);
+  const draft = storedDraft ?? starting;
   const store = useStore();
   const writable = store.writable;
   const list = useRef<HTMLOListElement>(null);

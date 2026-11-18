@@ -32,7 +32,7 @@ import { StatusMessage } from './primitives/StatusMessage.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import { clearNoteJournalsForPerson } from './use-note-autosave.js';
 import { errorDetail } from './api-error.js';
-import { initialDraft, type ChartSearchDraft } from './chart-search-draft.js';
+import type { ChartSearchDraft } from './chart-search-draft.js';
 import { useChartSearchRun } from './use-chart-search-run.js';
 
 /**
@@ -52,8 +52,9 @@ export function People(): React.JSX.Element {
   const [defaultRulership] = useRulershipChoice();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
-  // The chart query's draft and run live here, so the page owns them (#1731); the panel only renders them.
-  const [draft, setDraft] = useState<ChartSearchDraft>(initialDraft);
+  // The chart query's draft and run live here, so the page owns them (#1731). Empty until the lazy panel's first edit:
+  // the panel builds the starting draft itself, so this file never loads the draft model eagerly.
+  const [draft, setDraft] = useState<ChartSearchDraft | undefined>(undefined);
   const run = useChartSearchRun();
 
   const people = ordered(state.people);

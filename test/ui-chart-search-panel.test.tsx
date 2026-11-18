@@ -70,6 +70,19 @@ async function mount(): Promise<void> {
   });
 }
 
+/**
+ * Waits for the run to finish (#1731): the run engine loads through a dynamic import on the first run, so one
+ * microtask flush is not enough. Resolves once no Run control is busy, or after a bounded number of macrotasks.
+ */
+async function settle(): Promise<void> {
+  for (let i = 0; i < 50; i += 1) {
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    if (container.querySelector('button[aria-busy="true"]') === null) return;
+  }
+}
+
 const button = (name: string): HTMLButtonElement | undefined =>
   [...container.querySelectorAll('button')].find(
     (b) => (b.textContent ?? '').trim() === name || b.getAttribute('aria-label') === name,
@@ -125,9 +138,12 @@ describe('Search charts card (#1405)', () => {
     await click(button('Run search'));
     expect(button('Searching…')?.disabled).toBe(true);
     await act(async () => {
-      finish([]);
-      await Promise.resolve();
+      await import('../src/ui/chart-search-run.js');
     });
+    act(() => {
+      finish([]);
+    });
+    await settle();
     expect(button('Run search')?.disabled).toBe(false);
   });
 
@@ -138,9 +154,7 @@ describe('Search charts card (#1405)', () => {
     mocks.next = () => Promise.resolve(results);
     await mount();
     await click(button('Run search'));
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await settle();
     expect(container.textContent).toContain('Could not be evaluated');
     expect(container.textContent).toContain('Ada');
     expect(container.textContent).toContain('birth date, time or place is incomplete');
@@ -163,9 +177,7 @@ describe('Search charts card (#1405)', () => {
       Promise.resolve([{ kind: 'evaluated', personId: 'p-ada', displayName: 'Ada', result } satisfies PersonRunResult]);
     await mount();
     await click(button('Run search'));
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await settle();
     expect(container.textContent).toContain('Matches (1)');
     const row = container.querySelector('ul.people li');
     expect(row?.querySelector('.name')?.textContent).toBe('Ada');
@@ -187,9 +199,7 @@ describe('Search charts card (#1405)', () => {
       Promise.resolve([{ kind: 'evaluated', personId: 'p-bo', displayName: 'Bo', result } satisfies PersonRunResult]);
     await mount();
     await click(button('Zoeken'));
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await settle();
     expect(container.querySelector('ul.people .summary')?.textContent).toMatch(/in huis 7$/);
   });
 
@@ -197,9 +207,7 @@ describe('Search charts card (#1405)', () => {
     mocks.next = () => Promise.resolve([]);
     await mount();
     await click(button('Run search'));
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await settle();
     expect(container.textContent).toContain('No one matches these conditions. Try removing a condition');
   });
 
@@ -207,9 +215,7 @@ describe('Search charts card (#1405)', () => {
     mocks.next = () => Promise.reject(new Error('boom'));
     await mount();
     await click(button('Run search'));
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await settle();
     expect(container.textContent).toContain('The search did not finish. Your conditions are kept.');
     expect(button('Retry')).toBeDefined();
     expect(container.querySelectorAll('li.cond')).toHaveLength(1);
