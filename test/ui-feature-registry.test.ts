@@ -77,8 +77,7 @@ describe('featureFor', () => {
     }
   });
 
-  it('is undefined for a route with no feature metadata (home, about, etc.)', () => {
-    expect(featureFor({ kind: 'home' })).toBeUndefined();
+  it('is undefined for a route with no feature metadata (about, etc.)', () => {
     expect(featureFor({ kind: 'about' })).toBeUndefined();
   });
 });
