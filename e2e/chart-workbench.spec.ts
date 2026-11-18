@@ -1050,14 +1050,19 @@ test.describe('with the shared people (#799)', () => {
     const settingsBox = await box(settings);
     expect(overlaysBox.left).toBeGreaterThanOrEqual(header.left);
     expect(overlaysBox.right).toBeLessThanOrEqual(settingsBox.left);
-    // The PDF link (#856) is the rightmost action when the chart offers one; otherwise Extended settings ends the group.
+    // Owner decision (#1654, 2026-11-18): the search pill is the rightmost action on every page. The PDF link (#856)
+    // sits immediately left of it when the chart offers one; otherwise Extended settings is the element left of it.
+    // This replaces the 2026-11-07 rule that the PDF link is the rightmost action.
+    const searchPill = page.locator('.page-header-actions > .app-nav-search');
+    const searchBox = await box(searchPill);
+    expect(searchBox.right).toBeCloseTo(header.right, 0);
     const pdfLink = page.locator('.page-header-actions > .chart-pdf-link');
     if ((await pdfLink.count()) > 0) {
       const pdfBox = await box(pdfLink);
       expect(settingsBox.right).toBeLessThanOrEqual(pdfBox.left + 0.5);
-      expect(pdfBox.right).toBeCloseTo(header.right, 0);
+      expect(pdfBox.right).toBeLessThanOrEqual(searchBox.left + 0.5);
     } else {
-      expect(settingsBox.right).toBeCloseTo(header.right, 0);
+      expect(settingsBox.right).toBeLessThanOrEqual(searchBox.left + 0.5);
     }
     await expect(tabRow.locator('button.chart-overlay-trigger')).toHaveCount(0);
     await expect(tabRow.locator('button.extended-settings-trigger')).toHaveCount(0);

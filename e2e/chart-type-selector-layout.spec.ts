@@ -171,7 +171,9 @@ for (const viewport of [
       });
     }
 
-    test('the PDF link is the rightmost action of a chart page header (owner review 2026-11-07)', async () => {
+    // Owner decision (#1654, 2026-11-18): the search pill is the rightmost action on every page, and the PDF link sits
+    // immediately left of it. This replaces the 2026-11-07 rule that the PDF link is the rightmost action.
+    test('the PDF link sits immediately left of the search pill, which is the rightmost action of a chart page header (owner review 2026-11-07, #1654)', async () => {
       await openSharedPerson(page, baseUrl, EINSTEIN);
       await openChart(page, 'Natal');
       const xs = await page.evaluate<number[]>(
@@ -180,7 +182,15 @@ for (const viewport of [
       const pdf = await page.evaluate<number>(
         "document.querySelector('.page-header-actions > .chart-pdf-link').getBoundingClientRect().x",
       );
-      expect(pdf).toBe(Math.max(...xs));
+      const search = await page.evaluate<number>(
+        "document.querySelector('.page-header-actions > .app-nav-search').getBoundingClientRect().x",
+      );
+      expect(search).toBe(Math.max(...xs));
+      expect(pdf).toBeLessThan(search);
+      const between = await page.evaluate<number>(
+        "[...document.querySelectorAll('.page-header-actions > *')].filter((e) => e.getBoundingClientRect().x > document.querySelector('.page-header-actions > .chart-pdf-link').getBoundingClientRect().x && e.getBoundingClientRect().x < document.querySelector('.page-header-actions > .app-nav-search').getBoundingClientRect().x).length",
+      );
+      expect(between).toBe(0);
     });
 
     test('every chart type uses the same selector design values (height, margins, gap)', async () => {
