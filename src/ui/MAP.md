@@ -222,7 +222,6 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `people-query.ts` — Pure filters for the one people list (#1731): quick name/place filter and chart-query grouping into matches and a could-not-be-evaluated group, nobody dropped. Deps: `chart-search-summary`, `chart-search-run`, `domain/chart-search`, `domain/person`.
 - `chart-search-summary.ts` — Pure split of a chart-search run into matches and the could-not-be-evaluated group (#1405, #1731); no storage or React. Deps: `chart-search-run`.
 - `person-nav.ts` — Per-person tab bar + grouped subtab families. Deps: `route`.
-- `Home.tsx` + `Home.messages.ts` — Home screen at `#/` (#1058): last-viewed person's timing timeline, or a person picker with a first-use empty state; no redirect. Sidebar is full when a person is last-viewed (#965). Deps: `last-person`, `TimingTimelineView`, `people-list`, `store-context`, `primitives/Select`, `primitives/EmptyState`.
 - `person-screens.ts` — Barrel re-export for lazy-loading every person-scoped screen. Deps: all person-scoped screens.
 - `place-fields.ts` — Shared coordinate parsing (lat/lon validation). Deps: none.
 - `placement-label.ts` — Corpus key → human-readable placement name (admin UI). Deps: `astrology/aspects`, `astrology/bodies`, `astrology/signs`, `interpretation/schema`.

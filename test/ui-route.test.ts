@@ -117,8 +117,7 @@ describe('the canonical hashes', () => {
   });
 
   it('covers every route kind (a new kind must be added to this list)', () => {
-    // `home` has no hash of its own: it is what an unknown hash falls back to.
-    const every: Record<Exclude<Route['kind'], 'home'>, true> = {
+    const every: Record<Route['kind'], true> = {
       about: true,
       changelog: true,
       people: true,
