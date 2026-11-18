@@ -17,7 +17,7 @@
  * @module ui/pdf-export-plan
  * @purpose Builds the PDF export feature's (#441) ordered, declarative `PdfPlan` content tree from a user's `PdfSelection`, reusing the same domain compute functions and table-column definitions the on-screen chart/synastry/composite views use.
  * @conventions Deliberately free of jsPDF/svg2pdf.js/jspdf-autotable — svg2pdf.js's UMD entry fails to load under Vitest/Node, so any top-level import of it here would break every test importing this module; the rendering half using those libraries lives in pdf-export-render.ts instead, covered by Playwright. Table cells are reduced to plain strings with `cellText` (`render`, else `valueOf`), the same text Copy and the CSV download use (#664).
- * @exports PdfTablePlan, PdfChartSectionPlan, PdfTextSectionPlan, PdfFieldsSectionPlan, PdfSectionPlan, PdfPlan, PdfPlanContext, buildPdfPlan
+ * @exports PdfTablePlan, PdfChartSectionPlan, PdfTextSectionPlan, PdfFieldsSectionPlan, PdfSectionPlan, PdfPlan, PdfPlanContext, almutenNameList, almutenHintText, sectionCalculationOptions, buildPdfPlan
  */
 import { bodyById, bodyByKey } from '../astrology/bodies.js';
 import { signIndex } from '../astrology/signs.js';
@@ -434,6 +434,20 @@ interface MatrixPairRow {
 }
 
 /**
+ * The almuten of the Ascendant as printed in the PDF (#1646): the names joined with commas (or "no almuten"), and
+ * the scope note on a line of its own. jsPDF's `splitTextToSize` breaks on the newline, so the renderer needs no
+ * change. Tied almutens stay on the one name line.
+ */
+export function almutenNameList(keys: readonly string[], t: typeof chartViewMessages.en, locale: Locale): string {
+  return keys.length === 0 ? t.noAlmuten : keys.map((key) => bodyDisplayName(key, locale)).join(', ');
+}
+
+/** The chart section's almuten hint (#1646): the name sentence, a newline, then the scope note. */
+export function almutenHintText(keys: readonly string[], t: typeof chartViewMessages.en, locale: Locale): string {
+  return `${t.almutenOfAscendantSentence(almutenNameList(keys, t, locale))}\n${t.almutenScopeNote}`;
+}
+
+/**
  * The Chart shape view as short text (#915): the shape and its handle, the lunar phase, the sect and the Almuten of the
  * Ascendant, in the same words the Patterns view uses. The shape diagram and the metric cards are not reproduced.
  */
@@ -452,8 +466,6 @@ function shapeSummaryOf(
   const phase =
     sunLongitude === undefined || moonLongitude === undefined ? undefined : lunarPhaseOf(moonLongitude, sunLongitude);
   const almuten = almutenOfAscendant(data, boundsScheme);
-  const almutenNames = (keys: readonly string[]): string =>
-    keys.length === 0 ? t.noAlmuten : keys.map((key) => bodyDisplayName(key, locale)).join(', ');
   const parts: string[] = [
     shape === undefined
       ? t.shapeCannotBeWorkedOut
@@ -474,7 +486,7 @@ function shapeSummaryOf(
   }
   if (housesRenderable) parts.push(`${t.sectKeyLabel}: ${data.sect === 'day' ? t.dayChart : t.nightChart}`);
   if (almuten !== undefined) {
-    parts.push(`${t.almutenKeyLabel}: ${almutenNames(almuten.almutens)}`);
+    parts.push(`${t.almutenKeyLabel}: ${almutenNameList(almuten.almutens, t, locale)}`);
   }
   return parts.join(' ');
 }
@@ -722,12 +734,7 @@ async function buildChartSectionPlan(
 
   // Always traditional (#545) — almutenOfAscendant no longer takes a rulership/display-choice parameter.
   const almuten = almutenOfAscendant(data, settings.boundsScheme);
-  const almutenNames = (keys: readonly string[]): string =>
-    keys.length === 0 ? t.noAlmuten : keys.map((key) => bodyDisplayName(key, locale)).join(', ');
-  const almutenHint =
-    almuten === undefined
-      ? undefined
-      : t.almutenOfAscendantSentence(almutenNames(almuten.almutens)) + `\n${t.almutenScopeNote}`;
+  const almutenHint = almuten === undefined ? undefined : almutenHintText(almuten.almutens, t, locale);
   // The D10 convention caveat (#725), in the document's language, as the Harmonic screen shows it for the same chart.
   const d10Hint =
     options.type === 'harmonic' && (options.harmonicN ?? 5) === 10 ? harmonicViewMessages[locale].d10Note : undefined;

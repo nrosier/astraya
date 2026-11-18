@@ -21,6 +21,8 @@ import { NATAL_FIXED_STARS } from '../src/domain/chart-compute.js';
 import { chartViewMessages } from '../src/ui/ChartView.messages.js';
 import { harmonicViewMessages } from '../src/ui/HarmonicView.messages.js';
 import {
+  almutenHintText,
+  almutenNameList,
   buildPdfPlan,
   sectionCalculationOptions,
   type PdfParagraphPlan,
@@ -263,6 +265,25 @@ describe('buildPdfPlan', () => {
       expect(lines[1]).toBe(chartViewMessages[locale].almutenScopeNote);
     }
   }, 60_000);
+
+  it('keeps tied almutens on the one name line, with the scope note below, in en and nl (#1646)', () => {
+    for (const locale of ['en', 'nl'] as const) {
+      const t = chartViewMessages[locale];
+      const lines = almutenHintText(['sun', 'mars'], t, locale).split('\n');
+      expect(lines).toHaveLength(2);
+      expect(lines[0]).toBe(t.almutenOfAscendantSentence(almutenNameList(['sun', 'mars'], t, locale)));
+      expect(almutenNameList(['sun', 'mars'], t, locale)).toContain(', ');
+      expect(lines[1]).toBe(t.almutenScopeNote);
+    }
+  });
+
+  it('names no almuten with the no-almuten text, still above the scope note (#1646)', () => {
+    const t = chartViewMessages.en;
+    expect(almutenHintText([], t, 'en').split('\n')).toEqual([
+      t.almutenOfAscendantSentence(t.noAlmuten),
+      t.almutenScopeNote,
+    ]);
+  });
 
   it('builds a draconic chart from the same person without the Houses table it has no houses change for', async () => {
     const provider = await getEngine();
