@@ -21,7 +21,7 @@ import { NATAL_FIXED_STARS } from '../src/domain/chart-compute.js';
 import { chartViewMessages } from '../src/ui/ChartView.messages.js';
 import { harmonicViewMessages } from '../src/ui/HarmonicView.messages.js';
 import {
-  almutenHintText,
+  almutenLeadText,
   almutenNameList,
   buildPdfPlan,
   sectionCalculationOptions,
@@ -191,11 +191,10 @@ describe('buildPdfPlan', () => {
     const [section] = plan.sections;
     if (section?.kind !== 'chart') throw new Error('expected a chart section');
     expect(section.svg?.markup).toContain('<svg');
-    // The scope note starts its own line in the PDF (#1646): line 0 is the name sentence, line 1 the note.
-    const hintLines = section.hint?.split('\n') ?? [];
-    expect(hintLines[0]?.startsWith(chartViewMessages.en.almutenOfAscendantSentence(''))).toBe(true);
-    expect(hintLines[0]).not.toContain(chartViewMessages.en.almutenScopeNote);
-    expect(hintLines[1]).toBe(chartViewMessages.en.almutenScopeNote);
+    // The name line is the bold lead and the scope note starts the regular hint (#1646, owner decision 2026-11-18).
+    expect(section.hintLead?.startsWith(chartViewMessages.en.almutenOfAscendantSentence(''))).toBe(true);
+    expect(section.hintLead).not.toContain(chartViewMessages.en.almutenScopeNote);
+    expect(section.hint?.startsWith(chartViewMessages.en.almutenScopeNote)).toBe(true);
     expect(section.tables.map((t) => t.caption)).toEqual(
       expect.arrayContaining([chartViewMessages.en.positionsCaption, chartViewMessages.en.aspectsCaption]),
     );
@@ -239,7 +238,7 @@ describe('buildPdfPlan', () => {
     }
   }, 60_000);
 
-  it('starts the almuten scope note on its own line, with the name line kept whole, in en and nl (#1646)', async () => {
+  it('gives the almuten name line as the bold lead and starts the hint with the scope note, in en and nl (#1646)', async () => {
     const provider = await getEngine();
     const selection: PdfSelection = {
       personId: ADA.id,
@@ -258,31 +257,25 @@ describe('buildPdfPlan', () => {
       const plan = await buildPdfPlan(selection, context, chartViewMessages[locale], pdfExportMessages[locale]);
       const [section] = plan.sections;
       if (section?.kind !== 'chart') throw new Error('expected a chart section');
-      const lines = section.hint?.split('\n') ?? [];
-      expect(lines).toHaveLength(2);
-      expect(lines[0]?.startsWith(chartViewMessages[locale].almutenOfAscendantSentence(''))).toBe(true);
-      expect(lines[0]).not.toContain(chartViewMessages[locale].almutenScopeNote);
-      expect(lines[1]).toBe(chartViewMessages[locale].almutenScopeNote);
+      expect(section.hintLead?.startsWith(chartViewMessages[locale].almutenOfAscendantSentence(''))).toBe(true);
+      expect(section.hintLead).not.toContain(chartViewMessages[locale].almutenScopeNote);
+      expect(section.hint?.startsWith(chartViewMessages[locale].almutenScopeNote)).toBe(true);
     }
   }, 60_000);
 
-  it('keeps tied almutens on the one name line, with the scope note below, in en and nl (#1646)', () => {
+  it('keeps tied almutens on the one bold name line, in en and nl (#1646)', () => {
     for (const locale of ['en', 'nl'] as const) {
       const t = chartViewMessages[locale];
-      const lines = almutenHintText(['sun', 'mars'], t, locale).split('\n');
-      expect(lines).toHaveLength(2);
-      expect(lines[0]).toBe(t.almutenOfAscendantSentence(almutenNameList(['sun', 'mars'], t, locale)));
+      const lead = almutenLeadText(['sun', 'mars'], t, locale);
+      expect(lead).toBe(t.almutenOfAscendantSentence(almutenNameList(['sun', 'mars'], t, locale)));
+      expect(lead).not.toContain('\n');
       expect(almutenNameList(['sun', 'mars'], t, locale)).toContain(', ');
-      expect(lines[1]).toBe(t.almutenScopeNote);
     }
   });
 
-  it('names no almuten with the no-almuten text, still above the scope note (#1646)', () => {
+  it('names no almuten with the no-almuten text in the lead (#1646)', () => {
     const t = chartViewMessages.en;
-    expect(almutenHintText([], t, 'en').split('\n')).toEqual([
-      t.almutenOfAscendantSentence(t.noAlmuten),
-      t.almutenScopeNote,
-    ]);
+    expect(almutenLeadText([], t, 'en')).toBe(t.almutenOfAscendantSentence(t.noAlmuten));
   });
 
   it('builds a draconic chart from the same person without the Houses table it has no houses change for', async () => {
