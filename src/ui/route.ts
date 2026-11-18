@@ -2,7 +2,7 @@
  * Hash routes.
  *
  * Pure and separate from the components on purpose. A route that fails to match renders a
- * blank screen or, worse, silently falls through to the home page — a failure a user reports
+ * blank screen or, worse, silently falls through to the People page — a failure a user reports
  * as "the link you sent me doesn't work" and which no type checker catches. Parsing it here
  * means it can be tested without a DOM.
  *
@@ -64,7 +64,6 @@ function drawerParam(hash: string): DrawerKey | undefined {
 }
 
 export type Route =
-  | { readonly kind: 'home' }
   | { readonly kind: 'about' }
   | { readonly kind: 'changelog' }
   | { readonly kind: 'people' }
@@ -326,7 +325,7 @@ export function parseRoute(hash: string): Route {
   // Validated as one of our ids, not merely as "some characters after the slash". An
   // unparseable id would open the form on a person the store has no records for, which
   // renders as "deleted, restorable from the list" — a lie about a URL that was simply
-  // mistyped. Home is the honest answer.
+  // mistyped. People is the honest answer.
   if (segments[1] === 'people' && segments.length >= 4) {
     const personId = segments[2];
     if (isPersonId(personId)) return personSubRoute(personId, segments.slice(3), hash) ?? { kind: 'people' };
@@ -359,8 +358,6 @@ function withQuery(base: string, parts: readonly string[]): string {
 export function routeHref(route: Route): string {
   const person = (id: string, ...tail: string[]): string => `#/people/${id}/${tail.join('/')}`;
   switch (route.kind) {
-    case 'home':
-      return '#/people';
     case 'about':
       return '#/about';
     case 'changelog':
@@ -547,13 +544,7 @@ export function setupToken(hash: string): string | null {
 }
 
 /** Routes that are a place of their own, with no screen above them to go back to; every other screen shows the Back link (#1225). */
-const NO_BACK_LINK: ReadonlySet<Route['kind']> = new Set([
-  'home',
-  'people',
-  'documents',
-  'preferences',
-  'export-builder',
-]);
+const NO_BACK_LINK: ReadonlySet<Route['kind']> = new Set(['people', 'documents', 'preferences', 'export-builder']);
 
 /** Whether the app shell shows the Back link above this route's heading (it still hides when there is no previous page). */
 export function routeShowsBackLink(route: Route): boolean {

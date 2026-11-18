@@ -306,7 +306,6 @@ describe('the full sidebar on app-scoped screens (#965)', () => {
 const ROUTE_PERSON = 'p-abcdefghijklmnop';
 const PERSON_HASH = `#/people/${ROUTE_PERSON}`;
 const ROUTE_HASHES: Record<Route['kind'], string> = {
-  home: '#/',
   about: '#/about',
   changelog: '#/changelog',
   people: '#/people',
@@ -365,12 +364,10 @@ describe('the sidebar on every route (#965)', () => {
 
   it('maps every route kind to a hash that parseRoute reads back as that kind', () => {
     for (const [kind, hash] of Object.entries(ROUTE_HASHES)) {
-      // `home` has no hash of its own since #1730: the root parses to people. Removed in 1730-2.
-      if (kind === 'home') continue;
       expect(parseRoute(hash).kind, hash).toBe(kind);
     }
     // The number of kinds in the Route union; a new kind must be added to ROUTE_HASHES and to this count.
-    expect(Object.keys(ROUTE_HASHES)).toHaveLength(36);
+    expect(Object.keys(ROUTE_HASHES)).toHaveLength(35);
   });
 
   it('keeps the exceptions to the person sidebar as exactly the #914 list', () => {
@@ -403,7 +400,7 @@ describe('the sidebar on every route (#965)', () => {
   });
 
   const sameSidebarKinds = (Object.keys(ROUTE_HASHES) as Route['kind'][]).filter(
-    (kind) => kind !== 'home' && !(EXPLICIT_NO_PERSON_SIDEBAR_KINDS as readonly string[]).includes(kind),
+    (kind) => !(EXPLICIT_NO_PERSON_SIDEBAR_KINDS as readonly string[]).includes(kind),
   );
   it.each(sameSidebarKinds)(
     'shows the same sidebar links, text and href, on %s as on a person page (#965)',

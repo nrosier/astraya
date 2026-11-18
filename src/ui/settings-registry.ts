@@ -167,7 +167,7 @@ export const SETTINGS: readonly SettingDefinition[] = [
     describeDefault: 'unset (no person remembered yet)',
     persistence: 'local-storage',
     synced: false,
-    editingSurface: 'AppNav.tsx (written when a person route opens); Home.tsx (person picker)',
+    editingSurface: 'AppNav.tsx (written when a person route opens); People.tsx (person picker)',
     commitMode: 'immediate',
     sensitive: false,
     resetTarget: 'This device default (unset)',

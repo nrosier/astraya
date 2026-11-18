@@ -150,7 +150,7 @@ describe('BackLink', () => {
 
 describe('where the shell shows the Back link (#1225)', () => {
   it('shows it on every screen except the places of their own', () => {
-    for (const kind of ['home', 'people', 'documents', 'preferences'] as const) {
+    for (const kind of ['people', 'documents', 'preferences'] as const) {
       expect(routeShowsBackLink({ kind })).toBe(false);
     }
     for (const kind of ['about', 'changelog', 'admin', 'cycles', 'eclipses', 'electional'] as const) {
