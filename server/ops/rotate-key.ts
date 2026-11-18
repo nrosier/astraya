@@ -1,5 +1,6 @@
 /**
- * Re-encrypt every stored operation under a new `ASTRAYA_ENCRYPTION_KEY` (#340).
+ * Re-encrypt every stored operation and every saved interpretation result under a new
+ * `ASTRAYA_ENCRYPTION_KEY` (#340, #1680).
  *
  *   ASTRAYA_DB_PATH=./data/astraya.db \
  *   ASTRAYA_ENCRYPTION_KEY=<the key in use now> \
@@ -22,8 +23,8 @@
 
 /**
  * @module rotate-key
- * @purpose Operator CLI script to re-encrypt every stored `ops` row under a replacement `ASTRAYA_ENCRYPTION_KEY`, the remediation path for a leaked key.
- * @conventions Not exposed as an admin HTTP route on purpose — it holds both the old and new key and rewrites every row, which belongs to an operator with shell/container access, not a session cookie. Rotates the key material only, never `CURRENT_KEY_VERSION` (the encryption scheme itself, AES-256-GCM, is unchanged); re-encryption runs in one transaction, failing before writing anything if any row does not decrypt under the stated current key, so a wrong key never produces a half-rotated database.
+ * @purpose Operator CLI script to re-encrypt everything stored under `ASTRAYA_ENCRYPTION_KEY` (every `ops` row, and every saved interpretation result's sections and label, #1680) under a replacement key, the remediation path for a leaked key.
+ * @conventions Not exposed as an admin HTTP route on purpose — it holds both the old and new key and rewrites every row, which belongs to an operator with shell/container access, not a session cookie. Rotates the key material only, never `CURRENT_KEY_VERSION` (the encryption scheme itself, AES-256-GCM, is unchanged); re-encryption of both tables runs in one transaction, failing before writing anything if any row (an op, a result's sections or its label) does not decrypt under the stated current key, so a wrong key never produces a half-rotated database. Every re-encrypted value gets a fresh IV.
  * @exports RotationResult, rotateEncryptionKey
  */
 import { resolve } from 'node:path';
@@ -36,14 +37,38 @@ interface EncryptedRow {
   readonly iv: Buffer | null;
 }
 
+/** A saved Tier 2 result (#1680): its sections always encrypted, its label (description) encrypted when there is one. */
+interface ResultRow {
+  readonly id: string;
+  readonly sections_json: Buffer;
+  readonly iv: Buffer;
+  readonly description_json: Buffer | null;
+  readonly description_iv: Buffer | null;
+}
+
 export interface RotationResult {
   readonly rotated: number;
   /** Rows with a null `iv` — written before at-rest encryption existed, so there is nothing to re-key. */
   readonly plaintext: number;
+  /** Saved interpretation results re-encrypted (#1680): their sections, and their label when they have one. */
+  readonly interpretationResults: number;
+}
+
+/** Decrypts under the current key, or throws naming the row, before anything has been written. */
+function decryptForRotation(what: string, ciphertext: Buffer, iv: Buffer, currentKey: Buffer): Buffer {
+  try {
+    return decryptPayload(ciphertext, iv, currentKey);
+  } catch (error) {
+    throw new Error(
+      `${what} does not decrypt under the current key, so nothing was rotated. ` +
+        'Check ASTRAYA_ENCRYPTION_KEY against the key the server is running with.',
+      { cause: error },
+    );
+  }
 }
 
 /**
- * Re-encrypt in one transaction.
+ * Re-encrypt in one transaction, taken with `BEGIN IMMEDIATE` before the first read.
  *
  * All or nothing matters more here than anywhere else in this codebase: a partial rotation
  * leaves a database in which neither key decrypts every row, and there is no key version
@@ -54,8 +79,25 @@ export interface RotationResult {
  *
  * Throws on the first row that will not decrypt under `currentKey`, before writing
  * anything — a wrong "current" key must fail as a wrong key, not as a half-rotated log.
+ * That includes a result's label: the reader never sees an unreadable label as an error
+ * (`readDescription` shows none), so a rotation that skipped one would lose it silently.
  */
 export function rotateEncryptionKey(db: Database, currentKey: Buffer, newKey: Buffer): RotationResult {
+  // IMMEDIATE takes the write lock before the first read (#1680 review): a server still running on this file
+  // cannot save a row under the old key between the reads and the commit, which would leave a mix of keys.
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    const result = reEncryptAll(db, currentKey, newKey);
+    db.exec('COMMIT');
+    return result;
+  } catch (error) {
+    db.exec('ROLLBACK');
+    throw error;
+  }
+}
+
+/** Reads, decrypts and re-encrypts both tables inside the caller's transaction; throws before any write on a wrong key. */
+function reEncryptAll(db: Database, currentKey: Buffer, newKey: Buffer): RotationResult {
   const rows = db.prepare('SELECT seq, payload, iv FROM ops ORDER BY seq').all() as unknown as EncryptedRow[];
 
   const reEncrypted: { seq: number; payload: Buffer; iv: Buffer }[] = [];
@@ -65,31 +107,56 @@ export function rotateEncryptionKey(db: Database, currentKey: Buffer, newKey: Bu
       plaintext += 1;
       continue;
     }
-    let decrypted: Buffer;
-    try {
-      decrypted = decryptPayload(row.payload, row.iv, currentKey);
-    } catch (error) {
-      throw new Error(
-        `ops row seq=${String(row.seq)} does not decrypt under the current key, so nothing was rotated. ` +
-          'Check ASTRAYA_ENCRYPTION_KEY against the key the server is running with.',
-        { cause: error },
-      );
-    }
+    const decrypted = decryptForRotation(`ops row seq=${String(row.seq)}`, row.payload, row.iv, currentKey);
     const { ciphertext, iv } = encryptPayload(decrypted, newKey);
     reEncrypted.push({ seq: row.seq, payload: ciphertext, iv });
   }
 
-  const update = db.prepare('UPDATE ops SET payload = ?, iv = ? WHERE seq = ?');
-  db.exec('BEGIN');
-  try {
-    for (const row of reEncrypted) update.run(row.payload, row.iv, row.seq);
-    db.exec('COMMIT');
-  } catch (error) {
-    db.exec('ROLLBACK');
-    throw error;
+  // Saved interpretation results (#1680) use the same key: their sections and, when present, their label.
+  const results = db
+    .prepare('SELECT id, sections_json, iv, description_json, description_iv FROM interpretation_results ORDER BY id')
+    .all() as unknown as ResultRow[];
+  const reResults: {
+    id: string;
+    sections: Buffer;
+    iv: Buffer;
+    description: Buffer | null;
+    descriptionIv: Buffer | null;
+  }[] = [];
+  for (const row of results) {
+    const sections = encryptPayload(
+      decryptForRotation(`interpretation result ${row.id}`, row.sections_json, row.iv, currentKey),
+      newKey,
+    );
+    const description =
+      row.description_json === null || row.description_iv === null
+        ? undefined
+        : encryptPayload(
+            decryptForRotation(
+              `the label of interpretation result ${row.id}`,
+              row.description_json,
+              row.description_iv,
+              currentKey,
+            ),
+            newKey,
+          );
+    reResults.push({
+      id: row.id,
+      sections: sections.ciphertext,
+      iv: sections.iv,
+      description: description?.ciphertext ?? row.description_json,
+      descriptionIv: description?.iv ?? row.description_iv,
+    });
   }
 
-  return { rotated: reEncrypted.length, plaintext };
+  const update = db.prepare('UPDATE ops SET payload = ?, iv = ? WHERE seq = ?');
+  const updateResult = db.prepare(
+    'UPDATE interpretation_results SET sections_json = ?, iv = ?, description_json = ?, description_iv = ? WHERE id = ?',
+  );
+  for (const row of reEncrypted) update.run(row.payload, row.iv, row.seq);
+  for (const row of reResults) updateResult.run(row.sections, row.iv, row.description, row.descriptionIv, row.id);
+
+  return { rotated: reEncrypted.length, plaintext, interpretationResults: reResults.length };
 }
 
 function requireKey(name: string): Buffer {
@@ -111,9 +178,9 @@ if (isEntryPoint) {
   const dbPath = process.env.ASTRAYA_DB_PATH ?? resolve(import.meta.dirname, '..', '..', 'data', 'astraya.db');
   const db = openDatabase(dbPath);
   try {
-    const { rotated, plaintext } = rotateEncryptionKey(db, currentKey, newKey);
+    const { rotated, plaintext, interpretationResults } = rotateEncryptionKey(db, currentKey, newKey);
     console.log(
-      `Re-encrypted ${String(rotated)} operation row(s) under the new key` +
+      `Re-encrypted ${String(rotated)} operation row(s) and ${String(interpretationResults)} saved interpretation result(s) under the new key` +
         (plaintext > 0 ? `; left ${String(plaintext)} pre-encryption row(s) untouched` : '') +
         '. Set ASTRAYA_ENCRYPTION_KEY to the new key and restart the server.',
     );
