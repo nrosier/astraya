@@ -1,6 +1,6 @@
 /**
  * @module ui/PersonFileActions
- * @purpose The birth-record page's export and import of one person (#699, #896): an export card with one row of AAF, JSON and CSV downloads, and a separate Replace data card that replaces this person's birth data from an AAF or Astraya JSON file after a preview.
+ * @purpose One Export / Import card with pill tabs (#1732): the Export tab holds one row of AAF, JSON and CSV downloads, and the Import tab replaces this person's birth data from an AAF or Astraya JSON file after a preview (#699, #896).
  * @conventions Reuses the backup's writers (`peopleToAaf`, `buildFullExport`, `peopleToCsv`) with one person, and `domain/person-file.ts` to read and stage; the store is written only on Replace, in one `store.mutate`. CSV is export only. Returns two sibling cards for the birth-record right-hand column. The header Export menu no longer lists these downloads (#896, owner 2026-11-02); the EXPORT card is the only place for them.
  * @exports PersonFileActions
  */
@@ -203,6 +203,7 @@ export function PersonFileActions({
             <p>
               <FileInput
                 buttonLabel={t.importButton}
+                className="primitive-button-capsule primitive-button-form-action"
                 accept="application/json,.json,.aaf,text/plain"
                 onChange={onFileChosen}
               />

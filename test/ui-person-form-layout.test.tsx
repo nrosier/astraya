@@ -191,6 +191,7 @@ describe('PersonForm card layout (#795)', () => {
       importTab?.click();
     });
     expect(files.querySelector('input[type="file"]')).not.toBeNull();
+    expect(files.querySelector('button.primitive-button-form-action')?.textContent).toBe(tFiles.importButton);
     expect(files.querySelector('.birth-record-export-row')).toBeNull();
     expect([...files.querySelectorAll('button')].map((button) => button.textContent)).not.toContain(tFiles.exportAaf);
   });
