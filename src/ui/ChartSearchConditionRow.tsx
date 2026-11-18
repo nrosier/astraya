@@ -2,7 +2,7 @@
  * @module ChartSearchConditionRow
  * @purpose One editable condition of the "Search charts" card (#1405): scope, kind, body, then sign, house or aspect and its target, with a labelled Remove control.
  * @conventions Controlled by the draft: every change returns a whole new `SearchCondition` through `onChange`. Changing the kind starts that kind's defaults and keeps scope and body. Fields are shared `Select`s, one per line on a phone (40rem and below) and in a wrapping grid above it. The scope list offers natal, transit, progression, solarReturn, lunarReturn and solarArc.
- * @exports ChartSearchConditionRow, blankCondition
+ * @exports ChartSearchConditionRow
  */
 import { ASPECTS } from '../astrology/aspects.js';
 import { BODIES, bodyById, bodyByKey } from '../astrology/bodies.js';
@@ -20,13 +20,6 @@ const SCOPES: readonly SearchScope[] = ['natal', 'transit', 'progression', 'sola
 const KINDS: readonly SearchCondition['kind'][] = ['sign', 'house', 'aspect'];
 const HOUSES: readonly number[] = Array.from({ length: 12 }, (_, index) => index + 1);
 const ANGLES: readonly SearchAngle[] = ['asc', 'mc'];
-
-const SUN = bodyByKey('sun')?.id ?? BODIES[0]?.id ?? 0;
-
-/** The condition a new row starts as: the Sun in Aries, in the natal chart. */
-export function blankCondition(): SearchCondition {
-  return { kind: 'sign', scope: 'natal', body: SUN, sign: 0 };
-}
 
 function keyOf(condition: SearchCondition): string {
   return bodyById(condition.body)?.key ?? '';

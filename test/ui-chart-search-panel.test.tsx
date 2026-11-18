@@ -4,7 +4,7 @@
  * separate not-evaluable group, the zero-results suggestion and the read-only store. Mocks only the store and the
  * ephemeris edges, as test/ui-composite-method.test.tsx does; the draft model and the run hook are real.
  */
-import { act } from 'react';
+import { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setLocale } from '../src/ui/locale.js';
@@ -12,6 +12,9 @@ import type * as RunModule from '../src/ui/chart-search-run.js';
 import type { PersonRunResult } from '../src/ui/chart-search-run.js';
 import { bodyByKey } from '../src/astrology/bodies.js';
 import type { PersonSearchResult, SearchCondition } from '../src/domain/chart-search.js';
+import { initialDraft, type ChartSearchDraft } from '../src/ui/chart-search-draft.js';
+import { useChartSearchRun } from '../src/ui/use-chart-search-run.js';
+import { ChartSearchPanel as HostPanel } from '../src/ui/ChartSearchPanel.js';
 
 const mocks = vi.hoisted(() => ({
   writable: true,
@@ -51,10 +54,18 @@ vi.mock('../src/ui/store-context.js', () => {
 let container: HTMLDivElement;
 let root: Root;
 
+/** Owns the draft and the run as People does (#1731), so the panel is rendered with the same props. */
+function Host(): React.JSX.Element {
+  const [draft, setDraft] = useState<ChartSearchDraft>(initialDraft);
+  const run = useChartSearchRun();
+  return (
+    <HostPanel draft={draft} onDraftChange={setDraft} runState={run.state} results={run.results} onRun={run.run} />
+  );
+}
+
 async function mount(): Promise<void> {
-  const { ChartSearchPanel } = await import('../src/ui/ChartSearchPanel.js');
   await act(async () => {
-    root.render(<ChartSearchPanel />);
+    root.render(<Host />);
     await Promise.resolve();
   });
 }

@@ -32,6 +32,8 @@ import { StatusMessage } from './primitives/StatusMessage.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import { clearNoteJournalsForPerson } from './use-note-autosave.js';
 import { errorDetail } from './api-error.js';
+import { initialDraft, type ChartSearchDraft } from './chart-search-draft.js';
+import { useChartSearchRun } from './use-chart-search-run.js';
 
 /**
  * The chart-search card is behind a dynamic import (#1405): its code and the chart-search run core
@@ -50,6 +52,9 @@ export function People(): React.JSX.Element {
   const [defaultRulership] = useRulershipChoice();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+  // The chart query's draft and run live here, so the page owns them (#1731); the panel only renders them.
+  const [draft, setDraft] = useState<ChartSearchDraft>(initialDraft);
+  const run = useChartSearchRun();
 
   const people = ordered(state.people);
   trace('People', 'render', { deviceId: store.deviceId, people: people.length });
@@ -122,7 +127,13 @@ export function People(): React.JSX.Element {
       {/* The chart search sits above the list (#1405) and only when there is someone to search. */}
       {people.length > 0 && (
         <Suspense fallback={<StatusMessage kind="loading">{tApp.loadingScreen}</StatusMessage>}>
-          <ChartSearchPanel />
+          <ChartSearchPanel
+            draft={draft}
+            onDraftChange={setDraft}
+            runState={run.state}
+            results={run.results}
+            onRun={run.run}
+          />
         </Suspense>
       )}
 

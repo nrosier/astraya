@@ -2,9 +2,9 @@
  * @module ui/chart-search-draft
  * @purpose Pure draft model for building a chart search (#1405): the operator, the condition list and the as-of date being edited, with conversion both ways between the stored definition (bodies by key) and the domain `ChartSearch` (bodies by id).
  * @conventions No React, store writes or sweph-wasm access. Every function returns a new draft and never mutates its input. The draft holds domain conditions; the as-of date is draft-only state (default `todayInputValue()`, the local calendar day) and never appears in a built definition (owner decision 9). Adding is refused at the domain's `MAX_SEARCH_CONDITIONS`. A body key or id with no body definition, and a malformed as-of date, give a typed error and never a silent default. Scopes and kinds are not filtered here: every one the store accepts (including sign and house conditions in the transit and progression scopes, and the Ascendant and Midheaven as aspect targets) passes through, so the only refusals are the store's own (no conditions, too many).
- * @exports ChartSearchDraft, DraftError, DraftResult, AsOfDate, newDraft, setOperator, addDraftCondition, removeDraftCondition, editDraftCondition, setAsOf, parseAsOf, draftFromDefinition, definitionFromDraft
+ * @exports ChartSearchDraft, DraftError, DraftResult, AsOfDate, newDraft, initialDraft, blankCondition, setOperator, addDraftCondition, removeDraftCondition, editDraftCondition, setAsOf, parseAsOf, draftFromDefinition, definitionFromDraft
  */
-import { bodyById, bodyByKey } from '../astrology/bodies.js';
+import { BODIES, bodyById, bodyByKey } from '../astrology/bodies.js';
 import {
   addCondition,
   validateSearch,
@@ -55,6 +55,19 @@ function fail<T>(error: DraftError): DraftResult<T> {
 /** An empty draft: AND, no conditions, as of `asOf` (default today in the local timezone). */
 export function newDraft(asOf: string = todayInputValue()): ChartSearchDraft {
   return { operator: 'and', conditions: [], asOf };
+}
+
+const SUN = bodyByKey('sun')?.id ?? BODIES[0]?.id ?? 0;
+
+/** The condition a new row starts as: the Sun in Aries, in the natal chart. */
+export function blankCondition(): SearchCondition {
+  return { kind: 'sign', scope: 'natal', body: SUN, sign: 0 };
+}
+
+/** The draft a fresh card starts from: one blank condition, match all. Owned by People, which passes it down (#1731). */
+export function initialDraft(): ChartSearchDraft {
+  const draft = addDraftCondition(newDraft(), blankCondition());
+  return draft.ok ? draft.value : newDraft();
 }
 
 export function setOperator(draft: ChartSearchDraft, operator: SearchOperator): ChartSearchDraft {
