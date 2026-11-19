@@ -91,6 +91,20 @@ describe('rotateEncryptionKey', () => {
     expect(after).not.toBe(before);
   });
 
+  it('gives different rows different IVs', () => {
+    insertOp(OLD_KEY, '{"field":"one"}');
+    insertOp(OLD_KEY, '{"field":"two"}');
+    insertOp(OLD_KEY, '{"field":"three"}');
+
+    rotateEncryptionKey(db, OLD_KEY, NEW_KEY);
+
+    const ivs = (db.prepare('SELECT iv FROM ops').all() as unknown as { iv: Buffer }[]).map((row) =>
+      row.iv.toString('base64'),
+    );
+    expect(ivs).toHaveLength(3);
+    expect(new Set(ivs).size).toBe(ivs.length);
+  });
+
   it('is a no-op on an empty log', () => {
     expect(rotateEncryptionKey(db, OLD_KEY, NEW_KEY)).toEqual({ rotated: 0, plaintext: 0, interpretationResults: 0 });
   });
@@ -214,5 +228,76 @@ describe('rotateEncryptionKey and saved interpretation results (#1680)', () => {
     expect(message).not.toContain('Written under another key');
     expect(rawResult(id)).toEqual(before);
     expect(payloads(OLD_KEY)).toEqual([op]);
+  });
+});
+
+describe('rotateEncryptionKey transaction guarantees (#1680 review)', () => {
+  it('rolls back the whole rotation when a later write fails, leaving ops readable under the old key', () => {
+    const op = insertOp(OLD_KEY, '{"field":"one"}');
+    insertOp(OLD_KEY, '{"field":"two"}');
+    const result = saveInterpretationResult(
+      db,
+      { userId, mode: 'grounded', locale: 'en', sections: [{ heading: 'Overview', body: 'Text.' }] },
+      OLD_KEY,
+    );
+    const resultBefore = db.prepare('SELECT * FROM interpretation_results WHERE id = ?').get(result);
+    // The ops UPDATE runs first and succeeds; this makes the interpretation_results UPDATE fail after it.
+    db.exec(
+      "CREATE TRIGGER fail_result_update BEFORE UPDATE ON interpretation_results BEGIN SELECT RAISE(ABORT, 'forced failure'); END",
+    );
+    try {
+      expect(() => rotateEncryptionKey(db, OLD_KEY, NEW_KEY)).toThrow(/forced failure/);
+    } finally {
+      db.exec('DROP TRIGGER fail_result_update');
+    }
+
+    expect(payloads(OLD_KEY)[0]).toBe(op);
+    expect(payloads(OLD_KEY)).toHaveLength(2);
+    expect(() => payloads(NEW_KEY)).toThrow();
+    expect(db.prepare('SELECT * FROM interpretation_results WHERE id = ?').get(result)).toEqual(resultBefore);
+    // The connection is not left inside an open transaction.
+    expect(() => {
+      db.exec('BEGIN IMMEDIATE');
+    }).not.toThrow();
+    db.exec('ROLLBACK');
+  });
+
+  it('takes the write lock before reading: a held lock fails rotation as a lock error, not as a decrypt error', () => {
+    const written = [insertOp(OLD_KEY, '{"field":"one"}'), insertOp(OLD_KEY, '{"field":"two"}')];
+    const other = openDatabase(join(dir, 'astraya.db'));
+    let message = '';
+    try {
+      other.exec('BEGIN IMMEDIATE');
+      // A wrong current key makes any read-first implementation fail on decryption. Only a lock taken up front
+      // (BEGIN IMMEDIATE) can fail here with a lock error instead.
+      try {
+        rotateEncryptionKey(db, randomBytes(32), NEW_KEY);
+      } catch (error) {
+        message = error instanceof Error ? error.message : String(error);
+      }
+      other.exec('ROLLBACK');
+    } finally {
+      other.close();
+    }
+
+    expect(message).toMatch(/locked|busy/i);
+    expect(message).not.toMatch(/does not decrypt/);
+    expect(payloads(OLD_KEY)).toEqual(written);
+  });
+
+  it('commits: a second connection reads the rotated rows under the new key', () => {
+    const written = [insertOp(OLD_KEY, '{"field":"one"}'), insertOp(OLD_KEY, '{"field":"two"}')];
+    rotateEncryptionKey(db, OLD_KEY, NEW_KEY);
+
+    const other = openDatabase(join(dir, 'astraya.db'));
+    try {
+      const rows = other.prepare('SELECT payload, iv FROM ops ORDER BY seq').all() as unknown as {
+        payload: Buffer;
+        iv: Buffer;
+      }[];
+      expect(rows.map((row) => decryptPayload(row.payload, row.iv, NEW_KEY).toString('utf8'))).toEqual(written);
+    } finally {
+      other.close();
+    }
   });
 });

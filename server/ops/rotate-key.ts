@@ -16,7 +16,9 @@
  * per-row IV is still the scheme afterwards — bumping it would claim a format change that
  * did not happen, and would make a future real scheme change unable to tell the two apart.
  *
- * Runs with the server stopped. Not exposed as an admin route on purpose: it holds both
+ * Stop the server before rotating. The script locks the database for the rotation, but a
+ * server still running on the old key can write rows under it once the lock is released
+ * (between COMMIT and restart), leaving rows no key decrypts together. Not exposed as an admin route on purpose: it holds both
  * keys and rewrites every row, which is an operator action with shell access, not something
  * that should be reachable with a session cookie.
  */
@@ -91,7 +93,12 @@ export function rotateEncryptionKey(db: Database, currentKey: Buffer, newKey: Bu
     db.exec('COMMIT');
     return result;
   } catch (error) {
-    db.exec('ROLLBACK');
+    try {
+      db.exec('ROLLBACK');
+    } catch {
+      // SQLite may already have rolled back, or the rollback itself failed: either way the
+      // original error is the one the operator needs, so it must not be replaced by this one.
+    }
     throw error;
   }
 }
