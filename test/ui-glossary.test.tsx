@@ -31,6 +31,7 @@ vi.mock('../src/ui/store-context.js', () => {
       [
         'p1',
         {
+          id: 'p1',
           displayName: 'Test',
           timeAccuracy: 'exact',
           moment: {
