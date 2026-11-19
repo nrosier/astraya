@@ -8,6 +8,42 @@ feature and fixes is a minor release. See [docs/ops/RELEASING.md](docs/ops/RELEA
 
 ## [Unreleased]
 
+## [0.56.0] — 2026-11-19
+
+**A command palette on Ctrl/Cmd+K, a People page with a chart query, one tabbed Export / Import card, deep links that open the chart drawers, AC/MC/DC/IC labels everywhere, and pill-shaped controls throughout.**
+
+### Added
+
+- **Command palette (#1654).** A trigger in the page header, top right, and the Ctrl/Cmd+K shortcut open a search over screens and actions, with recents and pins. At 390 px the trigger is a circle.
+- **People page chart query (#1731).** A toolbar, a collapsible Chart query, and in-place filtering of the people list; the query draft and its run are kept when you leave the page.
+- **One Export / Import card (#1732).** Export and import are tabs of one card, and Import File is a full-height pill.
+- **Drawer deep links (#1667).** `drawer=extended-settings`, `map-settings`, `life-events` and `overlays` open the matching drawer on the chart or birth record, and the command palette lists all four.
+- **Consistent angle labels (#1649).** AC, MC, DC and IC are used on the wheel, the positions table and the aspect matrix. The Transits filter card shows AC and MC first, and each body's symbol before its name (#1642). Dutch uses Hemelmidden and Imum Coeli throughout.
+- **Person sidebar options are shown disabled when no person is selected (#1697).**
+
+### Changed
+
+- **The root opens the People page (#1730).** The old Home screen and its route are gone.
+- **Pill controls everywhere (#1650, #1600).** Buttons, tabs, menu items and single-line controls share one pill or circle shape and the 2.75rem form-action height.
+- **New app icons (#1668).**
+
+### Fixed
+
+- **Key rotation re-encrypts saved interpretation results (#1680).** Operators rotating the server key: results saved before this fix were left under the old key.
+- **The Transits filter removes unselected bodies and their aspect lines from the wheel (#1641).**
+- **Almuten (#1609, #1646).** The scope note names the detriment and fall points, and the explanation starts on its own line in the PDF, with the name in bold.
+- **PDF (#1647, #1648).** Astrocartography labels no longer draw as pale boxes, and a fields panel continues, tint included, on the next page.
+- **Layout (#1649, #1653, #1666, #1696, #1729).** Date and time pills keep room for the picker icon, the Life events footer wraps at phone width, the sidebar person label and nav stay inside the rail, and birth record cards size to their content.
+- **Palette details (#1654).** Focus returns to the header trigger on Escape, and the shortcut chip and trigger keep their shape and size.
+
+### Documentation
+
+- Holden record and Tebbs pages (#1602), the UI guideline's pill rule (#1650), the Descendant abbreviation (DC, #1649), and a check of `sources.json` against the reference files.
+
+### Dependencies
+
+- Vitest 5.1.1, oxlint 1.94.0, fast-check 4.10.3, knip 6.46.1, jose 6.2.18, and refreshed Node base-image digests.
+
 ## [0.55.0] — 2026-11-16
 
 **A heliocentric chart, a user-defined ayanamsa, solar arcs in declination, an instrument bar with tone colours on the wheel and the Aspect matrix, a date stepper for each extra ring, and an almuten that accounts for detriment and fall. The settings drawer gets pill controls and a Defaults menu.**
