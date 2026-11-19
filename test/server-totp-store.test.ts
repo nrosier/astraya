@@ -1,0 +1,213 @@
+/**
+ * TOTP storage (#1500, slice 2a), against a real temp SQLite file. Secrets and codes live only in variables here.
+ */
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { randomBytes, randomUUID } from 'node:crypto';
+import { openDatabase, type Database } from '../server/db.ts';
+import {
+  TotpKeyMissingError,
+  clearTotp,
+  confirmTotpEnrolment,
+  consumeRecoveryCode,
+  deriveTotpSubkey,
+  generateRecoveryCodes,
+  loadRecoveryPepper,
+  readTotpState,
+  recordAcceptedStep,
+  replaceRecoveryCodes,
+  startTotpEnrolment,
+} from '../server/auth/totp-store.ts';
+
+const KEY = randomBytes(32);
+
+let dir: string;
+let db: Database;
+let userId = '';
+
+function insertUser(username: string): string {
+  const id = randomUUID();
+  db.prepare('INSERT INTO users (id, username, password_hash, created_at) VALUES (?, ?, ?, ?)').run(
+    id,
+    username,
+    'not-a-real-hash',
+    new Date().toISOString(),
+  );
+  return id;
+}
+
+function storedHashes(id: string): string[] {
+  return (
+    db.prepare('SELECT code_hash FROM totp_recovery_codes WHERE user_id = ?').all(id) as unknown as {
+      code_hash: string;
+    }[]
+  ).map((row) => row.code_hash);
+}
+
+beforeEach(() => {
+  dir = mkdtempSync(join(tmpdir(), 'astraya-totp-store-test-'));
+  db = openDatabase(join(dir, 'astraya.db'));
+  userId = insertUser('alice');
+});
+
+afterEach(() => {
+  db.close();
+  rmSync(dir, { recursive: true, force: true });
+});
+
+describe('server/auth/totp-store.ts', () => {
+  it('start then read gives pending with the secret round-tripped, and the stored bytes are encrypted', () => {
+    const secret = startTotpEnrolment(db, KEY, userId);
+    const state = readTotpState(db, KEY, userId);
+    expect(state.status).toBe('pending');
+    if (state.status === 'off') throw new Error('expected a secret');
+    expect(Buffer.from(state.secret).equals(Buffer.from(secret))).toBe(true);
+    expect(state.lastStep).toBeNull();
+    const row = db.prepare('SELECT totp_secret FROM users WHERE id = ?').get(userId) as unknown as {
+      totp_secret: Uint8Array;
+    };
+    expect(Buffer.from(row.totp_secret).includes(Buffer.from(secret))).toBe(false);
+  });
+
+  it('a user with no TOTP reads as off, even with no key', () => {
+    expect(readTotpState(db, null, userId)).toEqual({ status: 'off' });
+  });
+
+  it('confirm enables the user, and confirming twice returns false the second time', () => {
+    startTotpEnrolment(db, KEY, userId);
+    expect(confirmTotpEnrolment(db, userId, 5, new Date().toISOString())).toBe(true);
+    const state = readTotpState(db, KEY, userId);
+    expect(state.status).toBe('enabled');
+    if (state.status === 'off') throw new Error('expected a secret');
+    expect(state.lastStep).toBe(5);
+    expect(confirmTotpEnrolment(db, userId, 6, new Date().toISOString())).toBe(false);
+  });
+
+  it('confirm returns false when nothing is pending', () => {
+    expect(confirmTotpEnrolment(db, userId, 5, new Date().toISOString())).toBe(false);
+  });
+
+  it('start on an enabled user throws, and on a missing user throws', () => {
+    startTotpEnrolment(db, KEY, userId);
+    confirmTotpEnrolment(db, userId, 1, new Date().toISOString());
+    expect(() => startTotpEnrolment(db, KEY, userId)).toThrow();
+    expect(() => startTotpEnrolment(db, KEY, randomUUID())).toThrow();
+  });
+
+  it('start on a pending user replaces the pending secret', () => {
+    const first = startTotpEnrolment(db, KEY, userId);
+    const second = startTotpEnrolment(db, KEY, userId);
+    const state = readTotpState(db, KEY, userId);
+    if (state.status === 'off') throw new Error('expected a secret');
+    expect(Buffer.from(state.secret).equals(Buffer.from(second))).toBe(true);
+    expect(Buffer.from(first).equals(Buffer.from(second))).toBe(false);
+  });
+
+  it('reading with key null while a secret is stored throws TotpKeyMissingError', () => {
+    startTotpEnrolment(db, KEY, userId);
+    expect(() => readTotpState(db, null, userId)).toThrow(TotpKeyMissingError);
+  });
+
+  it('reading with a different key throws and does not return off', () => {
+    startTotpEnrolment(db, KEY, userId);
+    expect(() => readTotpState(db, randomBytes(32), userId)).toThrow();
+  });
+
+  it('subkeys differ per user and are stable for one user', () => {
+    const other = insertUser('bob');
+    expect(deriveTotpSubkey(KEY, userId).equals(deriveTotpSubkey(KEY, userId))).toBe(true);
+    expect(deriveTotpSubkey(KEY, userId).equals(deriveTotpSubkey(KEY, other))).toBe(false);
+    expect(deriveTotpSubkey(KEY, userId)).toHaveLength(32);
+  });
+
+  it('recordAcceptedStep accepts only a later step', () => {
+    startTotpEnrolment(db, KEY, userId);
+    confirmTotpEnrolment(db, userId, 1, new Date().toISOString());
+    expect(recordAcceptedStep(db, userId, 10)).toBe(true);
+    expect(recordAcceptedStep(db, userId, 10)).toBe(false);
+    expect(recordAcceptedStep(db, userId, 9)).toBe(false);
+    expect(recordAcceptedStep(db, userId, 11)).toBe(true);
+  });
+
+  it('recordAcceptedStep refuses a user who is not enabled', () => {
+    expect(recordAcceptedStep(db, userId, 10)).toBe(false);
+    startTotpEnrolment(db, KEY, userId);
+    expect(recordAcceptedStep(db, userId, 10)).toBe(false);
+  });
+
+  it('generates 10 distinct codes of the expected shape', () => {
+    const codes = generateRecoveryCodes();
+    expect(codes).toHaveLength(10);
+    expect(new Set(codes).size).toBe(10);
+    for (const code of codes) expect(code).toMatch(/^[A-Z2-7]{5}-[A-Z2-7]{5}$/);
+  });
+
+  it('stores recovery codes only as hashes, and each works once, loosely typed', () => {
+    const codes = generateRecoveryCodes();
+    replaceRecoveryCodes(db, KEY, userId, codes);
+    const hashes = storedHashes(userId);
+    expect(hashes).toHaveLength(10);
+    for (const code of codes) {
+      expect(hashes).not.toContain(code);
+      expect(hashes).not.toContain(code.replace('-', ''));
+    }
+    const first = codes[0] ?? '';
+    expect(consumeRecoveryCode(db, KEY, userId, first.toLowerCase().replace('-', ''))).toBe(true);
+    expect(consumeRecoveryCode(db, KEY, userId, first)).toBe(false);
+    expect(consumeRecoveryCode(db, KEY, userId, 'AAAAA-AAAAA')).toBe(false);
+    for (const code of codes.slice(1)) expect(consumeRecoveryCode(db, KEY, userId, code)).toBe(true);
+    expect(storedHashes(userId)).toHaveLength(0);
+  });
+
+  it('replacing recovery codes invalidates the old set', () => {
+    const oldCodes = generateRecoveryCodes();
+    replaceRecoveryCodes(db, KEY, userId, oldCodes);
+    replaceRecoveryCodes(db, KEY, userId, generateRecoveryCodes());
+    expect(storedHashes(userId)).toHaveLength(10);
+    expect(consumeRecoveryCode(db, KEY, userId, oldCodes[0] ?? '')).toBe(false);
+  });
+
+  it("one user's code does not work for another user", () => {
+    const other = insertUser('bob');
+    const codes = generateRecoveryCodes();
+    replaceRecoveryCodes(db, KEY, userId, codes);
+    expect(consumeRecoveryCode(db, KEY, other, codes[0] ?? '')).toBe(false);
+  });
+
+  it('the pepper is created once and is stored encrypted', () => {
+    const first = loadRecoveryPepper(db, KEY);
+    const second = loadRecoveryPepper(db, KEY);
+    expect(first).toHaveLength(32);
+    expect(first.equals(second)).toBe(true);
+    expect(db.prepare('SELECT COUNT(*) AS n FROM server_secrets').get()).toEqual({ n: 1 });
+    const row = db.prepare('SELECT value FROM server_secrets').get() as unknown as { value: Uint8Array };
+    expect(Buffer.from(row.value).includes(first)).toBe(false);
+  });
+
+  it('loading the pepper with the wrong key throws', () => {
+    loadRecoveryPepper(db, KEY);
+    expect(() => loadRecoveryPepper(db, randomBytes(32))).toThrow();
+  });
+
+  it('clearTotp leaves the user off with no recovery codes', () => {
+    startTotpEnrolment(db, KEY, userId);
+    confirmTotpEnrolment(db, userId, 3, new Date().toISOString());
+    replaceRecoveryCodes(db, KEY, userId, generateRecoveryCodes());
+    clearTotp(db, userId);
+    expect(readTotpState(db, null, userId)).toEqual({ status: 'off' });
+    expect(storedHashes(userId)).toHaveLength(0);
+    const row = db
+      .prepare('SELECT totp_secret_iv, totp_enabled_at, totp_last_step FROM users WHERE id = ?')
+      .get(userId) as unknown as Record<string, unknown>;
+    expect(Object.values(row)).toEqual([null, null, null]);
+  });
+
+  it('deleting the user deletes their recovery codes', () => {
+    replaceRecoveryCodes(db, KEY, userId, generateRecoveryCodes());
+    expect(storedHashes(userId)).toHaveLength(10);
+    db.prepare('DELETE FROM users WHERE id = ?').run(userId);
+    expect(db.prepare('SELECT COUNT(*) AS n FROM totp_recovery_codes').get()).toEqual({ n: 0 });
+  });
+});
