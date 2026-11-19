@@ -33,7 +33,7 @@ export type TotpState =
   | { status: 'enabled'; secret: Uint8Array; lastStep: number | null };
 
 /** True only for an enabled state. Login must use this, so a pending (unconfirmed) user is never challenged. */
-export function isTotpEnabled(state: TotpState): boolean {
+export function isTotpEnabled(state: TotpState): state is Extract<TotpState, { status: 'enabled' }> {
   return state.status === 'enabled';
 }
 

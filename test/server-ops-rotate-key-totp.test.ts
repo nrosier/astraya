@@ -127,16 +127,29 @@ describe('rotateEncryptionKey and TOTP storage (#1500)', () => {
     expect(() => consumeRecoveryCode(db, OLD_KEY, alice.id, second)).toThrow();
   });
 
-  it('re-wraps a pending enrolment too, so a user mid-enrolment can still confirm after a rotation', () => {
+  it('re-wraps a pending enrolment, and only the post-rotation IV confirms it', () => {
     const bob = insertUser('bob');
     const secret = startTotpEnrolment(db, OLD_KEY, bob);
+    const before = readTotpState(db, OLD_KEY, bob);
+    if (before.status !== 'pending') throw new Error('expected a pending enrolment');
 
     expect(rotateEncryptionKey(db, OLD_KEY, NEW_KEY)).toMatchObject({ totpSecrets: 1, serverSecrets: 0 });
 
     const state = readTotpState(db, NEW_KEY, bob);
     expect(state.status).toBe('pending');
-    if (state.status === 'off') throw new Error('unreachable');
+    if (state.status !== 'pending') throw new Error('unreachable');
     expect(Buffer.from(state.secret).equals(Buffer.from(secret))).toBe(true);
+
+    // The pre-rotation IV is stale: the compare-and-set refuses it and the user stays pending.
+    expect(confirmTotpEnrolment(db, bob, before.enrolmentIv, 2000, new Date().toISOString())).toBe(false);
+    expect(readTotpState(db, NEW_KEY, bob).status).toBe('pending');
+
+    // The IV read under the new key confirms.
+    expect(confirmTotpEnrolment(db, bob, state.enrolmentIv, 2000, new Date().toISOString())).toBe(true);
+    const confirmed = readTotpState(db, NEW_KEY, bob);
+    expect(confirmed.status).toBe('enabled');
+    if (confirmed.status !== 'enabled') throw new Error('unreachable');
+    expect(confirmed.lastStep).toBe(2000);
   });
 
   it('gives every re-wrapped secret and the pepper a fresh IV', () => {
