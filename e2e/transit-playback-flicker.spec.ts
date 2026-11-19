@@ -242,6 +242,7 @@ test.describe('the slider and Now move the date and the chart (#1440)', () => {
     const slider = page.getByRole('slider');
     const wheel = page.locator('div.chart-wheel');
     const today = localToday();
+    const wheelToday = await wheel.innerHTML();
     const box = await slider.boundingBox();
     if (box === null) throw new Error('slider has no box');
 
@@ -249,6 +250,8 @@ test.describe('the slider and Now move the date and the chart (#1440)', () => {
     await page.mouse.down();
     await page.mouse.up();
     await expect(dateField).not.toHaveValue(today);
+    // Wait for the chart to redraw for the dragged date before reading it; a read taken earlier can still show today's wheel.
+    await expect.poll(() => wheel.innerHTML()).not.toBe(wheelToday);
     const wheelAway = await wheel.innerHTML();
 
     await page.getByRole('button', { name: 'Now', exact: true }).click();
