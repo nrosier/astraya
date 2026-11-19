@@ -1,13 +1,13 @@
 /**
  * @module totp-store
  * @purpose Storage for TOTP two-factor sign-in (#1500, slice 2a): the per-user encrypted secret, the replay-guard step, and single-use recovery codes stored only as peppered HMAC hashes. No route calls it yet.
- * @conventions Fails closed: a stored secret with no key, or one that will not decrypt, throws and is never read as "not enrolled". The secret is AES-256-GCM under a per-user HKDF subkey; the recovery pepper is one random 32-byte value stored encrypted under the key in `server_secrets`. State changes and replay protection are conditional UPDATEs checked by row count, never read-then-write. Key rotation re-wraps the secrets and every `server_secrets` row through `planTotpRotation`, which decrypts everything before `apply` writes anything. Nothing here logs, and no error message carries a secret, code, pepper or key bytes.
+ * @conventions Fails closed: a stored secret with no key, one that will not decrypt or is not `SECRET_BYTES` long, or a row with the secret NULL but any other TOTP column set, throws and is never read as "not enrolled". The secret is AES-256-GCM under a per-user HKDF subkey; the recovery pepper is one random 32-byte value stored encrypted under the key in `server_secrets`. State changes and replay protection are conditional UPDATEs checked by row count, never read-then-write. Key rotation re-wraps the secrets and every `server_secrets` row through `planTotpRotation`, which decrypts everything before `apply` writes anything. Nothing here logs, and no error message carries a secret, code, pepper or key bytes.
  * @exports TotpKeyMissingError, TotpState, deriveTotpSubkey, startTotpEnrolment, confirmTotpEnrolment, readTotpState, recordAcceptedStep, loadRecoveryPepper, generateRecoveryCodes, normaliseRecoveryCode, replaceRecoveryCodes, consumeRecoveryCode, clearTotp, RotationDecrypt, TotpRotationPlan, planTotpRotation
  */
 import { createHmac, hkdfSync, randomBytes, timingSafeEqual } from 'node:crypto';
 import type { Database } from '../db.ts';
 import { decryptPayload, encryptPayload } from '../ops/crypto.ts';
-import { encodeBase32, generateSecret } from './totp.ts';
+import { SECRET_BYTES, encodeBase32, generateSecret } from './totp.ts';
 
 const PEPPER_NAME = 'totp-recovery-pepper';
 const PEPPER_BYTES = 32;
@@ -74,22 +74,39 @@ export function confirmTotpEnrolment(db: Database, userId: string, step: number,
   return Number(result.changes) === 1;
 }
 
-/** Reads and decrypts the user's TOTP state. Throws, never returns 'off', when the key is missing or decryption fails. */
+/**
+ * Reads and decrypts the user's TOTP state. 'off' only when all four TOTP columns are NULL; throws, never returns 'off',
+ * on a partially cleared row, a missing key, a failed decryption or a decrypted secret that is not `SECRET_BYTES` long.
+ * The decrypted buffer is zeroed once copied into the returned state.
+ */
 export function readTotpState(db: Database, key: Buffer | null, userId: string): TotpState {
   const row = db
     .prepare('SELECT totp_secret, totp_secret_iv, totp_enabled_at, totp_last_step FROM users WHERE id = ?')
     .get(userId) as unknown as SecretRow | undefined;
-  if (row === undefined || row.totp_secret === null) return { status: 'off' };
+  if (row === undefined) return { status: 'off' };
+  if (row.totp_secret === null) {
+    // Off only when all four columns are NULL; a partial row fails closed rather than reading as "not enrolled".
+    if (row.totp_secret_iv === null && row.totp_enabled_at === null && row.totp_last_step === null) {
+      return { status: 'off' };
+    }
+    throw new Error('Stored TOTP state is inconsistent.');
+  }
   if (key === null) throw new TotpKeyMissingError();
   if (row.totp_secret_iv === null) throw new Error('Stored TOTP secret has no IV.');
-  const secret = decryptPayload(
+  const plain = decryptPayload(
     Buffer.from(row.totp_secret),
     Buffer.from(row.totp_secret_iv),
     deriveTotpSubkey(key, userId),
   );
+  if (plain.length !== SECRET_BYTES) {
+    plain.fill(0);
+    throw new Error('Stored TOTP secret has the wrong length.');
+  }
+  const secret = new Uint8Array(plain);
+  plain.fill(0);
   return {
     status: row.totp_enabled_at === null ? 'pending' : 'enabled',
-    secret: new Uint8Array(secret),
+    secret,
     lastStep: row.totp_last_step === null ? null : Number(row.totp_last_step),
   };
 }
