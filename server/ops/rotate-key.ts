@@ -1,6 +1,6 @@
 /**
- * Re-encrypt every stored operation and every saved interpretation result under a new
- * `ASTRAYA_ENCRYPTION_KEY` (#340, #1680).
+ * Re-encrypt every stored operation, every saved interpretation result, every TOTP secret and
+ * the TOTP recovery-code pepper under a new `ASTRAYA_ENCRYPTION_KEY` (#340, #1680, #1500).
  *
  *   ASTRAYA_DB_PATH=./data/astraya.db \
  *   ASTRAYA_ENCRYPTION_KEY=<the key in use now> \
@@ -23,11 +23,12 @@
 
 /**
  * @module rotate-key
- * @purpose Operator CLI script to re-encrypt everything stored under `ASTRAYA_ENCRYPTION_KEY` (every `ops` row, and every saved interpretation result's sections and label, #1680) under a replacement key, the remediation path for a leaked key.
- * @conventions Not exposed as an admin HTTP route on purpose — it holds both the old and new key and rewrites every row, which belongs to an operator with shell/container access, not a session cookie. Rotates the key material only, never `CURRENT_KEY_VERSION` (the encryption scheme itself, AES-256-GCM, is unchanged); re-encryption of both tables runs in one transaction, failing before writing anything if any row (an op, a result's sections or its label) does not decrypt under the stated current key, so a wrong key never produces a half-rotated database. Every re-encrypted value gets a fresh IV.
+ * @purpose Operator CLI script to re-encrypt everything stored under `ASTRAYA_ENCRYPTION_KEY` (every `ops` row, every saved interpretation result's sections and label, #1680, and every TOTP secret plus the `server_secrets` recovery-code pepper, #1500) under a replacement key, the remediation path for a leaked key.
+ * @conventions Not exposed as an admin HTTP route on purpose — it holds both the old and new key and rewrites every row, which belongs to an operator with shell/container access, not a session cookie. Rotates the key material only, never `CURRENT_KEY_VERSION` (the encryption scheme itself, AES-256-GCM, is unchanged); re-encryption of every table runs in one transaction, failing before writing anything if any row (an op, a result's sections or its label, a TOTP secret under its per-user subkey, a server secret) does not decrypt under the stated current key, so a wrong key never produces a half-rotated database. Every re-encrypted value gets a fresh IV.
  * @exports RotationResult, rotateEncryptionKey
  */
 import { resolve } from 'node:path';
+import { planTotpRotation } from '../auth/totp-store.ts';
 import { openDatabase, type Database } from '../db.ts';
 import { decryptPayload, encryptPayload } from './crypto.ts';
 
@@ -52,6 +53,10 @@ export interface RotationResult {
   readonly plaintext: number;
   /** Saved interpretation results re-encrypted (#1680): their sections, and their label when they have one. */
   readonly interpretationResults: number;
+  /** Users whose TOTP secret (#1500) was re-wrapped under their per-user subkey of the new key. */
+  readonly totpSecrets: number;
+  /** `server_secrets` rows (the TOTP recovery-code pepper, #1500) re-wrapped under the new key. */
+  readonly serverSecrets: number;
 }
 
 /** Decrypts under the current key, or throws naming the row, before anything has been written. */
@@ -96,7 +101,7 @@ export function rotateEncryptionKey(db: Database, currentKey: Buffer, newKey: Bu
   }
 }
 
-/** Reads, decrypts and re-encrypts both tables inside the caller's transaction; throws before any write on a wrong key. */
+/** Reads, decrypts and re-encrypts every table inside the caller's transaction; throws before any write on a wrong key. */
 function reEncryptAll(db: Database, currentKey: Buffer, newKey: Buffer): RotationResult {
   const rows = db.prepare('SELECT seq, payload, iv FROM ops ORDER BY seq').all() as unknown as EncryptedRow[];
 
@@ -149,14 +154,25 @@ function reEncryptAll(db: Database, currentKey: Buffer, newKey: Buffer): Rotatio
     });
   }
 
+  // TOTP secrets and the recovery-code pepper (#1500): without these a rotation locks every enrolled user out and
+  // leaves the secrets wrapped under the old, possibly leaked, key. Decrypted here, written only below.
+  const totp = planTotpRotation(db, currentKey, newKey, decryptForRotation);
+
   const update = db.prepare('UPDATE ops SET payload = ?, iv = ? WHERE seq = ?');
   const updateResult = db.prepare(
     'UPDATE interpretation_results SET sections_json = ?, iv = ?, description_json = ?, description_iv = ? WHERE id = ?',
   );
   for (const row of reEncrypted) update.run(row.payload, row.iv, row.seq);
   for (const row of reResults) updateResult.run(row.sections, row.iv, row.description, row.descriptionIv, row.id);
+  totp.apply();
 
-  return { rotated: reEncrypted.length, plaintext, interpretationResults: reResults.length };
+  return {
+    rotated: reEncrypted.length,
+    plaintext,
+    interpretationResults: reResults.length,
+    totpSecrets: totp.totpSecrets,
+    serverSecrets: totp.serverSecrets,
+  };
 }
 
 function requireKey(name: string): Buffer {
@@ -178,9 +194,14 @@ if (isEntryPoint) {
   const dbPath = process.env.ASTRAYA_DB_PATH ?? resolve(import.meta.dirname, '..', '..', 'data', 'astraya.db');
   const db = openDatabase(dbPath);
   try {
-    const { rotated, plaintext, interpretationResults } = rotateEncryptionKey(db, currentKey, newKey);
+    const { rotated, plaintext, interpretationResults, totpSecrets, serverSecrets } = rotateEncryptionKey(
+      db,
+      currentKey,
+      newKey,
+    );
     console.log(
-      `Re-encrypted ${String(rotated)} operation row(s) and ${String(interpretationResults)} saved interpretation result(s) under the new key` +
+      `Re-encrypted ${String(rotated)} operation row(s), ${String(interpretationResults)} saved interpretation result(s), ` +
+        `${String(totpSecrets)} TOTP secret(s) and ${String(serverSecrets)} server secret(s) under the new key` +
         (plaintext > 0 ? `; left ${String(plaintext)} pre-encryption row(s) untouched` : '') +
         '. Set ASTRAYA_ENCRYPTION_KEY to the new key and restart the server.',
     );
