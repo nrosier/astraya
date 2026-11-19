@@ -8,7 +8,7 @@
  * written" is the only acceptable outcome of a wrong current key.
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomBytes, randomUUID } from 'node:crypto';
@@ -260,6 +260,50 @@ describe('rotateEncryptionKey transaction guarantees (#1680 review)', () => {
       db.exec('BEGIN IMMEDIATE');
     }).not.toThrow();
     db.exec('ROLLBACK');
+  });
+
+  it('still reports the original error when the failure already ended the transaction (RAISE(ROLLBACK))', () => {
+    insertOp(OLD_KEY, '{"field":"one"}');
+    saveInterpretationResult(
+      db,
+      { userId, mode: 'grounded', locale: 'en', sections: [{ heading: 'Overview', body: 'Text.' }] },
+      OLD_KEY,
+    );
+    db.exec(
+      "CREATE TRIGGER rollback_result_update BEFORE UPDATE ON interpretation_results BEGIN SELECT RAISE(ROLLBACK, 'forced'); END",
+    );
+    try {
+      expect(() => rotateEncryptionKey(db, OLD_KEY, NEW_KEY)).toThrow(/forced/);
+    } finally {
+      db.exec('DROP TRIGGER rollback_result_update');
+    }
+    expect(db.isTransaction).toBe(false);
+  });
+
+  it('leaves no old-key ciphertext in the database file or the WAL after rotation', () => {
+    for (let i = 0; i < 20; i += 1) insertOp(OLD_KEY, `{"field":"row-${String(i)}","pad":"${'x'.repeat(200)}"}`);
+    saveInterpretationResult(
+      db,
+      { userId, mode: 'grounded', locale: 'en', sections: [{ heading: 'Overview', body: 'Text.' }] },
+      OLD_KEY,
+    );
+    const oldCiphertexts = [
+      ...(db.prepare('SELECT payload FROM ops').all() as unknown as { payload: Buffer }[]).map((r) => r.payload),
+      ...(
+        db.prepare('SELECT sections_json FROM interpretation_results').all() as unknown as { sections_json: Buffer }[]
+      ).map((r) => r.sections_json),
+    ];
+    const files = [join(dir, 'astraya.db'), join(dir, 'astraya.db-wal')];
+    const residue = (): number => {
+      const bytes = files.filter((f) => existsSync(f)).map((f) => readFileSync(f));
+      return oldCiphertexts.filter((ct) => bytes.some((b) => b.includes(ct))).length;
+    };
+    // Sanity: the old ciphertext really is on disk before rotating, so the assertion below can fail.
+    expect(residue()).toBe(oldCiphertexts.length);
+
+    rotateEncryptionKey(db, OLD_KEY, NEW_KEY);
+
+    expect(residue()).toBe(0);
   });
 
   it('takes the write lock before reading: a held lock fails rotation as a lock error, not as a decrypt error', () => {

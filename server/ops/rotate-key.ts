@@ -16,7 +16,13 @@
  * per-row IV is still the scheme afterwards — bumping it would claim a format change that
  * did not happen, and would make a future real scheme change unable to tell the two apart.
  *
- * Stop the server before rotating. The script locks the database for the rotation, but a
+ * **Old-key ciphertext in backups is not cleared.** Rotation sets `secure_delete`, and after the
+ * commit it checkpoints the WAL and runs `VACUUM`, so the database file and its WAL no longer hold
+ * the superseded ciphertext (#1680). Any backup or copy of the database taken before rotation, and
+ * any filesystem snapshot, still holds it and is still readable with the old key: treat those as
+ * exposed and destroy them if the leak matters.
+ *
+ * The server must be stopped before rotating. The script locks the database for the rotation, but a
  * server still running on the old key can write rows under it once the lock is released
  * (between COMMIT and restart), leaving rows no key decrypts together. Not exposed as an admin route on purpose: it holds both
  * keys and rewrites every row, which is an operator action with shell access, not something
@@ -87,19 +93,49 @@ function decryptForRotation(what: string, ciphertext: Buffer, iv: Buffer, curren
 export function rotateEncryptionKey(db: Database, currentKey: Buffer, newKey: Buffer): RotationResult {
   // IMMEDIATE takes the write lock before the first read (#1680 review): a server still running on this file
   // cannot save a row under the old key between the reads and the commit, which would leave a mix of keys.
+  // secure_delete zeroes the pages the UPDATEs free, so old ciphertext is not left behind in the file (#1680).
+  db.exec('PRAGMA secure_delete = ON');
   db.exec('BEGIN IMMEDIATE');
+  let result: RotationResult;
   try {
-    const result = reEncryptAll(db, currentKey, newKey);
+    result = reEncryptAll(db, currentKey, newKey);
     db.exec('COMMIT');
-    return result;
   } catch (error) {
     try {
       db.exec('ROLLBACK');
-    } catch {
-      // SQLite may already have rolled back, or the rollback itself failed: either way the
-      // original error is the one the operator needs, so it must not be replaced by this one.
+    } catch (rollbackError) {
+      // SQLite may already have rolled back (RAISE(ROLLBACK)), and then the original error is the one
+      // the operator needs. If a transaction is still open the rollback genuinely failed: report both.
+      if (db.isTransaction) {
+        throw new AggregateError(
+          [error, rollbackError],
+          'Key rotation failed and the rollback also failed; the connection is still in a transaction.',
+          { cause: rollbackError },
+        );
+      }
     }
     throw error;
+  }
+  clearResidue(db);
+  return result;
+}
+
+/**
+ * After COMMIT, folds the WAL into the main file and rebuilds that file so superseded ciphertext is gone from
+ * both (#1680). VACUUM itself writes through the WAL in WAL mode, so a second checkpoint follows it. The
+ * rotation is already committed here; a failure is reported as such so the operator does not re-run it.
+ */
+function clearResidue(db: Database): void {
+  try {
+    db.exec('PRAGMA wal_checkpoint(TRUNCATE)');
+    db.exec('VACUUM');
+    db.exec('PRAGMA wal_checkpoint(TRUNCATE)');
+  } catch (error) {
+    throw new Error(
+      'The rotation was committed, but clearing old-key ciphertext from the database file and WAL failed. ' +
+        'Do not rotate again; stop the server and run VACUUM on the database by hand.',
+      { cause: error },
+    );
   }
 }
 
@@ -189,7 +225,8 @@ if (isEntryPoint) {
     console.log(
       `Re-encrypted ${String(rotated)} operation row(s) and ${String(interpretationResults)} saved interpretation result(s) under the new key` +
         (plaintext > 0 ? `; left ${String(plaintext)} pre-encryption row(s) untouched` : '') +
-        '. Set ASTRAYA_ENCRYPTION_KEY to the new key and restart the server.',
+        '. Set ASTRAYA_ENCRYPTION_KEY to the new key and restart the server (it must have been stopped for the rotation).' +
+        ' Old-key ciphertext was cleared from the database file and WAL, but any backup or copy made before rotation still holds it and is readable with the old key.',
     );
   } finally {
     db.close();
