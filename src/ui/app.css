@@ -3848,6 +3848,99 @@ button.app-nav-search.primitive-button-circle {
     width: var(--rail-target-size);
     padding: 0;
   }
+
+  /* Compact brand, person switcher and account tile while collapsed (#1747). Each is still one click away:
+     the brand links home, the switcher opens its popup, the tile opens the account popover. The brand shows
+     the app's initial; the switcher draws the person's monogram from `data-monogram`. Their real text stays
+     in the DOM at font-size 0, so the accessible name is unchanged. */
+  .workspace-shell-collapsed .app-header-start {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .workspace-shell-collapsed .app-header-brand,
+  .workspace-shell-collapsed .app-nav-person {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: var(--rail-target-size);
+    height: var(--rail-target-size);
+    min-height: 0;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-full);
+    font-size: 0;
+  }
+
+  .workspace-shell-collapsed .app-header-brand::before {
+    content: 'A';
+  }
+
+  .workspace-shell-collapsed .app-nav-person::before {
+    content: attr(data-monogram);
+  }
+
+  .workspace-shell-collapsed .app-header-brand::before,
+  .workspace-shell-collapsed .app-nav-person::before {
+    font-size: var(--text-base);
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .workspace-shell-collapsed .app-nav-person {
+    background: var(--surface);
+  }
+
+  .workspace-shell-collapsed .app-header-status,
+  .workspace-shell-collapsed .profile-tile-name,
+  .workspace-shell-collapsed .profile-tile-role {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  .workspace-shell-collapsed .app-header-end {
+    justify-content: center;
+  }
+
+  /* The account tile: the avatar with its sync dot (`SyncBadge`) above a 36px circle that opens the account popover. */
+  .workspace-shell-collapsed .profile {
+    flex-direction: column;
+    align-items: center;
+    width: auto;
+  }
+
+  .workspace-shell-collapsed .profile-tile,
+  .workspace-shell-collapsed .profile-tile-menu {
+    flex: 0 0 auto;
+    justify-content: center;
+    box-sizing: border-box;
+    width: var(--rail-target-size);
+    height: var(--rail-target-size);
+    min-height: 0;
+    padding: 0;
+    border-radius: var(--radius-full);
+  }
+
+  .workspace-shell-collapsed .profile-tile-kebab {
+    margin-left: 0;
+  }
+
+  .workspace-shell-collapsed .profile-tile-guest {
+    display: none;
+  }
+
+  /* The version and About links do not fit an icon column; they return when the rail is expanded. */
+  .workspace-shell-collapsed .sidebar-footer {
+    display: none;
+  }
 }
 
 /* Report tab (#62): named sections of paragraphs, with an optional per-paragraph provenance line. */
