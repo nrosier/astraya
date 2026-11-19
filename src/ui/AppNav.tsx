@@ -35,7 +35,7 @@
  * @conventions No sub-menus for sections: sub-views are tabs on the page (SectionNav). The person switcher keeps one `useExclusiveOpen`; folds behind a Menu button below 1024px; text comes from co-located `AppNav.messages.ts` via `useMessages()`.
  * @exports AppNav
  */
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { appNavMessages } from './AppNav.messages.js';
 import { useMessages } from './messages.js';
@@ -257,7 +257,8 @@ const LazyCommandPalette = lazy(() =>
  * The search trigger (#1654, moved to the workspace utility row by #1769): on a wide screen it sits alone in the
  * workspace's slim top-right utility row, above every page header, at the same coordinates on every route, whether or
  * not the page has a header (`WorkspaceShell.tsx`, portalled through `workspace-utility-slot.tsx`), so the sidebar holds no search.
- * At 40rem and below it is an icon-only circle beside the Menu button. It opens the command palette, and Ctrl+K or Cmd+K opens it from anywhere outside a text field.
+ * It is the same icon-only circle at every width (#1769), with a CSS tooltip naming the shortcut. At 40rem and below it sits beside the Menu button.
+ * It opens the command palette, and Ctrl+K or Cmd+K opens it from anywhere outside a text field.
  * The shortcut only calls `preventDefault` on its own key, so other keydown handlers still receive it.
  * The palette loads on its first open and stays mounted after that, hidden while closed, so `StagedDialog`
  * can return focus here when it closes (#1654). Unmounting on close would run that focus return too late.
@@ -267,7 +268,10 @@ function PaletteTrigger(): React.JSX.Element {
   const [paletteLoaded, setPaletteLoaded] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  // At 40rem and below the trigger is the icon-only circle (#1650 shape), so it takes the shared circle class.
+  // The tooltip names the shortcut and is linked to the trigger; Escape hides it until the pointer leaves or focus moves (#1769).
+  const tooltipId = useId();
+  const [tipDismissed, setTipDismissed] = useState(false);
+  // The narrow and wide triggers are the same icon-only circle, so the trigger keeps its place at every width (#1769).
   const narrow = useNarrowViewport();
   // The workspace's top-right utility row, where the desktop trigger renders (#1769); null when no shell is mounted.
   const utilityRow = useWorkspaceUtilityTarget();
@@ -295,24 +299,40 @@ function PaletteTrigger(): React.JSX.Element {
     };
   }, []);
 
+  const shortcut = isApplePlatform() ? t.shortcutHintApple : t.shortcutHintOther;
   const searchButton = (
-    <Button
-      variant="plain"
-      ref={triggerRef}
-      className={narrow ? 'app-nav-search primitive-button-circle' : 'app-nav-search'}
-      aria-label={`${t.searchPlaceholder} ${isApplePlatform() ? t.shortcutHintApple : t.shortcutHintOther}`}
-      aria-haspopup="dialog"
-      onClick={openPalette}
+    <span
+      className={tipDismissed ? 'app-nav-search-wrap is-tip-dismissed' : 'app-nav-search-wrap'}
+      onPointerLeave={() => {
+        setTipDismissed(false);
+      }}
     >
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <circle cx="11" cy="11" r="7" />
-        <path d="M20 20l-3.5-3.5" />
-      </svg>
-      <span className="app-nav-search-text">{t.searchPlaceholder}</span>
-      <kbd className="app-nav-search-hint" aria-hidden="true">
-        {isApplePlatform() ? t.shortcutHintApple : t.shortcutHintOther}
-      </kbd>
-    </Button>
+      <Button
+        variant="plain"
+        ref={triggerRef}
+        className="app-nav-search primitive-button-circle"
+        aria-label={t.searchLabel}
+        aria-haspopup="dialog"
+        aria-describedby={tooltipId}
+        onClick={openPalette}
+        onKeyDown={(event) => {
+          // Escape hides the tooltip until the pointer leaves or focus moves on (#1769).
+          if (event.key === 'Escape') setTipDismissed(true);
+        }}
+        onBlur={() => {
+          setTipDismissed(false);
+        }}
+      >
+        {/* Search icon geometry from Lucide (lucide.dev), ISC licence; inlined, no dependency (#1769). */}
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.34-4.34" />
+        </svg>
+      </Button>
+      <span role="tooltip" id={tooltipId} className="app-nav-search-tip">
+        {t.searchTooltip(shortcut)}
+      </span>
+    </span>
   );
   const palette = paletteLoaded && (
     <Suspense fallback={null}>

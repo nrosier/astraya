@@ -3166,49 +3166,47 @@ label.stacked {
   gap: 0.15rem;
 }
 
-/* The command palette trigger (#1654): a pill at the standard 2.75rem on a wide screen, and an icon-only
-   circle beside the Menu button at 390px. Pill and circle use `--radius-full`, as the guidelines set. */
-.app-nav-search {
-  /* It may shrink to fit the header, but never below a 2.75rem pill: the placeholder truncates first (#1073). */
-  flex: 0 1 auto;
+/* The command palette trigger (#1654, #1769): one icon-only circle at the standard control height on every width.
+   On a wide screen it sits in the workspace utility row; at 40rem and below it sits beside the Menu button. */
+.app-nav-search-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.app-nav-search,
+button.app-nav-search.primitive-button-circle {
+  flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  min-width: 2.75rem;
-  height: 2.75rem;
-  padding: 0 var(--space-3) 0 var(--space-3);
+  justify-content: center;
+  width: var(--control-height);
+  height: var(--control-height);
+  min-width: var(--control-height);
+  min-height: var(--control-height);
+  aspect-ratio: 1;
+  padding: 0;
   border: 1px solid var(--line);
   border-radius: var(--radius-full);
   background: var(--surface);
   color: var(--muted);
   font: inherit;
-  font-size: var(--text-sm);
   cursor: pointer;
+}
+
+.app-nav-search:hover {
+  background: var(--surface-hover);
+  box-shadow: var(--shadow-popover);
 }
 
 .app-nav-search svg {
   flex: 0 0 auto;
-  width: 1rem;
-  height: 1rem;
+  width: 1.125rem;
+  height: 1.125rem;
   fill: none;
   stroke: currentcolor;
   stroke-width: 2;
   stroke-linecap: round;
-}
-
-.app-nav-search-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.app-nav-search-hint {
-  flex: 0 0 auto;
-  padding: 0 var(--space-2);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-full);
-  font: inherit;
-  font-size: var(--text-xs);
+  stroke-linejoin: round;
 }
 
 .app-nav-search:focus-visible {
@@ -3216,16 +3214,39 @@ label.stacked {
   outline-offset: 2px;
 }
 
-@media (max-width: 40rem) {
-  /* Icon only. The circle's size, padding and radius come from `.primitive-button-circle` (#1650), set on the trigger in AppNav.tsx. */
-  .app-nav-search {
-    flex: 0 0 auto;
-    justify-content: center;
-  }
+/* The tooltip sits below the circle, right-aligned to it. It shows on hover and on keyboard focus. */
+.app-nav-search-tip {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  z-index: 10;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  box-shadow: var(--shadow-popover);
+  color: var(--fg);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+}
 
-  .app-nav-search-text,
-  .app-nav-search-hint {
-    display: none;
+.app-nav-search-wrap:hover > .app-nav-search-tip,
+.app-nav-search-wrap:focus-within > .app-nav-search-tip {
+  opacity: 1;
+  visibility: visible;
+}
+
+.app-nav-search-wrap.is-tip-dismissed > .app-nav-search-tip {
+  opacity: 0;
+  visibility: hidden;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .app-nav-search-tip {
+    transition: opacity 120ms ease;
   }
 }
 
