@@ -65,6 +65,8 @@ async function giveEinsteinOneEvent(page: Page): Promise<string> {
 async function openTiming(page: Page, personId: string, hash: string): Promise<void> {
   await page.goto(`${baseUrl}/#/people/${personId}/${hash}`);
   await page.locator('.life-event-picker select').first().waitFor({ state: 'visible' });
+  // Export renders alongside the picker; wait for it so the header measurement does not race the page.
+  await page.locator('.page-header-actions .page-header-export-toggle').waitFor({ state: 'visible' });
 }
 
 interface Edges {
