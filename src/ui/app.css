@@ -10112,6 +10112,44 @@ a.quiet,
   gap: var(--space-2);
 }
 
+/* In a page header (#1770) the picker has no visible label, so its select sits on the row's centre line with Export. */
+.life-event-picker--header {
+  align-self: center;
+  gap: 0;
+}
+
+/* A header row that holds the picker (#1770) centres its controls and gives the select and Export the same height and
+   pill ends. Scoped to rows with the picker, so other headers keep the compact Export toggle (#1013, #817). */
+.page-header-actions:has(> .life-event-picker--header) {
+  align-items: center;
+}
+
+.page-header-actions:has(> .life-event-picker--header) .life-event-picker select,
+.page-header-actions:has(> .life-event-picker--header) .page-header-export-toggle {
+  min-height: var(--control-height);
+  height: var(--control-height);
+  border-radius: var(--radius-full);
+}
+
+/* A popover opened from a button (#1770): anchored in flow beside its trigger, styled like the Export menu. */
+.primitive-popover {
+  position: relative;
+  display: inline-flex;
+}
+
+.primitive-popover-panel {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 25;
+  min-width: 14rem;
+  padding: var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-popover);
+}
+
 .life-event-picker-filter {
   display: flex;
   flex-wrap: wrap;
