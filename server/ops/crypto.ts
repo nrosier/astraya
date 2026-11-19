@@ -14,7 +14,7 @@
 /**
  * @module crypto
  * @purpose At-rest encryption primitives for `ops.payload` (and, reused elsewhere, `interpretation_results`): whole-payload AES-256-GCM encrypt/decrypt plus `ASTRAYA_ENCRYPTION_KEY` loading.
- * @conventions The server never interprets an operation's contents (ADR 0002), so the entire opaque payload blob is encrypted as one unit rather than per-field; AES-256-GCM is authenticated, so `decryptPayload` throws loudly on a tampered or corrupted row instead of returning silently-wrong bytes; a missing `ASTRAYA_ENCRYPTION_KEY` disables the sync relay (`loadEncryptionKey` returns `null`) rather than failing server boot, but a present key of the wrong length throws immediately as a deployment mistake.
+ * @conventions The server never interprets an operation's contents (ADR 0002), so the entire opaque payload blob is encrypted as one unit rather than per-field; AES-256-GCM is authenticated, so `decryptPayload` throws loudly on a tampered or corrupted row instead of returning silently-wrong bytes, and zeroes its intermediate plaintext chunks in a `finally` while leaving the returned buffer to the caller; a missing `ASTRAYA_ENCRYPTION_KEY` disables the sync relay (`loadEncryptionKey` returns `null`) rather than failing server boot, but a present key of the wrong length throws immediately as a deployment mistake.
  * @exports CURRENT_KEY_VERSION, EncryptedPayload, encryptPayload, decryptPayload, loadEncryptionKey
  */
 import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
@@ -48,7 +48,8 @@ export function encryptPayload(plaintext: Buffer, key: Buffer): EncryptedPayload
 /**
  * Throws on a tampered or corrupted row — GCM's tag check fails closed, so this
  * never returns a silently-wrong buffer (#92's "decryption failure is a hard
- * error, never a silent empty value").
+ * error, never a silent empty value"). The returned buffer is the caller's own
+ * copy; the intermediate plaintext chunks are zeroed before this returns or throws.
  */
 export function decryptPayload(ciphertextWithTag: Buffer, iv: Buffer, key: Buffer): Buffer {
   if (ciphertextWithTag.length < AUTH_TAG_BYTES) {
@@ -57,7 +58,23 @@ export function decryptPayload(ciphertextWithTag: Buffer, iv: Buffer, key: Buffe
   const boundary = ciphertextWithTag.length - AUTH_TAG_BYTES;
   const decipher = createDecipheriv(ALGORITHM, key, iv);
   decipher.setAuthTag(ciphertextWithTag.subarray(boundary));
-  return Buffer.concat([decipher.update(ciphertextWithTag.subarray(0, boundary)), decipher.final()]);
+  // `update` and `final` each return a plaintext chunk of their own. They are copied
+  // into one dedicated, unpooled buffer for the caller, then zeroed on success and on
+  // failure. On a failed tag check, `update` has already produced unauthenticated
+  // plaintext, so the `finally` matters for the throwing path too (#1782).
+  const chunks: Buffer[] = [];
+  try {
+    chunks.push(decipher.update(ciphertextWithTag.subarray(0, boundary)));
+    chunks.push(decipher.final());
+    let total = 0;
+    for (const chunk of chunks) total += chunk.length;
+    const plaintext = Buffer.alloc(total);
+    let offset = 0;
+    for (const chunk of chunks) offset += chunk.copy(plaintext, offset);
+    return plaintext;
+  } finally {
+    for (const chunk of chunks) chunk.fill(0);
+  }
 }
 
 /**
