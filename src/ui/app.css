@@ -3661,9 +3661,9 @@ button.app-nav-search.primitive-button-circle {
   }
 
   .app-nav-person {
-    box-sizing: border-box;
     max-width: none;
     min-width: 0;
+    box-sizing: border-box;
     height: var(--rail-target-size);
     margin: 0 0 var(--space-2);
     padding: 0 var(--space-2) 0 0;
