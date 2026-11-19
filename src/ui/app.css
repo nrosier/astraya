@@ -8061,11 +8061,6 @@ button.primitive-button-form-action {
   order: 30;
 }
 
-/* The palette trigger (#1654) ends the row on a wide screen, after Export and the PDF link: the top-right element of the page. */
-.page-header-actions > .app-nav-search {
-  order: 40;
-}
-
 .page-header-actions .primitive-field,
 .page-header-actions .primitive-choice-field {
   margin-bottom: 0;
