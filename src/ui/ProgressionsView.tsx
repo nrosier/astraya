@@ -318,6 +318,7 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
         {/* The life-event picker and Export sit in the heading row, to the right (#1235, owner review 2026-11-07); the date, stepping and Now are in the bar below (#1400). */}
         <LifeEventPicker
           events={person.lifeEvents}
+          inHeader
           onPick={(event) => {
             setAsOf(event.date);
           }}
