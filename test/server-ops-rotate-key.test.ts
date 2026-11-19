@@ -71,7 +71,13 @@ describe('rotateEncryptionKey', () => {
   it('makes every row readable under the new key and unreadable under the old one', () => {
     const written = [insertOp(OLD_KEY, '{"field":"one"}'), insertOp(OLD_KEY, '{"field":"two"}')];
 
-    expect(rotateEncryptionKey(db, OLD_KEY, NEW_KEY)).toEqual({ rotated: 2, plaintext: 0, interpretationResults: 0 });
+    expect(rotateEncryptionKey(db, OLD_KEY, NEW_KEY)).toEqual({
+      rotated: 2,
+      plaintext: 0,
+      interpretationResults: 0,
+      totpSecrets: 0,
+      serverSecrets: 0,
+    });
 
     expect(payloads(NEW_KEY)).toEqual(written);
     // The reason rotation is a remediation at all: the leaked key stops working.
@@ -106,7 +112,13 @@ describe('rotateEncryptionKey', () => {
   });
 
   it('is a no-op on an empty log', () => {
-    expect(rotateEncryptionKey(db, OLD_KEY, NEW_KEY)).toEqual({ rotated: 0, plaintext: 0, interpretationResults: 0 });
+    expect(rotateEncryptionKey(db, OLD_KEY, NEW_KEY)).toEqual({
+      rotated: 0,
+      plaintext: 0,
+      interpretationResults: 0,
+      totpSecrets: 0,
+      serverSecrets: 0,
+    });
   });
 
   it('leaves pre-encryption rows alone rather than failing on them', () => {
@@ -119,7 +131,13 @@ describe('rotateEncryptionKey', () => {
     ).run(userId, stamped.hlc, clock.nodeId, 1, Buffer.from('{}', 'utf8'), new Date().toISOString());
     insertOp(OLD_KEY, '{"field":"one"}');
 
-    expect(rotateEncryptionKey(db, OLD_KEY, NEW_KEY)).toEqual({ rotated: 1, plaintext: 1, interpretationResults: 0 });
+    expect(rotateEncryptionKey(db, OLD_KEY, NEW_KEY)).toEqual({
+      rotated: 1,
+      plaintext: 1,
+      interpretationResults: 0,
+      totpSecrets: 0,
+      serverSecrets: 0,
+    });
   });
 
   it('writes nothing at all when the current key is wrong', () => {
@@ -165,7 +183,13 @@ describe('rotateEncryptionKey and saved interpretation results (#1680)', () => {
     const labelled = save(OLD_KEY, 'Short and warm');
     const plain = save(OLD_KEY);
 
-    expect(rotateEncryptionKey(db, OLD_KEY, NEW_KEY)).toEqual({ rotated: 1, plaintext: 0, interpretationResults: 2 });
+    expect(rotateEncryptionKey(db, OLD_KEY, NEW_KEY)).toEqual({
+      rotated: 1,
+      plaintext: 0,
+      interpretationResults: 2,
+      totpSecrets: 0,
+      serverSecrets: 0,
+    });
 
     expect(getInterpretationResult(db, userId, labelled, NEW_KEY)?.sections).toEqual(SECTIONS);
     expect(getInterpretationResult(db, userId, plain, NEW_KEY)?.sections).toEqual(SECTIONS);
