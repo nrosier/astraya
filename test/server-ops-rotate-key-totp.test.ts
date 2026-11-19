@@ -47,7 +47,9 @@ function insertUser(username: string): string {
 function enrol(username: string, key: Buffer): { id: string; secret: Uint8Array; codes: string[] } {
   const id = insertUser(username);
   const secret = startTotpEnrolment(db, key, id);
-  expect(confirmTotpEnrolment(db, id, 1000, new Date().toISOString())).toBe(true);
+  const pending = readTotpState(db, key, id);
+  if (pending.status !== 'pending') throw new Error('expected a pending enrolment');
+  expect(confirmTotpEnrolment(db, id, pending.enrolmentIv, 1000, new Date().toISOString())).toBe(true);
   const codes = generateRecoveryCodes();
   replaceRecoveryCodes(db, key, id, codes);
   return { id, secret, codes };
@@ -103,7 +105,7 @@ describe('rotateEncryptionKey and TOTP storage (#1500)', () => {
 
     const state = readTotpState(db, NEW_KEY, alice.id);
     expect(state.status).toBe('enabled');
-    if (state.status === 'off') throw new Error('unreachable');
+    if (state.status !== 'enabled') throw new Error('unreachable');
     expect(Buffer.from(state.secret).equals(Buffer.from(alice.secret))).toBe(true);
     // Enabled state and the replay guard are not touched by rotation.
     expect(state.lastStep).toBe(1000);

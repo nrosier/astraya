@@ -2,7 +2,7 @@
  * @module totp-store
  * @purpose Storage for TOTP two-factor sign-in (#1500, slice 2a): the per-user encrypted secret, the replay-guard step, and single-use recovery codes stored only as peppered HMAC hashes. No route calls it yet.
  * @conventions Fails closed: a stored secret with no key, one that will not decrypt or is not `SECRET_BYTES` long, or a row with the secret NULL but any other TOTP column set, throws and is never read as "not enrolled". The secret is AES-256-GCM under a per-user HKDF subkey; the recovery pepper is one random 32-byte value stored encrypted under the key in `server_secrets`. State changes and replay protection are conditional UPDATEs checked by row count, never read-then-write. Key rotation re-wraps the secrets and every `server_secrets` row through `planTotpRotation`, which decrypts everything before `apply` writes anything. Nothing here logs, and no error message carries a secret, code, pepper or key bytes.
- * @exports TotpKeyMissingError, TotpState, deriveTotpSubkey, startTotpEnrolment, confirmTotpEnrolment, readTotpState, recordAcceptedStep, loadRecoveryPepper, generateRecoveryCodes, normaliseRecoveryCode, replaceRecoveryCodes, consumeRecoveryCode, clearTotp, RotationDecrypt, TotpRotationPlan, planTotpRotation
+ * @exports TotpKeyMissingError, TotpState, isTotpEnabled, deriveTotpSubkey, startTotpEnrolment, confirmTotpEnrolment, readTotpState, recordAcceptedStep, loadRecoveryPepper, generateRecoveryCodes, normaliseRecoveryCode, replaceRecoveryCodes, consumeRecoveryCode, clearTotp, RotationDecrypt, TotpRotationPlan, planTotpRotation
  */
 import { createHmac, hkdfSync, randomBytes, timingSafeEqual } from 'node:crypto';
 import type { Database } from '../db.ts';
@@ -22,8 +22,20 @@ export class TotpKeyMissingError extends Error {
   }
 }
 
+/**
+ * Pending and enabled are different shapes so one cannot be mistaken for the other: a pending state carries the IV of
+ * the stored secret (`enrolmentIv`, the token `confirmTotpEnrolment` compares against) and no replay step; an enabled
+ * state carries `lastStep`. Use `isTotpEnabled` for any sign-in check.
+ */
 export type TotpState =
-  { status: 'off' } | { status: 'pending' | 'enabled'; secret: Uint8Array; lastStep: number | null };
+  | { status: 'off' }
+  | { status: 'pending'; secret: Uint8Array; enrolmentIv: Uint8Array }
+  | { status: 'enabled'; secret: Uint8Array; lastStep: number | null };
+
+/** True only for an enabled state. Login must use this, so a pending (unconfirmed) user is never challenged. */
+export function isTotpEnabled(state: TotpState): boolean {
+  return state.status === 'enabled';
+}
 
 interface SecretRow {
   readonly totp_secret: Uint8Array | null;
@@ -64,13 +76,23 @@ export function startTotpEnrolment(db: Database, key: Buffer, userId: string): U
   return bytes;
 }
 
-/** Moves a pending enrolment to enabled and records the matched step. False when there is nothing pending. */
-export function confirmTotpEnrolment(db: Database, userId: string, step: number, now: string): boolean {
+/**
+ * Moves a pending enrolment to enabled and records the matched step, as a compare-and-set on the secret that was
+ * verified: `enrolmentIv` is the pending state's IV, so a later start (another tab) that replaced the secret cannot be
+ * confirmed with the earlier code. False, never a throw, when the row count is 0 (nothing pending, or a different IV).
+ */
+export function confirmTotpEnrolment(
+  db: Database,
+  userId: string,
+  enrolmentIv: Uint8Array,
+  step: number,
+  now: string,
+): boolean {
   const result = db
     .prepare(
-      'UPDATE users SET totp_enabled_at = ?, totp_last_step = ? WHERE id = ? AND totp_secret IS NOT NULL AND totp_enabled_at IS NULL',
+      'UPDATE users SET totp_enabled_at = ?, totp_last_step = ? WHERE id = ? AND totp_secret IS NOT NULL AND totp_enabled_at IS NULL AND totp_secret_iv = ?',
     )
-    .run(now, step, userId);
+    .run(now, step, userId, enrolmentIv);
   return Number(result.changes) === 1;
 }
 
@@ -104,11 +126,9 @@ export function readTotpState(db: Database, key: Buffer | null, userId: string):
   }
   const secret = new Uint8Array(plain);
   plain.fill(0);
-  return {
-    status: row.totp_enabled_at === null ? 'pending' : 'enabled',
-    secret,
-    lastStep: row.totp_last_step === null ? null : Number(row.totp_last_step),
-  };
+  if (row.totp_enabled_at === null)
+    return { status: 'pending', secret, enrolmentIv: new Uint8Array(row.totp_secret_iv) };
+  return { status: 'enabled', secret, lastStep: row.totp_last_step === null ? null : Number(row.totp_last_step) };
 }
 
 /** Replay guard: accepts only a step later than the last one, atomically. False means replayed or stale. */
