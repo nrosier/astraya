@@ -5,7 +5,7 @@
  */
 /**
  * @module ui/CommandPalette.messages
- * @purpose English/Dutch strings for the command palette dialog (#1654): search label, placeholder, group headings, no-match and empty states, and pin and unpin labels.
+ * @purpose English/Dutch strings for the command palette dialog (#1654): search label, placeholder, group headings, no-match and empty states, pin and unpin labels, and the keyboard legend (#1769).
  * @conventions Co-located i18n file exporting `{ en, nl }`; `nl` is typed as `typeof en`, so both locales share every key. Functions take the text they need (the query or the result title) so no string is built in the component.
  * @exports commandPaletteMessages
  */
@@ -23,6 +23,9 @@ const en = {
   pin: (title: string): string => `Pin ${title}`,
   unpin: (title: string): string => `Unpin ${title}`,
   close: 'Close search',
+  legend: (shortcut: string): string => `↑↓ navigate · ↵ open · Esc close · ${shortcut} toggle`,
+  shortcutApple: '⌘K',
+  shortcutOther: 'Ctrl+K',
 };
 
 const nl: typeof en = {
@@ -38,6 +41,9 @@ const nl: typeof en = {
   pin: (title: string): string => `${title} vastzetten`,
   unpin: (title: string): string => `${title} losmaken`,
   close: 'Zoeken sluiten',
+  legend: (shortcut: string): string => `↑↓ navigeren · ↵ openen · Esc sluiten · ${shortcut} openen/sluiten`,
+  shortcutApple: '⌘K',
+  shortcutOther: 'Ctrl+K',
 };
 
 export const commandPaletteMessages = { en, nl };
