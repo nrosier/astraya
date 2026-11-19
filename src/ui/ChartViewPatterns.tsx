@@ -101,7 +101,7 @@ export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): 
       align: 'center',
       render: (row) => (row.face ? '✓' : ''),
     },
-    { key: 'points', label: t.dignityPointsLabel, valueOf: (row) => row.points },
+    { key: 'points', label: t.dignityPointsLabel, valueOf: (row) => row.points, align: 'center' },
     {
       key: 'peregrine',
       label: t.peregrineLabel,
@@ -176,7 +176,7 @@ export function almutenCandidateColumns(
       align: 'center',
       render: (row) => (row.fall ? '✓' : ''),
     },
-    { key: 'points', label: t.dignityPointsLabel, valueOf: (row) => row.points },
+    { key: 'points', label: t.dignityPointsLabel, valueOf: (row) => row.points, align: 'center' },
     // Shown, never scored (#1609): mutual reception with the Ascendant's ruler. `null` is the ruler's own row.
     {
       key: 'mutualReception',
@@ -233,7 +233,7 @@ export function conditionColumns(
       valueOf: (row) => row.bodyName,
       render: (row) => bodyDisplayName(row.bodyKey, locale),
     },
-    { key: 'points', label: t.dignityPointsLabel, valueOf: (row) => row.points },
+    { key: 'points', label: t.dignityPointsLabel, valueOf: (row) => row.points, align: 'center' },
     {
       key: 'peregrine',
       label: t.peregrineLabel,
