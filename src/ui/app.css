@@ -3497,6 +3497,30 @@ label.stacked {
   display: none;
 }
 
+/*
+ * The workspace utility row (#1769): a slim row above every page header on wide screens that holds
+ * the global search trigger, so the trigger sits at the same top-right coordinates on every route.
+ * Its inline padding matches `.shell`'s side padding (var(--space-6)) so its right edge lines up with
+ * the page content. It takes its own height (the owner accepted the downward shift, #1769). At 40rem
+ * and below the trigger sits beside Menu in the nav instead, so the row is hidden.
+ */
+.workspace-utility {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  width: 100%;
+  max-width: var(--shell-max-width);
+  margin-inline: auto;
+  padding-inline: var(--space-6);
+  padding-block: var(--space-2) 0;
+}
+
+@media (max-width: 40rem) {
+  .workspace-utility {
+    display: none;
+  }
+}
+
 @media (min-width: 64rem) {
   .workspace-shell {
     display: flex;

@@ -15,12 +15,13 @@
  */
 /**
  * @module ui/WorkspaceShell
- * @purpose Lays out the header as a collapsible left rail beside the current screen's content at >=64rem; narrower viewports keep AppNav.tsx's existing horizontal-bar-with-folding-panel behavior untouched.
+ * @purpose Lays out the header as a collapsible left rail beside the current screen's content at >=64rem; narrower viewports keep AppNav.tsx's existing horizontal-bar-with-folding-panel behavior untouched. Also hosts the workspace utility row (the search trigger, #1769) above the page content.
  * @conventions Pure layout wrapper — never renders navigation content itself; owns the `workspace-rail-setting.ts` collapsed/expanded device preference and nothing else.
  * @exports WorkspaceShell
  */
 import { useMessages } from './messages.js';
 import { useRailCollapsed } from './workspace-rail-setting.js';
+import { useWorkspaceUtilityRef } from './workspace-utility-slot.js';
 import { workspaceShellMessages } from './WorkspaceShell.messages.js';
 
 export function WorkspaceShell({
@@ -48,7 +49,10 @@ export function WorkspaceShell({
       >
         {collapsed ? t.expandGlyph : t.collapseGlyph}
       </button>
-      <div className="workspace-main">{children}</div>
+      <div className="workspace-main">
+        <div className="workspace-utility" ref={useWorkspaceUtilityRef()} />
+        {children}
+      </div>
     </div>
   );
 }
