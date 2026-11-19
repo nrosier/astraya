@@ -52,6 +52,7 @@ import { isApplePlatform } from './platform.js';
 import { useNarrowViewport } from './use-narrow-viewport.js';
 import { useWorkspaceUtilityTarget } from './workspace-utility-slot.js';
 import { Button } from './primitives/Button.js';
+import { isRailIconKey, RailNavItem, type RailIconKey } from './RailNavItem.js';
 
 // Charts is one destination (#511): the chart type is chosen on the page, not in this navigation.
 // 'consultation' (#563) is here too, not in LEADING_KEYS below — it needs a complete birth
@@ -67,22 +68,20 @@ const LEADING_KEYS = new Set(['overview', 'birth-record']);
  */
 function disabledEntry(
   key: string,
+  iconKey: RailIconKey,
   label: string,
-  className: string,
   accessibleName: string,
   hint: string,
 ): React.JSX.Element {
   return (
-    <button
+    <RailNavItem
       key={key}
-      type="button"
-      disabled
-      className={`${className} disabled`}
-      aria-label={accessibleName}
-      title={hint}
-    >
-      {label}
-    </button>
+      kind="disabled"
+      iconKey={iconKey}
+      label={label}
+      accessibleName={accessibleName}
+      hint={hint}
+    />
   );
 }
 
@@ -106,33 +105,35 @@ function PersonTabEntries({
   const active = activePersonTabKey(route);
   const tabsByKey = new Map(PERSON_TABS.map((tab) => [tab.key, tab]));
 
-  function renderTab(tab: PersonTab, className: string): React.JSX.Element {
+  function renderTab(tab: PersonTab): React.JSX.Element {
+    if (!isRailIconKey(tab.key)) throw new Error(`unreachable: ungrouped tab "${tab.key}" has no rail icon`);
+    const iconKey = tab.key;
     const label = t.tabLabels[tab.key];
     if (personId === undefined) {
-      return disabledEntry(tab.key, label, className, t.disabledNoPersonSuffix(label), t.selectPersonFirstHint);
+      return disabledEntry(tab.key, iconKey, label, t.disabledNoPersonSuffix(label), t.selectPersonFirstHint);
     }
     if (!isTabEnabled(tab.key, hasBirthMoment)) {
-      return disabledEntry(tab.key, label, className, t.disabledTabSuffix(label), t.completeBirthRecordHint);
+      return disabledEntry(tab.key, iconKey, label, t.disabledTabSuffix(label), t.completeBirthRecordHint);
     }
     const isActive = tab.key === active;
     return (
-      <a
+      <RailNavItem
         key={tab.key}
+        kind="link"
+        iconKey={iconKey}
+        label={label}
         href={tab.buildHref(personId)}
-        className={isActive ? `${className} active` : className}
-        aria-current={isActive ? 'page' : undefined}
-        onClick={onNavigate}
-      >
-        {label}
-      </a>
+        active={isActive}
+        onNavigate={onNavigate}
+      />
     );
   }
 
   return (
     <>
-      {PERSON_TABS.filter((tab) => LEADING_KEYS.has(tab.key)).map((tab) => renderTab(tab, 'app-nav-item'))}
+      {PERSON_TABS.filter((tab) => LEADING_KEYS.has(tab.key)).map((tab) => renderTab(tab))}
       {PERSON_TABS.filter((tab) => UNGROUPED_KEYS.has(tab.key) && !LEADING_KEYS.has(tab.key)).map((tab) =>
-        renderTab(tab, 'app-nav-item'),
+        renderTab(tab),
       )}
       {PERSON_TAB_FAMILIES.map((family) => {
         const familyLabel = t.familyLabels[family.key];
@@ -143,8 +144,8 @@ function PersonTabEntries({
         if (personId === undefined) {
           return disabledEntry(
             family.key,
+            family.key,
             familyLabel,
-            'app-nav-item',
             t.disabledNoPersonSuffix(familyLabel),
             t.selectPersonFirstHint,
           );
@@ -152,23 +153,23 @@ function PersonTabEntries({
         if (!isTabEnabled(first.key, hasBirthMoment)) {
           return disabledEntry(
             family.key,
+            family.key,
             familyLabel,
-            'app-nav-item',
             t.disabledTabSuffix(familyLabel),
             t.completeBirthRecordHint,
           );
         }
         const familyActive = active !== null && family.members.includes(active);
         return (
-          <a
+          <RailNavItem
             key={family.key}
+            kind="link"
+            iconKey={family.key}
+            label={familyLabel}
             href={first.buildHref(personId)}
-            className={familyActive ? 'app-nav-item active' : 'app-nav-item'}
-            aria-current={familyActive ? 'page' : undefined}
-            onClick={onNavigate}
-          >
-            {familyLabel}
-          </a>
+            active={familyActive}
+            onNavigate={onNavigate}
+          />
         );
       })}
     </>
@@ -434,26 +435,26 @@ export function AppNav({ route }: { route: Route }): React.JSX.Element {
           <PersonTabEntries personId={undefined} hasBirthMoment={false} route={route} onNavigate={closeAll} />
         )}
         {/* One entry (#882): opens the first tool; the other tools are tabs on the page (`SectionNav`). */}
-        <a
+        <RailNavItem
+          kind="link"
+          iconKey="tools"
+          label={t.toolsLabel}
           href={TOOLS[0]?.href ?? routeHref({ kind: 'cycles' })}
-          className={activeTool !== null ? 'app-nav-item active' : 'app-nav-item'}
-          aria-current={activeTool !== null ? 'page' : undefined}
-          onClick={closeAll}
-        >
-          {t.toolsLabel}
-        </a>
+          active={activeTool !== null}
+          onNavigate={closeAll}
+        />
         {/* The current screen's own exports now live in its PageHeader (#506/#509), not here; this
             is the only export action that is not page-specific. A single-item dropdown would be
             worse than a plain link, so it is one — same as Overview/Birth record above. */}
-        <a
+        <RailNavItem
+          kind="link"
+          iconKey="pdf"
+          label={t.documents}
           href={routeHref({ kind: 'documents' })}
-          className={documentsActive ? 'app-nav-item active' : 'app-nav-item'}
-          aria-current={documentsActive ? 'page' : undefined}
+          active={documentsActive}
           title={t.documentsHint}
-          onClick={closeAll}
-        >
-          {t.documents}
-        </a>
+          onNavigate={closeAll}
+        />
       </nav>
     </div>
   );

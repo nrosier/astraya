@@ -20,6 +20,7 @@ import { ExportRegistryProvider } from './export-registry.js';
 import { PageActionsProvider } from './page-actions-slot.js';
 import { WorkspaceUtilityProvider } from './workspace-utility-slot.js';
 import { PwaStatus } from './PwaStatus.js';
+import { RailCollapseButton } from './RailCollapseButton.js';
 import { SidebarFooter } from './SidebarFooter.js';
 import { canonicalPeopleHash, parseRoute, routeShowsBackLink } from './route.js';
 import { writeLastChart } from './last-chart.js';
@@ -368,6 +369,8 @@ function AppShell(): React.JSX.Element {
                     </div>
                     {/* The version, About & Licence and the update notice sit at the rail's foot (previously a page footer). */}
                     <SidebarFooter />
+                    {/* The rail's collapse control (#1747), last in the header so it sits at the foot of the rail. */}
+                    <RailCollapseButton />
                   </header>
                 }
               >

@@ -1,10 +1,9 @@
 /**
  * Whether the desktop workspace rail (#506/#509, `docs/ui/UI-UX_GUIDELINES.md` "Target application
  * shell") is collapsed: a device preference like the last-viewed-person id (`last-person.ts`,
- * whose shape this mirrors) — never synced, never sent anywhere. Collapsing hides the rail's
- * navigation and account controls entirely rather than shrinking them to icon-only buttons with
- * tooltips, since the application has no icon set to shrink to; the guideline's "without losing
- * labels to tooltips alone" is satisfied by there being no degraded label-less state at all.
+ * whose shape this mirrors) — never synced, never sent anywhere. Collapsed means the rail becomes
+ * an icon rail (#1747), not hidden: each navigation item keeps its icon, and its label is kept
+ * available to assistive technology and as a tooltip. The preference applies only from 64rem up.
  */
 /**
  * @module ui/workspace-rail-setting

@@ -180,6 +180,42 @@ test('the corpus-overrides table wraps its text instead of scrolling sideways, a
   ).toBeVisible();
 });
 
+// The collapsed icon rail (#1747): an icon-only column whose entries are named by aria-label, with sibling
+// tooltips. Scanned collapsed at the three reference sizes (below 64rem the preference has no effect), and
+// again with a tooltip showing, since the tooltip surface needs its own contrast.
+for (const { width, height } of [
+  { width: 390, height: 844 },
+  { width: 1280, height: 800 },
+  { width: 3440, height: 1440 },
+]) {
+  test(`the collapsed sidebar rail has no automatically detectable accessibility violations at ${String(width)}px (#1747)`, async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('astraya:workspaceRailCollapsed', 'true');
+    });
+    await page.setViewportSize({ width, height });
+    await gotoAndSettle(page, `${baseUrl}/#/people`);
+    await expect(page.getByRole('heading', { name: 'People' })).toBeVisible();
+    await expect(page.locator('.workspace-shell')).toHaveClass(/workspace-shell-collapsed/);
+
+    let results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+    expect(results.violations).toEqual([]);
+
+    if (width >= 1024) {
+      // Every entry is named though its label is visually hidden, and a focused one shows its tooltip.
+      const tools = page.getByRole('banner').getByRole('link', { name: 'Tools', exact: true });
+      await tools.focus();
+      await page.keyboard.press('Shift+Tab');
+      await page.keyboard.press('Tab');
+      await expect(tools).toBeFocused();
+      await expect(tools.locator('xpath=following-sibling::*[@role="tooltip"]')).toBeVisible();
+      results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+      expect(results.violations).toEqual([]);
+    }
+  });
+}
+
 test('a sub-view page at phone width has no axe region violations, so the sub-view select sits in a landmark (#1050)', async ({
   page,
 }) => {
