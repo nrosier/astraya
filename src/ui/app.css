@@ -3610,8 +3610,12 @@ button.app-nav-search.primitive-button-circle {
     border-bottom: none;
   }
 
+  /* The brand row and the person switcher are one --rail-target-size tall in both states, so the nav
+     icons below them keep their vertical position when the rail collapses (#1747). */
   .app-header-start {
     flex: 0 0 auto;
+    align-items: center;
+    min-height: var(--rail-target-size);
   }
 
   /* The rail is a column at least one viewport tall; the nav grows, and the footer stays at its foot. */
@@ -3657,10 +3661,12 @@ button.app-nav-search.primitive-button-circle {
   }
 
   .app-nav-person {
+    box-sizing: border-box;
     max-width: none;
     min-width: 0;
+    height: var(--rail-target-size);
     margin: 0 0 var(--space-2);
-    padding: var(--space-2) var(--space-2) var(--space-2) 0;
+    padding: 0 var(--space-2) 0 0;
     border-right: none;
     border-bottom: 1px solid var(--line);
   }
@@ -3901,6 +3907,7 @@ button.app-nav-search.primitive-button-circle {
   }
 
   .workspace-shell-collapsed .app-nav-person {
+    margin-bottom: var(--space-2);
     background: var(--surface);
   }
 
