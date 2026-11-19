@@ -18,6 +18,7 @@ import { rotateEncryptionKey } from '../server/ops/rotate-key.ts';
 import {
   confirmTotpEnrolment,
   generateRecoveryCodes,
+  readTotpState,
   replaceRecoveryCodes,
   startTotpEnrolment,
 } from '../server/auth/totp-store.ts';
@@ -326,7 +327,9 @@ describe('rotateEncryptionKey transaction guarantees (#1680 review)', () => {
       new Date().toISOString(),
     );
     startTotpEnrolment(db, OLD_KEY, totpUser);
-    expect(confirmTotpEnrolment(db, totpUser, 1000, new Date().toISOString())).toBe(true);
+    const pending = readTotpState(db, OLD_KEY, totpUser);
+    if (pending.status !== 'pending') throw new Error('expected a pending enrolment');
+    expect(confirmTotpEnrolment(db, totpUser, pending.enrolmentIv, 1000, new Date().toISOString())).toBe(true);
     replaceRecoveryCodes(db, OLD_KEY, totpUser, generateRecoveryCodes());
     const totpSecretCiphertext = (
       db.prepare('SELECT totp_secret FROM users WHERE id = ?').get(totpUser) as unknown as { totp_secret: Buffer }
