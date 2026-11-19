@@ -121,7 +121,10 @@ for (const viewport of VIEWPORTS) {
       const before = await headerEdges(page);
       // Equal heights always. The shared top and bottom edges are asserted at 1280px and 3440px. At 390px the brief
       // allows the row to wrap, so only heights are asserted there; in the measured build the row does stay on one line.
-      expect(Math.abs(before.selectHeight - before.exportHeight), 'select and Export heights match').toBeLessThanOrEqual(1);
+      expect(
+        Math.abs(before.selectHeight - before.exportHeight),
+        'select and Export heights match',
+      ).toBeLessThanOrEqual(1);
       if (viewport.width > 390) {
         expect(Math.abs(before.selectTop - before.exportTop), 'top edges line up').toBeLessThanOrEqual(1);
         expect(Math.abs(before.selectBottom - before.exportBottom), 'bottom edges line up').toBeLessThanOrEqual(1);

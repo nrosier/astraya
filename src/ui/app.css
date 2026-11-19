@@ -8091,6 +8091,48 @@ button.primitive-button-form-action {
   min-height: var(--control-height);
 }
 
+/* In a page header (#1770) the picker has no visible label, so its select sits on the row's centre line with Export.
+   The filter button sits beside the select in the same line (grid-auto-flow: column), not under it, so the wrapper is
+   one control tall and centres with the Export pill. */
+.life-event-picker--header {
+  align-self: center;
+  gap: 0;
+  grid-auto-flow: column;
+  align-items: center;
+}
+
+/* A header row that holds the picker (#1770) centres its controls and gives the select and Export the same height and
+   pill ends. Scoped to rows with the picker, so other headers keep the compact Export toggle (#1013, #817). */
+.page-header-actions:has(> .life-event-picker--header) {
+  align-items: center;
+}
+
+.page-header-actions:has(> .life-event-picker--header) .life-event-picker select,
+.page-header-actions:has(> .life-event-picker--header) .page-header-export-toggle {
+  min-height: var(--control-height);
+  height: var(--control-height);
+  border-radius: var(--radius-full);
+}
+
+/* A popover opened from a button (#1770): anchored in flow beside its trigger, styled like the Export menu. */
+.primitive-popover {
+  position: relative;
+  display: inline-flex;
+}
+
+.primitive-popover-panel {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 25;
+  min-width: 14rem;
+  padding: var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-popover);
+}
+
 /* Chart pages' Export PDF (#976): a primary accent link to the PDF creator, with an arrow for the navigation. */
 .chart-pdf-link {
   display: inline-flex;
@@ -10110,48 +10152,6 @@ a.quiet,
 .life-event-picker {
   display: grid;
   gap: var(--space-2);
-}
-
-/* In a page header (#1770) the picker has no visible label, so its select sits on the row's centre line with Export.
-   The filter button sits beside the select in the same line (grid-auto-flow: column), not under it, so the wrapper is
-   one control tall and centres with the Export pill. */
-.life-event-picker--header {
-  align-self: center;
-  gap: 0;
-  grid-auto-flow: column;
-  align-items: center;
-}
-
-/* A header row that holds the picker (#1770) centres its controls and gives the select and Export the same height and
-   pill ends. Scoped to rows with the picker, so other headers keep the compact Export toggle (#1013, #817). */
-.page-header-actions:has(> .life-event-picker--header) {
-  align-items: center;
-}
-
-.page-header-actions:has(> .life-event-picker--header) .life-event-picker select,
-.page-header-actions:has(> .life-event-picker--header) .page-header-export-toggle {
-  min-height: var(--control-height);
-  height: var(--control-height);
-  border-radius: var(--radius-full);
-}
-
-/* A popover opened from a button (#1770): anchored in flow beside its trigger, styled like the Export menu. */
-.primitive-popover {
-  position: relative;
-  display: inline-flex;
-}
-
-.primitive-popover-panel {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  z-index: 25;
-  min-width: 14rem;
-  padding: var(--space-3);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-popover);
 }
 
 .life-event-picker-filter {
