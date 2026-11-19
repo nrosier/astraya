@@ -412,6 +412,29 @@ const MIGRATIONS: readonly ((db: DatabaseSync) => void)[] = [
       UPDATE users SET last_seen_at = (SELECT MAX(last_seen_at) FROM sessions WHERE sessions.user_id = users.id);
     `);
   },
+  // 21: TOTP two-factor storage (#1500, slice 2). The secret is AES-256-GCM ciphertext under a per-user
+  // subkey; recovery codes are stored only as HMAC-SHA256 hashes under a random pepper kept encrypted in
+  // `server_secrets`. Secret set with `totp_enabled_at` NULL is pending, both set is enabled, secret NULL is off.
+  (db) => {
+    db.exec(`
+      ALTER TABLE users ADD COLUMN totp_secret BLOB;
+      ALTER TABLE users ADD COLUMN totp_secret_iv BLOB;
+      ALTER TABLE users ADD COLUMN totp_enabled_at TEXT;
+      ALTER TABLE users ADD COLUMN totp_last_step INTEGER;
+
+      CREATE TABLE totp_recovery_codes (
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        code_hash TEXT NOT NULL,
+        PRIMARY KEY (user_id, code_hash)
+      );
+
+      CREATE TABLE server_secrets (
+        name TEXT PRIMARY KEY,
+        value BLOB NOT NULL,
+        iv BLOB NOT NULL
+      );
+    `);
+  },
 ];
 
 /** Migration steps whose table rebuild would otherwise break `REFERENCES` clauses pointing at the table being rebuilt. */
