@@ -2,7 +2,7 @@
 
 Op-log sync relay: HTTP routes, at-rest encryption, right-to-erasure purge, key-rotation operator script.
 
-- `crypto.ts` — Whole-payload AES-256-GCM encrypt/decrypt (authenticated). Loads/validates `ASTRAYA_ENCRYPTION_KEY`. "Never store unencrypted" guarantee. Deps: node:crypto.
+- `crypto.ts` — Whole-payload AES-256-GCM encrypt/decrypt (authenticated); decrypt zeroes its intermediate plaintext chunks. Loads/validates `ASTRAYA_ENCRYPTION_KEY`. "Never store unencrypted" guarantee. Deps: node:crypto.
 - `deletion-impact.ts` — Pre-delete preview: scan (bounded) + decrypt user's ops, count distinct people/charts, approximate if truncated/no key. Deps: db, crypto.
 - `purge.ts` — Right-to-erasure (#308): maintains `purged_entities` deny-list, on purge-marker push erases every op row naming that entity (except marker itself). Deps: db, crypto.
 - `rotate-key.ts` — CLI script (server stopped): re-encrypt ops, saved interpretation results, TOTP secrets and the recovery pepper under a new key in one all-or-nothing transaction. Remediation for leaked key (#340, #1680, #1500). Deps: db, crypto, auth/totp-store.
