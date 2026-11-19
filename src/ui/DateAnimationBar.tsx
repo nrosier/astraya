@@ -8,7 +8,7 @@
 /**
  * @module ui/DateAnimationBar
  * @purpose Date stepper and animation control bar: play/pause, back, Day/Month/Year interval, date, forward, speed, slider and Now.
- * @conventions Controlled by `date`/`onDateChange` (YYYY-MM-DD) and reports play/pause through `onPlayingChange` so the URL is written only when playback stops (#1440); playback runs on requestAnimationFrame and steps only when the interval has elapsed; the range input is uncontrolled, its value set through a ref, and starting a drag pauses playback; playback always starts paused, whatever the motion preference, and only a press of Play advances it; arithmetic lives in date-animation.ts; Space and the arrow keys act from anywhere except inside an input, select or text area (where they keep their native meaning); tokens only, no new colours or spacing.
+ * @conventions Optional `trailing` node renders beside Now (#1770; the life-event picker is passed in by its screens, so this file does not import it); controlled by `date`/`onDateChange` (YYYY-MM-DD) and reports play/pause through `onPlayingChange` so the URL is written only when playback stops (#1440); playback runs on requestAnimationFrame and steps only when the interval has elapsed; the range input is uncontrolled, its value set through a ref, and starting a drag pauses playback; playback always starts paused, whatever the motion preference, and only a press of Play advances it; arithmetic lives in date-animation.ts; Space and the arrow keys act from anywhere except inside an input, select or text area (where they keep their native meaning); tokens only, no new colours or spacing.
  * @exports DateAnimationBar
  */
 import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from 'react';
@@ -58,6 +58,7 @@ export function DateAnimationBar({
   label,
   disabled = false,
   keyboard = true,
+  trailing,
 }: {
   readonly date: string;
   readonly onDateChange: (date: string) => void;
@@ -76,6 +77,8 @@ export function DateAnimationBar({
   readonly disabled?: boolean;
   /** False when other controls share the page and the window-wide Space and arrow keys must not step this bar. Default true. */
   readonly keyboard?: boolean;
+  /** Optional control shown beside Now, at the end of the bar (#1770: the life-event picker). Nothing renders when omitted. */
+  readonly trailing?: React.ReactNode;
 }): React.JSX.Element {
   const playable = mode === 'full';
   const t = useMessages(dateAnimationBarMessages);
@@ -285,6 +288,7 @@ export function DateAnimationBar({
             </div>
           </div>
         )}
+        {trailing}
         <Button
           className="date-animation-now"
           shape="capsule"

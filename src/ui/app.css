@@ -8091,9 +8091,8 @@ button.primitive-button-form-action {
   min-height: var(--control-height);
 }
 
-/* In a page header (#1770) the picker has no visible label, so its select sits on the row's centre line with Export.
-   The filter button sits beside the select in the same line (grid-auto-flow: column), not under it, so the wrapper is
-   one control tall and centres with the Export pill. */
+/* The picker beside Now in the date bar (#1770): the select and the filter button sit on one line (grid-auto-flow:
+   column), so the wrapper is one control tall and centres with the bar's other controls. */
 .life-event-picker--header {
   align-self: center;
   gap: 0;
@@ -8101,14 +8100,8 @@ button.primitive-button-form-action {
   align-items: center;
 }
 
-/* A header row that holds the picker (#1770) centres its controls and gives the select and Export the same height and
-   pill ends. Scoped to rows with the picker, so other headers keep the compact Export toggle (#1013, #817). */
-.page-header-actions:has(> .life-event-picker--header) {
-  align-items: center;
-}
-
-.page-header-actions:has(> .life-event-picker--header) .life-event-picker select,
-.page-header-actions:has(> .life-event-picker--header) .page-header-export-toggle {
+/* The picker's select takes the bar's standard control height and pill ends, like Now and the date field beside it. */
+.date-animation-bar .life-event-picker select {
   min-height: var(--control-height);
   height: var(--control-height);
   border-radius: var(--radius-full);
