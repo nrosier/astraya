@@ -11,6 +11,7 @@ import { encryptPayload } from '../server/ops/crypto.ts';
 import {
   TotpKeyMissingError,
   clearTotp,
+  completeTotpEnrolment,
   confirmTotpEnrolment,
   consumeRecoveryCode,
   deriveTotpSubkey,
@@ -348,6 +349,78 @@ describe('server/auth/totp-store.ts', () => {
       .prepare('SELECT totp_secret_iv, totp_enabled_at, totp_last_step FROM users WHERE id = ?')
       .get(userId) as unknown as Record<string, unknown>;
     expect(Object.values(row)).toEqual([null, null, null]);
+  });
+
+  it('completeTotpEnrolment with the pending IV enables the user and stores the codes', () => {
+    // The combined call is the only route path to enabled, so it must leave the user enabled with working codes.
+    startTotpEnrolment(db, KEY, userId);
+    const codes = generateRecoveryCodes();
+    expect(completeTotpEnrolment(db, KEY, userId, pendingIv(userId), 6, new Date().toISOString(), codes)).toBe(true);
+    const state = readTotpState(db, KEY, userId);
+    expect(isTotpEnabled(state) ? state.lastStep : 'not enabled').toBe(6);
+    expect(storedHashes(userId)).toHaveLength(10);
+    expect(consumeRecoveryCode(db, KEY, userId, codes[0] ?? '')).toBe(true);
+    expect(db.isTransaction).toBe(false);
+  });
+
+  it('completeTotpEnrolment with a stale IV returns false, keeps the user pending and stores no codes', () => {
+    // A second start (another tab) replaced the secret, so the earlier confirm must write nothing at all.
+    startTotpEnrolment(db, KEY, userId);
+    const staleIv = pendingIv(userId);
+    startTotpEnrolment(db, KEY, userId);
+    expect(completeTotpEnrolment(db, KEY, userId, staleIv, 6, new Date().toISOString(), generateRecoveryCodes())).toBe(
+      false,
+    );
+    expect(readTotpState(db, KEY, userId).status).toBe('pending');
+    expect(storedHashes(userId)).toHaveLength(0);
+    expect(db.isTransaction).toBe(false);
+  });
+
+  it('an enrolment interrupted while storing codes leaves the user pending with no codes and no open transaction', () => {
+    // Issue #1782 (e): no enabled user may be left without recovery codes after an interrupted enrolment.
+    startTotpEnrolment(db, KEY, userId);
+    const iv = pendingIv(userId);
+    db.exec(
+      "CREATE TRIGGER fail_codes BEFORE INSERT ON totp_recovery_codes BEGIN SELECT RAISE(ABORT, 'injected failure'); END",
+    );
+    expect(() =>
+      completeTotpEnrolment(db, KEY, userId, iv, 6, new Date().toISOString(), generateRecoveryCodes()),
+    ).toThrow('injected failure');
+    db.exec('DROP TRIGGER fail_codes');
+    expect(db.isTransaction).toBe(false);
+    expect(readTotpState(db, KEY, userId).status).toBe('pending');
+    expect(storedHashes(userId)).toHaveLength(0);
+    // The connection is usable afterwards: a later write commits, and the same IV can still complete.
+    expect(completeTotpEnrolment(db, KEY, userId, iv, 7, new Date().toISOString(), generateRecoveryCodes())).toBe(true);
+    expect(storedHashes(userId)).toHaveLength(10);
+  });
+
+  it('replaceRecoveryCodes inside an outer BEGIN is undone by the outer ROLLBACK, proving the savepoint nests', () => {
+    // A caller (the enrolment route) must be able to hold its own transaction around the store's writes.
+    loadRecoveryPepper(db, KEY);
+    db.exec('BEGIN');
+    expect(() => {
+      replaceRecoveryCodes(db, KEY, userId, generateRecoveryCodes());
+    }).not.toThrow();
+    expect(storedHashes(userId)).toHaveLength(10);
+    db.exec('ROLLBACK');
+    expect(db.isTransaction).toBe(false);
+    expect(storedHashes(userId)).toHaveLength(0);
+  });
+
+  it('clearTotp inside an outer BEGIN then COMMIT clears the user', () => {
+    // clearTotp nests too: the caller's COMMIT makes its writes durable.
+    startTotpEnrolment(db, KEY, userId);
+    confirmNow(userId, 3);
+    replaceRecoveryCodes(db, KEY, userId, generateRecoveryCodes());
+    db.exec('BEGIN');
+    expect(() => {
+      clearTotp(db, userId);
+    }).not.toThrow();
+    db.exec('COMMIT');
+    expect(db.isTransaction).toBe(false);
+    expect(readTotpState(db, null, userId)).toEqual({ status: 'off' });
+    expect(storedHashes(userId)).toHaveLength(0);
   });
 
   it('deleting the user deletes their recovery codes', () => {
