@@ -7,10 +7,24 @@
  * covered end to end (`e2e/app-nav.spec.ts`).
  */
 import { act } from 'react';
+import type { JSX } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { writeLastPersonId } from '../src/ui/last-person.js';
 import { setLocale } from '../src/ui/locale.js';
+import {
+  BookOpen,
+  CalendarClock,
+  Compass,
+  FileDown,
+  GitMerge,
+  Globe,
+  IdCard,
+  LayoutDashboard,
+  MessageSquareText,
+  TrendingUp,
+  Wrench,
+} from '../src/ui/nav-icons.js';
 import { parseRoute, type Route } from '../src/ui/route.js';
 
 // The Export menu asks for the calculation engine; none is needed to open and close menus.
@@ -584,5 +598,150 @@ describe('no "Return to" heading in the sidebar (#1696)', () => {
       mounted?.container.remove();
       mounted = undefined;
     }
+  });
+});
+
+// The icon rail (#1747): every entry has an icon, a name, and a sibling tooltip.
+const ICON_BY_LABEL = {
+  'Birth record': IdCard,
+  Overview: LayoutDashboard,
+  Consultation: MessageSquareText,
+  Charts: Compass,
+  Interpretation: BookOpen,
+  Astrocartography: Globe,
+  'Transits & Forecast': CalendarClock,
+  'Progressions & Directions': TrendingUp,
+  'Relationship Charts': GitMerge,
+  Tools: Wrench,
+  PDF: FileDown,
+} as const;
+
+/** The markup an icon component renders, as the DOM serialises it. */
+function iconMarkup(Icon: () => JSX.Element): string {
+  const holder = document.createElement('div');
+  const root = createRoot(holder);
+  act(() => {
+    root.render(<Icon />);
+  });
+  const markup = holder.innerHTML;
+  act(() => {
+    root.unmount();
+  });
+  return markup;
+}
+
+/** Every rail entry in the nav: the link or disabled button inside its `.rail-nav-item` wrapper. */
+const railEntries = (): { wrapper: HTMLElement; control: HTMLElement }[] =>
+  Array.from(box().querySelectorAll<HTMLElement>('nav#app-nav .rail-nav-item')).map((wrapper) => {
+    const control = wrapper.querySelector<HTMLElement>('a.app-nav-item, button.app-nav-item');
+    if (control === null) throw new Error('fixture bug: rail entry without a control');
+    return { wrapper, control };
+  });
+
+describe('the icon rail entries (#1747)', () => {
+  afterEach(() => {
+    fakeStore.current = undefined;
+    window.localStorage.clear();
+    setLocale('en');
+  });
+
+  it('gives all 11 entries an icon and an aria-label, with the label as the only text', async () => {
+    await mount(parseRoute('#/people'));
+    const entries = railEntries();
+    expect(entries).toHaveLength(11);
+    for (const { control } of entries) {
+      const name = control.getAttribute('aria-label');
+      expect(name, control.outerHTML).not.toBeNull();
+      expect(name).not.toBe('');
+      const svg = control.querySelector('svg');
+      expect(svg, name ?? '').not.toBeNull();
+      expect(svg?.getAttribute('aria-hidden')).toBe('true');
+      expect(control.querySelectorAll('svg')).toHaveLength(1);
+      // The icon adds no text: the control reads as its visible label.
+      expect(control.textContent).toBe(control.querySelector('.rail-nav-label')?.textContent);
+    }
+  });
+
+  it('names an enabled link by its visible label', async () => {
+    await mount(parseRoute('#/people'));
+    for (const name of ['Tools', 'PDF']) {
+      expect(linkNamed(name)?.getAttribute('aria-label')).toBe(name);
+    }
+  });
+
+  it('keeps the tooltip a sibling of the control, with the label, and out of its textContent', async () => {
+    await mount(parseRoute('#/people'));
+    for (const { wrapper, control } of railEntries()) {
+      const tooltip = wrapper.querySelector('[role="tooltip"]');
+      expect(tooltip, control.textContent ?? '').not.toBeNull();
+      expect(tooltip?.parentElement).toBe(wrapper);
+      expect(control.contains(tooltip)).toBe(false);
+      expect(control.querySelector('[role="tooltip"]')).toBeNull();
+      expect(tooltip?.textContent).toBe(control.textContent);
+    }
+    // The existing text assertions still hold with tooltips present.
+    expect(navLinks()).toEqual(['Tools', 'PDF']);
+  });
+
+  it('maps each of the 11 entries to its Lucide icon, disabled and enabled', async () => {
+    const personId = 'p-abcdefghijklmnop';
+    for (const enabled of [false, true]) {
+      if (enabled) {
+        fakeStore.current = {
+          state: { people: new Map([[personId, { displayName: 'Test', moment: {} }]]) },
+        };
+        writeLastPersonId(personId);
+      }
+      await mount(parseRoute(enabled ? `#/people/${personId}/overview` : '#/people'));
+      const entries = railEntries();
+      expect(entries.map(({ control }) => control.textContent)).toEqual(Object.keys(ICON_BY_LABEL));
+      for (const { control } of entries) {
+        const label = control.textContent as keyof typeof ICON_BY_LABEL;
+        expect(control.querySelector('svg')?.outerHTML, `${label} (${enabled ? 'enabled' : 'disabled'})`).toBe(
+          iconMarkup(ICON_BY_LABEL[label]),
+        );
+      }
+      act(() => {
+        mounted?.root.unmount();
+      });
+      mounted?.container.remove();
+      mounted = undefined;
+    }
+  });
+
+  it('uses one distinct icon per entry', () => {
+    const markups = Object.values(ICON_BY_LABEL).map((Icon) => iconMarkup(Icon));
+    expect(new Set(markups).size).toBe(11);
+  });
+
+  it('dismisses the tooltip on Escape, and shows it again on blur', async () => {
+    await mount(parseRoute('#/people'));
+    const tools = linkNamed('Tools');
+    if (tools === undefined) throw new Error('fixture bug: no Tools link');
+    const wrapper = tools.closest<HTMLElement>('.rail-nav-item');
+    expect(wrapper?.getAttribute('data-tooltip-dismissed')).toBeNull();
+    await act(async () => {
+      tools.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      await Promise.resolve();
+    });
+    expect(wrapper?.getAttribute('data-tooltip-dismissed')).toBe('true');
+    // The tooltip element stays in the DOM; CSS switches its visibility off.
+    expect(wrapper?.querySelector('[role="tooltip"]')).not.toBeNull();
+    await act(async () => {
+      tools.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+      await Promise.resolve();
+    });
+    expect(wrapper?.getAttribute('data-tooltip-dismissed')).toBeNull();
+  });
+
+  it('leaves other keys alone', async () => {
+    await mount(parseRoute('#/people'));
+    const tools = linkNamed('Tools');
+    if (tools === undefined) throw new Error('fixture bug: no Tools link');
+    await act(async () => {
+      tools.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true }));
+      await Promise.resolve();
+    });
+    expect(tools.closest('.rail-nav-item')?.getAttribute('data-tooltip-dismissed')).toBeNull();
   });
 });
