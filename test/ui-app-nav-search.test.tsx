@@ -9,6 +9,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setLocale } from '../src/ui/locale.js';
 import { PageActionsProvider, usePageActionsRef } from '../src/ui/page-actions-slot.js';
+import { WorkspaceUtilityProvider, useWorkspaceUtilityRef } from '../src/ui/workspace-utility-slot.js';
 import { parseRoute, type Route } from '../src/ui/route.js';
 
 vi.mock('../src/ui/EphemerisProviderContext.js', () => ({
@@ -53,14 +54,23 @@ function PageHeaderActions(): React.JSX.Element {
   return <div ref={actionsRef} className="page-header-actions" />;
 }
 
+/** The workspace utility row the shell publishes above every page header (#1769). */
+function WorkspaceUtilityRow(): React.JSX.Element {
+  const utilityRef = useWorkspaceUtilityRef();
+  return <div ref={utilityRef} className="workspace-utility" />;
+}
+
 function render(route: Route = home): void {
   act(() => {
     root.render(
       <PageActionsProvider>
-        <div className="page-header-row">
-          <PageHeaderActions />
-        </div>
-        <AppNav route={route} />
+        <WorkspaceUtilityProvider>
+          <WorkspaceUtilityRow />
+          <div className="page-header-row">
+            <PageHeaderActions />
+          </div>
+          <AppNav route={route} />
+        </WorkspaceUtilityProvider>
       </PageActionsProvider>,
     );
   });
@@ -215,7 +225,7 @@ describe('the command palette trigger (#1654)', () => {
     expect(paletteOpen()).toBe(false);
   });
 
-  it('renders the desktop trigger in the page header action group, after its actions, and not in the sidebar (#1654)', () => {
+  it('renders the desktop trigger in the workspace utility row, not in the page header action group or the sidebar (#1769)', () => {
     vi.stubGlobal('matchMedia', (query: string) => ({
       matches: false,
       media: query,
@@ -223,11 +233,11 @@ describe('the command palette trigger (#1654)', () => {
       removeEventListener: () => undefined,
     }));
     render();
-    const group = document.querySelector('.page-header-actions');
-    if (group === null) throw new Error('fixture bug: no page header action group');
-    // The trigger is the group's last child, so it is the top-right element of the page header row.
-    expect(group.lastElementChild).toBe(trigger());
-    expect(trigger().closest('.page-header-row')).not.toBeNull();
+    const utilityRow = document.querySelector('.workspace-utility');
+    if (utilityRow === null) throw new Error('fixture bug: no workspace utility row');
+    // The trigger sits in the workspace's top-right utility row above the page header, not in the header's action group.
+    expect(utilityRow.contains(trigger())).toBe(true);
+    expect(trigger().closest('.page-header-actions')).toBeNull();
     // The sidebar holds no search control: no trigger inside the nav wrapper or the nav.
     expect(document.querySelector('.app-nav-wrap .app-nav-search')).toBeNull();
     expect(document.querySelector('nav.app-nav .app-nav-search')).toBeNull();
