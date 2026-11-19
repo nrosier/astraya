@@ -85,11 +85,14 @@ These cause build/CI failures if violated:
 ## Multi-Agent Routing & Verification
 
 ### Deterministic gates decide, not model voting
+
 - The arbiter for a change is deterministic: `tsc -b`, `npm run lint`, the Vitest files it touches, the Playwright spec for a UI change, and the bundle budget (`node scripts/check-bundle-size.mjs`, `EAGER_JS_BUDGET_BYTES` 665600, never raised). Prose agreement between agents is not evidence.
 - A single implementing agent is paired with those gates. Do not ask several agents to vote on a fix.
 
 ### Agent mapping (existing agents only)
+
 Use the agents that exist in `~/.claude/agents/` and `.claude/agents/`. The shorthand names in older notes map as follows; no agent file's `model:` is changed by this section.
+
 - `haiku-explorer` = `explorer` (Haiku): read-only discovery.
 - `haiku-coder` = `coder` (Haiku): scoped implementation.
 - `sonnet-engineer` = `engineer` (Sonnet): root-cause work and specs where the issue is ambiguous.
@@ -97,6 +100,7 @@ Use the agents that exist in `~/.claude/agents/` and `.claude/agents/`. The shor
 - `opus-code-reviewer` = `deep-reviewer` (Opus): final review of a non-trivial diff.
 
 ### Pipeline
+
 1. **Fan-out discovery (explorer):** run two or three `explorer` agents at once, each on a distinct, non-overlapping file or subsystem. They return paths, line numbers and raw findings. They never design fixes.
 2. **Lock the spec:** if the issue spec is explicit (exact tokens, geometry, DOM structure, target files), skip to step 3. If it is ambiguous or spans layers, have `engineer` or `architect` write a file-by-file spec first.
 3. **Implement and verify (coder):** dispatch one `coder` with the locked spec. It runs `tsc`, `vitest`, the Playwright spec for a UI change and the bundle gate in a loop until green. It must not modify or weaken an existing test assertion unless the spec says to, and it reports any assertion it changed.
