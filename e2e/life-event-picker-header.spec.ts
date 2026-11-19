@@ -1,9 +1,9 @@
 /**
- * The life-event picker in a page header (#1770), on Progressions & Directions and Solar Arc at 390x844, 1280x800
- * and 3440x1440, with Einstein given one life event. The visible "Life event" label is gone from the header (its
- * accessible name stays), the select and the Export toggle share a height and their top and bottom edges line up,
- * and the category filter popover opens and closes without moving the row. The Return page keeps its label and is
- * not covered here.
+ * The life-event picker beside Now in the date bar (#1770, owner decision 2026-11-19), on Progressions & Directions and
+ * Solar Arc at 390x844, 1280x800 and 3440x1440, with Einstein given one life event. The visible "Life event" label is
+ * hidden (its accessible name stays), the select and Now share a height and a centre line, Export stays in the page
+ * header, and the category filter popover opens and closes without moving the bar. The Return page keeps its label and
+ * is not covered here.
  */
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -64,8 +64,8 @@ async function giveEinsteinOneEvent(page: Page): Promise<string> {
 
 async function openTiming(page: Page, personId: string, hash: string): Promise<void> {
   await page.goto(`${baseUrl}/#/people/${personId}/${hash}`);
-  await page.locator('.life-event-picker select').first().waitFor({ state: 'visible' });
-  // Export renders alongside the picker; wait for it so the header measurement does not race the page.
+  await page.locator('.date-animation-bar .life-event-picker select').first().waitFor({ state: 'visible' });
+  // Export renders in the page header; wait for it so the measurement does not race the page.
   await page.locator('.page-header-actions .page-header-export-toggle').waitFor({ state: 'visible' });
 }
 
@@ -73,31 +73,36 @@ interface Edges {
   readonly selectTop: number;
   readonly selectBottom: number;
   readonly selectHeight: number;
-  readonly exportTop: number;
-  readonly exportBottom: number;
-  readonly exportHeight: number;
-  readonly selectRight: number;
-  readonly exportLeft: number;
+  readonly selectCentre: number;
+  readonly nowTop: number;
+  readonly nowBottom: number;
+  readonly nowHeight: number;
+  readonly nowCentre: number;
+  readonly exportInHeader: boolean;
+  readonly pickerInBar: boolean;
 }
 
-async function headerEdges(page: Page): Promise<Edges> {
+async function barEdges(page: Page): Promise<Edges> {
   return page.evaluate<Edges>(`(() => {
-    const select = document.querySelector('.page-header-actions .life-event-picker select');
+    const select = document.querySelector('.date-animation-bar .life-event-picker select');
+    const now = document.querySelector('.date-animation-bar .date-animation-now');
     const exportToggle = document.querySelector('.page-header-actions .page-header-export-toggle');
-    if (select === null || exportToggle === null) throw new Error('picker or Export missing from the header');
+    if (select === null || now === null || exportToggle === null) throw new Error('picker, Now or Export missing');
     const s = select.getBoundingClientRect();
+    const n = now.getBoundingClientRect();
     const e = exportToggle.getBoundingClientRect();
     return {
-      selectTop: s.top, selectBottom: s.bottom, selectHeight: s.height,
-      exportTop: e.top, exportBottom: e.bottom, exportHeight: e.height,
-      selectRight: s.right, exportLeft: e.left,
+      selectTop: s.top, selectBottom: s.bottom, selectHeight: s.height, selectCentre: (s.top + s.bottom) / 2,
+      nowTop: n.top, nowBottom: n.bottom, nowHeight: n.height, nowCentre: (n.top + n.bottom) / 2,
+      exportInHeader: exportToggle.closest('.page-header-actions') !== null,
+      pickerInBar: select.closest('.date-animation-bar') !== null,
     };
   })()`);
 }
 
 for (const viewport of VIEWPORTS) {
   for (const target of PAGES) {
-    test(`${target.name} at ${String(viewport.width)}x${String(viewport.height)}: no visible label, equal row, filter popover`, async ({
+    test(`${target.name} at ${String(viewport.width)}x${String(viewport.height)}: picker beside Now, no visible label, filter popover`, async ({
       browser,
     }) => {
       test.setTimeout(120_000);
@@ -106,12 +111,12 @@ for (const viewport of VIEWPORTS) {
       const personId = await giveEinsteinOneEvent(page);
       await openTiming(page, personId, target.hash);
 
-      // The visible label is hidden in the header: the sr-only label is clipped to 1px, so Playwright's visibility
-      // check still sees it. Assert the visual hiding itself; the select keeps the accessible name "Life event".
-      const header = page.locator('.page-header-actions');
+      // The visible label is hidden: the sr-only label is clipped to 1px, so Playwright's visibility check still sees
+      // it. Assert the visual hiding itself; the select keeps the accessible name "Life event".
+      const bar = page.locator('.date-animation-bar');
       const label = await page.evaluate<{ cls: string; width: number; height: number }>(`(() => {
-        const el = document.querySelector('.page-header-actions .life-event-picker label');
-        if (el === null) throw new Error('no picker label in the header');
+        const el = document.querySelector('.date-animation-bar .life-event-picker label');
+        if (el === null) throw new Error('no picker label in the date bar');
         const r = el.getBoundingClientRect();
         return { cls: el.className, width: r.width, height: r.height };
       })()`);
@@ -120,33 +125,35 @@ for (const viewport of VIEWPORTS) {
       expect(label.height).toBeLessThanOrEqual(1);
       await expect(page.getByRole('combobox', { name: 'Life event', exact: true })).toBeVisible();
 
-      const before = await headerEdges(page);
-      // Equal heights always. The shared top and bottom edges are asserted at 1280px and 3440px. At 390px the brief
-      // allows the row to wrap, so only heights are asserted there; in the measured build the row does stay on one line.
-      expect(
-        Math.abs(before.selectHeight - before.exportHeight),
-        'select and Export heights match',
-      ).toBeLessThanOrEqual(1);
+      const before = await barEdges(page);
+      expect(before.pickerInBar, 'picker is in the date bar').toBe(true);
+      expect(before.exportInHeader, 'Export stays in the page header').toBe(true);
+      // Equal heights always: the select and Now both take the bar's standard control height.
+      expect(Math.abs(before.selectHeight - before.nowHeight), 'select and Now heights match').toBeLessThanOrEqual(1);
+      // The centre line is asserted at 1280px and 3440px. At 390px the bar is allowed to wrap onto two rows, so only
+      // heights are asserted there.
       if (viewport.width > 390) {
-        expect(Math.abs(before.selectTop - before.exportTop), 'top edges line up').toBeLessThanOrEqual(1);
-        expect(Math.abs(before.selectBottom - before.exportBottom), 'bottom edges line up').toBeLessThanOrEqual(1);
+        expect(
+          Math.abs(before.selectCentre - before.nowCentre),
+          'select and Now share a centre line',
+        ).toBeLessThanOrEqual(1);
       }
 
-      // The filter popover opens and closes, and the row does not move.
-      const filter = header.getByRole('button', { name: 'Filter by category', exact: true });
+      // The filter popover opens and closes, and the bar does not move.
+      const filter = bar.getByRole('button', { name: 'Filter by category', exact: true });
       await filter.click();
       await expect(filter).toHaveAttribute('aria-expanded', 'true');
       await expect(page.locator('.primitive-popover-panel')).toBeVisible();
-      const during = await headerEdges(page);
+      const during = await barEdges(page);
       expect(during.selectTop).toBeCloseTo(before.selectTop, 0);
-      expect(during.exportTop).toBeCloseTo(before.exportTop, 0);
+      expect(during.nowTop).toBeCloseTo(before.nowTop, 0);
 
       await page.keyboard.press('Escape');
       await expect(filter).toHaveAttribute('aria-expanded', 'false');
       await expect(page.locator('.primitive-popover-panel')).toHaveCount(0);
-      const after = await headerEdges(page);
+      const after = await barEdges(page);
       expect(after.selectTop).toBeCloseTo(before.selectTop, 0);
-      expect(after.exportTop).toBeCloseTo(before.exportTop, 0);
+      expect(after.nowTop).toBeCloseTo(before.nowTop, 0);
 
       await context.close();
     });

@@ -314,18 +314,22 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
         }
         basis={basisLine}
         basisEditHref={null}
-      >
-        {/* The life-event picker and Export sit in the heading row, to the right (#1235, owner review 2026-11-07); the date, stepping and Now are in the bar below (#1400). */}
-        <LifeEventPicker
-          events={person.lifeEvents}
-          inHeader
-          onPick={(event) => {
-            setAsOf(event.date);
-          }}
-        />
-      </PageHeader>
-      {/* A date selector with its steps only: Progressions does not animate (owner review 2026-11-11, #1442). */}
-      <DateAnimationBar date={asOf} onDateChange={setAsOf} mode="date" />
+      />
+      {/* A date selector with its steps only: Progressions does not animate (owner review 2026-11-11, #1442). The life-event picker sits beside Now (#1770, owner review 2026-11-19). */}
+      <DateAnimationBar
+        date={asOf}
+        onDateChange={setAsOf}
+        mode="date"
+        trailing={
+          <LifeEventPicker
+            events={person.lifeEvents}
+            inHeader
+            onPick={(event) => {
+              setAsOf(event.date);
+            }}
+          />
+        }
+      />
       <div className="progressions-controls">
         <Select
           label={t.techniqueLabel}

@@ -4,7 +4,7 @@
 /**
  * @module ui/LifeEventPicker
  * @purpose Life-event picker beside a screen's date field: lists the stored events in display order, optionally narrowed to one or more categories (#1439), and reports the one chosen.
- * @conventions Renders nothing when the person has no readable events; the select returns to its placeholder after a pick, so the same event can be picked again; the category filter appears only when at least one event has a category, lists only the categories in use, starts with all of them chosen (which also keeps events without a category), and is a Disclosure with a shown-of-total summary; with `inHeader` (a page header action row, #1770) the visible label is hidden but kept for screen readers (sr-only), the wrapper gets `life-event-picker--header`, and the filter opens in a Popover from a small button beside the select (its accessible name is filterTitle; the shown-of-total summary sits inside the panel) so the header row stays on one line; in a form row (the Return page) the label stays visible and the filter stays a Disclosure; uses LifeEventPicker.messages.ts via useMessages().
+ * @conventions Renders nothing when the person has no readable events; the select returns to its placeholder after a pick, so the same event can be picked again; the category filter appears only when at least one event has a category, lists only the categories in use, starts with all of them chosen (which also keeps events without a category), and is a Disclosure with a shown-of-total summary; with `inHeader` (#1770: beside Now in the date bar, passed through DateAnimationBar's `trailing` slot) the visible label is hidden but kept for screen readers (sr-only), the wrapper gets `life-event-picker--header`, and the filter opens in a Popover from a small button beside the select (its accessible name is filterTitle; the shown-of-total summary sits inside the panel) so the bar stays on one line; in a form row (the Return page) the label stays visible and the filter stays a Disclosure; uses LifeEventPicker.messages.ts via useMessages().
  * @exports LifeEventPicker
  */
 import { useState } from 'react';
@@ -31,7 +31,7 @@ export function LifeEventPicker({
 }: {
   readonly events: readonly LifeEvent[] | undefined;
   readonly onPick: (event: LifeEvent) => void;
-  /** True in a page header action row (#1770): the visible label is hidden, the accessible name stays. */
+  /** True beside Now in the date bar (#1770): the visible label is hidden, the accessible name stays. */
   readonly inHeader?: boolean;
 }): React.JSX.Element | null {
   const t = useMessages(lifeEventPickerMessages);

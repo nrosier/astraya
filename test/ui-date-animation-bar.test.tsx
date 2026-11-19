@@ -125,6 +125,34 @@ describe('stepping', () => {
   });
 });
 
+describe('trailing slot beside Now (#1770)', () => {
+  it('renders the trailing node directly before Now, and nothing extra when the slot is omitted', () => {
+    container = document.createElement('div');
+    document.body.append(container);
+    root = createRoot(container);
+    act(() => {
+      root?.render(
+        <DateAnimationBar
+          date="2026-11-10"
+          onDateChange={() => undefined}
+          mode="date"
+          trailing={<span className="slot-probe">probe</span>}
+        />,
+      );
+    });
+    const children = [...find('.date-animation-bar', HTMLElement).children];
+    const probe = children.findIndex((child) => child.classList.contains('slot-probe'));
+    const now = children.findIndex((child) => child.classList.contains('date-animation-now'));
+    expect(probe).toBeGreaterThan(-1);
+    expect(now).toBe(probe + 1);
+
+    act(() => {
+      root?.render(<DateAnimationBar date="2026-11-10" onDateChange={() => undefined} mode="date" />);
+    });
+    expect(container.querySelector('.slot-probe')).toBeNull();
+  });
+});
+
 describe('step buttons are circles (#1650)', () => {
   it('gives the back and forward step buttons the circle class, with their labels unchanged', () => {
     mount();
