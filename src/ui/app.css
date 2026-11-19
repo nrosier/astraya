@@ -3561,6 +3561,11 @@ button.app-nav-search.primitive-button-circle {
   display: block;
 }
 
+/* The footer button's wrapper (#1747) carries its collapsed tooltip; like the button, it is a rail feature only. */
+.rail-collapse-item {
+  display: none;
+}
+
 @media (min-width: 64rem) {
   .workspace-shell {
     display: flex;
@@ -3752,6 +3757,10 @@ button.app-nav-search.primitive-button-circle {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .rail-collapse-item {
+    display: block;
   }
 
   /* The footer button: a quiet bordered control, last in the rail. The ring is :focus-visible only, so it
