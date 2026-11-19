@@ -439,6 +439,7 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
         {/* The life-event picker sits in the header; the date, stepping and Now are in the bar below (#1400); Export stays in the page header (#887). */}
         <LifeEventPicker
           events={person.lifeEvents}
+          inHeader
           onPick={(event) => {
             setAsOf(event.date);
           }}
