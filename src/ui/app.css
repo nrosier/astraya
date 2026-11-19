@@ -10112,10 +10112,14 @@ a.quiet,
   gap: var(--space-2);
 }
 
-/* In a page header (#1770) the picker has no visible label, so its select sits on the row's centre line with Export. */
+/* In a page header (#1770) the picker has no visible label, so its select sits on the row's centre line with Export.
+   The filter button sits beside the select in the same line (grid-auto-flow: column), not under it, so the wrapper is
+   one control tall and centres with the Export pill. */
 .life-event-picker--header {
   align-self: center;
   gap: 0;
+  grid-auto-flow: column;
+  align-items: center;
 }
 
 /* A header row that holds the picker (#1770) centres its controls and gives the select and Export the same height and
