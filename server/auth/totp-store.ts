@@ -1,8 +1,8 @@
 /**
  * @module totp-store
  * @purpose Storage for TOTP two-factor sign-in (#1500, slice 2a): the per-user encrypted secret, the replay-guard step, and single-use recovery codes stored only as peppered HMAC hashes. No route calls it yet.
- * @conventions Fails closed: a stored secret with no key, one that will not decrypt or is not `SECRET_BYTES` long, or a row with the secret NULL but any other TOTP column set, throws and is never read as "not enrolled". The secret is AES-256-GCM under a per-user HKDF subkey; the recovery pepper is one random 32-byte value stored encrypted under the key in `server_secrets`. State changes and replay protection are conditional UPDATEs checked by row count, never read-then-write. Key rotation re-wraps the secrets and every `server_secrets` row through `planTotpRotation`, which decrypts everything before `apply` writes anything. Nothing here logs, and no error message carries a secret, code, pepper or key bytes.
- * @exports TotpKeyMissingError, TotpState, isTotpEnabled, deriveTotpSubkey, startTotpEnrolment, confirmTotpEnrolment, readTotpState, recordAcceptedStep, loadRecoveryPepper, generateRecoveryCodes, normaliseRecoveryCode, replaceRecoveryCodes, consumeRecoveryCode, clearTotp, RotationDecrypt, TotpRotationPlan, planTotpRotation
+ * @conventions Fails closed: a stored secret with no key, one that will not decrypt or is not `SECRET_BYTES` long, or a row with the secret NULL but any other TOTP column set, throws and is never read as "not enrolled". The secret is AES-256-GCM under a per-user HKDF subkey; the recovery pepper is one random 32-byte value stored encrypted under the key in `server_secrets`. State changes and replay protection are conditional UPDATEs checked by row count, never read-then-write. `completeTotpEnrolment` is the only way a route may enable TOTP: it refuses fewer than `RECOVERY_CODE_COUNT` codes and confirms and stores them in one savepoint, so an enabled user always has codes; `confirmTotpEnrolment` is its building block, not a route call, and `test/server-totp-store.test.ts` fails if any file in `server/` or `src/` other than this one references it. A route inside its own transaction must report success, and show the recovery codes, only after its outer COMMIT. The multi-statement writes (`replaceRecoveryCodes`, `clearTotp`, `completeTotpEnrolment`) use uniquely named savepoints, never `BEGIN`, so each is all or nothing alone and may also be called inside a caller's transaction; a failed rollback never replaces the original error. Key rotation re-wraps the secrets and every `server_secrets` row through `planTotpRotation`, which decrypts everything before `apply` writes anything. Nothing here logs, and no error message carries a secret, code, pepper or key bytes.
+ * @exports TotpKeyMissingError, TotpState, isTotpEnabled, deriveTotpSubkey, startTotpEnrolment, confirmTotpEnrolment, completeTotpEnrolment (the only route path that enables TOTP), readTotpState, recordAcceptedStep, loadRecoveryPepper, generateRecoveryCodes, normaliseRecoveryCode, replaceRecoveryCodes (nests in a caller's transaction), consumeRecoveryCode, clearTotp (nests in a caller's transaction), RotationDecrypt, TotpRotationPlan, planTotpRotation
  */
 import { createHmac, hkdfSync, randomBytes, timingSafeEqual } from 'node:crypto';
 import type { Database } from '../db.ts';
@@ -179,19 +179,113 @@ function hashCode(pepper: Buffer, code: string): string {
   return createHmac('sha256', pepper).update(normaliseRecoveryCode(code)).digest('hex');
 }
 
-/** Replaces all of the user's recovery codes with hashes of `codes`, in one transaction. */
-export function replaceRecoveryCodes(db: Database, key: Buffer, userId: string, codes: readonly string[]): void {
-  const pepper = loadRecoveryPepper(db, key);
-  db.exec('BEGIN');
+/**
+ * Runs `work` inside the named savepoint: released when `keep` accepts the result, rolled back to and released
+ * otherwise, or on any throw. A savepoint opens a transaction when none is open and nests inside a caller's `BEGIN`
+ * when one is, so callers of these functions may wrap them in their own transaction. On a throw the original error is
+ * rethrown even when the rollback itself fails (see `rollbackSavepoint`).
+ */
+function inSavepoint<T>(db: Database, name: string, work: () => T, keep: (result: T) => boolean = () => true): T {
+  const nested = db.isTransaction;
+  db.exec(`SAVEPOINT ${name}`);
+  let result: T;
   try {
-    db.prepare('DELETE FROM totp_recovery_codes WHERE user_id = ?').run(userId);
-    const insert = db.prepare('INSERT INTO totp_recovery_codes (user_id, code_hash) VALUES (?, ?)');
-    for (const code of codes) insert.run(userId, hashCode(pepper, code));
-    db.exec('COMMIT');
+    result = work();
+    if (keep(result)) {
+      // Inside the try: a RELEASE that fails to commit (SQLITE_BUSY) keeps the savepoint, which is then rolled back.
+      db.exec(`RELEASE ${name}`);
+      return result;
+    }
   } catch (error) {
-    db.exec('ROLLBACK');
+    rollbackSavepoint(db, name, nested, { error });
     throw error;
   }
+  rollbackSavepoint(db, name, nested, null);
+  return result;
+}
+
+/**
+ * Rolls back to and releases the savepoint. A failure of either statement never replaces `original`; it is
+ * swallowed and the caller rethrows the original error. The exception is a savepoint that opened its own transaction
+ * (`nested` false) and left it open: the connection is then stuck in a transaction, so an AggregateError whose cause
+ * is the original error (or, with none, the rollback failure) is thrown to say so. Inside a caller's transaction
+ * (`nested`) the caller's own ROLLBACK clears any leftover savepoint. With no original error, a rollback failure is
+ * thrown as it is.
+ */
+function rollbackSavepoint(db: Database, name: string, nested: boolean, original: { error: unknown } | null): void {
+  let failure: { error: unknown } | null = null;
+  try {
+    db.exec(`ROLLBACK TO ${name}`);
+    db.exec(`RELEASE ${name}`);
+  } catch (rollbackError) {
+    failure = { error: rollbackError };
+  }
+  if (failure === null) return;
+  if (!nested && db.isTransaction) {
+    const first = original ?? failure;
+    throw new AggregateError(
+      original === null ? [failure.error] : [original.error, failure.error],
+      `The ${name} savepoint could not be rolled back; the connection is still in a transaction.`,
+      { cause: first.error },
+    );
+  }
+  if (original === null) throw failure.error;
+}
+
+/** Deletes the user's recovery codes and inserts hashes of `codes`. Starts no transaction; the caller holds one. */
+function writeRecoveryCodes(db: Database, pepper: Buffer, userId: string, codes: readonly string[]): void {
+  db.prepare('DELETE FROM totp_recovery_codes WHERE user_id = ?').run(userId);
+  const insert = db.prepare('INSERT INTO totp_recovery_codes (user_id, code_hash) VALUES (?, ?)');
+  for (const code of codes) insert.run(userId, hashCode(pepper, code));
+}
+
+/**
+ * Replaces all of the user's recovery codes with hashes of `codes`, all or nothing, in the savepoint
+ * `totp_replace_codes`, so it may run inside a caller's transaction. Never enables TOTP; a route that enables it must
+ * use `completeTotpEnrolment`.
+ */
+export function replaceRecoveryCodes(db: Database, key: Buffer, userId: string, codes: readonly string[]): void {
+  const pepper = loadRecoveryPepper(db, key);
+  inSavepoint(db, 'totp_replace_codes', () => {
+    writeRecoveryCodes(db, pepper, userId, codes);
+  });
+}
+
+/**
+ * The only way a route may enable TOTP: confirms the pending enrolment (the `confirmTotpEnrolment` compare-and-set on
+ * `enrolmentIv`) and stores hashes of `codes` as the user's recovery codes, in the one savepoint `totp_complete`, so no
+ * enabled user is ever left without recovery codes. Throws, writing nothing, when `codes` has fewer than
+ * `RECOVERY_CODE_COUNT` entries. False, with nothing written, when the confirm matches no row
+ * (nothing pending, or a different IV); any throw rolls everything back and is rethrown. May run inside a caller's
+ * transaction.
+ */
+export function completeTotpEnrolment(
+  db: Database,
+  key: Buffer,
+  userId: string,
+  enrolmentIv: Uint8Array,
+  step: number,
+  now: string,
+  codes: readonly string[],
+): boolean {
+  // Before the savepoint and the pepper: an empty or short list must never enable a user, and nothing is written.
+  if (codes.length < RECOVERY_CODE_COUNT) {
+    throw new Error(
+      `TOTP enrolment needs at least ${String(RECOVERY_CODE_COUNT)} recovery codes; nothing was written.`,
+    );
+  }
+  // Loaded before the savepoint, as replaceRecoveryCodes does, so a wrong key throws before any user write.
+  const pepper = loadRecoveryPepper(db, key);
+  return inSavepoint(
+    db,
+    'totp_complete',
+    () => {
+      if (!confirmTotpEnrolment(db, userId, enrolmentIv, step, now)) return false;
+      writeRecoveryCodes(db, pepper, userId, codes);
+      return true;
+    },
+    (confirmed) => confirmed,
+  );
 }
 
 /** Spends one recovery code. True only when it matched and this call deleted it. */
@@ -211,19 +305,17 @@ export function consumeRecoveryCode(db: Database, key: Buffer, userId: string, i
   return Number(result.changes) === 1;
 }
 
-/** Turns TOTP off for the user: clears the four columns and deletes their recovery codes, in one transaction. */
+/**
+ * Turns TOTP off for the user: clears the four columns and deletes their recovery codes, all or nothing, in the
+ * savepoint `totp_clear`, so it may run inside a caller's transaction.
+ */
 export function clearTotp(db: Database, userId: string): void {
-  db.exec('BEGIN');
-  try {
+  inSavepoint(db, 'totp_clear', () => {
     db.prepare(
       'UPDATE users SET totp_secret = NULL, totp_secret_iv = NULL, totp_enabled_at = NULL, totp_last_step = NULL WHERE id = ?',
     ).run(userId);
     db.prepare('DELETE FROM totp_recovery_codes WHERE user_id = ?').run(userId);
-    db.exec('COMMIT');
-  } catch (error) {
-    db.exec('ROLLBACK');
-    throw error;
-  }
+  });
 }
 
 /** Decrypts one value under the current key or throws naming it (never its content); supplied by key rotation. */

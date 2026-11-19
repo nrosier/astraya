@@ -2,15 +2,16 @@
  * TOTP storage (#1500, slice 2a), against a real temp SQLite file. Secrets and codes live only in variables here.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, relative, resolve } from 'node:path';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { openDatabase, type Database } from '../server/db.ts';
 import { encryptPayload } from '../server/ops/crypto.ts';
 import {
   TotpKeyMissingError,
   clearTotp,
+  completeTotpEnrolment,
   confirmTotpEnrolment,
   consumeRecoveryCode,
   deriveTotpSubkey,
@@ -350,10 +351,219 @@ describe('server/auth/totp-store.ts', () => {
     expect(Object.values(row)).toEqual([null, null, null]);
   });
 
+  it('completeTotpEnrolment with the pending IV enables the user and stores the codes', () => {
+    // The combined call is the only route path to enabled, so it must leave the user enabled with working codes.
+    startTotpEnrolment(db, KEY, userId);
+    const codes = generateRecoveryCodes();
+    expect(completeTotpEnrolment(db, KEY, userId, pendingIv(userId), 6, new Date().toISOString(), codes)).toBe(true);
+    const state = readTotpState(db, KEY, userId);
+    expect(isTotpEnabled(state) ? state.lastStep : 'not enabled').toBe(6);
+    expect(storedHashes(userId)).toHaveLength(10);
+    expect(consumeRecoveryCode(db, KEY, userId, codes[0] ?? '')).toBe(true);
+    expect(db.isTransaction).toBe(false);
+  });
+
+  it('completeTotpEnrolment with a stale IV returns false, keeps the user pending and stores no codes', () => {
+    // A second start (another tab) replaced the secret, so the earlier confirm must write nothing at all.
+    startTotpEnrolment(db, KEY, userId);
+    const staleIv = pendingIv(userId);
+    startTotpEnrolment(db, KEY, userId);
+    expect(completeTotpEnrolment(db, KEY, userId, staleIv, 6, new Date().toISOString(), generateRecoveryCodes())).toBe(
+      false,
+    );
+    expect(readTotpState(db, KEY, userId).status).toBe('pending');
+    expect(storedHashes(userId)).toHaveLength(0);
+    expect(db.isTransaction).toBe(false);
+  });
+
+  it('an enrolment interrupted while storing codes leaves the user pending with no codes and no open transaction', () => {
+    // Issue #1782 (e): no enabled user may be left without recovery codes after an interrupted enrolment.
+    startTotpEnrolment(db, KEY, userId);
+    const iv = pendingIv(userId);
+    db.exec(
+      "CREATE TRIGGER fail_codes BEFORE INSERT ON totp_recovery_codes BEGIN SELECT RAISE(ABORT, 'injected failure'); END",
+    );
+    expect(() =>
+      completeTotpEnrolment(db, KEY, userId, iv, 6, new Date().toISOString(), generateRecoveryCodes()),
+    ).toThrow('injected failure');
+    db.exec('DROP TRIGGER fail_codes');
+    expect(db.isTransaction).toBe(false);
+    expect(readTotpState(db, KEY, userId).status).toBe('pending');
+    expect(storedHashes(userId)).toHaveLength(0);
+    // The connection is usable afterwards: a later write commits, and the same IV can still complete.
+    expect(completeTotpEnrolment(db, KEY, userId, iv, 7, new Date().toISOString(), generateRecoveryCodes())).toBe(true);
+    expect(storedHashes(userId)).toHaveLength(10);
+  });
+
+  it('replaceRecoveryCodes inside an outer BEGIN is undone by the outer ROLLBACK, proving the savepoint nests', () => {
+    // A caller (the enrolment route) must be able to hold its own transaction around the store's writes.
+    loadRecoveryPepper(db, KEY);
+    db.exec('BEGIN');
+    expect(() => {
+      replaceRecoveryCodes(db, KEY, userId, generateRecoveryCodes());
+    }).not.toThrow();
+    expect(storedHashes(userId)).toHaveLength(10);
+    db.exec('ROLLBACK');
+    expect(db.isTransaction).toBe(false);
+    expect(storedHashes(userId)).toHaveLength(0);
+  });
+
+  it('clearTotp inside an outer BEGIN then COMMIT clears the user', () => {
+    // clearTotp nests too: the caller's COMMIT makes its writes durable.
+    startTotpEnrolment(db, KEY, userId);
+    confirmNow(userId, 3);
+    replaceRecoveryCodes(db, KEY, userId, generateRecoveryCodes());
+    db.exec('BEGIN');
+    expect(() => {
+      clearTotp(db, userId);
+    }).not.toThrow();
+    db.exec('COMMIT');
+    expect(db.isTransaction).toBe(false);
+    expect(readTotpState(db, null, userId)).toEqual({ status: 'off' });
+    expect(storedHashes(userId)).toHaveLength(0);
+  });
+
   it('deleting the user deletes their recovery codes', () => {
     replaceRecoveryCodes(db, KEY, userId, generateRecoveryCodes());
     expect(storedHashes(userId)).toHaveLength(10);
     db.prepare('DELETE FROM users WHERE id = ?').run(userId);
     expect(db.prepare('SELECT COUNT(*) AS n FROM totp_recovery_codes').get()).toEqual({ n: 0 });
+  });
+
+  it('completeTotpEnrolment with a wrong key throws and leaves the user pending with no codes', () => {
+    // Reason (#1782 E): the pepper is loaded before the savepoint, so a wrong key must fail before any user write.
+    startTotpEnrolment(db, KEY, userId);
+    loadRecoveryPepper(db, KEY);
+    const iv = pendingIv(userId);
+    expect(() =>
+      completeTotpEnrolment(db, randomBytes(32), userId, iv, 6, new Date().toISOString(), generateRecoveryCodes()),
+    ).toThrow();
+    expect(db.isTransaction).toBe(false);
+    expect(readTotpState(db, KEY, userId).status).toBe('pending');
+    expect(storedHashes(userId)).toHaveLength(0);
+  });
+
+  it('completeTotpEnrolment inside an outer BEGIN then ROLLBACK leaves the user pending with no codes', () => {
+    // Reason (#1782 E): the savepoint is released inside the caller's transaction, so only the caller's end decides.
+    startTotpEnrolment(db, KEY, userId);
+    const iv = pendingIv(userId);
+    db.exec('BEGIN');
+    expect(completeTotpEnrolment(db, KEY, userId, iv, 6, new Date().toISOString(), generateRecoveryCodes())).toBe(true);
+    expect(storedHashes(userId)).toHaveLength(10);
+    db.exec('ROLLBACK');
+    expect(db.isTransaction).toBe(false);
+    expect(readTotpState(db, KEY, userId).status).toBe('pending');
+    expect(storedHashes(userId)).toHaveLength(0);
+  });
+
+  it('a stale-IV completeTotpEnrolment inside an outer BEGIN leaves that transaction open and usable', () => {
+    // Reason (#1782 E): the false path rolls back only its own savepoint, never the caller's transaction.
+    startTotpEnrolment(db, KEY, userId);
+    const staleIv = pendingIv(userId);
+    startTotpEnrolment(db, KEY, userId);
+    loadRecoveryPepper(db, KEY);
+    db.exec('BEGIN');
+    expect(completeTotpEnrolment(db, KEY, userId, staleIv, 6, new Date().toISOString(), generateRecoveryCodes())).toBe(
+      false,
+    );
+    expect(db.isTransaction).toBe(true);
+    db.prepare('UPDATE users SET username = ? WHERE id = ?').run('alice-renamed', userId);
+    db.exec('ROLLBACK');
+    expect(db.isTransaction).toBe(false);
+    expect(db.prepare('SELECT username FROM users WHERE id = ?').get(userId)).toEqual({ username: 'alice' });
+    expect(readTotpState(db, KEY, userId).status).toBe('pending');
+  });
+
+  /** Makes every `ROLLBACK TO` fail, as a BUSY or I/O error would, and fails the first code insert. */
+  function breakRollback(): void {
+    const realExec = db.exec.bind(db);
+    vi.spyOn(db, 'exec').mockImplementation((sql: string) => {
+      if (sql.startsWith('ROLLBACK TO')) throw new Error('injected rollback failure');
+      realExec(sql);
+    });
+    db.exec(
+      "CREATE TRIGGER fail_codes BEFORE INSERT ON totp_recovery_codes BEGIN SELECT RAISE(ABORT, 'injected original'); END",
+    );
+  }
+
+  it('a failing ROLLBACK TO does not hide the original error inside a caller transaction', () => {
+    // Reason (#1782 A): the caller must learn what actually failed, not that the rollback failed too.
+    startTotpEnrolment(db, KEY, userId);
+    const iv = pendingIv(userId);
+    loadRecoveryPepper(db, KEY);
+    db.exec('BEGIN');
+    breakRollback();
+    expect(() =>
+      completeTotpEnrolment(db, KEY, userId, iv, 6, new Date().toISOString(), generateRecoveryCodes()),
+    ).toThrow('injected original');
+    vi.restoreAllMocks();
+    db.exec('ROLLBACK');
+    expect(db.isTransaction).toBe(false);
+    expect(readTotpState(db, KEY, userId).status).toBe('pending');
+  });
+
+  it('a failing ROLLBACK TO that leaves the connection in a transaction throws an error caused by the original', () => {
+    // Reason (#1782 A): when the savepoint's own transaction stays open the caller is told, with the original as cause.
+    startTotpEnrolment(db, KEY, userId);
+    const iv = pendingIv(userId);
+    loadRecoveryPepper(db, KEY);
+    breakRollback();
+    let thrown: unknown;
+    try {
+      completeTotpEnrolment(db, KEY, userId, iv, 6, new Date().toISOString(), generateRecoveryCodes());
+    } catch (error) {
+      thrown = error;
+    }
+    vi.restoreAllMocks();
+    expect(thrown).toBeInstanceOf(AggregateError);
+    const cause = (thrown as AggregateError).cause;
+    expect(cause).toBeInstanceOf(Error);
+    expect((cause as Error).message).toContain('injected original');
+    expect((thrown as AggregateError).message).not.toContain('injected rollback failure');
+    expect(db.isTransaction).toBe(true);
+    db.exec('ROLLBACK');
+    expect(db.isTransaction).toBe(false);
+    expect(readTotpState(db, KEY, userId).status).toBe('pending');
+    expect(storedHashes(userId)).toHaveLength(0);
+  });
+
+  it('completeTotpEnrolment refuses an empty or short code list before writing anything', () => {
+    // Reason (#1782 B): an enabled user with no (or too few) recovery codes defeats the point of the combined call.
+    startTotpEnrolment(db, KEY, userId);
+    const iv = pendingIv(userId);
+    const now = new Date().toISOString();
+    expect(() => completeTotpEnrolment(db, KEY, userId, iv, 6, now, [])).toThrow(/recovery codes/);
+    const short = generateRecoveryCodes().slice(0, 9);
+    expect(() => completeTotpEnrolment(db, KEY, userId, iv, 6, now, short)).toThrow(/recovery codes/);
+    expect(db.isTransaction).toBe(false);
+    expect(readTotpState(db, KEY, userId).status).toBe('pending');
+    expect(storedHashes(userId)).toHaveLength(0);
+    expect(db.prepare('SELECT COUNT(*) AS n FROM server_secrets').get()).toEqual({ n: 0 });
+  });
+});
+
+describe('confirmTotpEnrolment is only referenced by the store (#1782 C)', () => {
+  // Reason: "completeTotpEnrolment is the only way to enable" is enforced here, not just documented, so a route that
+  // imports the building block (and could enable a user with no codes) fails the build.
+  const ROOT = resolve(import.meta.dirname, '..');
+  const ALLOWED = new Set([join('server', 'auth', 'totp-store.ts')]);
+
+  function files(dir: string): string[] {
+    const found: string[] = [];
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) found.push(...files(path));
+      else if (/\.(ts|tsx|mjs|js)$/.test(entry.name)) found.push(path);
+    }
+    return found;
+  }
+
+  it('no file under server/ or src/ other than the store mentions it', () => {
+    const offenders = [join(ROOT, 'server'), join(ROOT, 'src')]
+      .flatMap(files)
+      .map((file) => relative(ROOT, file))
+      .filter((file) => !ALLOWED.has(file) && !/\.test\.(ts|tsx)$/.test(file))
+      .filter((file) => readFileSync(join(ROOT, file), 'utf8').includes('confirmTotpEnrolment'));
+    expect(offenders).toEqual([]);
   });
 });
