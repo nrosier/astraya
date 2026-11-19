@@ -38,7 +38,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { appNavMessages } from './AppNav.messages.js';
-import { usePageActionsTarget } from './page-actions-slot.js';
 import { useMessages } from './messages.js';
 import { activeFeatureKey, activePersonTabKey, activeToolKey } from './feature-registry.js';
 import { isTabEnabled, PERSON_TAB_FAMILIES, PERSON_TABS } from './person-nav.js';
@@ -50,6 +49,7 @@ import { useLastPersonId, writeLastPersonId } from './last-person.js';
 import { PersonSwitcher } from './PersonSwitcher.js';
 import { useExclusiveOpen, type ExclusiveOpen } from './use-exclusive-open.js';
 import { useNarrowViewport } from './use-narrow-viewport.js';
+import { useWorkspaceUtilityTarget } from './workspace-utility-slot.js';
 import { Button } from './primitives/Button.js';
 
 // Charts is one destination (#511): the chart type is chosen on the page, not in this navigation.
@@ -254,8 +254,9 @@ const LazyCommandPalette = lazy(() =>
 );
 
 /**
- * The search trigger (#1654): on a wide screen a pill at the top right of the page, in the page header's action
- * group after Export (`PageHeader.tsx`, portalled through `page-actions-slot.tsx`), so the sidebar holds no search.
+ * The search trigger (#1654, moved to the workspace utility row by #1769): on a wide screen it sits alone in the
+ * workspace's slim top-right utility row, above every page header, at the same coordinates on every route, whether or
+ * not the page has a header (`WorkspaceShell.tsx`, portalled through `workspace-utility-slot.tsx`), so the sidebar holds no search.
  * At 40rem and below it is an icon-only circle beside the Menu button. It opens the command palette, and Ctrl+K or Cmd+K opens it from anywhere outside a text field.
  * The shortcut only calls `preventDefault` on its own key, so other keydown handlers still receive it.
  * The palette loads on its first open and stays mounted after that, hidden while closed, so `StagedDialog`
@@ -268,8 +269,8 @@ function PaletteTrigger(): React.JSX.Element {
   const triggerRef = useRef<HTMLButtonElement>(null);
   // At 40rem and below the trigger is the icon-only circle (#1650 shape), so it takes the shared circle class.
   const narrow = useNarrowViewport();
-  // The page header's top-right action group, where the desktop trigger renders (#1654); null when no header is mounted.
-  const pageActions = usePageActionsTarget();
+  // The workspace's top-right utility row, where the desktop trigger renders (#1769); null when no shell is mounted.
+  const utilityRow = useWorkspaceUtilityTarget();
 
   function openPalette(): void {
     setPaletteLoaded(true);
@@ -319,9 +320,9 @@ function PaletteTrigger(): React.JSX.Element {
     </Suspense>
   );
 
-  // Below 40rem the trigger is the icon-only circle beside Menu, in the nav (#1650). On desktop it is the page
-  // header's top-right control, after its actions (#1654), so the sidebar holds no search. With no page header
-  // mounted there is no desktop trigger; Ctrl+K still opens the palette.
+  // Below 40rem the trigger is the icon-only circle beside Menu, in the nav (#1650). On desktop it is in the workspace
+  // utility row above the page (#1769), so the sidebar holds no search. With no shell mounted there is no desktop
+  // trigger; Ctrl+K still opens the palette.
   if (narrow) {
     return (
       <>
@@ -332,7 +333,7 @@ function PaletteTrigger(): React.JSX.Element {
   }
   return (
     <>
-      {pageActions !== null && createPortal(searchButton, pageActions)}
+      {utilityRow !== null && createPortal(searchButton, utilityRow)}
       {palette}
     </>
   );
