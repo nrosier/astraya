@@ -33,6 +33,9 @@
  *   also use "six months (30') of time-arc past and future" (PDF 120). Tebbs (*The Complete Book of Chart Rectification*, 2008,
  *   provisional) gives the same 1 degree for directions and progressions, as support: "The '1-degree orb' rule applies
  *   to directions as well as progressions" (PDF page 135; printed page numbers are not in the scan).
+ *   A stricter school is recorded, not adopted: Marr (*Prediction II*, 1985, p. 28) says primary directions
+ *   "with orbs larger than 4 minutes" of arc should never be used to prove a rectification; Astraya keeps
+ *   the cited 1 degree (owner decision, #1606, 2026-11-19).
  * - **Orb, transit contacts**: 3 degrees (`RECTIFICATION_ORB_LIMIT`). Tebbs's outer limit (PDF page 77): consider exact
  *   contacts first, then within 1, 2 and up to 3 degrees, the closer the more important. Tebbs states this
  *   limit for building the natal hook; applying it to transit contacts is Astraya's reading of her rule.
