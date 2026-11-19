@@ -16,6 +16,12 @@ import { openDatabase, type Database } from '../server/db.ts';
 import { CURRENT_KEY_VERSION, decryptPayload, encryptPayload } from '../server/ops/crypto.ts';
 import { rotateEncryptionKey } from '../server/ops/rotate-key.ts';
 import {
+  confirmTotpEnrolment,
+  generateRecoveryCodes,
+  replaceRecoveryCodes,
+  startTotpEnrolment,
+} from '../server/auth/totp-store.ts';
+import {
   getInterpretationResult,
   listInterpretationResults,
   saveInterpretationResult,
@@ -311,23 +317,50 @@ describe('rotateEncryptionKey transaction guarantees (#1680 review)', () => {
       { userId, mode: 'grounded', locale: 'en', sections: [{ heading: 'Overview', body: 'Text.' }] },
       OLD_KEY,
     );
+    // A TOTP user (enabled, with recovery codes) so the wrapped secret and the recovery pepper are on disk under OLD_KEY.
+    const totpUser = randomUUID();
+    db.prepare('INSERT INTO users (id, username, password_hash, created_at) VALUES (?, ?, ?, ?)').run(
+      totpUser,
+      'totp-residue',
+      'not-a-real-hash',
+      new Date().toISOString(),
+    );
+    startTotpEnrolment(db, OLD_KEY, totpUser);
+    expect(confirmTotpEnrolment(db, totpUser, 1000, new Date().toISOString())).toBe(true);
+    replaceRecoveryCodes(db, OLD_KEY, totpUser, generateRecoveryCodes());
+    const totpSecretCiphertext = (
+      db.prepare('SELECT totp_secret FROM users WHERE id = ?').get(totpUser) as unknown as { totp_secret: Buffer }
+    ).totp_secret;
+    const pepperCiphertext = (
+      db.prepare("SELECT value FROM server_secrets WHERE name = 'totp-recovery-pepper'").get() as unknown as {
+        value: Buffer;
+      }
+    ).value;
+
     const oldCiphertexts = [
       ...(db.prepare('SELECT payload FROM ops').all() as unknown as { payload: Buffer }[]).map((r) => r.payload),
       ...(
         db.prepare('SELECT sections_json FROM interpretation_results').all() as unknown as { sections_json: Buffer }[]
       ).map((r) => r.sections_json),
+      Buffer.from(totpSecretCiphertext),
+      Buffer.from(pepperCiphertext),
     ];
     const files = [join(dir, 'astraya.db'), join(dir, 'astraya.db-wal')];
-    const residue = (): number => {
+    const onDisk = (ct: Buffer): boolean => {
       const bytes = files.filter((f) => existsSync(f)).map((f) => readFileSync(f));
-      return oldCiphertexts.filter((ct) => bytes.some((b) => b.includes(ct))).length;
+      return bytes.some((b) => b.includes(ct));
     };
+    const residue = (): number => oldCiphertexts.filter((ct) => onDisk(ct)).length;
     // Sanity: the old ciphertext really is on disk before rotating, so the assertion below can fail.
     expect(residue()).toBe(oldCiphertexts.length);
+    expect(onDisk(Buffer.from(totpSecretCiphertext))).toBe(true);
+    expect(onDisk(Buffer.from(pepperCiphertext))).toBe(true);
 
     rotateEncryptionKey(db, OLD_KEY, NEW_KEY);
 
     expect(residue()).toBe(0);
+    expect(onDisk(Buffer.from(totpSecretCiphertext))).toBe(false);
+    expect(onDisk(Buffer.from(pepperCiphertext))).toBe(false);
   });
 
   it('takes the write lock before reading: a held lock fails rotation as a lock error, not as a decrypt error', () => {
