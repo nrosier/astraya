@@ -344,6 +344,25 @@ test.describe('with the shared people (#799)', () => {
       const toggle = header.getByRole('button', { name: 'Collapse sidebar', exact: true });
       await expect(toggle).toHaveAttribute('aria-expanded', 'true');
 
+      // Every nav icon keeps its vertical position when the rail collapses (#1747).
+      const iconTops = async (): Promise<Record<string, number>> =>
+        Object.fromEntries(
+          await header.locator('.rail-nav-item .app-nav-item').evaluateAll(
+            (
+              items: readonly {
+                getAttribute: (name: string) => string | null;
+                querySelector: (selector: string) => { getBoundingClientRect: () => { top: number } } | null;
+              }[],
+            ) =>
+              items.map((item) => [
+                item.getAttribute('aria-label') ?? '',
+                item.querySelector('svg')?.getBoundingClientRect().top ?? Number.NaN,
+              ]),
+          ),
+        ) as Record<string, number>;
+      const expandedTops = await iconTops();
+      expect(Object.keys(expandedTops)).toHaveLength(11);
+
       // Collapse: the rail narrows to about 60px, the page gains that width, the links keep their names.
       await toggle.click();
       await expect(shell).toHaveClass(/workspace-shell-collapsed/);
@@ -352,6 +371,10 @@ test.describe('with the shared people (#799)', () => {
         'false',
       );
       const collapsedRail = await widthOf(header);
+      const collapsedTops = await iconTops();
+      for (const [name, top] of Object.entries(expandedTops)) {
+        expect(collapsedTops[name], name).toBeCloseTo(top, 0);
+      }
       expect(collapsedRail).toBeLessThanOrEqual(64);
       expect(collapsedRail).toBeLessThan(expandedRail - 100);
       expect(await widthOf(main)).toBeGreaterThan(expandedMain + (expandedRail - collapsedRail) - 2);
@@ -391,6 +414,27 @@ test.describe('with the shared people (#799)', () => {
       }
       expect(visited.at(-1)).toBe('Expand sidebar');
       await expect(header.getByRole('button', { name: 'Expand sidebar', exact: true })).toBeFocused();
+
+      // The footer button, focused from the keyboard, shows its own tooltip (owner decision, 2026-11-20).
+      const footerTooltip = header
+        .getByRole('button', { name: 'Expand sidebar', exact: true })
+        .locator('xpath=following-sibling::*[@role="tooltip"]');
+      await expect(footerTooltip).toBeVisible();
+      await expect(footerTooltip).toHaveText('Expand sidebar');
+
+      // Tab reaches every one of the 11 rail entries, from the first, and then the footer button.
+      const railNames = Object.keys(expandedTops);
+      const first = header.locator('.rail-nav-item .app-nav-item').first();
+      await first.focus();
+      const reached = new Set<string>([(await first.getAttribute('aria-label')) ?? '']);
+      for (let i = 0; i < 60; i += 1) {
+        await page.keyboard.press('Tab');
+        const name = (await page.locator(':focus').getAttribute('aria-label')) ?? '';
+        reached.add(name);
+        if (name === 'Expand sidebar') break;
+      }
+      for (const name of railNames) expect(reached.has(name), name).toBe(true);
+      expect(reached.has('Expand sidebar')).toBe(true);
 
       // Expand again from the same button.
       await header.getByRole('button', { name: 'Expand sidebar', exact: true }).click();
