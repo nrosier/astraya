@@ -42,6 +42,12 @@ interface UserRow {
   readonly oidc_subject: string | null;
 }
 
+/**
+ * Exactly the `UserRow` fields, never `SELECT *`: the users table also holds the TOTP secret ciphertext
+ * (`totp_secret`, `totp_secret_iv`), which must not load on every authenticated request (#1782).
+ */
+const USER_COLUMNS = 'id, username, password_hash, role, created_at, disabled_at, oidc_issuer, oidc_subject';
+
 interface PasswordSetTokenRow extends UserRow {
   readonly password_set_token_expires_at: string | null;
 }
@@ -63,12 +69,12 @@ function toUser(row: UserRow): User {
 }
 
 export function getUserById(db: Database, id: string): User | null {
-  const row = db.prepare('SELECT * FROM users WHERE id = ?').get(id) as UserRow | undefined;
+  const row = db.prepare(`SELECT ${USER_COLUMNS} FROM users WHERE id = ?`).get(id) as UserRow | undefined;
   return row ? toUser(row) : null;
 }
 
 export function getUserByUsername(db: Database, username: string): User | null {
-  const row = db.prepare('SELECT * FROM users WHERE username = ?').get(username) as UserRow | undefined;
+  const row = db.prepare(`SELECT ${USER_COLUMNS} FROM users WHERE username = ?`).get(username) as UserRow | undefined;
   return row ? toUser(row) : null;
 }
 
@@ -81,14 +87,15 @@ export function getUserCredentialsByUsername(
   db: Database,
   username: string,
 ): { user: User; passwordHash: string | null } | null {
-  const row = db.prepare('SELECT * FROM users WHERE username = ?').get(username) as UserRow | undefined;
+  const row = db.prepare(`SELECT ${USER_COLUMNS} FROM users WHERE username = ?`).get(username) as UserRow | undefined;
   return row ? { user: toUser(row), passwordHash: row.password_hash } : null;
 }
 
 /** Looks up a user by their OIDC identity, provisioned on a prior sign-in via that same issuer. */
 export function getUserByOidcIdentity(db: Database, issuer: string, subject: string): User | null {
-  const row = db.prepare('SELECT * FROM users WHERE oidc_issuer = ? AND oidc_subject = ?').get(issuer, subject) as
-    UserRow | undefined;
+  const row = db
+    .prepare(`SELECT ${USER_COLUMNS} FROM users WHERE oidc_issuer = ? AND oidc_subject = ?`)
+    .get(issuer, subject) as UserRow | undefined;
   return row ? toUser(row) : null;
 }
 
@@ -120,8 +127,9 @@ export function getUserByPasswordSetToken(
   db: Database,
   token: string,
 ): { readonly user: User; readonly expiresAt: string | null } | null {
-  const row = db.prepare('SELECT * FROM users WHERE password_set_token = ?').get(hashBearerToken(token)) as
-    PasswordSetTokenRow | undefined;
+  const row = db
+    .prepare(`SELECT ${USER_COLUMNS}, password_set_token_expires_at FROM users WHERE password_set_token = ?`)
+    .get(hashBearerToken(token)) as PasswordSetTokenRow | undefined;
   return row ? { user: toUser(row), expiresAt: row.password_set_token_expires_at } : null;
 }
 
