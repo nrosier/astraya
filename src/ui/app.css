@@ -3166,49 +3166,47 @@ label.stacked {
   gap: 0.15rem;
 }
 
-/* The command palette trigger (#1654): a pill at the standard 2.75rem on a wide screen, and an icon-only
-   circle beside the Menu button at 390px. Pill and circle use `--radius-full`, as the guidelines set. */
-.app-nav-search {
-  /* It may shrink to fit the header, but never below a 2.75rem pill: the placeholder truncates first (#1073). */
-  flex: 0 1 auto;
+/* The command palette trigger (#1654, #1769): one icon-only circle at the standard control height on every width.
+   On a wide screen it sits in the workspace utility row; at 40rem and below it sits beside the Menu button. */
+.app-nav-search-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.app-nav-search,
+button.app-nav-search.primitive-button-circle {
+  flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  min-width: 2.75rem;
-  height: 2.75rem;
-  padding: 0 var(--space-3) 0 var(--space-3);
+  justify-content: center;
+  width: var(--control-height);
+  height: var(--control-height);
+  min-width: var(--control-height);
+  min-height: var(--control-height);
+  aspect-ratio: 1;
+  padding: 0;
   border: 1px solid var(--line);
   border-radius: var(--radius-full);
   background: var(--surface);
   color: var(--muted);
   font: inherit;
-  font-size: var(--text-sm);
   cursor: pointer;
+}
+
+.app-nav-search:hover {
+  background: var(--surface-hover);
+  box-shadow: var(--shadow-popover);
 }
 
 .app-nav-search svg {
   flex: 0 0 auto;
-  width: 1rem;
-  height: 1rem;
+  width: 1.125rem;
+  height: 1.125rem;
   fill: none;
   stroke: currentcolor;
   stroke-width: 2;
   stroke-linecap: round;
-}
-
-.app-nav-search-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.app-nav-search-hint {
-  flex: 0 0 auto;
-  padding: 0 var(--space-2);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-full);
-  font: inherit;
-  font-size: var(--text-xs);
+  stroke-linejoin: round;
 }
 
 .app-nav-search:focus-visible {
@@ -3216,16 +3214,39 @@ label.stacked {
   outline-offset: 2px;
 }
 
-@media (max-width: 40rem) {
-  /* Icon only. The circle's size, padding and radius come from `.primitive-button-circle` (#1650), set on the trigger in AppNav.tsx. */
-  .app-nav-search {
-    flex: 0 0 auto;
-    justify-content: center;
-  }
+/* The tooltip sits below the circle, right-aligned to it. It shows on hover and on keyboard focus. */
+.app-nav-search-tip {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  z-index: 10;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  box-shadow: var(--shadow-popover);
+  color: var(--fg);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+}
 
-  .app-nav-search-text,
-  .app-nav-search-hint {
-    display: none;
+.app-nav-search-wrap:hover > .app-nav-search-tip,
+.app-nav-search-wrap:focus-within > .app-nav-search-tip {
+  opacity: 1;
+  visibility: visible;
+}
+
+.app-nav-search-wrap.is-tip-dismissed > .app-nav-search-tip {
+  opacity: 0;
+  visibility: hidden;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .app-nav-search-tip {
+    transition: opacity 120ms ease;
   }
 }
 
@@ -3488,13 +3509,56 @@ label.stacked {
  * above 64rem the header becomes a collapsible left rail per docs/ui/UI-UX_GUIDELINES.md's "Target
  * application shell" instead of a bar across the top — the brand/status at its head, the
  * dropdown nav from `AppNav.tsx` filling the middle unchanged, and the account cluster anchored
- * at its foot. The toggle collapses the whole rail rather than shrinking it to icon-only buttons
- * with tooltips: this app has no icon set to shrink to, so hiding the rail outright (rather than
- * degrading it to a label-less state) is what the guideline's "without losing labels to tooltips
- * alone" rules out.
+ * at its foot. The footer button (`RailCollapseButton.tsx`, #1747) shrinks the rail to an icon-only
+ * column with tooltips (collapsed rules at the end of this block); every item keeps its visible
+ * label in the DOM and an accessible name, so nothing depends on the tooltip alone. The collapsed
+ * look applies only from 64rem; below it the Menu panel is unchanged and the preference is ignored.
  */
-.workspace-rail-toggle {
+:root {
+  /* The icon rail's sizes (#1747): an 18px icon in a 36px target (44px on a coarse pointer, below). */
+  --rail-icon-size: 18px;
+  --rail-target-size: 36px;
+}
+
+@media (pointer: coarse) {
+  :root {
+    --rail-target-size: 44px;
+  }
+}
+
+/* The tooltip and the footer button are rail features: hidden until the 64rem rules below show them. */
+.rail-nav-tooltip,
+.rail-collapse-button {
   display: none;
+}
+
+/*
+ * The workspace utility row (#1769): a slim row above every page header on wide screens that holds
+ * the global search trigger, so the trigger sits at the same top-right coordinates on every route.
+ * Its inline padding matches `.shell`'s side padding (var(--space-6)) so its right edge lines up with
+ * the page content. It takes its own height (the owner accepted the downward shift, #1769). At 40rem
+ * and below the trigger sits beside Menu in the nav instead, so the row is hidden.
+ */
+.workspace-utility {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  width: 100%;
+  max-width: var(--shell-max-width);
+  margin-inline: auto;
+  padding-inline: var(--space-6);
+  padding-block: var(--space-2) 0;
+}
+
+@media (max-width: 40rem) {
+  .workspace-utility {
+    display: none;
+  }
+}
+
+.rail-nav-item {
+  position: relative;
+  display: block;
 }
 
 @media (min-width: 64rem) {
@@ -3665,45 +3729,217 @@ label.stacked {
     max-width: 16rem;
   }
 
-  /* Fixed to the viewport, not the rail: a flex/sticky offset only takes effect once its axis
-     actually scrolls, which the rail's width never does, so a toggle that must stay in the same
-     place whether the rail is open or collapsed needs real fixed positioning instead. */
-  .workspace-rail-toggle {
-    position: fixed;
-    top: 1rem;
-    left: 16rem;
-    z-index: 21;
-    display: inline-flex;
-    width: 1.5rem;
-    height: 1.5rem;
+  /* Every row has the same fixed height in both states, so the icons stay put when the rail collapses:
+     the icon sits in a square the size of the collapsed target, and the label follows it. */
+  .app-nav {
+    gap: var(--space-1);
+  }
+
+  .rail-nav-item .app-nav-item {
+    display: flex;
     align-items: center;
-    justify-content: center;
-    padding: 0;
-    transform: translateX(-50%);
+    gap: var(--space-2);
+    box-sizing: border-box;
+    min-height: var(--rail-target-size);
+    padding: 0 calc((var(--rail-target-size) - var(--rail-icon-size)) / 2);
+  }
+
+  .rail-nav-item .app-nav-item svg {
+    flex: 0 0 auto;
+  }
+
+  .rail-nav-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* The footer button: a quiet bordered control, last in the rail. The ring is :focus-visible only, so it
+     clears on a pointer click. */
+  button.rail-collapse-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--space-2);
+    box-sizing: border-box;
+    width: 100%;
+    min-height: var(--rail-target-size);
+    padding: 0 calc((var(--rail-target-size) - var(--rail-icon-size)) / 2);
     border: 1px solid var(--line);
     border-radius: var(--radius-full);
-    background: var(--surface);
+    background: transparent;
     color: var(--muted);
-    font-size: var(--text-xs);
+    font-size: var(--text-sm);
     cursor: pointer;
   }
 
-  .workspace-rail-toggle:hover {
-    color: var(--fg);
+  button.rail-collapse-button:hover:not(:disabled) {
     background: var(--surface-hover);
+    color: var(--fg);
   }
 
+  button.rail-collapse-button:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  button.rail-collapse-button:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Collapsed (#1747): an icon-only column, one 36px target plus --space-3 each side. Overflow stays
+     visible so the tooltips and the person switcher and account popups are not clipped. */
   .workspace-shell-collapsed .app-header,
   .workspace-shell-collapsed .app-header-with-person {
-    width: 0;
-    flex: 0 0 0;
-    padding: var(--space-4) 0;
-    overflow: hidden;
-    border-right: none;
+    box-sizing: border-box;
+    width: calc(var(--rail-target-size) + 2 * var(--space-3) + 1px);
+    flex: 0 0 calc(var(--rail-target-size) + 2 * var(--space-3) + 1px);
+    padding: var(--space-4) var(--space-3);
+    overflow: visible;
   }
 
-  .workspace-shell-collapsed .workspace-rail-toggle {
-    left: 0;
+  .workspace-shell-collapsed .rail-nav-item .app-nav-item {
+    justify-content: center;
+    width: var(--rail-target-size);
+    height: var(--rail-target-size);
+    padding: 0;
+    border-radius: var(--radius-full);
+  }
+
+  .workspace-shell-collapsed .rail-nav-item .app-nav-item.active {
+    background: var(--surface-hover);
+    color: var(--fg);
+  }
+
+  /* Visually hidden, still in the DOM: the link's aria-label names it, so no text is lost to assistive tech. */
+  .workspace-shell-collapsed .rail-nav-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  /* The tooltip opens to the right of the rail on hover or keyboard focus, never on a disabled entry
+     (its native title says why it is off), and not after Escape (WCAG 1.4.13). */
+  .workspace-shell-collapsed
+    .rail-nav-item:not([data-tooltip-dismissed], :has(button:disabled)):is(:hover, :has(:focus-visible))
+    .rail-nav-tooltip {
+    position: absolute;
+    top: 50%;
+    left: calc(100% + var(--space-2));
+    z-index: 30;
+    display: block;
+    transform: translateY(-50%);
+    padding: var(--space-1) var(--space-3);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-full);
+    background: var(--surface);
+    box-shadow: var(--shadow-popover);
+    color: var(--fg);
+    font-size: var(--text-sm);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .workspace-shell-collapsed button.rail-collapse-button {
+    justify-content: center;
+    width: var(--rail-target-size);
+    padding: 0;
+  }
+
+  /* Compact brand, person switcher and account tile while collapsed (#1747). Each is still one click away:
+     the brand links home, the switcher opens its popup, the tile opens the account popover. The brand shows
+     the app's initial; the switcher draws the person's monogram from `data-monogram`. Their real text stays
+     in the DOM at font-size 0, so the accessible name is unchanged. */
+  .workspace-shell-collapsed .app-header-start {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .workspace-shell-collapsed .app-header-brand,
+  .workspace-shell-collapsed .app-nav-person {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: var(--rail-target-size);
+    height: var(--rail-target-size);
+    min-height: 0;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-full);
+    font-size: 0;
+  }
+
+  .workspace-shell-collapsed .app-header-brand::before {
+    content: 'A';
+  }
+
+  .workspace-shell-collapsed .app-nav-person::before {
+    content: attr(data-monogram);
+  }
+
+  .workspace-shell-collapsed .app-header-brand::before,
+  .workspace-shell-collapsed .app-nav-person::before {
+    font-size: var(--text-base);
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .workspace-shell-collapsed .app-nav-person {
+    background: var(--surface);
+  }
+
+  .workspace-shell-collapsed .app-header-status,
+  .workspace-shell-collapsed .profile-tile-name,
+  .workspace-shell-collapsed .profile-tile-role {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  .workspace-shell-collapsed .app-header-end {
+    justify-content: center;
+  }
+
+  /* The account tile: the avatar with its sync dot (`SyncBadge`) above a 36px circle that opens the account popover. */
+  .workspace-shell-collapsed .profile {
+    flex-direction: column;
+    align-items: center;
+    width: auto;
+  }
+
+  .workspace-shell-collapsed .profile-tile,
+  .workspace-shell-collapsed .profile-tile-menu {
+    flex: 0 0 auto;
+    justify-content: center;
+    box-sizing: border-box;
+    width: var(--rail-target-size);
+    height: var(--rail-target-size);
+    min-height: 0;
+    padding: 0;
+    border-radius: var(--radius-full);
+  }
+
+  .workspace-shell-collapsed .profile-tile-kebab {
+    margin-left: 0;
+  }
+
+  .workspace-shell-collapsed .profile-tile-guest {
+    display: none;
+  }
+
+  /* The version and About links do not fit an icon column; they return when the rail is expanded. */
+  .workspace-shell-collapsed .sidebar-footer {
+    display: none;
   }
 }
 
@@ -5460,7 +5696,6 @@ svg text.chart-symbol-text-unicode {
   .report-controls,
   .pwastatus,
   .app-header,
-  .workspace-rail-toggle,
   .extended-settings,
   .birth-place-search,
   .hint {
@@ -8037,11 +8272,6 @@ button.primitive-button-form-action {
   order: 30;
 }
 
-/* The palette trigger (#1654) ends the row on a wide screen, after Export and the PDF link: the top-right element of the page. */
-.page-header-actions > .app-nav-search {
-  order: 40;
-}
-
 .page-header-actions .primitive-field,
 .page-header-actions .primitive-choice-field {
   margin-bottom: 0;
@@ -8049,6 +8279,41 @@ button.primitive-button-form-action {
 
 .page-header-actions .page-header-export-toggle {
   min-height: var(--control-height);
+}
+
+/* The picker beside Now in the date bar (#1770): the select and the filter button sit on one line (grid-auto-flow:
+   column), so the wrapper is one control tall and centres with the bar's other controls. */
+.life-event-picker--header {
+  align-self: center;
+  gap: 0;
+  grid-auto-flow: column;
+  align-items: center;
+}
+
+/* The picker's select takes the bar's standard control height and pill ends, like Now and the date field beside it. */
+.date-animation-bar .life-event-picker select {
+  min-height: var(--control-height);
+  height: var(--control-height);
+  border-radius: var(--radius-full);
+}
+
+/* A popover opened from a button (#1770): anchored in flow beside its trigger, styled like the Export menu. */
+.primitive-popover {
+  position: relative;
+  display: inline-flex;
+}
+
+.primitive-popover-panel {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 25;
+  min-width: 14rem;
+  padding: var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-popover);
 }
 
 /* Chart pages' Export PDF (#976): a primary accent link to the PDF creator, with an arrow for the navigation. */
@@ -9130,7 +9395,6 @@ button.mgrid-pair:focus-visible {
 
 /* Small controls that keep their look but grow to the target, in both directions. */
 .data-table th button,
-.workspace-rail-toggle,
 .birth-record-status .primitive-tooltip-trigger {
   min-height: var(--target-min);
   min-width: var(--target-min);
@@ -10674,4 +10938,13 @@ a.quiet,
   margin: 0;
   padding: var(--space-4);
   color: var(--muted);
+}
+
+/* The keyboard legend at the foot of the palette (#1769): a quiet line under a top rule, in the card's padding. */
+.command-palette-legend {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: var(--text-xs);
 }

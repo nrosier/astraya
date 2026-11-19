@@ -26,6 +26,7 @@ import { useMessages } from './messages.js';
 import { buildSearchIndex, type SearchEntry } from './search-index.js';
 import { scoreEntries } from './search-score.js';
 import { prunePaletteState, readPaletteState, recordRecent, togglePin, type PaletteState } from './palette-recents.js';
+import { isApplePlatform } from './platform.js';
 import { Button } from './primitives/Button.js';
 import { StagedDialog } from './primitives/StagedDialog.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
@@ -239,6 +240,15 @@ function PaletteBody({
               } else if (event.key === 'Enter') {
                 event.preventDefault();
                 activate(activeRow);
+              } else if (
+                event.key.toLowerCase() === 'k' &&
+                (event.ctrlKey || event.metaKey) &&
+                !event.altKey &&
+                !event.shiftKey
+              ) {
+                // The shortcut toggles the palette: typed in its own field it closes it, and focus returns to the trigger (#1769).
+                event.preventDefault();
+                onClose();
               }
             },
           }}
@@ -258,6 +268,10 @@ function PaletteBody({
             {t.noMatch(query.trim())}
           </StatusMessage>
         ))}
+      {/* The legend repeats keys the reader already has, so screen readers skip it (#1769). */}
+      <p className="command-palette-legend" aria-hidden="true">
+        {t.legend(isApplePlatform() ? t.shortcutApple : t.shortcutOther)}
+      </p>
     </>
   );
 }

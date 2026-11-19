@@ -4,7 +4,7 @@
 /**
  * @module ui/LifeEventPicker
  * @purpose Life-event picker beside a screen's date field: lists the stored events in display order, optionally narrowed to one or more categories (#1439), and reports the one chosen.
- * @conventions Renders nothing when the person has no readable events; the select returns to its placeholder after a pick, so the same event can be picked again; the category filter appears only when at least one event has a category, lists only the categories in use, starts with all of them chosen (which also keeps events without a category), and is a Disclosure with a shown-of-total summary; uses LifeEventPicker.messages.ts via useMessages().
+ * @conventions Renders nothing when the person has no readable events; the select returns to its placeholder after a pick, so the same event can be picked again; the category filter appears only when at least one event has a category, lists only the categories in use, starts with all of them chosen (which also keeps events without a category), and is a Disclosure with a shown-of-total summary; with `inHeader` (#1770: beside Now in the date bar, passed through DateAnimationBar's `trailing` slot) the visible label is hidden but kept for screen readers (sr-only), the wrapper gets `life-event-picker--header`, and the filter opens in a Popover from a small button beside the select (its accessible name is filterTitle; the shown-of-total summary sits inside the panel) so the bar stays on one line; in a form row (the Return page) the label stays visible and the filter stays a Disclosure; uses LifeEventPicker.messages.ts via useMessages().
  * @exports LifeEventPicker
  */
 import { useState } from 'react';
@@ -21,14 +21,18 @@ import { lifeEventPickerMessages } from './LifeEventPicker.messages.js';
 import { Button } from './primitives/Button.js';
 import { Checkbox } from './primitives/Checkbox.js';
 import { Disclosure } from './primitives/Disclosure.js';
+import { Popover } from './primitives/Popover.js';
 import { Select } from './primitives/Select.js';
 
 export function LifeEventPicker({
   events,
   onPick,
+  inHeader,
 }: {
   readonly events: readonly LifeEvent[] | undefined;
   readonly onPick: (event: LifeEvent) => void;
+  /** True beside Now in the date bar (#1770): the visible label is hidden, the accessible name stays. */
+  readonly inHeader?: boolean;
 }): React.JSX.Element | null {
   const t = useMessages(lifeEventPickerMessages);
   const names = useMessages(lifeEventCategoryMessages);
@@ -45,10 +49,35 @@ export function LifeEventPicker({
     else next.delete(category);
     setChosen(next.size === inUse.length ? undefined : next);
   };
+  const filterFields = (
+    <fieldset className="life-event-picker-filter">
+      <legend className="sr-only">{t.filterTitle}</legend>
+      {inUse.map((category) => (
+        <Checkbox
+          key={category}
+          label={names[category]}
+          checked={effective === undefined || effective.has(category)}
+          onChange={(on) => {
+            toggle(category, on);
+          }}
+        />
+      ))}
+      <Button
+        size="compact"
+        disabled={effective === undefined}
+        onClick={() => {
+          setChosen(undefined);
+        }}
+      >
+        {t.filterAll}
+      </Button>
+    </fieldset>
+  );
   return (
-    <div className="life-event-picker">
+    <div className={inHeader === true ? 'life-event-picker life-event-picker--header' : 'life-event-picker'}>
       <Select
         label={t.label}
+        hideLabel={inHeader === true}
         value=""
         options={[
           { value: '', label: effective !== undefined && options.length === 0 ? t.filterEmpty : t.placeholder },
@@ -59,37 +88,31 @@ export function LifeEventPicker({
           if (picked !== undefined) onPick(picked);
         }}
       />
-      {inUse.length > 0 && (
-        <Disclosure
-          title={t.filterTitle}
-          summary={t.filterSummary(visible.length, events.length)}
-          showLabel={t.filterShow}
-          hideLabel={t.filterHide}
-        >
-          <fieldset className="life-event-picker-filter">
-            <legend className="sr-only">{t.filterTitle}</legend>
-            {inUse.map((category) => (
-              <Checkbox
-                key={category}
-                label={names[category]}
-                checked={effective === undefined || effective.has(category)}
-                onChange={(on) => {
-                  toggle(category, on);
-                }}
-              />
-            ))}
-            <Button
-              size="compact"
-              disabled={effective === undefined}
-              onClick={() => {
-                setChosen(undefined);
-              }}
-            >
-              {t.filterAll}
-            </Button>
-          </fieldset>
-        </Disclosure>
-      )}
+      {inUse.length > 0 &&
+        (inHeader === true ? (
+          <Popover label={t.filterTitle} trigger={<FilterGlyph />}>
+            <p className="life-event-picker-filter-summary">{t.filterSummary(visible.length, events.length)}</p>
+            {filterFields}
+          </Popover>
+        ) : (
+          <Disclosure
+            title={t.filterTitle}
+            summary={t.filterSummary(visible.length, events.length)}
+            showLabel={t.filterShow}
+            hideLabel={t.filterHide}
+          >
+            {filterFields}
+          </Disclosure>
+        ))}
     </div>
+  );
+}
+
+/** A small funnel icon for the header's filter trigger; the trigger's accessible name is `filterTitle`. */
+function FilterGlyph(): React.JSX.Element {
+  return (
+    <svg className="life-event-picker-filter-glyph" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+      <path d="M2 3h12l-4.5 5.5V13l-3-1.5V8.5z" fill="currentColor" />
+    </svg>
   );
 }

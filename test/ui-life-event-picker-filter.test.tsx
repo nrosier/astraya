@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { filterLifeEventsByCategories, type LifeEvent } from '../src/domain/life-events.js';
 import { LifeEventPicker } from '../src/ui/LifeEventPicker.js';
 import { lifeEventPickerMessages } from '../src/ui/LifeEventPicker.messages.js';
+import { setLocale } from '../src/ui/locale.js';
 
 const events: LifeEvent[] = [
   { id: 'a', date: '2001-01-01', label: 'Moved', category: 'relocation' },
@@ -113,5 +114,74 @@ describe('LifeEventPicker category filter', () => {
       root.render(<LifeEventPicker events={[{ id: 'x', date: '2001-01-01', label: 'Plain' }]} onPick={picked} />);
     });
     expect(container.querySelector('.primitive-disclosure')).toBeNull();
+  });
+});
+
+describe('LifeEventPicker visible label (#1770)', () => {
+  const plain: LifeEvent[] = [{ id: 'x', date: '2001-01-01', label: 'Plain' }];
+
+  function renderWith(inHeader?: true): void {
+    act(() => {
+      root.render(
+        inHeader === undefined ? (
+          <LifeEventPicker events={plain} onPick={picked} />
+        ) : (
+          <LifeEventPicker events={plain} onPick={picked} inHeader={inHeader} />
+        ),
+      );
+    });
+  }
+
+  it('without inHeader the label is visible, so the Return page keeps it', () => {
+    renderWith();
+    const label = container.querySelector('.life-event-picker label');
+    expect(label?.classList.contains('sr-only')).toBe(false);
+    expect(container.querySelector('.life-event-picker')?.classList.contains('life-event-picker--header')).toBe(false);
+  });
+
+  it('with inHeader the label is sr-only and the select keeps the accessible name "Life event"', () => {
+    setLocale('en');
+    renderWith(true);
+    const label = container.querySelector<HTMLLabelElement>('.life-event-picker label');
+    expect(label?.classList.contains('sr-only')).toBe(true);
+    expect(label?.textContent).toBe('Life event');
+    const select = container.querySelector('select');
+    expect(select?.id).toBe(label?.htmlFor);
+    expect(container.querySelector('.life-event-picker--header')).not.toBeNull();
+  });
+
+  it('with inHeader the category filter opens from a popover button, not a disclosure (#1770)', () => {
+    setLocale('en');
+    act(() => {
+      root.render(<LifeEventPicker events={events} onPick={picked} inHeader />);
+    });
+    expect(container.querySelector('.primitive-disclosure')).toBeNull();
+    const button = container.querySelector<HTMLButtonElement>('.primitive-popover-trigger');
+    expect(button?.getAttribute('aria-label')).toBe(t.filterTitle);
+    expect(button?.getAttribute('aria-expanded')).toBe('false');
+    expect(container.querySelector('.primitive-popover-panel')).toBeNull();
+    act(() => {
+      button?.click();
+    });
+    expect(button?.getAttribute('aria-expanded')).toBe('true');
+    expect(container.querySelector('.life-event-picker-filter-summary')?.textContent).toBe(t.filterSummary(4, 4));
+    expect(container.querySelectorAll('.life-event-picker-filter input[type="checkbox"]')).toHaveLength(2);
+    act(() => {
+      button?.click();
+    });
+    expect(container.querySelector('.primitive-popover-panel')).toBeNull();
+  });
+
+  it('with inHeader the accessible name is "Levensgebeurtenis" in nl', () => {
+    setLocale('nl');
+    try {
+      renderWith(true);
+      const label = container.querySelector<HTMLLabelElement>('.life-event-picker label');
+      expect(label?.classList.contains('sr-only')).toBe(true);
+      expect(label?.textContent).toBe('Levensgebeurtenis');
+      expect(container.querySelector('select')?.id).toBe(label?.htmlFor);
+    } finally {
+      setLocale('en');
+    }
   });
 });

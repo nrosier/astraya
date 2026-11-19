@@ -435,17 +435,22 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
         }
         basis={basisLine}
         basisEditHref={null}
-      >
-        {/* The life-event picker sits in the header; the date, stepping and Now are in the bar below (#1400); Export stays in the page header (#887). */}
-        <LifeEventPicker
-          events={person.lifeEvents}
-          onPick={(event) => {
-            setAsOf(event.date);
-          }}
-        />
-      </PageHeader>
-      {/* A date selector with its steps only, as on Progressions: solar arc does not animate (#1400, #1442). */}
-      <DateAnimationBar date={asOf} onDateChange={setAsOf} mode="date" />
+      />
+      {/* A date selector with its steps only, as on Progressions: solar arc does not animate (#1400, #1442). The life-event picker sits beside Now (#1770); Export stays in the page header (#887). */}
+      <DateAnimationBar
+        date={asOf}
+        onDateChange={setAsOf}
+        mode="date"
+        trailing={
+          <LifeEventPicker
+            events={person.lifeEvents}
+            inHeader
+            onPick={(event) => {
+              setAsOf(event.date);
+            }}
+          />
+        }
+      />
       <div className="progressions-controls">
         <Select
           label={t.directedInLabel}

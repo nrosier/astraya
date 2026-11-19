@@ -319,6 +319,99 @@ test.describe('with the shared people (#799)', () => {
     await expect(header.getByRole('link', { name: 'Tools', exact: true })).toBeVisible();
   });
 
+  for (const { width, height } of [
+    { width: 1280, height: 800 },
+    { width: 3440, height: 1440 },
+  ]) {
+    test(`the rail collapses to icons from its footer button, persists across a reload, and shows tooltips on focus at ${String(width)}px (#1747)`, async () => {
+      test.setTimeout(90_000);
+      await page.setViewportSize({ width, height });
+      await openSharedPerson(page, baseUrl, EINSTEIN);
+      const header = page.getByRole('banner');
+      const shell = page.locator('.workspace-shell');
+      const main = page.locator('.workspace-main');
+      const widthOf = async (locator: typeof header): Promise<number> => {
+        const box = await locator.boundingBox();
+        if (box === null) throw new Error('not laid out');
+        return box.width;
+      };
+
+      // Expanded: the labels are visible, the footer button offers to collapse, the links are named.
+      await expect(shell).not.toHaveClass(/workspace-shell-collapsed/);
+      const expandedRail = await widthOf(header);
+      const expandedMain = await widthOf(main);
+      await expect(header.getByRole('link', { name: 'Tools', exact: true }).locator('.rail-nav-label')).toBeVisible();
+      const toggle = header.getByRole('button', { name: 'Collapse sidebar', exact: true });
+      await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+
+      // Collapse: the rail narrows to about 60px, the page gains that width, the links keep their names.
+      await toggle.click();
+      await expect(shell).toHaveClass(/workspace-shell-collapsed/);
+      await expect(header.getByRole('button', { name: 'Expand sidebar', exact: true })).toHaveAttribute(
+        'aria-expanded',
+        'false',
+      );
+      const collapsedRail = await widthOf(header);
+      expect(collapsedRail).toBeLessThanOrEqual(64);
+      expect(collapsedRail).toBeLessThan(expandedRail - 100);
+      expect(await widthOf(main)).toBeGreaterThan(expandedMain + (expandedRail - collapsedRail) - 2);
+      // The label is visually hidden (clipped to 1px), still in the DOM as the link's text.
+      expect(
+        await widthOf(header.getByRole('link', { name: 'Tools', exact: true }).locator('.rail-nav-label')),
+      ).toBeLessThanOrEqual(1);
+      await expect(header.getByRole('link', { name: 'Charts', exact: true })).toBeVisible();
+
+      // The choice is kept across a reload.
+      await reloadAndSettle(page);
+      await expect(shell).toHaveClass(/workspace-shell-collapsed/);
+      expect(await widthOf(header)).toBeCloseTo(collapsedRail, 0);
+
+      // Keyboard: the tooltip shows on focus, Escape dismisses it without moving focus, and the footer
+      // button is the last stop of the rail.
+      const tools = header.getByRole('link', { name: 'Tools', exact: true });
+      const tooltip = tools.locator('xpath=following-sibling::*[@role="tooltip"]');
+      await expect(tooltip).toBeHidden();
+      await tools.focus();
+      await page.keyboard.press('Shift+Tab');
+      await page.keyboard.press('Tab');
+      await expect(tools).toBeFocused();
+      await expect(tooltip).toBeVisible();
+      await expect(tooltip).toHaveText('Tools');
+      await page.keyboard.press('Escape');
+      await expect(tooltip).toBeHidden();
+      await expect(tools).toBeFocused();
+
+      // Tab walks on from Tools through the rest of the rail and reaches the footer button, which is last.
+      const visited: (string | null)[] = [];
+      for (let i = 0; i < 40; i += 1) {
+        await page.keyboard.press('Tab');
+        const name = await page.locator(':focus').getAttribute('aria-label');
+        visited.push(name);
+        if (name === 'Expand sidebar') break;
+      }
+      expect(visited.at(-1)).toBe('Expand sidebar');
+      await expect(header.getByRole('button', { name: 'Expand sidebar', exact: true })).toBeFocused();
+
+      // Expand again from the same button.
+      await header.getByRole('button', { name: 'Expand sidebar', exact: true }).click();
+      await expect(shell).not.toHaveClass(/workspace-shell-collapsed/);
+      expect(await widthOf(header)).toBeCloseTo(expandedRail, 0);
+    });
+  }
+
+  test('a 900px window, below 64rem, keeps the Menu panel and ignores a collapsed preference (#1747)', async () => {
+    test.setTimeout(60_000);
+    await page.addInitScript(() => {
+      localStorage.setItem('astraya:workspaceRailCollapsed', 'true');
+    });
+    await page.setViewportSize({ width: 900, height: 800 });
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    const header = page.getByRole('banner');
+    await expect(header.getByRole('button', { name: 'Menu', exact: true })).toBeVisible();
+    await expect(header.locator('.rail-collapse-button')).toBeHidden();
+    await expect(header.getByRole('link', { name: 'Charts', exact: true })).toBeHidden();
+  });
+
   test('Charts is one destination, and the page keeps the type and the view in the URL', async () => {
     test.setTimeout(90_000);
     await openSharedPerson(page, baseUrl, EINSTEIN);
