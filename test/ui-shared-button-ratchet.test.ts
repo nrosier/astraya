@@ -33,8 +33,6 @@ const ALLOWED_BARE_BUTTONS: Readonly<Record<string, number>> = {
   'src/ui/RelationshipSummary.tsx': 2,
   // Corner-pill theme switch: `corner-pill theme-toggle`, not a shared action.
   'src/ui/ThemeToggle.tsx': 1,
-  // Workspace rail toggle: bespoke `workspace-rail-toggle` layout control.
-  'src/ui/WorkspaceShell.tsx': 1,
 };
 
 /** Every `.tsx` file under `dir`, recursively, as a path relative to the repository root. */
