@@ -271,7 +271,7 @@ Primary integration points: [route.ts](../../src/ui/route.ts), [App.tsx](../../s
 4. Create a person Overview screen. Complete people land there; incomplete/new people land on Edit birth record until prerequisites are met.
 5. Replace the static current-person label with a searchable switcher. Preserve the current feature when the selected person meets its prerequisites; otherwise explain the requirement and route to the recovery action.
 6. Move current-page exports into `PageHeader`. Move Build PDF to Documents. Move full-data exports to Preferences → Data & privacy.
-7. Replace the generic Tools menu with the Explore groups. Global routes show **Return to Ada Lovelace** only as history and **Using Ada Lovelace** only when the tool consumes that person.
+7. Replace the generic Tools menu with the Explore groups. The sidebar is the same on every screen, and person entries are disabled with **Select a person first** when no person is selected. Global routes do not inherit person scope and show **Using Ada Lovelace** only when the tool consumes that person.
 8. Collapse the desktop rail without losing labels to tooltips alone. On narrow screens use one drawer with the same DOM data and grouping.
 
 **Acceptance criteria:**
