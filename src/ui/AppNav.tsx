@@ -48,6 +48,7 @@ import { TOOLS } from './tools-nav.js';
 import { useLastPersonId, writeLastPersonId } from './last-person.js';
 import { PersonSwitcher } from './PersonSwitcher.js';
 import { useExclusiveOpen, type ExclusiveOpen } from './use-exclusive-open.js';
+import { isApplePlatform } from './platform.js';
 import { useNarrowViewport } from './use-narrow-viewport.js';
 import { useWorkspaceUtilityTarget } from './workspace-utility-slot.js';
 import { Button } from './primitives/Button.js';
@@ -228,11 +229,6 @@ const KEEP_PERSON_SECTIONS_KINDS: ReadonlySet<Route['kind']> = new Set([
   'about',
   'changelog',
 ]);
-
-/** Apple keyboards press Cmd, so the shortcut hint names ⌘K there and Ctrl K elsewhere (#1654). */
-function isApplePlatform(): boolean {
-  return /Mac|iPhone|iPad|iPod/.test(navigator.platform);
-}
 
 /** True for a field the reader types in, where Ctrl+K belongs to the text and must not open the palette. */
 function isEditableTarget(target: EventTarget | null): boolean {
