@@ -150,6 +150,28 @@ describe('LifeEventPicker visible label (#1770)', () => {
     expect(container.querySelector('.life-event-picker--header')).not.toBeNull();
   });
 
+  it('with inHeader the category filter opens from a popover button, not a disclosure (#1770)', () => {
+    setLocale('en');
+    act(() => {
+      root.render(<LifeEventPicker events={events} onPick={picked} inHeader />);
+    });
+    expect(container.querySelector('.primitive-disclosure')).toBeNull();
+    const button = container.querySelector<HTMLButtonElement>('.primitive-popover-trigger');
+    expect(button?.getAttribute('aria-label')).toBe(t.filterTitle);
+    expect(button?.getAttribute('aria-expanded')).toBe('false');
+    expect(container.querySelector('.primitive-popover-panel')).toBeNull();
+    act(() => {
+      button?.click();
+    });
+    expect(button?.getAttribute('aria-expanded')).toBe('true');
+    expect(container.querySelector('.life-event-picker-filter-summary')?.textContent).toBe(t.filterSummary(4, 4));
+    expect(container.querySelectorAll('.life-event-picker-filter input[type="checkbox"]')).toHaveLength(2);
+    act(() => {
+      button?.click();
+    });
+    expect(container.querySelector('.primitive-popover-panel')).toBeNull();
+  });
+
   it('with inHeader the accessible name is "Levensgebeurtenis" in nl', () => {
     setLocale('nl');
     try {
