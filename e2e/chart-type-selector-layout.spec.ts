@@ -171,9 +171,9 @@ for (const viewport of [
       });
     }
 
-    // Owner decision (#1654, 2026-11-18): the search pill is the rightmost action on every page, and the PDF link sits
-    // immediately left of it. This replaces the 2026-11-07 rule that the PDF link is the rightmost action.
-    test('the PDF link sits immediately left of the search pill, which is the rightmost action of a chart page header (owner review 2026-11-07, #1654)', async () => {
+    // Owner review 2026-11-07 (#1654): the PDF link is the rightmost action of a chart page header. The search trigger
+    // moved out of this row under #1769, so it is no longer a header action and is not compared here.
+    test('the PDF link is the rightmost header action of a chart page, with nothing to its right (owner review 2026-11-07, #1654, #1769)', async () => {
       await openSharedPerson(page, baseUrl, EINSTEIN);
       await openChart(page, 'Natal');
       const xs = await page.evaluate<number[]>(
@@ -182,13 +182,9 @@ for (const viewport of [
       const pdf = await page.evaluate<number>(
         "document.querySelector('.page-header-actions > .chart-pdf-link').getBoundingClientRect().x",
       );
-      const search = await page.evaluate<number>(
-        "document.querySelector('.page-header-actions > .app-nav-search').getBoundingClientRect().x",
-      );
-      expect(search).toBe(Math.max(...xs));
-      expect(pdf).toBeLessThan(search);
+      expect(pdf).toBe(Math.max(...xs));
       const between = await page.evaluate<number>(
-        "[...document.querySelectorAll('.page-header-actions > *')].filter((e) => e.getBoundingClientRect().x > document.querySelector('.page-header-actions > .chart-pdf-link').getBoundingClientRect().x && e.getBoundingClientRect().x < document.querySelector('.page-header-actions > .app-nav-search').getBoundingClientRect().x).length",
+        "[...document.querySelectorAll('.page-header-actions > *')].filter((e) => e.getBoundingClientRect().x > document.querySelector('.page-header-actions > .chart-pdf-link').getBoundingClientRect().x).length",
       );
       expect(between).toBe(0);
     });

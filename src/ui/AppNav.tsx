@@ -35,10 +35,9 @@
  * @conventions No sub-menus for sections: sub-views are tabs on the page (SectionNav). The person switcher keeps one `useExclusiveOpen`; folds behind a Menu button below 1024px; text comes from co-located `AppNav.messages.ts` via `useMessages()`.
  * @exports AppNav
  */
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { appNavMessages } from './AppNav.messages.js';
-import { usePageActionsTarget } from './page-actions-slot.js';
 import { useMessages } from './messages.js';
 import { activeFeatureKey, activePersonTabKey, activeToolKey } from './feature-registry.js';
 import { isTabEnabled, PERSON_TAB_FAMILIES, PERSON_TABS } from './person-nav.js';
@@ -49,8 +48,11 @@ import { TOOLS } from './tools-nav.js';
 import { useLastPersonId, writeLastPersonId } from './last-person.js';
 import { PersonSwitcher } from './PersonSwitcher.js';
 import { useExclusiveOpen, type ExclusiveOpen } from './use-exclusive-open.js';
+import { isApplePlatform } from './platform.js';
 import { useNarrowViewport } from './use-narrow-viewport.js';
+import { useWorkspaceUtilityTarget } from './workspace-utility-slot.js';
 import { Button } from './primitives/Button.js';
+import { isRailIconKey, RailNavItem, type RailIconKey } from './RailNavItem.js';
 
 // Charts is one destination (#511): the chart type is chosen on the page, not in this navigation.
 // 'consultation' (#563) is here too, not in LEADING_KEYS below — it needs a complete birth
@@ -66,22 +68,20 @@ const LEADING_KEYS = new Set(['overview', 'birth-record']);
  */
 function disabledEntry(
   key: string,
+  iconKey: RailIconKey,
   label: string,
-  className: string,
   accessibleName: string,
   hint: string,
 ): React.JSX.Element {
   return (
-    <button
+    <RailNavItem
       key={key}
-      type="button"
-      disabled
-      className={`${className} disabled`}
-      aria-label={accessibleName}
-      title={hint}
-    >
-      {label}
-    </button>
+      kind="disabled"
+      iconKey={iconKey}
+      label={label}
+      accessibleName={accessibleName}
+      hint={hint}
+    />
   );
 }
 
@@ -105,33 +105,35 @@ function PersonTabEntries({
   const active = activePersonTabKey(route);
   const tabsByKey = new Map(PERSON_TABS.map((tab) => [tab.key, tab]));
 
-  function renderTab(tab: PersonTab, className: string): React.JSX.Element {
+  function renderTab(tab: PersonTab): React.JSX.Element {
+    if (!isRailIconKey(tab.key)) throw new Error(`unreachable: ungrouped tab "${tab.key}" has no rail icon`);
+    const iconKey = tab.key;
     const label = t.tabLabels[tab.key];
     if (personId === undefined) {
-      return disabledEntry(tab.key, label, className, t.disabledNoPersonSuffix(label), t.selectPersonFirstHint);
+      return disabledEntry(tab.key, iconKey, label, t.disabledNoPersonSuffix(label), t.selectPersonFirstHint);
     }
     if (!isTabEnabled(tab.key, hasBirthMoment)) {
-      return disabledEntry(tab.key, label, className, t.disabledTabSuffix(label), t.completeBirthRecordHint);
+      return disabledEntry(tab.key, iconKey, label, t.disabledTabSuffix(label), t.completeBirthRecordHint);
     }
     const isActive = tab.key === active;
     return (
-      <a
+      <RailNavItem
         key={tab.key}
+        kind="link"
+        iconKey={iconKey}
+        label={label}
         href={tab.buildHref(personId)}
-        className={isActive ? `${className} active` : className}
-        aria-current={isActive ? 'page' : undefined}
-        onClick={onNavigate}
-      >
-        {label}
-      </a>
+        active={isActive}
+        onNavigate={onNavigate}
+      />
     );
   }
 
   return (
     <>
-      {PERSON_TABS.filter((tab) => LEADING_KEYS.has(tab.key)).map((tab) => renderTab(tab, 'app-nav-item'))}
+      {PERSON_TABS.filter((tab) => LEADING_KEYS.has(tab.key)).map((tab) => renderTab(tab))}
       {PERSON_TABS.filter((tab) => UNGROUPED_KEYS.has(tab.key) && !LEADING_KEYS.has(tab.key)).map((tab) =>
-        renderTab(tab, 'app-nav-item'),
+        renderTab(tab),
       )}
       {PERSON_TAB_FAMILIES.map((family) => {
         const familyLabel = t.familyLabels[family.key];
@@ -142,8 +144,8 @@ function PersonTabEntries({
         if (personId === undefined) {
           return disabledEntry(
             family.key,
+            family.key,
             familyLabel,
-            'app-nav-item',
             t.disabledNoPersonSuffix(familyLabel),
             t.selectPersonFirstHint,
           );
@@ -151,23 +153,23 @@ function PersonTabEntries({
         if (!isTabEnabled(first.key, hasBirthMoment)) {
           return disabledEntry(
             family.key,
+            family.key,
             familyLabel,
-            'app-nav-item',
             t.disabledTabSuffix(familyLabel),
             t.completeBirthRecordHint,
           );
         }
         const familyActive = active !== null && family.members.includes(active);
         return (
-          <a
+          <RailNavItem
             key={family.key}
+            kind="link"
+            iconKey={family.key}
+            label={familyLabel}
             href={first.buildHref(personId)}
-            className={familyActive ? 'app-nav-item active' : 'app-nav-item'}
-            aria-current={familyActive ? 'page' : undefined}
-            onClick={onNavigate}
-          >
-            {familyLabel}
-          </a>
+            active={familyActive}
+            onNavigate={onNavigate}
+          />
         );
       })}
     </>
@@ -229,11 +231,6 @@ const KEEP_PERSON_SECTIONS_KINDS: ReadonlySet<Route['kind']> = new Set([
   'changelog',
 ]);
 
-/** Apple keyboards press Cmd, so the shortcut hint names ⌘K there and Ctrl K elsewhere (#1654). */
-function isApplePlatform(): boolean {
-  return /Mac|iPhone|iPad|iPod/.test(navigator.platform);
-}
-
 /** True for a field the reader types in, where Ctrl+K belongs to the text and must not open the palette. */
 function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -254,9 +251,11 @@ const LazyCommandPalette = lazy(() =>
 );
 
 /**
- * The search trigger (#1654): on a wide screen a pill at the top right of the page, in the page header's action
- * group after Export (`PageHeader.tsx`, portalled through `page-actions-slot.tsx`), so the sidebar holds no search.
- * At 40rem and below it is an icon-only circle beside the Menu button. It opens the command palette, and Ctrl+K or Cmd+K opens it from anywhere outside a text field.
+ * The search trigger (#1654, moved to the workspace utility row by #1769): on a wide screen it sits alone in the
+ * workspace's slim top-right utility row, above every page header, at the same coordinates on every route, whether or
+ * not the page has a header (`WorkspaceShell.tsx`, portalled through `workspace-utility-slot.tsx`), so the sidebar holds no search.
+ * It is the same icon-only circle at every width (#1769), with a CSS tooltip naming the shortcut. At 40rem and below it sits beside the Menu button.
+ * It opens the command palette, and Ctrl+K or Cmd+K opens it from anywhere outside a text field.
  * The shortcut only calls `preventDefault` on its own key, so other keydown handlers still receive it.
  * The palette loads on its first open and stays mounted after that, hidden while closed, so `StagedDialog`
  * can return focus here when it closes (#1654). Unmounting on close would run that focus return too late.
@@ -266,10 +265,13 @@ function PaletteTrigger(): React.JSX.Element {
   const [paletteLoaded, setPaletteLoaded] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  // At 40rem and below the trigger is the icon-only circle (#1650 shape), so it takes the shared circle class.
+  // The tooltip names the shortcut and is linked to the trigger; Escape hides it until the pointer leaves or focus moves (#1769).
+  const tooltipId = useId();
+  const [tipDismissed, setTipDismissed] = useState(false);
+  // The narrow and wide triggers are the same icon-only circle, so the trigger keeps its place at every width (#1769).
   const narrow = useNarrowViewport();
-  // The page header's top-right action group, where the desktop trigger renders (#1654); null when no header is mounted.
-  const pageActions = usePageActionsTarget();
+  // The workspace's top-right utility row, where the desktop trigger renders (#1769); null when no shell is mounted.
+  const utilityRow = useWorkspaceUtilityTarget();
 
   function openPalette(): void {
     setPaletteLoaded(true);
@@ -294,24 +296,40 @@ function PaletteTrigger(): React.JSX.Element {
     };
   }, []);
 
+  const shortcut = isApplePlatform() ? t.shortcutHintApple : t.shortcutHintOther;
   const searchButton = (
-    <Button
-      variant="plain"
-      ref={triggerRef}
-      className={narrow ? 'app-nav-search primitive-button-circle' : 'app-nav-search'}
-      aria-label={`${t.searchPlaceholder} ${isApplePlatform() ? t.shortcutHintApple : t.shortcutHintOther}`}
-      aria-haspopup="dialog"
-      onClick={openPalette}
+    <span
+      className={tipDismissed ? 'app-nav-search-wrap is-tip-dismissed' : 'app-nav-search-wrap'}
+      onPointerLeave={() => {
+        setTipDismissed(false);
+      }}
     >
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <circle cx="11" cy="11" r="7" />
-        <path d="M20 20l-3.5-3.5" />
-      </svg>
-      <span className="app-nav-search-text">{t.searchPlaceholder}</span>
-      <kbd className="app-nav-search-hint" aria-hidden="true">
-        {isApplePlatform() ? t.shortcutHintApple : t.shortcutHintOther}
-      </kbd>
-    </Button>
+      <Button
+        variant="plain"
+        ref={triggerRef}
+        className="app-nav-search primitive-button-circle"
+        aria-label={t.searchLabel}
+        aria-haspopup="dialog"
+        aria-describedby={tooltipId}
+        onClick={openPalette}
+        onKeyDown={(event) => {
+          // Escape hides the tooltip until the pointer leaves or focus moves on (#1769).
+          if (event.key === 'Escape') setTipDismissed(true);
+        }}
+        onBlur={() => {
+          setTipDismissed(false);
+        }}
+      >
+        {/* Search icon geometry from Lucide (lucide.dev), ISC licence; inlined, no dependency (#1769). */}
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.34-4.34" />
+        </svg>
+      </Button>
+      <span role="tooltip" id={tooltipId} className="app-nav-search-tip">
+        {t.searchTooltip(shortcut)}
+      </span>
+    </span>
   );
   const palette = paletteLoaded && (
     <Suspense fallback={null}>
@@ -319,9 +337,9 @@ function PaletteTrigger(): React.JSX.Element {
     </Suspense>
   );
 
-  // Below 40rem the trigger is the icon-only circle beside Menu, in the nav (#1650). On desktop it is the page
-  // header's top-right control, after its actions (#1654), so the sidebar holds no search. With no page header
-  // mounted there is no desktop trigger; Ctrl+K still opens the palette.
+  // Below 40rem the trigger is the icon-only circle beside Menu, in the nav (#1650). On desktop it is in the workspace
+  // utility row above the page (#1769), so the sidebar holds no search. With no shell mounted there is no desktop
+  // trigger; Ctrl+K still opens the palette.
   if (narrow) {
     return (
       <>
@@ -332,7 +350,7 @@ function PaletteTrigger(): React.JSX.Element {
   }
   return (
     <>
-      {pageActions !== null && createPortal(searchButton, pageActions)}
+      {utilityRow !== null && createPortal(searchButton, utilityRow)}
       {palette}
     </>
   );
@@ -417,26 +435,26 @@ export function AppNav({ route }: { route: Route }): React.JSX.Element {
           <PersonTabEntries personId={undefined} hasBirthMoment={false} route={route} onNavigate={closeAll} />
         )}
         {/* One entry (#882): opens the first tool; the other tools are tabs on the page (`SectionNav`). */}
-        <a
+        <RailNavItem
+          kind="link"
+          iconKey="tools"
+          label={t.toolsLabel}
           href={TOOLS[0]?.href ?? routeHref({ kind: 'cycles' })}
-          className={activeTool !== null ? 'app-nav-item active' : 'app-nav-item'}
-          aria-current={activeTool !== null ? 'page' : undefined}
-          onClick={closeAll}
-        >
-          {t.toolsLabel}
-        </a>
+          active={activeTool !== null}
+          onNavigate={closeAll}
+        />
         {/* The current screen's own exports now live in its PageHeader (#506/#509), not here; this
             is the only export action that is not page-specific. A single-item dropdown would be
             worse than a plain link, so it is one — same as Overview/Birth record above. */}
-        <a
+        <RailNavItem
+          kind="link"
+          iconKey="pdf"
+          label={t.documents}
           href={routeHref({ kind: 'documents' })}
-          className={documentsActive ? 'app-nav-item active' : 'app-nav-item'}
-          aria-current={documentsActive ? 'page' : undefined}
+          active={documentsActive}
           title={t.documentsHint}
-          onClick={closeAll}
-        >
-          {t.documents}
-        </a>
+          onNavigate={closeAll}
+        />
       </nav>
     </div>
   );

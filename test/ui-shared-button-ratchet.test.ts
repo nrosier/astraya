@@ -21,7 +21,7 @@ const PRIMITIVES = 'src/ui/primitives';
  */
 const ALLOWED_BARE_BUTTONS: Readonly<Record<string, number>> = {
   // The disabled nav-tab entry helper (#1697, `disabledEntry`) plus the narrow-viewport menu toggle: bespoke `app-nav-*` classes.
-  'src/ui/AppNav.tsx': 2,
+  'src/ui/AppNav.tsx': 1,
   // Corner-pill language switch: `corner-pill language-toggle`, not a shared action.
   'src/ui/LanguageToggle.tsx': 1,
   // Page-header export dropdown toggle and its item buttons: bespoke page-header classes, and a nav-style dropdown
@@ -33,8 +33,6 @@ const ALLOWED_BARE_BUTTONS: Readonly<Record<string, number>> = {
   'src/ui/RelationshipSummary.tsx': 2,
   // Corner-pill theme switch: `corner-pill theme-toggle`, not a shared action.
   'src/ui/ThemeToggle.tsx': 1,
-  // Workspace rail toggle: bespoke `workspace-rail-toggle` layout control.
-  'src/ui/WorkspaceShell.tsx': 1,
 };
 
 /** Every `.tsx` file under `dir`, recursively, as a path relative to the repository root. */

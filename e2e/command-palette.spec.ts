@@ -57,7 +57,7 @@ for (const viewport of VIEWPORTS) {
 
     const dialog = (p: Page) => p.getByRole('dialog', { name: 'Search features and pages', exact: true });
     const search = (p: Page) => p.getByRole('combobox', { name: 'Search features, charts and tabs', exact: true });
-    const trigger = (p: Page) => p.getByRole('button', { name: /^Search features, charts, tabs…/ });
+    const trigger = (p: Page) => p.getByRole('button', { name: 'Search features, charts, tabs', exact: true });
     // Results only: the page has native <option> elements (a select) that a bare role query would also match.
     const results = (p: Page) => p.getByRole('listbox', { name: 'Results', exact: true });
     const options = (p: Page) => results(p).getByRole('option');
@@ -73,21 +73,17 @@ for (const viewport of VIEWPORTS) {
       await expect(trigger(page)).toBeFocused();
     });
 
-    test('Ctrl+K opens the palette from the page, and Ctrl+K typed in the search field does not reopen it', async () => {
+    test('Ctrl+K opens the palette from the page, and Ctrl+K typed in the search field closes it and returns focus to the trigger', async () => {
       test.setTimeout(60_000);
-      // Start from non-editable focus. A centre-of-body click can land on a field on this page, and Ctrl+K typed
-      // in a field is ignored by design, so blur whatever has focus and press the shortcut from the page itself.
+      // Start from non-editable focus. A centre-of-body click can land on a field on this page, so blur whatever has
+      // focus and press the shortcut from the page itself.
       await page.evaluate('document.activeElement instanceof HTMLElement && document.activeElement.blur()');
       await page.keyboard.press('Control+k');
       await expect(dialog(page)).toBeVisible();
       await expect(search(page)).toBeFocused();
 
-      // Inside the field the shortcut is ignored: the palette stays open and the query is not replaced.
+      // Inside the palette's own search field Ctrl+K toggles it closed, and focus returns to the trigger (#1769).
       await page.keyboard.press('Control+k');
-      await expect(dialog(page)).toBeVisible();
-      await expect(search(page)).toHaveValue('');
-
-      await page.keyboard.press('Escape');
       await expect(dialog(page)).toBeHidden();
       await expect(trigger(page)).toBeFocused();
     });

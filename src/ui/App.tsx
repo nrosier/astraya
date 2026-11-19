@@ -18,7 +18,9 @@ import { AdminNav } from './AdminNav.js';
 import { AppNav } from './AppNav.js';
 import { ExportRegistryProvider } from './export-registry.js';
 import { PageActionsProvider } from './page-actions-slot.js';
+import { WorkspaceUtilityProvider } from './workspace-utility-slot.js';
 import { PwaStatus } from './PwaStatus.js';
+import { RailCollapseButton } from './RailCollapseButton.js';
 import { SidebarFooter } from './SidebarFooter.js';
 import { canonicalPeopleHash, parseRoute, routeShowsBackLink } from './route.js';
 import { writeLastChart } from './last-chart.js';
@@ -332,7 +334,8 @@ function AppShell(): React.JSX.Element {
       <StoreFrame>
         <ExportRegistryProvider>
           <PageActionsProvider>
-            {/* `WorkspaceShell` places the header beside the screen as a collapsible left rail at
+            <WorkspaceUtilityProvider>
+              {/* `WorkspaceShell` places the header beside the screen as a collapsible left rail at
           >=64rem (#506/#509, docs/ui/UI-UX_GUIDELINES.md's "Target application shell"); below that
           it stays `AppNav.tsx`'s existing horizontal bar with its own folding panel, unchanged.
           The header is still first in the DOM, so a keyboard user meets the skip link, then the
@@ -342,55 +345,58 @@ function AppShell(): React.JSX.Element {
           (#234) — once ready it is an implementation detail again, but a silent failure here is
           precisely the bug class this project is built to avoid, so it stays visible on every
           route. Language, theme and the symbol class are chosen in Preferences (#1183). */}
-            <WorkspaceShell
-              header={
-                <header
-                  ref={headerRef}
-                  className={'personId' in parsed ? 'app-header app-header-with-person' : 'app-header'}
-                >
-                  <a className="skip-link" href="#main-content" onClick={skipToContent}>
-                    {t.skipToContent}
-                  </a>
-                  <div className="app-header-start">
-                    <a className="app-header-brand" href="#/people" aria-label={t.homeLinkLabel}>
-                      Astraya
+              <WorkspaceShell
+                header={
+                  <header
+                    ref={headerRef}
+                    className={'personId' in parsed ? 'app-header app-header-with-person' : 'app-header'}
+                  >
+                    <a className="skip-link" href="#main-content" onClick={skipToContent}>
+                      {t.skipToContent}
                     </a>
-                    {engineStatus !== 'ready' && <p className="status app-header-status">{engineStatus}</p>}
-                  </div>
-                  <AppNav route={parsed} />
-                  {/* The utilities container (#882), now with the profile tile (#964): the account tile, with its sync dot
+                    <div className="app-header-start">
+                      <a className="app-header-brand" href="#/people" aria-label={t.homeLinkLabel}>
+                        Astraya
+                      </a>
+                      {engineStatus !== 'ready' && <p className="status app-header-status">{engineStatus}</p>}
+                    </div>
+                    <AppNav route={parsed} />
+                    {/* The utilities container (#882), now with the profile tile (#964): the account tile, with its sync dot
                       (#1183), sits at the rail's foot, and the tile's popover holds Preferences, Admin for administrators
                       and sign-out. */}
-                  <div className="app-header-end">
-                    <AccountPanel />
-                  </div>
-                  {/* The version, About & Licence and the update notice sit at the rail's foot (previously a page footer). */}
-                  <SidebarFooter />
-                </header>
-              }
-            >
-              {/* One boundary around the whole screen slot rather than one per lazy route (#338):
+                    <div className="app-header-end">
+                      <AccountPanel />
+                    </div>
+                    {/* The version, About & Licence and the update notice sit at the rail's foot (previously a page footer). */}
+                    <SidebarFooter />
+                    {/* The rail's collapse control (#1747), last in the header so it sits at the foot of the rail. */}
+                    <RailCollapseButton />
+                  </header>
+                }
+              >
+                {/* One boundary around the whole screen slot rather than one per lazy route (#338):
             every lazy screen wants the same fallback, and keeping the boundary outside
             `Stored` means a chunk still in flight does not also restart the store. */}
-              <div id="main-content" className="main-content" tabIndex={-1}>
-                {/* The account preferences' sign-in prompt, failed save and unreadable notice (#1066), on every route. */}
-                <AccountPreferencesNotices />
-                {/* The one Back link (#1225): above the section heading on every screen that has a place to go back to. */}
-                {routeShowsBackLink(parsed) && <BackLink />}
-                {/* Sections with sub-views share one frame: a section h1 and a Tabs bar. Tools (#1139) and the three person
+                <div id="main-content" className="main-content" tabIndex={-1}>
+                  {/* The account preferences' sign-in prompt, failed save and unreadable notice (#1066), on every route. */}
+                  <AccountPreferencesNotices />
+                  {/* The one Back link (#1225): above the section heading on every screen that has a place to go back to. */}
+                  {routeShowsBackLink(parsed) && <BackLink />}
+                  {/* Sections with sub-views share one frame: a section h1 and a Tabs bar. Tools (#1139) and the three person
                     sections (#882, #1175) each get it; any other route renders its screen alone. */}
-                {toolKey === null ? (
-                  <PersonSectionLayout route={parsed}>
-                    <Suspense fallback={<LoadingScreen />}>{screen}</Suspense>
-                  </PersonSectionLayout>
-                ) : (
-                  <ToolsLayout active={toolKey}>
-                    <Suspense fallback={<LoadingScreen />}>{screen}</Suspense>
-                  </ToolsLayout>
-                )}
-              </div>
-            </WorkspaceShell>
-            <PwaStatus />
+                  {toolKey === null ? (
+                    <PersonSectionLayout route={parsed}>
+                      <Suspense fallback={<LoadingScreen />}>{screen}</Suspense>
+                    </PersonSectionLayout>
+                  ) : (
+                    <ToolsLayout active={toolKey}>
+                      <Suspense fallback={<LoadingScreen />}>{screen}</Suspense>
+                    </ToolsLayout>
+                  )}
+                </div>
+              </WorkspaceShell>
+              <PwaStatus />
+            </WorkspaceUtilityProvider>
           </PageActionsProvider>
         </ExportRegistryProvider>
       </StoreFrame>
