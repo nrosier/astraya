@@ -144,10 +144,10 @@ describe('column alignment on Patterns & condition (#870)', () => {
       ?.getAttribute('data-align');
   };
 
-  it('right-aligns POINTS, left-aligns the BODY columns and centres the flag columns', async () => {
+  it('centres POINTS, left-aligns the BODY columns and centres the flag columns', async () => {
     const container = await mountOnPatterns();
     const panel = container.querySelector('#chart-view-patterns');
-    expect(alignIn(panel, t.dignitiesCaption, t.dignityPointsLabel)).toBe('end');
+    expect(alignIn(panel, t.dignitiesCaption, t.dignityPointsLabel)).toBe('center');
     expect(alignIn(panel, t.dignitiesCaption, t.bodyLabel)).toBe('start');
     expect(alignIn(panel, t.dignitiesCaption, t.rulerLabel)).toBe('center');
     expect(alignIn(panel, t.receptionCaption, t.bodyALabel)).toBe('start');

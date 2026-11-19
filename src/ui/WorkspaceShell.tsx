@@ -15,13 +15,12 @@
  */
 /**
  * @module ui/WorkspaceShell
- * @purpose Lays out the header as a collapsible left rail beside the current screen's content at >=64rem; narrower viewports keep AppNav.tsx's existing horizontal-bar-with-folding-panel behavior untouched.
- * @conventions Pure layout wrapper — never renders navigation content itself; owns the `workspace-rail-setting.ts` collapsed/expanded device preference and nothing else.
+ * @purpose Lays out the header as a collapsible left rail beside the current screen's content at >=64rem; narrower viewports keep AppNav.tsx's existing horizontal-bar-with-folding-panel behavior untouched. Also hosts the workspace utility row (the search trigger, #1769) above the page content.
+ * @conventions Pure layout wrapper — never renders navigation content itself; reads the `workspace-rail-setting.ts` collapsed/expanded device preference only to set the shell's class. The collapse control is `RailCollapseButton.tsx`, rendered by App.tsx inside the header.
  * @exports WorkspaceShell
  */
-import { useMessages } from './messages.js';
 import { useRailCollapsed } from './workspace-rail-setting.js';
-import { workspaceShellMessages } from './WorkspaceShell.messages.js';
+import { useWorkspaceUtilityRef } from './workspace-utility-slot.js';
 
 export function WorkspaceShell({
   header,
@@ -30,25 +29,15 @@ export function WorkspaceShell({
   readonly header: React.ReactNode;
   readonly children: React.ReactNode;
 }): React.JSX.Element {
-  const t = useMessages(workspaceShellMessages);
-  const [collapsed, setCollapsed] = useRailCollapsed();
+  const [collapsed] = useRailCollapsed();
 
   return (
     <div className={collapsed ? 'workspace-shell workspace-shell-collapsed' : 'workspace-shell'}>
       {header}
-      <button
-        type="button"
-        className="workspace-rail-toggle"
-        aria-expanded={!collapsed}
-        aria-label={collapsed ? t.expand : t.collapse}
-        title={collapsed ? t.expand : t.collapse}
-        onClick={() => {
-          setCollapsed(!collapsed);
-        }}
-      >
-        {collapsed ? t.expandGlyph : t.collapseGlyph}
-      </button>
-      <div className="workspace-main">{children}</div>
+      <div className="workspace-main">
+        <div className="workspace-utility" ref={useWorkspaceUtilityRef()} />
+        {children}
+      </div>
     </div>
   );
 }

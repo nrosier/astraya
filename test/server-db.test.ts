@@ -35,10 +35,22 @@ describe('server/db.ts', () => {
     db.close();
   });
 
+  it('migration 21 adds the TOTP columns on users and the totp_recovery_codes and server_secrets tables (#1500)', () => {
+    const db = openDatabase(':memory:');
+    const columnsOf = (table: string): string[] =>
+      (db.prepare(`PRAGMA table_info(${table})`).all() as unknown as { name: string }[]).map((c) => c.name);
+    for (const name of ['totp_secret', 'totp_secret_iv', 'totp_enabled_at', 'totp_last_step']) {
+      expect(columnsOf('users')).toContain(name);
+    }
+    expect(columnsOf('totp_recovery_codes')).toEqual(['user_id', 'code_hash']);
+    expect(columnsOf('server_secrets')).toEqual(['name', 'value', 'iv']);
+    db.close();
+  });
+
   it('sets PRAGMA user_version to the number of migrations applied', () => {
     const db = openDatabase(':memory:');
     const row = db.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
-    expect(row.user_version).toBe(20);
+    expect(row.user_version).toBe(21);
     db.close();
   });
 
@@ -46,7 +58,7 @@ describe('server/db.ts', () => {
     const dir = mkdtempSync(join(tmpdir(), 'astraya-db-test-'));
     const path = join(dir, 'astraya.db');
     try {
-      // Migration 18 (#1360) changes no schema. Migrations 19 and 20 (#1364) are removed from the fixture below, so a
+      // Migration 18 (#1360) changes no schema. Migrations 19, 20 (#1364) and 21 (#1500) are removed from the fixture below, so a
       // fully migrated file rolled back to user_version 17 is a v17 database.
       const setup = openDatabase(path);
       const now = new Date().toISOString();
@@ -63,14 +75,14 @@ describe('server/db.ts', () => {
         .prepare('INSERT INTO sessions (id, user_id, created_at, expires_at, last_seen_at) VALUES (?, ?, ?, ?, ?)')
         .run('raw-live-session', 'live-user', now, later, now);
       setup.exec(
-        'DROP INDEX sessions_expires_at; ALTER TABLE users DROP COLUMN last_seen_at; PRAGMA user_version = 17;',
+        'DROP INDEX sessions_expires_at; ALTER TABLE users DROP COLUMN last_seen_at; DROP TABLE totp_recovery_codes; DROP TABLE server_secrets; ALTER TABLE users DROP COLUMN totp_secret; ALTER TABLE users DROP COLUMN totp_secret_iv; ALTER TABLE users DROP COLUMN totp_enabled_at; ALTER TABLE users DROP COLUMN totp_last_step; PRAGMA user_version = 17;',
       );
       setup.close();
 
       const db = openDatabase(path);
       try {
         const version = db.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
-        expect(version.user_version).toBe(20);
+        expect(version.user_version).toBe(21);
         expect(db.prepare('SELECT COUNT(*) AS n FROM sessions').get()).toEqual({ n: 0 });
         expect(
           db
@@ -101,7 +113,7 @@ describe('server/db.ts', () => {
       const second = openDatabase(path);
       expect(schemaOf(second)).toEqual(before);
       const row = second.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
-      expect(row.user_version).toBe(20);
+      expect(row.user_version).toBe(21);
       second.close();
     } finally {
       rmSync(dir, { recursive: true, force: true });
@@ -188,7 +200,7 @@ describe('server/db.ts', () => {
 
       const db = openDatabase(path);
       const row = db.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
-      expect(row.user_version).toBe(20);
+      expect(row.user_version).toBe(21);
 
       // The pre-existing row survived the users rebuild intact.
       const legacyUser = db.prepare('SELECT * FROM users WHERE id = ?').get('legacy-user') as
@@ -393,6 +405,12 @@ describe('server/db.ts', () => {
         -- Nor migration 19's index or migration 20's column (#1364).
         DROP INDEX sessions_expires_at;
         ALTER TABLE users DROP COLUMN last_seen_at;
+        DROP TABLE totp_recovery_codes;
+        DROP TABLE server_secrets;
+        ALTER TABLE users DROP COLUMN totp_secret;
+        ALTER TABLE users DROP COLUMN totp_secret_iv;
+        ALTER TABLE users DROP COLUMN totp_enabled_at;
+        ALTER TABLE users DROP COLUMN totp_last_step;
         PRAGMA user_version = 12;
       `);
       first.close();
@@ -442,6 +460,12 @@ describe('server/db.ts', () => {
         -- Nor migration 19's index or migration 20's column (#1364).
         DROP INDEX sessions_expires_at;
         ALTER TABLE users DROP COLUMN last_seen_at;
+        DROP TABLE totp_recovery_codes;
+        DROP TABLE server_secrets;
+        ALTER TABLE users DROP COLUMN totp_secret;
+        ALTER TABLE users DROP COLUMN totp_secret_iv;
+        ALTER TABLE users DROP COLUMN totp_enabled_at;
+        ALTER TABLE users DROP COLUMN totp_last_step;
         PRAGMA user_version = 13;
       `);
       first.close();
@@ -480,6 +504,12 @@ describe('server/db.ts', () => {
         -- Nor migration 19's index or migration 20's column (#1364).
         DROP INDEX sessions_expires_at;
         ALTER TABLE users DROP COLUMN last_seen_at;
+        DROP TABLE totp_recovery_codes;
+        DROP TABLE server_secrets;
+        ALTER TABLE users DROP COLUMN totp_secret;
+        ALTER TABLE users DROP COLUMN totp_secret_iv;
+        ALTER TABLE users DROP COLUMN totp_enabled_at;
+        ALTER TABLE users DROP COLUMN totp_last_step;
         INSERT INTO users (id, username, password_hash, created_at) VALUES ('u', 'owner', 'h', 'now');
         INSERT INTO interpretation_results (id, user_id, mode, locale, sections_json, key_version, iv, created_at)
           VALUES ('r', 'u', 'grounded', 'en', x'00', 1, x'00', 'now');
@@ -558,6 +588,12 @@ describe('server/db.ts', () => {
       first.exec(`
         DROP INDEX sessions_expires_at;
         ALTER TABLE users DROP COLUMN last_seen_at;
+        DROP TABLE totp_recovery_codes;
+        DROP TABLE server_secrets;
+        ALTER TABLE users DROP COLUMN totp_secret;
+        ALTER TABLE users DROP COLUMN totp_secret_iv;
+        ALTER TABLE users DROP COLUMN totp_enabled_at;
+        ALTER TABLE users DROP COLUMN totp_last_step;
         INSERT INTO users (id, username, password_hash, created_at)
           VALUES ('seen', 'seen', 'h', 'now'), ('never', 'never', 'h', 'now');
         INSERT INTO sessions (id, user_id, created_at, expires_at, last_seen_at) VALUES
@@ -569,7 +605,7 @@ describe('server/db.ts', () => {
 
       const db = openDatabase(path);
       const row = db.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
-      expect(row.user_version).toBe(20);
+      expect(row.user_version).toBe(21);
       expect(db.prepare('SELECT id, last_seen_at FROM users ORDER BY id').all()).toEqual([
         { id: 'never', last_seen_at: null },
         { id: 'seen', last_seen_at: '2026-01-15T00:00:00.000Z' },

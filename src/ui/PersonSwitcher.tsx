@@ -13,7 +13,7 @@
  * @module ui/PersonSwitcher
  * @purpose Searchable person-switcher dropdown for the header (#506/#509): preserves the current feature on switch when the target person meets its prerequisites, otherwise routes to Overview (which explains what's missing).
  * @conventions Reuses AppNav.tsx's shared ExclusiveOpen instance and NavGroup-equivalent markup/CSS classes rather than a second dropdown mechanism; uses feature-registry.ts to decide the destination href, never a hand-written hash.
- * @exports PersonSwitcher
+ * @exports PersonSwitcher, monogram
  */
 import { useEffect, useId, useRef, useState } from 'react';
 import { Button } from './primitives/Button.js';
@@ -35,6 +35,17 @@ function destinationHref(route: Route, targetPersonId: string, hasBirthMoment: b
     return feature.buildHref({ personId: targetPersonId });
   }
   return hrefFor('overview', { personId: targetPersonId });
+}
+
+/**
+ * The one-letter monogram of a name (#1747): its first character (a whole code point, so an emoji or an
+ * accented letter is not split), upper-cased, or `?` for a blank name. The collapsed rail shows it as the
+ * person switcher's 36px circle and as the brand's mark; it is drawn by CSS from a data attribute, so the
+ * visible name stays the control's accessible name.
+ */
+export function monogram(name: string): string {
+  const first = Array.from(name.trim())[0];
+  return first === undefined ? '?' : first.toUpperCase();
 }
 
 export function PersonSwitcher({
@@ -80,6 +91,7 @@ export function PersonSwitcher({
         aria-expanded={isOpen}
         aria-controls={isOpen ? popupId : undefined}
         title={t.triggerLabel(name)}
+        data-monogram={monogram(name)}
         onClick={() => {
           setFilter('');
           dropdown.toggle(GROUP_KEY);

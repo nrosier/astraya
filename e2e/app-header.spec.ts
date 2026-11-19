@@ -114,13 +114,93 @@ for (const { width, height, rail } of RAIL_FOOT_VIEWPORTS) {
       const sidebarFooterBox = await header.locator('.sidebar-footer').boundingBox();
       if (sidebarFooterBox === null) throw new Error('not laid out');
       expect(footBox.y + footBox.height).toBeLessThanOrEqual(sidebarFooterBox.y + 1);
-      expect(
-        Math.abs(sidebarFooterBox.y + sidebarFooterBox.height - (headerBox.y + headerBox.height) + 16),
-      ).toBeLessThanOrEqual(2);
+      // The collapse button (#1747) is the last block, below the sidebar footer, and it ends at the rail's
+      // bottom edge less its 1rem padding; the sidebar footer ends above it, not at the edge.
+      const collapseBox = await header.locator('.rail-collapse-button').boundingBox();
+      if (collapseBox === null) throw new Error('not laid out');
+      expect(sidebarFooterBox.y + sidebarFooterBox.height).toBeLessThanOrEqual(collapseBox.y + 1);
+      expect(Math.abs(collapseBox.y + collapseBox.height - (headerBox.y + headerBox.height) + 16)).toBeLessThanOrEqual(
+        2,
+      );
     } else {
-      // Below 64rem nothing about the bar changed: the controls stay in the header's own row.
+      // Below 64rem nothing about the bar changed: the controls stay in the header's own row, and the
+      // rail's collapse button is not shown.
       await expect(foot).not.toHaveCSS('position', 'fixed');
+      await expect(header.locator('.rail-collapse-button')).toBeHidden();
     }
+  });
+}
+
+// The collapsed icon rail (#1747): about 60px wide (a 36px target, 0.75rem of padding each side and the
+// border), the utilities still inside it, the version and About links hidden, and the freed width given to
+// the page. Below 64rem the stored preference has no effect.
+for (const { width, height, rail } of RAIL_FOOT_VIEWPORTS) {
+  test(`the collapsed rail is an icon column at ${String(width)}px wide, and the preference is ignored below 64rem (#1747)`, async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('astraya:workspaceRailCollapsed', 'true');
+    });
+    await page.setViewportSize({ width, height });
+    await gotoAndSettle(page, `${baseUrl}/#/people`);
+    const header = page.getByRole('banner');
+    const headerBox = await header.boundingBox();
+    if (headerBox === null) throw new Error('not laid out');
+
+    if (!rail) {
+      // A phone: no rail, so the header is the full-width bar and the Menu button is there.
+      expect(headerBox.width).toBeGreaterThan(width - 2);
+      await expect(page.locator('.workspace-shell')).toHaveClass(/workspace-shell-collapsed/);
+      await expect(header.getByRole('button', { name: 'Menu', exact: true })).toBeVisible();
+      await expect(header.locator('.rail-collapse-button')).toBeHidden();
+      expect(await page.evaluate('document.documentElement.scrollWidth - window.innerWidth')).toBeLessThanOrEqual(1);
+      return;
+    }
+
+    const rootPx = await page.evaluate<number>('parseFloat(getComputedStyle(document.documentElement).fontSize)');
+    const expandedPx = 16 * rootPx;
+    // 36px target + 2 * 0.75rem + 1px border; "about 60px", and far narrower than the expanded rail.
+    expect(headerBox.width).toBeGreaterThanOrEqual(54);
+    expect(headerBox.width).toBeLessThanOrEqual(64);
+    expect(headerBox.width).toBeLessThan(expandedPx - 100);
+    expect(headerBox.x).toBe(0);
+
+    // The utilities stay inside the narrow rail, below the navigation, in flow.
+    const foot = header.locator('.app-header-end');
+    const footBox = await foot.boundingBox();
+    const navBox = await page.getByRole('navigation', { name: 'Main', exact: true }).boundingBox();
+    if (footBox === null || navBox === null) throw new Error('not laid out');
+    await expect(foot).toHaveCSS('position', 'static');
+    expect(footBox.x).toBeGreaterThanOrEqual(headerBox.x - 1);
+    expect(footBox.x + footBox.width).toBeLessThanOrEqual(headerBox.x + headerBox.width + 1);
+    expect(footBox.y).toBeGreaterThanOrEqual(navBox.y + navBox.height - 1);
+
+    // The version and About links are hidden while collapsed (and so leave the Tab order).
+    await expect(header.locator('.sidebar-footer')).toBeHidden();
+    // The collapse button is the last block, an icon alone, at the rail's bottom edge less its padding.
+    const button = header.getByRole('button', { name: 'Expand sidebar', exact: true });
+    await expect(button).toHaveAttribute('aria-expanded', 'false');
+    const buttonBox = await button.boundingBox();
+    if (buttonBox === null) throw new Error('not laid out');
+    expect(buttonBox.x).toBeGreaterThanOrEqual(headerBox.x - 1);
+    expect(buttonBox.x + buttonBox.width).toBeLessThanOrEqual(headerBox.x + headerBox.width + 1);
+    expect(footBox.y + footBox.height).toBeLessThanOrEqual(buttonBox.y + 1);
+    expect(Math.abs(buttonBox.y + buttonBox.height - (headerBox.y + headerBox.height) + 16)).toBeLessThanOrEqual(2);
+
+    // Every nav entry is a 36px target inside the rail, its label still the accessible name.
+    const tools = header.getByRole('link', { name: 'Tools', exact: true });
+    const toolsBox = await tools.boundingBox();
+    if (toolsBox === null) throw new Error('not laid out');
+    expect(toolsBox.width).toBeGreaterThanOrEqual(35);
+    expect(toolsBox.x + toolsBox.width).toBeLessThanOrEqual(headerBox.x + headerBox.width + 1);
+
+    // Nothing scrolls sideways, and the page starts where the narrow rail ends: the width it freed is its own.
+    expect(await page.evaluate('document.documentElement.scrollWidth - window.innerWidth')).toBeLessThanOrEqual(1);
+    const mainBox = await page.locator('.workspace-main').boundingBox();
+    if (mainBox === null) throw new Error('not laid out');
+    expect(mainBox.x).toBeGreaterThanOrEqual(headerBox.width - 1);
+    expect(mainBox.x).toBeLessThanOrEqual(headerBox.width + 1);
+    expect(mainBox.width).toBeGreaterThan(width - 64 - 1);
   });
 }
 
