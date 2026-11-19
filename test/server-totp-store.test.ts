@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { openDatabase, type Database } from '../server/db.ts';
+import { encryptPayload } from '../server/ops/crypto.ts';
 import {
   TotpKeyMissingError,
   clearTotp,
@@ -113,6 +114,61 @@ describe('server/auth/totp-store.ts', () => {
   it('reading with a different key throws and does not return off', () => {
     startTotpEnrolment(db, KEY, userId);
     expect(() => readTotpState(db, randomBytes(32), userId)).toThrow();
+  });
+
+  it.each([
+    ['totp_enabled_at', "'2026-01-01T00:00:00.000Z'"],
+    ['totp_secret_iv', 'randomblob(12)'],
+    ['totp_last_step', '1'],
+  ])('a row with the secret NULL but %s set throws as inconsistent, not off', (column, value) => {
+    db.prepare(
+      `UPDATE users SET totp_secret = NULL, totp_secret_iv = NULL, totp_enabled_at = NULL, totp_last_step = NULL, ${column} = ${value} WHERE id = ?`,
+    ).run(userId);
+    expect(() => readTotpState(db, KEY, userId)).toThrow('Stored TOTP state is inconsistent.');
+    expect(() => readTotpState(db, null, userId)).toThrow('Stored TOTP state is inconsistent.');
+  });
+
+  it('a stored secret that decrypts to 19 bytes throws, naming no secret bytes', () => {
+    startTotpEnrolment(db, KEY, userId);
+    const short = randomBytes(19);
+    const { ciphertext, iv } = encryptPayload(short, deriveTotpSubkey(KEY, userId));
+    db.prepare('UPDATE users SET totp_secret = ?, totp_secret_iv = ? WHERE id = ?').run(ciphertext, iv, userId);
+    let message = '';
+    try {
+      readTotpState(db, KEY, userId);
+    } catch (error) {
+      message = error instanceof Error ? error.message : String(error);
+    }
+    expect(message).toBe('Stored TOTP secret has the wrong length.');
+    expect(message).not.toContain(short.toString('hex'));
+    expect(message).not.toContain(short.toString('base64'));
+  });
+
+  it('a flipped byte in the stored ciphertext makes readTotpState throw', () => {
+    startTotpEnrolment(db, KEY, userId);
+    const row = db.prepare('SELECT totp_secret FROM users WHERE id = ?').get(userId) as unknown as {
+      totp_secret: Uint8Array;
+    };
+    const tampered = Buffer.from(row.totp_secret);
+    tampered[0] = (tampered[0] ?? 0) ^ 0x01;
+    db.prepare('UPDATE users SET totp_secret = ? WHERE id = ?').run(tampered, userId);
+    expect(() => readTotpState(db, KEY, userId)).toThrow();
+  });
+
+  it("a ciphertext copied from one user's row to another's throws when read", () => {
+    const other = insertUser('bob');
+    startTotpEnrolment(db, KEY, userId);
+    const row = db.prepare('SELECT totp_secret, totp_secret_iv FROM users WHERE id = ?').get(userId) as unknown as {
+      totp_secret: Uint8Array;
+      totp_secret_iv: Uint8Array;
+    };
+    db.prepare('UPDATE users SET totp_secret = ?, totp_secret_iv = ? WHERE id = ?').run(
+      row.totp_secret,
+      row.totp_secret_iv,
+      other,
+    );
+    expect(() => readTotpState(db, KEY, other)).toThrow();
+    expect(readTotpState(db, KEY, userId).status).toBe('pending');
   });
 
   it('subkeys differ per user and are stable for one user', () => {

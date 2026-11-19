@@ -2,13 +2,14 @@
  * @module totp
  * @purpose Pure TOTP primitives for two-factor sign-in: RFC 6238 time steps over RFC 4226 HOTP with SHA-1, base32 secret encoding, and replay-checked verification. Stores nothing and performs no I/O.
  * @conventions Codes are 6-digit strings with a 30-second step and a +/-1 step window. Verification fails closed: any malformed input yields { ok: false }. Codes are compared with timingSafeEqual. Callers persist the returned step as lastAcceptedStep to block replay.
- * @exports TotpSecret, generateSecret, encodeBase32, totpAt, verifyTotp, TotpVerifyResult
+ * @exports SECRET_BYTES, TotpSecret, generateSecret, encodeBase32, totpAt, verifyTotp, TotpVerifyResult
  */
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 
 const STEP_SECONDS = 30;
 const DIGITS = 6;
-const SECRET_BYTES = 20;
+/** Length in bytes of a TOTP shared secret (160 bits, RFC 4226 section 4 recommendation). */
+export const SECRET_BYTES = 20;
 const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
 /** A freshly generated shared secret: the raw bytes and their RFC 4648 base32 form (no padding). */
