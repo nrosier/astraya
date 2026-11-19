@@ -15,6 +15,7 @@ import {
   consumeRecoveryCode,
   deriveTotpSubkey,
   generateRecoveryCodes,
+  isTotpEnabled,
   loadRecoveryPepper,
   readTotpState,
   recordAcceptedStep,
@@ -37,6 +38,17 @@ function insertUser(username: string): string {
     new Date().toISOString(),
   );
   return id;
+}
+
+/** The pending state's IV, the compare-and-set token `confirmTotpEnrolment` takes. */
+function pendingIv(id: string): Uint8Array {
+  const state = readTotpState(db, KEY, id);
+  if (state.status !== 'pending') throw new Error('expected a pending enrolment');
+  return state.enrolmentIv;
+}
+
+function confirmNow(id: string, step: number): boolean {
+  return confirmTotpEnrolment(db, id, pendingIv(id), step, new Date().toISOString());
 }
 
 function storedHashes(id: string): string[] {
@@ -63,9 +75,10 @@ describe('server/auth/totp-store.ts', () => {
     const secret = startTotpEnrolment(db, KEY, userId);
     const state = readTotpState(db, KEY, userId);
     expect(state.status).toBe('pending');
-    if (state.status === 'off') throw new Error('expected a secret');
+    if (state.status !== 'pending') throw new Error('expected a pending state');
     expect(Buffer.from(state.secret).equals(Buffer.from(secret))).toBe(true);
-    expect(state.lastStep).toBeNull();
+    // A pending state has no replay step at all (it is not merely null).
+    expect('lastStep' in state).toBe(false);
     const row = db.prepare('SELECT totp_secret FROM users WHERE id = ?').get(userId) as unknown as {
       totp_secret: Uint8Array;
     };
@@ -78,21 +91,67 @@ describe('server/auth/totp-store.ts', () => {
 
   it('confirm enables the user, and confirming twice returns false the second time', () => {
     startTotpEnrolment(db, KEY, userId);
-    expect(confirmTotpEnrolment(db, userId, 5, new Date().toISOString())).toBe(true);
+    const iv = pendingIv(userId);
+    expect(confirmTotpEnrolment(db, userId, iv, 5, new Date().toISOString())).toBe(true);
     const state = readTotpState(db, KEY, userId);
     expect(state.status).toBe('enabled');
-    if (state.status === 'off') throw new Error('expected a secret');
+    if (state.status !== 'enabled') throw new Error('expected an enabled state');
     expect(state.lastStep).toBe(5);
-    expect(confirmTotpEnrolment(db, userId, 6, new Date().toISOString())).toBe(false);
+    expect(confirmTotpEnrolment(db, userId, iv, 6, new Date().toISOString())).toBe(false);
   });
 
   it('confirm returns false when nothing is pending', () => {
-    expect(confirmTotpEnrolment(db, userId, 5, new Date().toISOString())).toBe(false);
+    expect(confirmTotpEnrolment(db, userId, randomBytes(12), 5, new Date().toISOString())).toBe(false);
+  });
+
+  it('two enrolment starts from two tabs: only the latest pending secret (its IV) can be confirmed', () => {
+    startTotpEnrolment(db, KEY, userId);
+    const ivA = pendingIv(userId);
+    const secretB = startTotpEnrolment(db, KEY, userId);
+    const ivB = pendingIv(userId);
+    expect(Buffer.from(ivA).equals(Buffer.from(ivB))).toBe(false);
+
+    // Tab A's code was checked against the replaced secret, so its confirm must not enable the user.
+    expect(confirmTotpEnrolment(db, userId, ivA, 7, new Date().toISOString())).toBe(false);
+    const stillPending = readTotpState(db, KEY, userId);
+    expect(stillPending.status).toBe('pending');
+    if (stillPending.status !== 'pending') throw new Error('expected a pending state');
+    expect(Buffer.from(stillPending.secret).equals(Buffer.from(secretB))).toBe(true);
+
+    expect(confirmTotpEnrolment(db, userId, ivB, 8, new Date().toISOString())).toBe(true);
+    const enabled = readTotpState(db, KEY, userId);
+    expect(enabled.status).toBe('enabled');
+    if (enabled.status !== 'enabled') throw new Error('expected an enabled state');
+    expect(Buffer.from(enabled.secret).equals(Buffer.from(secretB))).toBe(true);
+    expect(enabled.lastStep).toBe(8);
+  });
+
+  it('a pending user fails isTotpEnabled and an enabled user passes it', () => {
+    expect(isTotpEnabled(readTotpState(db, KEY, userId))).toBe(false);
+    startTotpEnrolment(db, KEY, userId);
+    expect(isTotpEnabled(readTotpState(db, KEY, userId))).toBe(false);
+    expect(confirmNow(userId, 4)).toBe(true);
+    expect(isTotpEnabled(readTotpState(db, KEY, userId))).toBe(true);
+  });
+
+  it('the enabled state carries lastStep and the pending state does not', () => {
+    startTotpEnrolment(db, KEY, userId);
+    const pending = readTotpState(db, KEY, userId);
+    expect(pending.status).toBe('pending');
+    expect('lastStep' in pending).toBe(false);
+    expect('enrolmentIv' in pending).toBe(true);
+    expect(confirmNow(userId, 9)).toBe(true);
+    const enabled = readTotpState(db, KEY, userId);
+    expect(enabled.status).toBe('enabled');
+    expect('lastStep' in enabled).toBe(true);
+    expect('enrolmentIv' in enabled).toBe(false);
+    if (enabled.status !== 'enabled') throw new Error('expected an enabled state');
+    expect(enabled.lastStep).toBe(9);
   });
 
   it('start on an enabled user throws, and on a missing user throws', () => {
     startTotpEnrolment(db, KEY, userId);
-    confirmTotpEnrolment(db, userId, 1, new Date().toISOString());
+    confirmNow(userId, 1);
     expect(() => startTotpEnrolment(db, KEY, userId)).toThrow();
     expect(() => startTotpEnrolment(db, KEY, randomUUID())).toThrow();
   });
@@ -180,7 +239,7 @@ describe('server/auth/totp-store.ts', () => {
 
   it('recordAcceptedStep accepts only a later step', () => {
     startTotpEnrolment(db, KEY, userId);
-    confirmTotpEnrolment(db, userId, 1, new Date().toISOString());
+    confirmNow(userId, 1);
     expect(recordAcceptedStep(db, userId, 10)).toBe(true);
     expect(recordAcceptedStep(db, userId, 10)).toBe(false);
     expect(recordAcceptedStep(db, userId, 9)).toBe(false);
@@ -249,7 +308,7 @@ describe('server/auth/totp-store.ts', () => {
 
   it('clearTotp leaves the user off with no recovery codes', () => {
     startTotpEnrolment(db, KEY, userId);
-    confirmTotpEnrolment(db, userId, 3, new Date().toISOString());
+    confirmNow(userId, 3);
     replaceRecoveryCodes(db, KEY, userId, generateRecoveryCodes());
     clearTotp(db, userId);
     expect(readTotpState(db, null, userId)).toEqual({ status: 'off' });
