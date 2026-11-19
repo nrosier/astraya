@@ -3561,6 +3561,11 @@ button.app-nav-search.primitive-button-circle {
   display: block;
 }
 
+/* The footer button's wrapper (#1747) carries its collapsed tooltip; like the button, it is a rail feature only. */
+.rail-collapse-item {
+  display: none;
+}
+
 @media (min-width: 64rem) {
   .workspace-shell {
     display: flex;
@@ -3605,8 +3610,12 @@ button.app-nav-search.primitive-button-circle {
     border-bottom: none;
   }
 
+  /* The brand row and the person switcher are one --rail-target-size tall in both states, so the nav
+     icons below them keep their vertical position when the rail collapses (#1747). */
   .app-header-start {
     flex: 0 0 auto;
+    align-items: center;
+    min-height: var(--rail-target-size);
   }
 
   /* The rail is a column at least one viewport tall; the nav grows, and the footer stays at its foot. */
@@ -3654,8 +3663,10 @@ button.app-nav-search.primitive-button-circle {
   .app-nav-person {
     max-width: none;
     min-width: 0;
+    box-sizing: border-box;
+    height: var(--rail-target-size);
     margin: 0 0 var(--space-2);
-    padding: var(--space-2) var(--space-2) var(--space-2) 0;
+    padding: 0 var(--space-2) 0 0;
     border-right: none;
     border-bottom: 1px solid var(--line);
   }
@@ -3752,6 +3763,10 @@ button.app-nav-search.primitive-button-circle {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .rail-collapse-item {
+    display: block;
   }
 
   /* The footer button: a quiet bordered control, last in the rail. The ring is :focus-visible only, so it
@@ -3892,6 +3907,7 @@ button.app-nav-search.primitive-button-circle {
   }
 
   .workspace-shell-collapsed .app-nav-person {
+    margin-bottom: var(--space-2);
     background: var(--surface);
   }
 

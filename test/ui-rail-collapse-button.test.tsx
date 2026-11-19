@@ -2,7 +2,8 @@
 /**
  * The sidebar rail's footer collapse button (#1747): toggling writes the device preference to
  * localStorage, aria-expanded and the accessible name flip with it, the control is a plain
- * `type="button"`, and the Dutch labels are present.
+ * `type="button"`, and the Dutch labels are present. Collapsed, it carries the nav items' right-edge
+ * tooltip as a sibling, which Escape dismisses (owner decision, 2026-11-20).
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -93,5 +94,43 @@ describe('RailCollapseButton', () => {
     const button = mount();
     expect(button.getAttribute('aria-label')).toBe('Zijbalk samenvouwen');
     expect(button.textContent).toBe('Samenvouwen');
+  });
+
+  it('has no tooltip while expanded', () => {
+    const button = mount();
+    expect(button.parentElement?.querySelector('[role="tooltip"]')).toBeNull();
+  });
+
+  it('collapsed, carries an Expand sidebar tooltip beside the button, not inside it', () => {
+    localStorage.setItem(KEY, 'true');
+    const button = mount();
+    const wrapper = button.parentElement;
+    expect(wrapper?.classList.contains('rail-nav-item')).toBe(true);
+    const tooltip = wrapper?.querySelector('[role="tooltip"]');
+    expect(tooltip?.textContent).toBe('Expand sidebar');
+    expect(tooltip?.classList.contains('rail-nav-tooltip')).toBe(true);
+    expect(button.contains(tooltip ?? null)).toBe(false);
+    expect(button.textContent).toBe('');
+  });
+
+  it('collapsed, Escape dismisses the tooltip and blur brings it back', () => {
+    localStorage.setItem(KEY, 'true');
+    const button = mount();
+    const wrapper = button.parentElement;
+    act(() => {
+      button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    expect(wrapper?.getAttribute('data-tooltip-dismissed')).toBe('true');
+    act(() => {
+      button.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+    });
+    expect(wrapper?.hasAttribute('data-tooltip-dismissed')).toBe(false);
+  });
+
+  it('collapsed, shows the Dutch tooltip in Dutch', () => {
+    localStorage.setItem(KEY, 'true');
+    setLocale('nl');
+    const button = mount();
+    expect(button.parentElement?.querySelector('[role="tooltip"]')?.textContent).toBe('Zijbalk uitvouwen');
   });
 });

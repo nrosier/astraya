@@ -69,6 +69,9 @@ describe('icon rail CSS (#1747)', () => {
     expect(base).toContain('color: var(--muted);');
     expect(block).toMatch(/button\.rail-collapse-button:focus-visible \{[^}]*outline: 2px solid/);
     expect(css).toMatch(/\n\.rail-nav-tooltip,\n\.rail-collapse-button \{\n {2}display: none;/);
+    // The button's tooltip wrapper (2026-11-20) is hidden below 64rem too, and shown inside the rail block.
+    expect(css).toMatch(/\n\.rail-collapse-item \{\n {2}display: none;/);
+    expect(block).toMatch(/\.rail-collapse-item \{\s*display: block;/);
   });
 
   it('uses design tokens only: no raw colour values in the rail rules', () => {
