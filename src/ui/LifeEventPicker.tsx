@@ -4,7 +4,7 @@
 /**
  * @module ui/LifeEventPicker
  * @purpose Life-event picker beside a screen's date field: lists the stored events in display order, optionally narrowed to one or more categories (#1439), and reports the one chosen.
- * @conventions Renders nothing when the person has no readable events; the select returns to its placeholder after a pick, so the same event can be picked again; the category filter appears only when at least one event has a category, lists only the categories in use, starts with all of them chosen (which also keeps events without a category), and is a Disclosure with a shown-of-total summary; uses LifeEventPicker.messages.ts via useMessages().
+ * @conventions Renders nothing when the person has no readable events; the select returns to its placeholder after a pick, so the same event can be picked again; the category filter appears only when at least one event has a category, lists only the categories in use, starts with all of them chosen (which also keeps events without a category), and is a Disclosure with a shown-of-total summary; with `inHeader` (a page header action row, #1770) the visible label is hidden but kept for screen readers (sr-only), and the wrapper gets `life-event-picker--header`; in a form row (the Return page) the label stays visible; uses LifeEventPicker.messages.ts via useMessages().
  * @exports LifeEventPicker
  */
 import { useState } from 'react';
@@ -26,9 +26,12 @@ import { Select } from './primitives/Select.js';
 export function LifeEventPicker({
   events,
   onPick,
+  inHeader,
 }: {
   readonly events: readonly LifeEvent[] | undefined;
   readonly onPick: (event: LifeEvent) => void;
+  /** True in a page header action row (#1770): the visible label is hidden, the accessible name stays. */
+  readonly inHeader?: boolean;
 }): React.JSX.Element | null {
   const t = useMessages(lifeEventPickerMessages);
   const names = useMessages(lifeEventCategoryMessages);
@@ -46,9 +49,10 @@ export function LifeEventPicker({
     setChosen(next.size === inUse.length ? undefined : next);
   };
   return (
-    <div className="life-event-picker">
+    <div className={inHeader === true ? 'life-event-picker life-event-picker--header' : 'life-event-picker'}>
       <Select
         label={t.label}
+        hideLabel={inHeader === true}
         value=""
         options={[
           { value: '', label: effective !== undefined && options.length === 0 ? t.filterEmpty : t.placeholder },
