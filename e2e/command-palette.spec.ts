@@ -57,7 +57,7 @@ for (const viewport of VIEWPORTS) {
 
     const dialog = (p: Page) => p.getByRole('dialog', { name: 'Search features and pages', exact: true });
     const search = (p: Page) => p.getByRole('combobox', { name: 'Search features, charts and tabs', exact: true });
-    const trigger = (p: Page) => p.getByRole('button', { name: /^Search features, charts, tabs…/ });
+    const trigger = (p: Page) => p.getByRole('button', { name: 'Search features, charts, tabs', exact: true });
     // Results only: the page has native <option> elements (a select) that a bare role query would also match.
     const results = (p: Page) => p.getByRole('listbox', { name: 'Results', exact: true });
     const options = (p: Page) => results(p).getByRole('option');

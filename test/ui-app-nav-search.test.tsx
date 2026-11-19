@@ -126,17 +126,18 @@ afterEach(() => {
 });
 
 describe('the command palette trigger (#1654)', () => {
-  it('renders a search trigger with the muted placeholder and the shortcut hint', () => {
+  it('renders an icon-only circle named "Search features, charts, tabs", described by its tooltip', () => {
     render();
-    // The accessible name carries the shortcut too, so it matches the visible text (axe label-content-name-mismatch).
-    expect(trigger().getAttribute('aria-label')).toBe(
-      `${appNavMessages.en.searchPlaceholder} ${appNavMessages.en.shortcutHintOther}`,
-    );
-    expect(trigger().textContent).toContain(appNavMessages.en.searchPlaceholder);
-    expect(trigger().querySelector('kbd')?.textContent).toBe(appNavMessages.en.shortcutHintOther);
+    expect(trigger().getAttribute('aria-label')).toBe(appNavMessages.en.searchLabel);
+    expect(trigger().textContent).toBe('');
+    expect(trigger().querySelector('kbd')).toBeNull();
+    const tipId = trigger().getAttribute('aria-describedby') ?? '';
+    const tip = document.getElementById(tipId);
+    expect(tip?.getAttribute('role')).toBe('tooltip');
+    expect(tip?.textContent).toBe(`Search (${appNavMessages.en.shortcutHintOther})`);
   });
 
-  it('uses the shared circle class at 390px and keeps the pill class on the wide trigger', () => {
+  it('uses the same icon-only circle class at 390px and on the wide trigger (#1769)', () => {
     vi.stubGlobal('matchMedia', (query: string) => ({
       matches: query === '(max-width: 40rem)',
       media: query,
@@ -158,13 +159,27 @@ describe('the command palette trigger (#1654)', () => {
     }));
     render();
     expect(trigger().classList.contains('app-nav-search')).toBe(true);
-    expect(trigger().classList.contains('primitive-button-circle')).toBe(false);
+    expect(trigger().classList.contains('primitive-button-circle')).toBe(true);
   });
 
-  it('shows the Cmd K hint on Apple platforms and Ctrl K elsewhere', () => {
+  it('names the shortcut in the tooltip: Cmd K on Apple platforms, Ctrl+K elsewhere, in en and nl (#1769)', () => {
+    const tipText = (): string | null | undefined => {
+      const tipId = trigger().getAttribute('aria-describedby') ?? '';
+      return document.getElementById(tipId)?.textContent;
+    };
     setPlatform('MacIntel');
     render();
-    expect(trigger().querySelector('kbd')?.textContent).toBe(appNavMessages.en.shortcutHintApple);
+    expect(tipText()).toBe('Search (⌘K)');
+    act(() => {
+      root.unmount();
+    });
+    root = createRoot(container);
+    setPlatform('Linux x86_64');
+    setLocale('nl');
+    render();
+    expect(tipText()).toBe('Zoeken (Ctrl+K)');
+    expect(trigger().getAttribute('aria-label')).toBe(appNavMessages.nl.searchLabel);
+    setLocale('en');
   });
 
   it('opens the palette when the trigger is pressed', async () => {
