@@ -1,7 +1,7 @@
 /**
  * TOTP storage (#1500, slice 2a), against a real temp SQLite file. Secrets and codes live only in variables here.
  */
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -66,6 +66,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.restoreAllMocks();
   db.close();
   rmSync(dir, { recursive: true, force: true });
 });
@@ -132,6 +133,36 @@ describe('server/auth/totp-store.ts', () => {
     expect(isTotpEnabled(readTotpState(db, KEY, userId))).toBe(false);
     expect(confirmNow(userId, 4)).toBe(true);
     expect(isTotpEnabled(readTotpState(db, KEY, userId))).toBe(true);
+  });
+
+  it('isTotpEnabled is a type guard: a pending state is never narrowed to enabled', () => {
+    startTotpEnrolment(db, KEY, userId);
+    const state = readTotpState(db, KEY, userId);
+    if (isTotpEnabled(state)) {
+      // Compile-time: only an enabled state reaches here. Runtime: a pending one must not.
+      throw new Error(`a ${state.status} state passed isTotpEnabled`);
+    }
+    expect(state.status).toBe('pending');
+    expect(confirmNow(userId, 4)).toBe(true);
+    const enabled = readTotpState(db, KEY, userId);
+    expect(isTotpEnabled(enabled) ? enabled.lastStep : 'not enabled').toBe(4);
+  });
+
+  it('confirmTotpEnrolment is one UPDATE statement carrying all four compare-and-set predicates', () => {
+    startTotpEnrolment(db, KEY, userId);
+    const iv = pendingIv(userId);
+    const prepare = vi.spyOn(db, 'prepare');
+
+    expect(confirmTotpEnrolment(db, userId, iv, 4, new Date().toISOString())).toBe(true);
+
+    const statements = prepare.mock.calls.map(([sql]) => sql);
+    expect(statements).toHaveLength(1);
+    const [sql] = statements;
+    expect(sql).toMatch(/^\s*UPDATE\s+users\b/i);
+    expect(sql).toContain('totp_secret IS NOT NULL');
+    expect(sql).toContain('totp_enabled_at IS NULL');
+    expect(sql).toContain('totp_secret_iv = ?');
+    expect(sql).toContain('id = ?');
   });
 
   it('the enabled state carries lastStep and the pending state does not', () => {
