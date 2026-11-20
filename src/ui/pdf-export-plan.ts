@@ -150,7 +150,17 @@ import {
   midpointTreeColumns,
   positionColumns,
 } from './ChartView.js';
-import { checkedStarsOf, fixedStarColumns, fixedStarsScopeNoteOf, hasStarSources } from './ChartViewPlacements.js';
+import {
+  checkedStarsOf,
+  fixedStarColumns,
+  fixedStarsScopeNoteOf,
+  hasStarSources,
+  hermeticLotColumns,
+  type HermeticLotTableRow,
+} from './ChartViewPlacements.js';
+import { hermeticLots } from '../domain/hermetic-lots.js';
+import { degreeParts } from '../domain/degree-parts.js';
+import { lotFormulaByKey } from '../astrology/arabic-parts.js';
 import type { chartViewMessages } from './ChartView.messages.js';
 import type { pdfExportMessages } from './pdf-export.messages.js';
 import { aspectDisplayName, bodyDisplayName, bodyShortName, signDisplayName } from './astro-names.messages.js';
@@ -564,8 +574,24 @@ function tablesOf(
       ];
     case 'derived': {
       const allMidpoints = visibility.midpointsVisible === true ? allMidpointsRows(data) : [];
+      // The Hermetic lots card (#1797) sits after the Derived points on screen; the same rows, columns and source line.
+      const hermeticRows: readonly HermeticLotTableRow[] = hermeticLots(data).map((row) => ({
+        ...row,
+        label: t.hermeticLotNames[row.key],
+        ...degreeParts(row.longitude),
+      }));
       return [
         tablePlanOf(t.derivedPointsCaption, derivedPointColumns(t, locale), derivedPointRows(data, visibility)),
+        ...(hermeticRows.length === 0
+          ? []
+          : [
+              tablePlanOf(
+                t.hermeticLotsCaption,
+                hermeticLotColumns(t, locale, data.sect),
+                hermeticRows,
+                lotFormulaByKey('lot-of-eros')?.authority ?? '',
+              ),
+            ]),
         ...(allMidpoints.length === 0
           ? []
           : [tablePlanOf(t.allMidpointsCaption, allMidpointsColumns(t, locale), allMidpoints)]),
