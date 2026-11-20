@@ -1,5 +1,5 @@
 import { execSync } from 'node:child_process';
-import { readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { lstatSync, readFileSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve, sep } from 'node:path';
 import { loadEnv, type Plugin } from 'vite';
 import { defineConfig } from 'vitest/config';
@@ -44,6 +44,30 @@ function precacheManifest(base: string): Plugin {
 }
 
 /**
+ * The real location a metafile path would be written to, with symlinks followed where they resolve. A path that
+ * exists is resolved fully. A path that does not (or is a broken link) is resolved through its real parent directory
+ * and keeps its own name; the parent must exist, and its absence is reported in one short line rather than a trace.
+ */
+function resolveMetafileTarget(absolute: string): string {
+  // Exists (a file, or a symlink that resolves): its real path.
+  if (lstatSync(absolute, { throwIfNoEntry: false }) !== undefined && existsResolved(absolute)) {
+    return realpathSync.native(absolute);
+  }
+  // Missing, or a broken link: its real parent, keeping its own name. The parent is checked without a catch, so a
+  // missing directory is reported as one short line rather than as a caught-and-rethrown trace.
+  const parent = dirname(absolute);
+  if (lstatSync(parent, { throwIfNoEntry: false }) === undefined) {
+    throw new Error(`ASTRAYA_METAFILE's directory does not exist: ${parent}`);
+  }
+  return join(realpathSync.native(parent), basename(absolute));
+}
+
+/** True when `path` resolves to an existing file or directory (so `realpath` will succeed). A broken link is false. */
+function existsResolved(path: string): boolean {
+  return statSync(path, { throwIfNoEntry: false }) !== undefined;
+}
+
+/**
  * Writes a per-chunk module breakdown to `ASTRAYA_METAFILE` (a path outside the repo, set by the caller) when
  * that variable is present. Read-only: it reads the rendered bundle and emits nothing into `dist/`, so the
  * bundle and the eager-graph gate are unaffected.
@@ -52,16 +76,23 @@ function moduleSizeReport(): Plugin {
   let target: string | undefined;
   return {
     name: 'astraya-module-size-report',
-    // Checked before any output is written (not in writeBundle), against the root Vite resolved, with both sides
-    // canonicalised so a symlink or a differently spelt path cannot slip past the comparison.
+    // Build only: under Vitest or `vite dev` there is no bundle to report, and the guard must not fail those runs.
+    apply: 'build',
+    // Checked before any output is written (not in writeBundle), against the root Vite resolved. The target is
+    // resolved fully: its real path if it exists, otherwise its real parent plus its own basename, so a symlink
+    // (including a broken one) and a spelling such as `<repo>/.` cannot slip past the comparison.
     configResolved(config) {
       const configured = process.env.ASTRAYA_METAFILE;
       if (configured === undefined || configured === '') return;
+      const absolute = resolve(configured);
       const root = realpathSync.native(config.root);
-      const parent = realpathSync.native(dirname(resolve(configured)));
-      const resolvedTarget = join(parent, basename(configured));
+      const resolvedTarget = resolveMetafileTarget(absolute);
       if (resolvedTarget === root || resolvedTarget.startsWith(`${root}${sep}`)) {
         throw new Error(`ASTRAYA_METAFILE must point outside the repository (got ${resolvedTarget}).`);
+      }
+      const existing = lstatSync(resolvedTarget, { throwIfNoEntry: false });
+      if (existing?.isSymbolicLink() || existing?.isDirectory()) {
+        throw new Error(`ASTRAYA_METAFILE must name a regular file, not a directory or link (got ${resolvedTarget}).`);
       }
       target = resolvedTarget;
     },
