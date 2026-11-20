@@ -35,7 +35,10 @@ import type { CivilDateTime, Coordinates } from './types.js';
  */
 export const STANDARD_TIME_FROM_YEAR = 1880;
 
-/** IANA zone for a coordinate. Never throws — open water yields an `Etc/*` zone. */
+/**
+ * IANA zone for a coordinate. Open water yields an `Etc/*` zone rather than an error. Throws `TimeDataNotReadyError`
+ * until `loadZoneData` (zone-data) has resolved.
+ */
 export function lookupZone(coordinates: Coordinates): string {
   return zoneLookupModule()(clampLatitude(coordinates.latitude), wrapLongitude(coordinates.longitude));
 }

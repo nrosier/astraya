@@ -335,8 +335,17 @@ function AppShell(): React.JSX.Element {
   }, []);
 
   const parsed = parseRoute(route);
-  // No screen (and so no chart) mounts before the zone data is ready (#1794); until then the loading line stands in.
-  const screen = zoneDataLoaded ? renderScreen(parsed, seVersion) : <LoadingScreen />;
+  // No screen (and so no chart) mounts before the zone data is ready (#1794). Until then the loading line stands in;
+  // if the load failed, its error is shown in the same slot, through the same error line the other gates use.
+  const screen = zoneDataLoaded ? (
+    renderScreen(parsed, seVersion)
+  ) : zoneDataError === undefined ? (
+    <LoadingScreen />
+  ) : (
+    <main className="shell">
+      <StatusMessage kind="error">{zoneDataError}</StatusMessage>
+    </main>
+  );
   const toolKey = activeToolKey(parsed);
   // The last chart screen of a person, for "continue where you left off" on their Overview (#1173).
   useEffect(() => {

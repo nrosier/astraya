@@ -1,5 +1,6 @@
 import { execSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
+import { resolve, sep } from 'node:path';
 import { loadEnv, type Plugin } from 'vite';
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
@@ -51,8 +52,14 @@ function moduleSizeReport(): Plugin {
   return {
     name: 'astraya-module-size-report',
     writeBundle(_options, bundle) {
-      const target = process.env.ASTRAYA_METAFILE;
-      if (target === undefined) return;
+      const configured = process.env.ASTRAYA_METAFILE;
+      if (configured === undefined) return;
+      // Resolved to an absolute path and kept outside the project, so the report can never be committed by accident.
+      const target = resolve(configured);
+      const root = resolve(process.cwd());
+      if (target === root || target.startsWith(`${root}${sep}`)) {
+        throw new Error(`ASTRAYA_METAFILE must point outside the repository (got ${target}).`);
+      }
       const report: Record<string, { bytes: number; modules: Record<string, number> }> = {};
       for (const [fileName, chunk] of Object.entries(bundle)) {
         if (chunk.type !== 'chunk') continue;

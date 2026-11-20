@@ -34,14 +34,21 @@ let pending: Promise<ZoneData> | undefined;
 
 /**
  * Loads the time-zone data once. Concurrent and repeated calls share one load. Resolves when both modules are ready.
+ * A failed load clears the shared promise, so a later call retries rather than being stuck on the failure.
  */
 export function loadZoneData(): Promise<void> {
   if (loaded !== undefined) return Promise.resolve();
-  pending ??= Promise.all([import('@photostructure/tz-lookup'), import('luxon')]).then(([tz, luxon]) => {
-    const data: ZoneData = { tzlookup: tz.default, luxon };
-    loaded = data;
-    return data;
-  });
+  pending ??= Promise.all([import('@photostructure/tz-lookup'), import('luxon')]).then(
+    ([tz, luxon]) => {
+      const data: ZoneData = { tzlookup: tz.default, luxon };
+      loaded = data;
+      return data;
+    },
+    (error: unknown) => {
+      pending = undefined;
+      throw error;
+    },
+  );
   return pending.then(() => undefined);
 }
 
