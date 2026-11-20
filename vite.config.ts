@@ -1,6 +1,6 @@
 import { execSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
-import { resolve, sep } from 'node:path';
+import { readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { basename, dirname, join, resolve, sep } from 'node:path';
 import { loadEnv, type Plugin } from 'vite';
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
@@ -49,17 +49,24 @@ function precacheManifest(base: string): Plugin {
  * bundle and the eager-graph gate are unaffected.
  */
 function moduleSizeReport(): Plugin {
+  let target: string | undefined;
   return {
     name: 'astraya-module-size-report',
-    writeBundle(_options, bundle) {
+    // Checked before any output is written (not in writeBundle), against the root Vite resolved, with both sides
+    // canonicalised so a symlink or a differently spelt path cannot slip past the comparison.
+    configResolved(config) {
       const configured = process.env.ASTRAYA_METAFILE;
-      if (configured === undefined) return;
-      // Resolved to an absolute path and kept outside the project, so the report can never be committed by accident.
-      const target = resolve(configured);
-      const root = resolve(process.cwd());
-      if (target === root || target.startsWith(`${root}${sep}`)) {
-        throw new Error(`ASTRAYA_METAFILE must point outside the repository (got ${target}).`);
+      if (configured === undefined || configured === '') return;
+      const root = realpathSync.native(config.root);
+      const parent = realpathSync.native(dirname(resolve(configured)));
+      const resolvedTarget = join(parent, basename(configured));
+      if (resolvedTarget === root || resolvedTarget.startsWith(`${root}${sep}`)) {
+        throw new Error(`ASTRAYA_METAFILE must point outside the repository (got ${resolvedTarget}).`);
       }
+      target = resolvedTarget;
+    },
+    writeBundle(_options, bundle) {
+      if (target === undefined) return;
       const report: Record<string, { bytes: number; modules: Record<string, number> }> = {};
       for (const [fileName, chunk] of Object.entries(bundle)) {
         if (chunk.type !== 'chunk') continue;
