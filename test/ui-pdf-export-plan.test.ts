@@ -17,7 +17,12 @@ import { EMPTY_SELECTION, type PdfChartTable, type PdfSelection } from '../src/d
 import type { Person } from '../src/domain/person.js';
 import type { SavedInterpretationDetail } from '../src/interpretation/tier2-client.js';
 import { fixedStarsScopeNoteOf } from '../src/ui/ChartView.js';
-import { NATAL_FIXED_STARS } from '../src/domain/chart-compute.js';
+import { hermeticLotColumns } from '../src/ui/ChartViewPlacements.js';
+import { cellText } from '../src/ui/table-sort.js';
+import { hermeticLots } from '../src/domain/hermetic-lots.js';
+import { degreeParts } from '../src/domain/degree-parts.js';
+import { lotFormulaByKey } from '../src/astrology/arabic-parts.js';
+import { NATAL_FIXED_STARS, computeChartData } from '../src/domain/chart-compute.js';
 import { chartViewMessages } from '../src/ui/ChartView.messages.js';
 import { harmonicViewMessages } from '../src/ui/HarmonicView.messages.js';
 import {
@@ -1366,4 +1371,87 @@ describe('view tables in the PDF (#915)', () => {
     expect(section.hint).toContain(chartViewMessages.en.sectKeyLabel);
     expect(section.hint).toContain(chartViewMessages.en.lunarPhaseKeyLabel);
   }, 30_000);
+});
+
+describe('Hermetic lots table in the PDF (#1797)', () => {
+  // The same London day and night moments as test/chart-paulus-lots.test.ts (#740).
+  const LONDON = {
+    coordinates: { latitude: 51.5072, longitude: -0.1276 },
+    offsetOverrideMinutes: 60,
+  } as const;
+  const DAY_MOMENT = { ...LONDON, civil: { year: 1990, month: 6, day: 15, hour: 14, minute: 30, second: 0 } };
+  const NIGHT_MOMENT = { ...LONDON, civil: { year: 1990, month: 6, day: 15, hour: 2, minute: 30, second: 0 } };
+  const LONDON_DAY: Person = {
+    id: 'p-lots-day',
+    displayName: 'Lots Day',
+    moment: DAY_MOMENT,
+    placeLabel: 'London, UK',
+    timeAccuracy: 'recorded',
+    notes: '',
+    missing: [],
+  };
+  const LONDON_NIGHT: Person = { ...LONDON_DAY, id: 'p-lots-night', displayName: 'Lots Night', moment: NIGHT_MOMENT };
+
+  const derivedSection = async (person: Person) => {
+    const provider = await getEngine();
+    const selection: PdfSelection = {
+      personId: person.id,
+      ...EMPTY_SELECTION,
+      charts: [{ type: 'natal', wheel: false, tables: ['derived'] }],
+    };
+    const context: PdfPlanContext = {
+      person,
+      provider,
+      settings: DEFAULT_EXTENDED_SETTINGS,
+      rulership: DEFAULT_RULERSHIP_CHOICE,
+      locale: 'en',
+      corpusFetch,
+    };
+    const built = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
+    const [section] = built.sections;
+    if (section?.kind !== 'chart') throw new Error('expected a chart section');
+    return section;
+  };
+
+  it('puts the Hermetic lots table right after the Derived points table, with five rows in Paulus order (guards placement and order)', async () => {
+    const section = await derivedSection(LONDON_DAY);
+    const captions = section.tables.map((table) => table.caption);
+    expect(captions.indexOf(chartViewMessages.en.hermeticLotsCaption)).toBe(
+      captions.indexOf(chartViewMessages.en.derivedPointsCaption) + 1,
+    );
+    const hermetic = section.tables.find((table) => table.caption === chartViewMessages.en.hermeticLotsCaption);
+    const names = chartViewMessages.en.hermeticLotNames;
+    expect(hermetic?.body.map((row) => row[0])).toEqual([
+      names['lot-of-eros'],
+      names['lot-of-necessity'],
+      names['lot-of-courage'],
+      names['lot-of-victory'],
+      names['lot-of-nemesis'],
+    ]);
+  }, 60_000);
+
+  it('prints the same cell text as the screen, with the Paulus authority as the source note (guards mirrors-the-screen and the verbatim rule)', async () => {
+    const section = await derivedSection(LONDON_DAY);
+    const hermetic = section.tables.find((table) => table.caption === chartViewMessages.en.hermeticLotsCaption);
+    const chart = await computeChartData(DAY_MOMENT, await getEngine());
+    const columns = hermeticLotColumns(chartViewMessages.en, 'en', chart.sect);
+    const screenRows = hermeticLots(chart).map((row) => ({
+      ...row,
+      label: chartViewMessages.en.hermeticLotNames[row.key],
+      ...degreeParts(row.longitude),
+    }));
+    expect(hermetic?.body).toEqual(screenRows.map((row) => columns.map((column) => cellText(column, row))));
+    expect(hermetic?.note).toBe(lotFormulaByKey('lot-of-eros')?.authority);
+  }, 60_000);
+
+  it('uses the night formula in the Formula cell for a night chart and the day formula for a day chart (guards sect)', async () => {
+    const erosFormulaCell = async (person: Person) => {
+      const section = await derivedSection(person);
+      const hermetic = section.tables.find((table) => table.caption === chartViewMessages.en.hermeticLotsCaption);
+      return hermetic?.body[0]?.[hermetic.head.length - 1];
+    };
+    const eros = lotFormulaByKey('lot-of-eros');
+    expect(await erosFormulaCell(LONDON_DAY)).toBe(eros?.dayFormula);
+    expect(await erosFormulaCell(LONDON_NIGHT)).toBe(eros?.nightFormula);
+  }, 60_000);
 });
