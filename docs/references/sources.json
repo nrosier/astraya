@@ -1563,5 +1563,25 @@
     "provisional": false,
     "used_by": ["src/astrology/arabic-parts.ts"],
     "notes": "Cited as provenance only: arabic-parts.ts says 'Holden calls it the Lot of Retribution', which Brennan reports ('Holden refers to it as the Lot of Retribution in his translation of Paulus', Hellenistic Astrology ch. 16). Not held; unverified against a copy (owner decision on #1602, 2026-11-15)."
+  },
+  {
+    "id": "espenak-nasa-moon-phases-1801-1900",
+    "title": "Phases of the Moon: 1801 to 1900",
+    "author": "Fred Espenak, NASA Goddard Space Flight Center",
+    "year": null,
+    "edition": "Web page eclipse.gsfc.nasa.gov/phase/phases1801.html, fetched 2026-11-20 (HTTP 200, 128,202 bytes); times in Universal Time, as the page states.",
+    "licence": "Work of the US government (NASA), public domain in the US.",
+    "access_route": "https://eclipse.gsfc.nasa.gov/phase/phases1801.html, fetched 2026-11-20 by the agent at the owner's request (#1798).",
+    "original_name": "phases1801.html",
+    "processed_path": "docs/references/sources/html/espenak-nasa-moon-phases-1801-1900.html",
+    "sha256": "f2bc7758faf1ab693991001f3e68b91a3005dbcacc53d322a43571833dbc8cac",
+    "text_path": "docs/references/text/espenak-nasa-moon-phases-1801-1900.txt",
+    "pages_path": null,
+    "page_count": null,
+    "status": "extracted",
+    "copyrighted": false,
+    "provisional": false,
+    "used_by": ["test/domain-prenatal-syzygy-golden.test.ts"],
+    "notes": "Independent table for the prenatal-syzygy golden test (#1798, owner decision 2026-11-20). The page says: \"The following table gives the date and time (Universal Time) of all phases of the Moon for a period of one century.\" The 1879 rows used: New Moon Feb 21 04:03, Full Moon Mar 8 13:10, New Moon Mar 22 21:05. Calculations by Fred Espenak (page credit: 'by Fred Espenak, GSFC Planetary Systems Laboratory')."
   }
 ]
