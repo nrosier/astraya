@@ -34,6 +34,7 @@ describe('the placement table', () => {
     expect(advancedFields('special')).toEqual([
       'lilithVariant',
       'nodeVariant',
+      'fortuneFormula',
       'antisciaVisible',
       'antisciaMaxOrb',
       'declinationVisible',

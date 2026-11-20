@@ -50,6 +50,7 @@ export const PLACEMENT: Readonly<Record<keyof ExtendedSettings, SettingPlacement
   objectPolicies: 'first',
   lilithVariant: 'special',
   nodeVariant: 'special',
+  fortuneFormula: 'special',
   antisciaVisible: 'special',
   antisciaMaxOrb: 'special',
   declinationVisible: 'special',

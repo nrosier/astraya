@@ -18,6 +18,7 @@
  */
 import { DEFAULT_ORB_CONFIG, type OrbConfig, type OrbRule } from '../astrology/aspects.js';
 import type { BoundsScheme } from '../astrology/bounds.js';
+import type { FortuneFormula } from '../astrology/arabic-parts.js';
 import {
   CARD_SOURCE,
   orbSettingsFor,
@@ -55,6 +56,11 @@ export interface ExtendedSettings {
   };
   readonly lilithVariant: 'mean' | 'true' | 'interpolated';
   readonly nodeVariant: 'mean' | 'true';
+  /**
+   * Part of Fortune / Spirit day-night formula (#1794). `'sect-reversed'` is the Hellenistic
+   * reverse-at-night rule (Paulus); `'same-day-and-night'` is the modern formula (Marr).
+   */
+  readonly fortuneFormula?: FortuneFormula;
   /**
    * Per-object visibility and aspect-participation (#585), covering every planet, node, Lilith
    * variant, Chiron, asteroid, and the Vertex/Fortune/Spirit points — replacing what used to be
@@ -102,6 +108,7 @@ export const DEFAULT_EXTENDED_SETTINGS: ExtendedSettings = {
   enabledMinorAspects: [],
   lilithVariant: 'mean',
   nodeVariant: 'mean',
+  fortuneFormula: 'sect-reversed',
   objectPolicies: DEFAULT_OBJECT_POLICIES,
   midpointsVisible: false,
   antisciaVisible: false,
@@ -192,6 +199,7 @@ export function toChartCalculationOptions(settings: ExtendedSettings): ChartCalc
     orbConfig,
     lilithVariant: settings.lilithVariant,
     nodeVariant: settings.nodeVariant,
+    fortuneFormula: settings.fortuneFormula ?? 'sect-reversed',
     aspectsTo,
     // Pholus (#804) is computed only when the user turned it on, so every other chart's options are unchanged.
     ...(pholus.visible || pholus.aspectParticipant ? { includePholus: true } : {}),
