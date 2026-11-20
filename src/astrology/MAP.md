@@ -21,7 +21,7 @@ Pure astrological calculation (no DOM/React): bodies, aspects, houses, dignities
 - `eclipses.ts` — Eclipse search + natal-contact analysis. Deps: `bodies`, `ephemeris/types`.
 - `electional.ts` — Electional astrology rule-scoring for auspicious timing. Deps: `aspects`, `bodies`, `emphasis`, `lunar-phase`, `void-of-course`.
 - `emphasis.ts` — Chart balance (element/modality/quadrant/hemisphere/dominant body/sign/house). Deps: `dignities`, `signs`.
-- `firdaria.ts` — Firdaria time-lord periods (seven classical planets + nodes, fixed years, day/night sect order) (#554). Deps: `sect`, `ephemeris/types`.
+- `firdaria.ts` — Firdaria time-lord periods and their seven equal planet sub-periods (Bonatti Tr. 9 ch. 3; nodes, fixed years, day/night sect order) (#554, #1796). Deps: `sect`, `ephemeris/types`.
 - `fixed-star-registry.ts` — Yemen fixed-star baseline table (al-Fārisī, c. 1270, as printed) + longitude helper. Deps: `signs`.
 - `kite-registry.ts` — Cited Kite pattern definitions (#741): school, required aspects, orb policy, authority. Data only. Deps: none.
 - `fixed-stars.ts` — Fixed-star conjunctions + paran (angle-crossing). Deps: `aspects`.
