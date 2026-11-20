@@ -140,7 +140,9 @@ describe('LifeEventPicker visible label (#1770)', () => {
   });
 
   it('with inHeader the label is sr-only and the select keeps the accessible name "Life event"', () => {
-    setLocale('en');
+    act(() => {
+      setLocale('en');
+    });
     renderWith(true);
     const label = container.querySelector<HTMLLabelElement>('.life-event-picker label');
     expect(label?.classList.contains('sr-only')).toBe(true);
@@ -151,7 +153,9 @@ describe('LifeEventPicker visible label (#1770)', () => {
   });
 
   it('with inHeader the category filter opens from a popover button, not a disclosure (#1770)', () => {
-    setLocale('en');
+    act(() => {
+      setLocale('en');
+    });
     act(() => {
       root.render(<LifeEventPicker events={events} onPick={picked} inHeader />);
     });
@@ -173,7 +177,9 @@ describe('LifeEventPicker visible label (#1770)', () => {
   });
 
   it('with inHeader the accessible name is "Levensgebeurtenis" in nl', () => {
-    setLocale('nl');
+    act(() => {
+      setLocale('nl');
+    });
     try {
       renderWith(true);
       const label = container.querySelector<HTMLLabelElement>('.life-event-picker label');
@@ -181,7 +187,9 @@ describe('LifeEventPicker visible label (#1770)', () => {
       expect(label?.textContent).toBe('Levensgebeurtenis');
       expect(container.querySelector('select')?.id).toBe(label?.htmlFor);
     } finally {
-      setLocale('en');
+      act(() => {
+        setLocale('en');
+      });
     }
   });
 });

@@ -31,8 +31,10 @@ describe('StatusMessage (#513)', () => {
   it('puts an optional detail inside the same live region, not in a second paragraph (#1162)', () => {
     const container = document.createElement('div');
     document.body.append(container);
+    // One root, rendered twice (#1802): a second createRoot() on the same container makes React warn.
+    const root = createRoot(container);
     act(() => {
-      createRoot(container).render(
+      root.render(
         <StatusMessage kind="error" detail="why">
           headline
         </StatusMessage>,
@@ -42,9 +44,13 @@ describe('StatusMessage (#513)', () => {
     expect(container.querySelector('p')?.getAttribute('role')).toBe('alert');
     expect(container.querySelector('.status-detail')?.textContent).toBe('why');
     act(() => {
-      createRoot(container).render(<StatusMessage kind="error">headline</StatusMessage>);
+      root.render(<StatusMessage kind="error">headline</StatusMessage>);
     });
     expect(container.querySelector('.status-detail')).toBeNull();
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
   });
 
   it('is used instead of a hand-rolled warning or loading paragraph', () => {

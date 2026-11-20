@@ -751,7 +751,10 @@ describe('the trigger and the starting points (#442)', () => {
     });
     expect(checkboxLabeled(container, 'Rainbow Color Zodiac').checked).toBe(true);
     // With the default saved, the reset goes back to it; cleared, it goes back to the Astraya defaults.
-    resetAccountPreferencesForTests();
+    // Inside act: the mounted panel re-renders when the preferences reset (#1802).
+    act(() => {
+      resetAccountPreferencesForTests();
+    });
     act(() => {
       checkboxLabeled(container, 'Rainbow Color Zodiac').click();
     });

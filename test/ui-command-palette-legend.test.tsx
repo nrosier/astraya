@@ -63,7 +63,9 @@ function pressKey(target: EventTarget, init: KeyboardEventInit): KeyboardEvent {
 
 beforeEach(() => {
   stubDialog();
-  setLocale('en');
+  act(() => {
+    setLocale('en');
+  });
   setPlatform('Linux x86_64');
   vi.stubGlobal('localStorage', {
     getItem: () => null,
@@ -96,10 +98,14 @@ describe('the command palette legend (#1769)', () => {
   });
 
   it('names the same keys in Dutch', () => {
-    setLocale('nl');
+    act(() => {
+      setLocale('nl');
+    });
     render(true, () => undefined, createRef<HTMLElement>());
     expect(legend()?.textContent).toBe('↑↓ navigeren · ↵ openen · Esc sluiten · Ctrl+K openen/sluiten');
-    setLocale('en');
+    act(() => {
+      setLocale('en');
+    });
   });
 
   it('is hidden from assistive technology', () => {

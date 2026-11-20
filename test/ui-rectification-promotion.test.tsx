@@ -101,8 +101,10 @@ describe('Rectification method note (#1445)', () => {
     expect(trigger?.getAttribute('aria-expanded')).toBe('false');
     expect(container?.querySelector('.primitive-disclosure.open')).toBeNull();
     // Opening it reveals the citation status, the method and its limits.
-    (trigger as HTMLButtonElement).click();
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await act(async () => {
+      (trigger as HTMLButtonElement).click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
     const open = container?.querySelector('.primitive-disclosure.open');
     expect(open?.textContent).toContain(t.citationPending);
     expect(open?.textContent).toContain(t.methodBody);

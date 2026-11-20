@@ -182,7 +182,10 @@ describe('AspectMatrixGrid (#820)', () => {
       expect(grid).toMatch(/font-size:\s*var\(--text-xs\)/);
       expect(rule).not.toMatch(/font-size:\s*(\d|\.)/);
     } finally {
-      setSymbolClass('drawn');
+      // Inside act: the mounted grid re-renders on the symbol-class change (#1802).
+      act(() => {
+        setSymbolClass('drawn');
+      });
     }
   });
 

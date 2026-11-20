@@ -16,12 +16,16 @@ let mounted: { container: HTMLElement; root: Root } | undefined;
 afterEach(() => {
   if (mounted !== undefined) {
     act(() => {
-      mounted?.root.unmount();
+      act(() => {
+        mounted?.root.unmount();
+      });
     });
     mounted.container.remove();
     mounted = undefined;
   }
-  setLocale('en');
+  act(() => {
+    setLocale('en');
+  });
 });
 
 async function mount(node: React.ReactNode): Promise<HTMLElement> {
@@ -64,7 +68,9 @@ describe('PageHeader (#506/#509)', () => {
     expect(subtitle?.tagName).toBe('P');
     expect(subtitle?.previousElementSibling?.classList.contains('page-header-row')).toBe(true);
     act(() => {
-      mounted?.root.unmount();
+      act(() => {
+        mounted?.root.unmount();
+      });
     });
     mounted?.container.remove();
     mounted = undefined;
@@ -102,7 +108,9 @@ describe('PageHeader (#506/#509)', () => {
   });
 
   it('words the Edit link in Dutch, honours a custom target, and can hide it (#1059)', async () => {
-    setLocale('nl');
+    act(() => {
+      setLocale('nl');
+    });
     const custom = await mount(
       <ExportRegistryProvider>
         <PageHeader title="Geboortehoroscoop" basis="Tropisch" basisEditHref="#/preferences/appearance" />
@@ -111,7 +119,9 @@ describe('PageHeader (#506/#509)', () => {
     const edit = custom.querySelector('.page-header-basis-edit');
     expect(edit?.getAttribute('href')).toBe('#/preferences/appearance');
     expect(edit?.textContent).toBe('Bewerken');
-    mounted?.root.unmount();
+    act(() => {
+      mounted?.root.unmount();
+    });
     mounted?.container.remove();
     const hidden = await mount(
       <ExportRegistryProvider>

@@ -13,7 +13,8 @@
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { actWaitFor } from './act-wait-for.js';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -172,7 +173,7 @@ describe('signed out', () => {
   it('opens the anonymous store with no account and no sync engine', async () => {
     const { container, root } = mount();
     try {
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.status.kind).toBe('ready');
       }, WAIT);
       expect(latest?.user).toBeUndefined();
@@ -188,7 +189,7 @@ describe('signing in with no local data', () => {
   it('switches to the account store directly, with no adoption prompt', async () => {
     const { container, root } = mount();
     try {
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.status.kind).toBe('ready');
       }, WAIT);
 
@@ -197,7 +198,7 @@ describe('signing in with no local data', () => {
       });
 
       expect(latest?.adoption).toBeUndefined();
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.user?.username).toBe('alice');
       }, WAIT);
     } finally {
@@ -214,7 +215,7 @@ describe('adoption on sign-in with existing local data (#109)', () => {
 
     const { container, root } = mount();
     try {
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.status.kind).toBe('ready');
       }, WAIT);
 
@@ -222,7 +223,7 @@ describe('adoption on sign-in with existing local data (#109)', () => {
         await latest?.signIn('alice', 'correct-horse-battery');
       });
 
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.adoption?.recordCount).toBe(1);
       }, WAIT);
       // Not switched yet — the prompt is shown over the still-anonymous data.
@@ -232,7 +233,7 @@ describe('adoption on sign-in with existing local data (#109)', () => {
         await latest?.resolveAdoption(true);
       });
 
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.user?.username).toBe('alice');
       }, WAIT);
       expect(latest?.adoption).toBeUndefined();
@@ -254,14 +255,14 @@ describe('adoption on sign-in with existing local data (#109)', () => {
 
     const { container, root } = mount();
     try {
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.status.kind).toBe('ready');
       }, WAIT);
 
       await act(async () => {
         await latest?.signIn('alice', 'correct-horse-battery');
       });
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.adoption?.recordCount).toBe(1);
       }, WAIT);
 
@@ -269,7 +270,7 @@ describe('adoption on sign-in with existing local data (#109)', () => {
         await latest?.resolveAdoption(false);
       });
 
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.user?.username).toBe('alice');
       }, WAIT);
       expect(latest?.status.kind === 'ready' && latest.status.store.state.people.get('p1')).toBeUndefined();
@@ -293,27 +294,27 @@ describe('the cross-account-bleed guard', () => {
 
     const { container, root } = mount();
     try {
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.status.kind).toBe('ready');
       }, WAIT);
 
       await act(async () => {
         await latest?.signIn('alice', 'correct-horse-battery');
       });
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.adoption?.recordCount).toBe(1);
       }, WAIT);
       await act(async () => {
         await latest?.resolveAdoption(true);
       });
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.user?.username).toBe('alice');
       }, WAIT);
 
       await act(async () => {
         await latest?.signOut();
       });
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.user).toBeUndefined();
       }, WAIT);
 
@@ -323,7 +324,7 @@ describe('the cross-account-bleed guard', () => {
 
       // Already decided (claimed by alice) — bob is never prompted and never sees it.
       expect(latest?.adoption).toBeUndefined();
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.user?.id).toBe(bobId);
       }, WAIT);
       expect(latest?.status.kind === 'ready' && latest.status.store.state.people.get('p1')).toBeUndefined();
@@ -337,13 +338,13 @@ describe('a rejected session during sync (#106, #314)', () => {
   it('closes the store rather than leaving it open and writable with no user signed in', async () => {
     const { container, root } = mount();
     try {
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.status.kind).toBe('ready');
       }, WAIT);
       await act(async () => {
         await latest?.signIn('alice', 'correct-horse-battery');
       });
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.user?.username).toBe('alice');
       }, WAIT);
       const accountStore = latest?.status.kind === 'ready' ? latest.status.store : undefined;
@@ -358,7 +359,7 @@ describe('a rejected session during sync (#106, #314)', () => {
       // engine makes comes back 401, as if the session had expired mid-sync.
       globalThis.fetch = () => Promise.resolve(new Response(null, { status: 401 }));
 
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.user).toBeUndefined();
       }, WAIT);
       expect(latest?.engine).toBeUndefined();
@@ -375,7 +376,7 @@ describe('a rejected session during sync (#106, #314)', () => {
       await act(async () => {
         await latest?.signIn('alice', 'correct-horse-battery');
       });
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.user?.username).toBe('alice');
       }, WAIT);
       expect(latest?.adoption).toBeUndefined();
@@ -390,13 +391,13 @@ describe('signing out while offline (#335)', () => {
   it('signs out locally even though the server cannot be told', async () => {
     const { container, root } = mount();
     try {
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.status.kind).toBe('ready');
       }, WAIT);
       await act(async () => {
         await latest?.signIn('alice', 'correct-horse-battery');
       });
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.user?.username).toBe('alice');
       }, WAIT);
       const accountStore = latest?.status.kind === 'ready' ? latest.status.store : undefined;
@@ -412,7 +413,7 @@ describe('signing out while offline (#335)', () => {
         await latest?.signOut();
       });
 
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.user).toBeUndefined();
       }, WAIT);
       expect(latest?.engine).toBeUndefined();
@@ -427,13 +428,13 @@ describe('signing out while offline (#335)', () => {
   it('signs out locally when the server answers logout with a non-2xx (#1361)', async () => {
     const { container, root } = mount();
     try {
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.status.kind).toBe('ready');
       }, WAIT);
       await act(async () => {
         await latest?.signIn('alice', 'correct-horse-battery');
       });
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.user?.username).toBe('alice');
       }, WAIT);
 
@@ -444,7 +445,7 @@ describe('signing out while offline (#335)', () => {
         await latest?.signOut();
       });
 
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.user).toBeUndefined();
       }, WAIT);
       expect(latest?.engine).toBeUndefined();
@@ -465,7 +466,7 @@ describe('offline at boot', () => {
 
     const { container, root } = mount();
     try {
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.status.kind).toBe('ready');
       }, WAIT);
       expect(latest?.status.kind === 'ready' && latest.status.store.state.people.get('p1')?.displayName).toBe('Cached');
@@ -480,7 +481,7 @@ describe('offline at boot', () => {
 
     const { container, root } = mount();
     try {
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.status.kind).toBe('ready');
       }, WAIT);
       expect(latest?.user).toBeUndefined();
@@ -545,7 +546,7 @@ describe('the OIDC callback path (#75)', () => {
 
     const { container, root } = mount();
     try {
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.adoption?.recordCount).toBe(1);
       }, WAIT);
       // Not switched yet — same as a password sign-in, the prompt is shown over the
@@ -559,7 +560,7 @@ describe('the OIDC callback path (#75)', () => {
         await latest?.resolveAdoption(true);
       });
 
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.user?.username).toBe('carol');
       }, WAIT);
       expect(latest?.status.kind === 'ready' && latest.status.store.state.people.get('p1')?.displayName).toBe('Ada');
@@ -588,7 +589,7 @@ describe('the OIDC callback path (#75)', () => {
 
     const { container, root } = mount();
     try {
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.status.kind).toBe('ready');
       }, WAIT);
       expect(latest?.user).toBeUndefined();
@@ -611,7 +612,7 @@ describe('the OIDC callback path (#75)', () => {
 
       const { container, root } = mount();
       try {
-        await vi.waitFor(() => {
+        await actWaitFor(() => {
           expect(latest?.status.kind, raw).toBe('ready');
         }, WAIT);
         expect(latest?.user).toBeUndefined();
@@ -642,7 +643,7 @@ describe('the OIDC callback path (#75)', () => {
 
     const { container, root } = mount();
     try {
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.user?.username).toBe('erin');
       }, WAIT);
       expect(window.location.pathname).toBe('/');
@@ -655,7 +656,7 @@ describe('the OIDC callback path (#75)', () => {
 
 describe('the account preferences across sign-in and sign-out (#1066)', () => {
   const ready = async (): Promise<void> => {
-    await vi.waitFor(() => {
+    await actWaitFor(() => {
       expect(latest?.status.kind).toBe('ready');
     }, WAIT);
   };
@@ -675,7 +676,7 @@ describe('the account preferences across sign-in and sign-out (#1066)', () => {
       });
       // The only local record is a preference, so there is nothing to adopt.
       expect(latest?.adoption).toBeUndefined();
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.user?.username).toBe('alice');
       }, WAIT);
       const account = openStoreNow();
@@ -697,7 +698,7 @@ describe('the account preferences across sign-in and sign-out (#1066)', () => {
       await act(async () => {
         await latest?.signIn('alice', 'correct-horse-battery');
       });
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.user?.username).toBe('alice');
       }, WAIT);
       const accountDb = openStoreNow()?.dbName ?? '';
@@ -709,7 +710,7 @@ describe('the account preferences across sign-in and sign-out (#1066)', () => {
       await act(async () => {
         await latest?.signOut();
       });
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(openStoreNow()?.dbName).toBe('astraya');
       }, WAIT);
       expect(localStorage.getItem(accountCacheKey(accountDb))).toBeNull();
@@ -729,7 +730,7 @@ describe('the account preferences across sign-in and sign-out (#1066)', () => {
       await act(async () => {
         await latest?.signIn('alice', 'correct-horse-battery');
       });
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.user?.username).toBe('alice');
       }, WAIT);
       await act(async () => {
@@ -738,14 +739,14 @@ describe('the account preferences across sign-in and sign-out (#1066)', () => {
       await act(async () => {
         await latest?.signOut();
       });
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(openStoreNow()?.dbName).toBe('astraya');
       }, WAIT);
 
       await act(async () => {
         await latest?.signIn('bob', 'correct-horse-battery-2');
       });
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(latest?.user?.username).toBe('bob');
       }, WAIT);
       const bob = openStoreNow();
