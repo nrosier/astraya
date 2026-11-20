@@ -2,15 +2,14 @@
  * @module totp-store
  * @purpose Storage for TOTP two-factor sign-in (#1500, slice 2a): the per-user encrypted secret, the replay-guard step, and single-use recovery codes stored only as peppered HMAC hashes. No route calls it yet.
  * @conventions Fails closed: a stored secret with no key, one that will not decrypt or is not `SECRET_BYTES` long, or a row with the secret NULL but any other TOTP column set, throws and is never read as "not enrolled". The secret is AES-256-GCM under a per-user HKDF subkey; the recovery pepper is one random 32-byte value stored encrypted under the key in `server_secrets`. State changes and replay protection are conditional UPDATEs checked by row count, never read-then-write. `completeTotpEnrolment` is the only way a route may enable TOTP: it refuses fewer than `RECOVERY_CODE_COUNT` codes and confirms and stores them in one savepoint, so an enabled user always has codes; `confirmTotpEnrolment` is its building block, not a route call, and `test/server-totp-store.test.ts` fails if any file in `server/` or `src/` other than this one references it. A route inside its own transaction must report success, and show the recovery codes, only after its outer COMMIT. The multi-statement writes (`replaceRecoveryCodes`, `clearTotp`, `completeTotpEnrolment`) use uniquely named savepoints, never `BEGIN`, so each is all or nothing alone and may also be called inside a caller's transaction; a failed rollback never replaces the original error. Key rotation re-wraps the secrets and every `server_secrets` row through `planTotpRotation`, which decrypts everything before `apply` writes anything. Nothing here logs, and no error message carries a secret, code, pepper or key bytes.
- * @exports TotpKeyMissingError, TotpState, isTotpEnabled, deriveTotpSubkey, startTotpEnrolment, confirmTotpEnrolment, completeTotpEnrolment (the only route path that enables TOTP), readTotpState, recordAcceptedStep, loadRecoveryPepper, generateRecoveryCodes, normaliseRecoveryCode, replaceRecoveryCodes (nests in a caller's transaction), consumeRecoveryCode, clearTotp (nests in a caller's transaction), RotationDecrypt, TotpRotationPlan, planTotpRotation
+ * @exports TotpKeyMissingError, TotpState, isTotpEnabled, startTotpEnrolment, confirmTotpEnrolment, completeTotpEnrolment (the only route path that enables TOTP), readTotpState, recordAcceptedStep, generateRecoveryCodes, normaliseRecoveryCode, replaceRecoveryCodes (nests in a caller's transaction), consumeRecoveryCode, clearTotp (nests in a caller's transaction), RotationDecrypt, TotpRotationPlan, planTotpRotation
  */
-import { createHmac, hkdfSync, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import type { Database } from '../db.ts';
 import { decryptPayload, encryptPayload } from '../ops/crypto.ts';
 import { SECRET_BYTES, encodeBase32, generateSecret } from './totp.ts';
+import { deriveTotpSubkey, loadRecoveryPepper } from './totp-keys.ts';
 
-const PEPPER_NAME = 'totp-recovery-pepper';
-const PEPPER_BYTES = 32;
 const RECOVERY_CODE_COUNT = 10;
 const RECOVERY_CODE_CHARS = 10;
 
@@ -44,18 +43,8 @@ interface SecretRow {
   readonly totp_last_step: number | bigint | null;
 }
 
-interface PepperRow {
-  readonly value: Uint8Array;
-  readonly iv: Uint8Array;
-}
-
 interface CodeHashRow {
   readonly code_hash: string;
-}
-
-/** Per-user AES-256 subkey, HKDF-SHA256 from the server key with the user id as salt. */
-export function deriveTotpSubkey(key: Buffer, userId: string): Buffer {
-  return Buffer.from(hkdfSync('sha256', key, Buffer.from(userId, 'utf8'), 'astraya-totp-secret-v1', 32));
 }
 
 /**
@@ -139,25 +128,6 @@ export function recordAcceptedStep(db: Database, userId: string, step: number): 
     )
     .run(step, userId, step);
   return Number(result.changes) === 1;
-}
-
-/** The recovery-code pepper, created on first use. Concurrent first callers converge on one stored value. */
-export function loadRecoveryPepper(db: Database, key: Buffer): Buffer {
-  const read = (): PepperRow | undefined =>
-    db.prepare('SELECT value, iv FROM server_secrets WHERE name = ?').get(PEPPER_NAME) as unknown as
-      PepperRow | undefined;
-  let row = read();
-  if (row === undefined) {
-    const { ciphertext, iv } = encryptPayload(randomBytes(PEPPER_BYTES), key);
-    db.prepare('INSERT INTO server_secrets (name, value, iv) VALUES (?, ?, ?) ON CONFLICT(name) DO NOTHING').run(
-      PEPPER_NAME,
-      ciphertext,
-      iv,
-    );
-    row = read();
-  }
-  if (row === undefined) throw new Error('The recovery-code pepper could not be stored.');
-  return decryptPayload(Buffer.from(row.value), Buffer.from(row.iv), key);
 }
 
 /** Ten single-use codes shaped like `ABCDE-FGHIJ`. */
