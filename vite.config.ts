@@ -106,7 +106,10 @@ function moduleSizeReport(): Plugin {
         writeFileSync(temporary, JSON.stringify(report), { flag: 'wx' });
         renameSync(temporary, target);
       } catch (error) {
-        rmSync(temporary, { force: true });
+        // EEXIST means something already sat at the temporary name (a file, a link or a directory) and `wx` refused
+        // to touch it, so that is not this build's file and must survive. Any other failure, in the write or the
+        // rename, leaves this build's partial file, which is removed.
+        if ((error as NodeJS.ErrnoException).code !== 'EEXIST') rmSync(temporary, { force: true });
         throw error;
       }
     },
