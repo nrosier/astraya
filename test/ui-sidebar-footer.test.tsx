@@ -64,6 +64,38 @@ describe('sidebar footer', () => {
   });
 });
 
+describe('sidebar footer separator spacing (#1850)', () => {
+  it('gives the bullet a --space-1 margin on each side, from the real app.css rule', () => {
+    const css = readFileSync(resolve(import.meta.dirname, '..', 'src', 'ui', 'app.css'), 'utf8');
+    const rootBlock = /:root\s*\{[^}]*\}/.exec(css)?.[0] ?? '';
+    const rule = /\.sidebar-footer-sep\s*\{[^}]*\}/.exec(css)?.[0] ?? '';
+    expect(rule).not.toBe('');
+    const style = document.createElement('style');
+    style.textContent = `${rootBlock} ${rule}`;
+    document.head.append(style);
+    try {
+      const container = mount(<SidebarFooter />);
+      const sep = container.querySelector<HTMLElement>('.sidebar-footer-meta > span');
+      if (sep === null) {
+        throw new Error('separator span not rendered');
+      }
+      const computed = getComputedStyle(sep);
+      // jsdom resolves --space-1 (0.25rem) to px against its 16px root size.
+      expect(computed.marginInlineStart).toBe('4px');
+      expect(computed.marginInlineEnd).toBe('4px');
+    } finally {
+      style.remove();
+    }
+  });
+
+  it('keeps the separator hidden from assistive tech and the link names unchanged', () => {
+    const container = mount(<SidebarFooter />);
+    const sep = container.querySelector('.sidebar-footer-meta > span');
+    expect(sep?.getAttribute('aria-hidden')).toBe('true');
+    expect(container.querySelector('a[href="#/about"]')?.textContent).toBe('About & Licence');
+  });
+});
+
 describe('main content has no page footer', () => {
   it('App.tsx renders no <footer> element; the footer lives in the sidebar header', () => {
     const app = readFileSync(resolve(import.meta.dirname, '..', 'src', 'ui', 'App.tsx'), 'utf8');

@@ -22,7 +22,9 @@ export function SidebarFooter(): React.JSX.Element {
     <div className="sidebar-footer">
       <p className="sidebar-footer-meta">
         <a href="#/changelog">{t.versionLink(APP_VERSION)}</a>
-        <span aria-hidden="true">{t.separator}</span>
+        <span className="sidebar-footer-sep" aria-hidden="true">
+          {t.separator}
+        </span>
         <a href="#/about">{t.aboutLink}</a>
       </p>
     </div>

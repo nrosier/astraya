@@ -2425,6 +2425,11 @@ label.stacked {
   color: var(--accent);
 }
 
+/* The bullet between the version and About links (#1850): one --space-1 gap on each side. */
+.sidebar-footer-sep {
+  margin-inline: var(--space-1);
+}
+
 /* The profile tile and its popover (#964): the account area of the sidebar. Only existing tokens:
    --surface (the issue's --bg-surface), --line (--border-subtle), --muted (--text-muted),
    --radius (--radius-md), --surface-hover (--bg-hover), --shadow-popover, --color-danger. The
