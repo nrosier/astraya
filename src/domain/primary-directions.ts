@@ -143,7 +143,7 @@ export interface PrimaryDirection extends DirectionHit {
   readonly exactJd: JulianDayUT;
   /** The window half-width this hit was listed with, in degrees of right ascension. */
   readonly orb: Degrees;
-  /** Age at which the arc for the age first comes within `orb` of this hit's arc. Negative when that is before birth. */
+  /** Age at which the arc for the age first comes within `orb` of this hit's arc. Timed by absolute value (`arcToYears`), so a window edge below arc 0 gives the mirror age, positive. */
   readonly activeFromAge: number;
   /** Age at which it leaves the window again. */
   readonly activeUntilAge: number;
