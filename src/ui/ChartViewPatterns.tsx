@@ -24,11 +24,13 @@ import { type ChartData } from '../domain/chart-compute.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
 import { renderJonesShapeDiagramSvg } from '../chart/jones-shape-diagram.js';
 import { lunarPhaseOf } from '../astrology/lunar-phase.js';
+import { degreeParts } from '../domain/degree-parts.js';
+import type { PrenatalSyzygy } from '../domain/prenatal-syzygy.js';
 import type { DignityType } from '../astrology/reception.js';
 import { jonesBodyPositions } from '../astrology/jones-shapes.js';
 import { bodyById, bodyByKey } from '../astrology/bodies.js';
 import { besiegementRescueList } from './besiegement-rescue-label.js';
-import { bodyDisplayName } from './astro-names.messages.js';
+import { bodyDisplayName, signDisplayName } from './astro-names.messages.js';
 import type { chartViewMessages } from './ChartView.messages.js';
 import { findAspectPatterns, PATTERN_BODY_KEYS } from '../astrology/aspect-patterns.js';
 import type { RulershipChoice } from '../astrology/rulership.js';
@@ -432,6 +434,12 @@ export function receptionColumns(t: typeof chartViewMessages.en, locale: Locale)
   ];
 }
 
+/** A syzygy's degree as sign, degree and minute, e.g. "12° Leo 34′" (#1798), in the parts the Derived points table uses. */
+function formatSyzygyPosition(longitude: number, locale: Locale): string {
+  const parts = degreeParts(longitude);
+  return `${String(parts.degree)}° ${signDisplayName(parts.sign, locale)} ${String(parts.minute)}′`;
+}
+
 /**
  * The chart-shape section (#430): the Jones shape with its diagram and an explanation worded as a
  * convention, then what else describes the chart's overall character rather than a position — the
@@ -445,6 +453,7 @@ function renderShapeSection(
   locale: Locale,
   boundsScheme: BoundsScheme,
   showFacts: boolean,
+  prenatalSyzygy: PrenatalSyzygy | undefined,
 ): React.ReactNode {
   const shape = chartShapeOf(data);
   // Always traditional (#545) — the same Almuten of the Ascendant the dignities section breaks down below.
@@ -481,7 +490,9 @@ function renderShapeSection(
           />
         </div>
       )}
-      {(lunarPhase !== undefined || (showFacts && (hasHouses || almuten !== undefined))) && (
+      {(lunarPhase !== undefined ||
+        prenatalSyzygy !== undefined ||
+        (showFacts && (hasHouses || almuten !== undefined))) && (
         <dl className="metric-cards">
           {lunarPhase !== undefined && (
             <div className="flat-card">
@@ -492,6 +503,17 @@ function renderShapeSection(
                   formatElongation(lunarPhase.elongation),
                   lunarPhase.waxing,
                   Math.round(lunarPhase.illumination * 100),
+                )}
+              </dd>
+            </div>
+          )}
+          {prenatalSyzygy !== undefined && (
+            <div className="flat-card">
+              <dt>{t.prenatalSyzygyKeyLabel}</dt>
+              <dd className="prenatal-syzygy-summary">
+                {t.prenatalSyzygyValue(
+                  t.prenatalSyzygyKindLabels[prenatalSyzygy.kind],
+                  prenatalSyzygy.degree === undefined ? undefined : formatSyzygyPosition(prenatalSyzygy.degree, locale),
                 )}
               </dd>
             </div>
@@ -655,6 +677,7 @@ export function renderDignitiesTable(
 /**
  * The Patterns & condition view (#511): the chart shape (with the Moon's phase and sect) next to its
  * own explanation, then dignities and dispositors (the dignities, sect and Almuten Figuris can be switched off, #1190) — `docs/ui/UI-UX_GUIDELINES.md` §2's exact grouping.
+ * An optional prenatal syzygy (#1798) adds one row beside the lunar phase and sect.
  */
 export function renderPatternsView(
   data: ChartData,
@@ -666,11 +689,12 @@ export function renderPatternsView(
   rulership: RulershipChoice,
   boundsScheme: BoundsScheme,
   showFacts = true,
+  prenatalSyzygy?: PrenatalSyzygy,
 ): React.ReactNode {
   return (
     <>
       <h3>{t.shapeTabLabel}</h3>
-      {renderShapeSection(data, housesRenderable, t, locale, boundsScheme, showFacts)}
+      {renderShapeSection(data, housesRenderable, t, locale, boundsScheme, showFacts, prenatalSyzygy)}
       {showFacts && renderDignitiesTable(data, displayName, pointVisibility, t, locale, rulership, boundsScheme)}
     </>
   );
