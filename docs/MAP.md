@@ -38,7 +38,8 @@ Subdirectories:
 - `adr/` — Architecture Decision Records, one numbered file per decision. Deps: none.
 - `agents/` — Generic Claude Code skill docs (`domain-modeling` skill's `CONTEXT.md`/ADR conventions) — not Astraya product documentation.
 - `archive/` — Deprecated/retired docs, append-only, never deleted outright: abandoned tooling write-ups (LAYA/Ollama benchmarking, astrologyapi.com comparison), the removed-env-vars log, and the dated UI/UX audit.
-- `audit/` — One-off repository audits, reviews, and structural evaluations, filename datestamped `YYYY-MM-DD-description.md`.- `references/` — Curated public-domain source passages for seeding the corpus (structured JSON); see its own `MAP.md` for what is kept and why. Not documentation about Astraya.
+- `audit/` — One-off repository audits, reviews, and structural evaluations, filename datestamped `YYYY-MM-DD-description.md`.
+- `references/` — Curated public-domain source passages for seeding the corpus (structured JSON); see its own `MAP.md` for what is kept and why. Not documentation about Astraya.
 - `schema/` — Hand-authored JSON Schema files for Astraya's own stable data formats (`astraya-export.schema.json`, #561), paired with a top-level `.md` reference doc.
 
 ## Where does a new doc go?
