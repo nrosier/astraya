@@ -19,7 +19,7 @@ const en = {
   solarArcLongitude: 'directed in longitude only',
   solarArcDeclination: 'directed in declination',
   directionWindow: '±1° of arc',
-  directionKeys: { naibod: 'Naibod key', ptolemy: 'Ptolemy key' },
+  directionKeys: { naibod: 'Naibod key', ptolemy: 'Ptolemy key', 'true-solar-arc': 'True solar arc in RA key' },
   directionMethods: { zodiacal: 'Placidus semi-arcs, in zodiaco', 'in-mundo': 'Placidus semi-arcs, in mundo' },
 };
 
@@ -36,7 +36,11 @@ const nl: typeof en = {
   solarArcLongitude: 'alleen in lengte gedirigeerd',
   solarArcDeclination: 'in declinatie gedirigeerd',
   directionWindow: '±1° boog',
-  directionKeys: { naibod: 'Naibod-sleutel', ptolemy: 'Ptolemaeus-sleutel' },
+  directionKeys: {
+    naibod: 'Naibod-sleutel',
+    ptolemy: 'Ptolemaeus-sleutel',
+    'true-solar-arc': 'Ware zonneboog in RK-sleutel',
+  },
   directionMethods: { zodiacal: 'Placidus-semiboog, in zodiaco', 'in-mundo': 'Placidus-semiboog, in mundo' },
 };
 
