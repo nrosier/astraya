@@ -1579,6 +1579,7 @@ export function ChartDataView({
                       locale,
                       symbolClass,
                       tableSelection,
+                      extendedSettings.fortuneFormula,
                     )}
                   {currentTab === 'patterns' &&
                     renderPatternsView(
