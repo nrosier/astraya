@@ -58,7 +58,7 @@
  * @module ui/nav-icons
  * @purpose Thirteen inline SVG icons (eleven navigation, two sidebar-footer toggle) for the workspace rail.
  * @conventions 24-unit viewBox, 18px square, stroke-only and `currentColor`, always decorative (`aria-hidden`, `focusable="false"`); labels come from the surrounding link or button, never the icon.
- * @exports IdCard, LayoutDashboard, MessageSquareText, Compass, BookOpen, Globe, CalendarClock, TrendingUp, GitMerge, Wrench, FileDown, PanelLeftClose, PanelLeftOpen
+ * @exports IdCard, LayoutDashboard, MessageSquareText, Compass, BookOpen, Globe, CalendarClock, TrendingUp, GitMerge, Wrench, FileDown, PanelLeft, PanelLeftClose, PanelLeftOpen
  */
 import type { JSX } from 'react';
 
@@ -199,7 +199,17 @@ export function FileDown(): JSX.Element {
   );
 }
 
-/** Sidebar footer: collapse the rail. */
+/** Sidebar toggle at rest (#1851). */
+export function PanelLeft(): JSX.Element {
+  return (
+    <svg {...SVG_PROPS}>
+      <rect width="18" height="18" x="3" y="3" rx="2" />
+      <path d="M9 3v18" />
+    </svg>
+  );
+}
+
+/** Sidebar toggle, expanded and hovered or focused: collapse the rail. */
 export function PanelLeftClose(): JSX.Element {
   return (
     <svg {...SVG_PROPS}>
@@ -210,7 +220,7 @@ export function PanelLeftClose(): JSX.Element {
   );
 }
 
-/** Sidebar footer: expand the rail. */
+/** Sidebar toggle, collapsed and hovered or focused: expand the rail. */
 export function PanelLeftOpen(): JSX.Element {
   return (
     <svg {...SVG_PROPS}>
