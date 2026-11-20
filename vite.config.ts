@@ -1,5 +1,5 @@
 import { execSync } from 'node:child_process';
-import { lstatSync, readFileSync, realpathSync, statSync, writeFileSync } from 'node:fs';
+import { lstatSync, readFileSync, realpathSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve, sep } from 'node:path';
 import { loadEnv, type Plugin } from 'vite';
 import { defineConfig } from 'vitest/config';
@@ -44,33 +44,30 @@ function precacheManifest(base: string): Plugin {
 }
 
 /**
- * The real location a metafile path would be written to, with symlinks followed where they resolve. A path that
- * exists is resolved fully. A path that does not (or is a broken link) is resolved through its real parent directory
- * and keeps its own name; the parent must exist, and its absence is reported in one short line rather than a trace.
+ * Resolves the metafile target to the real path it would be written to, following symlinks where they resolve.
+ * A target that exists is resolved fully. A missing target, or a broken link, is placed in its real parent directory
+ * under its own name. The parent must be a real directory (a broken link or a regular file is refused), and a refusal
+ * is one message line: Vite prints the stack after it, the first line is the message the caller can act on.
  */
 function resolveMetafileTarget(absolute: string): string {
-  // Exists (a file, or a symlink that resolves): its real path.
-  if (lstatSync(absolute, { throwIfNoEntry: false }) !== undefined && existsResolved(absolute)) {
-    return realpathSync.native(absolute);
-  }
-  // Missing, or a broken link: its real parent, keeping its own name. The parent is checked without a catch, so a
-  // missing directory is reported as one short line rather than as a caught-and-rethrown trace.
   const parent = dirname(absolute);
-  if (lstatSync(parent, { throwIfNoEntry: false }) === undefined) {
-    throw new Error(`ASTRAYA_METAFILE's directory does not exist: ${parent}`);
+  const parentStat = statSync(parent, { throwIfNoEntry: false });
+  if (parentStat === undefined || !parentStat.isDirectory()) {
+    throw new Error(`ASTRAYA_METAFILE's directory is not an existing folder: ${parent}`);
   }
+  // A target that resolves to something real is followed; a missing one or a broken link is placed in the real parent.
+  if (statSync(absolute, { throwIfNoEntry: false }) !== undefined) return realpathSync.native(absolute);
   return join(realpathSync.native(parent), basename(absolute));
-}
-
-/** True when `path` resolves to an existing file or directory (so `realpath` will succeed). A broken link is false. */
-function existsResolved(path: string): boolean {
-  return statSync(path, { throwIfNoEntry: false }) !== undefined;
 }
 
 /**
  * Writes a per-chunk module breakdown to `ASTRAYA_METAFILE` (a path outside the repo, set by the caller) when
  * that variable is present. Read-only: it reads the rendered bundle and emits nothing into `dist/`, so the
  * bundle and the eager-graph gate are unaffected.
+ *
+ * The report is written by rename, never in place: it goes to a temporary file beside the target, opened with
+ * `wx`, and that file is renamed over the target. A rename replaces the directory entry, so a hard link to a tracked
+ * file is not written through, and an interrupted build cannot leave a half-written target.
  */
 function moduleSizeReport(): Plugin {
   let target: string | undefined;
@@ -79,8 +76,7 @@ function moduleSizeReport(): Plugin {
     // Build only: under Vitest or `vite dev` there is no bundle to report, and the guard must not fail those runs.
     apply: 'build',
     // Checked before any output is written (not in writeBundle), against the root Vite resolved. The target is
-    // resolved fully: its real path if it exists, otherwise its real parent plus its own basename, so a symlink
-    // (including a broken one) and a spelling such as `<repo>/.` cannot slip past the comparison.
+    // resolved fully, so a symlink, a hard link, a broken link and a spelling such as `<repo>/.` cannot slip past.
     configResolved(config) {
       const configured = process.env.ASTRAYA_METAFILE;
       if (configured === undefined || configured === '') return;
@@ -105,7 +101,14 @@ function moduleSizeReport(): Plugin {
         for (const [id, info] of Object.entries(chunk.modules)) modules[id] = info.renderedLength;
         report[fileName] = { bytes: Buffer.byteLength(chunk.code), modules };
       }
-      writeFileSync(target, JSON.stringify(report));
+      const temporary = join(dirname(target), `.${basename(target)}.${process.pid}.tmp`);
+      try {
+        writeFileSync(temporary, JSON.stringify(report), { flag: 'wx' });
+        renameSync(temporary, target);
+      } catch (error) {
+        rmSync(temporary, { force: true });
+        throw error;
+      }
     },
   };
 }
