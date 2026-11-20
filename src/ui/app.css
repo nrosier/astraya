@@ -3912,6 +3912,28 @@ button.app-nav-search.primitive-button-circle {
     pointer-events: none;
   }
 
+  /* Expanded (#1851): the toggle's tooltip opens below the button, right-aligned to it, so it stays over the
+     rail and never covers the page on the rail's right edge. Same triggers as above: hover and keyboard
+     focus, not after Escape (WCAG 1.4.13). */
+  .workspace-shell:not(.workspace-shell-collapsed)
+    .rail-collapse-item:not([data-tooltip-dismissed]):is(:hover, :has(:focus-visible))
+    .rail-nav-tooltip {
+    position: absolute;
+    top: calc(100% + var(--space-2));
+    right: 0;
+    z-index: 30;
+    display: block;
+    padding: var(--space-1) var(--space-3);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-full);
+    background: var(--surface);
+    box-shadow: var(--shadow-popover);
+    color: var(--fg);
+    font-size: var(--text-sm);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
   /* Collapsed (#1851): the toggle takes the brand monogram's place, centred at the top of the rail, so the
      row count and the nav icons' positions match the expanded rail. The brand shows only when expanded. */
   .workspace-shell-collapsed .app-header-brand {

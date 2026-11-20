@@ -61,6 +61,18 @@ describe('icon rail CSS (#1747, #1851)', () => {
     expect(block).toContain(':has(:focus-visible)');
   });
 
+  it('opens the expanded toggle tooltip below the button, on hover and focus-visible, not after Escape (#1851)', () => {
+    const block = railMediaBlock(css).text;
+    const rule =
+      /\.workspace-shell:not\(\.workspace-shell-collapsed\)\s+\.rail-collapse-item:not\(\[data-tooltip-dismissed\]\):is\(:hover, :has\(:focus-visible\)\)\s+\.rail-nav-tooltip \{([^}]*)\}/.exec(
+        block,
+      )?.[1];
+    expect(rule).toBeDefined();
+    expect(rule).toContain('top: calc(100% + var(--space-2));');
+    expect(rule).toContain('right: 0;');
+    expect(rule).toContain('display: block;');
+  });
+
   it('keeps the toggle states and hides it below 64rem', () => {
     const block = railMediaBlock(css).text;
     const base = /button\.rail-collapse-button \{([^}]*)\}/.exec(block)?.[1] ?? '';

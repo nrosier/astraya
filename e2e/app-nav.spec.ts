@@ -363,6 +363,21 @@ test.describe('with the shared people (#799)', () => {
       const expandedTops = await iconTops();
       expect(Object.keys(expandedTops)).toHaveLength(11);
 
+      // Expanded, hovering the toggle shows the short 'Collapse' tooltip below the button, inside the viewport
+      // (owner answer, 2026-11-20: below, so it does not cover the page).
+      const collapseTooltip = toggle.locator('xpath=following-sibling::*[@role="tooltip"]');
+      await expect(collapseTooltip).toBeHidden();
+      await toggle.hover();
+      await expect(collapseTooltip).toBeVisible();
+      await expect(collapseTooltip).toHaveText('Collapse');
+      const toggleBox = await toggle.boundingBox();
+      const tipBox = await collapseTooltip.boundingBox();
+      if (toggleBox === null || tipBox === null) throw new Error('not laid out');
+      expect(tipBox.y).toBeGreaterThanOrEqual(toggleBox.y + toggleBox.height);
+      expect(tipBox.x).toBeGreaterThanOrEqual(0);
+      expect(tipBox.x + tipBox.width).toBeLessThanOrEqual(width);
+      expect(tipBox.y + tipBox.height).toBeLessThanOrEqual(height);
+
       // Collapse: the rail narrows to about 60px, the page gains that width, the links keep their names.
       await toggle.click();
       await expect(shell).toHaveClass(/workspace-shell-collapsed/);
