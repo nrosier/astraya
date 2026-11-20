@@ -18,6 +18,7 @@
  */
 import { DEFAULT_ORB_CONFIG, type OrbConfig, type OrbRule } from '../astrology/aspects.js';
 import type { BoundsScheme } from '../astrology/bounds.js';
+import { DEFAULT_FORTUNE_FORMULA, type FortuneFormula } from '../astrology/arabic-parts.js';
 import {
   CARD_SOURCE,
   orbSettingsFor,
@@ -55,6 +56,13 @@ export interface ExtendedSettings {
   };
   readonly lilithVariant: 'mean' | 'true' | 'interpolated';
   readonly nodeVariant: 'mean' | 'true';
+  /**
+   * Part of Fortune / Spirit day-night formula (#1794). The stored value is either absent or `'same-day-and-night'`
+   * (Marr): absent is the default `DEFAULT_FORTUNE_FORMULA` (`'sect-reversed'`, Paulus). The type is `FortuneFormula`,
+   * so `'sect-reversed'` is accepted on input; `normalizeFortuneFormula` (calculation-snapshot) removes it before any
+   * snapshot, identity, artifact hash or register sees it.
+   */
+  readonly fortuneFormula?: FortuneFormula;
   /**
    * Per-object visibility and aspect-participation (#585), covering every planet, node, Lilith
    * variant, Chiron, asteroid, and the Vertex/Fortune/Spirit points — replacing what used to be
@@ -192,6 +200,7 @@ export function toChartCalculationOptions(settings: ExtendedSettings): ChartCalc
     orbConfig,
     lilithVariant: settings.lilithVariant,
     nodeVariant: settings.nodeVariant,
+    fortuneFormula: settings.fortuneFormula ?? DEFAULT_FORTUNE_FORMULA,
     aspectsTo,
     // Pholus (#804) is computed only when the user turned it on, so every other chart's options are unchanged.
     ...(pholus.visible || pholus.aspectParticipant ? { includePholus: true } : {}),
