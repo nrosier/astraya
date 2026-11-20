@@ -9,7 +9,7 @@
  * Node `ExperimentalWarning` (#492) and a Vite oversized-chunk warning (#494) respectively —
  * neither command's own exit code reflects a warning, only an outright failure. #492 and #494
  * removed today's two known offenders; this script is what stops the *next* one from passing
- * silently the same way.
+ * silently the same way. #1802 added React's test warnings, once the suite was clean of them.
  *
  *   node scripts/run-without-warnings.mjs <command> [args...]
  *
@@ -23,9 +23,19 @@ import { spawn } from 'node:child_process';
 import { constants } from 'node:os';
 
 // Node's own emitted warnings always look like "(node:12345) FooWarning: ...". Vite's size
-// warning doesn't follow that shape, so it gets its own pattern. Add future offenders here
-// rather than loosening either regex.
-const WARNING_PATTERNS = [/\(node:\d+\)\s+\w*Warning:/, /chunks are larger than \d+\s*k?B after minification/i];
+// warning doesn't follow that shape, so it gets its own pattern. React's development warnings in
+// component tests (#1802) get theirs: an update or a suspended resource outside act(), a list
+// without keys, invalid nesting such as a <div> in a <p>, and a second createRoot() on one
+// container. Add future offenders here rather than loosening any regex.
+const WARNING_PATTERNS = [
+  /\(node:\d+\)\s+\w*Warning:/,
+  /chunks are larger than \d+\s*k?B after minification/i,
+  /inside a test was not wrapped in act\(/,
+  /A suspended resource finished loading inside a test/,
+  /Each child in a list should have a unique "key" prop/,
+  /In HTML, <\w+> cannot be a descendant of <\w+>/,
+  /already been passed to createRoot\(\) before/,
+];
 
 const FORWARDED_SIGNALS = ['SIGINT', 'SIGTERM', 'SIGHUP'];
 

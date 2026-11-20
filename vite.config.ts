@@ -174,6 +174,9 @@ export default defineConfig(({ mode }) => {
     worker: { format: 'es' },
     test: {
       environment: 'node',
+      // Print console output on every host, not only under CI=true (#1802): Vitest otherwise hides it locally, and
+      // scripts/run-without-warnings.mjs could not see a React warning in a local `npm test`.
+      silent: false,
       setupFiles: ['./test/setup.ts'],
       include: ['test/**/*.test.ts', 'test/**/*.test.tsx', 'src/**/*.test.ts'],
       // The WASM module takes a moment to instantiate on first use.
