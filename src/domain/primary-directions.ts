@@ -46,7 +46,7 @@
 /**
  * @module primary-directions
  * @purpose Computes a person's Placidus primary directions (#407): direct/converse and zodiacal/in-mundo directions of Sun–Pluto and their Ptolemaic aspects to selected significators, each with age, exact date and active window; plus the directed chart at a chosen age for a bi-wheel.
- * @conventions PrimaryDirectionKey is a const object, not a TS enum (the project compiles under erasableSyntaxOnly); orb is a window in degrees of RA around each hit's arc (default 1°), stored per hit as activeFromAge/activeUntilAge so filtering never needs the key; tropical zodiac and Placidus houses always; at or beyond the polar circles (|φ| ≥ 90° − ε) returns defined: false with no hits instead of throwing.
+ * @conventions PrimaryDirectionKey is a const object, not a TS enum (the project compiles under erasableSyntaxOnly); the True Solar Arc key (#1795) reads the Sun's RA from a solar-arc clock built once per calculation (PrimaryDirectionsData.clock);orb is a window in degrees of RA around each hit's arc (default 1°), stored per hit as activeFromAge/activeUntilAge so filtering never needs the key; tropical zodiac and Placidus houses always; at or beyond the polar circles (|φ| ≥ 90° − ε) returns defined: false with no hits instead of throwing.
  * @exports PrimaryDirectionKey, arcToAge, ageToArc, DEFAULT_PRIMARY_DIRECTION_ORB, DEFAULT_MAX_AGE_YEARS, PRIMARY_DIRECTION_SIGNIFICATORS, PRIMARY_DIRECTION_ANGLE_KEYS, PRIMARY_DIRECTION_PROMISSORS, PrimaryDirection, PrimaryDirectionsOptions, PrimaryDirectionsData, generatePrimaryDirections, isDirectionActive, activeDirections, DirectedBodyPosition, DirectedChart, directedChartAt
  */
 import { bodyByKey } from '../astrology/bodies.js';
@@ -63,9 +63,11 @@ import {
   type PrimaryDirectionMethod,
   type PrimaryDirectionMode,
   type PrimaryDirectionTimeKey,
+  type SolarArcClock,
   type SphereFrame,
 } from '../astrology/primary-directions.js';
 import { TROPICAL_YEAR_DAYS } from '../astrology/progressions.js';
+import { createSolarArcClock } from './solar-arc-clock.js';
 import { computeChartDataAtJd, type ChartData } from './chart-compute.js';
 import { julianDayFor } from '../time/julian.js';
 import { resolveMoment } from '../time/resolve.js';
@@ -88,18 +90,20 @@ import type { BirthMomentInput } from '../time/types.js';
 export const PrimaryDirectionKey = {
   NAIBOD: 'naibod',
   PTOLEMY: 'ptolemy',
+  /** The True Solar Arc in RA (#1795): one day after birth is one year of life; needs the solar-arc clock. */
+  TRUE_SOLAR_ARC: 'true-solar-arc',
 } as const satisfies Record<string, PrimaryDirectionTimeKey>;
 
 export type PrimaryDirectionKey = (typeof PrimaryDirectionKey)[keyof typeof PrimaryDirectionKey];
 
-/** Years of life an arc of direction stands for under `key`. */
-export function arcToAge(arcDegrees: Degrees, key: PrimaryDirectionKey): number {
-  return arcToYears(arcDegrees, key);
+/** Years of life an arc of direction stands for under `key`. `clock` is required for `TRUE_SOLAR_ARC`. */
+export function arcToAge(arcDegrees: Degrees, key: PrimaryDirectionKey, clock?: SolarArcClock): number {
+  return arcToYears(arcDegrees, key, clock);
 }
 
-/** The arc of direction that stands for `ageYears` under `key`. */
-export function ageToArc(ageYears: number, key: PrimaryDirectionKey): Degrees {
-  return yearsToArc(ageYears, key);
+/** The arc of direction that stands for `ageYears` under `key`. `clock` is required for `TRUE_SOLAR_ARC`. */
+export function ageToArc(ageYears: number, key: PrimaryDirectionKey, clock?: SolarArcClock): Degrees {
+  return yearsToArc(ageYears, key, clock);
 }
 
 /** Half-width of a direction's active window, in degrees of right ascension — one year at the Ptolemy key. */
@@ -171,6 +175,8 @@ export interface PrimaryDirectionsData {
   readonly natalJd: JulianDayUT;
   readonly place: GeoPosition;
   readonly key: PrimaryDirectionKey;
+  /** The solar-arc clock, present only for `TRUE_SOLAR_ARC` (#1795). */
+  readonly clock?: SolarArcClock;
   /** Which point the directions carry; a bi-wheel only has a meaningful outer ring for direct directions. */
   readonly mode: PrimaryDirectionMode;
   /** Latitude convention used for every computed hit and the direct bi-wheel. */
@@ -226,6 +232,25 @@ function significatorsOf(natal: ChartData, keys: readonly string[]): readonly Di
 }
 
 /**
+ * The solar-arc clock for aspect conversion (#1795): the real clock inside its sampled span, and
+ * `Infinity` years for an arc beyond it, rather than the clock's `RangeError`. `arcAfterDays` is
+ * passed through unchanged.
+ */
+function spanLimitedClock(clock: SolarArcClock): SolarArcClock {
+  return {
+    arcAfterDays: clock.arcAfterDays,
+    daysForArc: (arc) => {
+      try {
+        return clock.daysForArc(arc);
+      } catch (error) {
+        if (error instanceof RangeError) return Infinity;
+        throw error;
+      }
+    },
+  };
+}
+
+/**
  * Every primary direction for a birth moment, under `key`, each listed with an active window of
  * ±`orbDefault` degrees of arc. `provider` must already be initialized.
  */
@@ -247,7 +272,14 @@ export async function generatePrimaryDirections(
 
   if (!isDefinedAtLatitude(frame.geoLatitude, frame.obliquity)) return { ...base, defined: false, hits: [] };
 
-  const maxArc = ageToArc(options.maxAgeYears ?? DEFAULT_MAX_AGE_YEARS, key);
+  // Built once per calculation: the True Solar Arc clock samples the Sun's RA from the ephemeris (#1795).
+  const clock = key === PrimaryDirectionKey.TRUE_SOLAR_ARC ? await createSolarArcClock(provider, natalJd) : undefined;
+  const clockOptions = clock === undefined ? {} : { clock };
+  // Aspect arcs run to 360°, past the clock's sampled span. An arc outside the span gets an infinite
+  // age instead of throwing, and the lifetime filter below drops it (its arc is above maxArc).
+  const directionClock = clock === undefined ? undefined : spanLimitedClock(clock);
+  const directionClockOptions = directionClock === undefined ? {} : { clock: directionClock };
+  const maxArc = ageToArc(options.maxAgeYears ?? DEFAULT_MAX_AGE_YEARS, key, clock);
   const promissors = (options.promissors ?? PRIMARY_DIRECTION_PROMISSORS).map((promissorKey) => ({
     key: promissorKey,
     longitude: longitudeOf(natal, promissorKey),
@@ -258,21 +290,22 @@ export async function generatePrimaryDirections(
   for (const significator of significatorsOf(natal, options.significators ?? PRIMARY_DIRECTION_SIGNIFICATORS)) {
     for (const promissor of promissors) {
       if (promissor.key === significator.key) continue;
-      for (const hit of calculatePrimaryDirections(significator, promissor, frame, { key, mode, method }).directions) {
+      const directionOptions = { key, mode, method, ...directionClockOptions };
+      for (const hit of calculatePrimaryDirections(significator, promissor, frame, directionOptions).directions) {
         if (hit.arcRA <= 0 || hit.arcRA > maxArc) continue;
         hits.push({
           ...hit,
           exactJd: natalJd + hit.ageYears * TROPICAL_YEAR_DAYS,
           orb: orbDefault,
-          activeFromAge: arcToAge(hit.arcRA - orbDefault, key),
-          activeUntilAge: arcToAge(hit.arcRA + orbDefault, key),
+          activeFromAge: arcToAge(hit.arcRA - orbDefault, key, clock),
+          activeUntilAge: arcToAge(hit.arcRA + orbDefault, key, clock),
         });
       }
     }
   }
   hits.sort((a, b) => a.arcRA - b.arcRA);
 
-  return { ...base, defined: true, hits };
+  return { ...base, ...clockOptions, defined: true, hits };
 }
 
 /** Whether a direction's active window includes `ageYears`. */
@@ -341,7 +374,7 @@ export async function directedChartAt(
   if (data.mode === 'converse') {
     throw new RangeError('a directed bi-wheel has no unambiguous outer ring for converse primary directions');
   }
-  const arc = ageToArc(ageYears, data.key);
+  const arc = ageToArc(ageYears, data.key, data.clock);
   const houses = await directedHouses(provider, data.natalJd, data.place, data.frame.ramc, arc);
   const positions = PRIMARY_DIRECTION_PROMISSORS.map((key): DirectedBodyPosition => {
     const latitude = data.method === 'in-mundo' ? latitudeOf(data.natal, key) : 0;
