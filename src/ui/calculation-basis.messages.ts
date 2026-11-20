@@ -22,6 +22,7 @@ const en = {
   relocatedTo: (place: string) => `Relocated to ${place}`,
   midpointMethod: 'Midpoint method',
   davisonMethod: 'Davison method',
+  fortuneFormulaModern: 'Fortune formula: same by day and night',
 };
 
 const nl: typeof en = {
@@ -40,6 +41,7 @@ const nl: typeof en = {
   relocatedTo: (place: string) => `Verplaatst naar ${place}`,
   midpointMethod: 'Middelpuntmethode',
   davisonMethod: 'Davison-methode',
+  fortuneFormulaModern: 'Fortuinpunt-formule: dag en nacht gelijk',
 };
 
 export const calculationBasisMessages: Record<Locale, typeof en> = { en, nl };

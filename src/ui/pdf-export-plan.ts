@@ -160,7 +160,7 @@ import {
 } from './ChartViewPlacements.js';
 import { hermeticLots } from '../domain/hermetic-lots.js';
 import { degreeParts } from '../domain/degree-parts.js';
-import { lotFormulaByKey } from '../astrology/arabic-parts.js';
+import { DEFAULT_FORTUNE_FORMULA, lotFormulaByKey, type FortuneFormula } from '../astrology/arabic-parts.js';
 import type { chartViewMessages } from './ChartView.messages.js';
 import type { pdfExportMessages } from './pdf-export.messages.js';
 import { aspectDisplayName, bodyDisplayName, bodyShortName, signDisplayName } from './astro-names.messages.js';
@@ -520,6 +520,7 @@ function tablesOf(
   rulership: RulershipChoice,
   visibility: PointVisibilityOptions,
   boundsScheme: BoundsScheme,
+  fortuneFormula: FortuneFormula,
 ): readonly PdfTablePlan[] {
   if ((table === 'houses' || table === 'derived') && !housesRenderable) return [];
   switch (table) {
@@ -581,7 +582,11 @@ function tablesOf(
         ...degreeParts(row.longitude),
       }));
       return [
-        tablePlanOf(t.derivedPointsCaption, derivedPointColumns(t, locale), derivedPointRows(data, visibility)),
+        tablePlanOf(
+          t.derivedPointsCaption,
+          derivedPointColumns(t, locale, undefined, fortuneFormula),
+          derivedPointRows(data, visibility),
+        ),
         ...(hermeticRows.length === 0
           ? []
           : [
@@ -778,7 +783,17 @@ async function buildChartSectionPlan(
   const hint = hints.length === 0 ? undefined : hints.join(' ');
 
   const tables = options.tables.flatMap((table) =>
-    tablesOf(data, table, housesRenderable, t, locale, rulership, visibility, settings.boundsScheme),
+    tablesOf(
+      data,
+      table,
+      housesRenderable,
+      t,
+      locale,
+      rulership,
+      visibility,
+      settings.boundsScheme,
+      settings.fortuneFormula ?? DEFAULT_FORTUNE_FORMULA,
+    ),
   );
 
   return {
@@ -908,7 +923,17 @@ async function buildCompositeSectionPlan(
   }
 
   const tables = options.tables.flatMap((table) =>
-    tablesOf(data, table, housesRenderable, t, locale, rulership, visibility, settings.boundsScheme),
+    tablesOf(
+      data,
+      table,
+      housesRenderable,
+      t,
+      locale,
+      rulership,
+      visibility,
+      settings.boundsScheme,
+      settings.fortuneFormula ?? DEFAULT_FORTUNE_FORMULA,
+    ),
   );
 
   return {

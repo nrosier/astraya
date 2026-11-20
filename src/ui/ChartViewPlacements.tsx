@@ -22,7 +22,12 @@ import { NATAL_FIXED_STARS, type ChartData } from '../domain/chart-compute.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
 import { hermeticLots, type HermeticLotRow } from '../domain/hermetic-lots.js';
 import { degreeParts, type DegreeParts } from '../domain/degree-parts.js';
-import { lotFormulaByKey } from '../astrology/arabic-parts.js';
+import {
+  DEFAULT_FORTUNE_FORMULA,
+  lotFormulaByKey,
+  lotFormulaFor,
+  type FortuneFormula,
+} from '../astrology/arabic-parts.js';
 import type { Sect } from '../astrology/sect.js';
 import { bodyDisplayName, signDisplayName } from './astro-names.messages.js';
 import type { chartViewMessages } from './ChartView.messages.js';
@@ -253,10 +258,12 @@ export function selectedHouseRowKey(data: ChartData, selection: TableSelection |
   return row === undefined ? undefined : String(row.house);
 }
 
+/** Columns of the Derived points table (#1794): the formula column follows the chart's Part of Fortune formula. */
 export function derivedPointColumns(
   t: typeof chartViewMessages.en,
   locale: Locale,
   selection?: TableSelection,
+  fortuneFormula: FortuneFormula = DEFAULT_FORTUNE_FORMULA,
 ): readonly TableColumn<DerivedPointRow>[] {
   return [
     ...(selection === undefined
@@ -278,7 +285,7 @@ export function derivedPointColumns(
       label: t.lotFormulaLabel,
       labelHelp: { text: t.lotFormulaTooltip },
       valueOf: (row) => {
-        const formula = row.pointKey === undefined ? undefined : lotFormulaByKey(row.pointKey);
+        const formula = row.pointKey === undefined ? undefined : lotFormulaFor(row.pointKey, fortuneFormula);
         return formula === undefined ? '' : `${formula.dayFormula} / ${formula.nightFormula}`;
       },
     },
@@ -415,12 +422,13 @@ export function renderDerivedTable(
   t: typeof chartViewMessages.en,
   locale: Locale,
   selection?: TableSelection,
+  fortuneFormula: FortuneFormula = DEFAULT_FORTUNE_FORMULA,
 ): React.ReactNode {
   return (
     <SortableTable
       caption={t.derivedPointsCaption}
       captionTerm="derivedPoint"
-      columns={derivedPointColumns(t, locale, selection)}
+      columns={derivedPointColumns(t, locale, selection, fortuneFormula)}
       rows={derivedPointRows(data, pointVisibility)}
       getRowKey={(row) => row.label}
       selectedRowKey={
@@ -534,6 +542,7 @@ export function renderPlacementsView(
   locale: Locale,
   symbolClass: SymbolClass,
   selection?: TableSelection,
+  fortuneFormula: FortuneFormula = DEFAULT_FORTUNE_FORMULA,
 ): React.ReactNode {
   return (
     <>
@@ -541,7 +550,7 @@ export function renderPlacementsView(
       {housesRenderable && (
         <>
           {renderHousesTable(data, displayName, pointVisibility, t, locale, selection)}
-          {renderDerivedTable(data, displayName, pointVisibility, t, locale, selection)}
+          {renderDerivedTable(data, displayName, pointVisibility, t, locale, selection, fortuneFormula)}
           {renderHermeticLotsTable(data, displayName, t, locale)}
         </>
       )}
