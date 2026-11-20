@@ -302,6 +302,11 @@ const en = {
   lunarPhaseValue: (phase: string, elongation: string, waxing: boolean, litPercent: number) =>
     `${phase} — ${elongation} ahead of the Sun, ${waxing ? 'waxing' : 'waning'}, ${String(litPercent)}% lit`,
 
+  prenatalSyzygyKeyLabel: 'Prenatal syzygy',
+  prenatalSyzygyKindLabels: { conjunction: 'New Moon (conjunction)', prevention: 'Full Moon (prevention)' },
+  prenatalSyzygyValue: (kind: string, position: string | undefined) =>
+    position === undefined ? kind : `${kind}, ${position}`,
+
   sectKeyLabel: 'Sect',
   almutenKeyLabel: 'Almuten of Ascendant',
   dayChart: 'Day chart',
@@ -666,6 +671,11 @@ const nl: typeof en = {
   lunarPhaseKeyLabel: 'Maanfase',
   lunarPhaseValue: (phase: string, elongation: string, waxing: boolean, litPercent: number) =>
     `${phase} — ${elongation} voor op de Zon, ${waxing ? 'wassend' : 'afnemend'}, ${String(litPercent)}% verlicht`,
+
+  prenatalSyzygyKeyLabel: 'Prenatale syzygie',
+  prenatalSyzygyKindLabels: { conjunction: 'Nieuwe maan (conjunctie)', prevention: 'Volle maan (oppositie)' },
+  prenatalSyzygyValue: (kind: string, position: string | undefined) =>
+    position === undefined ? kind : `${kind}, ${position}`,
 
   sectKeyLabel: 'Sect',
   almutenKeyLabel: 'Almuten van de Ascendant',

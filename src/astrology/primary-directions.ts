@@ -95,8 +95,8 @@ export type FixedRateTimeKey = 'naibod' | 'ptolemy';
  * The rate keys that convert an arc of direction into years of life. `true-solar-arc` is not a
  * fixed rate: it needs a `SolarArcClock` built from the ephemeris (Makransky rev. ed. 1992, pp.
  * 28-30, the True Solar Arc in RA, Placidus' method; one day after birth stands for one year of
- * life, p. 29). Makransky's p. 28 footnote, which times a converse arc by its absolute value, is
- * the owner's decision on #1603 (2026-11-19); its application is not in this layer yet.
+ * life, p. 29). Makransky's p. 28 footnote times a converse arc by its absolute value; `arcToYears`
+ * applies that to every key (the owner's decision on #1603, 2026-11-19).
  */
 export type PrimaryDirectionTimeKey = FixedRateTimeKey | 'true-solar-arc';
 
@@ -127,12 +127,15 @@ function requireClock(clock: SolarArcClock | undefined): SolarArcClock {
 }
 
 /**
- * Years of life an arc of direction stands for, under the given key. Fixed keys ignore `clock`;
- * `true-solar-arc` requires it and throws `RangeError` without it.
+ * Years of life an arc of direction stands for, under the given key. A negative arc (a converse
+ * arc, or a window edge set below the birth point) is timed by its absolute value, for every key
+ * (Makransky rev. ed. 1992, p. 28 footnote; #1603). Fixed keys ignore `clock`; `true-solar-arc`
+ * requires it and throws `RangeError` without it.
  */
 export function arcToYears(arc: Degrees, key: PrimaryDirectionTimeKey, clock?: SolarArcClock): number {
-  if (key === 'true-solar-arc') return requireClock(clock).daysForArc(arc);
-  return arc / TIME_KEY_DEGREES_PER_YEAR[key];
+  const magnitude = Math.abs(arc);
+  if (key === 'true-solar-arc') return requireClock(clock).daysForArc(magnitude);
+  return magnitude / TIME_KEY_DEGREES_PER_YEAR[key];
 }
 
 /**

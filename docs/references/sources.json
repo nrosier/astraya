@@ -196,7 +196,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
-    "used_by": [],
+    "used_by": ["src/astrology/firdaria.ts"],
     "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 14023 lines and no page markers. Update 2026-11-07 (#864): no recoverable page breaks (the OCR has no page numbers, running heads or form feeds), so the text carries one \"=== p. 1 ===\" marker and the index stays a single row."
   },
   {
