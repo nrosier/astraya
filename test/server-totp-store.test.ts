@@ -14,15 +14,14 @@ import {
   completeTotpEnrolment,
   confirmTotpEnrolment,
   consumeRecoveryCode,
-  deriveTotpSubkey,
   generateRecoveryCodes,
   isTotpEnabled,
-  loadRecoveryPepper,
   readTotpState,
   recordAcceptedStep,
   replaceRecoveryCodes,
   startTotpEnrolment,
 } from '../server/auth/totp-store.ts';
+import { deriveTotpSubkey, loadRecoveryPepper } from '../server/auth/totp-keys.ts';
 
 const KEY = randomBytes(32);
 
