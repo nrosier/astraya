@@ -1227,23 +1227,26 @@ export function ChartDataView({
   // always have at least their Positions/Aspects/shape content, so they're never dropped outright —
   // Placements and Patterns just skip their houses-dependent sub-sections (see the view renderers).
   const tabs: readonly ChartViewKind[] = CHART_VIEWS.filter((view) => (view === 'wheel' ? sheet !== undefined : true));
-  // A chosen view that has since gone (a setting made the wheel unavailable) falls back to the first one shown.
   // #1798: the prenatal syzygy for the Patterns view's row. A separate effect, not part of `computeChartData` (which runs
-  // for every overlay). It is gated on a known birth time, the same gate as `showHouses`, and a failure leaves the row
-  // out rather than the chart.
+  // for every overlay). Natal charts only, the same test as the natal-only interpretation note. It is gated on
+  // `showHouses` (a known birth time), not `housesRenderable`: the row needs the birth time and place, not the house
+  // cusps, and gating on the rendered cusps would recompute the syzygy on every house-solution change. A failure leaves
+  // the row out rather than the chart. The chart's own zodiac is used, so a sidereal chart shows a sidereal degree.
   const syzygyMoment = overlayContext?.moment;
   const syzygyProvider = overlayContext?.provider;
   const syzygyHouseSystem = extendedSettings.houseSystem;
+  const syzygyZodiac = extendedSettings.zodiac;
+  const syzygyNatal = chartType === undefined || chartType === 'natal';
   const [prenatal, setPrenatal] = useState<PrenatalSyzygy | undefined>(undefined);
   useEffect(() => {
     setPrenatal(undefined);
-    if (!showHouses || syzygyMoment === undefined || syzygyProvider === undefined) return undefined;
+    if (!showHouses || !syzygyNatal || syzygyMoment === undefined || syzygyProvider === undefined) return undefined;
     const effect = { cancelled: false };
     void (async () => {
       try {
         const birthJd = await julianDayFor(syzygyProvider, resolveMoment(syzygyMoment));
         const place = { ...syzygyMoment.coordinates, altitude: 0 };
-        const syzygy = await prenatalSyzygy(syzygyProvider, birthJd, place, syzygyHouseSystem);
+        const syzygy = await prenatalSyzygy(syzygyProvider, birthJd, place, syzygyHouseSystem, syzygyZodiac);
         if (!effect.cancelled) setPrenatal(syzygy);
       } catch {
         if (!effect.cancelled) setPrenatal(undefined);
@@ -1252,8 +1255,9 @@ export function ChartDataView({
     return () => {
       effect.cancelled = true;
     };
-  }, [showHouses, syzygyMoment, syzygyProvider, syzygyHouseSystem]);
+  }, [showHouses, syzygyNatal, syzygyMoment, syzygyProvider, syzygyHouseSystem, syzygyZodiac]);
 
+  // A chosen view that has since gone (a setting made the wheel unavailable) falls back to the first one shown.
   const currentTab: ChartViewKind = tabs.includes(activeTab) ? activeTab : (tabs[0] ?? 'aspects');
   const showAspectControls = load.kind === 'ready' && (currentTab === 'wheel' || currentTab === 'matrix');
 
