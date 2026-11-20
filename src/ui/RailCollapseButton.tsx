@@ -1,19 +1,20 @@
 /**
- * The sidebar rail's collapse/expand control (#1747), rendered as the last child of the header
- * in the footer position. Expanded it shows the PanelLeftClose icon with a "Collapse" label;
- * collapsed it shows the PanelLeftOpen icon alone, named by its aria-label. The preference is
- * the device setting in `workspace-rail-setting.ts`.
+ * The sidebar rail's collapse/expand toggle (#1747, moved to the header by #1851), rendered in the
+ * header's brand row. Icon only: the resting PanelLeft swaps to PanelLeftClose (expanded) or
+ * PanelLeftOpen (collapsed) on hover and keyboard focus (CSS). A styled tooltip names the action
+ * in both states; the accessible name is the longer "sidebar" form. The preference is the device
+ * setting in `workspace-rail-setting.ts`.
  */
 /**
  * @module ui/RailCollapseButton
- * @purpose Footer button that toggles the sidebar rail between expanded and icon-only (collapsed), backed by the device preference in workspace-rail-setting.
- * @conventions Uses the shared Button primitive (plain variant, `type="button"`) with aria-expanded and a state-dependent aria-label. Collapsed, it carries the same right-edge `role="tooltip"` sibling as `RailNavItem` (the `.rail-nav-item` wrapper and CSS are shared; Escape dismisses it, WCAG 1.4.13; owner decision on #1747, 2026-11-20). Icons are inline SVG from nav-icons. Strings from RailCollapseButton.messages via useMessages().
+ * @purpose Header toggle (icon only) that toggles the sidebar rail between expanded and icon-only (collapsed), backed by the device preference in workspace-rail-setting.
+ * @conventions Uses the shared Button primitive (plain variant, `type="button"`) with aria-expanded and a state-dependent long aria-label, and no `title` attribute (owner decision on #1851, 2026-11-20). It renders a rest icon and an active icon (swapped by CSS on hover and focus-visible) and a short `role="tooltip"` sibling in both states, sharing the `.rail-nav-item` wrapper with `RailNavItem`; Escape dismisses it (WCAG 1.4.13). Icons are inline SVG from nav-icons. Strings from RailCollapseButton.messages via useMessages().
  * @exports RailCollapseButton
  */
 import { useState } from 'react';
 import { Button } from './primitives/Button.js';
 import { useMessages } from './messages.js';
-import { PanelLeftClose, PanelLeftOpen } from './nav-icons.js';
+import { PanelLeft, PanelLeftClose, PanelLeftOpen } from './nav-icons.js';
 import { railCollapseButtonMessages } from './RailCollapseButton.messages.js';
 import { useRailCollapsed } from './workspace-rail-setting.js';
 
@@ -45,20 +46,14 @@ export function RailCollapseButton(): React.JSX.Element {
           setCollapsed(!collapsed);
         }}
       >
-        {collapsed ? (
-          <PanelLeftOpen />
-        ) : (
-          <>
-            <PanelLeftClose />
-            <span className="rail-collapse-button-label">{t.collapseLabel}</span>
-          </>
-        )}
-      </Button>
-      {collapsed && (
-        <span className="rail-nav-tooltip" role="tooltip">
-          {t.expandAria}
+        <span className="rail-toggle-icon-rest">
+          <PanelLeft />
         </span>
-      )}
+        <span className="rail-toggle-icon-active">{collapsed ? <PanelLeftOpen /> : <PanelLeftClose />}</span>
+      </Button>
+      <span className="rail-nav-tooltip" role="tooltip">
+        {collapsed ? t.expandTip : t.collapseTip}
+      </span>
     </span>
   );
 }
