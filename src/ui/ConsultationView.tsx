@@ -659,6 +659,17 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
                         </span>
                       </li>
                     )}
+                    {load.year.firdariaSub !== undefined && (
+                      <li>
+                        <span className="consultation-lord-key">{t.firdariaSub}</span>
+                        <span className="consultation-lord-value">
+                          {timelineSubjectLabel({ kind: 'firdaria', ruler: load.year.firdariaSub.ruler }, locale)}
+                        </span>
+                        <span className="consultation-lord-meta consultation-date">
+                          {t.endsOn(dateLabel(load.year.firdariaSub.endJd))}
+                        </span>
+                      </li>
+                    )}
                     <li>
                       <span className="consultation-lord-key">{t.progressedMoon}</span>
                       <span className="consultation-lord-value">
