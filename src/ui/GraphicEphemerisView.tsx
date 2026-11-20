@@ -39,6 +39,8 @@ import { GlossaryText } from './GlossaryText.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
+import { calculationErrorText } from './engine-error.js';
+import { engineErrorMessages } from './engine-error.messages.js';
 import { PageHeader } from './PageHeader.js';
 import { Button } from './primitives/Button.js';
 import { Tooltip } from './primitives/Tooltip.js';
@@ -63,6 +65,7 @@ interface TableRow {
 
 export function GraphicEphemerisView(): React.JSX.Element {
   const t = useMessages(graphicEphemerisViewMessages);
+  const engineT = useMessages(engineErrorMessages);
   const basisLine = useCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE);
   const [symbolClass] = useSymbolClass();
   // The plot's markup is cached on these, so a change of symbol form redraws it.
@@ -111,7 +114,7 @@ export function GraphicEphemerisView(): React.JSX.Element {
       },
       (error: unknown) => {
         if (id === runId.current) {
-          setResult({ kind: 'error', message: error instanceof Error ? error.message : String(error) });
+          setResult({ kind: 'error', message: calculationErrorText(error, engineT) });
         }
       },
     );

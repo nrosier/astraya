@@ -10,8 +10,8 @@
 /**
  * @module ephemeris/client
  * @purpose Provides the UI-thread client that talks to the ephemeris Web Worker over a message-based protocol, implementing the same EphemerisProvider interface as the direct engine.
- * @conventions Every provider method is async and routed through a single `#call` helper that tracks pending requests by id, times them out, and rejects all in-flight calls if the worker transport reports a fatal error.
- * @exports EphemerisTransport, workerTransport, spawnEphemerisWorker, WorkerEphemerisOptions, WorkerEphemerisProvider
+ * @conventions Every provider method is async and routed through a single `#call` helper that tracks pending requests by id and times them out. An engine abort (an Emscripten `Aborted(...)` reply, or the worker dying) leaves the WASM instance unusable, so when a `spawn` factory is available the client discards that worker, starts and re-initialises a new one, and rejects only the requests queued on the dead one with `EphemerisEngineRestartedError` (#1856); without a factory, or after `MAX_RESTARTS` within `RESTART_WINDOW_MS`, the failure latches and every call rejects.
+ * @exports EphemerisTransport, workerTransport, spawnEphemerisWorker, WorkerEphemerisOptions, WorkerEphemerisProvider, EphemerisEngineRestartedError, isEngineAbort, MAX_RESTARTS, RESTART_WINDOW_MS
  */
 
 import {
@@ -105,23 +105,66 @@ const DEFAULT_REQUEST_TIMEOUT_MS = 60_000;
 export interface WorkerEphemerisOptions {
   /** Overridable so a test can assert the timeout without waiting a minute for it. */
   readonly requestTimeoutMs?: number;
+  /**
+   * Starts a fresh transport after an engine abort (#1856). The default provider (no transport passed) uses
+   * `spawnEphemerisWorker`; a caller that passes its own transport and no `spawn` keeps the old latch-on-failure
+   * behaviour.
+   */
+  readonly spawn?: () => EphemerisTransport;
 }
 
+/**
+ * The request that met an engine abort, or was queued on the engine when it aborted (#1856). The engine has been
+ * restarted, so the same request can simply be tried again. `name` lets the UI show its own localised sentence.
+ */
+export class EphemerisEngineRestartedError extends Error {
+  constructor() {
+    super('The calculation engine stopped unexpectedly and has been restarted. Try again.');
+    this.name = 'EphemerisEngineRestartedError';
+  }
+}
+
+/**
+ * Whether an error is an Emscripten abort: the WASM instance hit a fatal fault (`Aborted(segmentation fault)`, an
+ * out-of-memory abort, ...). After one, every later call into the same instance fails the same way (#1856).
+ */
+export function isEngineAbort(error: Error): boolean {
+  return error.message.startsWith('Aborted(') || (error.name === 'RuntimeError' && error.message.includes('Aborted'));
+}
+
+/** At most this many restarts within `RESTART_WINDOW_MS`; one more latches the failure, so a crash loop stops. */
+export const MAX_RESTARTS = 3;
+export const RESTART_WINDOW_MS = 5 * 60_000;
+
 export class WorkerEphemerisProvider implements EphemerisProvider {
-  readonly #transport: EphemerisTransport;
+  #transport: EphemerisTransport;
+  readonly #spawn: (() => EphemerisTransport) | undefined;
   readonly #pending = new Map<number, Pending>();
   readonly #requestTimeoutMs: number;
   #nextId = 1;
   #fatal: Error | undefined;
+  /** Bumped on every restart; replies and errors from an older transport are ignored. */
+  #generation = 0;
+  /** Set once `initialize` has succeeded, so a restarted engine is initialised again before any other call. */
+  #initialized = false;
+  /** While a restarted engine initialises, calls wait on this before they are sent. */
+  #ready: Promise<void> | undefined;
+  readonly #restartTimes: number[] = [];
 
-  constructor(transport: EphemerisTransport = spawnEphemerisWorker(), options: WorkerEphemerisOptions = {}) {
-    this.#transport = transport;
+  constructor(transport?: EphemerisTransport, options: WorkerEphemerisOptions = {}) {
+    this.#spawn = options.spawn ?? (transport === undefined ? spawnEphemerisWorker : undefined);
     this.#requestTimeoutMs = options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
+    this.#transport = transport ?? spawnEphemerisWorker();
+    this.#wire(this.#transport);
+  }
+
+  #wire(transport: EphemerisTransport): void {
+    const generation = this.#generation;
     transport.onMessage((response) => {
-      this.#settle(response);
+      if (generation === this.#generation) this.#settle(response);
     });
     transport.onError((error) => {
-      this.#fail(error);
+      if (generation === this.#generation) this.#engineDied(error);
     });
   }
 
@@ -132,8 +175,61 @@ export class WorkerEphemerisProvider implements EphemerisProvider {
     if (pending === undefined) return;
     this.#pending.delete(response.id);
     clearTimeout(pending.timer);
-    if (response.ok) pending.resolve(response.value);
-    else pending.reject(deserializeError(response.error));
+    if (response.ok) {
+      pending.resolve(response.value);
+      return;
+    }
+    const error = deserializeError(response.error);
+    if (isEngineAbort(error) && this.#spawn !== undefined) {
+      this.#engineDied(error, pending);
+      return;
+    }
+    pending.reject(error);
+  }
+
+  /**
+   * The WASM instance aborted or the worker died (#1856). With a `spawn` factory, and fewer than `MAX_RESTARTS` in the
+   * last `RESTART_WINDOW_MS`, the dead transport is dropped and a fresh one started and re-initialised; the call that
+   * met the abort (`aborted`) and the calls queued on the dead engine are rejected with `EphemerisEngineRestartedError`
+   * (they would only meet the same abort). Otherwise the failure latches, and those calls get the engine's own error:
+   * no request is told "restarted" when no restart happened.
+   */
+  #engineDied(error: Error, aborted?: Pending): void {
+    const now = Date.now();
+    while (this.#restartTimes.length > 0 && now - (this.#restartTimes[0] ?? now) > RESTART_WINDOW_MS) {
+      this.#restartTimes.shift();
+    }
+    if (this.#spawn === undefined || this.#restartTimes.length >= MAX_RESTARTS) {
+      aborted?.reject(error);
+      this.#fail(error);
+      return;
+    }
+    this.#restartTimes.push(now);
+    this.#generation += 1;
+    aborted?.reject(new EphemerisEngineRestartedError());
+    for (const pending of this.#pending.values()) {
+      clearTimeout(pending.timer);
+      pending.reject(new EphemerisEngineRestartedError());
+    }
+    this.#pending.clear();
+    try {
+      this.#transport.close();
+    } catch {
+      // A transport that cannot even close is already gone; the new one replaces it either way.
+    }
+    this.#transport = this.#spawn();
+    this.#wire(this.#transport);
+    if (this.#initialized) {
+      const ready: Promise<void> = this.#send('initialize', []).then(
+        () => {
+          if (this.#ready === ready) this.#ready = undefined;
+        },
+        (initError: unknown) => {
+          this.#fail(initError instanceof Error ? initError : new Error(String(initError)));
+        },
+      );
+      this.#ready = ready;
+    }
   }
 
   /**
@@ -166,6 +262,14 @@ export class WorkerEphemerisProvider implements EphemerisProvider {
 
   #call<M extends EphemerisMethod>(method: M, args: Parameters<EphemerisProvider[M]>): Promise<EphemerisResult<M>> {
     if (this.#fatal !== undefined) return Promise.reject(this.#fatal);
+    const ready = this.#ready;
+    if (ready !== undefined) {
+      return ready.then(() => (this.#fatal === undefined ? this.#send(method, args) : Promise.reject(this.#fatal)));
+    }
+    return this.#send(method, args);
+  }
+
+  #send<M extends EphemerisMethod>(method: M, args: Parameters<EphemerisProvider[M]>): Promise<EphemerisResult<M>> {
     const id = this.#nextId++;
     return new Promise<EphemerisResult<M>>((resolve, reject) => {
       const timer = setTimeout(() => {
@@ -182,8 +286,9 @@ export class WorkerEphemerisProvider implements EphemerisProvider {
     });
   }
 
-  initialize(): Promise<void> {
-    return this.#call('initialize', []);
+  async initialize(): Promise<void> {
+    await this.#call('initialize', []);
+    this.#initialized = true;
   }
 
   julianDay(year: number, month: number, day: number, hour: number, calendar?: CalendarSystem): Promise<JulianDayUT> {

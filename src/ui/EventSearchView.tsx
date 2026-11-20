@@ -31,6 +31,8 @@ import { DateField } from './primitives/DateField.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useMessages } from './messages.js';
+import { calculationErrorText } from './engine-error.js';
+import { engineErrorMessages } from './engine-error.messages.js';
 import { eventSearchViewMessages } from './EventSearchView.messages.js';
 import { PageHeader } from './PageHeader.js';
 import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
@@ -70,6 +72,7 @@ function toggle(
 
 export function EventSearchView(): React.JSX.Element {
   const t = useMessages(eventSearchViewMessages);
+  const engineT = useMessages(engineErrorMessages);
   const pinMessages = useMessages(eventPinsMessages);
   const basisLine = useCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE);
   const columns = useMemo<readonly TableColumn<EventSearchResult>[]>(
@@ -147,8 +150,7 @@ export function EventSearchView(): React.JSX.Element {
         if (id === runId.current) setResult({ kind: 'ready', rows, fromJd, toJd, parameters });
       })
       .catch((error: unknown) => {
-        if (id === runId.current)
-          setResult({ kind: 'error', message: error instanceof Error ? error.message : String(error) });
+        if (id === runId.current) setResult({ kind: 'error', message: calculationErrorText(error, engineT) });
       });
   };
 

@@ -126,7 +126,15 @@ export interface EngineConfig {
 
 /** Minimal shape of the sweph-wasm instance, kept local to this module. */
 interface SweInstance {
-  wasm: { FS: { analyzePath(path: string, dontResolveLastLink?: boolean): { exists: boolean } } };
+  wasm: {
+    FS: { analyzePath(path: string, dontResolveLastLink?: boolean): { exists: boolean } };
+    /** The raw Emscripten exports `#calcUt` uses to call `swe_calc_ut` with reused buffers (#1856). */
+    _malloc(bytes: number): number;
+    _free(pointer: number): void;
+    _swe_calc_ut(jd: number, body: number, flags: number, xx: number, serr: number): number;
+    getValue(pointer: number, type: 'double'): number;
+    UTF8ToString(pointer: number): string;
+  };
   swe_set_ephe_path(url?: string, files?: readonly string[]): Promise<unknown>;
   swe_set_sid_mode(mode: number, t0: number, ayanT0: number): void;
   swe_set_topo(longitude: number, latitude: number, altitude: number): void;
@@ -171,6 +179,14 @@ interface SweInstance {
   swe_close(): void;
 }
 
+/**
+ * The size of Swiss Ephemeris's error-message buffer, `AS_MAXCH` in `swephexp.h` (256 chars). `swe_calc_ut` writes at
+ * most this many bytes into `serr`.
+ */
+const SERR_BYTES = 256;
+/** `swe_calc_ut` fills six doubles: longitude, latitude, distance and their speeds. */
+const CALC_RESULT_DOUBLES = 6;
+
 /** Normalise to the half-open interval [0, 360). */
 function norm360(degrees: number): Degrees {
   const value = degrees % 360;
@@ -214,6 +230,13 @@ export class SwissEphemerisEngine implements EphemerisProvider {
   #initializing: Promise<void> | undefined;
   /** Tracks the sidereal mode currently set on the WASM instance, as `sidModeKey` gives it. */
   #sidModeSet: string | undefined;
+  /**
+   * The result and error buffers `#calcUt` reuses on every call (#1856), allocated once per WASM instance. sweph-wasm
+   * 2.6.9's own `swe_calc_ut` allocates both on every call and frees only the result on success, leaking the 256-byte
+   * error buffer each time: about 2.5 KB per ten-body `positions` call, which filled the 128 MB heap in a long session
+   * and ended in `Aborted(segmentation fault)`.
+   */
+  #calcBuffers: { readonly xx: number; readonly serr: number } | undefined;
   readonly #config: EngineConfig;
 
   constructor(config: EngineConfig = {}) {
@@ -249,6 +272,21 @@ export class SwissEphemerisEngine implements EphemerisProvider {
     }
 
     this.#swe = swe;
+    this.#calcBuffers = undefined;
+  }
+
+  /**
+   * `swe_calc_ut` through the raw export, with buffers allocated once and reused (#1856): unlike sweph-wasm's wrapper, a
+   * call allocates nothing, so nothing can leak. Same contract as the wrapper: six doubles back, and an error (with the
+   * library's own message from `serr`) when the return code is negative.
+   */
+  #calcUt(jd: number, body: number, flags: number): readonly number[] {
+    const { wasm } = this.#instance();
+    this.#calcBuffers ??= { xx: wasm._malloc(CALC_RESULT_DOUBLES * 8), serr: wasm._malloc(SERR_BYTES) };
+    const { xx, serr } = this.#calcBuffers;
+    const code = wasm._swe_calc_ut(jd, body, flags, xx, serr);
+    if (code < 0) throw new Error(wasm.UTF8ToString(serr));
+    return Array.from({ length: CALC_RESULT_DOUBLES }, (_, index) => wasm.getValue(xx + index * 8, 'double'));
   }
 
   #instance(): SweInstance {
@@ -354,7 +392,7 @@ export class SwissEphemerisEngine implements EphemerisProvider {
     const flags = this.#flagsFor(options);
     let raw: readonly number[];
     try {
-      raw = this.#instance().swe_calc_ut(jd, body, flags);
+      raw = this.#calcUt(jd, body, flags);
     } catch (cause) {
       throw new EphemerisError(cause instanceof Error ? cause.message : String(cause), {
         call: 'swe_calc_ut',
@@ -507,7 +545,7 @@ export class SwissEphemerisEngine implements EphemerisProvider {
       // SE_ECL_NUT is a pseudo-body: swe_calc_ut returns [true obliquity, mean
       // obliquity, nutation in longitude, nutation in obliquity] instead of a
       // position. Index 0 is what we want.
-      raw = this.#instance().swe_calc_ut(jd, SE.SE_ECL_NUT, SE.SEFLG_SWIEPH);
+      raw = this.#calcUt(jd, SE.SE_ECL_NUT, SE.SEFLG_SWIEPH);
     } catch (cause) {
       throw new EphemerisError(cause instanceof Error ? cause.message : String(cause), {
         call: 'swe_calc_ut',
@@ -701,6 +739,11 @@ export class SwissEphemerisEngine implements EphemerisProvider {
   }
 
   async dispose(): Promise<void> {
+    if (this.#swe !== undefined && this.#calcBuffers !== undefined) {
+      this.#swe.wasm._free(this.#calcBuffers.xx);
+      this.#swe.wasm._free(this.#calcBuffers.serr);
+    }
+    this.#calcBuffers = undefined;
     this.#swe?.swe_close();
     this.#swe = undefined;
     this.#initializing = undefined;

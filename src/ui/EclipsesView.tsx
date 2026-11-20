@@ -26,6 +26,8 @@ import { eclipsesViewMessages } from './EclipsesView.messages.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
+import { calculationErrorText } from './engine-error.js';
+import { engineErrorMessages } from './engine-error.messages.js';
 import { SortableTable, csvExportTable, useCsvExports } from './SortableTable.js';
 import { useStoreState } from './store-context.js';
 import type { TableColumn } from './table-sort.js';
@@ -53,6 +55,7 @@ type Result =
 
 export function EclipsesView(): React.JSX.Element {
   const t = useMessages(eclipsesViewMessages);
+  const engineT = useMessages(engineErrorMessages);
   const basisLine = useCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE);
   const [locale] = useLocale();
   const state = useStoreState();
@@ -126,7 +129,7 @@ export function EclipsesView(): React.JSX.Element {
         });
       } catch (error) {
         if (id === runId.current) {
-          setResult({ kind: 'error', message: error instanceof Error ? error.message : String(error) });
+          setResult({ kind: 'error', message: calculationErrorText(error, engineT) });
         }
       }
     })();
