@@ -40,6 +40,12 @@ async function mountPeople(): Promise<HTMLElement> {
     );
     await Promise.resolve();
   });
+  // People lazy-loads its chart-search pieces; let that chunk resolve inside act, so the suspended components
+  // finish loading in scope on a slow machine too (#1802: CI logged "A suspended resource finished loading").
+  await act(async () => {
+    await import('../src/ui/ChartSearchPanel.js');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
   return container;
 }
 
