@@ -7,6 +7,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { angularSeparation, DEFAULT_ORB_CONFIG } from '../src/astrology/aspects.js';
+import { arabicPart } from '../src/astrology/arabic-parts.js';
 import { bodyById, bodyByKey } from '../src/astrology/bodies.js';
 import {
   computeChartData,
@@ -14,7 +15,7 @@ import {
   housesAreDefined,
   NATAL_FIXED_STARS,
 } from '../src/domain/chart-compute.js';
-import { finiteDifferenceRate } from '../src/ephemeris/finite-difference.js';
+import { finiteDifferenceRate, FINITE_DIFFERENCE_DT_DAYS } from '../src/ephemeris/finite-difference.js';
 import type { HousePositions } from '../src/ephemeris/types.js';
 import { julianDayFor } from '../src/time/julian.js';
 import { resolveMoment } from '../src/time/resolve.js';
@@ -546,6 +547,59 @@ describe('chosen fixed stars (#803)', () => {
     const keys = [...(data.fixedStars?.keys() ?? [])];
     expect(keys).toEqual(['Menkar (alCet)', 'Menkar (laCet)']);
     expect(data.fixedStars?.get('Menkar (alCet)')).not.toBe(data.fixedStars?.get('Menkar (laCet)'));
+  });
+});
+
+/**
+ * The Part of Fortune formula choice (#1794). The night moment is the one where the two
+ * formulas differ: the default reverses Sun and Moon at night, the modern formula does not.
+ */
+describe('fortuneFormula option (#1794)', () => {
+  const NIGHT: BirthMomentInput = { ...MOMENT, civil: { ...MOMENT.civil, hour: 23, minute: 0 } };
+
+  it('default options keep the Paulus night formula: Ascendant + Sun - Moon (regression guard)', async () => {
+    const engine = await getEngine();
+    const data = await computeChartData(NIGHT, engine);
+    const sun = bodyByKey('sun');
+    const moon = bodyByKey('moon');
+    const sunLon = data.positions.find((p) => p.body === sun?.id)?.longitude ?? Number.NaN;
+    const moonLon = data.positions.find((p) => p.body === moon?.id)?.longitude ?? Number.NaN;
+    expect(data.sect).toBe('night');
+    expect(data.partOfFortune).toBeCloseTo(arabicPart(data.houses.ascendant, sunLon, moonLon), 9);
+    const explicit = await computeChartData(NIGHT, engine, { fortuneFormula: 'sect-reversed' });
+    expect(data.partOfFortune).toBe(explicit.partOfFortune);
+  });
+
+  it("'same-day-and-night' gives Ascendant + Moon - Sun on a night chart, and differs from the default", async () => {
+    const engine = await getEngine();
+    const data = await computeChartData(NIGHT, engine, { fortuneFormula: 'same-day-and-night' });
+    const sun = bodyByKey('sun');
+    const moon = bodyByKey('moon');
+    const sunLon = data.positions.find((p) => p.body === sun?.id)?.longitude ?? Number.NaN;
+    const moonLon = data.positions.find((p) => p.body === moon?.id)?.longitude ?? Number.NaN;
+    expect(data.partOfFortune).toBeCloseTo(arabicPart(data.houses.ascendant, moonLon, sunLon), 9);
+    const defaults = await computeChartData(NIGHT, engine);
+    expect(data.partOfFortune).not.toBeCloseTo(defaults.partOfFortune, 3);
+  });
+
+  it("'same-day-and-night' finite-difference speed of the Part of Fortune uses the same formula", async () => {
+    const engine = await getEngine();
+    const place = { ...NIGHT.coordinates, altitude: 0 };
+    const jd = await julianDayFor(engine, resolveMoment(NIGHT));
+    const data = await computeChartDataAtJd(jd, place, engine, { fortuneFormula: 'same-day-and-night' });
+    const sun = bodyByKey('sun');
+    const moon = bodyByKey('moon');
+    if (sun === undefined || moon === undefined) throw new Error('unreachable: sun/moon are always in BODIES');
+    const dt = FINITE_DIFFERENCE_DT_DAYS;
+    const housesAfter = await engine.houses(jd + dt, place, 'P');
+    const luminaries = await engine.positions(jd + dt, [sun.id, moon.id]);
+    const sunAfter = luminaries.find((p) => p.body === sun.id)?.longitude ?? Number.NaN;
+    const moonAfter = luminaries.find((p) => p.body === moon.id)?.longitude ?? Number.NaN;
+    const fortuneAfter = arabicPart(housesAfter.ascendant, moonAfter, sunAfter);
+    expect(data.anglePointSpeeds?.partOfFortune).toBeCloseTo(
+      finiteDifferenceRate(data.partOfFortune, fortuneAfter, dt),
+      6,
+    );
   });
 });
 
