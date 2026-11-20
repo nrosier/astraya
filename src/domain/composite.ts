@@ -198,8 +198,20 @@ export async function computeComposite(
     aspects,
     dignities,
     sect,
-    partOfFortune: partOfFortune(sect, houses.ascendant, sunPosition.longitude, moonPosition.longitude),
-    partOfSpirit: partOfSpirit(sect, houses.ascendant, sunPosition.longitude, moonPosition.longitude),
+    partOfFortune: partOfFortune(
+      sect,
+      houses.ascendant,
+      sunPosition.longitude,
+      moonPosition.longitude,
+      options.fortuneFormula,
+    ),
+    partOfSpirit: partOfSpirit(
+      sect,
+      houses.ascendant,
+      sunPosition.longitude,
+      moonPosition.longitude,
+      options.fortuneFormula,
+    ),
   };
 
   return { chartA, chartB, composite };
