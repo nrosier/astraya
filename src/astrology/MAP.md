@@ -40,7 +40,7 @@ Pure astrological calculation (no DOM/React): bodies, aspects, houses, dignities
 - `orb-library.ts` — The device's named, revisioned orb profiles and each context's choice of orb source (card or a profile), pure and validated as a whole (#590). Deps: `orb-profiles`.
 - `planetary-condition.ts` — Traditional condition (sect alignment, angularity, hayz, motion, besiegement) for the seven classical planets. Deps: `bodies`, `aspects`, `signs`, `sect`.
 - `planetary-returns.ts` — Return search (any body), demibirthday, progressed-lunar-return. Deps: `minor-progressions`, `progressions`, `ephemeris/generated-constants`.
-- `primary-directions.ts` — Primary directions engine (Placidus semi-arcs; direct and converse; in zodiaco at latitude 0 or in mundo with body latitude; Naibod/Ptolemy keys; Makransky rev. ed. 1992, Gansten 2009 ch. 1). Deps: `aspects`, `progressions`.
+- `primary-directions.ts` — Primary directions engine (Placidus semi-arcs; direct and converse; in zodiaco at latitude 0 or in mundo with body latitude; Naibod/Ptolemy fixed keys plus true-solar-arc via a SolarArcClock; Makransky rev. ed. 1992, Gansten 2009 ch. 1). Deps: `aspects`, `progressions`.
 - `profections.ts` — Annual/monthly profections (Hellenistic house-per-year). Deps: `signs`.
 - `progressions.ts` — Secondary progressions (day-for-year, quotidian/naibod/solarArc MC). Deps: `ephemeris/types`.
 - `reception.ts` — Essential-dignity reception across all five dignity types, including mutual and mixed reception (#548). Deps: `rulership`, `dignities`, `triplicity`, `bounds`, `decans`, `signs`, `sect`.
