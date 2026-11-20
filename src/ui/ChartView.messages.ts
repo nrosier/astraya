@@ -7,6 +7,8 @@
  * @conventions Co-located i18n file exporting `{ en, nl }`, consumed by ChartView.tsx via `useMessages(chartViewMessages)`; `nl` is typed as `typeof en`.
  * @exports chartViewMessages
  */
+import type { HermeticLotKey } from '../domain/hermetic-lots.js';
+
 const en = {
   signLabel: 'Sign',
   degLabel: 'Deg',
@@ -90,6 +92,14 @@ const en = {
   aspectsCaption: 'Aspects',
   dignitiesCaption: 'Dignities',
   derivedPointsCaption: 'Derived points',
+  hermeticLotsCaption: 'Hermetic lots',
+  hermeticLotNames: {
+    'lot-of-eros': 'Lot of Eros',
+    'lot-of-necessity': 'Lot of Necessity',
+    'lot-of-courage': 'Lot of Courage',
+    'lot-of-victory': 'Lot of Victory',
+    'lot-of-nemesis': 'Lot of Nemesis',
+  } satisfies Readonly<Record<HermeticLotKey, string>>,
   dispositorsCaption: 'Dispositors',
   dispositorsHint:
     "A dispositor is the ruler of a planet's sign — the planetary chain traces each ruler forward until it circles back on itself or reaches a final dispositor. Use this to find rulership cycles and understand what each planet depends on.",
@@ -456,6 +466,14 @@ const nl: typeof en = {
   aspectsCaption: 'Aspecten',
   dignitiesCaption: 'Waardigheden',
   derivedPointsCaption: 'Afgeleide punten',
+  hermeticLotsCaption: 'Hermetische loten',
+  hermeticLotNames: {
+    'lot-of-eros': 'Lot van Eros',
+    'lot-of-necessity': 'Lot van Noodzaak',
+    'lot-of-courage': 'Lot van Moed',
+    'lot-of-victory': 'Lot van Overwinning',
+    'lot-of-nemesis': 'Lot van Nemesis',
+  },
   dispositorsCaption: 'Dispositoren',
   dispositorsHint:
     'Een dispositor is de heerser van het teken van een planeet — de planetaire keten volgt elke heerser vooruit totdat deze op zichzelf terugvoert of een uiteindelijke dispositor bereikt. Gebruik dit om heersersakels te vinden en te begrijpen waar elke planeet van afhangt.',
