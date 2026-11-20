@@ -155,6 +155,12 @@ for (const viewport of VIEWPORTS) {
       expect(after.selectTop).toBeCloseTo(before.selectTop, 0);
       expect(after.nowTop).toBeCloseTo(before.nowTop, 0);
 
+      // Nothing scrolls sideways (#1834): at 390px the Progressions selects used to push the page to 469px.
+      const widths = await page.evaluate<{ scroll: number; client: number }>(
+        '({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth })',
+      );
+      expect(widths.scroll, 'the page does not scroll sideways').toBeLessThanOrEqual(widths.client);
+
       await context.close();
     });
   }
