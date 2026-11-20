@@ -136,6 +136,14 @@ describe('consultation right column (#800)', () => {
     expect(body).toContain('load.year.firdaria !== undefined');
   });
 
+  it('renders the firdaria sub-period row after the firdaria row, guarded for node periods', () => {
+    const body = sectionBody(view, 'consultation-year-heading');
+    expect(body).toContain('{t.firdariaSub}');
+    expect(body).toContain('load.year.firdariaSub !== undefined');
+    expect(body.indexOf('{t.firdariaSub}')).toBeGreaterThan(body.indexOf('{t.firdaria}'));
+    expect(body.indexOf('{t.firdariaSub}')).toBeLessThan(body.indexOf('{t.progressedMoon}'));
+  });
+
   it('fills the releasing and directions card with releasing badges and the directions list', () => {
     const body = sectionBody(view, 'consultation-releasing-heading');
     expect(body).toContain('{t.releasingDirectionsHeading}');

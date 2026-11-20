@@ -47,6 +47,7 @@ const en = {
   // Layout (#669): summary first, then grouped sections.
   profectionYear: 'Profection year',
   firdaria: 'Firdaria',
+  firdariaSub: 'Sub-period',
   progressedMoon: 'Progressed Moon',
   solarReturns: 'Solar returns',
   solarReturnsValue: (last: string, next: string) => `last ${last}, next ${next}`,
@@ -145,6 +146,7 @@ const nl: typeof en = {
   anglesNeedBirthTime: 'Hiervoor is een bekende geboortetijd nodig.',
   profectionYear: 'Profectiejaar',
   firdaria: 'Firdaria',
+  firdariaSub: 'Subperiode',
   progressedMoon: 'Geprogresseerde Maan',
   solarReturns: 'Solar returns',
   solarReturnsValue: (last: string, next: string) => `vorige ${last}, volgende ${next}`,
