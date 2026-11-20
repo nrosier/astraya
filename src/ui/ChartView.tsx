@@ -152,6 +152,10 @@ import { useStore, useStoreState } from './store-context.js';
 import type { EphemerisProvider } from '../ephemeris/types.js';
 import type { Locale } from '../interpretation/schema.js';
 import type { BirthMomentInput } from '../time/types.js';
+import { julianDayFor } from '../time/julian.js';
+import { resolveMoment } from '../time/resolve.js';
+import { prenatalSyzygy } from '../domain/prenatal-syzygy.js';
+import type { PrenatalSyzygy } from '../domain/prenatal-syzygy.js';
 import { Disclosure } from './primitives/Disclosure.js';
 import { ChartHelpTooltip } from './ChartHelpTooltip.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
@@ -1224,6 +1228,32 @@ export function ChartDataView({
   // Placements and Patterns just skip their houses-dependent sub-sections (see the view renderers).
   const tabs: readonly ChartViewKind[] = CHART_VIEWS.filter((view) => (view === 'wheel' ? sheet !== undefined : true));
   // A chosen view that has since gone (a setting made the wheel unavailable) falls back to the first one shown.
+  // #1798: the prenatal syzygy for the Patterns view's row. A separate effect, not part of `computeChartData` (which runs
+  // for every overlay). It is gated on a known birth time, the same gate as `showHouses`, and a failure leaves the row
+  // out rather than the chart.
+  const syzygyMoment = overlayContext?.moment;
+  const syzygyProvider = overlayContext?.provider;
+  const syzygyHouseSystem = extendedSettings.houseSystem;
+  const [prenatal, setPrenatal] = useState<PrenatalSyzygy | undefined>(undefined);
+  useEffect(() => {
+    setPrenatal(undefined);
+    if (!showHouses || syzygyMoment === undefined || syzygyProvider === undefined) return undefined;
+    const effect = { cancelled: false };
+    void (async () => {
+      try {
+        const birthJd = await julianDayFor(syzygyProvider, resolveMoment(syzygyMoment));
+        const place = { ...syzygyMoment.coordinates, altitude: 0 };
+        const syzygy = await prenatalSyzygy(syzygyProvider, birthJd, place, syzygyHouseSystem);
+        if (!effect.cancelled) setPrenatal(syzygy);
+      } catch {
+        if (!effect.cancelled) setPrenatal(undefined);
+      }
+    })();
+    return () => {
+      effect.cancelled = true;
+    };
+  }, [showHouses, syzygyMoment, syzygyProvider, syzygyHouseSystem]);
+
   const currentTab: ChartViewKind = tabs.includes(activeTab) ? activeTab : (tabs[0] ?? 'aspects');
   const showAspectControls = load.kind === 'ready' && (currentTab === 'wheel' || currentTab === 'matrix');
 
@@ -1557,6 +1587,7 @@ export function ChartDataView({
                       rulership,
                       boundsScheme,
                       overlaySettings.chartFacts,
+                      prenatal,
                     )}
                 </div>
               )}

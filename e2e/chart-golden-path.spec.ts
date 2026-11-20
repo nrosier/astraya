@@ -154,6 +154,7 @@ test.describe('with the shared people (#799)', () => {
     await expect(page.getByText(/Marc Edmund Jones \(1941\)/)).toBeVisible();
     await expect(page.locator('.lunar-phase-summary')).toBeVisible();
     await expect(page.locator('.sect-summary')).toBeVisible();
+    await expect(page.getByText('Prenatal syzygy', { exact: true })).toBeVisible();
   });
 
   test('the Patterns shape preview sits on the dark canvas with visible accent marks (#900)', async () => {
