@@ -8,6 +8,43 @@ feature and fixes is a minor release. See [docs/ops/RELEASING.md](docs/ops/RELEA
 
 ## [Unreleased]
 
+## [0.57.0] — 2026-11-20
+
+**An icon rail for the sidebar, the search circle in its own top row, the life-event picker beside Now, a Hermetic lots card, the prenatal syzygy on natal charts, and the firdaria sub-period in the consultation year.**
+
+### Added
+
+- **Collapsible icon rail (#1747).** From 1024 px the sidebar collapses to a 60 px column of icons, from a footer button, with a tooltip on every entry (and on the footer button) on hover and keyboard focus. The icons keep their place when it collapses, and the choice is remembered on the device.
+- **Search in its own row (#1769).** The command palette trigger is an icon-only circle in a utility row above every page header, and the palette lists its keyboard shortcuts. Ctrl/Cmd+K also closes it.
+- **Hermetic lots (#1797).** A card on the chart's Placements view lists Paulus's Eros, Necessity, Courage, Victory and Nemesis, with their position, house and the day or night formula for the chart's sect.
+- **Prenatal syzygy (#1798).** Natal charts show the last New or Full Moon before birth, in the chart's zodiac, on the Patterns & condition tab. It is checked against NASA's 1879 moon-phase table.
+- **Firdaria sub-periods (#1796).** The consultation year shows the current sub-period beside the firdaria period, following Bonatti, who is now cited for the firdaria table.
+- **TOTP reset for operators (#1782).** `npm run ops:reset-totp -- --yes` clears every user's two-factor enrolment after a key leak. The groundwork for two-factor sign-in (#1500) is in place; sign-in itself is not switched on yet.
+
+### Changed
+
+- **The life-event picker sits beside Now (#1770)** on Progressions & Directions and Solar Arc, with no visible label, and its category filter opens in a popover.
+- **Engine groundwork, not yet selectable (#1794, #1795).** The chart engine can compute the Part of Fortune with one formula day and night, and primary directions can be timed by the true solar arc in right ascension (Makransky). Both settings get their controls in a later release.
+
+### Fixed
+
+- **The Progressions page no longer scrolls sideways on a phone (#1834).**
+- **Key rotation also re-encrypts the TOTP secrets and the recovery-code pepper (#1500),** in the same all-or-nothing transaction, and a failed rollback can no longer hide the original error (#1680).
+- **The skip link no longer peeks out of the collapsed sidebar (#1747).**
+- **Composite and Synastry controls are valid HTML (#1802).** They were inside paragraphs.
+- **Two-factor storage is stricter (#1782).** Pending and enabled are separate states, confirmation is a compare-and-set, and lookups never select the secret.
+- **The points column of the patterns tables is centred (#1609).**
+
+### Documentation
+
+- **The easter-egg digests can be reversed (#1808),** as `.env.example` now says.
+- **A security, quality and astrology review (2026-11-20)** is in `docs/audit/`, with its findings filed as #1806-#1810.
+- **The rectification orbs record Marr's stricter 4′ limit (#1606),** beside the cited 1°.
+
+### Under the hood
+
+- **Zero React warnings in the test run (#1802).** `npm test` now fails on React's act, Suspense, key, nesting and `createRoot` warnings, and Vitest prints console output on every host.
+
 ## [0.56.0] — 2026-11-19
 
 **A command palette on Ctrl/Cmd+K, a People page with a chart query, one tabbed Export / Import card, deep links that open the chart drawers, AC/MC/DC/IC labels everywhere, and pill-shaped controls throughout.**
