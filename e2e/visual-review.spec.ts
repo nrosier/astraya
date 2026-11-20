@@ -552,7 +552,9 @@ test('capture the #1747 and #1770 screens', async ({ browser }) => {
     await shoot(page, slug, clearFocus);
   }
 
-  // #1747: the rail expanded (default), then collapsed with focus cleared, then the collapsed footer tooltip.
+  // #1747: the rail expanded (default), then collapsed with focus cleared, then the collapsed toggle's tooltip
+  // (#1851 moved the toggle from the footer to the top of the rail; the '69-...-footer-tooltip' slug is a
+  // review-page key and stays).
   await page.getByRole('link', { name: 'Birth record', exact: true }).first().click();
   await page.getByRole('heading', { name: /Identity and birth timestamp/ }).waitFor({ timeout: 60_000 });
   await clearFocus();

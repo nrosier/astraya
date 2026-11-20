@@ -323,7 +323,7 @@ test.describe('with the shared people (#799)', () => {
     { width: 1280, height: 800 },
     { width: 3440, height: 1440 },
   ]) {
-    test(`the rail collapses to icons from its footer button, persists across a reload, and shows tooltips on focus at ${String(width)}px (#1747)`, async () => {
+    test(`the rail collapses to icons from its header toggle, persists across a reload, and shows tooltips on focus at ${String(width)}px (#1747)`, async () => {
       test.setTimeout(90_000);
       await page.setViewportSize({ width, height });
       await openSharedPerson(page, baseUrl, EINSTEIN);
@@ -336,7 +336,7 @@ test.describe('with the shared people (#799)', () => {
         return box.width;
       };
 
-      // Expanded: the labels are visible, the footer button offers to collapse, the links are named.
+      // Expanded: the labels are visible, the header toggle offers to collapse, the links are named.
       await expect(shell).not.toHaveClass(/workspace-shell-collapsed/);
       const expandedRail = await widthOf(header);
       const expandedMain = await widthOf(main);
@@ -392,8 +392,8 @@ test.describe('with the shared people (#799)', () => {
       await expect(shell).toHaveClass(/workspace-shell-collapsed/);
       expect(await widthOf(header)).toBeCloseTo(collapsedRail, 0);
 
-      // Keyboard: the tooltip shows on focus, Escape dismisses it without moving focus, and the footer
-      // button is the last stop of the rail.
+      // Keyboard: the tooltip shows on focus, Escape dismisses it without moving focus, and the header
+      // toggle is the first stop of the rail (#1851).
       const tools = header.getByRole('link', { name: 'Tools', exact: true });
       const tooltip = tools.locator('xpath=following-sibling::*[@role="tooltip"]');
       await expect(tooltip).toBeHidden();
@@ -407,39 +407,28 @@ test.describe('with the shared people (#799)', () => {
       await expect(tooltip).toBeHidden();
       await expect(tools).toBeFocused();
 
-      // Tab walks on from Tools through the rest of the rail and reaches the footer button, which is last.
-      const visited: (string | null)[] = [];
-      for (let i = 0; i < 40; i += 1) {
-        await page.keyboard.press('Tab');
-        const name = await page.locator(':focus').getAttribute('aria-label');
-        visited.push(name);
-        if (name === 'Expand sidebar') break;
-      }
-      expect(visited.at(-1)).toBe('Expand sidebar');
-      await expect(header.getByRole('button', { name: 'Expand sidebar', exact: true })).toBeFocused();
+      // The header toggle, focused from the keyboard, shows its own short tooltip (owner decisions, 2026-11-20):
+      // the tooltip reads 'Expand' while the accessible name stays 'Expand sidebar'.
+      const expandToggle = header.getByRole('button', { name: 'Expand sidebar', exact: true });
+      await expandToggle.focus();
+      await page.keyboard.press('Shift+Tab');
+      await page.keyboard.press('Tab');
+      await expect(expandToggle).toBeFocused();
+      const toggleTooltip = expandToggle.locator('xpath=following-sibling::*[@role="tooltip"]');
+      await expect(toggleTooltip).toBeVisible();
+      await expect(toggleTooltip).toHaveText('Expand');
 
-      // The footer button, focused from the keyboard, shows its own tooltip (owner decision, 2026-11-20).
-      const footerTooltip = header
-        .getByRole('button', { name: 'Expand sidebar', exact: true })
-        .locator('xpath=following-sibling::*[@role="tooltip"]');
-      await expect(footerTooltip).toBeVisible();
-      await expect(footerTooltip).toHaveText('Expand sidebar');
-
-      // Tab reaches every one of the 11 rail entries, from the first, and then the footer button.
+      // Tab walks forward from the toggle and reaches every one of the 11 rail entries.
       const railNames = Object.keys(expandedTops);
-      const first = header.locator('.rail-nav-item .app-nav-item').first();
-      await first.focus();
-      const reached = new Set<string>([(await first.getAttribute('aria-label')) ?? '']);
-      for (let i = 0; i < 60; i += 1) {
+      const reached = new Set<string>();
+      for (let i = 0; i < 60 && !railNames.every((name) => reached.has(name)); i += 1) {
         await page.keyboard.press('Tab');
         const name = (await page.locator(':focus').getAttribute('aria-label')) ?? '';
         reached.add(name);
-        if (name === 'Expand sidebar') break;
       }
       for (const name of railNames) expect(reached.has(name), name).toBe(true);
-      expect(reached.has('Expand sidebar')).toBe(true);
 
-      // Expand again from the same button.
+      // Expand again from the same toggle.
       await header.getByRole('button', { name: 'Expand sidebar', exact: true }).click();
       await expect(shell).not.toHaveClass(/workspace-shell-collapsed/);
       expect(await widthOf(header)).toBeCloseTo(expandedRail, 0);
