@@ -41,6 +41,7 @@ import { isStationWindowK } from '../astrology/planetary-condition.js';
 import type { Zodiac } from '../ephemeris/types.js';
 import type { JsonValue } from '../store/ops.js';
 import { STAR_SEARCH_LIMIT } from '../ephemeris/star-catalogue.js';
+import { DEFAULT_FORTUNE_FORMULA } from '../astrology/arabic-parts.js';
 import { readCustomPoints, readFixedStars, type ChosenFixedStar, type CustomPointDefinition } from './person.js';
 
 /**
@@ -54,8 +55,9 @@ import { readCustomPoints, readFixedStars, type ChosenFixedStar, type CustomPoin
  * all) still parses — it simply had no way to carry formula points, so it reads back with none.
  * #724's optional `stationWindow` and `motionScore` are not a bump either: absent means off, so every existing snapshot
  * reads back unchanged and one with both off serializes byte for byte as before.
- * #1794's optional `fortuneFormula` is not a bump either: it is written only when it is `'same-day-and-night'`, and a
- * missing one reads back as the default `'sect-reversed'`, so every existing snapshot reads back unchanged.
+ * #1794's optional `fortuneFormula` is not a bump either: it is present only when it is `'same-day-and-night'`, and a
+ * missing one reads back as the default `DEFAULT_FORTUNE_FORMULA`, so every existing snapshot reads back unchanged and a
+ * default snapshot keeps its old serialized form and identity.
  * 4 (#860): adds `fixedStars`, the person's chosen catalogue stars, so a shared or exported chart checks the same
  * stars as the sender's. A v1-v3 snapshot has none and reads back with none (the seven-star preset).
  * #1407's user-defined ayanamsa is not a bump: `zodiac.user` appears only with the new `SE_SIDM_USER` mode, so every
@@ -348,8 +350,8 @@ function parseExtendedSettings(value: unknown): ExtendedSettings {
       ? value.lilithVariant
       : d.lilithVariant,
     nodeVariant: isOneOf(value.nodeVariant, ['mean', 'true'] as const) ? value.nodeVariant : d.nodeVariant,
-    // Always set: a register without the field reads as the default (#1794), so the parsed bag is always complete.
-    fortuneFormula: isOneOf(value.fortuneFormula, SNAPSHOT_FORTUNE_FORMULAS) ? value.fortuneFormula : 'sect-reversed',
+    // Present only when non-default (#1794): an absent field is the default, so a default bag serializes as before.
+    ...(value.fortuneFormula === 'same-day-and-night' ? { fortuneFormula: 'same-day-and-night' as const } : {}),
     objectPolicies: parseObjectPolicies(value.objectPolicies, value),
     // An absent or invalid rules bag is simply no rules: the same result a never-customized chart
     // has. Validation happens here, so a snapshot's orb rules are always well-formed when used.
@@ -568,6 +570,6 @@ export function calculationSnapshotToJson(snapshot: CalculationSnapshot): Record
   if (snapshot.fixedStars.length > MAX_SNAPSHOT_FIXED_STARS) throw fixedStarCapError(snapshot.fixedStars.length);
   // The default Fortune formula is omitted (#1794), so a default chart serializes byte for byte as it did before the field existed.
   const settings = { ...snapshot.settings };
-  if (settings.fortuneFormula === 'sect-reversed') delete settings.fortuneFormula;
+  if (settings.fortuneFormula === DEFAULT_FORTUNE_FORMULA) delete settings.fortuneFormula;
   return JSON.parse(JSON.stringify({ ...snapshot, settings })) as Record<string, JsonValue>;
 }

@@ -38,8 +38,9 @@ describe('DEFAULT_EXTENDED_SETTINGS', () => {
     expect(DEFAULT_EXTENDED_SETTINGS.rainbowZodiac).toBe(false);
   });
 
-  it('defaults the Fortune formula to the Hellenistic reverse-at-night rule, sect-reversed (#1794)', () => {
-    expect(DEFAULT_EXTENDED_SETTINGS.fortuneFormula).toBe('sect-reversed');
+  it('leaves the Fortune formula absent in the defaults, so the default is the Hellenistic sect-reversed rule and no snapshot changes (#1794)', () => {
+    expect('fortuneFormula' in DEFAULT_EXTENDED_SETTINGS).toBe(false);
+    expect(toChartCalculationOptions(DEFAULT_EXTENDED_SETTINGS).fortuneFormula).toBe('sect-reversed');
   });
 });
 
