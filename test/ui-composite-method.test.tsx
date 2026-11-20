@@ -48,6 +48,8 @@ describe('composite method control (#1406 D2)', () => {
       expect(checked?.closest('label')?.textContent ?? checked?.parentElement?.textContent).toContain(
         'Midpoint (near-arc)',
       );
+      // #1802: no form control inside a <p> (invalid HTML, and React warns about it).
+      expect(container.querySelectorAll('p .primitive-field, p .primitive-choice-group, p select')).toHaveLength(0);
     } finally {
       act(() => {
         root.unmount();

@@ -214,6 +214,8 @@ describe('the calculation result regions (#888)', () => {
 
   it('SynastryView is aria-busy while the synastry calculates and cleared once ready', async () => {
     const container = mount(<SynastryView personId="p1" />);
+    // #1802: the partner select is not inside a <p> (invalid HTML, and React warns about it).
+    expect(container.querySelectorAll('p .primitive-field, p select')).toHaveLength(0);
     // No partner yet, so nothing is calculating.
     expect(busyRegions(container)).toEqual(['false']);
 

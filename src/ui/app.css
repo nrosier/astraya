@@ -1294,6 +1294,12 @@ footer {
 }
 
 /* Two fields that belong together (a date or year range) share one row. */
+/* The method and partner controls on Composite and Synastry (#1802): a block, not a <p> (a <p> cannot hold the
+   field's <div>), keeping the paragraph's 1em block margin so the spacing is unchanged. */
+.relationship-control-row {
+  margin-block: 1em;
+}
+
 .tool-field-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

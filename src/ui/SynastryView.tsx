@@ -372,7 +372,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
         <GlossaryText text={t.overlayContext} />
       </p>
 
-      <p>
+      <div className="relationship-control-row">
         <Select
           label={t.compareWithLabel}
           value={partnerId}
@@ -385,7 +385,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
             })),
           ]}
         />
-      </p>
+      </div>
 
       {partnerId !== '' && candidates.every((candidate) => candidate.id !== partnerId) && (
         <StatusMessage kind="error">{t.partnerGoneWarning}</StatusMessage>
