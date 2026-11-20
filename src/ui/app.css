@@ -412,10 +412,14 @@
 }
 
 /* First focusable thing on the page, hidden until it takes focus (#421). */
+/* Hidden by its own height, not a fixed offset: in the collapsed icon rail a fixed -4rem left the wrapped link's foot
+   in view (#1747). `nowrap` keeps it one line wherever it is placed. */
 .skip-link {
   position: absolute;
-  top: -4rem;
+  top: 0;
   left: 0.75rem;
+  transform: translateY(calc(-100% - 0.5rem));
+  white-space: nowrap;
   z-index: 30;
   padding: var(--space-2) var(--space-4);
   border: 1px solid var(--accent);
@@ -427,6 +431,7 @@
 
 .skip-link:focus {
   top: 0.5rem;
+  transform: none;
 }
 
 /* The skip link's target. Programmatically focusable only; no outline, since nothing here is a control. */

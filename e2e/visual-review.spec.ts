@@ -1,5 +1,5 @@
 /**
- * Captures every screen listed in `visual-review-screens.json` at 390x844, 1920x1080 and 1280x800 in light and dark, for
+ * Captures every screen listed in `visual-review-screens.json` at 390x844, 1280x800 and 3440x1440 in light and dark, for
  * the owner's visual review (docs/ops/VISUAL-REVIEW.md). It is a capture tool, not a test: it skips unless
  * `VISUAL_REVIEW_OUT` names the folder to write the JPEGs to, so the normal e2e run and CI do nothing here.
  *
@@ -21,7 +21,7 @@ const OUT = process.env.VISUAL_REVIEW_OUT;
 const SIZES = [
   { w: 390, h: 844 },
   { w: 1280, h: 800 },
-  { w: 1920, h: 1080 },
+  { w: 3440, h: 1440 },
 ] as const;
 const THEMES = ['light', 'dark'] as const;
 
@@ -499,5 +499,77 @@ test('capture the review PDFs', async ({ browser }) => {
     await download.saveAs(join(OUT ?? '', `pdf-${code.toLowerCase()}.pdf`));
   }
 
+  await app.close();
+});
+
+/**
+ * The sidebar rail (#1747) and the life-event picker in the timing headers (#1770). The rail only exists from 64rem, so
+ * its shots skip the phone size. The collapsed rail is shot with focus cleared (owner decision on #1747: the skip link
+ * shows on keyboard focus by design), then once with the footer button keyboard-focused to show its tooltip.
+ */
+test('capture the #1747 and #1770 screens', async ({ browser }) => {
+  test.setTimeout(300_000);
+  mkdirSync(OUT ?? '', { recursive: true });
+  process.env.LOG_LEVEL = 'silent';
+  const app = await build({ dbPath: join(mkdtempSync(join(tmpdir(), 'visual-review-')), 'astraya.db') });
+  await app.listen({ port: 0, host: '127.0.0.1' });
+  const address = app.server.address();
+  if (address === null || typeof address === 'string') throw new Error('server did not bind to a port');
+  const baseUrl = `http://127.0.0.1:${String(address.port)}`;
+  const page = await (await newSeededContext(browser, baseUrl)).newPage();
+  await page.setViewportSize({ width: 1280, height: 800 });
+  const wide = [SIZES[1], SIZES[2]];
+
+  // #1770: give Einstein one life event, so the picker shows, as e2e/life-event-picker-header.spec.ts does.
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  await page.getByRole('heading', { name: /Identity and birth timestamp/ }).waitFor();
+  await page.getByRole('button', { name: 'Manage Life Events' }).click();
+  await page.locator('dialog.life-events-drawer[open]').waitFor({ state: 'visible' });
+  await page.getByLabel('Date of the new event').fill('1905-06-30');
+  await page.getByLabel('Description of the new event').fill('Miracle year');
+  await page.getByRole('button', { name: 'Add', exact: true }).click();
+  await page.getByRole('button', { name: 'Save and close' }).click();
+  await page.locator('dialog.life-events-drawer[open]').waitFor({ state: 'hidden' });
+  const personId = /#\/people\/([^/]+)/.exec(page.url())?.[1];
+  if (personId === undefined) throw new Error('no person id in the URL');
+  const clearFocus = async (): Promise<void> => {
+    await page.evaluate(() => {
+      (
+        globalThis as unknown as { document: { activeElement: { blur?: () => void } | null } }
+      ).document.activeElement?.blur?.();
+    });
+    await page.mouse.move(0, 0);
+  };
+  for (const [hash, slug] of [
+    ['timing/progressions', '65-progressions-life-event-header'],
+    ['timing/solar-arc', '66-solar-arc-life-event-header'],
+  ] as const) {
+    await page.goto(`${baseUrl}/#/people/${personId}/${hash}`);
+    await page.locator('.date-animation-bar .life-event-picker select').first().waitFor({ state: 'visible' });
+    await page.locator('.page-header-actions .page-header-export-toggle').waitFor({ state: 'visible' });
+    await page.waitForTimeout(600);
+    await clearFocus();
+    await shoot(page, slug, clearFocus);
+  }
+
+  // #1747: the rail expanded (default), then collapsed with focus cleared, then the collapsed footer tooltip.
+  await page.getByRole('link', { name: 'Birth record', exact: true }).first().click();
+  await page.getByRole('heading', { name: /Identity and birth timestamp/ }).waitFor({ timeout: 60_000 });
+  await clearFocus();
+  await shoot(page, '67-rail-expanded', clearFocus, wide);
+  await page.getByRole('button', { name: 'Collapse sidebar', exact: true }).click();
+  await page.locator('.workspace-shell-collapsed').waitFor();
+  await clearFocus();
+  await shoot(page, '68-rail-collapsed', clearFocus, wide);
+  const footer = page.getByRole('button', { name: 'Expand sidebar', exact: true });
+  const focusFooter = async (): Promise<void> => {
+    await footer.focus();
+    await page.keyboard.press('Shift+Tab');
+    await page.keyboard.press('Tab');
+    await footer.locator('xpath=following-sibling::*[@role="tooltip"]').waitFor({ state: 'visible' });
+  };
+  await focusFooter();
+  await shoot(page, '69-rail-collapsed-footer-tooltip', focusFooter, wide);
+  await footer.click();
   await app.close();
 });

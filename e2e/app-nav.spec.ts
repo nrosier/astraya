@@ -372,6 +372,9 @@ test.describe('with the shared people (#799)', () => {
       );
       const collapsedRail = await widthOf(header);
       const collapsedTops = await iconTops();
+      // The unfocused skip link stays fully above the viewport in the narrow rail (#1747 review, 2026-11-20).
+      const skipBox = await page.getByRole('link', { name: 'Skip to main content' }).boundingBox();
+      if (skipBox !== null) expect(skipBox.y + skipBox.height).toBeLessThanOrEqual(0);
       for (const [name, top] of Object.entries(expandedTops)) {
         expect(collapsedTops[name], name).toBeCloseTo(top, 0);
       }
