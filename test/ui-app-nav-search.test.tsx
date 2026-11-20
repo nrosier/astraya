@@ -102,7 +102,9 @@ function pressKey(target: EventTarget, init: KeyboardEventInit): KeyboardEvent {
 
 beforeEach(async () => {
   stubDialog();
-  setLocale('en');
+  act(() => {
+    setLocale('en');
+  });
   setPlatform('Linux x86_64');
   vi.stubGlobal('localStorage', {
     getItem: () => null,
@@ -175,11 +177,15 @@ describe('the command palette trigger (#1654)', () => {
     });
     root = createRoot(container);
     setPlatform('Linux x86_64');
-    setLocale('nl');
+    act(() => {
+      setLocale('nl');
+    });
     render();
     expect(tipText()).toBe('Zoeken (Ctrl+K)');
     expect(trigger().getAttribute('aria-label')).toBe(appNavMessages.nl.searchLabel);
-    setLocale('en');
+    act(() => {
+      setLocale('en');
+    });
   });
 
   it('opens the palette when the trigger is pressed', async () => {

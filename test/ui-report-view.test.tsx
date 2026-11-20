@@ -17,6 +17,7 @@ import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { actWaitFor } from './act-wait-for.js';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import type { ResultBasis } from '../src/interpretation/result-basis.js';
@@ -748,13 +749,13 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
       await Promise.resolve();
       await Promise.resolve();
     });
-    await vi.waitFor(() => {
+    await actWaitFor(() => {
       expect(latestSession?.status.kind).toBe('ready');
     });
     await act(async () => {
       await latestSession?.signIn('alice', 'correct-horse-battery');
     });
-    await vi.waitFor(() => {
+    await actWaitFor(() => {
       expect(latestSession?.user?.username).toBe('alice');
     });
     await act(async () => {
@@ -982,7 +983,7 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
       generateButton(container).click();
     });
 
-    await vi.waitFor(() => {
+    await actWaitFor(() => {
       const resultEl = panelOf(container).querySelector('.tier2-result');
       expect(resultEl?.querySelector('h4')?.textContent).toBe('Overview');
       expect(resultEl?.querySelector('p')?.textContent).toBe('A restyled interpretation.');
@@ -1013,7 +1014,7 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
       generateButton(container).click();
     });
 
-    await vi.waitFor(() => {
+    await actWaitFor(() => {
       expect(panelOf(container).querySelector('[role="alert"]')).not.toBeNull();
     });
     expect(panelOf(container).querySelector('[role="alert"]')?.textContent).toBe(
@@ -1067,7 +1068,7 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
       generateButton(container).click();
     });
 
-    await vi.waitFor(() => {
+    await actWaitFor(() => {
       expect(panelOf(container).querySelector('.ai-customized-rejection')).not.toBeNull();
     });
     const rejection = panelOf(container).querySelector('.ai-customized-rejection');
@@ -1114,7 +1115,7 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
       generateButton(container).click();
     });
 
-    await vi.waitFor(() => {
+    await actWaitFor(() => {
       expect(panelOf(container).querySelector('.ai-customized-rejection')).not.toBeNull();
     });
     const rejection = panelOf(container).querySelector('.ai-customized-rejection');
@@ -1140,7 +1141,7 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
       generateButton(container).click();
     });
 
-    await vi.waitFor(() => {
+    await actWaitFor(() => {
       expect(panelOf(container).querySelector('.tier2-result')).not.toBeNull();
     });
 
@@ -1174,7 +1175,7 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
     save('synthesis'); // an entry from before the basis was recorded
     raw.close();
 
-    await vi.waitFor(() => {
+    await actWaitFor(() => {
       expect(panelOf(container).querySelectorAll('.tier2-saved-results button')).toHaveLength(4);
     });
     const texts = [...panelOf(container).querySelectorAll('.tier2-saved-results button')].map(
@@ -1234,7 +1235,7 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
     ).map((row) => row.created_at);
     raw.close();
 
-    await vi.waitFor(() => {
+    await actWaitFor(() => {
       expect(panelOf(container).querySelectorAll('.tier2-saved-results button')).toHaveLength(2);
     });
     const texts = [...panelOf(container).querySelectorAll('.tier2-saved-results button')].map((b) => b.textContent);
@@ -1283,7 +1284,7 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
     };
     raw.close();
 
-    await vi.waitFor(() => {
+    await actWaitFor(() => {
       expect(panelOf(container).querySelectorAll('.tier2-saved-results button')).toHaveLength(1);
     });
     expect(panelOf(container).querySelector('.tier2-saved-results button')?.textContent).toBe(
@@ -1323,7 +1324,7 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
     raw.close();
 
     let savedButton: HTMLButtonElement | undefined;
-    await vi.waitFor(() => {
+    await actWaitFor(() => {
       const found = panelOf(container).querySelector('.tier2-saved-results button');
       expect(found).not.toBeNull();
       savedButton = found as HTMLButtonElement;
@@ -1336,7 +1337,7 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
     act(() => {
       savedButton?.click();
     });
-    await vi.waitFor(() => {
+    await actWaitFor(() => {
       expect(panelOf(container).querySelector('.tier2-result')?.textContent).toContain('A saved interpretation.');
     });
     expect(savedId).not.toBe('');
@@ -1368,7 +1369,7 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
       generateButton(container).click();
     });
 
-    await vi.waitFor(() => {
+    await actWaitFor(() => {
       expect(panelOf(container).querySelector('.tier2-result')).not.toBeNull();
     });
 
@@ -1439,7 +1440,7 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
       generateButton(container).click();
     });
 
-    await vi.waitFor(() => {
+    await actWaitFor(() => {
       expect(panelOf(container).querySelector('.tier2-result')).not.toBeNull();
     });
 
@@ -1469,7 +1470,7 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
     act(() => {
       generateButton(container).click();
     });
-    await vi.waitFor(() => {
+    await actWaitFor(() => {
       expect(panelOf(container).querySelector('.tier2-result')).not.toBeNull();
     });
 
@@ -1657,11 +1658,11 @@ describe('ReportView: a reader’s own correction of an entry (#1338)', () => {
     );
     await act(async () => {
       (saveButton as HTMLButtonElement).click();
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(store.state.corrections.size).toBe(1);
       }, WAIT);
     });
-    await vi.waitFor(() => {
+    await actWaitFor(() => {
       expect(shownTexts(container).some((text) => text.includes(OWN_TEXT))).toBe(true);
     }, WAIT);
 
@@ -1679,11 +1680,11 @@ describe('ReportView: a reader’s own correction of an entry (#1338)', () => {
     );
     await act(async () => {
       (resetButton as HTMLButtonElement).click();
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(store.state.corrections.size).toBe(0);
       }, WAIT);
     });
-    await vi.waitFor(() => {
+    await actWaitFor(() => {
       expect(shownTexts(container).some((text) => text.includes(COMMITTED_TEXT))).toBe(true);
     }, WAIT);
 
@@ -1710,7 +1711,7 @@ describe('ReportView: a reader’s own correction of an entry (#1338)', () => {
     );
     await act(async () => {
       (saveButton as HTMLButtonElement).click();
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(document.querySelector('dialog')?.textContent).toContain(corpusCorrectionMessages.en.markup);
       }, WAIT);
     });

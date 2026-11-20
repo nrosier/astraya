@@ -11,7 +11,8 @@
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { actWaitFor } from './act-wait-for.js';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -119,13 +120,13 @@ async function mountSignedIn(): Promise<{ container: HTMLElement; root: Root }> 
     await Promise.resolve();
     await Promise.resolve();
   });
-  await vi.waitFor(() => {
+  await actWaitFor(() => {
     expect(latestSession?.status.kind).toBe('ready');
   });
   await act(async () => {
     await latestSession?.signIn('alice', 'correct-horse-battery');
   });
-  await vi.waitFor(() => {
+  await actWaitFor(() => {
     expect(latestSession?.user?.username).toBe('alice');
   });
   return { container, root };
@@ -172,7 +173,7 @@ describe('AdminPanel Users table, Last sync / Last AI usage columns (#445)', () 
 
     const { container, root } = await mountSignedIn();
     try {
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(container.textContent).toContain('bob');
       });
 
@@ -199,7 +200,7 @@ describe('AdminPanel Users markup (#816)', () => {
   it('shows each username with a status Badge that carries its text, and a disabled account as danger', async () => {
     const { container, root } = await mountSignedIn();
     try {
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(container.textContent).toContain('alice');
       });
       const aliceRow = rowFor(container, 'alice');
@@ -219,7 +220,7 @@ describe('AdminPanel Users markup (#816)', () => {
   it('marks a row’s Delete apart from the standard actions with a separator and the danger class', async () => {
     const { container, root } = await mountSignedIn();
     try {
-      await vi.waitFor(() => {
+      await actWaitFor(() => {
         expect(container.textContent).toContain('alice');
       });
       const aliceRow = rowFor(container, 'alice');

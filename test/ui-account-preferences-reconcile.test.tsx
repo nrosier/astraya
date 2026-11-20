@@ -10,6 +10,7 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { actWaitFor } from './act-wait-for.js';
 import { decodeHlc } from '../src/store/hlc.js';
 import { openStore, type Store } from '../src/store/store.js';
 import type { SyncState } from '../src/ui/status.js';
@@ -133,7 +134,7 @@ describe('the signed-out store (#1066)', () => {
     const store = await open(false);
     session.store = store;
     mount();
-    await vi.waitFor(() => {
+    await actWaitFor(() => {
       expect(migrated()).toBe(true);
     });
     expect(store.state.account.locale?.value).toBe('nl');
@@ -147,7 +148,7 @@ describe('the signed-out store (#1066)', () => {
   it('sets the guard when there is nothing to move', async () => {
     session.store = await open(false);
     mount();
-    await vi.waitFor(() => {
+    await actWaitFor(() => {
       expect(migrated()).toBe(true);
     });
   });
@@ -168,7 +169,7 @@ describe('an account store (#1066)', () => {
     act(() => {
       handle.setStatus({ kind: 'synced', at: Date.now() });
     });
-    await vi.waitFor(() => {
+    await actWaitFor(() => {
       expect(store.state.account.locale?.value).toBe('nl');
     });
   });
@@ -189,7 +190,7 @@ describe('an account store (#1066)', () => {
     session.store = store;
     session.engine = makeEngine({ kind: 'synced', at: Date.now() }).engine;
     mount();
-    await vi.waitFor(() => {
+    await actWaitFor(() => {
       expect(latest?.proposals.map((proposal) => proposal.field)).toEqual(['locale', 'defaultRulership']);
     });
     expect(latest?.account).toBe(true);
@@ -213,7 +214,7 @@ describe('an account store (#1066)', () => {
     session.store = store;
     session.engine = makeEngine({ kind: 'synced', at: Date.now() }).engine;
     mount();
-    await vi.waitFor(() => {
+    await actWaitFor(() => {
       expect(latest?.proposals.map((proposal) => proposal.field)).toEqual(['locale']);
     });
     expect(store.state.account.defaultRulership).toBeUndefined();
@@ -236,7 +237,7 @@ describe('an account store (#1066)', () => {
     session.store = account;
     session.engine = makeEngine({ kind: 'synced', at: Date.now() }).engine;
     mount();
-    await vi.waitFor(async () => {
+    await actWaitFor(async () => {
       expect(await account.getAccountReconcile()).not.toHaveProperty('pending');
     });
     expect(latest).toBeUndefined();
@@ -255,7 +256,7 @@ describe('an account store (#1066)', () => {
     session.store = account;
     session.engine = makeEngine({ kind: 'synced', at: Date.now() }).engine;
     mount();
-    await vi.waitFor(() => {
+    await actWaitFor(() => {
       expect(latest?.proposals).toEqual([{ field: 'locale', deviceValue: 'nl', accountValue: 'en' }]);
     });
     await act(async () => {
@@ -283,7 +284,7 @@ describe('an account store (#1066)', () => {
     session.store = account;
     session.engine = makeEngine({ kind: 'synced', at: Date.now() }).engine;
     mount();
-    await vi.waitFor(() => {
+    await actWaitFor(() => {
       expect(latest?.proposals).toEqual([{ field: 'defaultRulership', deviceValue: 'both', accountValue: 'modern' }]);
     });
   });
@@ -295,7 +296,7 @@ describe('an account store (#1066)', () => {
     session.store = first;
     session.engine = makeEngine({ kind: 'synced', at: Date.now() }).engine;
     mount();
-    await vi.waitFor(() => {
+    await actWaitFor(() => {
       expect(latest).toBeDefined();
     });
     const second = await open(true);
@@ -303,7 +304,7 @@ describe('an account store (#1066)', () => {
     act(() => {
       root?.render(<Harness />);
     });
-    await vi.waitFor(() => {
+    await actWaitFor(() => {
       expect(second.state.account.locale?.value).toBe('nl');
     });
     expect(first.state.account.locale?.value).toBe('en');
@@ -336,7 +337,7 @@ describe('the orb library and the saved transit filters (#1220)', () => {
     const store = await open(false);
     session.store = store;
     mount();
-    await vi.waitFor(() => {
+    await actWaitFor(() => {
       expect(localStorage.getItem(ACCOUNT_SETTINGS_MIGRATED_V2_KEY)).toBe('1');
     });
     expect(store.state.account.orbLibrary?.value).toEqual(stored('House style'));
@@ -354,7 +355,7 @@ describe('the orb library and the saved transit filters (#1220)', () => {
     session.store = store;
     session.engine = makeEngine({ kind: 'synced', at: Date.now() }).engine;
     mount();
-    await vi.waitFor(() => {
+    await actWaitFor(() => {
       expect(latest?.proposals.map((proposal) => proposal.field)).toEqual(['orbLibrary']);
     });
     await act(async () => {
@@ -373,7 +374,7 @@ describe('the orb library and the saved transit filters (#1220)', () => {
     session.store = store;
     session.engine = makeEngine({ kind: 'synced', at: Date.now() }).engine;
     mount();
-    await vi.waitFor(() => {
+    await actWaitFor(() => {
       expect(latest).toBeDefined();
     });
     await act(async () => {

@@ -7,6 +7,7 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { actWaitFor } from './act-wait-for.js';
 import { DEFAULT_EXTENDED_SETTINGS } from '../src/chart/extended-settings.js';
 import { openStore, type Store } from '../src/store/store.js';
 import { People } from '../src/ui/People.js';
@@ -45,11 +46,11 @@ async function mountPeople(): Promise<HTMLElement> {
 async function addPerson(host: HTMLElement): Promise<void> {
   const button = [...host.querySelectorAll('button')].find((candidate) => candidate.textContent === 'Add a person');
   if (button === undefined) throw new Error('fixture bug: no add button');
-  await act(async () => {
+  act(() => {
     button.click();
-    await vi.waitFor(() => {
-      expect(store.state.people.size).toBeGreaterThan(0);
-    });
+  });
+  await actWaitFor(() => {
+    expect(store.state.people.size).toBeGreaterThan(0);
   });
 }
 
@@ -104,8 +105,11 @@ describe('creating a person (#806)', () => {
     writeRulershipChoice('both');
     const host = await mountPeople();
     await addPerson(host);
-    writeDefaultCalculationProfile({ ...DEFAULT_EXTENDED_SETTINGS, houseSystem: 'W' }, 'modern');
-    writeRulershipChoice('modern');
+    // Inside act: People subscribes to both settings and re-renders when they change (#1802).
+    act(() => {
+      writeDefaultCalculationProfile({ ...DEFAULT_EXTENDED_SETTINGS, houseSystem: 'W' }, 'modern');
+      writeRulershipChoice('modern');
+    });
     const [person] = [...store.state.people.values()];
     expect(person?.calculationSettings).toMatchObject({ houseSystem: 'K' });
     expect(person?.rulership).toBe('both');

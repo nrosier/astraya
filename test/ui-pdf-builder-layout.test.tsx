@@ -6,7 +6,7 @@
  */
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { pdfExportMessages } from '../src/ui/pdf-export.messages.js';
 
 vi.mock('../src/ui/EphemerisProviderContext.js', () => {
@@ -41,10 +41,25 @@ vi.mock('../src/ui/PdfAiInterpretationPicker.js', () => ({ PdfAiInterpretationPi
 const { PdfExportBuilder } = await import('../src/ui/PdfExportBuilder.js');
 const { setLocale } = await import('../src/ui/locale.js');
 
+/** Every root a test mounts, unmounted after it (#1802): a root left mounted re-renders on a later setLocale() outside act(). */
+const mounted: { root: ReturnType<typeof createRoot>; container: HTMLElement }[] = [];
+
+afterEach(() => {
+  for (const { root, container } of mounted.splice(0)) {
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  }
+  // After the unmount, so the locale change re-renders nothing (the Dutch test sets 'nl').
+  setLocale('en');
+});
+
 async function render(): Promise<HTMLElement> {
   const container = document.createElement('div');
   document.body.append(container);
   const root = createRoot(container);
+  mounted.push({ root, container });
   await act(async () => {
     root.render(<PdfExportBuilder />);
     await Promise.resolve();
@@ -138,12 +153,8 @@ describe('the Documents page is the PDF builder (#916)', () => {
 
   it('renders the same heading and planned item in Dutch', async () => {
     setLocale('nl');
-    try {
-      const container = await render();
-      expect(container.querySelector('h1')?.textContent).toBe(pdfExportMessages.nl.heading);
-      expect(container.textContent).toContain(pdfExportMessages.nl.consultationNotesPlanned);
-    } finally {
-      setLocale('en');
-    }
+    const container = await render();
+    expect(container.querySelector('h1')?.textContent).toBe(pdfExportMessages.nl.heading);
+    expect(container.textContent).toContain(pdfExportMessages.nl.consultationNotesPlanned);
   });
 });

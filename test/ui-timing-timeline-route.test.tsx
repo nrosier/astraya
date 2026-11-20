@@ -8,6 +8,7 @@
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { describe, expect, it, vi } from 'vitest';
+import { actWaitFor } from './act-wait-for.js';
 import type * as SessionContext from '../src/ui/session-context.js';
 
 vi.mock('../src/ui/EphemerisProviderContext.js', () => ({
@@ -41,7 +42,7 @@ describe('timing timeline route (#776)', () => {
         root.render(<App />);
       });
       // The stub screen is lazy-loaded behind Suspense; its rendering is the settle signal.
-      await vi.waitFor(
+      await actWaitFor(
         () => {
           expect(container.querySelector('[data-testid="timing-timeline-stub"]')).not.toBeNull();
         },

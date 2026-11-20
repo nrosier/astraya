@@ -149,8 +149,10 @@ describe('GlossaryTerm (#456)', () => {
     setLocale('nl');
     const container = document.createElement('div');
     document.body.append(container);
+    // Unmounted at the end (#1802): a root left mounted re-renders on every later setLocale() outside act().
+    const root = createRoot(container);
     await act(async () => {
-      createRoot(container).render(
+      root.render(
         <>
           <GlossaryTerm id="dispositor" />
           <GlossaryTerms terms={['retrograde']} />
@@ -167,6 +169,10 @@ describe('GlossaryTerm (#456)', () => {
     });
     expect(container.textContent).toContain('De planeet die het teken regeert');
     expect(container.querySelector('ul[aria-label="Termen op deze pagina"]')).not.toBeNull();
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
     setLocale('en');
   });
 });

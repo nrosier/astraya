@@ -112,7 +112,6 @@ describe('redundant recovery', () => {
 
 describe('Other version blocks', () => {
   it('renders each fork as its own labelled block with its full text', () => {
-    const root = createRoot(document.createElement('div'));
     const host = document.createElement('div');
     document.body.append(host);
     const mounted = createRoot(host);
@@ -134,7 +133,6 @@ describe('Other version blocks', () => {
     act(() => {
       mounted.unmount();
     });
-    root.unmount();
     host.remove();
   });
 

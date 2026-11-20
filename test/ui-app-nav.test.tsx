@@ -58,7 +58,9 @@ afterEach(() => {
     mounted.container.remove();
     mounted = undefined;
   }
-  setLocale('en');
+  act(() => {
+    setLocale('en');
+  });
 });
 
 async function mount(route: Route): Promise<(next: Route) => Promise<void>> {
@@ -132,7 +134,9 @@ describe('the sidebar sections (#882)', () => {
   });
 
   it('is in Dutch when the language is Dutch', async () => {
-    setLocale('nl');
+    act(() => {
+      setLocale('nl');
+    });
     await mount(parseRoute('#/people'));
     expect(navLinks()).toEqual(['Hulpmiddelen', 'PDF']);
     expect(box().querySelector('nav[aria-label="Hoofdmenu"]')).not.toBeNull();
@@ -221,7 +225,9 @@ describe('the person sections on a route with no person (#914)', () => {
     expect(navLinks()).toContain('Birth record');
     expect(linkNamed('PDF')?.getAttribute('aria-current')).toBe('page');
 
-    setLocale('nl');
+    act(() => {
+      setLocale('nl');
+    });
     await render(parseRoute('#/documents'));
     expect(navLinks()).toContain('Overzicht');
     expect(navLinks()).toContain('Geboortegegevens');
@@ -479,7 +485,9 @@ describe('the person options with no person selected (#1697)', () => {
   afterEach(() => {
     fakeStore.current = undefined;
     window.localStorage.clear();
-    setLocale('en');
+    act(() => {
+      setLocale('en');
+    });
   });
 
   it('shows every person option on the People page, disabled, with the tooltip (en)', async () => {
@@ -495,7 +503,9 @@ describe('the person options with no person selected (#1697)', () => {
   });
 
   it('shows the same options disabled with the Dutch tooltip in Dutch (nl)', async () => {
-    setLocale('nl');
+    act(() => {
+      setLocale('nl');
+    });
     await mount(parseRoute('#/people'));
     expect(disabledPersonLabels()).toEqual(EXPECTED_PERSON_LABELS_NL);
     for (const button of Array.from(box().querySelectorAll<HTMLButtonElement>('nav#app-nav button.disabled'))) {
@@ -516,7 +526,9 @@ describe('the person options with a person selected (#1697)', () => {
   afterEach(() => {
     fakeStore.current = undefined;
     window.localStorage.clear();
-    setLocale('en');
+    act(() => {
+      setLocale('en');
+    });
   });
 
   const personId = 'p-abcdefghijklmnop';
@@ -541,7 +553,9 @@ describe('the person options with a person selected (#1697)', () => {
   });
 
   it('shows the same options enabled in Dutch with no tooltip (nl)', async () => {
-    setLocale('nl');
+    act(() => {
+      setLocale('nl');
+    });
     openStoreWithCompletePerson();
     await mount(parseRoute(`#/people/${personId}/overview`));
     expect(disabledPersonLabels()).toEqual([]);
@@ -585,7 +599,9 @@ describe('no "Return to" heading in the sidebar (#1696)', () => {
     ['a person page', ROUTE_HASHES['person-overview']],
   ])('renders no "Return to" text on %s, in English and in Dutch', async (_name, hash) => {
     for (const locale of ['en', 'nl'] as const) {
-      setLocale(locale);
+      act(() => {
+        setLocale(locale);
+      });
       fakeStore.current = { state: { people: new Map([[ROUTE_PERSON, { displayName: 'Test' }]]) } };
       writeLastPersonId(ROUTE_PERSON);
       await mount(parseRoute(hash));
@@ -642,7 +658,9 @@ describe('the icon rail entries (#1747)', () => {
   afterEach(() => {
     fakeStore.current = undefined;
     window.localStorage.clear();
-    setLocale('en');
+    act(() => {
+      setLocale('en');
+    });
   });
 
   it('gives all 11 entries an icon and an aria-label, with the label as the only text', async () => {
