@@ -25,8 +25,8 @@
 /**
  * @module ArabicParts
  * @purpose Computes Paulus's seven Hermetic lots (Fortune, Spirit, Eros, Necessity, Courage, Victory, Nemesis) and records each lot's cited formula.
- * @conventions General lot formula is base + a - b wrapped to 360; day/night sect reverses the a/b operand order (sectReversingPart); Eros, Necessity, Courage, Victory and Nemesis take the Fortune/Spirit longitudes as inputs; only Paulus's set is implemented (one named authority per lot). LotKey is separate from DerivedPointKey (the corpus vocabulary), so these lots are not in the Derived points table or corpus.
- * @exports arabicPart, sectReversingPart, partOfFortune, partOfSpirit, lotOfEros, lotOfNecessity, lotOfCourage, lotOfVictory, lotOfNemesis, LotKey, LotFormula, LOT_FORMULAS, lotFormulaByKey
+ * @conventions General lot formula is base + a - b wrapped to 360; day/night sect reverses the a/b operand order (sectReversingPart); Eros, Necessity, Courage, Victory and Nemesis take the Fortune/Spirit longitudes as inputs; only Paulus's set is implemented (one named authority per lot). Fortune and Spirit take an optional FortuneFormula: 'sect-reversed' (default, Paulus) or 'same-day-and-night' (Marr, Prediction II, p. 29). LotKey is separate from DerivedPointKey (the corpus vocabulary), so these lots are not in the Derived points table or corpus.
+ * @exports arabicPart, sectReversingPart, FortuneFormula, DEFAULT_FORTUNE_FORMULA, partOfFortune, partOfSpirit, lotOfEros, lotOfNecessity, lotOfCourage, lotOfVictory, lotOfNemesis, LotKey, LotFormula, LOT_FORMULAS, lotFormulaByKey, lotFormulaFor
  */
 import type { Degrees } from '../ephemeris/types.js';
 import type { Sect } from './sect.js';
@@ -50,20 +50,47 @@ export function sectReversingPart(sect: Sect, base: Degrees, dayA: Degrees, dayB
 }
 
 /**
- * Part of Fortune.
- * Day:   Ascendant + Moon - Sun
- * Night: Ascendant + Sun - Moon
+ * How the Part of Fortune (and the Spirit mirror of it) is reckoned.
+ * - `'sect-reversed'`: Paulus, via Brennan, Hellenistic Astrology, Chapter 16, printed p. 525.
+ *   Day: Ascendant + Moon - Sun; night: Ascendant + Sun - Moon.
+ * - `'same-day-and-night'`: Marr, Prediction II (1985), p. 29,
+ *   "Longitude of Moon plus Longitude of ASC minus Longitude of Sun", the same by day and night.
  */
-export function partOfFortune(sect: Sect, ascendant: Degrees, sunLongitude: Degrees, moonLongitude: Degrees): Degrees {
+export type FortuneFormula = 'sect-reversed' | 'same-day-and-night';
+
+/** The default is Paulus's sect-reversed formula, so existing charts are unchanged. */
+export const DEFAULT_FORTUNE_FORMULA: FortuneFormula = 'sect-reversed';
+
+/**
+ * Part of Fortune.
+ * `'sect-reversed'` — Day: Ascendant + Moon - Sun; Night: Ascendant + Sun - Moon.
+ * `'same-day-and-night'` — Ascendant + Moon - Sun by day and by night (Marr, p. 29).
+ */
+export function partOfFortune(
+  sect: Sect,
+  ascendant: Degrees,
+  sunLongitude: Degrees,
+  moonLongitude: Degrees,
+  formula: FortuneFormula = DEFAULT_FORTUNE_FORMULA,
+): Degrees {
+  if (formula === 'same-day-and-night') return arabicPart(ascendant, moonLongitude, sunLongitude);
   return sectReversingPart(sect, ascendant, moonLongitude, sunLongitude);
 }
 
 /**
  * Part of Spirit — the mirror of Fortune, swapping Sun and Moon.
- * Day:   Ascendant + Sun - Moon
- * Night: Ascendant + Moon - Sun
+ * `'sect-reversed'` — Day: Ascendant + Sun - Moon; Night: Ascendant + Moon - Sun.
+ * `'same-day-and-night'` — Ascendant + Sun - Moon by day and by night. Marr gives only
+ * Fortune; this modern Spirit is Astraya's convention, the mirror of Marr's Fortune formula.
  */
-export function partOfSpirit(sect: Sect, ascendant: Degrees, sunLongitude: Degrees, moonLongitude: Degrees): Degrees {
+export function partOfSpirit(
+  sect: Sect,
+  ascendant: Degrees,
+  sunLongitude: Degrees,
+  moonLongitude: Degrees,
+  formula: FortuneFormula = DEFAULT_FORTUNE_FORMULA,
+): Degrees {
+  if (formula === 'same-day-and-night') return arabicPart(ascendant, sunLongitude, moonLongitude);
   return sectReversingPart(sect, ascendant, sunLongitude, moonLongitude);
 }
 
@@ -234,4 +261,38 @@ export const LOT_FORMULAS: readonly LotFormula[] = [
 
 export function lotFormulaByKey(key: string): LotFormula | undefined {
   return LOT_FORMULAS.find((lot) => lot.key === key);
+}
+
+const MARR_AUTHORITY = 'Marr, Prediction II (1985), p. 29';
+
+/**
+ * The displayed formula for a lot under the chosen Fortune formula. Under `'same-day-and-night'`,
+ * Fortune and Spirit show one formula for both sects (no reversal), attributed to Marr for Fortune;
+ * Spirit's modern form is Astraya's convention (see `partOfSpirit`). Every other key, and both
+ * lots under `'sect-reversed'`, return the `LOT_FORMULAS` entry unchanged.
+ */
+export function lotFormulaFor(key: string, formula: FortuneFormula): LotFormula | undefined {
+  const base = lotFormulaByKey(key);
+  if (base === undefined || formula === 'sect-reversed') return base;
+  if (base.key === 'part-of-fortune') {
+    return {
+      ...base,
+      nightFormula: base.dayFormula,
+      reversesBySect: false,
+      authority: MARR_AUTHORITY,
+      source:
+        'Marr, Prediction II (1985), p. 29: "Longitude of Moon plus Longitude of ASC minus Longitude of Sun", the same by day and night. An Astraya option; the Paulus sect-reversed formula is the default.',
+    };
+  }
+  if (base.key === 'part-of-spirit') {
+    return {
+      ...base,
+      nightFormula: base.dayFormula,
+      reversesBySect: false,
+      authority: MARR_AUTHORITY,
+      source:
+        'Astraya convention: the mirror of the Marr Part of Fortune formula, Ascendant + Sun − Moon by day and by night. Marr gives only Fortune.',
+    };
+  }
+  return base;
 }
