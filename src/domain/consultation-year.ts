@@ -1,20 +1,20 @@
 /**
  * The year a consultation reads (#669): the frame an astrologer sets before looking at transits. The profected year
- * and its lord, the firdaria period, the progressed Moon (sign, natal house, phase) and the solar returns either side
- * of now.
+ * and its lord, the firdaria period and its sub-period, the progressed Moon (sign, natal house, phase) and the solar
+ * returns either side of now.
  *
  * Nothing here is a new technique: each fact comes from an existing module (`profections.ts`, `firdaria.ts`,
  * `secondary-progression.ts`, `solar-return.ts`, `lunar-phase.ts`), only gathered for one moment.
  */
 /**
  * @module domain/consultation-year
- * @purpose Gathers the year's frame for the consultation page (#669): profection year and lord, firdaria period, progressed Moon with phase and natal house, and the current and next solar return.
+ * @purpose Gathers the year's frame for the consultation page (#669): profection year and lord, firdaria period and sub-period, progressed Moon with phase and natal house, and the current and next solar return.
  * @conventions Pure aggregation over existing modules; the progressed Moon's house is read in the natal houses (the usual reading), its phase from the progressed Sun; the current solar return is the latest one at or before `nowJd`.
  * @exports ConsultationYear, consultationYear
  */
 import { bodyById, bodyByKey } from '../astrology/bodies.js';
 import { houseOf } from '../astrology/emphasis.js';
-import { firdariaPeriodAt } from '../astrology/firdaria.js';
+import { firdariaPeriodAt, firdariaSubPeriodAt } from '../astrology/firdaria.js';
 import { lunarPhaseOf, type LunarPhaseKey } from '../astrology/lunar-phase.js';
 import type { RulershipChoice } from '../astrology/rulership.js';
 import { signIndex } from '../astrology/signs.js';
@@ -32,6 +32,8 @@ export interface ConsultationYear {
     | { readonly sign: number; readonly house: number; readonly lords: readonly string[]; readonly endJd: JulianDayUT }
     | undefined;
   readonly firdaria: { readonly ruler: string; readonly endJd: JulianDayUT } | undefined;
+  /** The sub-period inside the firdaria period; undefined in a node period (Bonatti gives nodes none). */
+  readonly firdariaSub: { readonly ruler: string; readonly endJd: JulianDayUT } | undefined;
   readonly progressedMoon: {
     readonly sign: number;
     /** In the natal houses; undefined without a known birth time. */
@@ -72,6 +74,7 @@ export async function consultationYear(
     throw new Error('unreachable: a progression always has the Sun and the Moon');
   }
   const firdaria = firdariaPeriodAt(natal.sect, natalJd, nowJd);
+  const firdariaSub = firdariaSubPeriodAt(natal.sect, natalJd, nowJd);
 
   return {
     profection:
@@ -87,6 +90,7 @@ export async function consultationYear(
             endJd: profections.year.endJd,
           },
     firdaria: firdaria === undefined ? undefined : { ruler: firdaria.ruler, endJd: firdaria.endJd },
+    firdariaSub: firdariaSub === undefined ? undefined : { ruler: firdariaSub.ruler, endJd: firdariaSub.endJd },
     progressedMoon: {
       sign: signIndex(progressedMoon.longitude),
       house: timed ? houseOf(progressedMoon.longitude, natal.houses.cusps) : undefined,
