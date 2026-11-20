@@ -105,6 +105,33 @@ test.describe('with the shared people (#799)', () => {
     await expect(page.locator('tr.data-table-row-selected')).toHaveCount(0);
   });
 
+  test('the Hermetic lots card sits after Derived points on Placements, with five lot rows and its source line (#1797)', async () => {
+    test.setTimeout(90_000);
+    await page.setViewportSize({ width: 1600, height: 1000 });
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page, 'Placements');
+    const derived = page.getByRole('table', { name: 'Derived points', exact: true });
+    const lots = page.getByRole('table', { name: 'Hermetic lots', exact: true });
+    await expect(derived).toBeVisible();
+    await expect(lots).toBeVisible();
+    // The card comes after the Derived points table, not before it.
+    const derivedBox = await derived.boundingBox();
+    const lotsBox = await lots.boundingBox();
+    if (derivedBox === null || lotsBox === null) throw new Error('Derived points or Hermetic lots has no layout box');
+    expect(lotsBox.y).toBeGreaterThan(derivedBox.y);
+    // Five lots, in Paulus's order.
+    const rows = lots.locator('tbody tr');
+    await expect(rows).toHaveCount(5);
+    const names = ['Lot of Eros', 'Lot of Necessity', 'Lot of Courage', 'Lot of Victory', 'Lot of Nemesis'];
+    for (const [index, name] of names.entries()) {
+      await expect(rows.nth(index)).toContainText(name);
+    }
+    // The source line is the lot formula's own authority, shown verbatim under the table.
+    await expect(
+      page.getByText('Paulus, Introduction 23 (via Hellenistic astrology, Chapter 16, pp. 525–526)', { exact: true }),
+    ).toBeVisible();
+  });
+
   test('the aspect matrix is a view of its own, and a cell selects its pair on the wheel by mouse and keyboard (#511)', async () => {
     test.setTimeout(90_000);
     await page.setViewportSize({ width: 1600, height: 1000 });
