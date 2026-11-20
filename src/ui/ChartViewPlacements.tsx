@@ -2,7 +2,7 @@
  * @module ChartViewPlacements
  * @purpose Renders the Placements chart view (positions, houses and angles, derived points, fixed stars) and the tables' columns.
  * @conventions Pure move out of ChartView.tsx (#817), and the fixed-stars table moved here from the Aspects view (#815): same markup and strings, no behaviour change; takes the chart data and message bundle as arguments and never imports ChartView or ChartViewAspects.
- * @exports degreeColumns, symbolCell, positionColumns, houseCuspColumns, angleColumns, derivedPointColumns, fixedStarsScopeNoteOf, checkedStarsOf, hasStarSources, fixedStarColumns, renderPositionsTable, renderHousesTable, renderDerivedTable, renderFixedStarsTable, renderPlacementsView
+ * @exports degreeColumns, symbolCell, positionColumns, houseCuspColumns, angleColumns, derivedPointColumns, hermeticLotColumns, fixedStarsScopeNoteOf, checkedStarsOf, hasStarSources, fixedStarColumns, renderPositionsTable, renderHousesTable, renderDerivedTable, renderHermeticLotsTable, renderFixedStarsTable, renderPlacementsView
  */
 import { formatFixed, formatOrb } from './format.js';
 import {
@@ -20,7 +20,10 @@ import {
 } from '../domain/chart-tables.js';
 import { NATAL_FIXED_STARS, type ChartData } from '../domain/chart-compute.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
+import { hermeticLots, type HermeticLotRow } from '../domain/hermetic-lots.js';
+import { degreeParts, type DegreeParts } from '../domain/degree-parts.js';
 import { lotFormulaByKey } from '../astrology/arabic-parts.js';
+import type { Sect } from '../astrology/sect.js';
 import { bodyDisplayName, signDisplayName } from './astro-names.messages.js';
 import type { chartViewMessages } from './ChartView.messages.js';
 import { bodyGlyph, renderGlyph, signGlyph } from '../chart/glyphs.js';
@@ -282,6 +285,34 @@ export function derivedPointColumns(
   ];
 }
 
+/** A Hermetic lot row as the table shows it: its name and the sign/degree parts of its longitude (#1797). */
+export interface HermeticLotTableRow extends HermeticLotRow, DegreeParts {
+  readonly label: string;
+}
+
+/** Columns of the Hermetic lots table (#1797): the formula is the one for the chart's sect (day or night). */
+export function hermeticLotColumns(
+  t: typeof chartViewMessages.en,
+  locale: Locale,
+  sect: Sect,
+): readonly TableColumn<HermeticLotTableRow>[] {
+  return [
+    { key: 'label', label: t.pointLabel, valueOf: (row) => row.label },
+    ...degreeColumns<HermeticLotTableRow>(t, locale),
+    { key: 'house', label: t.houseLabel, valueOf: (row) => row.house ?? '' },
+    {
+      key: 'formula',
+      label: t.lotFormulaLabel,
+      labelHelp: { text: t.lotFormulaTooltip },
+      valueOf: (row) => {
+        const formula = lotFormulaByKey(row.key);
+        if (formula === undefined) return '';
+        return sect === 'day' ? formula.dayFormula : formula.nightFormula;
+      },
+    },
+  ];
+}
+
 /** The Positions table (and the station-window note), one case of the old `renderTableTab`. */
 export function renderPositionsTable(
   data: ChartData,
@@ -311,6 +342,36 @@ export function renderPositionsTable(
       />
       {/* With the station window on (#724), say what the St. markers are: the window is an Astraya convention. */}
       {data.stationStates !== undefined && <p className="hint">{t.stationWindowNote}</p>}
+    </>
+  );
+}
+
+/**
+ * The Hermetic lots table (#1797), a card of the Placements view after the Derived points. Empty (no card) when
+ * no lot has a position. The source line is the lot formula's own `authority`, shown verbatim.
+ */
+export function renderHermeticLotsTable(
+  data: ChartData,
+  displayName: string,
+  t: typeof chartViewMessages.en,
+  locale: Locale,
+): React.ReactNode {
+  const rows: readonly HermeticLotTableRow[] = hermeticLots(data).map((row) => ({
+    ...row,
+    label: t.hermeticLotNames[row.key],
+    ...degreeParts(row.longitude),
+  }));
+  if (rows.length === 0) return null;
+  return (
+    <>
+      <SortableTable
+        caption={t.hermeticLotsCaption}
+        columns={hermeticLotColumns(t, locale, data.sect)}
+        rows={rows}
+        getRowKey={(row) => row.key}
+        downloadFilename={deriveExportFilename(displayName, 'hermetic-lots', 'csv')}
+      />
+      <p className="hint">{lotFormulaByKey('lot-of-eros')?.authority ?? ''}</p>
     </>
   );
 }
@@ -481,6 +542,7 @@ export function renderPlacementsView(
         <>
           {renderHousesTable(data, displayName, pointVisibility, t, locale, selection)}
           {renderDerivedTable(data, displayName, pointVisibility, t, locale, selection)}
+          {renderHermeticLotsTable(data, displayName, t, locale)}
         </>
       )}
       {renderFixedStarsTable(data, displayName, pointVisibility, t, locale)}
