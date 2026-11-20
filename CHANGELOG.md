@@ -37,7 +37,7 @@ feature and fixes is a minor release. See [docs/ops/RELEASING.md](docs/ops/RELEA
 
 ### Documentation
 
-- **`.env.example` says the easter-egg digests can be reversed (#1808).**
+- **The easter-egg digests can be reversed (#1808),** as `.env.example` now says.
 - **A security, quality and astrology review (2026-11-20)** is in `docs/audit/`, with its findings filed as #1806-#1810.
 - **The rectification orbs record Marr's stricter 4′ limit (#1606),** beside the cited 1°.
 
