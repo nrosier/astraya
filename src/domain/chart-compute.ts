@@ -34,7 +34,7 @@ import { materializeCustomPoints, type ComputedCustomPoint } from './custom-poin
 import type { ChosenFixedStar, CustomPointDefinition } from './person.js';
 import type { EssentialDignities } from '../astrology/dignities.js';
 import { DEFAULT_RULERSHIP_CHOICE, essentialDignitiesFor, type RulershipChoice } from '../astrology/rulership.js';
-import { partOfFortune, partOfSpirit } from '../astrology/arabic-parts.js';
+import { partOfFortune, partOfSpirit, type FortuneFormula } from '../astrology/arabic-parts.js';
 import { sectOf, type Sect } from '../astrology/sect.js';
 import { isWithinStationWindow, stationTypeOf, type StationType } from '../astrology/planetary-condition.js';
 import { julianDayFor } from '../time/julian.js';
@@ -116,6 +116,8 @@ export interface ChartCalculationOptions extends BodySetOptions {
   readonly lilithVariant?: 'mean' | 'true' | 'interpolated';
   /** Which lunar-node model `data.positions` carries; the other is dropped. Default 'mean'. */
   readonly nodeVariant?: 'mean' | 'true';
+  /** Part of Fortune / Spirit day-night formula (#1794). Default 'sect-reversed' (Paulus). */
+  readonly fortuneFormula?: FortuneFormula;
   /** Persisted user formulas materialized as chart points after the ephemeris calculation (#566). */
   readonly customPoints?: readonly CustomPointDefinition[];
   /**
@@ -204,6 +206,7 @@ async function anglePointLongitudesAfter(
   sunId: BodyId,
   moonId: BodyId,
   sect: Sect,
+  fortuneFormula: FortuneFormula | undefined,
 ): Promise<{
   readonly ascendant: Degrees;
   readonly midheaven: Degrees;
@@ -225,8 +228,8 @@ async function anglePointLongitudesAfter(
     ascendant: housesAfter.ascendant,
     midheaven: housesAfter.midheaven,
     vertex: housesAfter.vertex,
-    partOfFortune: partOfFortune(sect, housesAfter.ascendant, sunAfter.longitude, moonAfter.longitude),
-    partOfSpirit: partOfSpirit(sect, housesAfter.ascendant, sunAfter.longitude, moonAfter.longitude),
+    partOfFortune: partOfFortune(sect, housesAfter.ascendant, sunAfter.longitude, moonAfter.longitude, fortuneFormula),
+    partOfSpirit: partOfSpirit(sect, housesAfter.ascendant, sunAfter.longitude, moonAfter.longitude, fortuneFormula),
   };
 }
 
@@ -554,8 +557,20 @@ export async function computeChartDataAtJd(
   }
 
   const sect = sectOf(sunPosition.longitude, houses.ascendant);
-  const partOfFortuneLongitude = partOfFortune(sect, houses.ascendant, sunPosition.longitude, moonPosition.longitude);
-  const partOfSpiritLongitude = partOfSpirit(sect, houses.ascendant, sunPosition.longitude, moonPosition.longitude);
+  const partOfFortuneLongitude = partOfFortune(
+    sect,
+    houses.ascendant,
+    sunPosition.longitude,
+    moonPosition.longitude,
+    options.fortuneFormula,
+  );
+  const partOfSpiritLongitude = partOfSpirit(
+    sect,
+    houses.ascendant,
+    sunPosition.longitude,
+    moonPosition.longitude,
+    options.fortuneFormula,
+  );
   const plusOfFortune = sect === 'day' ? moon.id : sun.id;
   const plusOfSpirit = sect === 'day' ? sun.id : moon.id;
 
@@ -575,6 +590,7 @@ export async function computeChartDataAtJd(
         sun.id,
         moon.id,
         sect,
+        options.fortuneFormula,
       )
     : undefined;
   // Named once so both `points` (below) and `ChartData.anglePointSpeeds` (returned at the bottom,

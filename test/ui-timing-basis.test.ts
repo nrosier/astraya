@@ -57,4 +57,9 @@ describe('timing basis items (#1059)', () => {
       '±1° boog',
     ]);
   });
+
+  it('names the true-solar-arc key in en and nl (#1795)', () => {
+    expect(en.directionKeys['true-solar-arc']).toBe('True solar arc in RA key');
+    expect(nl.directionKeys['true-solar-arc']).toBe('Ware zonneboog in RK-sleutel');
+  });
 });
