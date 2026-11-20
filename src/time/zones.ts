@@ -25,8 +25,7 @@
  * @conventions Standard time zones are treated as nonexistent before 1880 (`STANDARD_TIME_FROM_YEAR`); LMT is preferred over tzdb only when the tzdb offset is non-integral, since a whole-minute offset means a real legislated standard time existed.
  * @exports lookupZone, isFixedOffsetZone, zoneOffsetMinutes, localMeanTimeOffsetMinutes, useLocalMeanTime, offsetCandidates, offsetDisagreesNearby, tzdbFingerprint, STANDARD_TIME_FROM_YEAR
  */
-import tzlookup from '@photostructure/tz-lookup';
-import { IANAZone } from 'luxon';
+import { luxonModule, zoneLookupModule } from './zone-data.js';
 import type { CivilDateTime, Coordinates } from './types.js';
 
 /**
@@ -36,9 +35,12 @@ import type { CivilDateTime, Coordinates } from './types.js';
  */
 export const STANDARD_TIME_FROM_YEAR = 1880;
 
-/** IANA zone for a coordinate. Never throws — open water yields an `Etc/*` zone. */
+/**
+ * IANA zone for a coordinate. Open water yields an `Etc/*` zone rather than an error. Throws `TimeDataNotReadyError`
+ * until `loadZoneData` (zone-data) has resolved.
+ */
 export function lookupZone(coordinates: Coordinates): string {
-  return tzlookup(clampLatitude(coordinates.latitude), wrapLongitude(coordinates.longitude));
+  return zoneLookupModule()(clampLatitude(coordinates.latitude), wrapLongitude(coordinates.longitude));
 }
 
 /**
@@ -61,7 +63,7 @@ export function isFixedOffsetZone(zone: string): boolean {
 
 /** Offset in minutes east of UTC that `zone` was on at `instant` (epoch ms). */
 export function zoneOffsetMinutes(zone: string, instant: number): number {
-  return IANAZone.create(zone).offset(instant);
+  return luxonModule().IANAZone.create(zone).offset(instant);
 }
 
 /**
