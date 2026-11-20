@@ -36,9 +36,9 @@
  * @exports RotationResult, rotateEncryptionKey
  */
 import { resolve } from 'node:path';
-import { planTotpRotation } from '../auth/totp-store.ts';
 import { openDatabase, type Database } from '../db.ts';
 import { decryptPayload, encryptPayload } from './crypto.ts';
+import { planTotpRotation } from './rotate-totp.ts';
 
 interface EncryptedRow {
   readonly seq: number;
