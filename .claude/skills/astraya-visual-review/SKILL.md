@@ -1,6 +1,6 @@
 ---
 name: astraya-visual-review
-description: Hands a finished, merged UI batch to the owner for visual sign-off. Use when UI issues on main are waiting for the owner's 1920x1080 and 1280x800 light and dark check, or when the user asks for a visual review, a screenshot review, or a sign-off page. Builds main, captures the screens, produces the review page, uploads it to claude.ai/artifacts, and records each verdict on its issue.
+description: Hands a finished, merged UI batch to the owner for visual sign-off. Use when UI issues on main are waiting for the owner's 390x844, 1280x800 and 3440x1440 light and dark check, or when the user asks for a visual review, a screenshot review, or a sign-off page. Builds main, captures the screens, produces the review page, uploads it to claude.ai/artifacts, and records each verdict on its issue.
 ---
 
 # Astraya Visual Review
@@ -9,7 +9,7 @@ Use this to hand merged UI work to the owner for their own look. It is the agent
 
 The owner judges the screenshots. A coder never ticks the visual box from its own look.
 
-**Size mismatch to resolve before a handoff.** The owner's current sign-off on open issues is 1920x1080 and 1280x800, in light and dark. `docs/ops/VISUAL-REVIEW.md` and `e2e/visual-review.spec.ts` still capture 390x844, 1280x800 and 3440x1440. Until the process doc and the capture spec agree with the owner, confirm which sizes to capture with the user. Do not silently pick one set.
+**Sizes.** Capture 390x844, 1280x800 and 3440x1440, in light and dark (owner decision, #1747/#1770, 2026-11-20). `docs/ops/VISUAL-REVIEW.md`, `e2e/visual-review.spec.ts` and the issue boxes all use these. If an issue's box names other sizes, ask the owner before capturing.
 
 **Screen list is local and temporary.** `e2e/visual-review-screens.json` is git-ignored and never committed. It is `[]` when no review is needed. Fill it locally for a review, and reset it to `[]` afterwards. Report any waiting issue that no screen covers, rather than inventing one.
 
@@ -18,7 +18,7 @@ The owner judges the screenshots. A coder never ticks the visual box from its ow
 Run the steps in order. Stop at the first step that fails and report why.
 
 1. **Find what is waiting.** List open issues whose body has an unticked sign-off box:
-   `gh issue list --state open --json number` then, per issue, `gh issue view <N> --json body -q .body | grep -E '^- \[ \].*(visual sign-off|Checked at|1920x1080|1280x800)'`.
+   `gh issue list --state open --json number` then, per issue, `gh issue view <N> --json body -q .body | grep -E '^- \[ \].*(visual sign-off|visual check|Checked at|3440x1440|1280x800)'`.
    Keep only issues whose fix is merged to main. A box on an unmerged issue is not ready for review.
 
 2. **Build main in a clean worktree.** Use a detached worktree of `origin/main`, never the main checkout. Run `npm ci`, `npm run ephe:sync`, `npm run corpus:split`, `npm run build`. Without `corpus:split` the Interpretation screen fails to load, which is a capture problem, not a defect.
