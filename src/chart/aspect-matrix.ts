@@ -222,14 +222,7 @@ export function renderAspectMatrixSvg(
     if (definition) {
       return renderGlyph(definition, cx, cy, glyphSize, `chart-glyph chart-glyph-${body.key}`) + retrograde;
     }
-    return text(
-      cx,
-      cy + baselineOffset(labelFontSize),
-      'middle',
-      'chart-matrix-label',
-      escapeXml(body.label),
-      labelFontSize,
-    );
+    return text(cx, cy + baselineOffset(labelFontSize), 'middle', 'chart-matrix-label', body.label, labelFontSize);
   }
 
   const parts: string[] = [];
@@ -259,7 +252,7 @@ export function renderAspectMatrixSvg(
         centerY + baselineOffset(nameFont),
         'start',
         'chart-matrix-name',
-        escapeXml(rowBody.name),
+        rowBody.name,
         nameFont,
       ),
       text(

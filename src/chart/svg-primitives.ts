@@ -15,8 +15,8 @@
 /**
  * @module chart/svg-primitives
  * @purpose The shared low-level SVG element builders (`line`, `circle`, `rect`, `polygon`, `polyline`, `text`) and XML-escaping/baseline helpers every renderer in `src/chart/` uses, replacing what used to be near-identical per-file copies.
- * @conventions No colour is ever emitted — every builder takes only a CSS class name, matching the directory-wide convention that styling lives in `app.css` (or `standalone-svg.ts` for exports); coordinates are formatted to two decimals (`fmt`) for sub-pixel accuracy without bloating markup; `escapeXml` escapes for both text-node and double-quoted-attribute contexts since generated markup reaches the DOM via `dangerouslySetInnerHTML`; `baselineOffset` compensates for SVG's baseline (not middle) text anchoring since `dominant-baseline` is unreliable across SVG-to-raster converters.
- * @exports fmt, line, circle, rect, polygon, polyline, text, escapeXml, baselineOffset; TextAnchor type.
+ * @conventions No colour is ever emitted — every builder takes only a CSS class name, matching the directory-wide convention that styling lives in `app.css` (or `standalone-svg.ts` for exports); coordinates are formatted to two decimals (`fmt`) for sub-pixel accuracy without bloating markup; `text` escapes its `content` itself via `escapeText` (`&`, `<`, `>` only — a text node, so quotes stay literal and minute-label apostrophes keep their bytes), so callers pass raw strings and never pre-escape; `escapeXml` escapes for both text-node and double-quoted-attribute contexts since generated markup reaches the DOM via `dangerouslySetInnerHTML`; `baselineOffset` compensates for SVG's baseline (not middle) text anchoring since `dominant-baseline` is unreliable across SVG-to-raster converters.
+ * @exports fmt, line, circle, rect, polygon, polyline, text, escapeText, escapeXml, baselineOffset; TextAnchor type.
  */
 
 /** Two decimals: enough for sub-pixel accuracy at any export size, short enough to keep the markup readable. */
@@ -66,6 +66,7 @@ export function polyline(points: readonly { readonly x: number; readonly y: numb
 
 export type TextAnchor = 'start' | 'middle' | 'end';
 
+/** Draws a text element. `content` is plain text and is escaped here (`escapeText`); never pass pre-escaped or markup content. */
 export function text(
   x: number,
   y: number,
@@ -80,7 +81,17 @@ export function text(
   // HTML `title` attribute for raw SVG markup (#456's wheel audit: the retrograde "R" mark
   // had no accessible explanation at all, unlike its table counterpart's `labelHelp`).
   const titleChild = title === undefined ? '' : `<title>${escapeXml(title)}</title>`;
-  return `<text x="${fmt(x)}" y="${fmt(y)}" text-anchor="${anchor}"${size} class="${className}">${content}${titleChild}</text>`;
+  return `<text x="${fmt(x)}" y="${fmt(y)}" text-anchor="${anchor}"${size} class="${className}">${escapeText(content)}${titleChild}</text>`;
+}
+
+/**
+ * Escape a string for use as an SVG/XML text node: `&`, `<` and `>` only (`&` first so
+ * the others are not double-escaped). Quotes only matter inside attribute values, so
+ * they are left literal; that keeps labels such as the minute mark `22'` byte-identical.
+ * Use `escapeXml` for anything that lands in an attribute.
+ */
+export function escapeText(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 /**
