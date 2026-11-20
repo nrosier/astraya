@@ -33,6 +33,7 @@ import type { ExtendedSettings } from '../chart/extended-settings.js';
 import {
   decodeCalculationSnapshot,
   decodeStrictExtendedSettings,
+  normalizeFortuneFormula,
   SnapshotDecodeError,
 } from './calculation-snapshot.js';
 import { readLifeEvents, type LifeEvent } from './life-events.js';
@@ -450,7 +451,10 @@ export function serializeRulership(rulership: RulershipChoice): JsonValue {
  */
 export function serializeCalculationSettings(settings: ExtendedSettings): JsonValue {
   // Pinned at 3 (#860): the register holds settings only, and its shape did not change when the snapshot moved to 4.
-  return JSON.parse(JSON.stringify({ version: SETTINGS_REGISTER_VERSION, settings })) as JsonValue;
+  // The Fortune formula's default is absent from a register too (#1794), via the same normalizer the snapshot uses.
+  return JSON.parse(
+    JSON.stringify({ version: SETTINGS_REGISTER_VERSION, settings: normalizeFortuneFormula(settings) }),
+  ) as JsonValue;
 }
 
 /**

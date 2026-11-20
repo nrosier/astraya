@@ -37,6 +37,11 @@ describe('DEFAULT_EXTENDED_SETTINGS', () => {
     expect(DEFAULT_EXTENDED_SETTINGS.midpointTreeOrb).toBe(1);
     expect(DEFAULT_EXTENDED_SETTINGS.rainbowZodiac).toBe(false);
   });
+
+  it('leaves the Fortune formula absent in the defaults, so the default is the Hellenistic sect-reversed rule and no snapshot changes (#1794)', () => {
+    expect('fortuneFormula' in DEFAULT_EXTENDED_SETTINGS).toBe(false);
+    expect(toChartCalculationOptions(DEFAULT_EXTENDED_SETTINGS).fortuneFormula).toBe('sect-reversed');
+  });
 });
 
 describe('toChartCalculationOptions', () => {
@@ -52,6 +57,16 @@ describe('toChartCalculationOptions', () => {
     expect(options.zodiac).toEqual({ kind: 'sidereal', ayanamsa: 1 });
     expect(options.lilithVariant).toBe('true');
     expect(options.nodeVariant).toBe('true');
+  });
+
+  it('carries the Fortune formula to the calculation for both values (#1794)', () => {
+    expect(toChartCalculationOptions(DEFAULT_EXTENDED_SETTINGS).fortuneFormula).toBe('sect-reversed');
+    expect(toChartCalculationOptions(withOverrides({ fortuneFormula: 'sect-reversed' })).fortuneFormula).toBe(
+      'sect-reversed',
+    );
+    expect(toChartCalculationOptions(withOverrides({ fortuneFormula: 'same-day-and-night' })).fortuneFormula).toBe(
+      'same-day-and-night',
+    );
   });
 
   it('passes the interpolated Lilith variant through too (#380)', () => {

@@ -91,4 +91,24 @@ describe('prenatalSyzygy (#1798)', () => {
     const sunAbove = (((result.sunLongitude - houses.ascendant) % 360) + 360) % 360 >= 180;
     expect(result.degree).toBeCloseTo(sunAbove ? result.sunLongitude : result.moonLongitude, 9);
   });
+
+  // Measured on origin/main (7a6410a5) with the Lahiri mode (SE_SIDM_LAHIRI = 1), for birth one minute after the
+  // 1879-03-14 New Moon (JD 2407401.668968): tropical Moon 332.19287726, sidereal Moon 310.01921025, ayanamsa
+  // 22.17366702 at the syzygy instant. The sidereal degree is the sidereal Moon, and equals the tropical one less the ayanamsa.
+  it('a sidereal chart: the conjunction degree is the sidereal Moon, the tropical one less the ayanamsa (#1798)', async () => {
+    const engine = await getEngine();
+    const newMoon = (await marchLunations(engine)).find((event) => event.kind === 'new');
+    const birthJd = (newMoon?.jd ?? 0) + ONE_MINUTE_DAYS;
+    const sidereal = { kind: 'sidereal' as const, ayanamsa: 1 };
+    const tropical = await prenatalSyzygy(engine, birthJd, ULM);
+    const siderealResult = await prenatalSyzygy(engine, birthJd, ULM, 'P', sidereal);
+    expect(siderealResult.kind).toBe('conjunction');
+    expect(siderealResult.jd).toBeCloseTo(tropical.jd, 6);
+    const siderealMoon = await engine.position(siderealResult.jd, bodyId('moon'), { zodiac: sidereal });
+    expect(siderealResult.degree).toBeCloseTo(siderealMoon.longitude, 6);
+    expect(siderealResult.degree).toBeCloseTo(310.01921025, 4);
+    const ayanamsa = await engine.ayanamsa(tropical.jd, 1);
+    expect(ayanamsa).toBeCloseTo(22.17366702, 4);
+    expect((tropical.degree ?? 0) - (siderealResult.degree ?? 0)).toBeCloseTo(ayanamsa, 2);
+  });
 });
