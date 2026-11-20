@@ -39,6 +39,18 @@ describe('true-solar-arc time key (pure layer)', () => {
     }
   });
 
+  it('times a negative (converse) arc by its absolute value under true-solar-arc', () => {
+    expect(arcToYears(-16.1, 'true-solar-arc', oneDegreeADay)).toBe(16.1);
+    expect(arcToYears(-45.54, 'true-solar-arc', oneDegreeADay)).toBe(45.54);
+  });
+
+  it('times a negative arc by its absolute value under the fixed keys, as under true-solar-arc (#1603)', () => {
+    for (const key of ['naibod', 'ptolemy'] as const) {
+      expect(arcToYears(-16.1, key)).toBe(arcToYears(16.1, key));
+      expect(arcToYears(-0.5, key)).toBeCloseTo(0.5 / TIME_KEY_DEGREES_PER_YEAR[key], 12);
+    }
+  });
+
   it('leaves the fixed keys unchanged with and without a clock', () => {
     for (const key of ['naibod', 'ptolemy'] as const) {
       const perYear = TIME_KEY_DEGREES_PER_YEAR[key];
