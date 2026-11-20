@@ -57,9 +57,10 @@ export interface ExtendedSettings {
   readonly lilithVariant: 'mean' | 'true' | 'interpolated';
   readonly nodeVariant: 'mean' | 'true';
   /**
-   * Part of Fortune / Spirit day-night formula (#1794). Absent means the default `DEFAULT_FORTUNE_FORMULA`
-   * (`'sect-reversed'`, Paulus); the field is set only for `'same-day-and-night'` (Marr), so every default
-   * settings bag, snapshot, and register stays byte-identical to what it was before the field existed.
+   * Part of Fortune / Spirit day-night formula (#1794). The stored value is either absent or `'same-day-and-night'`
+   * (Marr): absent is the default `DEFAULT_FORTUNE_FORMULA` (`'sect-reversed'`, Paulus). The type is `FortuneFormula`,
+   * so `'sect-reversed'` is accepted on input; `normalizeFortuneFormula` (calculation-snapshot) removes it before any
+   * snapshot, identity, artifact hash or register sees it.
    */
   readonly fortuneFormula?: FortuneFormula;
   /**

@@ -17,7 +17,7 @@
  * @module domain/calculation-snapshot
  * @purpose Defines a versioned, fully-validated CalculationSnapshot (settings, rulership, custom points and chosen fixed stars) and the pure functions that build/parse/serialize one.
  * @conventions `version` is bumped only when the *shape* a snapshot must satisfy changes incompatibly; `parseCalculationSnapshot` never throws — an invalid or missing field is filled from the documented app defaults, the same defaults a never-customized chart already shows (for a device's own saved default); `decodeCalculationSnapshot` is the strict, version-dispatched gate for payloads from outside the device (#717) and refuses rather than repairs; strict validation checks registered house systems, aspect keys, and bounds schemes against canonical registries.
- * @exports CURRENT_SNAPSHOT_VERSION, MAX_SNAPSHOT_FIXED_STARS, decodeStrictExtendedSettings, CalculationSnapshot, buildCalculationSnapshot, snapshotCalculationOptions, calculationSnapshotIdentity, parseCalculationSnapshot, decodeCalculationSnapshot, SnapshotDecodeError, SNAPSHOT_ORB_SCALE_RANGE, calculationSnapshotToJson
+ * @exports CURRENT_SNAPSHOT_VERSION, MAX_SNAPSHOT_FIXED_STARS, decodeStrictExtendedSettings, CalculationSnapshot, buildCalculationSnapshot, snapshotCalculationOptions, calculationSnapshotIdentity, parseCalculationSnapshot, decodeCalculationSnapshot, SnapshotDecodeError, SNAPSHOT_ORB_SCALE_RANGE, calculationSnapshotToJson, normalizeFortuneFormula
  */
 import {
   DEFAULT_EXTENDED_SETTINGS,
@@ -138,7 +138,13 @@ export function buildCalculationSnapshot(
   customPoints: readonly CustomPointDefinition[] = [],
   fixedStars: readonly ChosenFixedStar[] = [],
 ): CalculationSnapshot {
-  return { version: CURRENT_SNAPSHOT_VERSION, settings, rulership, customPoints, fixedStars };
+  return {
+    version: CURRENT_SNAPSHOT_VERSION,
+    settings: normalizeFortuneFormula(settings),
+    rulership,
+    customPoints,
+    fixedStars,
+  };
 }
 
 /**
@@ -350,8 +356,6 @@ function parseExtendedSettings(value: unknown): ExtendedSettings {
       ? value.lilithVariant
       : d.lilithVariant,
     nodeVariant: isOneOf(value.nodeVariant, ['mean', 'true'] as const) ? value.nodeVariant : d.nodeVariant,
-    // Present only when non-default (#1794): an absent field is the default, so a default bag serializes as before.
-    ...(value.fortuneFormula === 'same-day-and-night' ? { fortuneFormula: 'same-day-and-night' as const } : {}),
     objectPolicies: parseObjectPolicies(value.objectPolicies, value),
     // An absent or invalid rules bag is simply no rules: the same result a never-customized chart
     // has. Validation happens here, so a snapshot's orb rules are always well-formed when used.
@@ -367,7 +371,20 @@ function parseExtendedSettings(value: unknown): ExtendedSettings {
     // Both absent unless on: an absent field is the off state, so an old bag and an off one read back identically (#724).
     ...parseStationWindow(value.stationWindow),
     ...(value.motionScore === true ? { motionScore: true } : {}),
+    // Last, beside motionScore (#1794): the non-default value only, so a default bag is unchanged and key order is fixed.
+    ...(value.fortuneFormula === 'same-day-and-night' ? { fortuneFormula: 'same-day-and-night' as const } : {}),
   };
+}
+
+/**
+ * The one normalizer for the Fortune formula (#1794): the default (`DEFAULT_FORTUNE_FORMULA`) is stored as absent, so an
+ * explicit default never reaches the snapshot identity, an artifact hash or a register. Used by every writer.
+ */
+export function normalizeFortuneFormula(settings: ExtendedSettings): ExtendedSettings {
+  if (settings.fortuneFormula !== DEFAULT_FORTUNE_FORMULA) return settings;
+  const copy = { ...settings };
+  delete copy.fortuneFormula;
+  return copy;
 }
 
 /**
@@ -569,7 +586,6 @@ export function decodeCalculationSnapshot(value: unknown): CalculationSnapshot {
 export function calculationSnapshotToJson(snapshot: CalculationSnapshot): Record<string, JsonValue> {
   if (snapshot.fixedStars.length > MAX_SNAPSHOT_FIXED_STARS) throw fixedStarCapError(snapshot.fixedStars.length);
   // The default Fortune formula is omitted (#1794), so a default chart serializes byte for byte as it did before the field existed.
-  const settings = { ...snapshot.settings };
-  if (settings.fortuneFormula === DEFAULT_FORTUNE_FORMULA) delete settings.fortuneFormula;
+  const settings = normalizeFortuneFormula(snapshot.settings);
   return JSON.parse(JSON.stringify({ ...snapshot, settings })) as Record<string, JsonValue>;
 }

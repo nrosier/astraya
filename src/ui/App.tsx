@@ -8,6 +8,7 @@ import { DocumentTitle } from './document-title.js';
 import { lazy, Suspense, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { registerServiceWorker } from '../pwa/register.js';
 import { startWarming } from '../pwa/warm-status.js';
+import { loadZoneData } from '../time/zone-data.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { AccountPanel } from './AccountPanel.js';
 import { appMessages } from './App.messages.js';
@@ -188,7 +189,15 @@ function AppShell(): React.JSX.Element {
   const { provider, error: engineError } = useEphemerisProvider();
   const [seVersion, setSeVersion] = useState<string>();
   const [versionError, setVersionError] = useState<string>();
-  const engineStatus = engineError ?? versionError ?? (seVersion === undefined ? t.loadingEphemeris : 'ready');
+  // The time-zone data (#1794): every chart path reaches the synchronous time functions through the shell, so the
+  // shell waits for this load before it renders a screen. Not a new message: the same "loading" line as the ephemeris.
+  const [zoneDataLoaded, setZoneDataLoaded] = useState(false);
+  const [zoneDataError, setZoneDataError] = useState<string>();
+  const engineStatus =
+    engineError ??
+    versionError ??
+    zoneDataError ??
+    (seVersion === undefined || !zoneDataLoaded ? t.loadingEphemeris : 'ready');
   const isFirstRoute = useRef(true);
   const routePath = route.split('?')[0] ?? route;
   // The whole route (with its query) as it is when the effect below runs; the effect itself follows the path only.
@@ -258,6 +267,21 @@ function AppShell(): React.JSX.Element {
   }, [routePath]);
 
   useEffect(() => {
+    let cancelled = false;
+    loadZoneData().then(
+      () => {
+        if (!cancelled) setZoneDataLoaded(true);
+      },
+      (error: unknown) => {
+        if (!cancelled) setZoneDataError(failureText(error));
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     if (provider === undefined) return undefined;
     // A mutable holder rather than a `let`: TypeScript narrows a closed-over
     // boolean to its initial literal, which makes the guards below look dead.
@@ -311,7 +335,8 @@ function AppShell(): React.JSX.Element {
   }, []);
 
   const parsed = parseRoute(route);
-  const screen = renderScreen(parsed, seVersion);
+  // No screen (and so no chart) mounts before the zone data is ready (#1794); until then the loading line stands in.
+  const screen = zoneDataLoaded ? renderScreen(parsed, seVersion) : <LoadingScreen />;
   const toolKey = activeToolKey(parsed);
   // The last chart screen of a person, for "continue where you left off" on their Overview (#1173).
   useEffect(() => {

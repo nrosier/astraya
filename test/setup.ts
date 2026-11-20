@@ -6,8 +6,16 @@
  * APIs have to be supplied here.
  */
 import { installFileFetch } from '../scripts/node-file-fetch.mjs';
+import { loadZoneData } from '../src/time/zone-data.js';
 
 installFileFetch();
+
+/**
+ * The time-zone data (#1794) is loaded once, before any test runs, the same way the app shell loads it before the
+ * first chart. The synchronous time functions throw until it resolves, so every test file gets it here rather than
+ * awaiting it individually.
+ */
+await loadZoneData();
 
 /**
  * IndexedDB, via `fake-indexeddb`.

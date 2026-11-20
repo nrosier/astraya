@@ -43,6 +43,29 @@ function precacheManifest(base: string): Plugin {
 }
 
 /**
+ * Writes a per-chunk module breakdown to `ASTRAYA_METAFILE` (a path outside the repo, set by the caller) when
+ * that variable is present. Read-only: it reads the rendered bundle and emits nothing into `dist/`, so the
+ * bundle and the eager-graph gate are unaffected.
+ */
+function moduleSizeReport(): Plugin {
+  return {
+    name: 'astraya-module-size-report',
+    writeBundle(_options, bundle) {
+      const target = process.env.ASTRAYA_METAFILE;
+      if (target === undefined) return;
+      const report: Record<string, { bytes: number; modules: Record<string, number> }> = {};
+      for (const [fileName, chunk] of Object.entries(bundle)) {
+        if (chunk.type !== 'chunk') continue;
+        const modules: Record<string, number> = {};
+        for (const [id, info] of Object.entries(chunk.modules)) modules[id] = info.renderedLength;
+        report[fileName] = { bytes: Buffer.byteLength(chunk.code), modules };
+      }
+      writeFileSync(target, JSON.stringify(report));
+    },
+  };
+}
+
+/**
  * `public/manifest.webmanifest` is a static, committed JSON file — it isn't part
  * of the HTML asset graph Vite's `base` rewriting covers, so its root-absolute
  * `id`/`start_url`/`scope`/icon `src` fields need a manual pass when serving
@@ -77,7 +100,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     base,
-    plugins: [react(), precacheManifest(base), patchManifestBase(base)],
+    plugins: [react(), precacheManifest(base), patchManifestBase(base), moduleSizeReport()],
     define: {
       __APP_VERSION__: JSON.stringify(pkg.version),
       __APP_COMMIT__: JSON.stringify(commitSha()),
