@@ -573,3 +573,60 @@ test('capture the #1747 and #1770 screens', async ({ browser }) => {
   await footer.click();
   await app.close();
 });
+
+/**
+ * #1834 (the Progressions controls no longer push the phone page sideways), #1798 (the prenatal syzygy row on the
+ * chart's Patterns & condition tab) and #1802 (Composite and Synastry, whose control rows moved from <p> to <div>).
+ */
+test('capture the #1798, #1802 and #1834 screens', async ({ browser }) => {
+  test.setTimeout(300_000);
+  mkdirSync(OUT ?? '', { recursive: true });
+  process.env.LOG_LEVEL = 'silent';
+  const app = await build({ dbPath: join(mkdtempSync(join(tmpdir(), 'visual-review-')), 'astraya.db') });
+  await app.listen({ port: 0, host: '127.0.0.1' });
+  const address = app.server.address();
+  if (address === null || typeof address === 'string') throw new Error('server did not bind to a port');
+  const baseUrl = `http://127.0.0.1:${String(address.port)}`;
+  const page = await (await newSeededContext(browser, baseUrl)).newPage();
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+
+  // #1834: Progressions with its Technique, MC method and Contacts-to row in view.
+  await page.getByRole('link', { name: 'Progressions & Directions', exact: true }).first().click();
+  await page.getByRole('tab', { name: 'Progressions', exact: true }).click();
+  await page.getByRole('table', { name: 'Progressed positions' }).waitFor({ timeout: 60_000 });
+  // The phone shot is the whole page, taken from the top: a scrolled full-page shot draws the sticky header mid-page,
+  // and the hidden skip link just above it shows up in the capture though no one can see it on a phone.
+  const atTopOnPhone = async (scrollTo: () => Promise<void>): Promise<void> => {
+    if ((page.viewportSize()?.width ?? 0) <= 390) await page.evaluate('window.scrollTo(0, 0)');
+    else await scrollTo();
+    await page.waitForTimeout(300);
+  };
+  const showControls = (): Promise<void> =>
+    atTopOnPhone(() => page.locator('.progressions-controls').scrollIntoViewIfNeeded());
+  await showControls();
+  await shoot(page, '70-progressions-controls', showControls);
+
+  // #1798: the prenatal syzygy row beside the lunar phase and sect.
+  await openNatalChart(page);
+  await page.getByRole('link', { name: 'Patterns & condition', exact: true }).click();
+  const syzygy = page.locator('.prenatal-syzygy-summary');
+  await syzygy.waitFor({ timeout: 60_000 });
+  const showSyzygy = (): Promise<void> => atTopOnPhone(() => syzygy.scrollIntoViewIfNeeded());
+  await showSyzygy();
+  await shoot(page, '71-charts-prenatal-syzygy', showSyzygy);
+
+  // #1802: Composite and Synastry with a partner chosen, as e2e/accessibility.spec.ts opens them.
+  for (const [tab, label, slug] of [
+    ['Composite', 'Compose with', '72-composite-controls'],
+    ['Synastry', 'Compare with', '73-synastry-controls'],
+  ] as const) {
+    await page.getByRole('link', { name: 'Relationship Charts', exact: true }).first().click();
+    await page.getByRole('tab', { name: tab, exact: true }).click();
+    await page.getByLabel(label).selectOption({ label: 'Max Born' });
+    await page.locator('div.chart-wheel').waitFor({ timeout: 60_000 });
+    await page.waitForTimeout(500);
+    await shoot(page, slug);
+  }
+  await app.close();
+});
