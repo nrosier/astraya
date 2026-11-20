@@ -26,6 +26,7 @@ One level above `src/astrology/`: composes pure astrological calculations into s
 - `draconic.ts` — Draconic chart (lunar-node-based zodiac shift, same houses). Deps: `astrology/draconic`, `./chart-compute`.
 - `heliocentric.ts` — Heliocentric chart (#1407): Earth for the Sun, no Moon or points, undefined houses. Deps: `astrology/bodies`, `./chart-compute`.
 - `derived-point-position.ts` — Locates the Part of Fortune and Part of Spirit (#511) as longitude, sign and house in a computed chart; shared by the Derived points table and the selection inspector. Deps: `astrology/derived-points`, `astrology/emphasis`, `astrology/signs`, `chart-compute`.
+- `hermetic-lots.ts` — Paulus's five Hermetic lots (Eros, Necessity, Courage, Victory, Nemesis) with house, for the Hermetic lots table (#1797). Deps: `astrology/arabic-parts`, `astrology/bodies`, `astrology/emphasis`, `chart-compute`.
 - `event-search.ts` — Batch stations/ingresses/lunations/exact aspects plus reproducible CSV. Deps: `astrology/stations`, `astrology/sign-ingress`, `astrology/lunations`, `astrology/mutual-aspects`, `astrology/bodies`, `astrology/signs`, `time/julian`.
 - `event-search-ics.ts` — Event-search results as an iCalendar (.ics) file (#639) for stations, ingresses, lunations and exact aspects. Deps: `event-search`, `time/julian`.
 - `graphic-ephemeris.ts` — Graphic ephemeris data (#1404): daily ecliptic longitudes of the classical seven plus optional outer bodies over a date range, month ticks and CSV. Deps: `astrology/bodies`, `ephemeris/types`, `ui/year-range`.
