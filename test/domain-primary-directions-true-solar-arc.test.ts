@@ -32,7 +32,7 @@ describe('PrimaryDirectionKey.TRUE_SOLAR_ARC in the domain (#1795, task 5)', () 
     expect(PrimaryDirectionKey.TRUE_SOLAR_ARC).toBe('true-solar-arc');
   });
 
-  it('builds the clock once for the new key and stores it on the data', async () => {
+  it('stores the clock on the data for the new key', async () => {
     const engine = await getEngine();
     const data = await generatePrimaryDirections(PRINCE_CHARLES, engine, PrimaryDirectionKey.TRUE_SOLAR_ARC);
     expect(data.key).toBe('true-solar-arc');
