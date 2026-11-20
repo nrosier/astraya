@@ -6,6 +6,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 
 - `About.tsx` + `About.messages.ts` — About/privacy/licence screen, version metadata. Deps: none (static content).
 - `default-calculation-profile.ts` — The default calculation profile (account preference, #510, #1066) that Preferences edits; a new person receives a copy of it (#806); a view over `account-preferences`. Deps: `./account-preferences`, `store/account`.
+- `engine-error.ts` + `engine-error.messages.ts` — Calculation error text: the localised restart sentence after an ephemeris engine abort (#1856), otherwise the error's own message. Deps: `engine-error.messages`.
 - `online-status.ts` — Hook following the browser's online/offline state, so network-only actions can show the offline result state. Deps: none.
 - `note-autosave.ts` — Pure note autosave state machine (#919): idle, pending, saving, saved, savedLocal, error; 750 ms debounce constant. Deps: none.
 - `use-note-autosave.ts` — Hook over the note state machine (#919): debounced store `mutate`, localStorage journal keyed by database name, flush on pagehide/unmount/reconnect. Deps: `note-autosave`, `store/db`, `store/notes`, `store/store`.

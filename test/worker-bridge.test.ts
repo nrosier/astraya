@@ -11,7 +11,12 @@
 import { describe, expect, it } from 'vitest';
 import { computePlanetaryReturn } from '../src/domain/planetary-return.js';
 import { SE } from '../src/ephemeris/generated-constants.js';
-import { WorkerEphemerisProvider, type EphemerisTransport } from '../src/ephemeris/client.js';
+import {
+  EphemerisEngineRestartedError,
+  MAX_RESTARTS,
+  WorkerEphemerisProvider,
+  type EphemerisTransport,
+} from '../src/ephemeris/client.js';
 import { serveEphemeris, type WorkerScope } from '../src/ephemeris/worker.js';
 import type { EphemerisRequest, EphemerisResponse } from '../src/ephemeris/protocol.js';
 import { EphemerisError, type EphemerisProvider } from '../src/ephemeris/types.js';
@@ -269,5 +274,146 @@ describe('worker bridge', () => {
     // Generous: this guards against an accidental quadratic blow-up (e.g. the
     // bisectCrossing redundant-fetch regressing), not a tight perf budget.
     expect(elapsedMs).toBeLessThan(15_000);
+  });
+});
+
+/** A position stub's answer: the shape `position` returns, with a recognisable longitude. */
+function stubPosition(body: number, longitude: number) {
+  return {
+    body,
+    longitude,
+    latitude: 0,
+    distance: 1,
+    longitudeSpeed: 1,
+    latitudeSpeed: 0,
+    distanceSpeed: 0,
+    retrograde: false,
+  };
+}
+
+/** An engine whose WASM instance has aborted: every position call throws Emscripten's abort, as #1856 reported. */
+function abortingEngine(): EphemerisProvider {
+  return {
+    initialize: () => Promise.resolve(),
+    position: () => {
+      const error = new Error('Aborted(segmentation fault). Build with -sASSERTIONS for more info.');
+      error.name = 'RuntimeError';
+      return Promise.reject(error);
+    },
+  } as unknown as EphemerisProvider;
+}
+
+/** A healthy replacement engine that counts how often it is initialised. */
+function healthyEngine(): { engine: EphemerisProvider; initialized: () => number } {
+  let count = 0;
+  const engine = {
+    initialize: () => {
+      count += 1;
+      return Promise.resolve();
+    },
+    position: (_jd: number, body: number) => Promise.resolve(stubPosition(body, 123)),
+  } as unknown as EphemerisProvider;
+  return { engine, initialized: () => count };
+}
+
+/** A transport that records whether it was closed. */
+function closable(transport: EphemerisTransport): { transport: EphemerisTransport; closed: () => boolean } {
+  let closed = false;
+  return {
+    closed: () => closed,
+    transport: {
+      ...transport,
+      close: () => {
+        closed = true;
+      },
+    },
+  };
+}
+
+describe('engine abort recovery (#1856)', () => {
+  it('restarts the engine after an Emscripten abort: the aborted call says so, and the next call works', async () => {
+    const dead = closable(loopback(abortingEngine()).transport);
+    const healthy = healthyEngine();
+    let spawned = 0;
+    const client = new WorkerEphemerisProvider(dead.transport, {
+      spawn: () => {
+        spawned += 1;
+        return loopback(healthy.engine).transport;
+      },
+    });
+    await client.initialize();
+
+    await expect(client.position(JD_2024, SE.SE_SUN)).rejects.toBeInstanceOf(EphemerisEngineRestartedError);
+    expect(spawned).toBe(1);
+    expect(dead.closed()).toBe(true);
+
+    const next = await client.position(JD_2024, SE.SE_SUN);
+    expect(next.longitude).toBe(123);
+    // The fresh engine was initialised (once) before it answered.
+    expect(healthy.initialized()).toBe(1);
+  });
+
+  it('rejects the calls that were queued on the dead engine, then serves new calls', async () => {
+    const healthy = healthyEngine();
+    const client = new WorkerEphemerisProvider(loopback(abortingEngine()).transport, {
+      spawn: () => loopback(healthy.engine).transport,
+    });
+    await client.initialize();
+
+    const results = await Promise.allSettled([
+      client.position(JD_2024, SE.SE_SUN),
+      client.position(JD_2024, SE.SE_MOON),
+      client.position(JD_2024, SE.SE_MARS),
+    ]);
+    for (const result of results) {
+      expect(result.status).toBe('rejected');
+      if (result.status === 'rejected') expect(result.reason).toBeInstanceOf(EphemerisEngineRestartedError);
+    }
+    await expect(client.position(JD_2024, SE.SE_MOON)).resolves.toMatchObject({ longitude: 123 });
+  });
+
+  it('stops restarting after MAX_RESTARTS within the window, and latches the original abort', async () => {
+    let spawned = 0;
+    const client = new WorkerEphemerisProvider(loopback(abortingEngine()).transport, {
+      spawn: () => {
+        spawned += 1;
+        return loopback(abortingEngine()).transport;
+      },
+    });
+    await client.initialize();
+    for (let attempt = 0; attempt < MAX_RESTARTS; attempt += 1) {
+      await expect(client.position(JD_2024, SE.SE_SUN)).rejects.toBeInstanceOf(EphemerisEngineRestartedError);
+    }
+    expect(spawned).toBe(MAX_RESTARTS);
+    // The next abort latches: no more restarts, and every later call fails fast with the engine's own message.
+    await expect(client.position(JD_2024, SE.SE_SUN)).rejects.toThrow(/Aborted\(segmentation fault\)/);
+    await expect(client.position(JD_2024, SE.SE_SUN)).rejects.toThrow(/Aborted\(segmentation fault\)/);
+    expect(spawned).toBe(MAX_RESTARTS);
+  });
+
+  it('without a spawn factory, an abort passes through unchanged and nothing restarts', async () => {
+    const client = new WorkerEphemerisProvider(loopback(abortingEngine()).transport);
+    await client.initialize();
+    await expect(client.position(JD_2024, SE.SE_SUN)).rejects.toThrow(/Aborted\(segmentation fault\)/);
+  });
+
+  it('restarts after the worker itself dies, when a spawn factory is given', async () => {
+    let failWorker: ((error: Error) => void) | undefined;
+    const healthy = healthyEngine();
+    const client = new WorkerEphemerisProvider(
+      {
+        send: () => {},
+        onMessage: () => {},
+        onError: (handler) => {
+          failWorker = handler;
+        },
+        close: () => {},
+      },
+      { spawn: () => loopback(healthy.engine).transport },
+    );
+    const inFlight = client.position(JD_2024, SE.SE_SUN);
+    failWorker?.(new Error('worker exploded'));
+    await expect(inFlight).rejects.toBeInstanceOf(EphemerisEngineRestartedError);
+    await expect(client.position(JD_2024, SE.SE_SUN)).resolves.toMatchObject({ longitude: 123 });
   });
 });
