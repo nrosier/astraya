@@ -1,8 +1,8 @@
 /**
  * @module totp-store
  * @purpose Storage for TOTP two-factor sign-in (#1500, slice 2a): the per-user encrypted secret, the replay-guard step, and single-use recovery codes stored only as peppered HMAC hashes. No route calls it yet.
- * @conventions Fails closed: a stored secret with no key, one that will not decrypt or is not `SECRET_BYTES` long, or a row with the secret NULL but any other TOTP column set, throws and is never read as "not enrolled". The secret is AES-256-GCM under a per-user HKDF subkey; the recovery pepper is one random 32-byte value stored encrypted under the key in `server_secrets`. State changes and replay protection are conditional UPDATEs checked by row count, never read-then-write. `completeTotpEnrolment` is the only way a route may enable TOTP: it refuses fewer than `RECOVERY_CODE_COUNT` codes and confirms and stores them in one savepoint, so an enabled user always has codes; `confirmTotpEnrolment` is its building block, not a route call, and `test/server-totp-store.test.ts` fails if any file in `server/` or `src/` other than this one references it. A route inside its own transaction must report success, and show the recovery codes, only after its outer COMMIT. The multi-statement writes (`replaceRecoveryCodes`, `clearTotp`, `completeTotpEnrolment`) use uniquely named savepoints, never `BEGIN`, so each is all or nothing alone and may also be called inside a caller's transaction; a failed rollback never replaces the original error. Key rotation re-wraps the secrets and every `server_secrets` row through `planTotpRotation`, which decrypts everything before `apply` writes anything. Nothing here logs, and no error message carries a secret, code, pepper or key bytes.
- * @exports TotpKeyMissingError, TotpState, isTotpEnabled, startTotpEnrolment, confirmTotpEnrolment, completeTotpEnrolment (the only route path that enables TOTP), readTotpState, recordAcceptedStep, generateRecoveryCodes, normaliseRecoveryCode, replaceRecoveryCodes (nests in a caller's transaction), consumeRecoveryCode, clearTotp (nests in a caller's transaction), RotationDecrypt, TotpRotationPlan, planTotpRotation
+ * @conventions Fails closed: a stored secret with no key, one that will not decrypt or is not `SECRET_BYTES` long, or a row with the secret NULL but any other TOTP column set, throws and is never read as "not enrolled". The secret is AES-256-GCM under a per-user HKDF subkey; the recovery pepper is one random 32-byte value stored encrypted under the key in `server_secrets`. State changes and replay protection are conditional UPDATEs checked by row count, never read-then-write. `completeTotpEnrolment` is the only way a route may enable TOTP: it refuses fewer than `RECOVERY_CODE_COUNT` codes and confirms and stores them in one savepoint, so an enabled user always has codes; `confirmTotpEnrolment` is its building block, not a route call, and `test/server-totp-store.test.ts` fails if any file in `server/` or `src/` other than this one references it. A route inside its own transaction must report success, and show the recovery codes, only after its outer COMMIT. The multi-statement writes (`replaceRecoveryCodes`, `clearTotp`, `completeTotpEnrolment`) use uniquely named savepoints, never `BEGIN`, so each is all or nothing alone and may also be called inside a caller's transaction; a failed rollback never replaces the original error. Key rotation does not live here: it re-wraps the TOTP secrets and every `server_secrets` row in `server/ops/rotate-totp.ts`, which decrypts everything before it writes anything. Nothing here logs, and no error message carries a secret, code, pepper or key bytes.
+ * @exports TotpKeyMissingError, TotpState, isTotpEnabled, startTotpEnrolment, confirmTotpEnrolment, completeTotpEnrolment (the only route path that enables TOTP), readTotpState, recordAcceptedStep, generateRecoveryCodes, normaliseRecoveryCode, replaceRecoveryCodes (nests in a caller's transaction), consumeRecoveryCode, clearTotp (nests in a caller's transaction)
  */
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import type { Database } from '../db.ts';
@@ -286,82 +286,4 @@ export function clearTotp(db: Database, userId: string): void {
     ).run(userId);
     db.prepare('DELETE FROM totp_recovery_codes WHERE user_id = ?').run(userId);
   });
-}
-
-/** Decrypts one value under the current key or throws naming it (never its content); supplied by key rotation. */
-export type RotationDecrypt = (what: string, ciphertext: Buffer, iv: Buffer, key: Buffer) => Buffer;
-
-/** Every TOTP value re-encrypted in memory under the new key, not yet written. */
-export interface TotpRotationPlan {
-  /** Users whose stored secret (pending or enabled) was re-wrapped under their new per-user subkey. */
-  readonly totpSecrets: number;
-  /** `server_secrets` rows (the recovery-code pepper) re-wrapped under the new key. */
-  readonly serverSecrets: number;
-  /** Writes the re-wrapped values. Call inside the rotation transaction, after every other table has decrypted. */
-  readonly apply: () => void;
-}
-
-interface RotationSecretRow {
-  readonly id: string;
-  readonly totp_secret: Uint8Array;
-  readonly totp_secret_iv: Uint8Array | null;
-}
-
-interface ServerSecretRow {
-  readonly name: string;
-  readonly value: Uint8Array;
-  readonly iv: Uint8Array;
-}
-
-/**
- * Key rotation for TOTP (#1500): decrypts every stored TOTP secret under the user's subkey of `currentKey` and every
- * `server_secrets` value under `currentKey`, re-encrypting each with a fresh IV under `newKey` (the secret under the
- * user's subkey of `newKey`). Reads and decrypts only; nothing is written until `apply` is called. Throws on the first
- * value that is missing its IV or does not decrypt, so a wrong key aborts the rotation before any write.
- */
-export function planTotpRotation(
-  db: Database,
-  currentKey: Buffer,
-  newKey: Buffer,
-  decrypt: RotationDecrypt,
-): TotpRotationPlan {
-  const users = db
-    .prepare('SELECT id, totp_secret, totp_secret_iv FROM users WHERE totp_secret IS NOT NULL ORDER BY id')
-    .all() as unknown as RotationSecretRow[];
-  const reUsers: { id: string; secret: Buffer; iv: Buffer }[] = [];
-  for (const row of users) {
-    const what = `the TOTP secret of user ${row.id}`;
-    if (row.totp_secret_iv === null) throw new Error(`${what} has no IV, so nothing was rotated.`);
-    const plain = decrypt(
-      what,
-      Buffer.from(row.totp_secret),
-      Buffer.from(row.totp_secret_iv),
-      deriveTotpSubkey(currentKey, row.id),
-    );
-    const { ciphertext, iv } = encryptPayload(plain, deriveTotpSubkey(newKey, row.id));
-    plain.fill(0);
-    reUsers.push({ id: row.id, secret: ciphertext, iv });
-  }
-
-  const secrets = db
-    .prepare('SELECT name, value, iv FROM server_secrets ORDER BY name')
-    .all() as unknown as ServerSecretRow[];
-  const reSecrets: { name: string; value: Buffer; iv: Buffer }[] = [];
-  for (const row of secrets) {
-    const plain = decrypt(`server secret ${row.name}`, Buffer.from(row.value), Buffer.from(row.iv), currentKey);
-    const { ciphertext, iv } = encryptPayload(plain, newKey);
-    plain.fill(0);
-    reSecrets.push({ name: row.name, value: ciphertext, iv });
-  }
-
-  return {
-    totpSecrets: reUsers.length,
-    serverSecrets: reSecrets.length,
-    apply: () => {
-      const updateUser = db.prepare('UPDATE users SET totp_secret = ?, totp_secret_iv = ? WHERE id = ?');
-      const updateSecret = db.prepare('UPDATE server_secrets SET value = ?, iv = ? WHERE name = ?');
-      for (const row of reUsers) updateUser.run(row.secret, row.iv, row.id);
-      for (const row of reSecrets) updateSecret.run(row.value, row.iv, row.name);
-    },
-  };
 }
