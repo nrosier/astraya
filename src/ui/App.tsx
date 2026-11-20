@@ -389,9 +389,14 @@ function AppShell(): React.JSX.Element {
                       {t.skipToContent}
                     </a>
                     <div className="app-header-start">
-                      <a className="app-header-brand" href="#/people" aria-label={t.homeLinkLabel}>
-                        Astraya
-                      </a>
+                      {/* The brand row (#1851): the brand on the left, the rail's collapse toggle at the top right.
+                        The engine status sits on its own line below it, so the row never wraps around the toggle. */}
+                      <div className="app-header-brand-row">
+                        <a className="app-header-brand" href="#/people" aria-label={t.homeLinkLabel}>
+                          Astraya
+                        </a>
+                        <RailCollapseButton />
+                      </div>
                       {engineStatus !== 'ready' && <p className="status app-header-status">{engineStatus}</p>}
                     </div>
                     <AppNav route={parsed} />
@@ -403,8 +408,6 @@ function AppShell(): React.JSX.Element {
                     </div>
                     {/* The version, About & Licence and the update notice sit at the rail's foot (previously a page footer). */}
                     <SidebarFooter />
-                    {/* The rail's collapse control (#1747), last in the header so it sits at the foot of the rail. */}
-                    <RailCollapseButton />
                   </header>
                 }
               >
