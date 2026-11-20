@@ -57,7 +57,7 @@
  * @module PrimaryDirections
  * @purpose Spherical-trigonometry engine for direct/converse, zodiacal/in-mundo primary directions under the Placidus semi-arc system: ecliptic-to-equatorial conversion, semi-arcs, Placidian mundane position and its inverse, arcs of direction, time keys, and directed zodiacal degrees.
  * @conventions Direct carries the promissor and converse carries the significator; zodiacal directions use latitude 0 while in-mundo directions use actual body latitude; mundane position uses Makransky's 0–360 scale (ASC 0, IC 90, DSC 180, MC 270); Naibod key reuses progressions.ts's NAIBOD_DAILY_MOTION, Ptolemy is 1°/year; circumpolar points throw RangeError rather than yield an arc.
- * @exports PrimaryDirectionTimeKey, TIME_KEY_DEGREES_PER_YEAR, arcToYears, yearsToArc, SphereFrame, EquatorialPosition, SemiArcs, eclipticToEquatorial, eclipticLongitudeFromRightAscension, semiArcs, isDefinedAtLatitude, placidianMundanePosition, hourAngleAtMundanePosition, directArc, midheavenLongitude, ascendantLongitude, eclipticPointAtMundanePosition, directedLongitude, DirectionAngle, ANGLE_MUNDANE_POSITIONS, DIRECTION_ASPECT_OFFSETS, DirectionSignificator, DirectionPromissor, DirectionHit, PrimaryDirectionOptions, PrimaryDirectionResult, significatorMundanePosition, calculatePrimaryDirections
+ * @exports PrimaryDirectionTimeKey, FixedRateTimeKey, TIME_KEY_DEGREES_PER_YEAR, SolarArcClock, arcToYears, yearsToArc, SphereFrame, EquatorialPosition, SemiArcs, eclipticToEquatorial, eclipticLongitudeFromRightAscension, semiArcs, isDefinedAtLatitude, placidianMundanePosition, hourAngleAtMundanePosition, directArc, midheavenLongitude, ascendantLongitude, eclipticPointAtMundanePosition, directedLongitude, DirectionAngle, ANGLE_MUNDANE_POSITIONS, DIRECTION_ASPECT_OFFSETS, DirectionSignificator, DirectionPromissor, DirectionHit, PrimaryDirectionOptions, PrimaryDirectionResult, significatorMundanePosition, calculatePrimaryDirections
  */
 import { ASPECTS } from './aspects.js';
 import { NAIBOD_DAILY_MOTION } from './progressions.js';
@@ -88,25 +88,59 @@ function norm180(degrees: Degrees): Degrees {
   return value > 180 ? value - 360 : value;
 }
 
-/** The rate keys that convert an arc of direction into years of life. */
-export type PrimaryDirectionTimeKey = 'naibod' | 'ptolemy';
+/** The time keys whose years of life are a fixed rate of right ascension per year. */
+export type FixedRateTimeKey = 'naibod' | 'ptolemy';
 
 /**
- * Degrees of right ascension per year of life, per key. Naibod is the mean Sun's daily motion
- * (0°59′08.33″, progressions.ts's `NAIBOD_DAILY_MOTION`); Ptolemy is one degree a year.
+ * The rate keys that convert an arc of direction into years of life. `true-solar-arc` is not a
+ * fixed rate: it needs a `SolarArcClock` built from the ephemeris (Makransky rev. ed. 1992, pp.
+ * 28-30, the True Solar Arc in RA, Placidus' method; one day after birth stands for one year of
+ * life, p. 29). Makransky's p. 28 footnote, which times a converse arc by its absolute value, is
+ * the owner's decision on #1603 (2026-11-19); its application is not in this layer yet.
  */
-export const TIME_KEY_DEGREES_PER_YEAR: Readonly<Record<PrimaryDirectionTimeKey, Degrees>> = {
+export type PrimaryDirectionTimeKey = FixedRateTimeKey | 'true-solar-arc';
+
+/**
+ * Degrees of right ascension per year of life, per fixed-rate key. Naibod is the mean Sun's daily
+ * motion (0°59′08.33″, progressions.ts's `NAIBOD_DAILY_MOTION`); Ptolemy is one degree a year.
+ */
+export const TIME_KEY_DEGREES_PER_YEAR: Readonly<Record<FixedRateTimeKey, Degrees>> = {
   naibod: NAIBOD_DAILY_MOTION,
   ptolemy: 1,
 };
 
-/** Years of life an arc of direction stands for, under the given key. */
-export function arcToYears(arc: Degrees, key: PrimaryDirectionTimeKey): number {
+/**
+ * The Sun's right ascension, measured from birth, for the True Solar Arc key. Makransky (rev. ed.
+ * 1992, p. 29) states the rule: "the sun's travel in RA each day after birth represents the
+ * corresponding year of life". Built from the ephemeris, not from his low-precision solar formula.
+ */
+export interface SolarArcClock {
+  /** The Sun's right ascension arc travelled since birth, in degrees (unwrapped, increasing), after `days` days. */
+  readonly arcAfterDays: (days: number) => Degrees;
+  /** The inverse: days after birth until the Sun has travelled `arc` degrees of RA. */
+  readonly daysForArc: (arc: Degrees) => number;
+}
+
+function requireClock(clock: SolarArcClock | undefined): SolarArcClock {
+  if (clock === undefined) throw new RangeError('true-solar-arc needs a SolarArcClock');
+  return clock;
+}
+
+/**
+ * Years of life an arc of direction stands for, under the given key. Fixed keys ignore `clock`;
+ * `true-solar-arc` requires it and throws `RangeError` without it.
+ */
+export function arcToYears(arc: Degrees, key: PrimaryDirectionTimeKey, clock?: SolarArcClock): number {
+  if (key === 'true-solar-arc') return requireClock(clock).daysForArc(arc);
   return arc / TIME_KEY_DEGREES_PER_YEAR[key];
 }
 
-/** The arc of direction that stands for `years` of life, under the given key. */
-export function yearsToArc(years: number, key: PrimaryDirectionTimeKey): Degrees {
+/**
+ * The arc of direction that stands for `years` of life, under the given key. Fixed keys ignore
+ * `clock`; `true-solar-arc` requires it and throws `RangeError` without it.
+ */
+export function yearsToArc(years: number, key: PrimaryDirectionTimeKey, clock?: SolarArcClock): Degrees {
+  if (key === 'true-solar-arc') return requireClock(clock).arcAfterDays(years);
   return years * TIME_KEY_DEGREES_PER_YEAR[key];
 }
 
@@ -376,6 +410,8 @@ export interface PrimaryDirectionOptions {
   readonly method?: PrimaryDirectionMethod;
   /** Defaults to Naibod. */
   readonly key?: PrimaryDirectionTimeKey;
+  /** Required for `true-solar-arc`; ignored by the fixed keys. */
+  readonly clock?: SolarArcClock;
 }
 
 export interface PrimaryDirectionResult {
@@ -460,7 +496,7 @@ export function calculatePrimaryDirections(
       aspectOffset: offset,
       promissorPoint,
       arcRA,
-      ageYears: arcToYears(arcRA, key),
+      ageYears: arcToYears(arcRA, key, options.clock),
       mode,
       method,
     };
