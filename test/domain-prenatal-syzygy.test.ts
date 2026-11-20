@@ -2,7 +2,7 @@
  * Integration tests for prenatalSyzygy (#1798) against the real Swiss Ephemeris (no mocks). The
  * expected instants come from `findLunations` (checked against a published table in
  * astrology-lunations.test.ts), not from a hand-typed table. The 1879 golden table is a separate
- * test that waits for the owner's source.
+ * test, `domain-prenatal-syzygy-golden.test.ts` (NASA/Espenak, #1798).
  */
 import { describe, expect, it } from 'vitest';
 import { bodyByKey } from '../src/astrology/bodies.js';
