@@ -78,12 +78,16 @@ export function buildCalculationBasisLine(
   const node = parts.houses === 'none' ? '' : settings.nodeVariant === 'true' ? t.trueNode : t.meanNode;
   const rulers = t.rulers(words.rulerTitles[rulership]);
   const orbs = t.orbs(deviceOrbProfile ?? words.orbProfileTitles[builtIn ?? 'custom']);
-  if (parts.houses === undefined && parts.rulers !== false && parts.orbs !== false) {
-    return t.line(zodiac, houses, node, rulers, orbs);
-  }
-  return [zodiac, houses, node, parts.rulers === false ? '' : rulers, parts.orbs === false ? '' : orbs]
-    .filter((item) => item !== '')
-    .join(' · ');
+  const line =
+    parts.houses === undefined && parts.rulers !== false && parts.orbs !== false
+      ? t.line(zodiac, houses, node, rulers, orbs)
+      : [zodiac, houses, node, parts.rulers === false ? '' : rulers, parts.orbs === false ? '' : orbs]
+          .filter((item) => item !== '')
+          .join(' · ');
+  // The Part of Fortune formula is named only when it is the modern one (#1794, owner decision 2026-11-20); the default line is unchanged.
+  const fortune =
+    settings.fortuneFormula === 'same-day-and-night' && parts.houses !== 'none' ? t.fortuneFormulaModern : '';
+  return fortune === '' ? line : `${line} · ${fortune}`;
 }
 
 function useBasisWords(): BasisWords {

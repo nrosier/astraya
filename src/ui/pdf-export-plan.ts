@@ -160,7 +160,7 @@ import {
 } from './ChartViewPlacements.js';
 import { hermeticLots } from '../domain/hermetic-lots.js';
 import { degreeParts } from '../domain/degree-parts.js';
-import { lotFormulaByKey } from '../astrology/arabic-parts.js';
+import { DEFAULT_FORTUNE_FORMULA, lotFormulaByKey, type FortuneFormula } from '../astrology/arabic-parts.js';
 import type { chartViewMessages } from './ChartView.messages.js';
 import type { pdfExportMessages } from './pdf-export.messages.js';
 import { aspectDisplayName, bodyDisplayName, bodyShortName, signDisplayName } from './astro-names.messages.js';
@@ -520,6 +520,7 @@ function tablesOf(
   rulership: RulershipChoice,
   visibility: PointVisibilityOptions,
   boundsScheme: BoundsScheme,
+  fortuneFormula: FortuneFormula,
 ): readonly PdfTablePlan[] {
   if ((table === 'houses' || table === 'derived') && !housesRenderable) return [];
   switch (table) {
@@ -581,7 +582,11 @@ function tablesOf(
         ...degreeParts(row.longitude),
       }));
       return [
-        tablePlanOf(t.derivedPointsCaption, derivedPointColumns(t, locale), derivedPointRows(data, visibility)),
+        tablePlanOf(
+          t.derivedPointsCaption,
+          derivedPointColumns(t, locale, undefined, fortuneFormula),
+          derivedPointRows(data, visibility),
+        ),
         ...(hermeticRows.length === 0
           ? []
           : [
@@ -672,6 +677,26 @@ export function sectionCalculationOptions(
       return { rulership, ...orbsOf(settings), ...customPoints };
     case 'heliocentric':
       return { rulership, ...orbsOf(settings) };
+  }
+}
+
+/**
+ * The Part of Fortune formula a chart section's table column names (#1794). Only natal and returns are calculated
+ * with the chart's setting (`toChartCalculationOptions`); draconic, harmonic, relocated and heliocentric use the orbs
+ * alone, so their Fortune is the default and the column must name it. The formula passed to `tablesOf` has to match
+ * the one the section was calculated with, or the column names a formula the value does not use.
+ */
+function derivedFormulaOfSection(type: PdfChartSectionOptions['type'], settings: ExtendedSettings): FortuneFormula {
+  switch (type) {
+    case 'natal':
+    case 'solar-return':
+    case 'lunar-return':
+      return settings.fortuneFormula ?? DEFAULT_FORTUNE_FORMULA;
+    case 'draconic':
+    case 'harmonic':
+    case 'relocated':
+    case 'heliocentric':
+      return DEFAULT_FORTUNE_FORMULA;
   }
 }
 
@@ -777,8 +802,9 @@ async function buildChartSectionPlan(
   const hints = [almutenHint, d10Hint, shapeHint].filter((part): part is string => part !== undefined);
   const hint = hints.length === 0 ? undefined : hints.join(' ');
 
+  const fortuneFormula = derivedFormulaOfSection(options.type, settings);
   const tables = options.tables.flatMap((table) =>
-    tablesOf(data, table, housesRenderable, t, locale, rulership, visibility, settings.boundsScheme),
+    tablesOf(data, table, housesRenderable, t, locale, rulership, visibility, settings.boundsScheme, fortuneFormula),
   );
 
   return {
@@ -907,8 +933,19 @@ async function buildCompositeSectionPlan(
     svg = { markup: standaloneSvg(sheet.markup), width: sheet.width, height: sheet.height };
   }
 
+  // Composite is calculated with `{ rulership }` alone (no Extended-settings formula), so its column names the default (#1794).
   const tables = options.tables.flatMap((table) =>
-    tablesOf(data, table, housesRenderable, t, locale, rulership, visibility, settings.boundsScheme),
+    tablesOf(
+      data,
+      table,
+      housesRenderable,
+      t,
+      locale,
+      rulership,
+      visibility,
+      settings.boundsScheme,
+      DEFAULT_FORTUNE_FORMULA,
+    ),
   );
 
   return {
