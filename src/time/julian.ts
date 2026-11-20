@@ -21,8 +21,8 @@
  * @conventions Dates from 1972 onward in the Gregorian calendar go through `swe_utc_to_jd` (leap-second aware); earlier dates and Julian-calendar dates stay in Julian-day space via `swe_julday` plus elapsed day fraction, since UTC did not exist yet.
  * @exports julianDayFor, civilFromJulianDay
  */
-import { DateTime, FixedOffsetZone } from 'luxon';
 import type { CalendarSystem, EphemerisProvider, JulianDayUT } from '../ephemeris/types.js';
+import { luxonModule } from './zone-data.js';
 import type { CivilDateTime, ResolvedMoment } from './types.js';
 
 /**
@@ -47,6 +47,7 @@ export async function julianDayFor(provider: EphemerisProvider, moment: Resolved
     // Luxon does the civil arithmetic: a fixed-offset zone has no transitions, so
     // this is pure field conversion with no tzdb involvement and nothing to be
     // ambiguous about — the ambiguity was already settled during resolution.
+    const { DateTime, FixedOffsetZone } = luxonModule();
     const utc = DateTime.fromObject(
       {
         year: civil.year,
@@ -89,7 +90,7 @@ const UNIX_EPOCH_JD = 2440587.5;
  */
 export function civilFromJulianDay(jd: JulianDayUT): CivilDateTime {
   const millisSinceEpoch = Math.round((jd - UNIX_EPOCH_JD) * 86_400_000);
-  const dt = DateTime.fromMillis(millisSinceEpoch, { zone: 'utc' });
+  const dt = luxonModule().DateTime.fromMillis(millisSinceEpoch, { zone: 'utc' });
   if (!dt.isValid) throw new Error(`Cannot convert Julian day ${String(jd)} to a civil date: ${dt.invalidReason}`);
   return { year: dt.year, month: dt.month, day: dt.day, hour: dt.hour, minute: dt.minute, second: dt.second };
 }

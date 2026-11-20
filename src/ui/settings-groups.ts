@@ -21,6 +21,7 @@ import {
   CALCULATION_PROFILE_IDS,
   type CalculationProfileId,
 } from '../chart/calculation-profiles.js';
+import { DEFAULT_FORTUNE_FORMULA } from '../astrology/arabic-parts.js';
 import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from '../chart/extended-settings.js';
 
 /** The tabs of the Extended settings drawer that have an Advanced group. The Display tab has none (it is appearance). */
@@ -50,6 +51,7 @@ export const PLACEMENT: Readonly<Record<keyof ExtendedSettings, SettingPlacement
   objectPolicies: 'first',
   lilithVariant: 'special',
   nodeVariant: 'special',
+  fortuneFormula: 'special',
   antisciaVisible: 'special',
   antisciaMaxOrb: 'special',
   declinationVisible: 'special',
@@ -104,6 +106,9 @@ function canonical(value: unknown): string {
 function differs(field: keyof ExtendedSettings, a: ExtendedSettings, b: ExtendedSettings): boolean {
   // An aspect list is a set: the same aspects in another order are the same choice.
   if (field === 'enabledMinorAspects') return [...a[field]].sort().join() !== [...b[field]].sort().join();
+  // An absent Fortune formula is the default (#1794), so an explicit default is not a customised choice.
+  if (field === 'fortuneFormula')
+    return (a.fortuneFormula ?? DEFAULT_FORTUNE_FORMULA) !== (b.fortuneFormula ?? DEFAULT_FORTUNE_FORMULA);
   return canonical(a[field]) !== canonical(b[field]);
 }
 

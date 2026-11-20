@@ -104,6 +104,16 @@ const mustStayLazy = [
     what: 'the Changelog screen and its embedded changelog text (#494)',
     cost: 'a multi-hundred-release changelog nobody but someone clicking the version number asked for',
   },
+  {
+    pattern: /^tz-.*\.js$/,
+    what: 'the tz-lookup coordinate→zone data, loaded once at startup by src/time/zone-data.ts (#1794)',
+    cost: 'the tz-lookup polygon data, before the shell renders its first screen',
+  },
+  {
+    pattern: /^luxon-.*\.js$/,
+    what: 'the luxon date library, loaded once at startup by src/time/zone-data.ts (#1794)',
+    cost: 'the luxon date library, before the shell renders its first screen',
+  },
 ];
 
 const found = [];
