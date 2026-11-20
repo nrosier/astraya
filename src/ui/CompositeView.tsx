@@ -154,7 +154,7 @@ export function CompositeView({
         <GlossaryText text={t.overlayContext} />
       </p>
 
-      <p>
+      <div className="relationship-control-row">
         <ChoiceGroup
           segmented
           showLabel
@@ -168,9 +168,9 @@ export function CompositeView({
             if (value === 'midpoint' || value === 'davison') setCompositeMethod(value);
           }}
         />
-      </p>
+      </div>
 
-      <p>
+      <div className="relationship-control-row">
         <Select
           label={t.composeWithLabel}
           value={partnerId}
@@ -183,7 +183,7 @@ export function CompositeView({
             })),
           ]}
         />
-      </p>
+      </div>
 
       {partnerId !== '' && candidates.every((candidate) => candidate.id !== partnerId) && (
         <StatusMessage kind="error">{t.partnerGoneWarning}</StatusMessage>
