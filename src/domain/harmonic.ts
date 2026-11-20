@@ -122,8 +122,20 @@ export async function computeHarmonic(
     aspects,
     dignities,
     sect,
-    partOfFortune: partOfFortune(sect, houses.ascendant, sunPosition.longitude, moonPosition.longitude),
-    partOfSpirit: partOfSpirit(sect, houses.ascendant, sunPosition.longitude, moonPosition.longitude),
+    partOfFortune: partOfFortune(
+      sect,
+      houses.ascendant,
+      sunPosition.longitude,
+      moonPosition.longitude,
+      options.fortuneFormula,
+    ),
+    partOfSpirit: partOfSpirit(
+      sect,
+      houses.ascendant,
+      sunPosition.longitude,
+      moonPosition.longitude,
+      options.fortuneFormula,
+    ),
     ...(customPoints === undefined ? {} : { customPoints }),
   };
 

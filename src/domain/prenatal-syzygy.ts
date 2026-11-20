@@ -25,18 +25,27 @@
  * luminaries here, and the above-horizon luminary is used. The house system defaults to Placidus
  * ('P'), as in `astrology/electional` and `astrology/rectification`.
  *
- * Zodiac: positions are requested with no zodiac argument, the same as `findLunations` with no
- * zodiac, so the degrees are the provider's default zodiac.
+ * Zodiac: the caller passes the chart's own zodiac (#1798, owner decision 2026-11-20). It is used for
+ * the lunation search, the luminary positions and the Ascendant, so a sidereal chart shows a sidereal
+ * degree. With no zodiac the provider's default (tropical) is used.
  *
  * @module domain/prenatal-syzygy
  * @purpose Finds a person's prenatal syzygy (last New or Full Moon before birth) and its degree per Bonatti Tr. 9 (#1798).
- * @conventions Uses `astrology/lunations` `findLunations` over a 31-day window ending at birth (one synodic month is about 29.53 days). A prevention's degree is the above-horizon luminary's longitude, using `astrology/sect` `isAboveHorizon` on the Ascendant from `provider.houses`. Degrees are tropical.
+ * @conventions Uses `astrology/lunations` `findLunations` over a 31-day window ending at birth (one synodic month is about 29.53 days). A prevention's degree is the above-horizon luminary's longitude, using `astrology/sect` `isAboveHorizon` on the Ascendant from `provider.houses`. Degrees are in the zodiac passed by the caller (default tropical).
  * @exports PrenatalSyzygy, prenatalSyzygy
  */
 import { findLunations } from '../astrology/lunations.js';
 import { bodyByKey } from '../astrology/bodies.js';
 import { isAboveHorizon } from '../astrology/sect.js';
-import type { BodyId, Degrees, EphemerisProvider, GeoPosition, HouseSystem, JulianDayUT } from '../ephemeris/types.js';
+import type {
+  BodyId,
+  Degrees,
+  EphemerisProvider,
+  GeoPosition,
+  HouseSystem,
+  JulianDayUT,
+  Zodiac,
+} from '../ephemeris/types.js';
 
 /** Length of the search window before birth; one synodic month is about 29.53 days, so it always holds a New and a Full Moon. */
 const SEARCH_WINDOW_DAYS = 31;
@@ -77,14 +86,16 @@ export async function prenatalSyzygy(
   birthJd: JulianDayUT,
   place: GeoPosition,
   houseSystem: HouseSystem = DEFAULT_HOUSE_SYSTEM,
+  zodiac?: Zodiac,
 ): Promise<PrenatalSyzygy> {
-  const events = await findLunations(birthJd - SEARCH_WINDOW_DAYS, birthJd, provider);
+  const events = await findLunations(birthJd - SEARCH_WINDOW_DAYS, birthJd, provider, zodiac);
   const before = events.filter((event) => event.jd < birthJd);
   const latest = before[before.length - 1];
   if (latest === undefined) throw new Error('no New or Full Moon found in the 31 days before birth');
 
-  const sun = await provider.position(latest.jd, SUN);
-  const moon = await provider.position(latest.jd, MOON);
+  const positionOptions = zodiac === undefined ? undefined : { zodiac };
+  const sun = await provider.position(latest.jd, SUN, positionOptions);
+  const moon = await provider.position(latest.jd, MOON, positionOptions);
 
   if (latest.kind === 'new') {
     return {
@@ -96,7 +107,7 @@ export async function prenatalSyzygy(
     };
   }
 
-  const degree = await preventionDegree(provider, latest.jd, sun.longitude, moon.longitude, place, houseSystem);
+  const degree = await preventionDegree(provider, latest.jd, sun.longitude, moon.longitude, place, houseSystem, zodiac);
   return {
     kind: 'prevention',
     jd: latest.jd,
@@ -114,10 +125,11 @@ async function preventionDegree(
   moonLongitude: Degrees,
   place: GeoPosition,
   houseSystem: HouseSystem,
+  zodiac: Zodiac | undefined,
 ): Promise<Degrees | undefined> {
   let ascendant: Degrees;
   try {
-    ascendant = (await provider.houses(jd, place, houseSystem)).ascendant;
+    ascendant = (await provider.houses(jd, place, houseSystem, zodiac)).ascendant;
   } catch {
     return undefined;
   }

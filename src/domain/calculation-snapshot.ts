@@ -17,7 +17,7 @@
  * @module domain/calculation-snapshot
  * @purpose Defines a versioned, fully-validated CalculationSnapshot (settings, rulership, custom points and chosen fixed stars) and the pure functions that build/parse/serialize one.
  * @conventions `version` is bumped only when the *shape* a snapshot must satisfy changes incompatibly; `parseCalculationSnapshot` never throws — an invalid or missing field is filled from the documented app defaults, the same defaults a never-customized chart already shows (for a device's own saved default); `decodeCalculationSnapshot` is the strict, version-dispatched gate for payloads from outside the device (#717) and refuses rather than repairs; strict validation checks registered house systems, aspect keys, and bounds schemes against canonical registries.
- * @exports CURRENT_SNAPSHOT_VERSION, MAX_SNAPSHOT_FIXED_STARS, decodeStrictExtendedSettings, CalculationSnapshot, buildCalculationSnapshot, snapshotCalculationOptions, calculationSnapshotIdentity, parseCalculationSnapshot, decodeCalculationSnapshot, SnapshotDecodeError, SNAPSHOT_ORB_SCALE_RANGE, calculationSnapshotToJson
+ * @exports CURRENT_SNAPSHOT_VERSION, MAX_SNAPSHOT_FIXED_STARS, decodeStrictExtendedSettings, CalculationSnapshot, buildCalculationSnapshot, snapshotCalculationOptions, calculationSnapshotIdentity, parseCalculationSnapshot, decodeCalculationSnapshot, SnapshotDecodeError, SNAPSHOT_ORB_SCALE_RANGE, calculationSnapshotToJson, normalizeFortuneFormula
  */
 import {
   DEFAULT_EXTENDED_SETTINGS,
@@ -41,6 +41,7 @@ import { isStationWindowK } from '../astrology/planetary-condition.js';
 import type { Zodiac } from '../ephemeris/types.js';
 import type { JsonValue } from '../store/ops.js';
 import { STAR_SEARCH_LIMIT } from '../ephemeris/star-catalogue.js';
+import { DEFAULT_FORTUNE_FORMULA } from '../astrology/arabic-parts.js';
 import { readCustomPoints, readFixedStars, type ChosenFixedStar, type CustomPointDefinition } from './person.js';
 
 /**
@@ -54,6 +55,9 @@ import { readCustomPoints, readFixedStars, type ChosenFixedStar, type CustomPoin
  * all) still parses — it simply had no way to carry formula points, so it reads back with none.
  * #724's optional `stationWindow` and `motionScore` are not a bump either: absent means off, so every existing snapshot
  * reads back unchanged and one with both off serializes byte for byte as before.
+ * #1794's optional `fortuneFormula` is not a bump either: it is present only when it is `'same-day-and-night'`, and a
+ * missing one reads back as the default `DEFAULT_FORTUNE_FORMULA`, so every existing snapshot reads back unchanged and a
+ * default snapshot keeps its old serialized form and identity.
  * 4 (#860): adds `fixedStars`, the person's chosen catalogue stars, so a shared or exported chart checks the same
  * stars as the sender's. A v1-v3 snapshot has none and reads back with none (the seven-star preset).
  * #1407's user-defined ayanamsa is not a bump: `zodiac.user` appears only with the new `SE_SIDM_USER` mode, so every
@@ -134,7 +138,13 @@ export function buildCalculationSnapshot(
   customPoints: readonly CustomPointDefinition[] = [],
   fixedStars: readonly ChosenFixedStar[] = [],
 ): CalculationSnapshot {
-  return { version: CURRENT_SNAPSHOT_VERSION, settings, rulership, customPoints, fixedStars };
+  return {
+    version: CURRENT_SNAPSHOT_VERSION,
+    settings: normalizeFortuneFormula(settings),
+    rulership,
+    customPoints,
+    fixedStars,
+  };
 }
 
 /**
@@ -361,7 +371,20 @@ function parseExtendedSettings(value: unknown): ExtendedSettings {
     // Both absent unless on: an absent field is the off state, so an old bag and an off one read back identically (#724).
     ...parseStationWindow(value.stationWindow),
     ...(value.motionScore === true ? { motionScore: true } : {}),
+    // Last, beside motionScore (#1794): the non-default value only, so a default bag is unchanged and key order is fixed.
+    ...(value.fortuneFormula === 'same-day-and-night' ? { fortuneFormula: 'same-day-and-night' as const } : {}),
   };
+}
+
+/**
+ * The one normalizer for the Fortune formula (#1794): the default (`DEFAULT_FORTUNE_FORMULA`) is stored as absent, so an
+ * explicit default never reaches the snapshot identity, an artifact hash or a register. Used by every writer.
+ */
+export function normalizeFortuneFormula(settings: ExtendedSettings): ExtendedSettings {
+  if (settings.fortuneFormula !== DEFAULT_FORTUNE_FORMULA) return settings;
+  const copy = { ...settings };
+  delete copy.fortuneFormula;
+  return copy;
 }
 
 /**
@@ -399,6 +422,7 @@ export class SnapshotDecodeError extends Error {
 const SNAPSHOT_BOUNDS_SCHEMES = ['egyptian', 'ptolemaic'] as const;
 const SNAPSHOT_LILITH_VARIANTS = ['mean', 'true', 'interpolated'] as const;
 const SNAPSHOT_NODE_VARIANTS = ['mean', 'true'] as const;
+const SNAPSHOT_FORTUNE_FORMULAS = ['sect-reversed', 'same-day-and-night'] as const;
 
 function isNonNegativeNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0;
@@ -444,6 +468,10 @@ function invalidSettingFields(settings: Record<string, unknown>, requireAll = fa
   check('boundsScheme', (v) => isOneOf(v, SNAPSHOT_BOUNDS_SCHEMES));
   check('lilithVariant', (v) => isOneOf(v, SNAPSHOT_LILITH_VARIANTS));
   check('nodeVariant', (v) => isOneOf(v, SNAPSHOT_NODE_VARIANTS));
+  // Not a `check`: a missing fortuneFormula is an old register (default), never invalid, even with requireAll.
+  if (settings.fortuneFormula !== undefined && !isOneOf(settings.fortuneFormula, SNAPSHOT_FORTUNE_FORMULAS)) {
+    problems.push('fortuneFormula');
+  }
   check('enabledMinorAspects', (aspects) => Array.isArray(aspects) && aspects.every((key) => isValidAspect(key)));
   check('objectPolicies', (v) => isValidObjectPolicies(v, requireAll));
   for (const key of ['midpointsVisible', 'antisciaVisible', 'declinationVisible', 'dial90Visible', 'rainbowZodiac']) {
@@ -557,5 +585,7 @@ export function decodeCalculationSnapshot(value: unknown): CalculationSnapshot {
  */
 export function calculationSnapshotToJson(snapshot: CalculationSnapshot): Record<string, JsonValue> {
   if (snapshot.fixedStars.length > MAX_SNAPSHOT_FIXED_STARS) throw fixedStarCapError(snapshot.fixedStars.length);
-  return JSON.parse(JSON.stringify(snapshot)) as Record<string, JsonValue>;
+  // The default Fortune formula is omitted (#1794), so a default chart serializes byte for byte as it did before the field existed.
+  const settings = normalizeFortuneFormula(snapshot.settings);
+  return JSON.parse(JSON.stringify({ ...snapshot, settings })) as Record<string, JsonValue>;
 }
