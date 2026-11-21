@@ -212,7 +212,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `last-person.ts` — Remembers most-recently viewed person across app. Deps: localStorage only.
 - `palette-recents.ts` — Command palette recents (last 8) and pins in localStorage (#1654). Deps: localStorage only.
 - `last-chart.ts` — Remembers each person's last-opened chart screen (#1173), so Overview can offer "continue where you left off". Deps: none.
-- `locale.ts` — App-wide UI locale (en/nl, an account preference since #1066) and `<html lang>`; a view over `account-preferences`. Deps: `./account-preferences`, `interpretation/schema`.
+- `locale.ts` — App-wide UI locale (en/nl, an account preference since #1066) and `<html lang>`; a view over `account-preferences`. Deps: `./account-preferences`, `interpretation/locales`.
 - `markdown.tsx` — Dependency-free Markdown subset renderer (headings/lists/links/code). Deps: none.
 - `messages.ts` — Generic `useMessages()` hook for co-located `*.messages.ts`. Deps: `locale`.
 - `moment-labels.ts` — Wording for resolved birth-moment provenance + warnings. Deps: `time/types`.
