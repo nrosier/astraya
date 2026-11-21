@@ -661,4 +661,16 @@ describe('rotateEncryptionKey zeroes decrypted operation and result plaintext (#
     expect(derived.plaintexts.length).toBeGreaterThanOrEqual(1);
     for (const plain of derived.plaintexts) expect(plain.every((b) => b === 0)).toBe(true);
   });
+
+  it('zeroes the decrypted plaintext when encryption throws after a successful decrypt', () => {
+    insertOp(OLD_KEY, '{"field":"one"}');
+    derived.plaintexts.length = 0;
+
+    // rotateEncryptionKey does not check the new key's length, so a 16-byte key makes createCipheriv throw
+    // after decryptPayload has already returned the plaintext. This exercises the failure branch of the finally.
+    expect(() => rotateEncryptionKey(db, OLD_KEY, Buffer.alloc(16))).toThrow();
+
+    expect(derived.plaintexts.length).toBeGreaterThanOrEqual(1);
+    for (const plain of derived.plaintexts) expect(plain.every((b) => b === 0)).toBe(true);
+  });
 });
