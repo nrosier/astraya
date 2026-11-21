@@ -41,7 +41,7 @@ import {
   type ReconcileCandidates,
 } from '../domain/account-preferences.js';
 import { parseCalculationSnapshot } from '../domain/calculation-snapshot.js';
-import { CORPUS_LOCALES, type Locale } from '../interpretation/schema.js';
+import { CORPUS_LOCALES, type Locale } from '../interpretation/locales.js';
 import {
   ACCOUNT_ENTITY,
   ACCOUNT_ENTITY_ID,

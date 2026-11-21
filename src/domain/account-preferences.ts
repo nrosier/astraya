@@ -33,7 +33,7 @@ import {
 import { isRulershipChoice, type RulershipChoice } from '../astrology/rulership.js';
 import { readSavedTransitFilter, type SavedTransitFilter } from '../astrology/transit-importance.js';
 import type { ExtendedSettings } from '../chart/extended-settings.js';
-import { CORPUS_LOCALES, type Locale } from '../interpretation/schema.js';
+import { CORPUS_LOCALES, type Locale } from '../interpretation/locales.js';
 import {
   ACCOUNT_ENTITY,
   ACCOUNT_ENTITY_ID,
