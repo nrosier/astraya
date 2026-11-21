@@ -16,11 +16,12 @@
 /**
  * @module reset-totp
  * @purpose Operator CLI that clears TOTP for every user after a key leak (#1782): the four TOTP columns, every recovery code and the recovery-code pepper, in one transaction. Rotation alone does not undo a TOTP compromise, so this is the step after `ops:rotate-key`.
- * @conventions Destructive and operator-only (shell access, server stopped), never an HTTP route. Refuses to run without an explicit `--yes`, and then opens and changes nothing. One `BEGIN IMMEDIATE` transaction with a rollback on any error, rethrowing the original error. Touches only `users.totp_*`, `totp_recovery_codes` and the pepper row of `server_secrets`; passwords, sessions and every other column or table are left alone (owner decision D1, #1782). Needs no encryption key. Prints counts and fixed sentences only, never a secret, code, pepper or key.
+ * @conventions Destructive and operator-only (shell access, server stopped), never an HTTP route. Refuses to run without an explicit `--yes`, and then opens and changes nothing. With `--yes` it prints `Database: <path>` before opening, and exits 2 when the counts are all zero (no TOTP state found, #1792). Entry-point and blank-path handling come from `cli.ts`. One `BEGIN IMMEDIATE` transaction with a rollback on any error, rethrowing the original error. Touches only `users.totp_*`, `totp_recovery_codes` and the pepper row of `server_secrets`; passwords, sessions and every other column or table are left alone (owner decision D1, #1782). Needs no encryption key. Prints counts and fixed sentences only, never a secret, code, pepper or key.
  * @exports TotpResetResult, resetAllTotp, runResetTotp
  */
 import { resolve } from 'node:path';
 import { openDatabase, type Database } from '../db.ts';
+import { isEntryPoint, opsDbPath } from './cli.ts';
 
 /** Row name of the recovery-code pepper in `server_secrets`; must match `PEPPER_NAME` in `auth/totp-store.ts` (the test checks it). */
 const PEPPER_NAME = 'totp-recovery-pepper';
@@ -69,8 +70,9 @@ export function resetAllTotp(db: Database): TotpResetResult {
 
 /**
  * The CLI body, separate from the entry point so the refusal path is testable. Says what it is about to do, then
- * returns 1 without `--yes` (the database is not even opened) or resets and returns 0. `log` only ever receives
- * fixed sentences and counts.
+ * returns 1 without `--yes` (the database is not even opened). With `--yes` it prints the database path it is about
+ * to change, then resets: returns 2 when nothing was TOTP state (a wrong `ASTRAYA_DB_PATH` looks like this), else 0.
+ * `log` only ever receives fixed sentences, the database path and counts.
  */
 export function runResetTotp(argv: readonly string[], dbPath: string, log: (line: string) => void): number {
   log(
@@ -81,9 +83,14 @@ export function runResetTotp(argv: readonly string[], dbPath: string, log: (line
     log('Nothing was changed. Re-run with --yes to confirm: npm run ops:reset-totp -- --yes');
     return 1;
   }
+  log(`Database: ${dbPath}`);
   const db = openDatabase(dbPath);
   try {
     const { users, codes, pepper } = resetAllTotp(db);
+    if (users === 0 && codes === 0 && pepper === 0) {
+      log('No TOTP state was found in this database. Check ASTRAYA_DB_PATH: nothing was reset.');
+      return 2;
+    }
     log(
       `Reset TOTP for ${String(users)} user(s); deleted ${String(codes)} recovery code(s) and ${String(pepper)} pepper row(s). ` +
         'Users must enrol TOTP again on next sign-in.',
@@ -94,11 +101,8 @@ export function runResetTotp(argv: readonly string[], dbPath: string, log: (line
   }
 }
 
-/** True when this module is the process entry point rather than an import — same test as `rotate-key.ts`. */
-const isEntryPoint = process.argv[1] !== undefined && import.meta.url === `file://${resolve(process.argv[1])}`;
-
-if (isEntryPoint) {
-  const dbPath = process.env.ASTRAYA_DB_PATH ?? resolve(import.meta.dirname, '..', '..', 'data', 'astraya.db');
+if (isEntryPoint(import.meta.url, process.argv[1])) {
+  const dbPath = opsDbPath(process.env, resolve(import.meta.dirname, '..', '..', 'data', 'astraya.db'));
   process.exitCode = runResetTotp(process.argv.slice(2), dbPath, (line) => {
     console.log(line);
   });

@@ -208,9 +208,36 @@ describe('runResetTotp (the CLI body)', () => {
     const output = lines.join('\n');
     expect(output).toContain('Reset TOTP for 1 user(s); deleted 10 recovery code(s) and 1 pepper row(s).');
     expect(output).toContain('enrol TOTP again');
+    expect(output).toContain(`Database: ${dbPath}`);
     expect(output).not.toContain(Buffer.from(secret.totp_secret).toString('hex'));
     expect(output).not.toContain(KEY.toString('base64'));
     db = openDatabase(dbPath);
     expect(readTotpState(db, KEY, userId)).toEqual({ status: 'off' });
+  });
+
+  it('with --yes on a missing database path prints the path, says no TOTP was found, exits 2 and never reports success (#1792: a wrong path used to print success)', () => {
+    const missing = join(dir, 'wrong-path.db');
+    const lines: string[] = [];
+
+    expect(runResetTotp(['--yes'], missing, (line) => lines.push(line))).toBe(2);
+
+    const output = lines.join('\n');
+    expect(output).toContain(`Database: ${missing}`);
+    expect(output).toContain('No TOTP state was found in this database. Check ASTRAYA_DB_PATH: nothing was reset.');
+    expect(output).not.toContain('Reset TOTP for');
+  });
+
+  it('with --yes on an existing database that has users but no TOTP exits 2 and reports nothing reset', () => {
+    addUser('never-enrolled');
+    db.close();
+    const lines: string[] = [];
+
+    expect(runResetTotp(['--yes'], dbPath, (line) => lines.push(line))).toBe(2);
+
+    const output = lines.join('\n');
+    expect(output).toContain('No TOTP state was found in this database.');
+    expect(output).not.toContain('Reset TOTP for');
+    db = openDatabase(dbPath);
+    expect(count('SELECT COUNT(*) AS n FROM users')).toBe(1);
   });
 });
