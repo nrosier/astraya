@@ -39,6 +39,7 @@ import { resolve } from 'node:path';
 import { openDatabase, type Database } from '../db.ts';
 import { decryptPayload, encryptPayload } from './crypto.ts';
 import { planTotpRotation } from './rotate-totp.ts';
+import { isEntryPoint, opsDbPath } from './cli.ts';
 
 interface EncryptedRow {
   readonly seq: number;
@@ -226,15 +227,12 @@ function requireKey(name: string): Buffer {
   return key;
 }
 
-/** True when this module is the process entry point rather than an import — same test as `server/index.ts`. */
-const isEntryPoint = process.argv[1] !== undefined && import.meta.url === `file://${resolve(process.argv[1])}`;
-
-if (isEntryPoint) {
+if (isEntryPoint(import.meta.url, process.argv[1])) {
   const currentKey = requireKey('ASTRAYA_ENCRYPTION_KEY');
   const newKey = requireKey('ASTRAYA_NEW_ENCRYPTION_KEY');
   if (currentKey.equals(newKey)) throw new Error('ASTRAYA_NEW_ENCRYPTION_KEY is the same key — nothing to rotate.');
 
-  const dbPath = process.env.ASTRAYA_DB_PATH ?? resolve(import.meta.dirname, '..', '..', 'data', 'astraya.db');
+  const dbPath = opsDbPath(process.env, resolve(import.meta.dirname, '..', '..', 'data', 'astraya.db'));
   const db = openDatabase(dbPath);
   try {
     const { rotated, plaintext, interpretationResults, totpSecrets, serverSecrets } = rotateEncryptionKey(
