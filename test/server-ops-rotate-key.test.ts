@@ -389,6 +389,39 @@ describe('rotateEncryptionKey transaction guarantees (#1680 review)', () => {
     expect(payloads(OLD_KEY)).toEqual(written);
   });
 
+  it('reports a busy WAL checkpoint, tells the operator to switch the key, and keeps the committed rotation (#1801)', () => {
+    const plaintext = '{"field":"one"}';
+    insertOp(OLD_KEY, plaintext);
+    const other = openDatabase(join(dir, 'astraya.db'));
+    let message = '';
+    try {
+      // A read transaction left open on another connection: the rotation can still commit, but the
+      // WAL checkpoint cannot fold in while that reader holds its snapshot, so it reports busy.
+      other.exec('BEGIN');
+      other.prepare('SELECT seq FROM ops').all();
+      try {
+        rotateEncryptionKey(db, OLD_KEY, NEW_KEY);
+      } catch (error) {
+        message = error instanceof Error ? error.message : String(error);
+      }
+      other.exec('ROLLBACK');
+    } finally {
+      other.close();
+    }
+
+    expect(message).toMatch(
+      /^The rotation was committed: set ASTRAYA_ENCRYPTION_KEY to the new key before restarting\. /,
+    );
+    expect(message).toMatch(/Another connection is still reading the database/);
+    expect(message).toMatch(/Do not rotate again/);
+    // Secrets and plaintext never appear in an error.
+    expect(message).not.toContain(OLD_KEY.toString('base64'));
+    expect(message).not.toContain(NEW_KEY.toString('base64'));
+    expect(message).not.toContain(plaintext);
+    // The commit stands: the rotated row reads under the new key.
+    expect(payloads(NEW_KEY)).toEqual([plaintext]);
+  });
+
   it('commits: a second connection reads the rotated rows under the new key', () => {
     const written = [insertOp(OLD_KEY, '{"field":"one"}'), insertOp(OLD_KEY, '{"field":"two"}')];
     rotateEncryptionKey(db, OLD_KEY, NEW_KEY);

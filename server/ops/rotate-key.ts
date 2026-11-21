@@ -126,21 +126,46 @@ export function rotateEncryptionKey(db: Database, currentKey: Buffer, newKey: Bu
   return result;
 }
 
+/** Prefix of every error after COMMIT: the rotation stands, so the operator must switch the key rather than re-run it. */
+const COMMITTED_PREFIX = 'The rotation was committed: set ASTRAYA_ENCRYPTION_KEY to the new key before restarting. ';
+
+/**
+ * Runs `PRAGMA wal_checkpoint(TRUNCATE)` and reports whether it did not finish. `busy` is 1 when another connection
+ * still holds a read, so the WAL was not fully folded in. A row or column that cannot be read also counts as not finished.
+ */
+function checkpointIncomplete(db: Database): boolean {
+  const row = db.prepare('PRAGMA wal_checkpoint(TRUNCATE)').get() as unknown as { busy?: unknown } | undefined;
+  const busy: unknown = row?.busy;
+  return !((typeof busy === 'number' || typeof busy === 'bigint') && Number(busy) === 0);
+}
+
 /**
  * After COMMIT, folds the WAL into the main file and rebuilds that file so superseded ciphertext is gone from
  * both (#1680). VACUUM itself writes through the WAL in WAL mode, so a second checkpoint follows it. The
  * rotation is already committed here; a failure is reported as such so the operator does not re-run it.
+ * Both checkpoints are read before anything is thrown, so a busy one is never hidden behind the other.
  */
 function clearResidue(db: Database): void {
+  let firstIncomplete: boolean;
+  let secondIncomplete: boolean;
   try {
-    db.exec('PRAGMA wal_checkpoint(TRUNCATE)');
+    firstIncomplete = checkpointIncomplete(db);
     db.exec('VACUUM');
-    db.exec('PRAGMA wal_checkpoint(TRUNCATE)');
+    secondIncomplete = checkpointIncomplete(db);
   } catch (error) {
     throw new Error(
-      'The rotation was committed, but clearing old-key ciphertext from the database file and WAL failed. ' +
+      COMMITTED_PREFIX +
+        'Clearing old-key ciphertext from the database file and WAL failed. ' +
         'Do not rotate again; stop the server and run VACUUM on the database by hand.',
       { cause: error },
+    );
+  }
+  if (firstIncomplete || secondIncomplete) {
+    throw new Error(
+      COMMITTED_PREFIX +
+        'Another connection is still reading the database, so old-key ciphertext may remain in the WAL. ' +
+        'Stop every process using the file, then run PRAGMA wal_checkpoint(TRUNCATE) and VACUUM by hand. ' +
+        'Do not rotate again.',
     );
   }
 }
