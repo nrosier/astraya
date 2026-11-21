@@ -2934,24 +2934,6 @@ label.stacked {
   margin-bottom: 0;
 }
 
-/* Without a chart-type row (a page with no type Select), the Selects stand alone under the wheel or above the matrix. */
-.chart-workbench-dial > .aspect-family-filter,
-#chart-view-matrix > .aspect-family-filter {
-  display: block;
-  max-width: 20rem;
-  margin: 0 0 var(--space-4);
-}
-
-/* Pills carry their own width, so on the matrix and the wheel they sit in a wrapping row with the same --space-3 gap as the chart-type row. */
-.chart-workbench-dial > .aspect-family-filter:has(.primitive-pill-select),
-#chart-view-matrix > .aspect-family-filter:has(.primitive-pill-select) {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: var(--space-3);
-  max-width: none;
-}
-
 .data-table td[data-align='center'] {
   text-align: center;
 }
