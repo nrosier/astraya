@@ -311,6 +311,37 @@ describe('rotateEncryptionKey transaction guarantees (#1680 review)', () => {
     expect(db.isTransaction).toBe(false);
   });
 
+  it('reports both errors when the rollback itself fails inside an open transaction (AggregateError, #1801)', () => {
+    const op = insertOp(OLD_KEY, '{"field":"one"}');
+    db.exec(
+      "CREATE TRIGGER fail_aggregate_update BEFORE UPDATE ON ops BEGIN SELECT RAISE(ABORT, 'forced failure'); END",
+    );
+    // The rollback seam: ROLLBACK throws while the transaction is still open, so the branch sees isTransaction true.
+    const failingRollback = (sql: string): void => {
+      if (sql === 'ROLLBACK') throw new Error('rollback refused');
+      db.exec(sql);
+    };
+    let caught: unknown;
+    try {
+      rotateEncryptionKey(db, OLD_KEY, NEW_KEY, failingRollback);
+    } catch (error) {
+      caught = error;
+    } finally {
+      db.exec('DROP TRIGGER fail_aggregate_update');
+    }
+
+    expect(caught).toBeInstanceOf(AggregateError);
+    const aggregate = caught as AggregateError;
+    expect(aggregate.message).toMatch(/the rollback also failed/);
+    expect(aggregate.errors).toHaveLength(2);
+    expect((aggregate.errors[0] as Error).message).toMatch(/forced failure/);
+    expect((aggregate.errors[1] as Error).message).toBe('rollback refused');
+    // The real connection is still in its transaction, so the test ends it, then nothing was written.
+    expect(db.isTransaction).toBe(true);
+    db.exec('ROLLBACK');
+    expect(payloads(OLD_KEY)).toEqual([op]);
+  });
+
   it('leaves no old-key ciphertext in the database file or the WAL after rotation', () => {
     for (let i = 0; i < 20; i += 1) insertOp(OLD_KEY, `{"field":"row-${String(i)}","pad":"${'x'.repeat(200)}"}`);
     saveInterpretationResult(

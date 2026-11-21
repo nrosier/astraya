@@ -100,7 +100,14 @@ function decryptForRotation(what: string, ciphertext: Buffer, iv: Buffer, curren
  * That includes a result's label: the reader never sees an unreadable label as an error
  * (`readDescription` shows none), so a rotation that skipped one would lose it silently.
  */
-export function rotateEncryptionKey(db: Database, currentKey: Buffer, newKey: Buffer): RotationResult {
+export function rotateEncryptionKey(
+  db: Database,
+  currentKey: Buffer,
+  newKey: Buffer,
+  execRollback: (sql: string) => void = (sql) => {
+    db.exec(sql);
+  },
+): RotationResult {
   // IMMEDIATE takes the write lock before the first read (#1680 review): a server still running on this file
   // cannot save a row under the old key between the reads and the commit, which would leave a mix of keys.
   // secure_delete zeroes the pages the UPDATEs free, so old ciphertext is not left behind in the file (#1680).
@@ -112,7 +119,7 @@ export function rotateEncryptionKey(db: Database, currentKey: Buffer, newKey: Bu
     db.exec('COMMIT');
   } catch (error) {
     try {
-      db.exec('ROLLBACK');
+      execRollback('ROLLBACK');
     } catch (rollbackError) {
       // SQLite may already have rolled back (RAISE(ROLLBACK)), and then the original error is the one
       // the operator needs. If a transaction is still open the rollback genuinely failed: report both.
