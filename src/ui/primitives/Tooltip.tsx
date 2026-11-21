@@ -29,73 +29,32 @@
  * @conventions Generalizes SyncBadge.tsx's click-toggled aria-expanded/aria-controls popover; trigger is a real <button> (never a bare <span title>), sibling of the popup rather than nested inside another interactive element; dismissible (Escape/outside click), hoverable (survives pointer moving onto the popup), and persistent (no auto-timeout).
  * @exports Tooltip
  */
-import { useEffect, useId, useRef, useState } from 'react';
-
-const HOVER_OPEN_DELAY_MS = 400;
+import { useRef } from 'react';
+import { useTooltipState } from './use-tooltip-state.js';
 
 export interface TooltipProps {
   /** The visible trigger text, e.g. a column label or an inline glossary term. */
   readonly children: React.ReactNode;
   /** The definition shown in the popup. */
   readonly text: string;
-  /** Rendered trigger element: 'button' for a standalone trigger (e.g. a column header's label), 'span' when the caller already renders its own interactive element and only wants this as a sibling disclosure (e.g. a dotted-underline term inside a sentence) — still a real button under the hood. */
+  /** Extra class names on the wrapper span, added after `primitive-tooltip` (e.g. `glossary-term`). */
   readonly className?: string | undefined;
   /** The trigger's accessible name when its visible content (a "?") does not name itself, e.g. "About Ruler". */
   readonly label?: string | undefined;
 }
 
 export function Tooltip({ children, text, className, label }: TooltipProps): React.JSX.Element {
-  const [open, setOpen] = useState(false);
-  const [sticky, setSticky] = useState(false);
-  const hoverTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const wrapperRef = useRef<HTMLSpanElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const popoverId = useId();
   // Escape returns focus to the trigger, which must not count as a focus that opens the popup again.
   const restoringFocus = useRef(false);
-
-  const openNow = (): void => {
-    setOpen(true);
-  };
-  const closeUnlessSticky = (): void => {
-    if (!sticky) setOpen(false);
-  };
-  const closeFully = (): void => {
-    setSticky(false);
-    setOpen(false);
-  };
-
-  const onPointerEnter = (): void => {
-    clearTimeout(hoverTimer.current);
-    hoverTimer.current = setTimeout(openNow, HOVER_OPEN_DELAY_MS);
-  };
-  const onPointerLeave = (): void => {
-    clearTimeout(hoverTimer.current);
-    closeUnlessSticky();
-  };
-
-  useEffect(() => {
-    if (!open) return undefined;
-    const onPointerDown = (event: PointerEvent): void => {
-      if (wrapperRef.current !== null && event.target instanceof Node && wrapperRef.current.contains(event.target)) {
-        return;
-      }
-      closeFully();
-    };
-    const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key !== 'Escape') return;
-      closeFully();
-      restoringFocus.current = true;
-      triggerRef.current?.focus();
-      restoringFocus.current = false;
-    };
-    document.addEventListener('pointerdown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [open]);
+  const { open, popoverId, wrapperRef, openNow, closeUnlessSticky, toggleSticky, onPointerEnter, onPointerLeave } =
+    useTooltipState({
+      onEscape: () => {
+        restoringFocus.current = true;
+        triggerRef.current?.focus();
+        restoringFocus.current = false;
+      },
+    });
 
   return (
     <span
@@ -112,10 +71,7 @@ export function Tooltip({ children, text, className, label }: TooltipProps): Rea
         aria-expanded={open}
         aria-controls={open ? popoverId : undefined}
         aria-describedby={open ? popoverId : undefined}
-        onClick={() => {
-          setSticky((was) => !was);
-          setOpen((was) => !was || !sticky);
-        }}
+        onClick={toggleSticky}
         onFocus={() => {
           if (!restoringFocus.current) openNow();
         }}

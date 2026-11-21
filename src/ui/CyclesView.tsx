@@ -13,9 +13,9 @@
  * @exports CyclesView
  */
 import { GlossaryText } from './GlossaryText.js';
-import { GlossaryTerm } from './GlossaryTerm.js';
-import { Radio } from './primitives/Radio.js';
-import type { GlossaryTermId } from './astro-glossary.messages.js';
+import { Radio, type RadioTerm } from './primitives/Radio.js';
+import { astroGlossaryMessages, type GlossaryTermId } from './astro-glossary.messages.js';
+import { splitGlossaryText } from './glossary-match.js';
 import { formatFixed } from './format.js';
 import { Button } from './primitives/Button.js';
 import { PillSelect } from './primitives/PillSelect.js';
@@ -23,7 +23,7 @@ import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
-import { Fragment, useCallback, useEffect, useEffectEvent, useId, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useEffectEvent, useId, useMemo, useRef, useState } from 'react';
 import { findMutualAspects, type MutualAspectEvent } from '../astrology/mutual-aspects.js';
 import { renderCycleDiagramSvg } from '../chart/cycle-diagram.js';
 import { aspectDisplayName, bodyDisplayName, signDisplayName } from './astro-names.messages.js';
@@ -85,13 +85,14 @@ function paramsFor(preset: CyclePreset): Params {
 interface MotionOption {
   readonly value: string;
   readonly label: string;
-  /** A glossary term the option's label names, shown as a tooltip beside it (#901). */
+  /** A glossary term the option's label names, shown as a tooltip on that word inside the label (#901, #1867). */
   readonly term?: GlossaryTermId;
 }
 
 /**
  * The motion filter (#901): a labelled radio group, not a native select, because a glossary tooltip cannot sit
- * inside a native `<option>`. Each choice is a real radio, so the arrow keys still move through the group.
+ * inside a native `<option>`. Each choice is a real radio, so the arrow keys still move through the group. The
+ * term's word is found in the label at render time (#1867), so the en and nl strings stay whole.
  */
 function MotionFilterGroup({
   label,
@@ -105,22 +106,30 @@ function MotionFilterGroup({
   readonly onChange: (value: string) => void;
 }): React.JSX.Element {
   const name = useId();
+  const [locale] = useLocale();
+  const glossary = useMessages(astroGlossaryMessages);
+  const termFor = (option: MotionOption): RadioTerm | undefined => {
+    if (option.term === undefined) return undefined;
+    const segment = splitGlossaryText(option.label, locale).find(
+      (part) => part.kind === 'term' && part.id === option.term,
+    );
+    return segment === undefined ? undefined : { word: segment.text, definition: glossary[option.term].definition };
+  };
   return (
     <fieldset className="primitive-choice-field">
       <legend className="primitive-field-label">{label}</legend>
       <div className="primitive-choice-group" role="radiogroup" aria-label={label}>
         {options.map((option) => (
-          <Fragment key={option.value}>
-            <Radio
-              name={name}
-              label={option.label}
-              checked={value === option.value}
-              onChange={() => {
-                onChange(option.value);
-              }}
-            />
-            {option.term !== undefined && <GlossaryTerm id={option.term} label={option.label} />}
-          </Fragment>
+          <Radio
+            key={option.value}
+            name={name}
+            label={option.label}
+            checked={value === option.value}
+            onChange={() => {
+              onChange(option.value);
+            }}
+            term={termFor(option)}
+          />
         ))}
       </div>
     </fieldset>
