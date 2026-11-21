@@ -2,6 +2,7 @@
 
 Op-log sync relay: HTTP routes, at-rest encryption, right-to-erasure purge, key-rotation operator script.
 
+- `cli.ts` — Shared operator-CLI helpers: entry-point test that handles spaces and Windows paths, and `ASTRAYA_DB_PATH` refusal of a blank value (#1792). Deps: none.
 - `crypto.ts` — Whole-payload AES-256-GCM encrypt/decrypt (authenticated); decrypt zeroes its intermediate plaintext chunks. Loads/validates `ASTRAYA_ENCRYPTION_KEY`. "Never store unencrypted" guarantee. Deps: node:crypto.
 - `deletion-impact.ts` — Pre-delete preview: scan (bounded) + decrypt user's ops, count distinct people/charts, approximate if truncated/no key. Deps: db, crypto.
 - `purge.ts` — Right-to-erasure (#308): maintains `purged_entities` deny-list, on purge-marker push erases every op row naming that entity (except marker itself). Deps: db, crypto.
