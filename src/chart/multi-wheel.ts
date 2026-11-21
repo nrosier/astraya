@@ -62,7 +62,7 @@ import {
 import type { GlyphLayoutInput } from './glyph-layout.js';
 import { bodyAttributes, hitAreaCircle, renderGlyphRingSvg, spreadGlyphs } from './glyph-layout.js';
 import { renderGlyph, signGlyph } from './glyphs.js';
-import { baselineOffset, circle, escapeXml, fmt, line, polygon, text } from './svg-primitives.js';
+import { baselineOffset, circle, fmt, line, polygon, text } from './svg-primitives.js';
 import type { RingBand, SheetGeometry } from './sheet-geometry.js';
 import {
   TICK_MAJOR_INTERVAL_DEG,
@@ -755,7 +755,7 @@ export function renderMultiWheelSvg(
             y,
             'start',
             'chart-multiwheel-legend-label',
-            escapeXml(ring.label),
+            ring.label,
             geometry.panelFontSize,
           ) +
           '</g>',

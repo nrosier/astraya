@@ -23,7 +23,7 @@
 /**
  * @module chart/dial90
  * @purpose Renders the traditional cosmobiology 90-degree dial: the ring geometry, each body plotted at all four of its dial arms, and midpoint-tree hit markers.
- * @conventions A dial degree (`dialPosition`) collapses conjunction/square/opposition to one 0-90 value, so each body is plotted at all four synthetic longitudes 90° apart (`dialArmLongitudes`) rather than a single point, letting two bodies in hard aspect visibly coincide; body placement delegates to `glyph-layout.ts`'s `renderGlyphRingSvg` with a fixed `{ orientation: 'aries-up', sweep: 'counterclockwise' }` anchor, reusing its collision-spreading/leader-line logic unmodified.
+ * @conventions A dial degree (`dialPosition`) collapses conjunction/square/opposition to one 0-90 value, so each body is plotted at all four synthetic longitudes 90° apart (`dialArmLongitudes`) rather than a single point, letting two bodies in hard aspect visibly coincide; body placement delegates to `glyph-layout.ts`'s `renderGlyphRingSvg` with a fixed `{ orientation: 'aries-up', sweep: 'counterclockwise' }` anchor, reusing its collision-spreading/leader-line logic unmodified; tick and hit labels go through the shared `text` from `svg-primitives.ts`, which escapes its content.
  * @exports dialArmLongitudes, renderDial90RingSvg, renderDial90Svg, renderDial90BodiesSvg, renderDial90MidpointHitsSvg; Dial90GeometryOptions, Dial90Input types.
  */
 import type { MidpointTreeHit } from '../astrology/midpoints.js';
@@ -31,6 +31,7 @@ import { dialPosition } from '../astrology/midpoints.js';
 import type { BodyId, Degrees } from '../ephemeris/types.js';
 import type { GlyphLayoutInput, GlyphRingOptions } from './glyph-layout.js';
 import { renderGlyphRingSvg } from './glyph-layout.js';
+import { text } from './svg-primitives.js';
 import { pointOnCircle } from './wheel.js';
 
 const ARM_COUNT = 4;
@@ -98,10 +99,6 @@ function line(x1: number, y1: number, x2: number, y2: number, className: string)
 
 function circle(cx: number, cy: number, r: number, className: string): string {
   return `<circle cx="${fmt(cx)}" cy="${fmt(cy)}" r="${fmt(r)}" class="${className}" />`;
-}
-
-function text(x: number, y: number, anchor: string, className: string, content: string): string {
-  return `<text x="${fmt(x)}" y="${fmt(y)}" text-anchor="${anchor}" class="${className}">${content}</text>`;
 }
 
 /**
