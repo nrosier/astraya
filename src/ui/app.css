@@ -4330,12 +4330,17 @@ button.app-nav-search.primitive-button-circle {
   }
 
   .chart-workbench {
-    /* .shell pads its bottom 5rem; pulling the grid up by the difference to --space-6 ends the page at the
-     * filled Selection card's margin, so the two-column chart view does not scroll the document (#900). */
-    margin-bottom: calc(var(--space-6) - 5rem);
     grid-template-columns: minmax(46rem, 1fr) minmax(20rem, 24rem);
     /* No row gap here: the dial's hint and wheel meet, and the card's --space-6 margin sets the overhang. */
     row-gap: 0;
+  }
+
+  /* .shell pads its bottom 5rem; pulling the grid up by the difference to --space-6 ends the page at the
+   * filled Selection card's margin, so the two-column chart view does not scroll the document (#900).
+   * Only when the chart ends the page: a following report or table would otherwise be pulled over the
+   * instrument bar (#1853). */
+  .shell > :last-child .chart-workbench {
+    margin-bottom: calc(var(--space-6) - 5rem);
   }
 
   .chart-workbench-dial {
