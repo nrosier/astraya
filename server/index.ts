@@ -35,6 +35,7 @@ import { registerAdminRoutes } from './auth/admin-routes.ts';
 import { loadOidcConfig } from './auth/oidc.ts';
 import { adminGroupStartupNotice } from './auth/admin-promotion.ts';
 import { registerOpsRoutes } from './ops/routes.ts';
+import { isEntryPoint, opsDbPath } from './ops/cli.ts';
 import { registerCorpusOverrideRoutes } from './corpus-overrides-routes.ts';
 import { registerCorpusCandidateRoutes } from './corpus-candidates-routes.ts';
 import { registerCorpusSubmissionRoutes } from './corpus-submissions-routes.ts';
@@ -46,7 +47,7 @@ const distRoot = resolve(here, '..', 'dist');
 
 const PORT = Number(process.env.PORT ?? 8080);
 const HOST = process.env.HOST ?? '0.0.0.0';
-const DB_PATH = process.env.ASTRAYA_DB_PATH ?? resolve(here, '..', 'data', 'astraya.db');
+const DB_PATH = opsDbPath(process.env, resolve(here, '..', 'data', 'astraya.db'));
 
 /**
  * `trustProxy` controls whether Fastify honours `X-Forwarded-For`/`X-Forwarded-Proto`
@@ -274,10 +275,7 @@ export async function build(options: BuildOptions = {}) {
   return app;
 }
 
-/** True when this module is the process entry point rather than an import. */
-const isEntryPoint = process.argv[1] !== undefined && import.meta.url === `file://${resolve(process.argv[1])}`;
-
-if (isEntryPoint) {
+if (isEntryPoint(import.meta.url, process.argv[1])) {
   const app = await build();
 
   // Containers are stopped with SIGTERM. Without this the process is killed
