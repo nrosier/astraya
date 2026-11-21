@@ -14,7 +14,7 @@ import { join } from 'node:path';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { openDatabase, type Database } from '../server/db.ts';
 import { CURRENT_KEY_VERSION, decryptPayload, encryptPayload } from '../server/ops/crypto.ts';
-import { rotateEncryptionKey } from '../server/ops/rotate-key.ts';
+import { rotateEncryptionKey, STORAGE_RESIDUE_NOTE } from '../server/ops/rotate-key.ts';
 import {
   confirmTotpEnrolment,
   generateRecoveryCodes,
@@ -311,6 +311,37 @@ describe('rotateEncryptionKey transaction guarantees (#1680 review)', () => {
     expect(db.isTransaction).toBe(false);
   });
 
+  it('reports both errors when the rollback itself fails inside an open transaction (AggregateError, #1801)', () => {
+    const op = insertOp(OLD_KEY, '{"field":"one"}');
+    db.exec(
+      "CREATE TRIGGER fail_aggregate_update BEFORE UPDATE ON ops BEGIN SELECT RAISE(ABORT, 'forced failure'); END",
+    );
+    // The rollback seam: ROLLBACK throws while the transaction is still open, so the branch sees isTransaction true.
+    const failingRollback = (sql: string): void => {
+      if (sql === 'ROLLBACK') throw new Error('rollback refused');
+      db.exec(sql);
+    };
+    let caught: unknown;
+    try {
+      rotateEncryptionKey(db, OLD_KEY, NEW_KEY, failingRollback);
+    } catch (error) {
+      caught = error;
+    } finally {
+      db.exec('DROP TRIGGER fail_aggregate_update');
+    }
+
+    expect(caught).toBeInstanceOf(AggregateError);
+    const aggregate = caught as AggregateError;
+    expect(aggregate.message).toMatch(/the rollback also failed/);
+    expect(aggregate.errors).toHaveLength(2);
+    expect((aggregate.errors[0] as Error).message).toMatch(/forced failure/);
+    expect((aggregate.errors[1] as Error).message).toBe('rollback refused');
+    // The real connection is still in its transaction, so the test ends it, then nothing was written.
+    expect(db.isTransaction).toBe(true);
+    db.exec('ROLLBACK');
+    expect(payloads(OLD_KEY)).toEqual([op]);
+  });
+
   it('leaves no old-key ciphertext in the database file or the WAL after rotation', () => {
     for (let i = 0; i < 20; i += 1) insertOp(OLD_KEY, `{"field":"row-${String(i)}","pad":"${'x'.repeat(200)}"}`);
     saveInterpretationResult(
@@ -389,6 +420,40 @@ describe('rotateEncryptionKey transaction guarantees (#1680 review)', () => {
     expect(payloads(OLD_KEY)).toEqual(written);
   });
 
+  it('reports a busy WAL checkpoint, tells the operator to switch the key, and keeps the committed rotation (#1801)', () => {
+    const plaintext = '{"field":"one"}';
+    insertOp(OLD_KEY, plaintext);
+    const other = openDatabase(join(dir, 'astraya.db'));
+    let message = '';
+    try {
+      // A read transaction left open on another connection: the rotation can still commit, but the
+      // WAL checkpoint cannot fold in while that reader holds its snapshot, so it reports busy.
+      other.exec('BEGIN');
+      other.prepare('SELECT seq FROM ops').all();
+      try {
+        rotateEncryptionKey(db, OLD_KEY, NEW_KEY);
+      } catch (error) {
+        message = error instanceof Error ? error.message : String(error);
+      }
+      other.exec('ROLLBACK');
+    } finally {
+      other.close();
+    }
+
+    expect(message).toMatch(
+      /^The rotation was committed: set ASTRAYA_ENCRYPTION_KEY to the new key before restarting\. /,
+    );
+    expect(message).toMatch(/Another connection is still reading the database/);
+    expect(message).toMatch(/A server still running on the old key may have written rows under it since the commit\./);
+    expect(message).toMatch(/Do not rotate again/);
+    // Secrets and plaintext never appear in an error.
+    expect(message).not.toContain(OLD_KEY.toString('base64'));
+    expect(message).not.toContain(NEW_KEY.toString('base64'));
+    expect(message).not.toContain(plaintext);
+    // The commit stands: the rotated row reads under the new key.
+    expect(payloads(NEW_KEY)).toEqual([plaintext]);
+  });
+
   it('commits: a second connection reads the rotated rows under the new key', () => {
     const written = [insertOp(OLD_KEY, '{"field":"one"}'), insertOp(OLD_KEY, '{"field":"two"}')];
     rotateEncryptionKey(db, OLD_KEY, NEW_KEY);
@@ -403,5 +468,14 @@ describe('rotateEncryptionKey transaction guarantees (#1680 review)', () => {
     } finally {
       other.close();
     }
+  });
+});
+
+describe('rotation success message storage residue (#1801)', () => {
+  it('names copy-on-write filesystems, SSD wear levelling and snapshots as outside the database control', () => {
+    expect(STORAGE_RESIDUE_NOTE).toMatch(/copy-on-write filesystems/);
+    expect(STORAGE_RESIDUE_NOTE).toMatch(/SSD wear levelling/);
+    expect(STORAGE_RESIDUE_NOTE).toMatch(/snapshots/);
+    expect(STORAGE_RESIDUE_NOTE).toMatch(/outside the database's control/);
   });
 });

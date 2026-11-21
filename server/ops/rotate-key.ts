@@ -20,7 +20,8 @@
  * commit it checkpoints the WAL and runs `VACUUM`, so the database file and its WAL no longer hold
  * the superseded ciphertext (#1680). Any backup or copy of the database taken before rotation, and
  * any filesystem snapshot, still holds it and is still readable with the old key: treat those as
- * exposed and destroy them if the leak matters.
+ * exposed and destroy them if the leak matters. Storage-level residue (copy-on-write filesystems, SSD wear
+ * levelling, snapshots) is outside the database's control.
  *
  * The server must be stopped before rotating. The script locks the database for the rotation, but a
  * server still running on the old key can write rows under it once the lock is released
@@ -33,7 +34,7 @@
  * @module rotate-key
  * @purpose Operator CLI script to re-encrypt everything stored under `ASTRAYA_ENCRYPTION_KEY` (every `ops` row, every saved interpretation result's sections and label, #1680, and every TOTP secret plus the `server_secrets` recovery-code pepper, #1500) under a replacement key, the remediation path for a leaked key.
  * @conventions Not exposed as an admin HTTP route on purpose — it holds both the old and new key and rewrites every row, which belongs to an operator with shell/container access, not a session cookie. Rotates the key material only, never `CURRENT_KEY_VERSION` (the encryption scheme itself, AES-256-GCM, is unchanged); re-encryption of every table runs in one transaction, failing before writing anything if any row (an op, a result's sections or its label, a TOTP secret under its per-user subkey, a server secret) does not decrypt under the stated current key, so a wrong key never produces a half-rotated database. Every re-encrypted value gets a fresh IV.
- * @exports RotationResult, rotateEncryptionKey
+ * @exports RotationResult, rotateEncryptionKey, STORAGE_RESIDUE_NOTE
  */
 import { resolve } from 'node:path';
 import { openDatabase, type Database } from '../db.ts';
@@ -55,6 +56,10 @@ interface ResultRow {
   readonly description_json: Buffer | null;
   readonly description_iv: Buffer | null;
 }
+
+/** Sentence printed after a successful rotation: storage outside the database can still hold old-key ciphertext (#1801). */
+export const STORAGE_RESIDUE_NOTE =
+  "Storage-level residue (copy-on-write filesystems, SSD wear levelling, snapshots) is outside the database's control.";
 
 export interface RotationResult {
   readonly rotated: number;
@@ -96,7 +101,14 @@ function decryptForRotation(what: string, ciphertext: Buffer, iv: Buffer, curren
  * That includes a result's label: the reader never sees an unreadable label as an error
  * (`readDescription` shows none), so a rotation that skipped one would lose it silently.
  */
-export function rotateEncryptionKey(db: Database, currentKey: Buffer, newKey: Buffer): RotationResult {
+export function rotateEncryptionKey(
+  db: Database,
+  currentKey: Buffer,
+  newKey: Buffer,
+  execRollback: (sql: string) => void = (sql) => {
+    db.exec(sql);
+  },
+): RotationResult {
   // IMMEDIATE takes the write lock before the first read (#1680 review): a server still running on this file
   // cannot save a row under the old key between the reads and the commit, which would leave a mix of keys.
   // secure_delete zeroes the pages the UPDATEs free, so old ciphertext is not left behind in the file (#1680).
@@ -108,7 +120,7 @@ export function rotateEncryptionKey(db: Database, currentKey: Buffer, newKey: Bu
     db.exec('COMMIT');
   } catch (error) {
     try {
-      db.exec('ROLLBACK');
+      execRollback('ROLLBACK');
     } catch (rollbackError) {
       // SQLite may already have rolled back (RAISE(ROLLBACK)), and then the original error is the one
       // the operator needs. If a transaction is still open the rollback genuinely failed: report both.
@@ -126,21 +138,47 @@ export function rotateEncryptionKey(db: Database, currentKey: Buffer, newKey: Bu
   return result;
 }
 
+/** Prefix of every error after COMMIT: the rotation stands, so the operator must switch the key rather than re-run it. */
+const COMMITTED_PREFIX = 'The rotation was committed: set ASTRAYA_ENCRYPTION_KEY to the new key before restarting. ';
+
+/**
+ * Runs `PRAGMA wal_checkpoint(TRUNCATE)` and reports whether it did not finish. `busy` is 1 when another connection
+ * still holds a read, so the WAL was not fully folded in. A row or column that cannot be read also counts as not finished.
+ */
+function checkpointIncomplete(db: Database): boolean {
+  const row = db.prepare('PRAGMA wal_checkpoint(TRUNCATE)').get() as unknown as { busy?: unknown } | undefined;
+  const busy: unknown = row?.busy;
+  return !((typeof busy === 'number' || typeof busy === 'bigint') && Number(busy) === 0);
+}
+
 /**
  * After COMMIT, folds the WAL into the main file and rebuilds that file so superseded ciphertext is gone from
  * both (#1680). VACUUM itself writes through the WAL in WAL mode, so a second checkpoint follows it. The
  * rotation is already committed here; a failure is reported as such so the operator does not re-run it.
+ * Both checkpoints are read before anything is thrown, so a busy one is never hidden behind the other.
  */
 function clearResidue(db: Database): void {
+  let firstIncomplete: boolean;
+  let secondIncomplete: boolean;
   try {
-    db.exec('PRAGMA wal_checkpoint(TRUNCATE)');
+    firstIncomplete = checkpointIncomplete(db);
     db.exec('VACUUM');
-    db.exec('PRAGMA wal_checkpoint(TRUNCATE)');
+    secondIncomplete = checkpointIncomplete(db);
   } catch (error) {
     throw new Error(
-      'The rotation was committed, but clearing old-key ciphertext from the database file and WAL failed. ' +
+      COMMITTED_PREFIX +
+        'Clearing old-key ciphertext from the database file and WAL failed. ' +
         'Do not rotate again; stop the server and run VACUUM on the database by hand.',
       { cause: error },
+    );
+  }
+  if (firstIncomplete || secondIncomplete) {
+    throw new Error(
+      COMMITTED_PREFIX +
+        'Another connection is still reading the database, so old-key ciphertext may remain in the WAL. ' +
+        'Stop every process using the file, then run PRAGMA wal_checkpoint(TRUNCATE) and VACUUM by hand. ' +
+        'A server still running on the old key may have written rows under it since the commit. ' +
+        'Do not rotate again.',
     );
   }
 }
@@ -245,7 +283,8 @@ if (isEntryPoint(import.meta.url, process.argv[1])) {
         `${String(totpSecrets)} TOTP secret(s) and ${String(serverSecrets)} server secret(s) under the new key` +
         (plaintext > 0 ? `; left ${String(plaintext)} pre-encryption row(s) untouched` : '') +
         '. Set ASTRAYA_ENCRYPTION_KEY to the new key and restart the server (it must have been stopped for the rotation).' +
-        ' Old-key ciphertext was cleared from the database file and WAL, but any backup or copy made before rotation still holds it and is readable with the old key.',
+        ' Old-key ciphertext was cleared from the database file and WAL, but any backup or copy made before rotation still holds it and is readable with the old key. ' +
+        STORAGE_RESIDUE_NOTE,
     );
   } finally {
     db.close();
