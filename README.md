@@ -123,8 +123,14 @@ The runtime Docker image has no npm. A Docker operator runs the same scripts in
 a one-off container from the image, with the server container stopped and the
 data volume mounted at `/app/data`, passing the script path as the argument
 (the image's entrypoint is `node`): `server/ops/rotate-key.ts` for rotation and
-`server/ops/reset-totp.ts --yes` for the TOTP reset. The runbook gives the
-commands.
+`server/ops/reset-totp.ts --yes` for the TOTP reset. Use the same tag as your
+running server container (for example, if it runs ghcr.io/nrosier/astraya:0.56.0,
+use that tag); do not use `:latest`, because opening the database runs migrations
+and a newer image would upgrade it in place. If your server uses a different
+volume, a bind mount, or a custom `ASTRAYA_DB_PATH`, pass the same `-v` mount and
+`-e ASTRAYA_DB_PATH` to this container, or it will open an empty database. Check
+that the reported row counts are not zero where you expected data; rotation does
+not guard against an empty database. The runbook gives the commands.
 
 ### Optional: sign-in with Authentik
 
