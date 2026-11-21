@@ -38,7 +38,7 @@
  */
 import { resolve } from 'node:path';
 import { openDatabase, type Database } from '../db.ts';
-import { decryptPayload, encryptPayload } from './crypto.ts';
+import { decryptPayload, encryptPayload, type EncryptedPayload } from './crypto.ts';
 import { planTotpRotation } from './rotate-totp.ts';
 import { isEntryPoint, opsDbPath } from './cli.ts';
 
@@ -83,6 +83,26 @@ function decryptForRotation(what: string, ciphertext: Buffer, iv: Buffer, curren
         'Check ASTRAYA_ENCRYPTION_KEY against the key the server is running with.',
       { cause: error },
     );
+  }
+}
+
+/**
+ * Decrypts under the current key and re-encrypts under the new one. The decrypted plaintext is the caller's to
+ * zero (`decryptPayload` returns its own copy), so it is zeroed in a `finally`, on success and on failure (#1782).
+ * The returned ciphertext is independent of that buffer and is not zeroed.
+ */
+function reEncryptForRotation(
+  what: string,
+  ciphertext: Buffer,
+  iv: Buffer,
+  currentKey: Buffer,
+  newKey: Buffer,
+): EncryptedPayload {
+  const plaintext = decryptForRotation(what, ciphertext, iv, currentKey);
+  try {
+    return encryptPayload(plaintext, newKey);
+  } finally {
+    plaintext.fill(0);
   }
 }
 
@@ -194,8 +214,13 @@ function reEncryptAll(db: Database, currentKey: Buffer, newKey: Buffer): Rotatio
       plaintext += 1;
       continue;
     }
-    const decrypted = decryptForRotation(`ops row seq=${String(row.seq)}`, row.payload, row.iv, currentKey);
-    const { ciphertext, iv } = encryptPayload(decrypted, newKey);
+    const { ciphertext, iv } = reEncryptForRotation(
+      `ops row seq=${String(row.seq)}`,
+      row.payload,
+      row.iv,
+      currentKey,
+      newKey,
+    );
     reEncrypted.push({ seq: row.seq, payload: ciphertext, iv });
   }
 
@@ -211,20 +236,21 @@ function reEncryptAll(db: Database, currentKey: Buffer, newKey: Buffer): Rotatio
     descriptionIv: Buffer | null;
   }[] = [];
   for (const row of results) {
-    const sections = encryptPayload(
-      decryptForRotation(`interpretation result ${row.id}`, row.sections_json, row.iv, currentKey),
+    const sections = reEncryptForRotation(
+      `interpretation result ${row.id}`,
+      row.sections_json,
+      row.iv,
+      currentKey,
       newKey,
     );
     const description =
       row.description_json === null || row.description_iv === null
         ? undefined
-        : encryptPayload(
-            decryptForRotation(
-              `the label of interpretation result ${row.id}`,
-              row.description_json,
-              row.description_iv,
-              currentKey,
-            ),
+        : reEncryptForRotation(
+            `the label of interpretation result ${row.id}`,
+            row.description_json,
+            row.description_iv,
+            currentKey,
             newKey,
           );
     reResults.push({

@@ -624,3 +624,41 @@ describe('derived subkeys and decrypted plaintext are zeroed (#1782)', () => {
     for (const subkey of subkeys) expect(subkey.every((b) => b === 0)).toBe(true);
   });
 });
+
+describe('rotateEncryptionKey zeroes decrypted operation and result plaintext (#1782)', () => {
+  const SECTIONS = [{ heading: 'Overview', body: 'A restyled interpretation.' }];
+
+  it('zeroes every decrypted operation, result section and label plaintext after a successful rotation', () => {
+    insertOp(OLD_KEY, '{"field":"one"}');
+    saveInterpretationResult(
+      db,
+      { userId, mode: 'grounded', locale: 'en', sections: SECTIONS, description: 'Short and warm' },
+      OLD_KEY,
+    );
+    derived.plaintexts.length = 0;
+
+    expect(rotateEncryptionKey(db, OLD_KEY, NEW_KEY)).toEqual({
+      rotated: 1,
+      plaintext: 0,
+      interpretationResults: 1,
+      totpSecrets: 0,
+      serverSecrets: 0,
+    });
+
+    // One operation, one result's sections and one result's label were decrypted.
+    expect(derived.plaintexts.length).toBeGreaterThanOrEqual(3);
+    for (const plain of derived.plaintexts) expect(plain.every((b) => b === 0)).toBe(true);
+  });
+
+  it('zeroes the operation plaintext decrypted before a stored row fails under the current key', () => {
+    insertOp(OLD_KEY, '{"field":"one"}');
+    insertOp(randomBytes(32), '{"field":"foreign"}');
+    derived.plaintexts.length = 0;
+
+    expect(() => rotateEncryptionKey(db, OLD_KEY, NEW_KEY)).toThrow(/does not decrypt under the current key/);
+
+    // The first row decrypted before the foreign one threw, so its plaintext was recorded and must be zero.
+    expect(derived.plaintexts.length).toBeGreaterThanOrEqual(1);
+    for (const plain of derived.plaintexts) expect(plain.every((b) => b === 0)).toBe(true);
+  });
+});
