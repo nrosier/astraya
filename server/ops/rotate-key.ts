@@ -20,7 +20,7 @@
  * commit it checkpoints the WAL and runs `VACUUM`, so the database file and its WAL no longer hold
  * the superseded ciphertext (#1680). Any backup or copy of the database taken before rotation, and
  * any filesystem snapshot, still holds it and is still readable with the old key: treat those as
- * exposed and destroy them if the leak matters.
+ * exposed and destroy them if the leak matters. Storage-level residue (copy-on-write filesystems, SSD wear levelling, snapshots) is outside the database's control.
  *
  * The server must be stopped before rotating. The script locks the database for the rotation, but a
  * server still running on the old key can write rows under it once the lock is released
@@ -33,7 +33,7 @@
  * @module rotate-key
  * @purpose Operator CLI script to re-encrypt everything stored under `ASTRAYA_ENCRYPTION_KEY` (every `ops` row, every saved interpretation result's sections and label, #1680, and every TOTP secret plus the `server_secrets` recovery-code pepper, #1500) under a replacement key, the remediation path for a leaked key.
  * @conventions Not exposed as an admin HTTP route on purpose — it holds both the old and new key and rewrites every row, which belongs to an operator with shell/container access, not a session cookie. Rotates the key material only, never `CURRENT_KEY_VERSION` (the encryption scheme itself, AES-256-GCM, is unchanged); re-encryption of every table runs in one transaction, failing before writing anything if any row (an op, a result's sections or its label, a TOTP secret under its per-user subkey, a server secret) does not decrypt under the stated current key, so a wrong key never produces a half-rotated database. Every re-encrypted value gets a fresh IV.
- * @exports RotationResult, rotateEncryptionKey
+ * @exports RotationResult, rotateEncryptionKey, STORAGE_RESIDUE_NOTE
  */
 import { resolve } from 'node:path';
 import { openDatabase, type Database } from '../db.ts';
@@ -55,6 +55,10 @@ interface ResultRow {
   readonly description_json: Buffer | null;
   readonly description_iv: Buffer | null;
 }
+
+/** Sentence printed after a successful rotation: storage outside the database can still hold old-key ciphertext (#1801). */
+export const STORAGE_RESIDUE_NOTE =
+  "Storage-level residue (copy-on-write filesystems, SSD wear levelling, snapshots) is outside the database's control.";
 
 export interface RotationResult {
   readonly rotated: number;
@@ -270,7 +274,8 @@ if (isEntryPoint(import.meta.url, process.argv[1])) {
         `${String(totpSecrets)} TOTP secret(s) and ${String(serverSecrets)} server secret(s) under the new key` +
         (plaintext > 0 ? `; left ${String(plaintext)} pre-encryption row(s) untouched` : '') +
         '. Set ASTRAYA_ENCRYPTION_KEY to the new key and restart the server (it must have been stopped for the rotation).' +
-        ' Old-key ciphertext was cleared from the database file and WAL, but any backup or copy made before rotation still holds it and is readable with the old key.',
+        ' Old-key ciphertext was cleared from the database file and WAL, but any backup or copy made before rotation still holds it and is readable with the old key. ' +
+        STORAGE_RESIDUE_NOTE,
     );
   } finally {
     db.close();

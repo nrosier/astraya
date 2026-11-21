@@ -14,7 +14,7 @@ import { join } from 'node:path';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { openDatabase, type Database } from '../server/db.ts';
 import { CURRENT_KEY_VERSION, decryptPayload, encryptPayload } from '../server/ops/crypto.ts';
-import { rotateEncryptionKey } from '../server/ops/rotate-key.ts';
+import { rotateEncryptionKey, STORAGE_RESIDUE_NOTE } from '../server/ops/rotate-key.ts';
 import {
   confirmTotpEnrolment,
   generateRecoveryCodes,
@@ -436,5 +436,14 @@ describe('rotateEncryptionKey transaction guarantees (#1680 review)', () => {
     } finally {
       other.close();
     }
+  });
+});
+
+describe('rotation success message storage residue (#1801)', () => {
+  it('names copy-on-write filesystems, SSD wear levelling and snapshots as outside the database control', () => {
+    expect(STORAGE_RESIDUE_NOTE).toMatch(/copy-on-write filesystems/);
+    expect(STORAGE_RESIDUE_NOTE).toMatch(/SSD wear levelling/);
+    expect(STORAGE_RESIDUE_NOTE).toMatch(/snapshots/);
+    expect(STORAGE_RESIDUE_NOTE).toMatch(/outside the database's control/);
   });
 });
