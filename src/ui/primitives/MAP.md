@@ -28,5 +28,6 @@ Shared UI primitives for the #506 UI/UX overhaul (Phase 1, #508). Business logic
 - `Notice.tsx` — Persistent explanatory block (warning panel or muted info), distinct from a result state. Deps: none.
 - `Tabs.tsx` — Same-page tabs with the WAI-ARIA tab pattern (roving tabindex, arrow/Home/End select-and-focus) and `tabPanelProps` for the labelled panel, in the shared scrolling tab row with edge fades at every width (#818); used by Preferences (#650) and the Report. Deps: `./useTabRowScroll`.
 - `useTabRowScroll.ts` — Shared tab-row scroll behaviour (#818): edge-fade state from the scroll position, wheel-to-sideways, open tab kept clear of the fades; used by `Tabs` and `ScrollingTabRow`. Deps: none.
-- `Tooltip.tsx` — Shared hover/click/keyboard-focus term-disclosure popup (#456), replacing every native-`title` tooltip in the app. Deps: none.
+- `Tooltip.tsx` — Shared hover/click/keyboard-focus term-disclosure popup (#456), replacing every native-`title` tooltip in the app. Deps: `./use-tooltip-state`.
+- `use-tooltip-state.ts` — Shared open/pinned state, hover delay and outside-click/Escape dismissal for term-disclosure popups (#1867), used by `Tooltip`. Deps: none.
 - `FileInput.tsx` — Shared file picker (#587): hidden native `<input type="file">` opened by an accessible button, since the file-chooser dialog itself cannot be restyled; optional primary style (#966). Deps: none.
