@@ -17,7 +17,7 @@ Shared UI primitives for the #506 UI/UX overhaul (Phase 1, #508). Business logic
 - `StatList.tsx` — Definition list of label/value stat tiles inside the existing global `dl` card surface (#826); no consumer yet. Deps: none.
 - `EmptyState.tsx` — Shared "nothing here" block for an empty list or panel: message prop plus optional follow-up children, on the existing `.empty` look. Deps: none.
 - `Checkbox.tsx` — Shared checkbox anatomy, paired with `Radio`; optional `switchStyle` draws it as an on/off switch, optional `indeterminate` sets the partial state. Deps: none.
-- `Radio.tsx` — Shared radio anatomy; always used inside a caller-owned `name`/`radiogroup`. Deps: none.
+- `Radio.tsx` — Shared radio anatomy; always used inside a caller-owned `name`/`radiogroup`; optional `term` puts a glossary popup on one non-interactive word of the label (#1867). Deps: `./use-tooltip-state`.
 - `ChoiceGroup.tsx` — Segmented control (2-4 exclusive choices) as a labelled radiogroup over `Radio`; `segmented` draws joined horizontal segments and `showLabel` a visible label (#824). Deps: `./Radio`.
 - `OptionCards.tsx` — Radio option cards (2-5 choices needing a title + consequence line), fully-clickable cards.
 - `AdvancedGroup.tsx` — Collapsed-by-default group for fine-tuning options (#916), a thin wrapper over Disclosure. Deps: `Disclosure`.
@@ -29,5 +29,5 @@ Shared UI primitives for the #506 UI/UX overhaul (Phase 1, #508). Business logic
 - `Tabs.tsx` — Same-page tabs with the WAI-ARIA tab pattern (roving tabindex, arrow/Home/End select-and-focus) and `tabPanelProps` for the labelled panel, in the shared scrolling tab row with edge fades at every width (#818); used by Preferences (#650) and the Report. Deps: `./useTabRowScroll`.
 - `useTabRowScroll.ts` — Shared tab-row scroll behaviour (#818): edge-fade state from the scroll position, wheel-to-sideways, open tab kept clear of the fades; used by `Tabs` and `ScrollingTabRow`. Deps: none.
 - `Tooltip.tsx` — Shared hover/click/keyboard-focus term-disclosure popup (#456), replacing every native-`title` tooltip in the app. Deps: `./use-tooltip-state`.
-- `use-tooltip-state.ts` — Shared open/pinned state, hover delay and outside-click/Escape dismissal for term-disclosure popups (#1867), used by `Tooltip`. Deps: none.
+- `use-tooltip-state.ts` — Shared open/pinned state, hover delay and outside-click/Escape dismissal for term-disclosure popups (#1867), used by `Tooltip` and `Radio`. Deps: none.
 - `FileInput.tsx` — Shared file picker (#587): hidden native `<input type="file">` opened by an accessible button, since the file-chooser dialog itself cannot be restyled; optional primary style (#966). Deps: none.
