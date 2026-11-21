@@ -384,6 +384,13 @@
   min-width: 0;
 }
 
+.app-header-brand-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
 .app-header-brand {
   color: var(--fg);
   font-size: var(--text-md);
@@ -3553,7 +3560,7 @@ button.app-nav-search.primitive-button-circle {
   }
 }
 
-/* The tooltip and the footer button are rail features: hidden until the 64rem rules below show them. */
+/* The tooltip and the header collapse toggle are rail features: hidden until the 64rem rules below show them. */
 .rail-nav-tooltip,
 .rail-collapse-button {
   display: none;
@@ -3588,7 +3595,7 @@ button.app-nav-search.primitive-button-circle {
   display: block;
 }
 
-/* The footer button's wrapper (#1747) carries its collapsed tooltip; like the button, it is a rail feature only. */
+/* The collapse toggle's wrapper (#1747, #1851) carries its tooltip; like the toggle, it is a rail feature only. */
 .rail-collapse-item {
   display: none;
 }
@@ -3638,10 +3645,19 @@ button.app-nav-search.primitive-button-circle {
   }
 
   /* The brand row and the person switcher are one --rail-target-size tall in both states, so the nav
-     icons below them keep their vertical position when the rail collapses (#1747). */
+     icons below them keep their vertical position when the rail collapses (#1747). The brand row (#1851)
+     holds the brand on the left and the collapse toggle at the top right; the engine status is its
+     sibling, so the start block stacks them and the status takes its own line. */
   .app-header-start {
     flex: 0 0 auto;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-1);
+    min-height: var(--rail-target-size);
+  }
+
+  .app-header-brand-row {
+    justify-content: space-between;
     min-height: var(--rail-target-size);
   }
 
@@ -3796,23 +3812,34 @@ button.app-nav-search.primitive-button-circle {
     display: block;
   }
 
-  /* The footer button: a quiet bordered control, last in the rail. The ring is :focus-visible only, so it
-     clears on a pointer click. */
+  /* The collapse toggle (#1851): an icon-only bordered square one rail target wide, matching the menu button's
+     --radius-md corners. The ring is :focus-visible only, so it clears on a pointer click. */
   button.rail-collapse-button {
     display: inline-flex;
+    flex: 0 0 auto;
     align-items: center;
-    justify-content: flex-start;
-    gap: var(--space-2);
+    justify-content: center;
     box-sizing: border-box;
-    width: 100%;
-    min-height: var(--rail-target-size);
-    padding: 0 calc((var(--rail-target-size) - var(--rail-icon-size)) / 2);
+    width: var(--rail-target-size);
+    height: var(--rail-target-size);
+    padding: 0;
     border: 1px solid var(--line);
-    border-radius: var(--radius-full);
+    border-radius: var(--radius-md);
     background: transparent;
     color: var(--muted);
-    font-size: var(--text-sm);
     cursor: pointer;
+  }
+
+  /* The icon swap (#1851): the plain sidebar outline at rest, the chevron form on hover and keyboard focus.
+     Instant, with no transition. */
+  .rail-toggle-icon-rest,
+  button.rail-collapse-button:is(:hover, :focus-visible) .rail-toggle-icon-active {
+    display: inline-flex;
+  }
+
+  .rail-toggle-icon-active,
+  button.rail-collapse-button:is(:hover, :focus-visible) .rail-toggle-icon-rest {
+    display: none;
   }
 
   button.rail-collapse-button:hover:not(:disabled) {
@@ -3885,22 +3912,46 @@ button.app-nav-search.primitive-button-circle {
     pointer-events: none;
   }
 
-  .workspace-shell-collapsed button.rail-collapse-button {
-    justify-content: center;
-    width: var(--rail-target-size);
-    padding: 0;
+  /* Expanded (#1851): the toggle's tooltip opens below the button, right-aligned to it, so it stays over the
+     rail and never covers the page on the rail's right edge. Same triggers as above: hover and keyboard
+     focus, not after Escape (WCAG 1.4.13). */
+  .workspace-shell:not(.workspace-shell-collapsed)
+    .rail-collapse-item:not([data-tooltip-dismissed]):is(:hover, :has(:focus-visible))
+    .rail-nav-tooltip {
+    position: absolute;
+    top: calc(100% + var(--space-2));
+    right: 0;
+    z-index: 30;
+    display: block;
+    padding: var(--space-1) var(--space-3);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-full);
+    background: var(--surface);
+    box-shadow: var(--shadow-popover);
+    color: var(--fg);
+    font-size: var(--text-sm);
+    white-space: nowrap;
+    pointer-events: none;
   }
 
-  /* Compact brand, person switcher and account tile while collapsed (#1747). Each is still one click away:
-     the brand links home, the switcher opens its popup, the tile opens the account popover. The brand shows
-     the app's initial; the switcher draws the person's monogram from `data-monogram`. Their real text stays
-     in the DOM at font-size 0, so the accessible name is unchanged. */
+  /* Collapsed (#1851): the toggle takes the brand monogram's place, centred at the top of the rail, so the
+     row count and the nav icons' positions match the expanded rail. The brand shows only when expanded. */
+  .workspace-shell-collapsed .app-header-brand {
+    display: none;
+  }
+
+  .workspace-shell-collapsed .app-header-brand-row {
+    justify-content: center;
+  }
+
+  /* Compact person switcher and account tile while collapsed (#1747). Each is still one click away: the
+     switcher opens its popup, the tile opens the account popover. The switcher draws the person's monogram
+     from `data-monogram`. Its real text stays in the DOM at font-size 0, so the accessible name is unchanged. */
   .workspace-shell-collapsed .app-header-start {
     flex-direction: column;
     align-items: center;
   }
 
-  .workspace-shell-collapsed .app-header-brand,
   .workspace-shell-collapsed .app-nav-person {
     display: inline-flex;
     align-items: center;
@@ -3918,16 +3969,8 @@ button.app-nav-search.primitive-button-circle {
     font-size: 0;
   }
 
-  .workspace-shell-collapsed .app-header-brand::before {
-    content: 'A';
-  }
-
   .workspace-shell-collapsed .app-nav-person::before {
     content: attr(data-monogram);
-  }
-
-  .workspace-shell-collapsed .app-header-brand::before,
-  .workspace-shell-collapsed .app-nav-person::before {
     font-size: var(--text-base);
     font-weight: 700;
     line-height: 1;

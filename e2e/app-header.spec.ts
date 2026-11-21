@@ -114,14 +114,23 @@ for (const { width, height, rail } of RAIL_FOOT_VIEWPORTS) {
       const sidebarFooterBox = await header.locator('.sidebar-footer').boundingBox();
       if (sidebarFooterBox === null) throw new Error('not laid out');
       expect(footBox.y + footBox.height).toBeLessThanOrEqual(sidebarFooterBox.y + 1);
-      // The collapse button (#1747) is the last block, below the sidebar footer, and it ends at the rail's
-      // bottom edge less its 1rem padding; the sidebar footer ends above it, not at the edge.
+      // The collapse toggle (#1851; was the last block below the sidebar footer, #1747) sits at the top right
+      // of the header: its top is the brand row's top, its right edge is the rail's right edge less its
+      // padding, and it sits above the navigation.
       const collapseBox = await header.locator('.rail-collapse-button').boundingBox();
-      if (collapseBox === null) throw new Error('not laid out');
-      expect(sidebarFooterBox.y + sidebarFooterBox.height).toBeLessThanOrEqual(collapseBox.y + 1);
-      expect(Math.abs(collapseBox.y + collapseBox.height - (headerBox.y + headerBox.height) + 16)).toBeLessThanOrEqual(
-        2,
+      const brandRowBox = await header.locator('.app-header-brand-row').boundingBox();
+      if (collapseBox === null || brandRowBox === null) throw new Error('not laid out');
+      const paddingRight = await page.evaluate<number>(
+        "parseFloat(getComputedStyle(document.querySelector('header.app-header')).paddingRight)",
       );
+      const borderRight = await page.evaluate<number>(
+        "parseFloat(getComputedStyle(document.querySelector('header.app-header')).borderRightWidth)",
+      );
+      expect(collapseBox.y).toBeCloseTo(brandRowBox.y, 0);
+      expect(
+        Math.abs(collapseBox.x + collapseBox.width - (headerBox.x + headerBox.width - paddingRight - borderRight)),
+      ).toBeLessThanOrEqual(1);
+      expect(collapseBox.y + collapseBox.height).toBeLessThanOrEqual(navBox.y + 1);
     } else {
       // Below 64rem nothing about the bar changed: the controls stay in the header's own row, and the
       // rail's collapse button is not shown.
@@ -177,15 +186,24 @@ for (const { width, height, rail } of RAIL_FOOT_VIEWPORTS) {
 
     // The version and About links are hidden while collapsed (and so leave the Tab order).
     await expect(header.locator('.sidebar-footer')).toBeHidden();
-    // The collapse button is the last block, an icon alone, at the rail's bottom edge less its padding.
+    // The collapse toggle (#1851; was the last block at the rail's bottom edge, #1747) takes the brand
+    // monogram's place: an icon alone, horizontally centred in the rail at its top, above the navigation.
+    // The brand link is hidden while collapsed.
     const button = header.getByRole('button', { name: 'Expand sidebar', exact: true });
     await expect(button).toHaveAttribute('aria-expanded', 'false');
+    await expect(header.locator('a.app-header-brand')).toBeHidden();
     const buttonBox = await button.boundingBox();
-    if (buttonBox === null) throw new Error('not laid out');
+    const brandRowBox = await header.locator('.app-header-brand-row').boundingBox();
+    if (buttonBox === null || brandRowBox === null) throw new Error('not laid out');
     expect(buttonBox.x).toBeGreaterThanOrEqual(headerBox.x - 1);
     expect(buttonBox.x + buttonBox.width).toBeLessThanOrEqual(headerBox.x + headerBox.width + 1);
-    expect(footBox.y + footBox.height).toBeLessThanOrEqual(buttonBox.y + 1);
-    expect(Math.abs(buttonBox.y + buttonBox.height - (headerBox.y + headerBox.height) + 16)).toBeLessThanOrEqual(2);
+    const borderRight = await page.evaluate<number>(
+      "parseFloat(getComputedStyle(document.querySelector('header.app-header')).borderRightWidth)",
+    );
+    const railCentre = headerBox.x + (headerBox.width - borderRight) / 2;
+    expect(Math.abs(buttonBox.x + buttonBox.width / 2 - railCentre)).toBeLessThanOrEqual(1);
+    expect(buttonBox.y).toBeCloseTo(brandRowBox.y, 0);
+    expect(buttonBox.y + buttonBox.height).toBeLessThanOrEqual(navBox.y + 1);
 
     // Every nav entry is a 36px target inside the rail, its label still the accessible name.
     const tools = header.getByRole('link', { name: 'Tools', exact: true });
