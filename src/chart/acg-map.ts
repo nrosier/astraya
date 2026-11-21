@@ -466,7 +466,7 @@ export function renderAcgMapSvg(input: AcgMapInput, options?: AcgMapOptions): Ac
         placement.y,
         placement.anchor,
         `acg-label acg-label-${placement.bodyKey}`,
-        escapeXml(placement.text),
+        placement.text,
         fontSize,
       ),
     );
@@ -522,9 +522,7 @@ function legendBand(
     const x = column * columnWidth + fontSize;
     const y = top + fontSize + row * rowHeight + rowHeight / 2;
     parts.push(line(x, y, x + sample, y, strokeClass));
-    parts.push(
-      text(x + sample + fontSize * 0.5, y + fontSize * 0.35, 'start', 'acg-legend-text', escapeXml(name), fontSize),
-    );
+    parts.push(text(x + sample + fontSize * 0.5, y + fontSize * 0.35, 'start', 'acg-legend-text', name, fontSize));
     column += 1;
   };
 

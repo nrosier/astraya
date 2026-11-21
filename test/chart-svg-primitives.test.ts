@@ -58,3 +58,21 @@ describe('escapeXml', () => {
     expect(text(0, 0, 'middle', escapeXml('a"b'), 'label')).toContain('class="a&quot;b"');
   });
 });
+
+describe('text content escaping (#1809)', () => {
+  it('renders script content escaped, never as a live tag', () => {
+    const out = text(0, 0, 'middle', 'c', '<script>alert(1)</script>');
+    expect(out).toContain('&lt;script&gt;');
+    expect(out).not.toContain('<script>');
+  });
+
+  it('escapes an ampersand once, so a caller passing the raw string is not double-escaped', () => {
+    const out = text(0, 0, 'middle', 'c', 'A & B');
+    expect(out).toContain('>A &amp; B<');
+    expect(out).not.toContain('&amp;amp;');
+  });
+
+  it('keeps the apostrophe in a minute label literal (byte-identical wheel output)', () => {
+    expect(text(0, 0, 'middle', 'c', "22'")).toContain(">22'<");
+  });
+});
