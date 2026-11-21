@@ -13,6 +13,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { chartViewFromHash, type ChartViewKind } from './chart-sections.js';
 import { ChartDataView } from './ChartView.js';
+import { ChartControlsOnly } from './ChartTypeSelector.js';
 import { buildChartArtifact } from './chart-artifact.js';
 import type { CalculationArtifact } from '../domain/calculation-artifact.js';
 import { toChartCalculationOptions } from '../chart/extended-settings.js';
@@ -147,6 +148,7 @@ export function SharedChartView(): React.JSX.Element {
       {initial.data !== undefined && snapshot !== undefined && (
         <ChartDataView
           load={load}
+          typeSelector={<ChartControlsOnly />}
           displayName={t.sharedChart}
           showHouses={initial.data.housesKnown}
           metaLines={chartSheetMetaLines(t.sharedChart, initial.data.moment, locale)}

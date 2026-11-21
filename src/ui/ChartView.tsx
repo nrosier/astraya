@@ -1097,8 +1097,8 @@ export function ChartDataView({
     },
     [openingOverlaySettings],
   );
-  // The aspect family and preset Selects go into the chart-type row's slot (#1224). A page with no chart-type row has
-  // no slot, and keeps them where they were: under the wheel, and above the matrix.
+  // Every page that hosts ChartDataView provides the controls slot (a ChartTypeSelector or ChartControlsOnly row); the
+  // aspect controls are portalled there (#1224, #1853).
   const [controlsSlot, setControlsSlot] = useState<HTMLElement | null>(null);
   useLayoutEffect(() => {
     setControlsSlot(document.querySelector<HTMLElement>(`.${CHART_CONTROLS_SLOT_CLASS}`));
@@ -1340,7 +1340,6 @@ export function ChartDataView({
                   onNatalOnlyChange={setNatalOnly}
                 />
               </div>
-              {controlsSlot === null && aspectControls}
             </div>
             <SelectionInspector
               facts={isolation}
@@ -1546,7 +1545,6 @@ export function ChartDataView({
                         </>
                       );
                     })()}
-                  {currentTab === 'matrix' && controlsSlot === null && aspectControls}
                   {currentTab === 'matrix' &&
                     renderMatrixView(
                       load.data,
