@@ -10,7 +10,7 @@
 /**
  * @module HoraryView
  * @purpose Renders the Horary chart tool screen: casts a chart for the moment/place a question was asked and checks the traditional considerations before judgment against it.
- * @conventions Needs no saved person or stored data (computed entirely in-browser), so it lives outside `Stored`, like ElectionalView; it reports only whether the chart is fit to be judged, never an answer to the question itself. Reuses the shared `ChartDataView`. Text comes from co-located `HoraryView.messages.ts` via `useMessages()`.
+ * @conventions Needs no saved person or stored data (computed entirely in-browser), so it lives outside `Stored`, like ElectionalView; it reports only whether the chart is fit to be judged, never an answer to the question itself. Reuses the shared `ChartDataView` and its controls slot (`ChartControlsOnly`, #1853). Text comes from co-located `HoraryView.messages.ts` via `useMessages()`.
  * @exports HoraryView
  */
 import { GlossaryText } from './GlossaryText.js';
@@ -28,6 +28,7 @@ import { computeHoraryChart, HORARY_DEFAULT_HOUSE_SYSTEM, type HoraryChart } fro
 import { BirthPlaceSearch } from './BirthPlaceSearch.js';
 import type { ChartViewKind } from './chart-sections.js';
 import { ChartDataView } from './ChartView.js';
+import { ChartControlsOnly } from './ChartTypeSelector.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { HORARY_HOUSE_SYSTEMS, nowFields, parseHoraryFields, type HoraryFieldError } from './horary.js';
 import { geocodeHost } from './geocode-provider.js';
@@ -279,6 +280,7 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
 
             <ChartDataView
               rulership={rulership}
+              typeSelector={<ChartControlsOnly />}
               load={{ kind: 'ready', data: ready.chart.data }}
               displayName={t.chartName}
               showHouses={ready.chart.housesAvailable}
