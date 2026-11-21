@@ -54,14 +54,15 @@ interface CodeHashRow {
 export function startTotpEnrolment(db: Database, key: Buffer, userId: string): Uint8Array {
   const { bytes } = generateSecret();
   const subkey = deriveTotpSubkey(key, userId);
-  const secretCopy = Buffer.from(bytes);
+  let secretCopy: Buffer | undefined;
   let ciphertext: Buffer;
   let iv: Buffer;
   try {
+    secretCopy = Buffer.from(bytes);
     ({ ciphertext, iv } = encryptPayload(secretCopy, subkey));
   } finally {
+    secretCopy?.fill(0);
     subkey.fill(0);
-    secretCopy.fill(0);
   }
   const result = db
     .prepare(

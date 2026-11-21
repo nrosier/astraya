@@ -22,6 +22,42 @@ import {
   startTotpEnrolment,
 } from '../server/auth/totp-store.ts';
 import { deriveTotpSubkey, loadRecoveryPepper } from '../server/auth/totp-keys.ts';
+import type * as CryptoModule from '../server/ops/crypto.ts';
+import type * as TotpKeysModule from '../server/auth/totp-keys.ts';
+
+// Wraps the real helpers and records the buffers they handle, so the failure-path test can assert that the derived
+// subkey and the secret copy were zeroed (#1782). `failNextEncrypt` makes one encryptPayload call throw. The real
+// behaviour is otherwise unchanged.
+const derived = vi.hoisted(() => ({
+  returned: [] as Buffer[],
+  plaintexts: [] as Buffer[],
+  failNextEncrypt: false,
+}));
+vi.mock('../server/ops/crypto.ts', async (importOriginal) => {
+  const actual = await importOriginal<typeof CryptoModule>();
+  return {
+    ...actual,
+    encryptPayload: (plaintext: Buffer, key: Buffer): ReturnType<typeof actual.encryptPayload> => {
+      derived.plaintexts.push(plaintext);
+      if (derived.failNextEncrypt) {
+        derived.failNextEncrypt = false;
+        throw new Error('encryption failed (test)');
+      }
+      return actual.encryptPayload(plaintext, key);
+    },
+  };
+});
+vi.mock('../server/auth/totp-keys.ts', async (importOriginal) => {
+  const actual = await importOriginal<typeof TotpKeysModule>();
+  return {
+    ...actual,
+    deriveTotpSubkey: (key: Buffer, userId: string): Buffer => {
+      const subkey = actual.deriveTotpSubkey(key, userId);
+      derived.returned.push(subkey);
+      return subkey;
+    },
+  };
+});
 
 const KEY = randomBytes(32);
 
@@ -84,6 +120,21 @@ describe('server/auth/totp-store.ts', () => {
       totp_secret: Uint8Array;
     };
     expect(Buffer.from(row.totp_secret).includes(Buffer.from(secret))).toBe(false);
+  });
+
+  it('startTotpEnrolment zeroes the derived subkey and the secret copy when encryption throws', () => {
+    // Reason (#1782): the failure path must not leave the subkey or the secret copy readable in memory.
+    derived.returned.length = 0;
+    derived.plaintexts.length = 0;
+    derived.failNextEncrypt = true;
+    expect(() => startTotpEnrolment(db, KEY, userId)).toThrow('encryption failed (test)');
+    expect(derived.returned).toHaveLength(1);
+    expect(derived.plaintexts).toHaveLength(1);
+    expect(derived.returned[0]?.length).toBeGreaterThan(0);
+    for (const buf of [...derived.returned, ...derived.plaintexts]) {
+      expect(buf.every((b) => b === 0)).toBe(true);
+    }
+    expect(readTotpState(db, KEY, userId).status).toBe('off');
   });
 
   it('a user with no TOTP reads as off, even with no key', () => {
