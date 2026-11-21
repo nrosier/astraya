@@ -89,6 +89,8 @@ import { aspectByKey } from '../astrology/aspects.ts';
 import { SIGNS } from '../astrology/signs.ts';
 import { NAKSHATRAS } from '../astrology/nakshatras.ts';
 import { isDerivedPointKey } from '../astrology/derived-points.ts';
+import { CORPUS_LOCALES, type Locale } from './locales.ts';
+export { CORPUS_LOCALES, type Locale };
 import type { EssentialDignities } from '../astrology/dignities.js';
 
 export const CORPUS_CATEGORIES = [
@@ -134,9 +136,6 @@ export const ACG_ANGLE_POINT_KEYS: Readonly<Record<AcgAngle, 'asc' | 'dsc' | 'mc
  */
 export const CORPUS_TIERS = ['core', 'notable', 'nuance'] as const;
 export type CorpusTier = (typeof CORPUS_TIERS)[number];
-
-export const CORPUS_LOCALES = ['en', 'nl'] as const;
-export type Locale = (typeof CORPUS_LOCALES)[number];
 
 /**
  * A body has at most one of these true under a given rulership scheme
