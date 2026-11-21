@@ -18,7 +18,6 @@ const css = readFileSync(join(import.meta.dirname, '..', 'src', 'ui', 'app.css')
 const SMALL_RADIUS_ALLOWLIST: Record<string, string> = {
   '.skip-link': 'skip link, not a control',
   '.warning': 'message box, a container',
-  'a.quiet': 'route link styled as a quiet button; not in the 1650-2 file list, so unchanged (flagged for 1650-12)',
   '.person-switcher-item': 'menu item inside an open person switcher panel (owner answer 4)',
   '.app-nav-item, .app-nav-group-toggle': 'navigation menu item (owner answer 4)',
   '.app-nav-menu-item': 'menu item inside the open nav menu (owner answer 4)',
@@ -85,6 +84,8 @@ describe('border-radius ratchet (#1650)', () => {
       '.chart-pdf-link',
       '.page-header-export-toggle',
       '.profile-tile',
+      // The route link styled as a quiet button (Consultation's Open interpretation and Build PDF, People's import link).
+      'a.quiet',
     ];
     const rule = /([^{}]+)\{([^{}]*)\}/g;
     const pillRules: string[] = [];

@@ -2248,14 +2248,15 @@ button.quiet:hover:not(:disabled) {
   background: var(--surface-hover);
 }
 
-/* A route link styled as the quiet button (#1048): same box, weight and hover as `button.quiet`. */
+/* A route link styled as the quiet button (#1048): same box, weight and hover as `button.quiet`, and the same pill
+   shape as every button (#1650, #1855). */
 a.quiet {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: var(--space-1) var(--control-padding-x);
   border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-full);
   background: var(--surface);
   color: var(--fg);
   font-weight: 500;
