@@ -86,8 +86,7 @@ describe('motionOf (#547)', () => {
 
 describe('isInHayz (#547)', () => {
   it('a diurnal planet above the horizon in a day chart, in a masculine sign, is in hayz', () => {
-    // Ascendant at 0° Aries; longitude 100° (Cancer) is above horizon (180-360° past the ASC... wait
-    // test with a longitude clearly in the above-horizon half and a masculine sign: 200° = 20° Libra (air, masculine).
+    // Ascendant at 0°; longitude 200° = 20° Libra is above the horizon (180°-360° past the Ascendant) and in a masculine sign (air).
     expect(isInHayz(jupiter.id, 200, 0, 'day')).toBe(true);
   });
 
@@ -111,6 +110,25 @@ describe('isInHayz (#547)', () => {
   it('Mercury is never in hayz, under either sect', () => {
     expect(isInHayz(mercury.id, 200, 0, 'day')).toBe(false);
     expect(isInHayz(mercury.id, 200, 0, 'night')).toBe(false);
+  });
+
+  it('the Moon in a night chart, below the horizon in a feminine sign, is in hayz (Lilly)', () => {
+    // Ascendant 0°; longitude 50° = 20° Taurus (earth, feminine) is below the horizon.
+    // Reason: Lilly's nocturnal planet, under the earth, in a feminine sign.
+    expect(isInHayz(moon.id, 50, 0, 'night')).toBe(true);
+  });
+
+  it('the Moon in a night chart, above the horizon in a feminine sign, is not in hayz (Lilly)', () => {
+    // Ascendant 0°; longitude 220° = 10° Scorpio (water, feminine) is above the horizon.
+    // Reason: this is the case where Alchabitius (via Bonatti) and Avelar differ; Astraya follows Lilly, so it is false.
+    expect(isInHayz(moon.id, 220, 0, 'night')).toBe(false);
+  });
+
+  it('Venus in a day chart, a planet contrary to sect, is never in hayz (Lilly)', () => {
+    // Ascendant 0°; Venus is nocturnal, so in a day chart she is contrary to sect at both longitudes.
+    // Reason: Lilly defines no hayz for a planet contrary to the chart's sect.
+    expect(isInHayz(venus.id, 50, 0, 'day')).toBe(false);
+    expect(isInHayz(venus.id, 220, 0, 'day')).toBe(false);
   });
 });
 
