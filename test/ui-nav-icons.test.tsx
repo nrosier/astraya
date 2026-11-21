@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
  * The sidebar rail icons (#1747): each export renders a decorative 24-unit SVG, and the module
- * exports exactly the thirteen icons the rail uses.
+ * exports exactly the fourteen icons the rail uses.
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -20,6 +20,7 @@ const ICON_NAMES = [
   'GitMerge',
   'Wrench',
   'FileDown',
+  'PanelLeft',
   'PanelLeftClose',
   'PanelLeftOpen',
 ] as const;
@@ -48,7 +49,7 @@ function render(name: (typeof ICON_NAMES)[number]): SVGSVGElement {
 }
 
 describe('sidebar rail icons', () => {
-  it('exports exactly the thirteen rail icons', () => {
+  it('exports exactly the fourteen rail icons', () => {
     expect(Object.keys(navIcons).sort()).toEqual([...ICON_NAMES].sort());
   });
 

@@ -389,9 +389,14 @@ function AppShell(): React.JSX.Element {
                       {t.skipToContent}
                     </a>
                     <div className="app-header-start">
-                      <a className="app-header-brand" href="#/people" aria-label={t.homeLinkLabel}>
-                        Astraya
-                      </a>
+                      {/* The brand row (#1851): the brand on the left, the rail's collapse toggle at the top right.
+                        The engine status sits on its own line below it, so the row never wraps around the toggle. */}
+                      <div className="app-header-brand-row">
+                        <a className="app-header-brand" href="#/people" aria-label={t.homeLinkLabel}>
+                          Astraya
+                        </a>
+                        <RailCollapseButton />
+                      </div>
                       {engineStatus !== 'ready' && <p className="status app-header-status">{engineStatus}</p>}
                     </div>
                     <AppNav route={parsed} />
@@ -403,8 +408,6 @@ function AppShell(): React.JSX.Element {
                     </div>
                     {/* The version, About & Licence and the update notice sit at the rail's foot (previously a page footer). */}
                     <SidebarFooter />
-                    {/* The rail's collapse control (#1747), last in the header so it sits at the foot of the rail. */}
-                    <RailCollapseButton />
                   </header>
                 }
               >
@@ -574,21 +577,17 @@ function renderChart(parsed: Extract<Route, { kind: 'chart' }>): React.JSX.Eleme
   const { personId, view, compareType, date, ringDates } = parsed;
   switch (parsed.chartType ?? 'natal') {
     case 'draconic':
-      return <DraconicView key={personId} personId={personId} view={view} compareType={compareType} />;
+      return <DraconicView key={personId} personId={personId} view={view} />;
     case 'harmonic':
-      return <HarmonicView key={personId} personId={personId} view={view} compareType={compareType} />;
+      return <HarmonicView key={personId} personId={personId} view={view} />;
     case 'heliocentric':
-      return <HeliocentricView key={personId} personId={personId} view={view} compareType={compareType} />;
+      return <HeliocentricView key={personId} personId={personId} view={view} />;
     case 'solar-return':
-      return (
-        <ReturnView key={personId} personId={personId} kind="solar-return" view={view} compareType={compareType} />
-      );
+      return <ReturnView key={personId} personId={personId} kind="solar-return" view={view} />;
     case 'lunar-return':
-      return (
-        <ReturnView key={personId} personId={personId} kind="lunar-return" view={view} compareType={compareType} />
-      );
+      return <ReturnView key={personId} personId={personId} kind="lunar-return" view={view} />;
     case 'relocated':
-      return <RelocatedChartView key={personId} personId={personId} view={view} compareType={compareType} />;
+      return <RelocatedChartView key={personId} personId={personId} view={view} />;
     case 'natal':
       return (
         <ChartView

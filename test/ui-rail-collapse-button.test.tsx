@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 /**
- * The sidebar rail's footer collapse button (#1747): toggling writes the device preference to
+ * The sidebar rail's header collapse toggle (#1747, #1851): toggling writes the device preference to
  * localStorage, aria-expanded and the accessible name flip with it, the control is a plain
- * `type="button"`, and the Dutch labels are present. Collapsed, it carries the nav items' right-edge
- * tooltip as a sibling, which Escape dismisses (owner decision, 2026-11-20).
+ * `type="button"`, and the Dutch labels are present. It is icon only, carries a short styled tooltip
+ * sibling in both states (never a `title`), which Escape dismisses (owner decisions, 2026-11-20).
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -47,12 +47,29 @@ function mount(): HTMLButtonElement {
 }
 
 describe('RailCollapseButton', () => {
-  it('is a plain button type and starts expanded with the Collapse label', () => {
+  it('is a plain button type and starts expanded, icon only', () => {
     const button = mount();
     expect(button.getAttribute('type')).toBe('button');
     expect(button.getAttribute('aria-expanded')).toBe('true');
     expect(button.getAttribute('aria-label')).toBe('Collapse sidebar');
-    expect(button.textContent).toBe('Collapse');
+    expect(button.textContent).toBe('');
+    expect(button.parentElement?.querySelector('[role="tooltip"]')?.textContent).toBe('Collapse');
+  });
+
+  it('renders the rest icon and the active icon in both states, and no title', () => {
+    for (const collapsedValue of [false, true]) {
+      localStorage.setItem(KEY, String(collapsedValue));
+      const button = mount();
+      expect(button.querySelectorAll('.rail-toggle-icon-rest svg')).toHaveLength(1);
+      expect(button.querySelectorAll('.rail-toggle-icon-active svg')).toHaveLength(1);
+      expect(button.hasAttribute('title')).toBe(false);
+      expect(button.parentElement?.hasAttribute('title')).toBe(false);
+      act(() => {
+        mounted?.root.unmount();
+      });
+      mounted?.container.remove();
+      mounted = undefined;
+    }
   });
 
   it('toggling writes localStorage and flips aria-expanded and the label', () => {
@@ -66,6 +83,7 @@ describe('RailCollapseButton', () => {
     expect(button.getAttribute('aria-expanded')).toBe('false');
     expect(button.getAttribute('aria-label')).toBe('Expand sidebar');
     expect(button.textContent).toBe('');
+    expect(button.parentElement?.querySelector('[role="tooltip"]')?.textContent).toBe('Expand');
 
     act(() => {
       button.click();
@@ -83,7 +101,8 @@ describe('RailCollapseButton', () => {
   });
 
   it('carries Dutch labels with parity between locales', () => {
-    expect(railCollapseButtonMessages.nl.collapseLabel).toBe('Samenvouwen');
+    expect(railCollapseButtonMessages.nl.collapseTip).toBe('Samenvouwen');
+    expect(railCollapseButtonMessages.nl.expandTip).toBe('Uitvouwen');
     expect(railCollapseButtonMessages.nl.collapseAria).toBe('Zijbalk samenvouwen');
     expect(railCollapseButtonMessages.nl.expandAria).toBe('Zijbalk uitvouwen');
     expect(Object.keys(railCollapseButtonMessages.nl).sort()).toEqual(
@@ -93,27 +112,30 @@ describe('RailCollapseButton', () => {
     setLocale('nl');
     const button = mount();
     expect(button.getAttribute('aria-label')).toBe('Zijbalk samenvouwen');
-    expect(button.textContent).toBe('Samenvouwen');
+    expect(button.parentElement?.querySelector('[role="tooltip"]')?.textContent).toBe('Samenvouwen');
   });
 
-  it('has no tooltip while expanded', () => {
+  it('expanded, carries a Collapse tooltip beside the button, not inside it', () => {
     const button = mount();
-    expect(button.parentElement?.querySelector('[role="tooltip"]')).toBeNull();
+    const tooltip = button.parentElement?.querySelector('[role="tooltip"]');
+    expect(tooltip?.textContent).toBe('Collapse');
+    expect(tooltip?.classList.contains('rail-nav-tooltip')).toBe(true);
+    expect(button.contains(tooltip ?? null)).toBe(false);
   });
 
-  it('collapsed, carries an Expand sidebar tooltip beside the button, not inside it', () => {
+  it('collapsed, carries an Expand tooltip beside the button, not inside it', () => {
     localStorage.setItem(KEY, 'true');
     const button = mount();
     const wrapper = button.parentElement;
     expect(wrapper?.classList.contains('rail-nav-item')).toBe(true);
     const tooltip = wrapper?.querySelector('[role="tooltip"]');
-    expect(tooltip?.textContent).toBe('Expand sidebar');
+    expect(tooltip?.textContent).toBe('Expand');
     expect(tooltip?.classList.contains('rail-nav-tooltip')).toBe(true);
     expect(button.contains(tooltip ?? null)).toBe(false);
     expect(button.textContent).toBe('');
   });
 
-  it('collapsed, Escape dismisses the tooltip and blur brings it back', () => {
+  it('Escape dismisses the tooltip and blur brings it back', () => {
     localStorage.setItem(KEY, 'true');
     const button = mount();
     const wrapper = button.parentElement;
@@ -131,6 +153,6 @@ describe('RailCollapseButton', () => {
     localStorage.setItem(KEY, 'true');
     setLocale('nl');
     const button = mount();
-    expect(button.parentElement?.querySelector('[role="tooltip"]')?.textContent).toBe('Zijbalk uitvouwen');
+    expect(button.parentElement?.querySelector('[role="tooltip"]')?.textContent).toBe('Uitvouwen');
   });
 });

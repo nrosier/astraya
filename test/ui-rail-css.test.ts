@@ -21,7 +21,7 @@ function railMediaBlock(source: string): { start: number; end: number; text: str
   throw new Error('unbalanced rail media block');
 }
 
-describe('icon rail CSS (#1747)', () => {
+describe('icon rail CSS (#1747, #1851)', () => {
   it('has no .workspace-rail-toggle rule left', () => {
     expect(css).not.toContain('workspace-rail-toggle');
   });
@@ -61,17 +61,64 @@ describe('icon rail CSS (#1747)', () => {
     expect(block).toContain(':has(:focus-visible)');
   });
 
-  it('keeps the footer button states and hides it below 64rem', () => {
+  it('opens the expanded toggle tooltip below the button, on hover and focus-visible, not after Escape (#1851)', () => {
+    const block = railMediaBlock(css).text;
+    const rule =
+      /\.workspace-shell:not\(\.workspace-shell-collapsed\)\s+\.rail-collapse-item:not\(\[data-tooltip-dismissed\]\):is\(:hover, :has\(:focus-visible\)\)\s+\.rail-nav-tooltip \{([^}]*)\}/.exec(
+        block,
+      )?.[1];
+    expect(rule).toBeDefined();
+    expect(rule).toContain('top: calc(100% + var(--space-2));');
+    expect(rule).toContain('right: 0;');
+    expect(rule).toContain('display: block;');
+  });
+
+  it('keeps the toggle states and hides it below 64rem', () => {
     const block = railMediaBlock(css).text;
     const base = /button\.rail-collapse-button \{([^}]*)\}/.exec(block)?.[1] ?? '';
     expect(base).toContain('background: transparent;');
     expect(base).toContain('border: 1px solid var(--line);');
     expect(base).toContain('color: var(--muted);');
+    // Changed in #1851: was a full-width pill (--radius-full) in the footer; now a square, matching the menu button.
+    expect(base).toContain('border-radius: var(--radius-md);');
+    expect(base).toContain('width: var(--rail-target-size);');
+    expect(base).toContain('height: var(--rail-target-size);');
     expect(block).toMatch(/button\.rail-collapse-button:focus-visible \{[^}]*outline: 2px solid/);
     expect(css).toMatch(/\n\.rail-nav-tooltip,\n\.rail-collapse-button \{\n {2}display: none;/);
-    // The button's tooltip wrapper (2026-11-20) is hidden below 64rem too, and shown inside the rail block.
+    // The toggle's tooltip wrapper is hidden below 64rem too, and shown inside the rail block.
     expect(css).toMatch(/\n\.rail-collapse-item \{\n {2}display: none;/);
     expect(block).toMatch(/\.rail-collapse-item \{\s*display: block;/);
+  });
+
+  it('swaps the rest icon for the active icon on hover and focus-visible (#1851)', () => {
+    const block = railMediaBlock(css).text;
+    expect(block).toMatch(/\.rail-toggle-icon-active,[^{]*\{[^}]*display: none;/);
+    expect(block).toMatch(
+      /\.rail-toggle-icon-rest,\s*button\.rail-collapse-button:is\(:hover, :focus-visible\) \.rail-toggle-icon-active \{[^}]*display: inline-flex;/,
+    );
+    expect(block).toMatch(
+      /button\.rail-collapse-button:is\(:hover, :focus-visible\) \.rail-toggle-icon-rest \{[^}]*display: none;/,
+    );
+    const swapRules = [
+      ...block.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/[^{}]*rail-toggle-icon[^{}]*\{[^}]*\}/g),
+    ].map((m) => m[0]);
+    expect(swapRules).toHaveLength(2);
+    for (const rule of swapRules) expect(rule).not.toContain('transition');
+  });
+
+  it('hides the collapsed brand monogram and keeps no content: A rule (#1851)', () => {
+    const block = railMediaBlock(css).text;
+    expect(block).toMatch(/\.workspace-shell-collapsed \.app-header-brand \{[^}]*display: none;/);
+    expect(css).not.toContain("content: 'A'");
+    expect(css).not.toContain('.app-header-brand::before');
+    expect(block).toMatch(/\.workspace-shell-collapsed \.app-header-brand-row \{[^}]*justify-content: center;/);
+  });
+
+  it('puts the brand and the toggle in one space-between row, with the status on its own line (#1851)', () => {
+    const block = railMediaBlock(css).text;
+    expect(block).toMatch(/\.app-header-brand-row \{[^}]*justify-content: space-between;/);
+    expect(block).toMatch(/\.app-header-start \{[^}]*flex-direction: column;/);
+    expect(block).toMatch(/\.app-header-start \{[^}]*min-height: var\(--rail-target-size\);/);
   });
 
   it('uses design tokens only: no raw colour values in the rail rules', () => {

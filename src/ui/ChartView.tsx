@@ -1879,7 +1879,7 @@ export function ChartView({
           <div>
             <h2>{t.natalLabel}</h2>
             <ChartDataView
-              typeSelector={<ChartTypeSelector personId={personId} type="natal" view={view} />}
+              typeSelector={<ChartTypeSelector personId={personId} type="natal" view={view} comparing />}
               wheelHint={false}
               personId={personId}
               load={load}
