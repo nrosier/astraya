@@ -16,6 +16,7 @@ import { eclipsesViewMessages } from '../src/ui/EclipsesView.messages.js';
 import { profectionsViewMessages } from '../src/ui/ProfectionsView.messages.js';
 import { synastryViewMessages } from '../src/ui/SynastryView.messages.js';
 import { cyclesViewMessages } from '../src/ui/CyclesView.messages.js';
+import { splitGlossaryText } from '../src/ui/glossary-match.js';
 
 // Render-only mocks (as in test/ui-page-header-screens.test.tsx): the provider never resolves, so each view
 // renders its header and loading state with no calculation running.
@@ -503,7 +504,8 @@ describe('inline glossary tooltips on view prose (#901)', () => {
 
 /**
  * The Cycles motion filter (#901, owner decision): "retrograde" is one of its options, and a tooltip cannot sit inside
- * a native `<option>`, so the filter is a radio group whose retrograde choice carries the glossary term.
+ * a native `<option>`, so the filter is a radio group whose retrograde choice carries the glossary term on the word
+ * itself, inside the option's label (#1867, owner decision: wrap the word, not the button).
  */
 describe('the Cycles motion filter carries the retrograde tooltip (#901)', () => {
   afterEach(() => {
@@ -527,11 +529,23 @@ describe('the Cycles motion filter carries the retrograde tooltip (#901)', () =>
       const motionGroup = [...container.querySelectorAll('[role="radiogroup"]')].find(
         (group) => group.getAttribute('aria-label') === cyclesViewMessages[locale].motionLabel,
       );
-      // The trigger sits beside the retrograde radio and is named after that option (its own label).
-      const triggers = [...(motionGroup?.querySelectorAll('.glossary-term button') ?? [])].map((element) =>
-        element.getAttribute('aria-label'),
+      // The tooltip sits on the word "retrograde" inside the retrograde radio's own label (#1867): a plain span, never
+      // a button in the label, and the popup is aria-hidden so the radio's name stays the whole option text.
+      expect(motionGroup, `motion group in ${locale}`).toBeDefined();
+      expect(motionGroup?.querySelectorAll('label button'), `no button inside a motion label, ${locale}`).toHaveLength(
+        0,
       );
-      expect(triggers, `retrograde tooltip in the motion filter, ${locale}`).toContain(
+      const retrogradeLabel = [...(motionGroup?.querySelectorAll('label') ?? [])].find(
+        (label) => label.querySelector('.glossary-term') !== null,
+      );
+      expect(retrogradeLabel, `retrograde label with a term in ${locale}`).toBeDefined();
+      const word = retrogradeLabel?.querySelector('.glossary-term .primitive-tooltip-trigger');
+      expect(word?.textContent, `tooltip on the word, ${locale}`).toBe(locale === 'en' ? 'Retrograde' : 'retrograde');
+      const named = retrogradeLabel?.cloneNode(true);
+      if (named instanceof HTMLElement) {
+        for (const hidden of named.querySelectorAll('[aria-hidden="true"]')) hidden.remove();
+      }
+      expect(named?.textContent?.trim(), `radio name is the whole option, ${locale}`).toBe(
         cyclesViewMessages[locale].motionRetrograde,
       );
     } finally {
@@ -540,6 +554,14 @@ describe('the Cycles motion filter carries the retrograde tooltip (#901)', () =>
       });
       container.remove();
     }
+  });
+
+  it.each(['en', 'nl'] as const)('finds the retrograde word in the whole option text in %s', (locale) => {
+    const segments = splitGlossaryText(cyclesViewMessages[locale].motionRetrograde, locale);
+    expect(
+      segments.some((segment) => segment.kind === 'term' && segment.id === 'retrograde'),
+      `retrograde segment in ${locale}`,
+    ).toBe(true);
   });
 });
 
