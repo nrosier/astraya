@@ -5,10 +5,17 @@
  * traditional chart alongside essential dignity (`dignities.ts`/`almuten.ts`) and solar
  * phase/proximity (`sect.ts`), neither of which is duplicated here.
  *
- * Hayz and besiegement are summarized from widely-repeated modern restatements of the classical
- * sources (chiefly Bonatti and Lilly, via Benjamin Dykes' translations) rather than one specific
- * page this change can cite exactly — flagged here, not asserted as beyond dispute, per
- * CLAUDE.md's domain-integrity convention. Diurnal/nocturnal planet membership and sign gender
+ * Hayz is cited to Lilly, *Christian Astrology* (1647), Houlding transcription, PDF p. 72: a
+ * diurnal planet above the earth by day and a nocturnal planet under the earth by night, each in a
+ * sign of its own gender. The other reading, recorded and not adopted: Alchabitius via Bonatti (Tr. 3, ch. 7, p. 70) and
+ * Avelar (*On the Heavenly Spheres*, 2010, p. 161) put a nocturnal planet above the earth by
+ * night, and also allow planets contrary to the chart's sect. Decision: owner, #1806, 2026-11-20
+ * (keep Lilly, no output change).
+ *
+ * Besiegement is summarized from widely-repeated modern restatements of the classical sources
+ * (chiefly Bonatti and Lilly, via Benjamin Dykes' translations) rather than one specific page this
+ * change can cite exactly — flagged here, not asserted as beyond dispute, per CLAUDE.md's
+ * domain-integrity convention. Diurnal/nocturnal planet membership and sign gender
  * (fire/air masculine, earth/water feminine) are uncontroversial classical facts repeated
  * identically across every traditional source checked, unlike a specific numeric table, so they
  * are not separately flagged.
@@ -260,7 +267,8 @@ export function motionScoreOf(
  * of the horizon for that sect (above by day for a diurnal planet, below by night for a
  * nocturnal one), and sits in a sign whose gender matches its own nature (masculine — fire/air —
  * for a diurnal planet, feminine — earth/water — for a nocturnal one). Always `false` for
- * Mercury (sect-neutral) or any planet contrary to the chart's sect.
+ * Mercury (sect-neutral) or any planet contrary to the chart's sect. Source: Lilly (1647), PDF
+ * p. 72; the other reading is recorded in the module header.
  */
 export function isInHayz(body: BodyId, longitude: Degrees, ascendant: Degrees, chartSect: Sect): boolean {
   if (sectAlignmentOf(body, chartSect) !== 'ofSect') return false;

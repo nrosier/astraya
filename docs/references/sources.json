@@ -17,7 +17,7 @@
     "provisional": false,
     "copyrighted": true,
     "notes": "Cited in docs/domain/EXPORT_SCHEMA.md for mean daily speeds and the motion score.",
-    "used_by": ["src/astrology/houses.ts"]
+    "used_by": ["src/astrology/houses.ts", "src/astrology/planetary-condition.ts"]
   },
   {
     "id": "bonatti-liber-astronomiae-tr-1-2-1-1994",
@@ -76,7 +76,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
-    "used_by": [],
+    "used_by": ["src/astrology/planetary-condition.ts"],
     "notes": "OCR text without page breaks; page index is a single entry. Contents/index OCR is noisy; cite from the body. Text has 5576 lines and no page markers. Update 2026-11-07 (#864): text now carries \"=== p. N ===\" markers inserted before the page that follows each of the printed folio numbers on their own lines (71 footers, one inferred where the OCR misread 59); N is the printed folio, and page 1 holds all unnumbered front matter. The page index has 72 rows. The \"single entry\" and \"no page markers\" statements above are superseded."
   },
   {
@@ -636,7 +636,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
-    "used_by": [],
+    "used_by": ["src/astrology/planetary-condition.ts"],
     "notes": "Year is the date of the work; the edition is Houlding 1999/2022."
   },
   {
