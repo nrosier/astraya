@@ -104,20 +104,22 @@ export function readTotpState(db: Database, key: Buffer | null, userId: string):
   }
   if (key === null) throw new TotpKeyMissingError();
   if (row.totp_secret_iv === null) throw new Error('Stored TOTP secret has no IV.');
-  const plain = decryptPayload(
-    Buffer.from(row.totp_secret),
-    Buffer.from(row.totp_secret_iv),
-    deriveTotpSubkey(key, userId),
-  );
-  if (plain.length !== SECRET_BYTES) {
-    plain.fill(0);
-    throw new Error('Stored TOTP secret has the wrong length.');
+  const subkey = deriveTotpSubkey(key, userId);
+  let plain: Buffer;
+  try {
+    plain = decryptPayload(Buffer.from(row.totp_secret), Buffer.from(row.totp_secret_iv), subkey);
+  } finally {
+    subkey.fill(0);
   }
-  const secret = new Uint8Array(plain);
-  plain.fill(0);
-  if (row.totp_enabled_at === null)
-    return { status: 'pending', secret, enrolmentIv: new Uint8Array(row.totp_secret_iv) };
-  return { status: 'enabled', secret, lastStep: row.totp_last_step === null ? null : Number(row.totp_last_step) };
+  try {
+    if (plain.length !== SECRET_BYTES) throw new Error('Stored TOTP secret has the wrong length.');
+    const secret = new Uint8Array(plain);
+    if (row.totp_enabled_at === null)
+      return { status: 'pending', secret, enrolmentIv: new Uint8Array(row.totp_secret_iv) };
+    return { status: 'enabled', secret, lastStep: row.totp_last_step === null ? null : Number(row.totp_last_step) };
+  } finally {
+    plain.fill(0);
+  }
 }
 
 /** Replay guard: accepts only a step later than the last one, atomically. False means replayed or stale. */
@@ -216,9 +218,13 @@ function writeRecoveryCodes(db: Database, pepper: Buffer, userId: string, codes:
  */
 export function replaceRecoveryCodes(db: Database, key: Buffer, userId: string, codes: readonly string[]): void {
   const pepper = loadRecoveryPepper(db, key);
-  inSavepoint(db, 'totp_replace_codes', () => {
-    writeRecoveryCodes(db, pepper, userId, codes);
-  });
+  try {
+    inSavepoint(db, 'totp_replace_codes', () => {
+      writeRecoveryCodes(db, pepper, userId, codes);
+    });
+  } finally {
+    pepper.fill(0);
+  }
 }
 
 /**
@@ -246,21 +252,31 @@ export function completeTotpEnrolment(
   }
   // Loaded before the savepoint, as replaceRecoveryCodes does, so a wrong key throws before any user write.
   const pepper = loadRecoveryPepper(db, key);
-  return inSavepoint(
-    db,
-    'totp_complete',
-    () => {
-      if (!confirmTotpEnrolment(db, userId, enrolmentIv, step, now)) return false;
-      writeRecoveryCodes(db, pepper, userId, codes);
-      return true;
-    },
-    (confirmed) => confirmed,
-  );
+  try {
+    return inSavepoint(
+      db,
+      'totp_complete',
+      () => {
+        if (!confirmTotpEnrolment(db, userId, enrolmentIv, step, now)) return false;
+        writeRecoveryCodes(db, pepper, userId, codes);
+        return true;
+      },
+      (confirmed) => confirmed,
+    );
+  } finally {
+    pepper.fill(0);
+  }
 }
 
 /** Spends one recovery code. True only when it matched and this call deleted it. */
 export function consumeRecoveryCode(db: Database, key: Buffer, userId: string, input: string): boolean {
-  const candidate = Buffer.from(hashCode(loadRecoveryPepper(db, key), input), 'hex');
+  const pepper = loadRecoveryPepper(db, key);
+  let candidate: Buffer;
+  try {
+    candidate = Buffer.from(hashCode(pepper, input), 'hex');
+  } finally {
+    pepper.fill(0);
+  }
   const rows = db
     .prepare('SELECT code_hash FROM totp_recovery_codes WHERE user_id = ?')
     .all(userId) as unknown as CodeHashRow[];

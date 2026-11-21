@@ -7,7 +7,7 @@
  * neither key decrypts every row, with no key version distinguishing them, so "nothing was
  * written" is the only acceptable outcome of a wrong current key.
  */
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -15,6 +15,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { openDatabase, type Database } from '../server/db.ts';
 import { CURRENT_KEY_VERSION, decryptPayload, encryptPayload } from '../server/ops/crypto.ts';
 import { rotateEncryptionKey, STORAGE_RESIDUE_NOTE } from '../server/ops/rotate-key.ts';
+import { SECRET_BYTES } from '../server/auth/totp.ts';
 import {
   confirmTotpEnrolment,
   generateRecoveryCodes,
@@ -477,5 +478,63 @@ describe('rotation success message storage residue (#1801)', () => {
     expect(STORAGE_RESIDUE_NOTE).toMatch(/SSD wear levelling/);
     expect(STORAGE_RESIDUE_NOTE).toMatch(/snapshots/);
     expect(STORAGE_RESIDUE_NOTE).toMatch(/outside the database's control/);
+  });
+});
+
+describe('derived subkeys and decrypted plaintext are zeroed (#1782)', () => {
+  /** Records every `fill(0)` call as the buffer it was made on; the spy still runs the real fill. */
+  function spyZeroFills(): { zeroed: Buffer[]; restore: () => void } {
+    const zeroed: Buffer[] = [];
+    const proto = Buffer.prototype as unknown as { fill: (this: Buffer, ...args: unknown[]) => Buffer };
+    const realFill = proto.fill;
+    const spy = vi.spyOn(proto, 'fill').mockImplementation(function (this: Buffer, ...args: unknown[]) {
+      if (args[0] === 0) zeroed.push(this);
+      return realFill.apply(this, args);
+    });
+    return {
+      zeroed,
+      restore: () => {
+        spy.mockRestore();
+      },
+    };
+  }
+
+  it('readTotpState zeroes its subkey and the decrypted secret plaintext', () => {
+    const totpUser = randomUUID();
+    db.prepare('INSERT INTO users (id, username, password_hash, created_at) VALUES (?, ?, ?, ?)').run(
+      totpUser,
+      'totp-zero-read',
+      'not-a-real-hash',
+      new Date().toISOString(),
+    );
+    startTotpEnrolment(db, OLD_KEY, totpUser);
+    const spy = spyZeroFills();
+    try {
+      expect(readTotpState(db, OLD_KEY, totpUser).status).toBe('pending');
+    } finally {
+      spy.restore();
+    }
+    expect(spy.zeroed.some((buf) => buf.length === 32)).toBe(true);
+    expect(spy.zeroed.some((buf) => buf.length === SECRET_BYTES)).toBe(true);
+  });
+
+  it('rotateEncryptionKey zeroes both subkeys and every decrypted plaintext', () => {
+    const totpUser = randomUUID();
+    db.prepare('INSERT INTO users (id, username, password_hash, created_at) VALUES (?, ?, ?, ?)').run(
+      totpUser,
+      'totp-zero-rotate',
+      'not-a-real-hash',
+      new Date().toISOString(),
+    );
+    startTotpEnrolment(db, OLD_KEY, totpUser);
+    const spy = spyZeroFills();
+    try {
+      expect(rotateEncryptionKey(db, OLD_KEY, NEW_KEY).totpSecrets).toBe(1);
+    } finally {
+      spy.restore();
+    }
+    // Two 32-byte subkeys (current and new) for the user, plus the secret plaintext of 20 bytes.
+    expect(spy.zeroed.filter((buf) => buf.length === 32).length).toBeGreaterThanOrEqual(2);
+    expect(spy.zeroed.some((buf) => buf.length === SECRET_BYTES)).toBe(true);
   });
 });

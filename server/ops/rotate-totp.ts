@@ -52,15 +52,18 @@ export function planTotpRotation(
   for (const row of users) {
     const what = `the TOTP secret of user ${row.id}`;
     if (row.totp_secret_iv === null) throw new Error(`${what} has no IV, so nothing was rotated.`);
-    const plain = decrypt(
-      what,
-      Buffer.from(row.totp_secret),
-      Buffer.from(row.totp_secret_iv),
-      deriveTotpSubkey(currentKey, row.id),
-    );
-    const { ciphertext, iv } = encryptPayload(plain, deriveTotpSubkey(newKey, row.id));
-    plain.fill(0);
-    reUsers.push({ id: row.id, secret: ciphertext, iv });
+    const currentSubkey = deriveTotpSubkey(currentKey, row.id);
+    const newSubkey = deriveTotpSubkey(newKey, row.id);
+    let plain: Buffer | undefined;
+    try {
+      plain = decrypt(what, Buffer.from(row.totp_secret), Buffer.from(row.totp_secret_iv), currentSubkey);
+      const { ciphertext, iv } = encryptPayload(plain, newSubkey);
+      reUsers.push({ id: row.id, secret: ciphertext, iv });
+    } finally {
+      currentSubkey.fill(0);
+      newSubkey.fill(0);
+      plain?.fill(0);
+    }
   }
 
   const secrets = db
@@ -68,10 +71,14 @@ export function planTotpRotation(
     .all() as unknown as ServerSecretRow[];
   const reSecrets: { name: string; value: Buffer; iv: Buffer }[] = [];
   for (const row of secrets) {
-    const plain = decrypt(`server secret ${row.name}`, Buffer.from(row.value), Buffer.from(row.iv), currentKey);
-    const { ciphertext, iv } = encryptPayload(plain, newKey);
-    plain.fill(0);
-    reSecrets.push({ name: row.name, value: ciphertext, iv });
+    let plain: Buffer | undefined;
+    try {
+      plain = decrypt(`server secret ${row.name}`, Buffer.from(row.value), Buffer.from(row.iv), currentKey);
+      const { ciphertext, iv } = encryptPayload(plain, newKey);
+      reSecrets.push({ name: row.name, value: ciphertext, iv });
+    } finally {
+      plain?.fill(0);
+    }
   }
 
   return {
