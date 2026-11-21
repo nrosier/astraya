@@ -119,6 +119,13 @@ backup, every TOTP secret decrypts and the recovery codes can be guessed
 offline (about 50 bits). After a key leak, also run `npm run ops:reset-totp`.
 Follow the full sequence in [the key-leak runbook](docs/ops/KEY-LEAK-RUNBOOK.md).
 
+The runtime Docker image has no npm. A Docker operator runs the same scripts in
+a one-off container from the image, with the server container stopped and the
+data volume mounted at `/app/data`, passing the script path as the argument
+(the image's entrypoint is `node`): `server/ops/rotate-key.ts` for rotation and
+`server/ops/reset-totp.ts --yes` for the TOTP reset. The runbook gives the
+commands.
+
 ### Optional: sign-in with Authentik
 
 Astraya's own username/password accounts work with no further setup. To let
