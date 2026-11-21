@@ -20,7 +20,8 @@
  * commit it checkpoints the WAL and runs `VACUUM`, so the database file and its WAL no longer hold
  * the superseded ciphertext (#1680). Any backup or copy of the database taken before rotation, and
  * any filesystem snapshot, still holds it and is still readable with the old key: treat those as
- * exposed and destroy them if the leak matters. Storage-level residue (copy-on-write filesystems, SSD wear levelling, snapshots) is outside the database's control.
+ * exposed and destroy them if the leak matters. Storage-level residue (copy-on-write filesystems, SSD wear
+ * levelling, snapshots) is outside the database's control.
  *
  * The server must be stopped before rotating. The script locks the database for the rotation, but a
  * server still running on the old key can write rows under it once the lock is released
@@ -176,6 +177,7 @@ function clearResidue(db: Database): void {
       COMMITTED_PREFIX +
         'Another connection is still reading the database, so old-key ciphertext may remain in the WAL. ' +
         'Stop every process using the file, then run PRAGMA wal_checkpoint(TRUNCATE) and VACUUM by hand. ' +
+        'A server still running on the old key may have written rows under it since the commit. ' +
         'Do not rotate again.',
     );
   }

@@ -444,6 +444,7 @@ describe('rotateEncryptionKey transaction guarantees (#1680 review)', () => {
       /^The rotation was committed: set ASTRAYA_ENCRYPTION_KEY to the new key before restarting\. /,
     );
     expect(message).toMatch(/Another connection is still reading the database/);
+    expect(message).toMatch(/A server still running on the old key may have written rows under it since the commit\./);
     expect(message).toMatch(/Do not rotate again/);
     // Secrets and plaintext never appear in an error.
     expect(message).not.toContain(OLD_KEY.toString('base64'));
