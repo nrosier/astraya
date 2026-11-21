@@ -7,7 +7,7 @@
  * neither key decrypts every row, with no key version distinguishing them, so "nothing was
  * written" is the only acceptable outcome of a wrong current key.
  */
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -15,6 +15,10 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { openDatabase, type Database } from '../server/db.ts';
 import { CURRENT_KEY_VERSION, decryptPayload, encryptPayload } from '../server/ops/crypto.ts';
 import { rotateEncryptionKey, STORAGE_RESIDUE_NOTE } from '../server/ops/rotate-key.ts';
+import { SECRET_BYTES } from '../server/auth/totp.ts';
+import type * as CryptoModule from '../server/ops/crypto.ts';
+import type * as TotpKeysModule from '../server/auth/totp-keys.ts';
+import { deriveTotpSubkey } from '../server/auth/totp-keys.ts';
 import {
   confirmTotpEnrolment,
   generateRecoveryCodes,
@@ -28,6 +32,37 @@ import {
   saveInterpretationResult,
 } from '../server/interpretation/results.ts';
 import { createClock, randomNodeId, tick } from '../src/store/hlc.ts';
+
+// Wraps the real key-derivation helpers and records every buffer they return, so a failure-path test can
+// assert that the exact subkey or pepper it targets was zeroed (#1782). The real behaviour is unchanged.
+const derived = vi.hoisted(() => ({ returned: [] as Buffer[], plaintexts: [] as Buffer[] }));
+vi.mock('../server/ops/crypto.ts', async (importOriginal) => {
+  const actual = await importOriginal<typeof CryptoModule>();
+  return {
+    ...actual,
+    decryptPayload: (ciphertextWithTag: Buffer, iv: Buffer, key: Buffer): Buffer => {
+      const plain = actual.decryptPayload(ciphertextWithTag, iv, key);
+      derived.plaintexts.push(plain);
+      return plain;
+    },
+  };
+});
+vi.mock('../server/auth/totp-keys.ts', async (importOriginal) => {
+  const actual = await importOriginal<typeof TotpKeysModule>();
+  return {
+    ...actual,
+    deriveTotpSubkey: (key: Buffer, userId: string): Buffer => {
+      const subkey = actual.deriveTotpSubkey(key, userId);
+      derived.returned.push(subkey);
+      return subkey;
+    },
+    loadRecoveryPepper: (db: Database, key: Buffer): Buffer => {
+      const pepper = actual.loadRecoveryPepper(db, key);
+      derived.returned.push(pepper);
+      return pepper;
+    },
+  };
+});
 
 const OLD_KEY = randomBytes(32);
 const NEW_KEY = randomBytes(32);
@@ -477,5 +512,115 @@ describe('rotation success message storage residue (#1801)', () => {
     expect(STORAGE_RESIDUE_NOTE).toMatch(/SSD wear levelling/);
     expect(STORAGE_RESIDUE_NOTE).toMatch(/snapshots/);
     expect(STORAGE_RESIDUE_NOTE).toMatch(/outside the database's control/);
+  });
+});
+
+describe('derived subkeys and decrypted plaintext are zeroed (#1782)', () => {
+  /** Records every `fill(0)` call as the buffer it was made on; the spy still runs the real fill. */
+  function spyZeroFills(): { zeroed: Buffer[]; restore: () => void } {
+    const zeroed: Buffer[] = [];
+    const proto = Buffer.prototype as unknown as { fill: (this: Buffer, ...args: unknown[]) => Buffer };
+    const realFill = proto.fill;
+    const spy = vi.spyOn(proto, 'fill').mockImplementation(function (this: Buffer, ...args: unknown[]) {
+      if (args[0] === 0) zeroed.push(this);
+      return realFill.apply(this, args);
+    });
+    return {
+      zeroed,
+      restore: () => {
+        spy.mockRestore();
+      },
+    };
+  }
+
+  it('readTotpState zeroes its subkey and the decrypted secret plaintext', () => {
+    const totpUser = randomUUID();
+    db.prepare('INSERT INTO users (id, username, password_hash, created_at) VALUES (?, ?, ?, ?)').run(
+      totpUser,
+      'totp-zero-read',
+      'not-a-real-hash',
+      new Date().toISOString(),
+    );
+    startTotpEnrolment(db, OLD_KEY, totpUser);
+    const spy = spyZeroFills();
+    try {
+      expect(readTotpState(db, OLD_KEY, totpUser).status).toBe('pending');
+    } finally {
+      spy.restore();
+    }
+    expect(spy.zeroed.some((buf) => buf.length === 32)).toBe(true);
+    expect(spy.zeroed.some((buf) => buf.length === SECRET_BYTES)).toBe(true);
+  });
+
+  it('rotateEncryptionKey zeroes both subkeys and every decrypted plaintext', () => {
+    const totpUser = randomUUID();
+    db.prepare('INSERT INTO users (id, username, password_hash, created_at) VALUES (?, ?, ?, ?)').run(
+      totpUser,
+      'totp-zero-rotate',
+      'not-a-real-hash',
+      new Date().toISOString(),
+    );
+    startTotpEnrolment(db, OLD_KEY, totpUser);
+    const spy = spyZeroFills();
+    try {
+      expect(rotateEncryptionKey(db, OLD_KEY, NEW_KEY).totpSecrets).toBe(1);
+    } finally {
+      spy.restore();
+    }
+    // Two 32-byte subkeys (current and new) for the user, plus the secret plaintext of 20 bytes.
+    expect(spy.zeroed.filter((buf) => buf.length === 32).length).toBeGreaterThanOrEqual(2);
+    expect(spy.zeroed.some((buf) => buf.length === SECRET_BYTES)).toBe(true);
+  });
+
+  it('readTotpState with the wrong key throws and zeroes the subkey it derived', () => {
+    const totpUser = randomUUID();
+    db.prepare('INSERT INTO users (id, username, password_hash, created_at) VALUES (?, ?, ?, ?)').run(
+      totpUser,
+      'totp-zero-wrong-key',
+      'not-a-real-hash',
+      new Date().toISOString(),
+    );
+    startTotpEnrolment(db, OLD_KEY, totpUser);
+    derived.returned.length = 0;
+    expect(() => readTotpState(db, NEW_KEY, totpUser)).toThrow();
+    const subkey = derived.returned.find((buf) => buf.length === 32);
+    if (subkey === undefined) throw new Error('expected readTotpState to derive a subkey');
+    expect(subkey.every((b) => b === 0)).toBe(true);
+  });
+
+  it('readTotpState throws on a wrong-length secret and zeroes the 16-byte plaintext', () => {
+    const totpUser = randomUUID();
+    db.prepare('INSERT INTO users (id, username, password_hash, created_at) VALUES (?, ?, ?, ?)').run(
+      totpUser,
+      'totp-zero-wrong-length',
+      'not-a-real-hash',
+      new Date().toISOString(),
+    );
+    const { ciphertext, iv } = encryptPayload(randomBytes(16), deriveTotpSubkey(OLD_KEY, totpUser));
+    db.prepare('UPDATE users SET totp_secret = ?, totp_secret_iv = ? WHERE id = ?').run(ciphertext, iv, totpUser);
+    derived.plaintexts.length = 0;
+    expect(() => readTotpState(db, OLD_KEY, totpUser)).toThrow('Stored TOTP secret has the wrong length.');
+    const plain = derived.plaintexts.find((buf) => buf.length === 16);
+    if (plain === undefined) throw new Error('expected readTotpState to decrypt a 16-byte plaintext');
+    expect(plain.every((b) => b === 0)).toBe(true);
+  });
+
+  it('rotateEncryptionKey throws on a foreign-key secret and zeroes both subkeys of that user', () => {
+    const badUser = randomUUID();
+    db.prepare('INSERT INTO users (id, username, password_hash, created_at) VALUES (?, ?, ?, ?)').run(
+      badUser,
+      'totp-zero-rotate-fail',
+      'not-a-real-hash',
+      new Date().toISOString(),
+    );
+    const foreignKey = randomBytes(32);
+    const { ciphertext, iv } = encryptPayload(randomBytes(SECRET_BYTES), deriveTotpSubkey(foreignKey, badUser));
+    db.prepare('UPDATE users SET totp_secret = ?, totp_secret_iv = ? WHERE id = ?').run(ciphertext, iv, badUser);
+    derived.returned.length = 0;
+    derived.plaintexts.length = 0;
+    expect(() => rotateEncryptionKey(db, OLD_KEY, NEW_KEY)).toThrow();
+    const subkeys = derived.returned.filter((buf) => buf.length === 32);
+    expect(subkeys.length).toBeGreaterThanOrEqual(2);
+    for (const subkey of subkeys) expect(subkey.every((b) => b === 0)).toBe(true);
   });
 });
