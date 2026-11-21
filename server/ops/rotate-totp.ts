@@ -1,7 +1,7 @@
 /**
  * @module rotate-totp
  * @purpose Key-rotation re-wrap of the TOTP secrets and the `server_secrets` recovery-code pepper (#1500, #1782): decrypts every value under the current key and re-encrypts it under the new one, in memory, for `rotate-key` to write.
- * @conventions Internal to key rotation, called only by `server/ops/rotate-key.ts`. Decrypts everything before `apply` writes anything, so a wrong key aborts before any write. Nothing here logs, and no error message carries a secret, code, pepper or key bytes. The code was moved verbatim from `server/auth/totp-store.ts` (#1782) so the store no longer carries the operator rotation path.
+ * @conventions Internal to key rotation, called only by `server/ops/rotate-key.ts`. Decrypts everything before `apply` writes anything, so a wrong key aborts before any write. Nothing here logs, and no error message carries a secret, code, pepper or key bytes. The rotation logic was moved out of `server/auth/totp-store.ts` (#1782) so the store no longer carries the operator rotation path; it now also zeroes its subkeys and plaintext on every path.
  * @exports RotationDecrypt, TotpRotationPlan, planTotpRotation
  */
 import type { Database } from '../db.ts';
@@ -52,16 +52,18 @@ export function planTotpRotation(
   for (const row of users) {
     const what = `the TOTP secret of user ${row.id}`;
     if (row.totp_secret_iv === null) throw new Error(`${what} has no IV, so nothing was rotated.`);
-    const currentSubkey = deriveTotpSubkey(currentKey, row.id);
-    const newSubkey = deriveTotpSubkey(newKey, row.id);
+    let currentSubkey: Buffer | undefined;
+    let newSubkey: Buffer | undefined;
     let plain: Buffer | undefined;
     try {
+      currentSubkey = deriveTotpSubkey(currentKey, row.id);
+      newSubkey = deriveTotpSubkey(newKey, row.id);
       plain = decrypt(what, Buffer.from(row.totp_secret), Buffer.from(row.totp_secret_iv), currentSubkey);
       const { ciphertext, iv } = encryptPayload(plain, newSubkey);
       reUsers.push({ id: row.id, secret: ciphertext, iv });
     } finally {
-      currentSubkey.fill(0);
-      newSubkey.fill(0);
+      currentSubkey?.fill(0);
+      newSubkey?.fill(0);
       plain?.fill(0);
     }
   }

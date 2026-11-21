@@ -53,7 +53,16 @@ interface CodeHashRow {
  */
 export function startTotpEnrolment(db: Database, key: Buffer, userId: string): Uint8Array {
   const { bytes } = generateSecret();
-  const { ciphertext, iv } = encryptPayload(Buffer.from(bytes), deriveTotpSubkey(key, userId));
+  const subkey = deriveTotpSubkey(key, userId);
+  const secretCopy = Buffer.from(bytes);
+  let ciphertext: Buffer;
+  let iv: Buffer;
+  try {
+    ({ ciphertext, iv } = encryptPayload(secretCopy, subkey));
+  } finally {
+    subkey.fill(0);
+    secretCopy.fill(0);
+  }
   const result = db
     .prepare(
       'UPDATE users SET totp_secret = ?, totp_secret_iv = ?, totp_enabled_at = NULL, totp_last_step = NULL WHERE id = ? AND totp_enabled_at IS NULL',
