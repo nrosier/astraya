@@ -179,15 +179,15 @@ describe('GlossaryTerm (#456)', () => {
 
 /** The eighteen views whose top-of-view `ul.glossary-terms` list #901 removed. Each entry mounts the view. */
 const views: readonly { name: string; node: () => React.JSX.Element }[] = [
-  { name: 'DraconicView', node: () => <DraconicView personId="p1" view="wheel" compareType={undefined} /> },
+  { name: 'DraconicView', node: () => <DraconicView personId="p1" view="wheel" /> },
   { name: 'HoraryView', node: () => <HoraryView view="wheel" /> },
   { name: 'SolarArcView', node: () => <SolarArcView personId="p1" /> },
-  { name: 'HarmonicView', node: () => <HarmonicView personId="p1" view="wheel" compareType={undefined} /> },
+  { name: 'HarmonicView', node: () => <HarmonicView personId="p1" view="wheel" /> },
   { name: 'TransitView', node: () => <TransitView personId="p1" /> },
   { name: 'PrimaryDirectionsView', node: () => <PrimaryDirectionsView personId="p1" /> },
   {
     name: 'ReturnView',
-    node: () => <ReturnView personId="p1" kind="solar-return" view="wheel" compareType={undefined} />,
+    node: () => <ReturnView personId="p1" kind="solar-return" view="wheel" />,
   },
   { name: 'ElectionalView', node: () => <ElectionalView /> },
   { name: 'CompositeView', node: () => <CompositeView personId="p1" view="wheel" /> },
@@ -196,7 +196,7 @@ const views: readonly { name: string; node: () => React.JSX.Element }[] = [
   { name: 'PeriodicTransitView', node: () => <PeriodicTransitView personId="p1" /> },
   {
     name: 'RelocatedChartView',
-    node: () => <RelocatedChartView personId="p1" view="wheel" compareType={undefined} />,
+    node: () => <RelocatedChartView personId="p1" view="wheel" />,
   },
   { name: 'ProgressionsView', node: () => <ProgressionsView personId="p1" /> },
   { name: 'ProfectionsView', node: () => <ProfectionsView personId="p1" /> },
@@ -268,12 +268,12 @@ const headingTerms: readonly { view: string; term: GlossaryTermId; node: () => R
   {
     view: 'DraconicView',
     term: 'draconic',
-    node: () => <DraconicView personId="p1" view="wheel" compareType={undefined} />,
+    node: () => <DraconicView personId="p1" view="wheel" />,
   },
   {
     view: 'HarmonicView',
     term: 'harmonic',
-    node: () => <HarmonicView personId="p1" view="wheel" compareType={undefined} />,
+    node: () => <HarmonicView personId="p1" view="wheel" />,
   },
   { view: 'SynastryView', term: 'synastry', node: () => <SynastryView personId="p1" /> },
   { view: 'TransitView', term: 'transit', node: () => <TransitView personId="p1" /> },
@@ -284,7 +284,7 @@ const headingTerms: readonly { view: string; term: GlossaryTermId; node: () => R
   {
     view: 'ReturnView',
     term: 'solarReturn',
-    node: () => <ReturnView personId="p1" kind="solar-return" view="wheel" compareType={undefined} />,
+    node: () => <ReturnView personId="p1" kind="solar-return" view="wheel" />,
   },
 ];
 
@@ -433,7 +433,7 @@ const proseTerms: readonly {
     view: 'ReturnView',
     term: 'houses',
     visible: { en: 'houses', nl: 'huizen' },
-    node: () => <ReturnView personId="p1" kind="solar-return" view="wheel" compareType={undefined} />,
+    node: () => <ReturnView personId="p1" kind="solar-return" view="wheel" />,
   },
   {
     view: 'ProfectionsView',

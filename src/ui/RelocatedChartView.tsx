@@ -22,7 +22,7 @@ import { computeRelocatedChart, relocatedComparisonRows, type RelocatedChartData
 import { housesAreDefined } from '../domain/chart-compute.js';
 import { ChartDataView, type ChartOverlayContext } from './ChartView.js';
 import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
-import { type ChartType, type ChartViewKind } from './chart-sections.js';
+import { type ChartViewKind } from './chart-sections.js';
 import { chartHref, personHref } from './route.js';
 import { ReportView } from './ReportView.js';
 import { relocatedChartViewMessages } from './RelocatedChartView.messages.js';
@@ -76,19 +76,13 @@ function comparisonColumns(
   ];
 }
 
-// Comparison mode (compareType) will be implemented in a follow-up (#439)
 export function RelocatedChartView({
   personId,
   view,
-  compareType,
 }: {
   personId: string;
   view?: ChartViewKind | undefined;
-  compareType?: ChartType | undefined;
 }): React.JSX.Element {
-  if (compareType !== undefined) {
-    // TODO: implement comparison mode for relocated charts (#439)
-  }
   const store = useStore();
   const state = useStoreState();
   const person = state.people.get(personId);

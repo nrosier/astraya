@@ -12,6 +12,7 @@ import type { ChartType } from './chart-sections.js';
 
 const en = {
   typeSelectorLabel: 'Chart type',
+  compareNatalOnly: 'Comparison is available on the natal chart only.',
   typeLabels: {
     natal: 'Natal',
     draconic: 'Draconic',
@@ -25,6 +26,7 @@ const en = {
 
 const nl: typeof en = {
   typeSelectorLabel: 'Soort horoscoop',
+  compareNatalOnly: 'Vergelijken kan alleen bij de geboortehoroscoop.',
   typeLabels: {
     natal: 'Geboortehoroscoop',
     draconic: 'Draconisch',
