@@ -54,6 +54,10 @@ test('the cycles screen lists the great conjunctions with a diagram, and narrows
   await expect(page.getByRole('button', { name: /^Cycle Venus–Sun inferior conjunctions/ })).toBeVisible();
   // The motion filter is a radio group (#901), so the retrograde choice is the checked radio, not a select value.
   await expect(page.getByRole('radio', { name: 'Retrograde only (e.g. Venus’s inferior conjunctions)' })).toBeChecked();
+  // The tooltip must not change the radio's accessible name: it is exactly the option text (#1867).
+  await expect(
+    page.getByRole('radio', { name: 'Retrograde only (e.g. Venus’s inferior conjunctions)', exact: true }),
+  ).toBeChecked();
   await expect(table.getByRole('row').nth(1)).toContainText('Venus');
 
   // The two bodies are pills too (#1545): the preset set them to Venus and Sun, and a body pill changes one of them.
@@ -61,6 +65,71 @@ test('the cycles screen lists the great conjunctions with a diagram, and narrows
   await expect(page.getByRole('button', { name: /^Second body Sun/ })).toBeVisible();
   await choosePill(page, 'Second body', 'Mars');
   await expect(page.getByRole('button', { name: /^Second body Mars/ })).toBeVisible();
+});
+
+const RETROGRADE_OPTION = 'Retrograde only (e.g. Venus’s inferior conjunctions)';
+const RETROGRADE_DEFINITION = /^A body that appears to move backwards against the zodiac as seen from Earth\./;
+
+test('the Retrograde tooltip sits on the word inside the option, and clicking the word selects it (#1867)', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await gotoAndSettle(page, `${baseUrl}/#/explore/cycles`);
+  await expect(page.getByRole('table')).toBeVisible({ timeout: 60_000 });
+
+  const radio = page.getByRole('radio', { name: RETROGRADE_OPTION, exact: true });
+  const label = page.locator('label.primitive-choice', { has: radio });
+  const term = label.locator('.glossary-term');
+  // The tooltip is the word itself, a plain span: no button inside the label, and nothing floating beside it.
+  await expect(term).toHaveCount(1);
+  await expect(label.locator('.glossary-term .primitive-tooltip-trigger')).toHaveText('Retrograde');
+  await expect(label.locator('button')).toHaveCount(0);
+  await expect(page.locator('.primitive-choice-group button')).toHaveCount(0);
+
+  // Hovering the word shows the definition right next to it (below it, starting at the same edge).
+  const word = label.locator('.primitive-tooltip-trigger');
+  const popup = label.getByRole('tooltip', { includeHidden: true });
+  await expect(popup).toBeHidden();
+  await word.hover();
+  await expect(popup).toBeVisible();
+  await expect(popup).toHaveText(RETROGRADE_DEFINITION);
+  const wordBox = await word.boundingBox();
+  const popupBox = await popup.boundingBox();
+  if (wordBox === null || popupBox === null) throw new Error('the word and its popup must both have a box');
+  expect(Math.abs(popupBox.x - wordBox.x)).toBeLessThan(40);
+  expect(popupBox.y - (wordBox.y + wordBox.height)).toBeGreaterThanOrEqual(0);
+  expect(popupBox.y - (wordBox.y + wordBox.height)).toBeLessThan(40);
+
+  // Clicking the word is a click on label text: it selects the option, from "Any".
+  await page.mouse.move(0, 0);
+  await expect(popup).toBeHidden();
+  await page.getByRole('radio', { name: 'Any', exact: true }).check();
+  await expect(radio).not.toBeChecked();
+  await word.click();
+  await expect(radio).toBeChecked();
+});
+
+test('the Retrograde tooltip opens when the radio is reached from the keyboard, and Escape closes it (#1867)', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await gotoAndSettle(page, `${baseUrl}/#/explore/cycles`);
+  await expect(page.getByRole('table')).toBeVisible({ timeout: 60_000 });
+
+  const any = page.getByRole('radio', { name: 'Any', exact: true });
+  const radio = page.getByRole('radio', { name: RETROGRADE_OPTION, exact: true });
+  const popup = page.locator('label.primitive-choice', { has: radio }).getByRole('tooltip', { includeHidden: true });
+  await any.check();
+  await any.focus();
+  await expect(popup).toBeHidden();
+  await page.keyboard.press('ArrowDown');
+  await expect(radio).toBeFocused();
+  await expect(radio).toBeChecked();
+  await expect(popup).toBeVisible();
+  await expect(popup).toHaveText(RETROGRADE_DEFINITION);
+  await page.keyboard.press('Escape');
+  await expect(popup).toBeHidden();
+  await expect(radio).toBeFocused();
 });
 
 test('a diagram point and its table row select each other (#418)', async ({ page }) => {
