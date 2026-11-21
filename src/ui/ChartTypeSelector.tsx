@@ -6,46 +6,64 @@
 /**
  * @module ChartTypeSelector
  * @purpose Renders the one chart-type Select (natal/draconic/harmonic/solar-return/lunar-return) shown at the top of a person's Charts page, in a row with a slot for the chart's aspect family and preset Selects (#1224).
- * @conventions A labelled shared Select, not links; choosing a type sets the page's hash with the open view preserved. `changeChartView` keeps the open view in the URL via `history.replaceState` + a synthetic `hashchange`.
+ * @conventions A labelled shared Select, not links; choosing a type sets the page's hash with the open view preserved. `changeChartView` keeps the open view in the URL via `history.replaceState` + a synthetic `hashchange`. Leaving natal comparison for another type sets a one-shot module flag (not the URL, not storage) that the next selector to mount shows as a `StatusMessage` and then clears; the flag is read in a state initializer and cleared in an effect, so StrictMode's double run keeps the note (#1810).
  * @exports ChartTypeSelector, ChartControlsOnly, CHART_CONTROLS_SLOT_CLASS, changeChartView
  */
+import { useEffect, useState } from 'react';
 import { CHART_TYPES, type ChartType, type ChartViewKind } from './chart-sections.js';
 import { chartHref } from './route.js';
 import { chartTypesMessages } from './ChartTypes.messages.js';
 import { useMessages } from './messages.js';
 import { PillSelect } from './primitives/PillSelect.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 import { replaceRoute } from './nav-history.js';
 
 /** The element `ChartView` finds to place the aspect family and preset Selects beside the chart type (#1224). */
 export const CHART_CONTROLS_SLOT_CLASS = 'chart-controls-slot';
 
+/** Set when a natal comparison is left for a type without comparison; the next selector shows the note once (#1810). */
+let compareDroppedNote = false;
+
 export function ChartTypeSelector({
   personId,
   type,
   view,
+  comparing = false,
 }: {
   readonly personId: string;
   readonly type: ChartType;
   readonly view: ChartViewKind | undefined;
+  /** True while the natal chart is in comparison mode, so choosing another type drops the comparison with a note. */
+  readonly comparing?: boolean;
 }): React.JSX.Element {
   const t = useMessages(chartTypesMessages);
+  // Peeked here and cleared in the effect: a StrictMode double run of the initializer or the effect cannot lose the note.
+  const [showNote] = useState(() => compareDroppedNote);
+  useEffect(() => {
+    compareDroppedNote = false;
+  }, []);
   return (
-    <div className="chart-controls-row">
-      <div className="chart-type-select">
-        <PillSelect
-          label={t.typeSelectorLabel}
-          value={type}
-          options={CHART_TYPES.map((candidate) => ({ value: candidate, label: t.typeLabels[candidate] }))}
-          onChange={(value) => {
-            const next = CHART_TYPES.find((candidate) => candidate === value);
-            if (next !== undefined) window.location.hash = chartHref(personId, view, next);
-          }}
-        />
-      </div>
-      {/* The chart's aspect family and preset Selects are portalled in here by `ChartView` (#1224), so the three
+    <>
+      <div className="chart-controls-row">
+        <div className="chart-type-select">
+          <PillSelect
+            label={t.typeSelectorLabel}
+            value={type}
+            options={CHART_TYPES.map((candidate) => ({ value: candidate, label: t.typeLabels[candidate] }))}
+            onChange={(value) => {
+              const next = CHART_TYPES.find((candidate) => candidate === value);
+              if (next === undefined) return;
+              if (comparing && next !== 'natal') compareDroppedNote = true;
+              window.location.hash = chartHref(personId, view, next);
+            }}
+          />
+        </div>
+        {/* The chart's aspect family and preset Selects are portalled in here by `ChartView` (#1224), so the three
           sit in one row on every chart page. */}
-      <div className={CHART_CONTROLS_SLOT_CLASS} />
-    </div>
+        <div className={CHART_CONTROLS_SLOT_CLASS} />
+      </div>
+      {showNote && <StatusMessage kind="empty">{t.compareNatalOnly}</StatusMessage>}
+    </>
   );
 }
 

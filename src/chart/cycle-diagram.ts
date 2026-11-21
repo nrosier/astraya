@@ -110,14 +110,7 @@ export function renderCycleDiagramSvg(points: readonly CyclePoint[], size = 380,
       wheelAngle(point.longitude, 0, ORIENTATION),
     );
     group.push(
-      text(
-        label.x,
-        label.y + baselineOffset(size * 0.035),
-        'middle',
-        'cycle-point-label',
-        escapeXml(point.label),
-        size * 0.035,
-      ),
+      text(label.x, label.y + baselineOffset(size * 0.035), 'middle', 'cycle-point-label', point.label, size * 0.035),
     );
     // Drawn last, so it is what a click lands on, over the dot it surrounds.
     // A transparent disc larger than the dot, so the point is easy to click (as the wheel's symbols are).
@@ -185,7 +178,7 @@ export function renderCycleTimeSeriesSvg(
   for (const tick of ticks) {
     const x = xOf(tick.at);
     parts.push(line(x, top, x, top + plotHeight, 'cycle-sign-boundary cycle-time-grid'));
-    parts.push(text(x, top + plotHeight + 15, 'middle', 'cycle-point-label', escapeXml(tick.label), 11));
+    parts.push(text(x, top + plotHeight + 15, 'middle', 'cycle-point-label', tick.label, 11));
   }
 
   const ends: { key: string; y: number }[] = [];

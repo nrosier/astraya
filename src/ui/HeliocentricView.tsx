@@ -10,7 +10,7 @@ import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { computeHeliocentric } from '../domain/heliocentric.js';
 import { ChartDataView } from './ChartView.js';
 import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
-import { type ChartType, type ChartViewKind } from './chart-sections.js';
+import { type ChartViewKind } from './chart-sections.js';
 import { chartHref, personHref } from './route.js';
 import { heliocentricViewMessages } from './HeliocentricView.messages.js';
 import { useMessages } from './messages.js';
@@ -31,14 +31,12 @@ type Load =
   | { readonly kind: 'ready'; readonly data: ChartData }
   | { readonly kind: 'error'; readonly message: string };
 
-// Comparison mode (compareType) follows the other derived charts (#439).
 export function HeliocentricView({
   personId,
   view,
 }: {
   personId: string;
   view?: ChartViewKind | undefined;
-  compareType?: ChartType | undefined;
 }): React.JSX.Element {
   const state = useStoreState();
   const person = state.people.get(personId);

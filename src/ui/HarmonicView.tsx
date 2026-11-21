@@ -28,7 +28,7 @@ import {
 import { housesAreDefined } from '../domain/chart-compute.js';
 import { ChartDataView, PdfCreatorLink, pdfCreatorHref, type ChartOverlayContext } from './ChartView.js';
 import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
-import { type ChartType, type ChartViewKind } from './chart-sections.js';
+import { type ChartViewKind } from './chart-sections.js';
 import { chartHref, personHref } from './route.js';
 import { harmonicViewMessages } from './HarmonicView.messages.js';
 import { useMessages } from './messages.js';
@@ -77,19 +77,13 @@ function provenanceColumns(
   ];
 }
 
-// Comparison mode (compareType) will be implemented in a follow-up (#439)
 export function HarmonicView({
   personId,
   view,
-  compareType,
 }: {
   personId: string;
   view?: ChartViewKind | undefined;
-  compareType?: ChartType | undefined;
 }): React.JSX.Element {
-  if (compareType !== undefined) {
-    // TODO: implement comparison mode for harmonic charts (#439)
-  }
   const state = useStoreState();
   const person = state.people.get(personId);
   const personMoment = useStableMoment(person?.moment);

@@ -36,7 +36,7 @@ import type { CrossRingAspects, MultiWheelOptions, WheelRingInput } from './mult
 import { renderMultiWheelSvg, wheelOrientationLongitude } from './multi-wheel.js';
 import type { PanelLayout } from './sheet-geometry.js';
 import { resolveSheetGeometry } from './sheet-geometry.js';
-import { baselineOffset, escapeXml, fmt, line, text } from './svg-primitives.js';
+import { baselineOffset, fmt, line, text } from './svg-primitives.js';
 
 export interface ChartSheetInput {
   /**
@@ -194,7 +194,7 @@ export function renderChartSheetSvg(input: ChartSheetInput, options?: ChartSheet
         y - baselineOffset(lineFontSize),
         'start',
         index === 0 ? 'chart-sheet-title' : 'chart-sheet-meta',
-        escapeXml(metaLine),
+        metaLine,
         lineFontSize,
       ),
     );

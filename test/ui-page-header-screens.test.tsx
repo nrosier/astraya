@@ -205,21 +205,19 @@ describe('one PageHeader pattern (#887)', () => {
     });
 
     it('Draconic', async () => {
-      expectPageHeader(await headingOf(<DraconicView personId="p1" view="wheel" compareType={undefined} />));
+      expectPageHeader(await headingOf(<DraconicView personId="p1" view="wheel" />));
     });
 
     it('Harmonic', async () => {
-      expectPageHeader(await headingOf(<HarmonicView personId="p1" view="wheel" compareType={undefined} />));
+      expectPageHeader(await headingOf(<HarmonicView personId="p1" view="wheel" />));
     });
 
     it('Solar return', async () => {
-      expectPageHeader(
-        await headingOf(<ReturnView personId="p1" kind="solar-return" view="wheel" compareType={undefined} />),
-      );
+      expectPageHeader(await headingOf(<ReturnView personId="p1" kind="solar-return" view="wheel" />));
     });
 
     it('Relocated', async () => {
-      expectPageHeader(await headingOf(<RelocatedChartView personId="p1" view="wheel" compareType={undefined} />));
+      expectPageHeader(await headingOf(<RelocatedChartView personId="p1" view="wheel" />));
     });
 
     it('Astrocartography', async () => {
@@ -349,7 +347,7 @@ describe('chart pages link to the PDF creator from the PageHeader (#915)', () =>
   });
 
   it('draconic: one link, with the draconic section', async () => {
-    const links = await pdfLinksIn(<DraconicView personId="p1" view="placements" compareType={undefined} />);
+    const links = await pdfLinksIn(<DraconicView personId="p1" view="placements" />);
     expect(links).toHaveLength(1);
     expect(links[0]?.getAttribute('href')).toBe('#/documents/pdf?person=p1&section=draconic&view=placements');
   });
