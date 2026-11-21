@@ -35,7 +35,7 @@ const SMALL_RADIUS_ALLOWLIST: Record<string, string> = {
   '.fixed-star-results': 'results container',
   '.settings-card-note': 'note container',
   ".primitive-field input:not([type='checkbox']):not([type='radio']), .primitive-field select, .primitive-field textarea":
-    'form field (input, select, textarea); inputs are outside task 1650-2',
+    'the base field rule now only shapes textareas and checkboxes, which keep the small radius by design; selects and every single-line input are pills by later rules (#1600 WP5/WP7; owner, #1865)',
   '.primitive-option-card': 'option card, a container (owner answer 4 keeps the small radius on option containers)',
   '.page-header-export-item': 'menu item inside the open Export menu (owner answer 4)',
   '.settings-card-defaults-item':
