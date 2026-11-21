@@ -19,7 +19,7 @@
  * @exports LOCALE_LABELS, isLocale, getLocale, setLocale, useLocale
  */
 import { useSyncExternalStore } from 'react';
-import { CORPUS_LOCALES, type Locale } from '../interpretation/schema.js';
+import { CORPUS_LOCALES, type Locale } from '../interpretation/locales.js';
 import { getAccountPreferences, setAccountPreferences, subscribeAccountPreferences } from './account-preferences.js';
 
 export const LOCALE_LABELS: Readonly<Record<Locale, string>> = { en: 'English', nl: 'Nederlands' };

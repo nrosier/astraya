@@ -102,6 +102,7 @@ COPY --from=build /app/src/interpretation/submission-licence.ts ./src/interpreta
 # stripping before resolution is attempted. This is the full value-import
 # closure that route actually reaches at runtime — now checked by
 # `test/docker-runtime-files.test.ts` instead of traced by hand.
+COPY --from=build /app/src/interpretation/locales.ts ./src/interpretation/locales.ts
 COPY --from=build /app/src/interpretation/schema.ts ./src/interpretation/schema.ts
 COPY --from=build /app/src/interpretation/compose.ts ./src/interpretation/compose.ts
 COPY --from=build /app/src/interpretation/index.ts ./src/interpretation/index.ts
