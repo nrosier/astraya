@@ -71,7 +71,7 @@
     "jsdom": "^31.0.0",
     "knip": "6.46.1",
     "oxlint": "1.94.0",
-    "oxlint-tsgolint": "7.0.2007",
+    "oxlint-tsgolint": "7.0.2008",
     "prettier": "3.10.1",
     "tsx": "^4.23.13",
     "typescript": "7.0.2",
