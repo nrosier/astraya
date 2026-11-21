@@ -535,6 +535,8 @@ describe('the Cycles motion filter carries the retrograde tooltip (#901)', () =>
       expect(motionGroup?.querySelectorAll('label button'), `no button inside a motion label, ${locale}`).toHaveLength(
         0,
       );
+      // No floating trigger beside the options either (the #1867 bug), anywhere in the group.
+      expect(motionGroup?.querySelectorAll('button'), `no button in the motion group, ${locale}`).toHaveLength(0);
       const retrogradeLabel = [...(motionGroup?.querySelectorAll('label') ?? [])].find(
         (label) => label.querySelector('.glossary-term') !== null,
       );

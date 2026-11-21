@@ -113,6 +113,18 @@ describe('Radio with a word term', () => {
     expect(termInput().checked).toBe(true);
   });
 
+  it('does not select the radio when the open popup text is clicked', () => {
+    act(() => {
+      termInput().focus();
+    });
+    expect(popup().hidden).toBe(false);
+    expect(termInput().checked).toBe(false);
+    act(() => {
+      popup().click();
+    });
+    expect(termInput().checked).toBe(false);
+  });
+
   it('links the definition through aria-describedby', () => {
     const id = termInput().getAttribute('aria-describedby');
     expect(id).not.toBeNull();

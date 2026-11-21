@@ -30,7 +30,7 @@
  * @exports Tooltip
  */
 import { useRef } from 'react';
-import { useTooltipState } from './use-tooltip-state';
+import { useTooltipState } from './use-tooltip-state.js';
 
 export interface TooltipProps {
   /** The visible trigger text, e.g. a column label or an inline glossary term. */

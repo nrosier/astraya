@@ -17,7 +17,7 @@
  * @conventions Always rendered inside a caller-owned `role="radiogroup"`/`name` group — this primitive is one option, not the group. A `term` word is a non-interactive span inside the label (never a button); its popup is aria-hidden and wired by aria-describedby, so the accessible name is `label` exactly.
  * @exports Radio, RadioProps, RadioTerm
  */
-import { useTooltipState } from './use-tooltip-state';
+import { useTooltipState } from './use-tooltip-state.js';
 
 export interface RadioTerm {
   /** The exact text of the word in `label` that carries the definition (first occurrence). */
@@ -102,6 +102,10 @@ function TermRadio({ before, after, term, name, checked, onChange, disabled }: T
             aria-hidden="true"
             hidden={!open}
             onPointerEnter={onPointerEnter}
+            // The popup sits inside the label, so a click on its text would otherwise select the option.
+            onClick={(event) => {
+              event.preventDefault();
+            }}
           >
             {term.definition}
           </span>
