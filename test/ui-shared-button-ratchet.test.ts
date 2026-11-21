@@ -24,8 +24,8 @@ const ALLOWED_BARE_BUTTONS: Readonly<Record<string, number>> = {
   'src/ui/AppNav.tsx': 1,
   // Corner-pill language switch: `corner-pill language-toggle`, not a shared action.
   'src/ui/LanguageToggle.tsx': 1,
-  // Page-header export dropdown toggle and its item buttons: bespoke page-header classes, and a nav-style dropdown
-  // whose migration changes its look, so it is left for the owner to review (see #1348 report).
+  // Page-header export dropdown toggle and its item buttons: bespoke page-header classes. The toggle is already a pill
+  // and the items are menu rows (small radius, owner answer 4); the owner decided to keep them bare (#1865, 2026-11-21).
   'src/ui/PageHeader.tsx': 2,
   // Saved-interpretation trigger and the up/down move icons: bespoke `pdf-ai-move` picker controls.
   'src/ui/PdfAiInterpretationPicker.tsx': 3,
