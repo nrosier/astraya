@@ -108,10 +108,16 @@ an account.
 
 If `ASTRAYA_ENCRYPTION_KEY` ever leaks, it can be rotated: stop the server and
 run `npm run ops:rotate-key` with `ASTRAYA_NEW_ENCRYPTION_KEY` set to the
-replacement, which re-encrypts every stored operation in one transaction, then
-start again with `ASTRAYA_ENCRYPTION_KEY` set to the new key. Changing the
-variable without that step leaves the existing rows undecryptable — see
-[`.env.example`](.env.example).
+replacement. Rotation re-encrypts, in one transaction, the stored operations,
+the saved interpretation results, the TOTP secrets and the TOTP recovery-code
+pepper. Then start again with `ASTRAYA_ENCRYPTION_KEY` set to the new key.
+Changing the variable without that step leaves the existing rows
+undecryptable — see [`.env.example`](.env.example).
+
+Rotation does not undo a TOTP compromise: with the old key and a pre-rotation
+backup, every TOTP secret decrypts and the recovery codes can be guessed
+offline (about 50 bits). After a key leak, also run `npm run ops:reset-totp`.
+Follow the full sequence in [the key-leak runbook](docs/ops/KEY-LEAK-RUNBOOK.md).
 
 ### Optional: sign-in with Authentik
 

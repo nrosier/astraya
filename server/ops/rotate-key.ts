@@ -284,6 +284,7 @@ if (isEntryPoint(import.meta.url, process.argv[1])) {
         (plaintext > 0 ? `; left ${String(plaintext)} pre-encryption row(s) untouched` : '') +
         '. Set ASTRAYA_ENCRYPTION_KEY to the new key and restart the server (it must have been stopped for the rotation).' +
         ' Old-key ciphertext was cleared from the database file and WAL, but any backup or copy made before rotation still holds it and is readable with the old key. ' +
+        'Rotation does not undo a TOTP compromise: with the old key and a pre-rotation backup, every TOTP secret decrypts and the recovery codes can be guessed offline (about 50 bits). After a key leak, also run `npm run ops:reset-totp`. ' +
         STORAGE_RESIDUE_NOTE,
     );
   } finally {
