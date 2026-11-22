@@ -124,3 +124,11 @@ Upgrading turns every existing admin into a super admin, so nobody loses access;
 others afterwards. Automatic promotion is still promote-only and can name either role
 (`ASTRAYA_ADMIN_USERNAMES` / `ASTRAYA_SUPER_ADMIN_USERNAMES`, `ASTRAYA_OIDC_ADMIN_GROUPS` /
 `ASTRAYA_OIDC_SUPER_ADMIN_GROUPS`); a match for a lower role never lowers a higher one.
+
+## Amendment (2026-11-21): administrator key delivery (#1801)
+
+Both encryption keys are delivered as environment variables: `ASTRAYA_ENCRYPTION_KEY` for the current key, and `ASTRAYA_NEW_ENCRYPTION_KEY` for rotation, where the rotation tool takes the current and the new key from the environment. The owner accepted this design on 2026-11-21 and chose not to move key delivery to a file or a secret store.
+
+The reason is the threat model above. The key lives outside the database, so a leaked database dump or backup is still unreadable without it. This is the defence the Consequences section names for encryption at rest with an env-supplied key, and it holds only while the key is kept apart from the backup.
+
+It does not defend a process or host compromise. Anyone who can read the environment of the running server holds both the key and the data, which is the host-compromise limit the Consequences section already states.
