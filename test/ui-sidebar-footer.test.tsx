@@ -68,10 +68,13 @@ describe('sidebar footer separator spacing (#1850)', () => {
   it('gives the bullet a --space-1 margin on each side, from the real app.css rule', () => {
     const css = readFileSync(resolve(import.meta.dirname, '..', 'src', 'ui', 'app.css'), 'utf8');
     const rootBlock = /:root\s*\{[^}]*\}/.exec(css)?.[0] ?? '';
+    // Top-level `html` rule only (line-anchored, so the nested one inside a media query is skipped).
+    const htmlBlock = /^html\s*\{[^}]*\}/m.exec(css)?.[0] ?? '';
     const rule = /\.sidebar-footer-sep\s*\{[^}]*\}/.exec(css)?.[0] ?? '';
+    expect(htmlBlock).not.toBe('');
     expect(rule).not.toBe('');
     const style = document.createElement('style');
-    style.textContent = `${rootBlock} ${rule}`;
+    style.textContent = `${rootBlock} ${htmlBlock} ${rule}`;
     document.head.append(style);
     try {
       const container = mount(<SidebarFooter />);
@@ -80,9 +83,9 @@ describe('sidebar footer separator spacing (#1850)', () => {
         throw new Error('separator span not rendered');
       }
       const computed = getComputedStyle(sep);
-      // jsdom resolves --space-1 (0.25rem) to px against its 16px root size.
-      expect(computed.marginInlineStart).toBe('4px');
-      expect(computed.marginInlineEnd).toBe('4px');
+      // jsdom resolves --space-1 (0.25rem) to px against the app's 14px root (html { font-size: 87.5% }).
+      expect(computed.marginInlineStart).toBe('3.5px');
+      expect(computed.marginInlineEnd).toBe('3.5px');
     } finally {
       style.remove();
     }
