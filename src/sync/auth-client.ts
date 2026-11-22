@@ -42,12 +42,15 @@ async function authFailure(response: Response): Promise<AuthError> {
   return new AuthError(message, response.status, code);
 }
 
-/** `POST /api/auth/login`. Throws `AuthError` on 400/401/429 with the server's own message. */
-export async function login(username: string, password: string): Promise<AuthUser> {
+/**
+ * `POST /api/auth/login`. Throws `AuthError` on 400/401/429 with the server's own message. `totpCode` (an authenticator code or a
+ * recovery code, #1500) goes in the body only when given, so a password-only sign-in sends the same body it always has.
+ */
+export async function login(username: string, password: string, totpCode?: string): Promise<AuthUser> {
   const response = await fetch('/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify(totpCode === undefined ? { username, password } : { username, password, totpCode }),
   });
   if (!response.ok) throw await authFailure(response);
   const { user } = (await response.json()) as { user: AuthUser };

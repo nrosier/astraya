@@ -54,7 +54,7 @@ interface ProbeApi {
   readonly engine: SyncEngine | undefined;
   readonly user: AuthUser | undefined;
   readonly adoption: AdoptionPrompt | undefined;
-  readonly signIn: (username: string, password: string) => Promise<void>;
+  readonly signIn: (username: string, password: string, totpCode?: string) => Promise<void>;
   readonly signOut: () => Promise<void>;
   readonly resolveAdoption: (accept: boolean) => Promise<void>;
 }
@@ -201,6 +201,47 @@ describe('signing in with no local data', () => {
       await actWaitFor(() => {
         expect(latest?.user?.username).toBe('alice');
       }, WAIT);
+    } finally {
+      unmount(root, container);
+    }
+  });
+});
+
+describe('signIn and the second-step code (#1500)', () => {
+  /** Records the JSON body of each login call, then passes it on to the real server. */
+  function recordLoginBodies(): string[] {
+    const bodies: string[] = [];
+    const inner = globalThis.fetch;
+    globalThis.fetch = (input, init) => {
+      if (typeof input === 'string' && input.endsWith('/api/auth/login') && typeof init?.body === 'string')
+        bodies.push(init.body);
+      return inner(input, init);
+    };
+    return bodies;
+  }
+
+  it('passes the code through to the login request, and omits it without one', async () => {
+    const { container, root } = mount();
+    try {
+      await actWaitFor(() => {
+        expect(latest?.status.kind).toBe('ready');
+      }, WAIT);
+      const bodies = recordLoginBodies();
+
+      await act(async () => {
+        await latest?.signIn('alice', 'correct-horse-battery').catch(() => undefined);
+      });
+      expect(bodies[0]).toBe('{"username":"alice","password":"correct-horse-battery"}');
+
+      await act(async () => {
+        await latest?.signIn('alice', 'correct-horse-battery', '123456').catch(() => undefined);
+      });
+      const withCode = bodies.find((body) => body.includes('totpCode'));
+      expect(JSON.parse(withCode ?? '{}')).toEqual({
+        username: 'alice',
+        password: 'correct-horse-battery',
+        totpCode: '123456',
+      });
     } finally {
       unmount(root, container);
     }

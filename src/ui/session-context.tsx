@@ -49,7 +49,7 @@ interface SessionContextValue {
   readonly user: AuthUser | undefined;
   readonly engine: SyncEngine | undefined;
   readonly adoption: AdoptionPrompt | undefined;
-  readonly signIn: (username: string, password: string) => Promise<void>;
+  readonly signIn: (username: string, password: string, totpCode?: string) => Promise<void>;
   readonly setup: (token: string, username: string, password: string) => Promise<void>;
   readonly signOut: () => Promise<void>;
   readonly resolveAdoption: (accept: boolean) => Promise<void>;
@@ -409,8 +409,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
     setAdoption({ recordCount: outgoing.length });
   }
 
-  async function signIn(username: string, password: string): Promise<void> {
-    const authUser = await login(username, password);
+  async function signIn(username: string, password: string, totpCode?: string): Promise<void> {
+    const authUser = await login(username, password, totpCode);
     await completeSignIn(authUser);
   }
 
@@ -499,7 +499,7 @@ export function useSyncEngine(): SyncEngine | undefined {
 export function useSession(): {
   user: AuthUser | undefined;
   adoption: AdoptionPrompt | undefined;
-  signIn: (username: string, password: string) => Promise<void>;
+  signIn: (username: string, password: string, totpCode?: string) => Promise<void>;
   setup: (token: string, username: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   resolveAdoption: (accept: boolean) => Promise<void>;
