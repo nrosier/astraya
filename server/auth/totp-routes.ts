@@ -1,7 +1,7 @@
 /**
  * @module totp-routes
- * @purpose The two-step enrolment HTTP surface (#1500, slice 2b): `POST /api/auth/totp/enrol` starts a pending enrolment and returns the secret once, `POST /api/auth/totp/confirm` checks the first code, enables TOTP and returns the recovery codes once.
- * @conventions Both routes need a session (`requireUser`), a local account (an OIDC account is refused 403), `ASTRAYA_ENCRYPTION_KEY` (503 without it) and are limited to 5 per minute. A wrong password (enrol) or wrong code (confirm) is a failed login on the shared per-username throttle (`login-throttle.ts`, 5 per 15 minutes), which is checked before anything is verified. Enrolment is enabled only through `completeTotpEnrolment`. A successful confirm ends every other session of the user and keeps the current one. Both success responses are `Cache-Control: no-store`. Fails closed: a thrown `readTotpState` or a malformed key is a generic 500 (the shared error handler), never "not enrolled". Nothing here logs, and no response other than the two success bodies carries a secret or code.
+ * @purpose The TOTP management HTTP surface (#1500): `POST /api/auth/totp/enrol` starts a pending enrolment and returns the secret once, `POST /api/auth/totp/confirm` checks the first code, enables TOTP and returns the recovery codes once, `POST /api/auth/totp/disable` (slice 5) turns it off on a current or recovery code.
+ * @conventions All three routes need a session (`requireUser`), a local account (an OIDC account is refused 403), `ASTRAYA_ENCRYPTION_KEY` (503 without it) and are limited to 5 per minute. A wrong password (enrol) or wrong code (confirm) is a failed login on the shared per-username throttle (`login-throttle.ts`, 5 per 15 minutes), which is checked before anything is verified. Enrolment is enabled only through `completeTotpEnrolment`. A successful confirm ends every other session of the user and keeps the current one. `disable` takes `{ code }`, is refused 409 unless TOTP is enabled (off or pending clears nothing), checks the throttle before the code, accepts a TOTP code or a single-use recovery code through `checkLoginSecondStep` (a wrong one is a failed login on the shared throttle), then `clearTotp` removes the secret columns and the recovery codes and the current session is kept. Every success response is `Cache-Control: no-store`. Fails closed: a thrown `readTotpState` or a malformed key is a generic 500 (the shared error handler), never "not enrolled". Nothing here logs, and no response other than the success bodies carries a secret or code.
  * @exports registerTotpRoutes
  */
 import type { FastifyInstance, FastifyReply } from 'fastify';
@@ -10,10 +10,17 @@ import { loadEncryptionKey } from '../ops/crypto.ts';
 import { BODY_REQUIRED_ERROR, bodyObject } from '../request-body.ts';
 import { getUserCredentialsByUsername, requireUser } from './identity.ts';
 import { isLoginThrottled, recordFailedLogin } from './login-throttle.ts';
+import { checkLoginSecondStep } from './login-totp.ts';
 import { verifyPassword } from './passwords.ts';
 import { SESSION_COOKIE, revokeOtherSessionsForUser } from './sessions.ts';
 import { ALGORITHM, DIGITS, STEP_SECONDS, encodeBase32, verifyTotp } from './totp.ts';
-import { completeTotpEnrolment, generateRecoveryCodes, readTotpState, startTotpEnrolment } from './totp-store.ts';
+import {
+  clearTotp,
+  completeTotpEnrolment,
+  generateRecoveryCodes,
+  readTotpState,
+  startTotpEnrolment,
+} from './totp-store.ts';
 
 declare module 'fastify' {
   interface FastifyContextConfig {
@@ -32,6 +39,10 @@ interface EnrolBody {
 }
 
 interface ConfirmBody {
+  readonly code?: unknown;
+}
+
+interface DisableBody {
   readonly code?: unknown;
 }
 
@@ -147,6 +158,42 @@ export function registerTotpRoutes(app: FastifyInstance, db: Database): void {
       if (cookie !== undefined) revokeOtherSessionsForUser(db, user.id, cookie);
       reply.header('Cache-Control', 'no-store');
       return reply.send({ recoveryCodes });
+    },
+  );
+  app.post<{ Body: DisableBody }>(
+    '/api/auth/totp/disable',
+    { preHandler: requireUser(db), config: { rateLimit: RATE_LIMIT, noStore: true } },
+    async (request, reply) => {
+      const user = request.user;
+      if (!user) return refuse(reply, 401, 'not-authenticated', 'Not authenticated');
+      const body = bodyObject(request.body);
+      if (!body) return refuse(reply, 400, 'body-required', BODY_REQUIRED_ERROR);
+      const { code } = body;
+      if (typeof code !== 'string' || code === '') return refuse(reply, 400, 'missing-fields', 'code is required');
+
+      const credentials = getUserCredentialsByUsername(db, user.username);
+      const passwordHash = credentials?.passwordHash;
+      if (passwordHash === undefined || passwordHash === null) {
+        return refuse(reply, 403, 'totp-local-only', 'Two-step sign-in is only available for local accounts');
+      }
+      const key = loadEncryptionKey();
+      if (key === null) return refuse(reply, 503, 'totp-unavailable', 'Two-step sign-in is not available');
+
+      if (isLoginThrottled(user.username)) {
+        return refuse(reply, 429, 'rate-limited', 'Too many attempts. Try again later.');
+      }
+      // Reads the state itself and throws on anything it cannot read (a generic 500), never "not enrolled".
+      // 'not-required' means off or pending: refused, nothing cleared.
+      const step = checkLoginSecondStep(db, user.id, code);
+      if (step === 'not-required') return refuse(reply, 409, 'totp-not-enabled', 'Two-step sign-in is not on');
+      if (step === 'refused') {
+        recordFailedLogin(user.username);
+        return refuse(reply, 401, 'invalid-code', 'That code did not match');
+      }
+
+      clearTotp(db, user.id);
+      reply.header('Cache-Control', 'no-store');
+      return reply.send({ disabled: true });
     },
   );
 }
