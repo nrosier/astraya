@@ -583,6 +583,28 @@ test('capture the #1747 and #1770 screens', async ({ browser }) => {
 });
 
 /**
+ * #1850: the sidebar footer, with its version link, the bullet separator and the About & Licence link. The footer sits in
+ * the rail, which is expanded by default from 64rem, so no expand step is needed and the shots skip the phone size.
+ */
+test('capture the #1850 sidebar footer', async ({ browser }) => {
+  test.setTimeout(300_000);
+  mkdirSync(OUT ?? '', { recursive: true });
+  process.env.LOG_LEVEL = 'silent';
+  const app = await build({ dbPath: join(mkdtempSync(join(tmpdir(), 'visual-review-')), 'astraya.db') });
+  await app.listen({ port: 0, host: '127.0.0.1' });
+  const address = app.server.address();
+  if (address === null || typeof address === 'string') throw new Error('server did not bind to a port');
+  const baseUrl = `http://127.0.0.1:${String(address.port)}`;
+  const page = await (await newSeededContext(browser, baseUrl)).newPage();
+  await page.setViewportSize({ width: 1280, height: 800 });
+
+  await page.goto(`${baseUrl}/`);
+  await page.getByRole('link', { name: /^Version / }).waitFor({ state: 'visible' });
+  await shoot(page, '76-sidebar-footer', undefined, [SIZES[1], SIZES[2]]);
+  await app.close();
+});
+
+/**
  * #1834 (the Progressions controls no longer push the phone page sideways), #1798 (the prenatal syzygy row on the
  * chart's Patterns & condition tab) and #1802 (Composite and Synastry, whose control rows moved from <p> to <div>).
  */
