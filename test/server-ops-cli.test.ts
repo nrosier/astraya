@@ -5,11 +5,11 @@
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, rmSync, symlinkSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { isEntryPoint, notEntryPointLine, opsDbPath } from '../server/ops/cli.ts';
+import { isEntryPoint, isSymlinkedEntry, notEntryPointLine, opsDbPath } from '../server/ops/cli.ts';
 
 describe('isEntryPoint', () => {
   it('is true for a script path that contains a space (the reported bug: the old check compared a raw path and exited 0)', () => {
@@ -31,6 +31,31 @@ describe('isEntryPoint', () => {
 
   it('is false when there is no script argument (the module was imported, not run)', () => {
     expect(isEntryPoint(pathToFileURL('/tmp/a b/x.ts').href, undefined)).toBe(false);
+  });
+});
+
+describe('isSymlinkedEntry', () => {
+  let dir: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'astraya-symlink-'));
+  });
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('is true for a symlink to the module file, false for an unrelated file, false for undefined', () => {
+    const moduleFile = resolve(import.meta.dirname, '..', 'server/ops/reset-totp.ts');
+    const link = join(dir, 'reset-totp-link.ts');
+    const unrelated = join(dir, 'unrelated.ts');
+    symlinkSync(moduleFile, link);
+    writeFileSync(unrelated, '');
+    const moduleUrl = pathToFileURL(moduleFile).href;
+
+    expect(isSymlinkedEntry(moduleUrl, link)).toBe(true);
+    expect(isSymlinkedEntry(moduleUrl, unrelated)).toBe(false);
+    expect(isSymlinkedEntry(moduleUrl, undefined)).toBe(false);
   });
 });
 
@@ -66,7 +91,8 @@ describe('symlinked script run (#1792)', () => {
 
     // spawnSync, not execFileSync: execFileSync returns only stdout on success, and the log line is on stderr.
     const run = spawnSync(process.execPath, [link], {
-      env: { ...process.env, ASTRAYA_DB_PATH: dbPath },
+      // Only PATH and ASTRAYA_DB_PATH: a developer's ASTRAYA_ENCRYPTION_KEY must never reach the child.
+      env: { PATH: process.env.PATH ?? '', ASTRAYA_DB_PATH: dbPath },
       encoding: 'utf8',
     });
 

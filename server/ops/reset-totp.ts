@@ -21,7 +21,7 @@
  */
 import { resolve } from 'node:path';
 import { openDatabase, type Database } from '../db.ts';
-import { isEntryPoint, notEntryPointLine, opsDbPath } from './cli.ts';
+import { isEntryPoint, isSymlinkedEntry, notEntryPointLine, opsDbPath } from './cli.ts';
 
 /** Row name of the recovery-code pepper in `server_secrets`; must match `PEPPER_NAME` in `auth/totp-store.ts` (the test checks it). */
 const PEPPER_NAME = 'totp-recovery-pepper';
@@ -106,6 +106,6 @@ if (isEntryPoint(import.meta.url, process.argv[1])) {
   process.exitCode = runResetTotp(process.argv.slice(2), dbPath, (line) => {
     console.log(line);
   });
-} else {
+} else if (isSymlinkedEntry(import.meta.url, process.argv[1])) {
   console.error(notEntryPointLine('reset-totp'));
 }
