@@ -86,7 +86,7 @@ test('the Retrograde tooltip sits on the word inside the option, and clicking th
   await expect(label.locator('button')).toHaveCount(0);
   await expect(page.locator('.primitive-choice-group button')).toHaveCount(0);
 
-  // Hovering the word shows the definition right next to it (below it, starting at the same edge).
+  // Hovering the word shows the definition right next to it (beside it: starting at its right edge, vertically centred on it).
   const word = label.locator('.primitive-tooltip-trigger');
   const popup = label.getByRole('tooltip', { includeHidden: true });
   await expect(popup).toBeHidden();
@@ -96,9 +96,8 @@ test('the Retrograde tooltip sits on the word inside the option, and clicking th
   const wordBox = await word.boundingBox();
   const popupBox = await popup.boundingBox();
   if (wordBox === null || popupBox === null) throw new Error('the word and its popup must both have a box');
-  expect(Math.abs(popupBox.x - wordBox.x)).toBeLessThan(40);
-  expect(popupBox.y - (wordBox.y + wordBox.height)).toBeGreaterThanOrEqual(0);
-  expect(popupBox.y - (wordBox.y + wordBox.height)).toBeLessThan(40);
+  expect(popupBox.x).toBeGreaterThanOrEqual(wordBox.x + wordBox.width - 1);
+  expect(Math.abs(popupBox.y + popupBox.height / 2 - (wordBox.y + wordBox.height / 2))).toBeLessThan(40);
 
   // Clicking the word is a click on label text: it selects the option, from "Any".
   await page.mouse.move(0, 0);
