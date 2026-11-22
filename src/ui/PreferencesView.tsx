@@ -86,6 +86,7 @@ import { PageHeader } from './PageHeader.js';
 import { PreferencesRow } from './PreferencesRow.js';
 import { useRegisterExports } from './export-registry.js';
 import { failureText } from './api-error.js';
+import { AccountTwoStepSignIn } from './AccountPanel.js';
 
 interface ExportStatus {
   readonly kind: 'busy' | 'done' | 'error';
@@ -600,6 +601,8 @@ export function PreferencesView({
                 />
               )}
             </section>
+
+            <AccountTwoStepSignIn />
 
             {status !== undefined && (
               <StatusMessage
