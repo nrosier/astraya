@@ -2067,7 +2067,8 @@ describe('the other person of a composite reading (#1852)', () => {
 
   it('keeps the partner id and name out of every request to the model (prompt and basis)', async () => {
     const cookie = await signIn(app);
-    const response = await generateWith(cookie, { partnerPersonId: PERSON_B });
+    // A client that wrongly sent the name too: the route must still keep it away from the model.
+    const response = await generateWith(cookie, { partnerPersonId: PERSON_B, partnerName: PARTNER_NAME });
     expect(response.statusCode).toBe(200);
     expect(fetchMock).toHaveBeenCalled();
     for (const call of fetchMock.mock.calls) {

@@ -720,6 +720,8 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
   /** The person the report is for (#768): saved results are listed and saved under them. */
   const PERSON = 'p-abcdefghijklmnop';
   let lastGenerateRequest: unknown;
+  /** The generate request's body text exactly as the browser sent it (#1852). */
+  let lastGenerateBody: string | undefined;
 
   interface SessionProbeApi {
     readonly status: StoreStatus;
@@ -856,6 +858,7 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
         // The route itself: intercepted here rather than reaching `app`, per this describe
         // block's own doc comment above.
         if (url === '/api/interpretation/generate') {
+          lastGenerateBody = typeof init?.body === 'string' ? init.body : undefined;
           lastGenerateRequest = typeof init?.body === 'string' ? JSON.parse(init.body) : undefined;
           return generateResponse();
         }
@@ -884,6 +887,7 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
     localStorage.clear();
     latestSession = undefined;
     lastGenerateRequest = undefined;
+    lastGenerateBody = undefined;
   });
 
   it('renders the consent checkbox, prompt textarea, and Generate button once signed in', async () => {
@@ -1258,6 +1262,8 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
 
   describe('the other person of a composite reading (#1852)', () => {
     const PARTNER = 'p-partnerpartner01';
+    /** The partner's display name in the local people list, the store the composite page reads. */
+    const PARTNER_NAME = 'Max Born';
     const opened: Store[] = [];
     let storeCounter = 0;
 
@@ -1356,7 +1362,7 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
     }
 
     it('names the partner inline after the description, from the local people list (en)', async () => {
-      const { container } = await mountComposite('Max Born', PARTNER);
+      const { container } = await mountComposite(PARTNER_NAME, PARTNER);
       const createdAt = saveRow('en', 'Short and warm', PARTNER);
       expect(await entryText(container)).toBe(
         `${formatSavedTime(createdAt, 'en')} (Short and warm · with Max Born) (AI interpretation of the entire chart)`,
@@ -1364,7 +1370,7 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
     });
 
     it('names the partner in Dutch', async () => {
-      const { container } = await mountComposite('Max Born', PARTNER);
+      const { container } = await mountComposite(PARTNER_NAME, PARTNER);
       await act(async () => {
         setLocale('nl');
         await Promise.resolve();
@@ -1384,7 +1390,7 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
     });
 
     it('renders an entry without a partner exactly as before', async () => {
-      const { container } = await mountComposite('Max Born');
+      const { container } = await mountComposite(PARTNER_NAME);
       const createdAt = saveRow('en', 'Short and warm', undefined);
       expect(await entryText(container)).toBe(
         `${formatSavedTime(createdAt, 'en')} (Short and warm) (AI interpretation of the entire chart)`,
@@ -1392,7 +1398,7 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
     });
 
     it('sends the partner id, and no name, in a composite generate request; a natal one sends none', async () => {
-      const composite = await mountComposite('Max Born', PARTNER);
+      const composite = await mountComposite(PARTNER_NAME, PARTNER);
       await act(async () => {
         consentCheckbox(composite.container).click();
         setTextareaValue(customPromptTextarea(composite.container), 'warm and encouraging, focused on career growth');
@@ -1405,11 +1411,17 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
         expect(lastGenerateRequest).toBeDefined();
       });
       expect(lastGenerateRequest).toMatchObject({ personId: PERSON, partnerPersonId: PARTNER });
-      expect(JSON.stringify(lastGenerateRequest)).not.toContain('Max Born');
+      // The name is in the app's own people list (the store) while the request is sent...
+      expect(composite.store.state.people.get(PARTNER)?.displayName).toBe(PARTNER_NAME);
+      // ...and the captured body text holds the id but not the name.
+      expect(lastGenerateBody).toBeDefined();
+      expect(lastGenerateBody).toContain(PARTNER);
+      expect(lastGenerateBody).not.toContain(PARTNER_NAME);
+      expect(lastGenerateBody).not.toContain('Born');
     });
 
     it('a natal page sends no partner id', async () => {
-      const natal = await mountComposite('Max Born');
+      const natal = await mountComposite(PARTNER_NAME);
       await act(async () => {
         consentCheckbox(natal.container).click();
         setTextareaValue(customPromptTextarea(natal.container), 'warm and encouraging, focused on career growth');
