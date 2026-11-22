@@ -2,12 +2,16 @@
  * @module totp
  * @purpose Pure TOTP primitives for two-factor sign-in: RFC 6238 time steps over RFC 4226 HOTP with SHA-1, base32 secret encoding, and replay-checked verification. Stores nothing and performs no I/O.
  * @conventions Codes are 6-digit strings with a 30-second step and a +/-1 step window. Verification fails closed: any malformed input yields { ok: false }. Codes are compared with timingSafeEqual. Callers persist the returned step as lastAcceptedStep to block replay.
- * @exports SECRET_BYTES, TotpSecret, generateSecret, encodeBase32, totpAt, verifyTotp, TotpVerifyResult
+ * @exports ALGORITHM, STEP_SECONDS, DIGITS, SECRET_BYTES, TotpSecret, generateSecret, encodeBase32, totpAt, verifyTotp, TotpVerifyResult
  */
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 
-const STEP_SECONDS = 30;
-const DIGITS = 6;
+/** HMAC algorithm name as `createHmac` takes it; the otpauth URI states it upper-case (`SHA1`). */
+export const ALGORITHM = 'sha1';
+/** Seconds in one TOTP time step (the otpauth `period`). */
+export const STEP_SECONDS = 30;
+/** Digits in a code (the otpauth `digits`). */
+export const DIGITS = 6;
 /** Length in bytes of a TOTP shared secret (160 bits, RFC 4226 section 4 recommendation). */
 export const SECRET_BYTES = 20;
 const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
@@ -51,7 +55,7 @@ export function totpAt(secretBytes: Uint8Array, unixSeconds: number): string {
   const counter = Math.floor(unixSeconds / STEP_SECONDS);
   const counterBytes = Buffer.alloc(8);
   counterBytes.writeBigUInt64BE(BigInt(counter));
-  const hmac = createHmac('sha1', secretBytes).update(counterBytes).digest();
+  const hmac = createHmac(ALGORITHM, secretBytes).update(counterBytes).digest();
   const offset = (hmac[hmac.length - 1] ?? 0) & 0x0f;
   const binary =
     ((hmac[offset] ?? 0) & 0x7f) * 0x1000000 +

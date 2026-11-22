@@ -13,7 +13,7 @@
  * @module sessions
  * @purpose Server-side session storage: the cookie carries only a random session id, and the `sessions` row is the real source of truth, so revocation (disabling a user, signing out) takes effect on the very next request.
  * @conventions The `sessions.id` column holds `hashBearerToken(cookie)`, never the raw cookie value: `createSession` returns the raw value as `cookieValue` (the only place it exists) and `getSession`/`touchSession`/`revokeSession` take the raw cookie and hash it internally, with no fallback that also tries the raw value. Sliding expiry, not a fixed calendar expiry: `touchSession` extends it on an authenticated request; an OIDC-derived session gets a shorter TTL (`OIDC_SESSION_TTL_MS`) than a local one, since an upstream Authentik-side disable is otherwise invisible to Astraya once the token exchange is done. Touches are throttled (#1364): one conditional `UPDATE` writes only when `last_seen_at` is older than `TOUCH_INTERVAL_MS` (5 minutes), and only that write extends `expires_at`, so the worst case is an idle window up to 5 minutes shorter than the TTL; an active user cannot expire early, since the TTL is far longer than the interval. The same write stamps `users.last_seen_at`, which the admin user list reads, so last activity survives the sweep. Expired rows (and an OIDC row's stored ID token with them) are deleted by `sweepExpiredSessions`, in batches of `SWEEP_BATCH_SIZE`, yielding to the event loop between batches (`node:timers/promises`); the caller (`server/index.ts`) owns the timer.
- * @exports SESSION_COOKIE, TOUCH_INTERVAL_MS, SWEEP_BATCH_SIZE, Session, CreatedSession, CreateSessionOptions, SweepLogger, createSession, getSession, touchSession, revokeSession, revokeAllSessionsForUser, sweepExpiredSessions
+ * @exports SESSION_COOKIE, TOUCH_INTERVAL_MS, SWEEP_BATCH_SIZE, Session, CreatedSession, CreateSessionOptions, SweepLogger, createSession, getSession, touchSession, revokeSession, revokeAllSessionsForUser, revokeOtherSessionsForUser, sweepExpiredSessions
  */
 import { randomUUID } from 'node:crypto';
 import { setImmediate } from 'node:timers/promises';
@@ -143,6 +143,11 @@ export function revokeSession(db: Database, cookieValue: string): void {
 /** Used when disabling a user: existing sessions must die immediately, not merely block re-login. */
 export function revokeAllSessionsForUser(db: Database, userId: string): void {
   db.prepare('DELETE FROM sessions WHERE user_id = ?').run(userId);
+}
+
+/** Ends every session of the user except the one whose raw cookie is given (#1500: a confirmed enrolment keeps the current session). */
+export function revokeOtherSessionsForUser(db: Database, userId: string, keepCookieValue: string): void {
+  db.prepare('DELETE FROM sessions WHERE user_id = ? AND id != ?').run(userId, hashBearerToken(keepCookieValue));
 }
 
 /** Where `sweepExpiredSessions` reports a failure; Fastify's `app.log` fits. */
