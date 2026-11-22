@@ -8,7 +8,7 @@
  * @module sync/auth-client
  * @purpose Provides the client-side authentication calls — login, logout, session check, OIDC config/callback, password set/bootstrap — each a thin wrapper over the matching server route.
  * @conventions One function per route, mirroring `server/auth/routes.ts`/`server/auth/roles.ts`/`server/auth/identity.ts`/`server/auth/oidc.ts`/`server/auth/bootstrap.ts` exactly; nothing here interprets a response beyond its own shape — the server is the sole authority on who is signed in; failures throw `AuthError` carrying the server's message and stable `code` (#1365), except `me()` where a 401 is treated as the expected "not signed in" outcome rather than an error.
- * @exports Role, AuthUser, AuthError, login, logout, me, OidcConfig, getOidcConfig, setPassword, setup, exchangeOidcCode
+ * @exports Role, AuthUser, AuthError, login, logout, me, OidcConfig, getOidcConfig, setPassword, setup, exchangeOidcCode, TotpError, TotpErrorReason, TotpEnrolment, enrolTotp, confirmTotp
  */
 
 import { ApiError, readErrorBody } from './api-error.js';
@@ -152,4 +152,116 @@ export async function exchangeOidcCode(params: {
   if (!response.ok) throw await authFailure(response);
   const { user } = (await response.json()) as { user: AuthUser };
   return user;
+}
+
+/**
+ * Why a TOTP call failed, from the server's stable `code` (with the status as the fallback). `malformed-response` means a 2xx
+ * answer whose body did not have the expected shape: a failure, never a silent default.
+ */
+export type TotpErrorReason =
+  | 'invalid-credentials'
+  | 'invalid-code'
+  | 'unauthenticated'
+  | 'local-only'
+  | 'unavailable'
+  | 'already-enabled'
+  | 'not-started'
+  | 'rate-limited'
+  | 'malformed-response'
+  | 'unknown';
+
+/** Thrown by `enrolTotp` and `confirmTotp`; `reason` is the switchable outcome and `message` keeps the server's own text. */
+export class TotpError extends AuthError {
+  readonly reason: TotpErrorReason;
+
+  constructor(message: string, status: number, reason: TotpErrorReason, code?: string) {
+    super(message, status, code);
+    this.name = 'TotpError';
+    this.reason = reason;
+  }
+}
+
+function totpReason(status: number, code: string | undefined): TotpErrorReason {
+  switch (code) {
+    case 'invalid-credentials':
+      return 'invalid-credentials';
+    case 'invalid-code':
+      return 'invalid-code';
+    case 'totp-local-only':
+      return 'local-only';
+    case 'totp-unavailable':
+      return 'unavailable';
+    case 'totp-already-enabled':
+      return 'already-enabled';
+    case 'totp-not-started':
+      return 'not-started';
+    case 'rate-limited':
+      return 'rate-limited';
+    default:
+      break;
+  }
+  switch (status) {
+    case 401:
+      return 'unauthenticated';
+    case 403:
+      return 'local-only';
+    case 409:
+      return 'already-enabled';
+    case 429:
+      return 'rate-limited';
+    case 503:
+      return 'unavailable';
+    default:
+      return 'unknown';
+  }
+}
+
+async function totpFailure(response: Response): Promise<TotpError> {
+  const { message, code } = await readErrorBody(response);
+  return new TotpError(message, response.status, totpReason(response.status, code), code);
+}
+
+function malformedTotp(): TotpError {
+  return new TotpError('Unexpected response from the server', 200, 'malformed-response');
+}
+
+/** The result of `enrolTotp`: the base32 secret and the `otpauth://` URI for an authenticator app. The caller keeps them in component state only. */
+export interface TotpEnrolment {
+  readonly secret: string;
+  readonly otpauthUri: string;
+}
+
+/**
+ * `POST /api/auth/totp/enrol`. Starts a pending enrolment for the signed-in local account after the current password is checked.
+ * Throws `TotpError` (statuses 401, 403, 409, 429, 503) with the server's own message. Stores nothing.
+ */
+export async function enrolTotp(password: string): Promise<TotpEnrolment> {
+  const response = await fetch('/api/auth/totp/enrol', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password }),
+  });
+  if (!response.ok) throw await totpFailure(response);
+  const body = (await response.json()) as { secret?: unknown; otpauthUri?: unknown };
+  if (typeof body.secret !== 'string' || body.secret === '') throw malformedTotp();
+  if (typeof body.otpauthUri !== 'string' || body.otpauthUri === '') throw malformedTotp();
+  return { secret: body.secret, otpauthUri: body.otpauthUri };
+}
+
+/**
+ * `POST /api/auth/totp/confirm`. Checks the first code from the app, enables TOTP and returns the ten recovery codes, shown once.
+ * Throws `TotpError` (statuses 401, 403, 409, 429, 503) with the server's own message. Stores nothing.
+ */
+export async function confirmTotp(code: string): Promise<readonly string[]> {
+  const response = await fetch('/api/auth/totp/confirm', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code }),
+  });
+  if (!response.ok) throw await totpFailure(response);
+  const body = (await response.json()) as { recoveryCodes?: unknown };
+  const codes = body.recoveryCodes;
+  if (!Array.isArray(codes) || codes.length !== 10) throw malformedTotp();
+  if (!codes.every((item): item is string => typeof item === 'string' && item !== '')) throw malformedTotp();
+  return codes;
 }
