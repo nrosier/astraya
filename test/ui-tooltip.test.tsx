@@ -48,6 +48,13 @@ describe('Tooltip', () => {
     expect(popup()).toBeNull();
   });
 
+  it('keeps the default placement: no data-placement attribute (#1867)', () => {
+    act(() => {
+      trigger().focus();
+    });
+    expect(popup()?.hasAttribute('data-placement')).toBe(false);
+  });
+
   it('shows the same text on keyboard focus, and closes when focus leaves', () => {
     act(() => {
       trigger().focus();

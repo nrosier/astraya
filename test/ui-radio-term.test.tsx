@@ -100,6 +100,10 @@ describe('Radio with a word term', () => {
     expect(popup().closest('.glossary-term')).toBe(word().parentElement);
   });
 
+  it('opens the popup beside its word (#1867)', () => {
+    expect(popup().getAttribute('data-placement')).toBe('beside');
+  });
+
   it('has no interactive element inside the label', () => {
     expect(termLabel().querySelectorAll('button, a, select, textarea, [tabindex], [role="button"]')).toHaveLength(0);
     expect(termLabel().querySelectorAll('input')).toHaveLength(1);

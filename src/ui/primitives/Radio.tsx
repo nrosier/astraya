@@ -99,6 +99,7 @@ function TermRadio({ before, after, term, name, checked, onChange, disabled }: T
             id={popoverId}
             role="tooltip"
             className="primitive-tooltip-popup"
+            data-placement="beside"
             aria-hidden="true"
             hidden={!open}
             onPointerEnter={onPointerEnter}
