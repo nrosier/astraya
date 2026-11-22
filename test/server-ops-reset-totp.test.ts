@@ -240,4 +240,19 @@ describe('runResetTotp (the CLI body)', () => {
     db = openDatabase(dbPath);
     expect(count('SELECT COUNT(*) AS n FROM users')).toBe(1);
   });
+
+  it('with --yes on a database whose only TOTP state is totp_last_step resets it, exits zero and never says nothing was reset (#1792)', () => {
+    const userId = addUser('last-step-only');
+    db.prepare('UPDATE users SET totp_last_step = ? WHERE id = ?').run(12345, userId);
+    db.close();
+    const lines: string[] = [];
+
+    expect(runResetTotp(['--yes'], dbPath, (line) => lines.push(line))).toBe(0);
+
+    const output = lines.join('\n');
+    expect(output).toContain('Reset TOTP for 1 user(s)');
+    expect(output).not.toContain('nothing was reset');
+    db = openDatabase(dbPath);
+    expect(db.prepare('SELECT totp_last_step FROM users WHERE id = ?').get(userId)).toEqual({ totp_last_step: null });
+  });
 });

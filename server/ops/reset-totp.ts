@@ -26,8 +26,12 @@ import { isEntryPoint, isSymlinkedEntry, notEntryPointLine, opsDbPath } from './
 /** Row name of the recovery-code pepper in `server_secrets`; must match `PEPPER_NAME` in `auth/totp-store.ts` (the test checks it). */
 const PEPPER_NAME = 'totp-recovery-pepper';
 
+/** Rows holding any TOTP column; the count and the UPDATE both use it, so they always agree (#1792). */
+const HAS_TOTP_STATE =
+  'totp_secret IS NOT NULL OR totp_secret_iv IS NOT NULL OR totp_enabled_at IS NOT NULL OR totp_last_step IS NOT NULL';
+
 export interface TotpResetResult {
-  /** Users that held a TOTP secret (pending or enabled) before the reset; users with no TOTP are not counted. */
+  /** Users with any TOTP state (secret, IV, enabled-at or last step) before the reset; users with no TOTP are not counted. */
   readonly users: number;
   /** Recovery-code rows deleted. */
   readonly codes: number;
@@ -39,13 +43,12 @@ export interface TotpResetResult {
 export function resetAllTotp(db: Database): TotpResetResult {
   db.exec('BEGIN IMMEDIATE');
   try {
-    const counted = db.prepare('SELECT COUNT(*) AS n FROM users WHERE totp_secret IS NOT NULL').get() as unknown as {
+    const counted = db.prepare(`SELECT COUNT(*) AS n FROM users WHERE ${HAS_TOTP_STATE}`).get() as unknown as {
       n: number | bigint;
     };
     // Every row with any TOTP column set is cleared, so a partially cleared row cannot survive the reset either.
     db.prepare(
-      'UPDATE users SET totp_secret = NULL, totp_secret_iv = NULL, totp_enabled_at = NULL, totp_last_step = NULL ' +
-        'WHERE totp_secret IS NOT NULL OR totp_secret_iv IS NOT NULL OR totp_enabled_at IS NOT NULL OR totp_last_step IS NOT NULL',
+      `UPDATE users SET totp_secret = NULL, totp_secret_iv = NULL, totp_enabled_at = NULL, totp_last_step = NULL WHERE ${HAS_TOTP_STATE}`,
     ).run();
     const codes = db.prepare('DELETE FROM totp_recovery_codes').run();
     const pepper = db.prepare('DELETE FROM server_secrets WHERE name = ?').run(PEPPER_NAME);
