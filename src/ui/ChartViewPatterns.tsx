@@ -25,6 +25,7 @@ import { deriveExportFilename } from '../domain/export-filename.js';
 import { renderJonesShapeDiagramSvg } from '../chart/jones-shape-diagram.js';
 import { lunarPhaseOf } from '../astrology/lunar-phase.js';
 import { degreeParts } from '../domain/degree-parts.js';
+import { findHyleg } from '../domain/hyleg.js';
 import type { PrenatalSyzygy } from '../domain/prenatal-syzygy.js';
 import type { DignityType } from '../astrology/reception.js';
 import { jonesBodyPositions } from '../astrology/jones-shapes.js';
@@ -539,8 +540,62 @@ function renderShapeSection(
           )}
         </dl>
       )}
+      {showFacts &&
+        hasHouses &&
+        prenatalSyzygy !== undefined &&
+        renderHylegCard(data, prenatalSyzygy, boundsScheme, t, locale)}
       {renderAspectPatterns(data, t, locale)}
     </>
+  );
+}
+
+/**
+ * The hyleg and alcocoden card (#1799): which point is the hyleg and which planet the alcocoden, each with the rule that
+ * chose it, or the no-hyleg line. Identification only: no length of life. Shown only with houses and a prenatal syzygy,
+ * since the search needs the Ascendant and the syzygy's kind.
+ */
+function renderHylegCard(
+  data: ChartData,
+  syzygy: PrenatalSyzygy,
+  boundsScheme: BoundsScheme,
+  t: typeof chartViewMessages.en,
+  locale: Locale,
+): React.ReactNode {
+  const result = findHyleg({
+    sect: data.sect,
+    positions: data.positions,
+    ascendant: data.houses.ascendant,
+    partOfFortune: data.partOfFortune,
+    syzygy,
+    boundsScheme,
+  });
+  const { hyleg, alcocoden } = result;
+  const alcocodenKey = alcocoden === undefined ? undefined : bodyById(alcocoden.planet)?.key;
+  return (
+    <section className="flat-card hyleg-card" aria-labelledby="hyleg-heading">
+      <h3 id="hyleg-heading">{t.hylegHeading}</h3>
+      {hyleg === undefined ? (
+        <p className="hyleg-none">{t.noHyleg}</p>
+      ) : (
+        <>
+          <p className="hyleg-point">
+            <strong>
+              {t.hylegLine(t.hylegPointLabels[hyleg.point], formatSyzygyPosition(hyleg.longitude, locale))}
+            </strong>
+          </p>
+          <p className="hint">{t.hylegRuleLabels[hyleg.rule]}</p>
+          {alcocoden !== undefined && alcocodenKey !== undefined && (
+            <>
+              <p className="hyleg-alcocoden">
+                <strong>{t.alcocodenLine(bodyDisplayName(alcocodenKey, locale))}</strong>
+              </p>
+              <p className="hint">{t.alcocodenRuleLabels[alcocoden.rule]}</p>
+            </>
+          )}
+        </>
+      )}
+      <p className="hint">{t.hylegSourceNote}</p>
+    </section>
   );
 }
 
