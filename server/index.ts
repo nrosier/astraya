@@ -216,9 +216,12 @@ export async function build(options: BuildOptions = {}) {
     reply.header('Permissions-Policy', 'geolocation=(self), camera=(), microphone=()');
     if (request.url.startsWith('/ephe/') || request.url.startsWith('/assets/')) {
       reply.header('Cache-Control', IMMUTABLE);
-    } else if (!request.url.startsWith('/healthz') && reply.getHeader('Cache-Control') === undefined) {
-      // A route that set its own policy (the TOTP enrolment responses are `no-store`, #1500) keeps it.
-      reply.header('Cache-Control', NO_CACHE);
+    } else if (!request.url.startsWith('/healthz')) {
+      // Only a route that declared `config.noStore` (the TOTP enrolment routes, #1500) and set `no-store` itself on
+      // this response keeps it; everything else, including a static file, gets `no-cache`.
+      if (!(request.routeOptions.config.noStore === true && reply.getHeader('Cache-Control') === 'no-store')) {
+        reply.header('Cache-Control', NO_CACHE);
+      }
     }
   });
 

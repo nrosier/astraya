@@ -4,7 +4,7 @@
  * only in variables here.
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
@@ -362,5 +362,42 @@ describe('logging', () => {
     }
     for (const recovery of done.recoveryCodes) expect(log).not.toContain(recovery);
     expect(log).not.toContain(cookie);
+  });
+});
+
+describe('Cache-Control contract (#1500 audit: the global no-cache must survive the TOTP no-store exception)', () => {
+  const distDir = join(import.meta.dirname, '..', 'dist');
+  let createdDist = false;
+
+  beforeEach(async () => {
+    // `dist/` is a build output and may not exist when the tests run before `npm run build`.
+    if (!existsSync(join(distDir, 'index.html'))) {
+      createdDist = !existsSync(distDir);
+      mkdirSync(distDir, { recursive: true });
+      writeFileSync(join(distDir, 'index.html'), '<!doctype html><title>test</title>');
+    }
+    // The static plugin is registered at build time, so rebuild now that the file exists.
+    await app.close();
+    app = await startApp();
+  });
+
+  afterEach(() => {
+    if (createdDist) rmSync(distDir, { recursive: true, force: true });
+    createdDist = false;
+  });
+
+  it.each(['/', '/index.html', '/some/unknown/spa/path', '/api/nope'])('GET %s is no-cache', async (url) => {
+    const response = await app.inject({ method: 'GET', url });
+    expect(response.headers['cache-control']).toBe('no-cache');
+  });
+
+  it('the two TOTP routes answer a success with no-store', async () => {
+    const cookie = await setupAdmin();
+    const started = await enrol(cookie);
+    expect(started.statusCode).toBe(200);
+    expect(started.headers['cache-control']).toBe('no-store');
+    const done = await confirm(cookie, currentCode());
+    expect(done.statusCode).toBe(200);
+    expect(done.headers['cache-control']).toBe('no-store');
   });
 });

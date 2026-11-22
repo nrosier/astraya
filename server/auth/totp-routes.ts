@@ -15,6 +15,13 @@ import { SESSION_COOKIE, revokeOtherSessionsForUser } from './sessions.ts';
 import { ALGORITHM, DIGITS, STEP_SECONDS, encodeBase32, verifyTotp } from './totp.ts';
 import { completeTotpEnrolment, generateRecoveryCodes, readTotpState, startTotpEnrolment } from './totp-store.ts';
 
+declare module 'fastify' {
+  interface FastifyContextConfig {
+    /** The route sets `Cache-Control: no-store` on its success response, and the global `no-cache` hook must keep it. */
+    noStore?: boolean;
+  }
+}
+
 /** The issuer shown in the authenticator app, and the label prefix. */
 const ISSUER = 'Astraya';
 
@@ -48,7 +55,7 @@ function refuse(reply: FastifyReply, status: number, code: string, error: string
 export function registerTotpRoutes(app: FastifyInstance, db: Database): void {
   app.post<{ Body: EnrolBody }>(
     '/api/auth/totp/enrol',
-    { preHandler: requireUser(db), config: { rateLimit: RATE_LIMIT } },
+    { preHandler: requireUser(db), config: { rateLimit: RATE_LIMIT, noStore: true } },
     async (request, reply) => {
       const user = request.user;
       if (!user) return refuse(reply, 401, 'not-authenticated', 'Not authenticated');
@@ -89,7 +96,7 @@ export function registerTotpRoutes(app: FastifyInstance, db: Database): void {
 
   app.post<{ Body: ConfirmBody }>(
     '/api/auth/totp/confirm',
-    { preHandler: requireUser(db), config: { rateLimit: RATE_LIMIT } },
+    { preHandler: requireUser(db), config: { rateLimit: RATE_LIMIT, noStore: true } },
     async (request, reply) => {
       const user = request.user;
       if (!user) return refuse(reply, 401, 'not-authenticated', 'Not authenticated');
