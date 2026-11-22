@@ -9837,6 +9837,27 @@ a.quiet,
   min-width: 0;
 }
 
+/* Two-step sign-in enrolment (#1500): the QR code, the manual key and the recovery codes. */
+.totp-qr {
+  display: block;
+  margin: 0 0 var(--space-3);
+  border-radius: var(--radius-md);
+}
+
+.totp-key code,
+.totp-recovery-codes code {
+  font-family: var(--font-mono);
+}
+
+.totp-recovery-codes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  list-style: none;
+}
+
 .preferences-action-group {
   display: flex;
   flex-wrap: wrap;

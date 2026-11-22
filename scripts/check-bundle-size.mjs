@@ -110,6 +110,11 @@ const mustStayLazy = [
     cost: 'the tz-lookup polygon data, before the shell renders its first screen',
   },
   {
+    pattern: /^totp-qr-.*\.js$/,
+    what: 'the QR encoder of the two-step sign-in enrolment panel (#1500)',
+    cost: 'the uqr QR encoder, before anyone opens two-step sign-in setup',
+  },
+  {
     pattern: /^luxon-.*\.js$/,
     what: 'the luxon date library, loaded once at startup by src/time/zone-data.ts (#1794)',
     cost: 'the luxon date library, before the shell renders its first screen',

@@ -15,15 +15,15 @@
 /**
  * @module AccountPanel
  * @purpose Renders the sign-in/sign-out control mounted in the sticky app header, plus the one-time account-adoption prompt and local-data-removal flow.
- * @conventions Mounted globally alongside SyncBadge; reads session state via `useSession()`/`session-context.js`; the sign-in is a centred `StagedDialog` that swaps between an OpenID stage (when SSO is configured, #651) and a local-form stage (#781); text comes from co-located `AccountPanel.messages.ts` via `useMessages()`.
- * @exports AccountPanel
+ * @conventions Mounted globally alongside SyncBadge; reads session state via `useSession()`/`session-context.js`; the sign-in is a centred `StagedDialog` that swaps between an OpenID stage (when SSO is configured, #651) and a local-form stage (#781); `AccountTwoStepSignIn` is the mount point of the two-step sign-in enrolment panel (#1500), shown for a signed-in account and hidden for a guest, in demo mode, and (by the panel itself) for an OIDC account (403) or when the server has enrolment off (503); text comes from co-located `AccountPanel.messages.ts` via `useMessages()`.
+ * @exports AccountPanel, AccountTwoStepSignIn
  */
 import { Button } from './primitives/Button.js';
 import { PasswordField } from './primitives/PasswordField.js';
 import { StagedDialog } from './primitives/StagedDialog.js';
 import { TextField } from './primitives/TextField.js';
 import { useEffect, useRef, useState } from 'react';
-import { removeAccountData, useSession } from './session-context.js';
+import { removeAccountData, useSession, useSessionUserOrUndefined } from './session-context.js';
 import { AuthError, getOidcConfig } from '../sync/auth-client.js';
 import { accountPanelMessages } from './AccountPanel.messages.js';
 import { useMessages } from './messages.js';
@@ -34,6 +34,7 @@ import type { OidcConfig } from '../sync/auth-client.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { ProfileTile } from './ProfileTile.js';
 import { apiErrorText } from './api-error.js';
+import { TotpEnrolmentPanel } from './TotpEnrolmentPanel.js';
 
 function changes(count: number, t: typeof accountPanelMessages.en): string {
   return count === 1 ? t.oneChange : t.changesCount(String(count));
@@ -374,6 +375,19 @@ function RemoveAccountData({ userId, onRemoved }: { userId: string; onRemoved: (
       </p>
     </div>
   );
+}
+
+/**
+ * The two-step sign-in (TOTP) enrolment panel's mount point (#1500), rendered from Preferences > Data & privacy, the
+ * guidelines' home for account status. Signed in only, and only in a real deployment (demo mode has no server). The
+ * panel hides itself when the server answers that the account is not a local one (403) or that enrolment is off (503):
+ * the client has no other signal for either, and a hidden panel is the intended outcome, not an error.
+ */
+export function AccountTwoStepSignIn(): React.JSX.Element | null {
+  const user = useSessionUserOrUndefined();
+  if (IS_DEMO_MODE || user === undefined) return null;
+  // Keyed by account, so a different sign-in never sees the previous account's enrolment state.
+  return <TotpEnrolmentPanel key={user.id} />;
 }
 
 export function AccountPanel(): React.JSX.Element {
