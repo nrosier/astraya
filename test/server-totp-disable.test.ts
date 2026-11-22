@@ -179,7 +179,9 @@ describe('POST /api/auth/totp/disable', () => {
     expect(stateStatus()).toBe('enabled');
   });
 
-  it('a wrong code counts on the per-username throttle and the 6th attempt is throttled', async () => {
+  // The 6th disable request here is refused by the route limit (5 a minute) as much as by the throttle; the test below
+  // ('the throttle itself refuses ...') is the one that proves the throttle check.
+  it('5 wrong codes trip the per-username throttle, and a 6th request leaves the state enabled', async () => {
     const cookie = await setupAdmin();
     await enableTotp(cookie);
     const wrong = wrongCode();
@@ -192,6 +194,31 @@ describe('POST /api/auth/totp/disable', () => {
     expect(isLoginThrottled('admin')).toBe(true);
     const sixth = await disable(cookie, codeAt(0));
     expect(sixth.statusCode).toBe(429);
+    expect(stateStatus()).toBe('enabled');
+    expect(recoveryCodeRows()).toBe(RECOVERY_CODE_COUNT);
+  });
+
+  it('the throttle itself refuses a valid code, below the disable route limit (5 a minute)', async () => {
+    const cookie = await setupAdmin();
+    await enableTotp(cookie);
+    const wrong = wrongCode();
+    // 4 wrong codes on the disable route plus 1 wrong password on /api/auth/login (its own limit is 20 a minute) are
+    // the 5 failures that trip the per-username throttle; the valid code is then only the 5th disable request.
+    for (let i = 0; i < MAX_ATTEMPTS - 1; i++) {
+      expect((await disable(cookie, wrong)).statusCode).toBe(401);
+    }
+    const badLogin = await app.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      payload: { username: 'admin', password: 'wrong-password-here' },
+    });
+    expect(badLogin.statusCode).toBe(401);
+    expect(isLoginThrottled('admin')).toBe(true);
+
+    const refused = await disable(cookie, codeAt(0));
+    expect(refused.statusCode).toBe(429);
+    // The throttle's own text, not the route limit's 'Too Many Requests'.
+    expect(refused.json<{ error: string }>().error).toBe('Too many attempts. Try again later.');
     expect(stateStatus()).toBe('enabled');
     expect(recoveryCodeRows()).toBe(RECOVERY_CODE_COUNT);
   });
@@ -265,13 +292,22 @@ describe('POST /api/auth/totp/disable', () => {
     await enableTotp(cookie);
     const wrong = wrongCode();
     const valid = codeAt(0);
-    const sent = MAX_ATTEMPTS + 1;
+    // One failure lands first through /api/auth/login (its own limit is 20 a minute), so the burst stays at the
+    // disable route limit (5 a minute) and only the throttle can refuse the valid code.
+    const badLogin = await app.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      payload: { username: 'admin', password: 'wrong-password-here' },
+    });
+    expect(badLogin.statusCode).toBe(401);
+    const sent = MAX_ATTEMPTS;
     const codes = Array.from({ length: sent }, (_, i) => (i === sent - 1 ? valid : wrong));
     const responses = await Promise.all(codes.map((code) => disable(cookie, code)));
     const statuses = responses.map((r) => r.statusCode);
     expect(statuses.filter((s) => s === 200)).toEqual([]);
-    expect(statuses.filter((s) => s === 401)).toHaveLength(MAX_ATTEMPTS);
+    expect(statuses.filter((s) => s === 401)).toHaveLength(MAX_ATTEMPTS - 1);
     expect(responses[sent - 1]?.statusCode).toBe(429);
+    expect(responses[sent - 1]?.json<{ error: string }>().error).toBe('Too many attempts. Try again later.');
     expect(stateStatus()).toBe('enabled');
     expect(recoveryCodeRows()).toBe(RECOVERY_CODE_COUNT);
   });
