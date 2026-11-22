@@ -292,11 +292,31 @@ describe('Life events summary card and drawer (#1439)', () => {
     typeInto(input(form, 'input[type="text"]'), label);
     pressEnter(input(form, 'input[type="text"]'));
   }
-  async function saveAndClose(): Promise<void> {
+  function macrotask(): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, 0));
+  }
+  /**
+   * Presses a button that writes through the store, inside one act that lasts until the write has landed (#1802).
+   * The drawer's write goes to IndexedDB and only then sets the busy flag back and closes, so a fixed wait can end
+   * first under load and those updates would land outside act. React holds updates made inside act until it ends,
+   * so this waits on the store (its state is replaced wholesale on every write), not on the DOM, then gives the
+   * write's `finally`/`then` one macrotask to run before act flushes them.
+   */
+  async function pressAndAwaitWrite(button: () => HTMLButtonElement): Promise<void> {
+    const before = store.state;
     await act(async () => {
-      buttonByText(drawer(), td.saveClose).click();
-      await new Promise((resolve) => setTimeout(resolve, 25));
+      button().click();
+      await vi.waitFor(
+        () => {
+          if (store.state === before) throw new Error('store write not landed yet');
+        },
+        { timeout: 10_000 },
+      );
+      await macrotask();
     });
+  }
+  async function saveAndClose(): Promise<void> {
+    await pressAndAwaitWrite(() => buttonByText(drawer(), td.saveClose));
   }
   async function seed(events: readonly object[]): Promise<void> {
     await act(async () => {
@@ -476,13 +496,9 @@ describe('Life events summary card and drawer (#1439)', () => {
     click(buttonByText(confirm as HTMLElement, td.confirmKeep));
     expect(stored()).toHaveLength(2);
     click(buttonByText(drawer(), td.clearAll));
-    await act(async () => {
-      buttonByText(
-        container?.querySelector('dialog.life-events-confirm') ?? document.body,
-        td.confirmDelete(2),
-      ).click();
-      await new Promise((resolve) => setTimeout(resolve, 25));
-    });
+    await pressAndAwaitWrite(() =>
+      buttonByText(container?.querySelector('dialog.life-events-confirm') ?? document.body, td.confirmDelete(2)),
+    );
     await vi.waitFor(() => {
       expect(stored()).toEqual([]);
     });
@@ -527,14 +543,17 @@ describe('Life events summary card and drawer (#1439)', () => {
     openDrawer();
     const file = drawer().querySelector<HTMLInputElement>('input[type="file"]');
     if (file === null) throw new Error('no file input');
+    // The drawer reads the file asynchronously; act lasts until that read has resolved, not a fixed wait, so the
+    // notice it sets never lands outside act under load (#1802).
     const choose = async (text: string): Promise<void> => {
+      const chosen = new File([text], 'events.csv', { type: 'text/csv' });
+      const read = chosen.text();
+      chosen.text = () => read;
       await act(async () => {
-        Object.defineProperty(file, 'files', {
-          configurable: true,
-          value: [new File([text], 'events.csv', { type: 'text/csv' })],
-        });
+        Object.defineProperty(file, 'files', { configurable: true, value: [chosen] });
         file.dispatchEvent(new Event('change', { bubbles: true }));
-        await new Promise((resolve) => setTimeout(resolve, 25));
+        await read;
+        await macrotask();
       });
     };
     await choose('date,time,category,description\n2020-02-30,,,Bad date\n');
