@@ -8261,6 +8261,16 @@ button.primitive-button-form-action {
   color: var(--fg);
 }
 
+/* Opt-in placement (#1867): the Radio term popup sits inside a control group, so above or below the word it covers a neighbouring control; open beside it, centred on the word. */
+.primitive-tooltip-popup[data-placement='beside'] {
+  inset-inline-start: 100%;
+  inset-block-start: 50%;
+  translate: 0 -50%;
+  margin-top: 0;
+  margin-inline-start: var(--space-2);
+  max-width: min(40rem, 90vw);
+}
+
 /* On a phone the trigger sits mid-line, so a popup anchored to it runs past the right edge and
    stretches the page sideways (#511): span the screen instead, keeping its natural line position. */
 @media (max-width: 40rem) {
@@ -8269,6 +8279,16 @@ button.primitive-button-form-action {
     inset-block-start: auto;
     inset-inline: var(--space-3);
     width: auto;
+    max-width: none;
+  }
+
+  /* The phone popup is fixed at its natural line position, so the beside placement (#1867) has no anchor here. */
+  .primitive-tooltip-popup[data-placement='beside'] {
+    inset-block-start: auto;
+    inset-inline-start: var(--space-3);
+    translate: none;
+    margin-inline-start: 0;
+    margin-top: var(--space-2);
     max-width: none;
   }
 }
