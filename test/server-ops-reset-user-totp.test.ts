@@ -6,7 +6,7 @@
  * one UPDATE, so these tests do not depend on the confirm function's signature.
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomBytes, randomUUID } from 'node:crypto';
@@ -208,6 +208,7 @@ describe('runResetUserTotp (the CLI body)', () => {
     expect(runResetUserTotp(['--username', '--yes'], missing, (line) => lines.push(line))).toBe(1);
 
     expect(lines.join('\n')).toContain('Usage: npm run ops:reset-user-totp');
+    expect(existsSync(missing)).toBe(false);
   });
 
   it('with --yes and an unknown username exits 2 and changes nothing', () => {
