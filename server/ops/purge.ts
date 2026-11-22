@@ -116,5 +116,9 @@ export function recordPurgeAndErase(
   // op-log erasure above. Scoped by `user_id`, so another user's results are untouched.
   if (entity === PERSON_ENTITY) {
     db.prepare('DELETE FROM interpretation_results WHERE user_id = ? AND person_id = ?').run(userId, entityId);
+    // A purged *partner* only loses the link (#1852): the reading stays and shows the "no longer in your list" line.
+    db.prepare(
+      'UPDATE interpretation_results SET partner_person_id = NULL WHERE user_id = ? AND partner_person_id = ?',
+    ).run(userId, entityId);
   }
 }

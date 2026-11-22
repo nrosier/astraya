@@ -2030,3 +2030,62 @@ describe('saved results are filed under a person (#768)', () => {
     }
   });
 });
+
+describe('the other person of a composite reading (#1852)', () => {
+  const PARTNER_NAME = 'Max Born';
+
+  async function generateWith(cookie: string, extra: Record<string, unknown>) {
+    return app.inject({
+      method: 'POST',
+      url: '/api/interpretation/generate',
+      cookies: { [SESSION_COOKIE]: cookie },
+      payload: { ...VALID_FREEFORM_BODY, chartKind: 'composite', ...extra },
+    });
+  }
+
+  async function listed(cookie: string) {
+    const response = await app.inject({
+      method: 'GET',
+      url: `/api/interpretation/results?personId=${PERSON_A}&locale=en`,
+      cookies: { [SESSION_COOKIE]: cookie },
+    });
+    return response.json<{ results: { partnerPersonId: string | null; basis: unknown }[] }>().results;
+  }
+
+  it('stores the partner id and returns it in the list', async () => {
+    const cookie = await signIn(app);
+    const response = await generateWith(cookie, { partnerPersonId: PERSON_B });
+    expect(response.statusCode).toBe(200);
+    expect((await listed(cookie))[0]?.partnerPersonId).toBe(PERSON_B);
+  });
+
+  it('lists partnerPersonId as null when none was sent', async () => {
+    const cookie = await signIn(app);
+    await generateWith(cookie, {});
+    expect((await listed(cookie))[0]?.partnerPersonId).toBeNull();
+  });
+
+  it('keeps the partner id and name out of every request to the model (prompt and basis)', async () => {
+    const cookie = await signIn(app);
+    // A client that wrongly sent the name too: the route must still keep it away from the model.
+    const response = await generateWith(cookie, { partnerPersonId: PERSON_B, partnerName: PARTNER_NAME });
+    expect(response.statusCode).toBe(200);
+    expect(fetchMock).toHaveBeenCalled();
+    for (const call of fetchMock.mock.calls) {
+      const body = (call[1] as RequestInit | undefined)?.body;
+      const text = typeof body === 'string' ? body : '';
+      expect(text).not.toContain(PERSON_B);
+      expect(text).not.toContain(PARTNER_NAME);
+    }
+    expect(JSON.stringify((await listed(cookie))[0]?.basis)).not.toContain(PERSON_B);
+  });
+
+  it('rejects an invalid partner id, or the same person, with 400 before calling the model', async () => {
+    const cookie = await signIn(app);
+    for (const bad of ['', 'c-aaaaaaaaaaaaaaaa', 'p-short', 42, null, PERSON_A]) {
+      const response = await generateWith(cookie, { partnerPersonId: bad });
+      expect(response.statusCode).toBe(400);
+    }
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});

@@ -50,7 +50,7 @@ describe('server/db.ts', () => {
   it('sets PRAGMA user_version to the number of migrations applied', () => {
     const db = openDatabase(':memory:');
     const row = db.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
-    expect(row.user_version).toBe(21);
+    expect(row.user_version).toBe(22);
     db.close();
   });
 
@@ -75,14 +75,14 @@ describe('server/db.ts', () => {
         .prepare('INSERT INTO sessions (id, user_id, created_at, expires_at, last_seen_at) VALUES (?, ?, ?, ?, ?)')
         .run('raw-live-session', 'live-user', now, later, now);
       setup.exec(
-        'DROP INDEX sessions_expires_at; ALTER TABLE users DROP COLUMN last_seen_at; DROP TABLE totp_recovery_codes; DROP TABLE server_secrets; ALTER TABLE users DROP COLUMN totp_secret; ALTER TABLE users DROP COLUMN totp_secret_iv; ALTER TABLE users DROP COLUMN totp_enabled_at; ALTER TABLE users DROP COLUMN totp_last_step; PRAGMA user_version = 17;',
+        'ALTER TABLE interpretation_results DROP COLUMN partner_person_id; DROP INDEX sessions_expires_at; ALTER TABLE users DROP COLUMN last_seen_at; DROP TABLE totp_recovery_codes; DROP TABLE server_secrets; ALTER TABLE users DROP COLUMN totp_secret; ALTER TABLE users DROP COLUMN totp_secret_iv; ALTER TABLE users DROP COLUMN totp_enabled_at; ALTER TABLE users DROP COLUMN totp_last_step; PRAGMA user_version = 17;',
       );
       setup.close();
 
       const db = openDatabase(path);
       try {
         const version = db.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
-        expect(version.user_version).toBe(21);
+        expect(version.user_version).toBe(22);
         expect(db.prepare('SELECT COUNT(*) AS n FROM sessions').get()).toEqual({ n: 0 });
         expect(
           db
@@ -113,7 +113,7 @@ describe('server/db.ts', () => {
       const second = openDatabase(path);
       expect(schemaOf(second)).toEqual(before);
       const row = second.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
-      expect(row.user_version).toBe(21);
+      expect(row.user_version).toBe(22);
       second.close();
     } finally {
       rmSync(dir, { recursive: true, force: true });
@@ -200,7 +200,7 @@ describe('server/db.ts', () => {
 
       const db = openDatabase(path);
       const row = db.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
-      expect(row.user_version).toBe(21);
+      expect(row.user_version).toBe(22);
 
       // The pre-existing row survived the users rebuild intact.
       const legacyUser = db.prepare('SELECT * FROM users WHERE id = ?').get('legacy-user') as
@@ -398,6 +398,7 @@ describe('server/db.ts', () => {
         -- migrations from here doesn't collide with the one the first openDatabase() created.
         DROP TABLE interpretation_cost_reservations;
         -- Nor migration 16's person column and its index (#768).
+        ALTER TABLE interpretation_results DROP COLUMN partner_person_id;
         DROP INDEX interpretation_results_user_person_created;
         ALTER TABLE interpretation_results DROP COLUMN person_id;
         -- Nor migration 17's submissions table (#1338).
@@ -453,6 +454,7 @@ describe('server/db.ts', () => {
         -- migrations from here doesn't collide with the one the first openDatabase() created.
         DROP TABLE interpretation_cost_reservations;
         -- Nor migration 16's person column and its index (#768).
+        ALTER TABLE interpretation_results DROP COLUMN partner_person_id;
         DROP INDEX interpretation_results_user_person_created;
         ALTER TABLE interpretation_results DROP COLUMN person_id;
         -- Nor migration 17's submissions table (#1338).
@@ -497,6 +499,7 @@ describe('server/db.ts', () => {
       // Put a current database back into its version-15 shape, with one saved result in it.
       const first = openDatabase(path);
       first.exec(`
+        ALTER TABLE interpretation_results DROP COLUMN partner_person_id;
         DROP INDEX interpretation_results_user_person_created;
         ALTER TABLE interpretation_results DROP COLUMN person_id;
         -- Nor migration 17's submissions table (#1338).
@@ -599,13 +602,14 @@ describe('server/db.ts', () => {
         INSERT INTO sessions (id, user_id, created_at, expires_at, last_seen_at) VALUES
           ('s1', 'seen', 'now', '2026-01-01T00:00:00.000Z', '2025-12-01T00:00:00.000Z'),
           ('s2', 'seen', 'now', '2026-02-01T00:00:00.000Z', '2026-01-15T00:00:00.000Z');
+        ALTER TABLE interpretation_results DROP COLUMN partner_person_id;
         PRAGMA user_version = 18;
       `);
       first.close();
 
       const db = openDatabase(path);
       const row = db.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
-      expect(row.user_version).toBe(21);
+      expect(row.user_version).toBe(22);
       expect(db.prepare('SELECT id, last_seen_at FROM users ORDER BY id').all()).toEqual([
         { id: 'never', last_seen_at: null },
         { id: 'seen', last_seen_at: '2026-01-15T00:00:00.000Z' },

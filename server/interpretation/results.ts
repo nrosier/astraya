@@ -28,6 +28,8 @@ export interface InterpretationResultSummary {
   readonly kind: ResultKind | null;
   /** What it was based on; `null` for entries saved before this was recorded. */
   readonly basis: ResultBasis | null;
+  /** The other person of a two-person reading (#1852); `null` for natal and older results. */
+  readonly partnerPersonId: string | null;
 }
 
 export interface InterpretationResultDetail extends InterpretationResultSummary {
@@ -48,6 +50,8 @@ export function saveInterpretationResult(
     readonly basis?: ResultBasis;
     /** The person the result was generated for (#768); a filter for listing, not an ownership claim. The route requires it; older rows have none. */
     readonly personId?: string;
+    /** The other person of a composite reading (#1852); a filter-only id like `personId`, never in the prompt or the basis. The name is looked up on the device. */
+    readonly partnerPersonId?: string;
   },
   key: Buffer,
 ): string {
@@ -59,7 +63,7 @@ export function saveInterpretationResult(
       ? undefined
       : encryptPayload(Buffer.from(params.description, 'utf8'), key);
   db.prepare(
-    'INSERT INTO interpretation_results (id, user_id, mode, locale, sections_json, key_version, iv, created_at, description_json, description_iv, kind, basis_json, person_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    'INSERT INTO interpretation_results (id, user_id, mode, locale, sections_json, key_version, iv, created_at, description_json, description_iv, kind, basis_json, person_id, partner_person_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
   ).run(
     id,
     params.userId,
@@ -74,6 +78,7 @@ export function saveInterpretationResult(
     params.basis?.kind ?? kindForMode(params.mode) ?? null,
     params.basis === undefined ? null : JSON.stringify(params.basis),
     params.personId ?? null,
+    params.partnerPersonId ?? null,
   );
   return id;
 }
@@ -87,6 +92,7 @@ interface SummaryRow {
   readonly description_iv: Buffer | null;
   readonly kind: string | null;
   readonly basis_json: string | null;
+  readonly partner_person_id: string | null;
 }
 
 /** The kind and basis a row reports: the stored ones, or — for an older row — the kind its `mode` implies and no basis. */
@@ -122,7 +128,7 @@ export function listInterpretationResults(
   key?: Buffer,
 ): readonly InterpretationResultSummary[] {
   const columns =
-    'SELECT id, mode, locale, created_at, description_json, description_iv, kind, basis_json FROM interpretation_results';
+    'SELECT id, mode, locale, created_at, description_json, description_iv, kind, basis_json, partner_person_id FROM interpretation_results';
   const rows = ('personId' in filter
     ? db
         .prepare(`${columns} WHERE user_id = ? AND person_id = ? AND locale = ? ORDER BY created_at DESC`)
@@ -136,6 +142,7 @@ export function listInterpretationResults(
     locale: row.locale,
     createdAt: row.created_at,
     description: readDescription(row, key),
+    partnerPersonId: row.partner_person_id,
     ...readBasis(row),
   }));
 }
@@ -154,7 +161,7 @@ export function getInterpretationResult(
 ): InterpretationResultDetail | undefined {
   const row = db
     .prepare(
-      'SELECT id, mode, locale, sections_json, iv, created_at, description_json, description_iv, kind, basis_json FROM interpretation_results WHERE user_id = ? AND id = ?',
+      'SELECT id, mode, locale, sections_json, iv, created_at, description_json, description_iv, kind, basis_json, partner_person_id FROM interpretation_results WHERE user_id = ? AND id = ?',
     )
     .get(userId, id) as DetailRow | undefined;
   if (row === undefined) return undefined;
@@ -166,6 +173,7 @@ export function getInterpretationResult(
     locale: row.locale,
     createdAt: row.created_at,
     description: readDescription(row, key),
+    partnerPersonId: row.partner_person_id,
     ...readBasis(row),
     sections,
   };

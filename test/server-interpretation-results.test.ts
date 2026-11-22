@@ -254,6 +254,7 @@ describe('the short description of an interpretation (#423)', () => {
         description: null,
         kind: 'whole-chart',
         basis: null,
+        partnerPersonId: null,
       },
     ]);
     db.close();
@@ -325,6 +326,23 @@ describe('results are filed under a person (#768)', () => {
       key,
     );
   }
+
+  it('stores the partner id and returns it from the list and the detail (#1852)', () => {
+    const db = openDatabase(':memory:');
+    const key = randomBytes(32);
+    const userId = makeUser(db, 'alice');
+    const id = saveInterpretationResult(
+      db,
+      { userId, mode: 'freeform', locale: 'en', sections: SECTIONS, personId: PERSON_A, partnerPersonId: PERSON_B },
+      key,
+    );
+    expect(db.prepare('SELECT partner_person_id FROM interpretation_results').get()).toEqual({
+      partner_person_id: PERSON_B,
+    });
+    expect(listInterpretationResults(db, userId, { personId: PERSON_A }, 'en')[0]?.partnerPersonId).toBe(PERSON_B);
+    expect(getInterpretationResult(db, userId, id, key)?.partnerPersonId).toBe(PERSON_B);
+    db.close();
+  });
 
   it('stores the person id in its own column', () => {
     const db = openDatabase(':memory:');

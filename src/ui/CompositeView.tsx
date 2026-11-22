@@ -212,7 +212,7 @@ export function CompositeView({
         </StatusMessage>
       )}
       {partnerId !== '' && load.kind === 'ready' && housesAreDefined(load.data.houses) && (
-        <ReportView personId={personId} chart={load.data} chartKind="composite" />
+        <ReportView personId={personId} partnerPersonId={partnerId} chart={load.data} chartKind="composite" />
       )}
     </main>
   );

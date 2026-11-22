@@ -435,6 +435,13 @@ const MIGRATIONS: readonly ((db: DatabaseSync) => void)[] = [
       );
     `);
   },
+  // 22: the other person of a two-person reading (#1852), so a saved composite's history entry can
+  // name them. Like `person_id` (migration 16) it is only a filter: not a foreign key (people live in
+  // the encrypted op-log), never sent to the model, and nullable (older and one-person rows have
+  // none). The name is looked up on the device; only the id is stored. No index: nothing filters on it.
+  (db) => {
+    db.exec(`ALTER TABLE interpretation_results ADD COLUMN partner_person_id TEXT;`);
+  },
 ];
 
 /** Migration steps whose table rebuild would otherwise break `REFERENCES` clauses pointing at the table being rebuilt. */

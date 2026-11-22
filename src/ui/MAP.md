@@ -244,7 +244,8 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `shared.messages.ts` — Common i18n strings reused across many components. Deps: none.
 - `status.messages.ts` — en/nl for sync-status indicator. Deps: none.
 - `status.ts` — Decides sync-status label/tone/detail from sync/persistence/pending state, plus the held-back-notes line (#919). Deps: `store/persist`, `sync/engine`.
-- `store-context.tsx` — React adapter exposing op-log store via `useSyncExternalStore`. Deps: `store/fold`, `store/store`, `./trace`.
+- `saved-partner-label.ts` + `saved-partner-label.messages.ts` — Suffix naming the other person in a saved two-person interpretation's history entry, name looked up locally (#1852). Deps: `interpretation/schema`.
+- `store-context.tsx` — React adapter exposing op-log store via `useSyncExternalStore`, including a reactive optional-state hook (#1852). Deps: `store/fold`, `store/store`, `./trace`.
 - `symbol-setting.ts` — Device preference for symbol class (glyphs/Unicode/text). Deps: `chart/symbol-class`.
 - `synastry-text.ts` — Resolves Synastry aspect-row interpretation text. Deps: `interpretation/compose`, `interpretation/schema`.
 - `table-column-width.ts` — Pure width arithmetic (clamp, keyboard step, drag) for resizable data-table columns (#1301). Deps: none.

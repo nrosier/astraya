@@ -13,7 +13,7 @@
  * @module ui/store-context
  * @purpose React adapter exposing the plain-object op-log store (src/store) to components via context and useSyncExternalStore, so screens re-render correctly on store change including under concurrent rendering.
  * @conventions Deliberately has no knowledge of which store to open or who's signed in — that decision lives one level up in session-context.tsx; store.state is replaced wholesale (never mutated) so identity comparison works as a valid snapshot.
- * @exports StoreProvider, useStore, useOptionalStore, useStoreState
+ * @exports StoreProvider, useStore, useOptionalStore, useOptionalStoreState, useStoreState
  */
 import { createContext, useContext, useSyncExternalStore } from 'react';
 import type { State } from '../store/fold.js';
@@ -78,5 +78,20 @@ export function useStoreState(): State {
       trace('store-context', 'getSnapshot', { deviceId: store.deviceId, people: snapshot.people.size });
       return snapshot;
     },
+  );
+}
+
+const NO_UNSUBSCRIBE = (): void => undefined;
+const NO_SUBSCRIBE = (): (() => void) => NO_UNSUBSCRIBE;
+
+/**
+ * The current fold, or `undefined` outside a `StoreProvider` or while the store is still opening (#1852). Unlike
+ * `useOptionalStore().state` it is reactive, so a rename shows at once; unlike `useStoreState` it never throws.
+ */
+export function useOptionalStoreState(): State | undefined {
+  const store = useOptionalStore();
+  return useSyncExternalStore(
+    store === undefined ? NO_SUBSCRIBE : (onChange) => store.subscribe(onChange),
+    () => store?.state,
   );
 }
