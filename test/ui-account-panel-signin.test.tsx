@@ -8,7 +8,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const signIn = vi.fn<(username: string, password: string) => Promise<void>>();
+const signIn = vi.fn<(username: string, password: string, totpCode?: string) => Promise<void>>();
 vi.mock('../src/ui/session-context.tsx', () => ({
   useSession: () => ({
     user: undefined,
@@ -254,5 +254,73 @@ describe('sign-in panel without single sign-on', () => {
       await Promise.resolve();
     });
     expect(signIn).toHaveBeenCalledWith('ada', 'secret-pass');
+  });
+});
+
+describe('sign-in second step (#1500)', () => {
+  const codeField = (container: HTMLElement): HTMLInputElement | null =>
+    container.querySelector<HTMLInputElement>('input[autocomplete="one-time-code"]');
+
+  async function submitForm(container: HTMLElement): Promise<void> {
+    await act(async () => {
+      container.querySelector('form')?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      await Promise.resolve();
+    });
+  }
+
+  async function fillAndSubmit(container: HTMLElement, pass: string): Promise<void> {
+    await act(async () => {
+      type(field(container, 'input[autocomplete="username"]'), 'ada');
+      type(field(container, 'input[type="password"]'), pass);
+      await Promise.resolve();
+    });
+    await submitForm(container);
+  }
+
+  it('shows no code field before a failure', async () => {
+    const container = await mount({ enabled: false });
+    await openPanel(container);
+    expect(codeField(container)).toBeNull();
+  });
+
+  it('shows the code field after a 401, then signs in with the password and the code', async () => {
+    signIn.mockRejectedValueOnce(new AuthError('Wrong', 401, 'invalid-credentials'));
+    const container = await mount({ enabled: false });
+    await openPanel(container);
+    await fillAndSubmit(container, 'secret-pass');
+    expect(signIn).toHaveBeenLastCalledWith('ada', 'secret-pass');
+    const code = codeField(container);
+    expect(code).not.toBeNull();
+    expect(container.textContent).toContain('Authenticator or recovery code');
+    expect(field(container, 'input[type="password"]').value).toBe('secret-pass');
+    await act(async () => {
+      if (code !== null) type(code, '123456');
+      await Promise.resolve();
+    });
+    await submitForm(container);
+    expect(signIn).toHaveBeenLastCalledWith('ada', 'secret-pass', '123456');
+    expect(container.querySelector('dialog[open]')).toBeNull();
+  });
+
+  it('clears the code field after a failed attempt', async () => {
+    signIn.mockRejectedValue(new AuthError('Wrong', 401, 'invalid-credentials'));
+    const container = await mount({ enabled: false });
+    await openPanel(container);
+    await fillAndSubmit(container, 'secret-pass');
+    await act(async () => {
+      const code = codeField(container);
+      if (code !== null) type(code, '111111');
+      await Promise.resolve();
+    });
+    await submitForm(container);
+    expect(codeField(container)?.value).toBe('');
+  });
+
+  it('does not show the code field for a non-401 failure', async () => {
+    signIn.mockRejectedValue(new AuthError('Slow down', 429, 'rate-limited'));
+    const container = await mount({ enabled: false });
+    await openPanel(container);
+    await fillAndSubmit(container, 'secret-pass');
+    expect(codeField(container)).toBeNull();
   });
 });

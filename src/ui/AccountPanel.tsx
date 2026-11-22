@@ -24,7 +24,7 @@ import { StagedDialog } from './primitives/StagedDialog.js';
 import { TextField } from './primitives/TextField.js';
 import { useEffect, useRef, useState } from 'react';
 import { removeAccountData, useSession } from './session-context.js';
-import { getOidcConfig } from '../sync/auth-client.js';
+import { AuthError, getOidcConfig } from '../sync/auth-client.js';
 import { accountPanelMessages } from './AccountPanel.messages.js';
 import { useMessages } from './messages.js';
 import { startOidcHandshake } from './oidc-pkce.js';
@@ -201,7 +201,7 @@ function SignInForm({
   onOpenChange,
   triggerRef,
 }: {
-  signIn: (username: string, password: string) => Promise<void>;
+  signIn: (username: string, password: string, totpCode?: string) => Promise<void>;
   oidcConfig: OidcConfig | undefined;
   /** Opened from the profile tile (#964), so its open state is the caller's. */
   readonly open: boolean;
@@ -215,6 +215,9 @@ function SignInForm({
   const stage: SignInStage = ssoConfig === undefined ? 'local' : (chosen ?? 'openid');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  // The code lives in component state only, never in a store or storage (#1500). The field appears after any 401, because that answer is the same for every account.
+  const [totpCode, setTotpCode] = useState('');
+  const [needsCode, setNeedsCode] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const usernameRef = useRef<HTMLInputElement>(null);
@@ -224,6 +227,8 @@ function SignInForm({
   const close = (): void => {
     onOpenChange(false);
     setChosen(undefined);
+    setNeedsCode(false);
+    setTotpCode('');
   };
 
   const switchTo = (next: SignInStage): void => {
@@ -240,12 +245,16 @@ function SignInForm({
     event.preventDefault();
     setBusy(true);
     setError(undefined);
-    void signIn(username, password)
+    const code = totpCode.trim();
+    void (code === '' ? signIn(username, password) : signIn(username, password, code))
       .then(() => {
         setPassword('');
+        setTotpCode('');
         close();
       })
       .catch((cause: unknown) => {
+        setTotpCode('');
+        if (cause instanceof AuthError && cause.status === 401) setNeedsCode(true);
         setError(apiErrorText(cause));
       })
       .finally(() => {
@@ -293,6 +302,15 @@ function SignInForm({
                   showLabel={t.showPasswordLabel}
                   hideLabel={t.hidePasswordLabel}
                 />
+                {needsCode && (
+                  <TextField
+                    label={t.totpCodeLabel}
+                    help={t.totpCodeHint}
+                    autoComplete="one-time-code"
+                    value={totpCode}
+                    onChange={setTotpCode}
+                  />
+                )}
               </div>
               <p className="actions">
                 <Button type="submit" variant="primary" disabled={busy || username.trim() === '' || password === ''}>

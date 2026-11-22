@@ -30,6 +30,9 @@ const en = {
   signInExplainer:
     'An account syncs your data to your other devices. It is optional — (almost) everything here already works with no account, on this device alone.',
   passwordLabel: 'Password',
+  // DRAFT copy (#1500), held for the owner's review.
+  totpCodeLabel: 'Authenticator or recovery code',
+  totpCodeHint: 'Enter the 6-digit code from your authenticator app, or one of your recovery codes.',
 
   signOutButton: 'Sign out',
   manageUsersLink: 'Admin',
@@ -68,6 +71,9 @@ const nl: typeof en = {
   signInExplainer:
     'Een account synchroniseert je gegevens naar je andere apparaten. Het is optioneel — (bijna) alles hier werkt al zonder account, op dit apparaat alleen.',
   passwordLabel: 'Wachtwoord',
+  // DRAFT copy (#1500), held for the owner's review.
+  totpCodeLabel: 'Authenticatie- of herstelcode',
+  totpCodeHint: 'Vul de code van zes cijfers uit je authenticator-app in, of een van je herstelcodes.',
 
   signOutButton: 'Uitloggen',
   manageUsersLink: 'Beheer',
