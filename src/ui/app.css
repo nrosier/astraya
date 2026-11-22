@@ -8550,6 +8550,13 @@ button.primitive-button-form-action {
   background: transparent;
 }
 
+/* Stacked disclosures in a card touch once the box is gone: a hairline divider separates neighbours. */
+:is(.birth-record-card, .consultation-section, .consultation-glance, dialog.settings-card)
+  .primitive-disclosure
+  + .primitive-disclosure {
+  border-top: var(--border-hairline) solid var(--line);
+}
+
 .primitive-disclosure-trigger {
   display: flex;
   width: 100%;
