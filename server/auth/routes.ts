@@ -103,16 +103,17 @@ export function registerAuthRoutes(app: FastifyInstance, db: Database): void {
       // the point is that a client can't tell "no such user" from "wrong password".
       const valid = await verifyPassword(credentials?.passwordHash ?? DUMMY_PASSWORD_HASH, password);
 
+      // Checked again after the Argon2 await: concurrent guesses all passed the first check before any of them
+      // recorded a failure. Before the wrong-password branch, so a throttled burst gets the same 429 whether or not
+      // the password was right. No await sits between this check, the password and code checks and
+      // `recordFailedLogin`, so the requests are counted one after another from here on.
+      if (isLoginThrottled(username)) {
+        return reply.code(429).send({ code: 'rate-limited', error: 'Too many attempts. Try again later.' });
+      }
+
       if (!credentials || !valid || credentials.user.disabledAt !== null) {
         recordFailedLogin(username);
         return reply.code(401).send({ code: 'invalid-credentials', error: 'Invalid username or password' });
-      }
-
-      // Checked again after the Argon2 await: concurrent guesses all passed the first check before any of them
-      // recorded a failure. No await sits between this check, the code check and `recordFailedLogin`, so the
-      // requests are counted one after another from here on.
-      if (isLoginThrottled(username)) {
-        return reply.code(429).send({ code: 'rate-limited', error: 'Too many attempts. Try again later.' });
       }
 
       // The TOTP second step (#1500): the client resends the password with `totpCode`. No or a wrong code on an

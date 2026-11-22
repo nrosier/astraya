@@ -255,6 +255,38 @@ describe('POST /api/auth/login concurrent guesses', () => {
   });
 });
 
+describe('POST /api/auth/login mixed-password burst', () => {
+  it('a concurrent burst of wrong and correct passwords gets the same 429 once throttled, so a 429 does not reveal the right password', async () => {
+    await enableTotp();
+    const wrong = wrongCode();
+    // 6 wrong passwords, the correct password with a wrong code, then 6 more of each, interleaved (19, under the route limit of 20 a minute).
+    const payloads = [
+      ...Array.from({ length: 6 }, (_, i) => ({ password: `wrong-password-${String(i)}`, correct: false })),
+      { password: PASSWORD, correct: true },
+      ...Array.from({ length: 6 }, (_, i) => [
+        { password: `wrong-password-again-${String(i)}`, correct: false },
+        { password: PASSWORD, correct: true },
+      ]).flat(),
+    ];
+    const responses = await Promise.all(
+      payloads.map(({ password }) => login({ username: 'admin', password, totpCode: wrong })),
+    );
+    const statuses = responses.map((r) => r.statusCode);
+    expect(statuses.filter((s) => s === 200)).toEqual([]);
+    expect(statuses.filter((s) => s === 401).length).toBeLessThanOrEqual(MAX_ATTEMPTS);
+    expect(statuses.filter((s) => s === 401).length + statuses.filter((s) => s === 429).length).toBe(payloads.length);
+    const throttled = responses.filter((r) => r.statusCode === 429);
+    const throttledBodies = new Set(throttled.map((r) => r.body));
+    expect(throttledBodies.size).toBe(1);
+    // Both a wrong and a correct password reach the throttle and get that same body.
+    const correctThrottled = payloads.filter((p, i) => p.correct && responses[i]?.statusCode === 429).length;
+    const wrongThrottled = payloads.filter((p, i) => !p.correct && responses[i]?.statusCode === 429).length;
+    expect(correctThrottled).toBeGreaterThan(0);
+    expect(wrongThrottled).toBeGreaterThan(0);
+    expect(isLoginThrottled('admin')).toBe(true);
+  });
+});
+
 describe('POST /api/auth/login without TOTP enabled (regressions)', () => {
   it('a pending-enrolment account is not required to supply a code (signs in with the password as before)', async () => {
     const cookie = await setupAdmin();
