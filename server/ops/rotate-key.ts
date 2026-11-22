@@ -40,7 +40,7 @@ import { resolve } from 'node:path';
 import { openDatabase, type Database } from '../db.ts';
 import { decryptPayload, encryptPayload, type EncryptedPayload } from './crypto.ts';
 import { planTotpRotation } from './rotate-totp.ts';
-import { isEntryPoint, opsDbPath } from './cli.ts';
+import { isEntryPoint, notEntryPointLine, opsDbPath } from './cli.ts';
 
 interface EncryptedRow {
   readonly seq: number;
@@ -316,4 +316,6 @@ if (isEntryPoint(import.meta.url, process.argv[1])) {
   } finally {
     db.close();
   }
+} else {
+  console.error(notEntryPointLine('rotate-key'));
 }

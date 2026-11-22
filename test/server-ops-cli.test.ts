@@ -1,10 +1,15 @@
 /**
- * Entry-point and database-path helpers for the operator CLIs (#1792). Pure functions, so these tests use no
- * database and no process spawn.
+ * Entry-point and database-path helpers for the operator CLIs (#1792). The helper tests are pure functions. The
+ * symlink tests run the real script through a child process, because the bug was a silent exit 0 on a symlinked
+ * script path, and only a real run shows it.
  */
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { spawnSync } from 'node:child_process';
+import { existsSync, mkdtempSync, rmSync, symlinkSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { isEntryPoint, opsDbPath } from '../server/ops/cli.ts';
+import { isEntryPoint, notEntryPointLine, opsDbPath } from '../server/ops/cli.ts';
 
 describe('isEntryPoint', () => {
   it('is true for a script path that contains a space (the reported bug: the old check compared a raw path and exited 0)', () => {
@@ -26,6 +31,48 @@ describe('isEntryPoint', () => {
 
   it('is false when there is no script argument (the module was imported, not run)', () => {
     expect(isEntryPoint(pathToFileURL('/tmp/a b/x.ts').href, undefined)).toBe(false);
+  });
+});
+
+describe('notEntryPointLine', () => {
+  it('names the script and says nothing was changed, with no path in it', () => {
+    expect(notEntryPointLine('reset-totp')).toBe(
+      'reset-totp: loaded but not run as the entry point; nothing was changed.',
+    );
+  });
+});
+
+describe('symlinked script run (#1792)', () => {
+  let dir: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'astraya-entry-'));
+  });
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  // A symlink resolves to the real file in import.meta.url but keeps the link path in argv[1], so the entry check
+  // is false. The script must log the line and exit 0 without creating a database.
+  it.each([
+    ['reset-totp', 'server/ops/reset-totp.ts'],
+    ['rotate-key', 'server/ops/rotate-key.ts'],
+  ])('%s logs the not-entry-point line, exits 0 and creates no database', (script, relPath) => {
+    const target = resolve(import.meta.dirname, '..', relPath);
+    const link = join(dir, `${script}-link.ts`);
+    symlinkSync(target, link);
+    const dbPath = join(dir, 'astraya.db');
+
+    // spawnSync, not execFileSync: execFileSync returns only stdout on success, and the log line is on stderr.
+    const run = spawnSync(process.execPath, [link], {
+      env: { ...process.env, ASTRAYA_DB_PATH: dbPath },
+      encoding: 'utf8',
+    });
+
+    expect(run.status).toBe(0);
+    expect(run.stderr).toContain(notEntryPointLine(script));
+    expect(existsSync(dbPath)).toBe(false);
   });
 });
 
