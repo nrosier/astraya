@@ -18,7 +18,7 @@ import {
   startTotpEnrolment,
 } from '../server/auth/totp-store.ts';
 import { opsDbPath } from '../server/ops/cli.ts';
-import { resetUserTotp, runResetUserTotp } from '../server/ops/reset-user-totp.ts';
+import { auditLine, resetUserTotp, runResetUserTotp } from '../server/ops/reset-user-totp.ts';
 
 const KEY = randomBytes(32);
 
@@ -263,5 +263,66 @@ describe('runResetUserTotp (the CLI body)', () => {
     expect(() => opsDbPath({ ASTRAYA_DB_PATH: '' }, fallback)).toThrow('ASTRAYA_DB_PATH is set but empty');
     expect(() => opsDbPath({ ASTRAYA_DB_PATH: '   ' }, fallback)).toThrow('ASTRAYA_DB_PATH is set but empty');
     expect(opsDbPath({}, fallback)).toBe(fallback);
+  });
+});
+
+describe('auditLine (#1500 audit line)', () => {
+  it('formats the fixed audit line exactly', () => {
+    expect(auditLine('alice', '2026-11-22T10:00:00.000Z', 2)).toBe(
+      'audit: ops:reset-user-totp username=alice at=2026-11-22T10:00:00.000Z result=reset codes=2',
+    );
+  });
+});
+
+describe('runResetUserTotp audit line (#1500)', () => {
+  const AUDIT_PREFIX = 'audit: ops:reset-user-totp ';
+
+  it('a successful reset prints exactly one audit line with the username, result=reset and the codes removed', () => {
+    const target = addUser('target');
+    enrol(target, true);
+    db.close();
+    const lines: string[] = [];
+
+    expect(runResetUserTotp(['--username', 'target', '--yes'], dbPath, (line) => lines.push(line))).toBe(0);
+
+    const audits = lines.filter((line) => line.startsWith(AUDIT_PREFIX));
+    expect(audits).toHaveLength(1);
+    expect(audits[0]).toMatch(
+      /^audit: ops:reset-user-totp username=target at=\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z result=reset codes=10$/,
+    );
+    db = openDatabase(dbPath);
+  });
+
+  it('the audit line contains no secret, recovery code or key byte', () => {
+    const target = addUser('target');
+    const { secret, codes } = enrol(target, true);
+    db.close();
+    const lines: string[] = [];
+
+    runResetUserTotp(['--username', 'target', '--yes'], dbPath, (line) => lines.push(line));
+
+    const audit = lines.find((line) => line.startsWith(AUDIT_PREFIX)) ?? '';
+    expect(audit).not.toBe('');
+    expect(audit).not.toContain(Buffer.from(secret).toString('hex'));
+    expect(audit).not.toContain(Buffer.from(secret).toString('base64'));
+    for (const code of codes) expect(audit).not.toContain(code);
+    expect(audit).not.toContain(KEY.toString('hex'));
+    expect(audit).not.toContain(KEY.toString('base64'));
+    db = openDatabase(dbPath);
+  });
+
+  it('refusals print no audit line: without --yes, unknown user, and TOTP off', () => {
+    const target = addUser('target');
+    enrol(target, true);
+    addUser('plain');
+    db.close();
+    const lines: string[] = [];
+
+    expect(runResetUserTotp(['--username', 'target'], dbPath, (line) => lines.push(line))).toBe(1);
+    expect(runResetUserTotp(['--username', 'nobody', '--yes'], dbPath, (line) => lines.push(line))).toBe(2);
+    expect(runResetUserTotp(['--username', 'plain', '--yes'], dbPath, (line) => lines.push(line))).toBe(0);
+
+    expect(lines.some((line) => line.includes('audit:'))).toBe(false);
+    db = openDatabase(dbPath);
   });
 });
