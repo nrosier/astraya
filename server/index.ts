@@ -30,6 +30,7 @@ import { buildCsp, stripCspMeta } from './csp.ts';
 import { isCrossOriginWrite } from './csrf.ts';
 import { openDatabase } from './db.ts';
 import { registerAuthRoutes } from './auth/routes.ts';
+import { registerTotpRoutes } from './auth/totp-routes.ts';
 import { sweepExpiredSessions } from './auth/sessions.ts';
 import { registerAdminRoutes } from './auth/admin-routes.ts';
 import { loadOidcConfig } from './auth/oidc.ts';
@@ -95,6 +96,8 @@ export const SESSION_SWEEP_INTERVAL_MS = 60 * 60 * 1000;
 export interface BuildOptions {
   /** Overrides `ASTRAYA_DB_PATH`. Tests pass `:memory:` so nothing touches disk. */
   readonly dbPath?: string;
+  /** Sends the server log to this stream instead of stdout; tests use it to assert that nothing secret is logged. */
+  readonly logStream?: NodeJS.WritableStream;
 }
 
 export async function build(options: BuildOptions = {}) {
@@ -110,6 +113,7 @@ export async function build(options: BuildOptions = {}) {
     bodyLimit: 1024 * 1024,
     logger: {
       level: process.env.LOG_LEVEL ?? 'info',
+      ...(options.logStream !== undefined ? { stream: options.logStream } : {}),
       // The default `req` serializer logs the full URL, including a query string —
       // e.g. `/auth/oidc/callback?code=…&state=…` (#313b). Never needed for this
       // log's purpose (request-rate/error diagnostics), so drop it entirely rather
@@ -213,13 +217,18 @@ export async function build(options: BuildOptions = {}) {
     if (request.url.startsWith('/ephe/') || request.url.startsWith('/assets/')) {
       reply.header('Cache-Control', IMMUTABLE);
     } else if (!request.url.startsWith('/healthz')) {
-      reply.header('Cache-Control', NO_CACHE);
+      // Only a route that declared `config.noStore` (the TOTP enrolment routes, #1500) and set `no-store` itself on
+      // this response keeps it; everything else, including a static file, gets `no-cache`.
+      if (!(request.routeOptions.config.noStore === true && reply.getHeader('Cache-Control') === 'no-store')) {
+        reply.header('Cache-Control', NO_CACHE);
+      }
     }
   });
 
   app.get('/healthz', () => ({ status: 'ok' }));
 
   registerAuthRoutes(app, db);
+  registerTotpRoutes(app, db);
   registerAdminRoutes(app, db);
   registerOpsRoutes(app, db);
   registerCorpusOverrideRoutes(app, db);
