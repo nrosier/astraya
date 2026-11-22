@@ -108,6 +108,13 @@ export function registerAuthRoutes(app: FastifyInstance, db: Database): void {
         return reply.code(401).send({ code: 'invalid-credentials', error: 'Invalid username or password' });
       }
 
+      // Checked again after the Argon2 await: concurrent guesses all passed the first check before any of them
+      // recorded a failure. No await sits between this check, the code check and `recordFailedLogin`, so the
+      // requests are counted one after another from here on.
+      if (isLoginThrottled(username)) {
+        return reply.code(429).send({ code: 'rate-limited', error: 'Too many attempts. Try again later.' });
+      }
+
       // The TOTP second step (#1500): the client resends the password with `totpCode`. No or a wrong code on an
       // enabled account is the same response as a wrong password and counts on the same throttle.
       const totpCode = typeof body.totpCode === 'string' ? body.totpCode : undefined;

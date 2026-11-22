@@ -234,6 +234,27 @@ describe('POST /api/auth/login with TOTP enabled', () => {
   });
 });
 
+describe('POST /api/auth/login concurrent guesses', () => {
+  it('concurrent wrong codes are counted after the password check, so a valid code sent after the 5th failure is throttled', async () => {
+    await enableTotp();
+    const wrong = wrongCode();
+    const valid = codeAt(0);
+    const sent = 20;
+    // The valid code goes last: the password hashing of the earlier requests finishes first.
+    const codes = Array.from({ length: sent }, (_, i) => (i === sent - 1 ? valid : wrong));
+    const responses = await Promise.all(
+      codes.map((totpCode) => login({ username: 'admin', password: PASSWORD, totpCode })),
+    );
+    const statuses = responses.map((r) => r.statusCode);
+    const count = (status: number) => statuses.filter((s) => s === status).length;
+    expect(count(401) + count(429)).toBe(sent);
+    expect(count(200)).toBe(0);
+    expect(count(401)).toBe(MAX_ATTEMPTS);
+    expect(responses[sent - 1]?.statusCode).toBe(429);
+    expect(responses.some((r) => sessionCookie(r) !== undefined)).toBe(false);
+  });
+});
+
 describe('POST /api/auth/login without TOTP enabled (regressions)', () => {
   it('a pending-enrolment account is not required to supply a code (signs in with the password as before)', async () => {
     const cookie = await setupAdmin();
