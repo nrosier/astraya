@@ -14,7 +14,7 @@
  * @module reset-user-totp
  * @purpose Operator CLI that clears TOTP for one named user (#1500): the four `users.totp_*` columns and that user's recovery codes, in one transaction. Operator recovery for a locked-out user; the all-user counterpart is `reset-totp.ts` (#1782).
  * @conventions Operator-only (shell access, no HTTP route). Refuses without `--yes` and then opens nothing. Requires `--username <name>`. Exits 2 when the username is unknown and 0 when the user is off (nothing changed) or was reset. Reuses `clearTotp` from `auth/totp-store` and the entry-point and blank-path helpers from `cli.ts`. Prints counts and fixed sentences plus the username the operator typed, never a stored value, secret, code or key byte.
- * @exports UserTotpResetResult, resetUserTotp, runResetUserTotp
+ * @exports UserTotpResetResult, resetUserTotp, auditLine, runResetUserTotp
  */
 import { resolve } from 'node:path';
 import { openDatabase, type Database } from '../db.ts';
@@ -83,6 +83,14 @@ export function resetUserTotp(db: Database, username: string): UserTotpResetResu
   }
 }
 
+/**
+ * The audit line printed on a successful reset (#1500). Fixed format, stdout only. It carries the username the operator
+ * typed, the UTC time of the reset and the number of recovery codes removed. Never a secret, code or key byte.
+ */
+export function auditLine(username: string, at: string, codes: number): string {
+  return `audit: ops:reset-user-totp username=${JSON.stringify(username)} at=${at} result=reset codes=${String(codes)}`;
+}
+
 /** The value after `--username`, or undefined when the flag is missing, has no value, or the value is blank or another flag. */
 function usernameArg(argv: readonly string[]): string | undefined {
   const index = argv.indexOf('--username');
@@ -127,6 +135,7 @@ export function runResetUserTotp(argv: readonly string[], dbPath: string, log: (
       `Reset TOTP for user "${username}"; deleted ${String(result.codes)} recovery code(s). ` +
         'The user must enrol TOTP again on next sign-in if it is required.',
     );
+    log(auditLine(username, new Date().toISOString(), result.codes));
     return 0;
   } finally {
     db.close();
