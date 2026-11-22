@@ -67,11 +67,6 @@ describe('spacing tokens (#1074)', () => {
       value: '4px var(--space-3)',
       reason: 'owner decision 2026-11-14, #1544, exact 4px row gap',
     },
-    {
-      selector: /^\.birth-record-card--files \[role='tabpanel'\] > p:has\(> input\[type='file'\]\)$/,
-      value: '4.5px',
-      reason: 'owner decision on #1732, exact 4.5px so the bottom gap under Import File equals the 19.5px top gap',
-    },
   ];
 
   function allowed(value: string, selector: string): boolean {

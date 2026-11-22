@@ -1773,9 +1773,11 @@ footer {
   margin: 0 0 var(--space-2);
 }
 
+/* No bottom margin under the Import File pill: the card's --space-4 padding and 1px border alone sit below it, the same
+   as above the tab pills (owner visual review). */
 .birth-record-card--files [role='tabpanel'] > p:has(> input[type='file']) {
   margin-top: 0;
-  margin-bottom: 4.5px;
+  margin-bottom: 0;
 }
 
 .birth-record-card--danger {
