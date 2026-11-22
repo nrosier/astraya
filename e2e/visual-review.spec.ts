@@ -131,6 +131,15 @@ test('capture the screens of the visual review', async ({ browser }) => {
   await page.locator('.consultation-grid').waitFor({ timeout: 60_000 });
   await page.locator('.consultation-grid .primitive-disclosure-trigger').first().click();
   await shoot(page, '06-consultation-open-card');
+  // #1855: the Consultation header unscrolled. The card above leaves the page scrolled, so scroll back to the top before
+  // each shot (shoot() runs this before every size and theme) and wait for the header controls to be on screen.
+  const showConsultationHeader = async (): Promise<void> => {
+    await page.evaluate('window.scrollTo(0, 0)');
+    await page.getByRole('link', { name: 'View Chart Wheel', exact: true }).first().waitFor({ state: 'visible' });
+    await page.waitForTimeout(300);
+  };
+  await showConsultationHeader();
+  await shoot(page, '06b-consultation-header-top', showConsultationHeader);
 
   await page.getByRole('link', { name: 'Interpretation', exact: true }).first().click();
   await page.getByRole('heading', { level: 1 }).first().waitFor();
