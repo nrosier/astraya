@@ -269,8 +269,16 @@ describe('runResetUserTotp (the CLI body)', () => {
 describe('auditLine (#1500 audit line)', () => {
   it('formats the fixed audit line exactly', () => {
     expect(auditLine('alice', '2026-11-22T10:00:00.000Z', 2)).toBe(
-      'audit: ops:reset-user-totp username=alice at=2026-11-22T10:00:00.000Z result=reset codes=2',
+      'audit: ops:reset-user-totp username="alice" at=2026-11-22T10:00:00.000Z result=reset codes=2',
     );
+  });
+
+  it('JSON-quotes a username with a space, an equals sign and a newline so it stays one line', () => {
+    const name = 'x result=reset\ncodes=0';
+    const line = auditLine(name, '2026-11-22T10:00:00.000Z', 2);
+
+    expect(line).not.toContain('\n');
+    expect(line).toContain(`username=${JSON.stringify(name)} at=`);
   });
 });
 
@@ -288,7 +296,7 @@ describe('runResetUserTotp audit line (#1500)', () => {
     const audits = lines.filter((line) => line.startsWith(AUDIT_PREFIX));
     expect(audits).toHaveLength(1);
     expect(audits[0]).toMatch(
-      /^audit: ops:reset-user-totp username=target at=\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z result=reset codes=10$/,
+      /^audit: ops:reset-user-totp username="target" at=\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z result=reset codes=10$/,
     );
     db = openDatabase(dbPath);
   });

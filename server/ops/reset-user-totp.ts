@@ -88,7 +88,7 @@ export function resetUserTotp(db: Database, username: string): UserTotpResetResu
  * typed, the UTC time of the reset and the number of recovery codes removed. Never a secret, code or key byte.
  */
 export function auditLine(username: string, at: string, codes: number): string {
-  return `audit: ops:reset-user-totp username=${username} at=${at} result=reset codes=${String(codes)}`;
+  return `audit: ops:reset-user-totp username=${JSON.stringify(username)} at=${at} result=reset codes=${String(codes)}`;
 }
 
 /** The value after `--username`, or undefined when the flag is missing, has no value, or the value is blank or another flag. */
