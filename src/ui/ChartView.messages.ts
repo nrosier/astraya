@@ -219,14 +219,15 @@ const en = {
     'fortune-angular-succeedent':
       'The Part of Fortune is in an angle or a succeedent house, and a lord of its degree aspects it.',
     ascendant: 'The Ascendant, because a lord of its degree aspects it.',
-    'syzygy-degree': 'The degree of the prenatal syzygy, because a lord of that degree aspects it.',
+    'syzygy-degree':
+      'The degree of the prenatal syzygy, in an angle or a succeedent house, because a lord of that degree aspects it.',
   },
   alcocodenLine: (planet: string) => `Alcocoden (giver of years): ${planet}`,
   alcocodenRuleLabels: {
     'only-aspecting':
       'The only lord of the hyleg\u2019s degree (domicile, exaltation, bound or triplicity) that aspects it.',
-    'closest-aspect': 'The lord closest to an exact aspect with the hyleg\u2019s degree.',
-    'more-dignities': 'Equally close, but holds more dignities in the hyleg\u2019s degree.',
+    'closest-aspect': 'Equal in dignities, but closest to an exact aspect with the hyleg\u2019s degree.',
+    'more-dignities': 'Holds the most dignities in the hyleg\u2019s degree among the lords that aspect it.',
     'angular-or-succeedent': 'Equal so far, but is in an angle or a succeedent house.',
     'closer-to-cusp': 'Equal so far, but is closer to the cusp of its house.',
     'own-dignity': 'Equal so far, but is in a dignity of its own rather than peregrine.',
@@ -628,25 +629,27 @@ const nl: typeof en = {
     'fortune-angular-succeedent':
       'Het Fortuinpunt staat in een hoekhuis of een volgend huis en een heer van zijn graad heeft er een aspect mee.',
     ascendant: 'De Ascendant, omdat een heer van zijn graad er een aspect mee heeft.',
-    'syzygy-degree': 'De graad van de prenatale syzygie, omdat een heer van die graad er een aspect mee heeft.',
+    'syzygy-degree':
+      'De graad van de prenatale syzygie, in een hoekhuis of een volgend huis, omdat een heer van die graad er een aspect mee heeft.',
   },
   alcocodenLine: (planet: string) => `Alcocoden (gever van jaren): ${planet}`,
   alcocodenRuleLabels: {
     'only-aspecting':
-      'De enige heer van de graad van de hyleg (heerschappij, verheffing, bound of triplicitiet) die er een aspect mee heeft.',
-    'closest-aspect': 'De heer die het dichtst bij een exact aspect met de graad van de hyleg staat.',
-    'more-dignities': 'Even dichtbij, maar heeft meer waardigheden in de graad van de hyleg.',
+      'De enige heer van de graad van de hyleg (heerschappij, exaltatie, bound of triplicitair) die er een aspect mee heeft.',
+    'closest-aspect': 'Gelijk in waardigheden, maar het dichtst bij een exact aspect met de graad van de hyleg.',
+    'more-dignities':
+      'Heeft de meeste waardigheden in de graad van de hyleg van de heren die er een aspect mee hebben.',
     'angular-or-succeedent': 'Tot hier gelijk, maar staat in een hoekhuis of een volgend huis.',
     'closer-to-cusp': 'Tot hier gelijk, maar staat dichter bij de spits van zijn huis.',
     'own-dignity': 'Tot hier gelijk, maar staat in een eigen waardigheid en is niet peregrijn.',
     oriental: 'Tot hier gelijk, maar is oriëntaal.',
     'closer-to-sun': 'Tot hier gelijk, maar staat dichter bij de Zon en is niet verbrand.',
     'lord-order':
-      'In al het overige gelijk, dus de eerste in de volgorde van heren: bound, heerschappij, verheffing, triplicitiet.',
+      'In al het overige gelijk, dus de eerste in de volgorde van heren: bound, heerschappij, exaltatie, triplicitair.',
   },
   noHyleg: 'Geen hyleg gevonden met deze methode',
   hylegSourceNote:
-    'Naar Bonatti, Liber astronomiae, Tr. 9, deel 2, hoofdstuk 1\u20132 (naar \u2018Umar), met hele-tekenhuizen en hele-tekenaspecten, zonder orben. Toont welk punt en welke planeet, niet de levensduur.',
+    'Naar Bonatti, Liber astronomiae, Tr. 9, deel 2, hoofdstuk 1\u20132 (naar \u2018Umar), met hele-tekenhuizen en hele-tekenaspecten, zonder orbs. Toont welk punt en welke planeet, niet de levensduur.',
   yesLabel: 'Ja',
   noLabel: 'Nee',
   jonesShapeLabels: {

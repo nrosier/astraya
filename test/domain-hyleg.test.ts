@@ -134,7 +134,7 @@ describe('the syzygy branch (ch. 1 and ch. 2)', () => {
   it('row 10: a conjunctional nativity takes the Ascendant before the Part of Fortune', () => {
     const result = findHyleg({ ...base, syzygy: syzygy('conjunction', 100) });
     expect(result.hyleg).toEqual({ point: 'ascendant', longitude: ASC, rule: 'ascendant' });
-    // Mars (domicile) opposes exactly; Jupiter (bound, 0-6 of Aries) in Gemini 15 is 15 degrees from the exact sextile.
+    // Mars (domicile) opposes exactly; Venus (bound, 6-12 of Aries) in Gemini 15 is 5 degrees from the exact sextile. Each holds one dignity, so closeness decides.
     expect(result.alcocoden).toEqual({ planet: id('mars'), rule: 'closest-aspect' });
   });
 
@@ -157,6 +157,19 @@ describe('the syzygy branch (ch. 1 and ch. 2)', () => {
     );
     expect(result.hyleg).toEqual({ point: 'syzygy', longitude: LEO + 15, rule: 'syzygy-degree' });
     expect(result.alcocoden).toEqual({ planet: id('saturn'), rule: 'only-aspecting' });
+  });
+
+  it('row 12b: a syzygy degree in a cadent house is skipped, in any sign (ch. 2)', () => {
+    // Gemini 15 is the 3rd house. Mercury, its domicile lord, in Aries sextiles it, so only the cadent house excludes it.
+    const result = findHyleg(
+      chart(
+        'day',
+        { sun: VIRGO + 5, moon: GEMINI + 15, mars: TAURUS + 15, jupiter: TAURUS + 15, mercury: ARIES + 10 },
+        TAURUS + 15,
+        { syzygy: syzygy('conjunction', GEMINI + 15) },
+      ),
+    );
+    expect(result).toEqual({ hyleg: undefined, alcocoden: undefined });
   });
 
   it('row 13: nothing fits, so there is no hyleg ("the hilaj will be made useless")', () => {
@@ -224,15 +237,22 @@ describe('the alcocoden tie-breaks (ch. 1, ch. 2), on hand-made rows', () => {
     expect(pickAlcocoden([row('mars')])).toEqual({ planet: id('mars'), rule: 'only-aspecting' });
   });
 
-  it('closer to an exact aspect wins', () => {
+  it('equal dignities: closer to an exact aspect wins', () => {
     expect(pickAlcocoden([row('mars', { deviation: 4 }), row('venus', { deviation: 1 })])).toEqual({
       planet: id('venus'),
       rule: 'closest-aspect',
     });
   });
 
-  it('equally close: more dignities in the hyleg degree wins', () => {
+  it('more dignities in the hyleg degree wins first, as ch. 1 orders', () => {
     expect(pickAlcocoden([row('mars'), row('venus', { dignities: 2 })])).toEqual({
+      planet: id('venus'),
+      rule: 'more-dignities',
+    });
+  });
+
+  it('a lord farther away with more dignities beats a closer lord with fewer (ch. 1)', () => {
+    expect(pickAlcocoden([row('mars', { deviation: 1 }), row('venus', { deviation: 9, dignities: 2 })])).toEqual({
       planet: id('venus'),
       rule: 'more-dignities',
     });

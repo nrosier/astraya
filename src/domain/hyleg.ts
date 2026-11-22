@@ -22,7 +22,10 @@
  *    sign (ch. 2). The Ascendant needs no house.
  * 4. The degree of the syzygy itself (ch. 1, "seek it then from the degree of the conjunction ... or from the degree of
  *    the prevention"). 'Umar wants the Moon's degree at a prevention; the degree used here is `PrenatalSyzygy.degree`,
- *    the owner's #1798 decision (the luminary above the earth).
+ *    the owner's #1798 decision (the luminary above the earth). Ch. 2: look at the conjunction or the prevention "to
+ *    see [if] it were in an angle or a succeedent to an angle ... (nor will you care whether the sign is masculine or
+ *    feminine)", so the degree must be in an angle or a succeedent in whole-sign houses, in any sign; the same test as
+ *    for the Part of Fortune.
  * 5. Otherwise "the hilaj will be made useless": no hyleg.
  *
  * Fitness of a candidate: "could not be a hilaj unless the Lords of the domiciles (or exaltations or triplicities or
@@ -33,22 +36,30 @@
  * (notes 87 and 107), whatever the chart's own house setting.
  *
  * The alcocoden (ch. 1; ch. 2 "On the knowledge of the al-kadukhadah"): among the four lords of the hyleg's degree that
- * aspect it, the one "closer to the degree by aspect or by conjunction"; closeness is measured in degrees from the exact
- * aspect (owner point 3), no orb. A tie goes to the lord with more dignities in that degree, then, in order, ch. 2's
- * tie-breaks: in an angle or a succeedent; closer to the cusp; in his own dignity rather than peregrine; oriental;
- * closer to the Sun and not combust. The Lord of the face is the last resort in ch. 2, but every hyleg here already has
- * an aspecting lord among the four, so the face lord never decides and is not used.
+ * aspect it, the order is dignities first (owner decision, #1799, 2026-11-23). Ch. 1: a lord with more dignities in the
+ * degree "will be called stronger than the rest, and he will have to be preferred to all, provided that he aspects the
+ * aforesaid degree, even if the distance between the degree of the hilaj and the other one ... were the lesser one".
+ * Only then, among lords with equal dignities, the one "closer to the degree by aspect or by conjunction", measured in
+ * degrees from the exact aspect (owner point 3), no orb. Then, in order, ch. 2's tie-breaks: in an angle or a
+ * succeedent; closer to the cusp; in his own dignity rather than peregrine; oriental; closer to the Sun and not
+ * combust. The Lord of the face is the last resort in ch. 2, but every hyleg here already has an aspecting lord among
+ * the four, so the face lord never decides and is not used.
+ *
+ * A luminary is never the lord of its own degree: the Sun as hyleg does not count as its own aspecting lord, nor the
+ * Moon (owner decision, #1799, 2026-11-23).
  *
  * Divergences kept as comments, not options (ch. 2): Ptolemy does not seek the hyleg in the 8th, and does not mention
  * the sex of the signs; Dorotheus allows the Sun in the 7th and 8th only in masculine signs, and Bonatti advises "observe
  * the opinion of Dorotheus if you can, for it is safer". This module follows Dorotheus's masculine-sign rule, as the
  * brief and the issue state.
  *
- * Open readings, flagged for the owner (see the pull request): (a) a lord that is the candidate itself (the Sun as its
- * own domicile lord) does not count as aspecting it; (b) ch. 1 also says a lord with more dignities is "to be preferred
- * to all, ... even if the distance ... were the lesser one", which this module does not follow (closeness first, as the
- * brief orders it); (c) the whole-sign cusp of a house is its first degree; (d) "impeded" (the Ascendant, ch. 2) and the
- * ch. 2 "angle or succeedent" test on the syzygy degree are not applied.
+ * Night Sun: in a night chart the Sun is tested with the same masculine-sign rule as by day. Dorotheus gives the night
+ * Sun "in places opposite these masculine signs" (ch. 2, with the translator's note that 'Umar is confusing on this
+ * point); that divergence is recorded here and not applied.
+ *
+ * Still open, for the owner: (c) the whole-sign cusp of a house is taken as its first degree, used only for the
+ * "closer to the cusp" tie-break; (d) the "impeded" Ascendant of ch. 2 ("nor were the Ascendant impeded") is not
+ * applied.
  *
  * @module domain/hyleg
  * @purpose Identifies the hyleg and the alcocoden of a nativity, each with the rule that chose it, per Bonatti Tr. 9 part 2 chs. 1-2 (#1799).
@@ -81,8 +92,8 @@ export type HylegRule =
 /** The step that chose the alcocoden among the lords aspecting the hyleg's degree. */
 export type AlcocodenRule =
   | 'only-aspecting'
-  | 'closest-aspect'
   | 'more-dignities'
+  | 'closest-aspect'
   | 'angular-or-succeedent'
   | 'closer-to-cusp'
   | 'own-dignity'
@@ -236,8 +247,8 @@ export function pickAlcocoden(
   if (candidates.length === 1) return { planet: first.body, rule: 'only-aspecting' };
   // Each stage scores a candidate; the lowest scores stay. A stage that scores everyone alike changes nothing.
   const stages: readonly (readonly [AlcocodenRule, (c: AlcocodenCandidate) => number])[] = [
-    ['closest-aspect', (c) => c.deviation],
     ['more-dignities', (c) => -c.dignities],
+    ['closest-aspect', (c) => c.deviation],
     ['angular-or-succeedent', (c) => (c.angularOrSucceedent ? 0 : 1)],
     ['closer-to-cusp', (c) => c.cuspDistance],
     ['own-dignity', (c) => -c.ownDignities],
@@ -316,7 +327,7 @@ export function findHyleg(input: HylegInput): HylegResult {
     aspected({ point: 'ascendant', longitude: input.ascendant, rule: 'ascendant', self: undefined });
   const syzygyStep = (): Found | undefined => {
     const degree = input.syzygy?.degree;
-    return degree === undefined
+    return degree === undefined || !isAngularOrSucceedent(wholeSignHouse(degree, input.ascendant))
       ? undefined
       : aspected({ point: 'syzygy', longitude: degree, rule: 'syzygy-degree', self: undefined });
   };
