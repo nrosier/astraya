@@ -134,6 +134,37 @@ test.describe('with the shared people (#799)', () => {
     await expect(frame).toBeFocused();
   });
 
+  test("the map's own labels are hidden from assistive technology, and the table carries them (#1371)", async () => {
+    test.setTimeout(90_000);
+    await openSharedEinstein(page);
+
+    // The labels the map draws, as text. Trimmed, de-duplicated, empty strings dropped.
+    const drawn = await page.locator('div.acg-map svg text').allTextContents();
+    const labels = [...new Set(drawn.map((text) => text.trim()).filter((text) => text.length > 0))];
+    expect(labels.length).toBeGreaterThan(0);
+
+    // The map card's accessibility snapshot: no label of three or more characters, and no image or graphics node from the SVG.
+    const card = await page.getByRole('region', { name: 'World map' }).ariaSnapshot();
+    for (const label of labels.filter((text) => text.length >= 3)) {
+      expect(card).not.toContain(label);
+    }
+    expect(card).not.toMatch(/^\s*- (img|graphics-\S+)/m);
+
+    // The map is aria-hidden, so it exposes no image role of its own.
+    await expect(page.locator('div.acg-map').getByRole('img')).toHaveCount(0);
+
+    // The structured list carries the same information: visible, with at least one body row.
+    const equivalent = page.getByRole('table', { name: 'What the map shows' });
+    await expect(equivalent).toBeVisible();
+    const bodyRows = equivalent.getByRole('row').filter({ hasText: /\S/ });
+    expect(await bodyRows.count()).toBeGreaterThan(1);
+
+    // Reachable by keyboard: the table's scroll frame takes focus, as in the #1371 test above.
+    const frame = page.getByRole('region', { name: 'What the map shows' });
+    await frame.focus();
+    await expect(frame).toBeFocused();
+  });
+
   test('enabling Local Space adds lines for the checked bodies', async () => {
     test.setTimeout(60_000);
 
