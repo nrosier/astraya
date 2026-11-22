@@ -74,6 +74,14 @@ describe('a card holds no second card', () => {
     expect(body).toMatch(/background:\s*transparent;/);
   });
 
+  it('divides stacked disclosures in a card with a hairline --line top border', () => {
+    const body =
+      /:is\(\.birth-record-card, \.consultation-section, \.consultation-glance, dialog\.settings-card\)\s+\.primitive-disclosure\s+\+ \.primitive-disclosure \{([^}]*)\}/.exec(
+        css,
+      )?.[1] ?? '';
+    expect(body).toMatch(/border-top:\s*var\(--border-hairline\) solid var\(--line\);/);
+  });
+
   it('places the flattening rule after the base disclosure rule', () => {
     const base = css.indexOf('\n.primitive-disclosure {');
     const flat = css.indexOf('dialog.settings-card) .primitive-disclosure {');
