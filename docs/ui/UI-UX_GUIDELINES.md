@@ -471,7 +471,7 @@ These keep the small radius (`--radius-sm`) and are not pills:
 
 - Multi-line textareas.
 - Checkboxes.
-- Popover and menu panels, and cards, because full rounding on tall boxes turns them into ovals.
+- Popover and menu panels, because full rounding on tall boxes turns them into ovals. Cards are not pills either: they use `--radius`, with one token set (see Radius under the design tokens).
 - Bottom sheets (`rounded-t-2xl`).
 - Menu items inside an open panel: the rows in the person switcher, the nav menu, the Export menu, and the PillSelect cards.
 
@@ -588,7 +588,7 @@ A tool page (a screen that takes inputs and returns results, such as Planetary c
 ## 11. Use the design system rather than local styling
 
 - Use the spacing, type, semantic-color, radius, elevation, and motion tokens in `app.css`.
-- **Radius.** `--radius`, `--radius-sm`, `--radius-md` and `--radius-lg` cover boxes and cards. Every single-line control, every button (including icon-only circles), tabs, filter chips and badges use `--radius-full` (equal to 999px), per "Shape: pill or rounded rectangle" (#1650, 2026-11-16). Textareas, checkboxes, popover and menu panels, cards and bottom sheets keep `--radius-sm`, the box radii, or the bottom-sheet radius.
+- **Radius.** `--radius`, `--radius-sm`, `--radius-md` and `--radius-lg` cover boxes and cards. Every single-line control, every button (including icon-only circles), tabs, filter chips and badges use `--radius-full` (equal to 999px), per "Shape: pill or rounded rectangle" (#1650, 2026-11-16). Textareas, checkboxes, popover and menu panels keep `--radius-sm`, the box radii, or the bottom-sheet radius. Cards use `--radius`, with one token set for every card: `--radius` radius, `--space-4` padding on all four sides, a 1px `--line` border, the `--surface` fill, and a title in `--h2-size` at `--h2-weight`. A card holds no second card: a disclosure inside a card drops its own border, radius and fill (#1850, #1851, #1853, #1867).
 - **Type scale (#1353).** The major-second scale in `:root` is `--text-xs` 0.79rem, `--text-sm` 0.889rem, `--text-base` 1rem, `--text-lg` 1.125rem, `--text-xl` 1.266rem and `--text-2xl` 1.424rem. Three further sizes have their own tokens, so no literal is needed for them: `--text-2xs` 0.75rem, `--text-caption` 0.85rem and `--text-md` 1.05rem.
 - **Headings (#1354).** One h2 spec and one h3 spec apply to cards, prose and pages. The h2 is `--h2-size` (`--text-lg`, 1.125rem), `--h2-weight` 600 and `--h2-margin` 0. The h3 is `--h3-size` (`--text-base`, 1rem), `--h3-weight` 600 and `--h3-margin` 0. The six tokens are defined once in `:root` and every heading rule in `app.css` reads them. Prose h2 and h3 follow the same spec as cards (owner decision 2026-11-11: no prose exception). Space around a heading comes from the container's gap or from padding on the heading, never from heading margin.
   - **Exceptions** (identity only; none changes size, weight or margin): `.shell > h2` keeps its uppercase, 0.11em tracking and accent colour; `.birth-record-card h3` keeps its uppercase, 0.04em tracking and muted colour; `.prose h2` keeps its -0.015em tracking; `.focus-interpretation h3` and `.relationship-summary h3` keep their accent colour; `.pdf-summary-card h2` and `.page-header--section` h2 keep `--fg` colour and (page header) a 1.2 line height; `.admin-stack > h2` keeps its tight line height.

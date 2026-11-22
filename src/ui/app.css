@@ -1741,8 +1741,8 @@ footer {
 .birth-record-card h3 {
   margin: var(--h3-margin);
   color: var(--muted);
-  font-size: var(--h3-size);
-  font-weight: var(--h3-weight);
+  font-size: var(--h2-size);
+  font-weight: var(--h2-weight);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -1809,9 +1809,9 @@ footer {
 }
 
 .life-events-card-header h3 {
-  margin: var(--h3-margin);
-  font-size: var(--h3-size);
-  font-weight: var(--h3-weight);
+  margin: var(--h2-margin);
+  font-size: var(--h2-size);
+  font-weight: var(--h2-weight);
 }
 
 .life-events-preview {
@@ -2689,10 +2689,17 @@ label.stacked {
 
 .data-table-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
   margin-bottom: var(--space-2);
+}
+
+/* The title shares the action buttons' height, so it and Copy / Download CSV have one height and one bottom edge. */
+.data-table-head :is(h2, h3) {
+  display: flex;
+  align-items: center;
+  min-height: var(--control-height-compact);
 }
 
 .data-table-head h3 {
@@ -2727,6 +2734,10 @@ label.stacked {
 }
 
 @media (pointer: coarse) {
+  .data-table-head :is(h2, h3) {
+    min-height: var(--control-height);
+  }
+
   .data-table td button.quiet,
   .data-table-actions button {
     min-height: var(--control-height);
@@ -4578,7 +4589,7 @@ dl.primitive-stat-list {
    shove the page. Stacked under the dial, as on a phone, nothing sits below it that could jump, so it
    stays as short as its content instead of showing a tall empty box. */
 .selection-inspector {
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-4);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
@@ -4587,7 +4598,8 @@ dl.primitive-stat-list {
 
 .selection-inspector-title {
   margin: 0 0 var(--space-2);
-  font-size: var(--text-base, 1rem);
+  font-size: var(--h2-size);
+  font-weight: var(--h2-weight);
 }
 
 .selection-inspector ul {
@@ -4629,9 +4641,9 @@ dl.primitive-stat-list {
 /* Flat card (#870): a 1px token border on a low-opacity surface fill, small padding and radius. Shared by the shape
    summary, the aspect patterns section and the Patterns key-value metrics. */
 .flat-card {
-  padding: var(--space-3);
+  padding: var(--space-4);
   border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius);
   background: color-mix(in oklab, var(--surface) 70%, transparent);
 }
 
@@ -6001,9 +6013,9 @@ svg text.chart-symbol-text-unicode {
    screen. */
 .relationship-summary {
   margin: var(--space-4) 0;
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-4);
   border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius);
   background: var(--surface);
 }
 .relationship-summary h2 {
@@ -8531,6 +8543,13 @@ button.primitive-button-form-action {
   background: var(--surface);
 }
 
+/* A card holds no second card: the disclosure inside a card drops its own box. */
+:is(.birth-record-card, .consultation-section, .consultation-glance, dialog.settings-card) .primitive-disclosure {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
 .primitive-disclosure-trigger {
   display: flex;
   width: 100%;
@@ -8925,7 +8944,7 @@ button.primitive-disclosure-trigger:hover:not(:disabled) {
 .consultation-section,
 .consultation-glance {
   border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius);
   background: var(--surface);
   padding: var(--space-4);
 }
@@ -9056,6 +9075,7 @@ dl.consultation-tiles {
   position: absolute;
   width: 1px;
   height: 1px;
+  min-height: 0;
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
@@ -9117,8 +9137,8 @@ dl.consultation-tiles {
   margin: 0;
   margin-right: auto;
   color: var(--muted);
-  font-size: var(--text-sm);
-  font-weight: 600;
+  font-size: var(--h2-size);
+  font-weight: var(--h2-weight);
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -9746,14 +9766,15 @@ a.quiet,
 .preferences-card {
   margin: 0 0 var(--space-6);
   padding: var(--space-4);
-  border: var(--border-hairline) solid var(--border-subtle);
+  border: var(--border-hairline) solid var(--line);
   border-radius: var(--radius-lg);
-  background: var(--bg-surface);
+  background: var(--surface);
 }
 
 .preferences-card-title {
   margin: 0 0 var(--space-3);
   font-size: var(--text-lg);
+  font-weight: var(--h2-weight);
 }
 
 /* The Appearance tab's two groups side by side from 1024px, stacked below (issue 1185). */

@@ -8,12 +8,13 @@
  *
  * A screen's slug in the JSON must have a step below that opens it. Add the step when a screen is added to the review.
  */
-import { mkdirSync, mkdtempSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { build } from '../server/index.ts';
+import { measureCards } from '../scripts/measure-cards.mjs';
 import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
 import { choosePill, gotoAndSettle, openChart, openNatalChart, setLanguage } from './support.ts';
 
@@ -47,6 +48,11 @@ async function shoot(
         // The phone shot is the whole page; the wide ones are the first screen.
         fullPage: size.w === 390,
       });
+      // The card measurements for scripts/measure-cards.mjs, beside the shot.
+      writeFileSync(
+        join(OUT ?? '', `${slug}__${String(size.w)}__${theme}.cards.json`),
+        JSON.stringify(await measureCards(page)),
+      );
     }
   }
   await page.setViewportSize({ width: 1280, height: 800 });
@@ -630,5 +636,57 @@ test('capture the #1798, #1802 and #1834 screens', async ({ browser }) => {
     await page.waitForTimeout(500);
     await shoot(page, slug);
   }
+  await app.close();
+});
+
+/**
+ * #1853 (the horary Hard, Soft and Minor pills take clicks on their words) and #1867 (the Retrograde tooltip on the cycles
+ * motion box sits on the word). Both open from a route with no person, as e2e/chart-tone-pill-click.spec.ts and
+ * e2e/cycles-golden-path.spec.ts do.
+ */
+test('capture the #1853 and #1867 screens', async ({ browser }) => {
+  test.setTimeout(300_000);
+  mkdirSync(OUT ?? '', { recursive: true });
+  process.env.LOG_LEVEL = 'silent';
+  const app = await build({ dbPath: join(mkdtempSync(join(tmpdir(), 'visual-review-')), 'astraya.db') });
+  await app.listen({ port: 0, host: '127.0.0.1' });
+  const address = app.server.address();
+  if (address === null || typeof address === 'string') throw new Error('server did not bind to a port');
+  const baseUrl = `http://127.0.0.1:${String(address.port)}`;
+  const page = await (await newSeededContext(browser, baseUrl)).newPage();
+  await page.setViewportSize({ width: 1280, height: 800 });
+
+  // #1853: a horary chart cast for London, with the Hard, Soft and Minor pills in view.
+  await gotoAndSettle(page, `${baseUrl}/#/explore/horary`);
+  await page.getByLabel('Date the question was asked').fill('2024-03-08');
+  await page.getByLabel('Local time').fill('12:00');
+  await page.getByLabel('Latitude', { exact: true }).fill('51.5072');
+  await page.getByLabel('Longitude', { exact: true }).fill('-0.1276');
+  await page.getByRole('button', { name: 'Cast chart', exact: true }).click();
+  await page.locator('.chart-workbench-dial .chart-wheel svg').first().waitFor({ timeout: 60_000 });
+  const tones = page.getByRole('group', { name: 'Aspect families on the wheel', exact: true });
+  const showTones = async (): Promise<void> => {
+    await tones.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(400);
+  };
+  await showTones();
+  await shoot(page, '74-horary-pills', showTones);
+
+  // #1867: the motion filter on planetary cycles, with the Retrograde definition showing above the option.
+  await gotoAndSettle(page, `${baseUrl}/#/explore/cycles`);
+  await page.getByRole('table').waitFor({ timeout: 60_000 });
+  const retrograde = page.getByRole('radio', {
+    name: 'Retrograde only (e.g. Venus’s inferior conjunctions)',
+    exact: true,
+  });
+  const option = page.locator('label.primitive-choice', { has: retrograde });
+  const showTooltip = async (): Promise<void> => {
+    await option.scrollIntoViewIfNeeded();
+    await option.locator('.primitive-tooltip-trigger').hover();
+    await option.getByRole('tooltip', { includeHidden: true }).waitFor({ state: 'visible' });
+    await page.waitForTimeout(300);
+  };
+  await showTooltip();
+  await shoot(page, '75-cycles-retrograde-tooltip', showTooltip);
   await app.close();
 });

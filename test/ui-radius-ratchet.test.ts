@@ -22,13 +22,11 @@ const SMALL_RADIUS_ALLOWLIST: Record<string, string> = {
   '.app-nav-item, .app-nav-group-toggle': 'navigation menu item (owner answer 4)',
   '.app-nav-menu-item': 'menu item inside the open nav menu (owner answer 4)',
   '.selection-sabian': 'content panel, a container',
-  '.flat-card': 'card, a container',
   '.chart-shape-diagram-wrap': 'diagram container',
   '.command-palette-option':
     'row inside the open command palette, a menu item in an open panel (owner answer 4; added with #1654)',
   '.horary-considerations li': 'list item, not a control',
   '.focus-interpretation': 'text container',
-  '.relationship-summary': 'text container',
   '.corpus-entry-key': 'text container',
   '.corpus-candidate-text': 'text container',
   '.text-diff-removed, .text-diff-added': 'diff highlight, not a control',
@@ -41,7 +39,6 @@ const SMALL_RADIUS_ALLOWLIST: Record<string, string> = {
   '.settings-card-defaults-item':
     'menu item inside the open Defaults menu (owner decision on #1650, 2026-11-17: 5.25px)',
   '.primitive-disclosure': 'disclosure container',
-  '.consultation-section, .consultation-glance': 'card, a container',
   '.consultation-context': 'card, a container',
   '.consultation-note-confirm': 'note container',
   '.pdf-summary-card': 'card, a container',
