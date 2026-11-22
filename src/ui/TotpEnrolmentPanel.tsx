@@ -33,6 +33,9 @@ type Step =
   | { readonly kind: 'done' }
   | { readonly kind: 'hidden' };
 
+/** The link is rendered only for a real `otpauth://` URI, so a server answer such as `javascript:` can never become a clickable href. */
+const isOtpauthUri = (value: string): boolean => value.startsWith('otpauth://');
+
 /** The base32 key in groups of four, easier to type by hand. */
 function groupedKey(secret: string): string {
   return secret.replace(/(.{4})(?=.)/g, '$1 ');
@@ -151,9 +154,11 @@ export function TotpEnrolmentPanel(): React.JSX.Element | null {
           <p className="totp-key">
             <span className="totp-key-label">{t.manualKeyLabel}</span> <code>{groupedKey(step.enrolment.secret)}</code>
           </p>
-          <p>
-            <a href={step.enrolment.otpauthUri}>{t.openInApp}</a>
-          </p>
+          {isOtpauthUri(step.enrolment.otpauthUri) && (
+            <p>
+              <a href={step.enrolment.otpauthUri}>{t.openInApp}</a>
+            </p>
+          )}
           {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
           <div className="field-grid">
             <TextField

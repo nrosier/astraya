@@ -173,6 +173,27 @@ describe('the states', () => {
   });
 });
 
+describe('the authenticator link is rendered only for an otpauth:// URI', () => {
+  it('renders the link for a real otpauth:// URI', async () => {
+    stubFetch({ '/api/auth/totp/enrol': () => json({ secret: SECRET, otpauthUri: URI }) });
+    await mount();
+    await submitPassword();
+    expect(container.querySelector<HTMLAnchorElement>('a[href^="otpauth://"]')?.getAttribute('href')).toBe(URI);
+  });
+
+  it.each(['javascript:alert(1)', 'https://example.com'])(
+    'renders no link for %s, and still shows the manual key',
+    async (uri) => {
+      stubFetch({ '/api/auth/totp/enrol': () => json({ secret: SECRET, otpauthUri: uri }) });
+      await mount();
+      await submitPassword();
+      expect(container.querySelector('a[href]')).toBeNull();
+      expect(container.innerHTML).not.toContain(`href="${uri}"`);
+      expect(container.querySelector('code')?.textContent).toBe('JBSW Y3DP EHPK 3PXP');
+    },
+  );
+});
+
 describe('the recovery-code file and copy', () => {
   async function toRecoveryScreen(): Promise<void> {
     stubFetch({
