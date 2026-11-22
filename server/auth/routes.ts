@@ -8,7 +8,7 @@
 /**
  * @module routes
  * @purpose The local-account HTTP surface: login, logout, "who am I", OIDC config/callback, first-admin setup, and setting a password from an admin-issued link.
- * @conventions Mounted unconditionally — signing in is optional, the anonymous path elsewhere on this server is untouched; session cookies are always `httpOnly`, `sameSite: 'lax'`, and `secure` only when the request is actually HTTPS; `/api/setup` returns 404 rather than 403 once already bootstrapped, so the route's existence isn't confirmed to an attacker.
+ * @conventions Mounted unconditionally — signing in is optional, the anonymous path elsewhere on this server is untouched; session cookies are always `httpOnly`, `sameSite: 'lax'`, and `secure` only when the request is actually HTTPS; `/api/setup` returns 404 rather than 403 once already bootstrapped, so the route's existence isn't confirmed to an attacker; an account with TOTP enabled (#1500) signs in only when the login body also carries `totpCode` (a current code or a recovery code, checked by `login-totp.ts` after the password), and a missing or wrong code gets the wrong-password response and counts on the same per-username throttle.
  * @exports registerAuthRoutes
  */
 import { randomUUID } from 'node:crypto';
@@ -31,6 +31,7 @@ import {
   roleFields,
 } from './identity.ts';
 import { clearLoginThrottle, isLoginThrottled, recordFailedLogin } from './login-throttle.ts';
+import { checkLoginSecondStep } from './login-totp.ts';
 import { exchangeCode, getDiscovery, getEndSessionEndpoint, loadOidcConfig, verifyIdToken } from './oidc.ts';
 import { DUMMY_PASSWORD_HASH, hashPassword, passwordIsTooWeak, verifyPassword } from './passwords.ts';
 import { SESSION_COOKIE, createSession, getSession, revokeAllSessionsForUser, revokeSession } from './sessions.ts';
@@ -51,6 +52,8 @@ const MAX_USERNAME_LENGTH = 64;
 interface LoginBody {
   readonly username?: unknown;
   readonly password?: unknown;
+  /** The TOTP second step (#1500): a current code or a recovery code, sent with the password again. */
+  readonly totpCode?: unknown;
 }
 
 interface SetupBody {
@@ -100,7 +103,23 @@ export function registerAuthRoutes(app: FastifyInstance, db: Database): void {
       // the point is that a client can't tell "no such user" from "wrong password".
       const valid = await verifyPassword(credentials?.passwordHash ?? DUMMY_PASSWORD_HASH, password);
 
+      // Checked again after the Argon2 await: concurrent guesses all passed the first check before any of them
+      // recorded a failure. Before the wrong-password branch, so a throttled burst gets the same 429 whether or not
+      // the password was right. No await sits between this check, the password and code checks and
+      // `recordFailedLogin`, so the requests are counted one after another from here on.
+      if (isLoginThrottled(username)) {
+        return reply.code(429).send({ code: 'rate-limited', error: 'Too many attempts. Try again later.' });
+      }
+
       if (!credentials || !valid || credentials.user.disabledAt !== null) {
+        recordFailedLogin(username);
+        return reply.code(401).send({ code: 'invalid-credentials', error: 'Invalid username or password' });
+      }
+
+      // The TOTP second step (#1500): the client resends the password with `totpCode`. No or a wrong code on an
+      // enabled account is the same response as a wrong password and counts on the same throttle.
+      const totpCode = typeof body.totpCode === 'string' ? body.totpCode : undefined;
+      if (checkLoginSecondStep(db, credentials.user.id, totpCode) === 'refused') {
         recordFailedLogin(username);
         return reply.code(401).send({ code: 'invalid-credentials', error: 'Invalid username or password' });
       }
