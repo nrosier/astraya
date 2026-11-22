@@ -155,9 +155,13 @@ export function toTier2RelationshipPayload(
 /**
  * One Tier 2 request: the mode's own payload, plus the person the page is for (#768). `personId` only
  * files the saved result under that person — the server never puts it in the prompt or the basis. A
- * synastry or composite page sends its primary person.
+ * synastry or composite page sends its primary person. A composite page also sends the other person's
+ * id as `partnerPersonId` (#1852), again only a filter for the saved result; no name is ever sent.
  */
-export type Tier2Request = Tier2RequestPayload & { readonly personId: string };
+export type Tier2Request = Tier2RequestPayload & {
+  readonly personId: string;
+  readonly partnerPersonId?: string;
+};
 
 type Tier2RequestPayload =
   | {
@@ -223,6 +227,8 @@ export interface SavedInterpretationSummary {
   readonly kind: ResultKind | null;
   /** What it was based on; `null` for entries saved before that was recorded. */
   readonly basis: ResultBasis | null;
+  /** The other person of a composite reading (#1852); `null` for natal and older entries, absent from an older server. The name is looked up on this device. */
+  readonly partnerPersonId?: string | null;
 }
 
 export interface SavedInterpretationDetail extends SavedInterpretationSummary {

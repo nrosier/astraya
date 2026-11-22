@@ -1256,6 +1256,175 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
     container.remove();
   });
 
+  describe('the other person of a composite reading (#1852)', () => {
+    const PARTNER = 'p-partnerpartner01';
+    const opened: Store[] = [];
+    let storeCounter = 0;
+
+    const roots: { root: Root; container: HTMLElement }[] = [];
+
+    afterEach(() => {
+      for (const { root, container } of roots.splice(0)) {
+        act(() => {
+          root.unmount();
+        });
+        container.remove();
+      }
+      for (const store of opened.splice(0)) store.close();
+      setLocale('en');
+    });
+
+    /** Signs in, with a local people list that holds `partnerName` (or no partner at all), then opens the AI tab. */
+    async function mountComposite(partnerName: string | undefined, partnerPersonId?: string) {
+      storeCounter += 1;
+      const store = await openStore({ name: `astraya-report-partner-${String(storeCounter)}` });
+      opened.push(store);
+      if (partnerName !== undefined) {
+        await store.mutate([{ entity: 'person', entityId: PARTNER, field: 'displayName', value: partnerName }]);
+      }
+      const container = document.createElement('div');
+      document.body.append(container);
+      const root = createRoot(container);
+      roots.push({ root, container });
+      await act(async () => {
+        root.render(
+          <SessionProvider>
+            <SessionProbe />
+            <StoreProvider store={store}>
+              <ReportView
+                chart={makeChart()}
+                personId={PERSON}
+                {...(partnerPersonId === undefined ? {} : { partnerPersonId })}
+                chartKind={partnerPersonId === undefined ? 'natal' : 'composite'}
+              />
+            </StoreProvider>
+          </SessionProvider>,
+        );
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+      await actWaitFor(() => {
+        expect(latestSession?.status.kind).toBe('ready');
+      });
+      await act(async () => {
+        await latestSession?.signIn('alice', 'correct-horse-battery');
+      });
+      await actWaitFor(() => {
+        expect(latestSession?.user?.username).toBe('alice');
+      });
+      await act(async () => {
+        findTab(container, reportViewMessages.en.aiTabLabel).click();
+        await Promise.resolve();
+      });
+      return { container, root, store };
+    }
+
+    function saveRow(
+      locale: 'en' | 'nl',
+      description: string | undefined,
+      partnerPersonId: string | undefined,
+    ): string {
+      const raw = new DatabaseSync(join(dir, 'astraya.db'));
+      const { id: userId } = raw.prepare('SELECT id FROM users WHERE username = ?').get('alice') as { id: string };
+      const key = Buffer.from(process.env.ASTRAYA_ENCRYPTION_KEY ?? '', 'base64');
+      saveInterpretationResult(
+        raw,
+        {
+          userId,
+          personId: PERSON,
+          mode: 'freeform',
+          locale,
+          sections: [{ heading: 'h', body: 'b' }],
+          ...(description === undefined ? {} : { description }),
+          ...(partnerPersonId === undefined ? {} : { partnerPersonId }),
+          basis: { kind: 'whole-chart' },
+        },
+        key,
+      );
+      const { created_at: createdAt } = raw.prepare('SELECT created_at FROM interpretation_results').get() as {
+        created_at: string;
+      };
+      raw.close();
+      return createdAt;
+    }
+
+    async function entryText(container: HTMLElement): Promise<string> {
+      await actWaitFor(() => {
+        expect(panelOf(container).querySelectorAll('.tier2-saved-results button')).toHaveLength(1);
+      });
+      return panelOf(container).querySelector('.tier2-saved-results button')?.textContent ?? '';
+    }
+
+    it('names the partner inline after the description, from the local people list (en)', async () => {
+      const { container } = await mountComposite('Max Born', PARTNER);
+      const createdAt = saveRow('en', 'Short and warm', PARTNER);
+      expect(await entryText(container)).toBe(
+        `${formatSavedTime(createdAt, 'en')} (Short and warm · with Max Born) (AI interpretation of the entire chart)`,
+      );
+    });
+
+    it('names the partner in Dutch', async () => {
+      const { container } = await mountComposite('Max Born', PARTNER);
+      await act(async () => {
+        setLocale('nl');
+        await Promise.resolve();
+      });
+      const createdAt = saveRow('nl', 'Kort en warm', PARTNER);
+      expect(await entryText(container)).toBe(
+        `${formatSavedTime(createdAt, 'nl')} (Kort en warm · met Max Born) (AI-interpretatie van de hele horoscoop)`,
+      );
+    });
+
+    it('shows the fallback, never the id, when the partner is no longer in the list', async () => {
+      const { container } = await mountComposite(undefined, PARTNER);
+      saveRow('en', 'Short and warm', PARTNER);
+      const text = await entryText(container);
+      expect(text).toContain('(Short and warm · with someone no longer in your list)');
+      expect(text).not.toContain(PARTNER);
+    });
+
+    it('renders an entry without a partner exactly as before', async () => {
+      const { container } = await mountComposite('Max Born');
+      const createdAt = saveRow('en', 'Short and warm', undefined);
+      expect(await entryText(container)).toBe(
+        `${formatSavedTime(createdAt, 'en')} (Short and warm) (AI interpretation of the entire chart)`,
+      );
+    });
+
+    it('sends the partner id, and no name, in a composite generate request; a natal one sends none', async () => {
+      const composite = await mountComposite('Max Born', PARTNER);
+      await act(async () => {
+        consentCheckbox(composite.container).click();
+        setTextareaValue(customPromptTextarea(composite.container), 'warm and encouraging, focused on career growth');
+        await Promise.resolve();
+      });
+      act(() => {
+        generateButton(composite.container).click();
+      });
+      await actWaitFor(() => {
+        expect(lastGenerateRequest).toBeDefined();
+      });
+      expect(lastGenerateRequest).toMatchObject({ personId: PERSON, partnerPersonId: PARTNER });
+      expect(JSON.stringify(lastGenerateRequest)).not.toContain('Max Born');
+    });
+
+    it('a natal page sends no partner id', async () => {
+      const natal = await mountComposite('Max Born');
+      await act(async () => {
+        consentCheckbox(natal.container).click();
+        setTextareaValue(customPromptTextarea(natal.container), 'warm and encouraging, focused on career growth');
+        await Promise.resolve();
+      });
+      act(() => {
+        generateButton(natal.container).click();
+      });
+      await actWaitFor(() => {
+        expect(lastGenerateRequest).toBeDefined();
+      });
+      expect(lastGenerateRequest).not.toHaveProperty('partnerPersonId');
+    });
+  });
+
   it('shows the history line in Dutch when the language is Dutch (#423)', async () => {
     const { container, root } = await mountSignedIn();
     await act(async () => {

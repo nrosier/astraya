@@ -8,6 +8,10 @@ feature and fixes is a minor release. See [docs/ops/RELEASING.md](docs/ops/RELEA
 
 ## [Unreleased]
 
+### Changed
+
+- **Partner named in a relationship reading's history (#1852).** A saved composite interpretation records the other person's id, and the history entry reads "<description> · with <name>", the name looked up on the device. For people running their own server: migration 22 is applied on start and adds one nullable column, `partner_person_id`, to `interpretation_results`. No action is needed, and the name never reaches the server.
+
 ## [0.57.0] — 2026-11-20
 
 **An icon rail for the sidebar, the search circle in its own top row, the life-event picker beside Now, a Hermetic lots card, the prenatal syzygy on natal charts, and the firdaria sub-period in the consultation year.**

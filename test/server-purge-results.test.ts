@@ -69,6 +69,24 @@ describe('purging a person erases their saved results (#768)', () => {
     db.close();
   });
 
+  it('keeps a reading whose partner was purged and clears the partner id (#1852)', () => {
+    const db = openDatabase(':memory:');
+    const key = randomBytes(32);
+    const userId = makeUser(db, 'alice');
+    const id = saveInterpretationResult(
+      db,
+      { userId, mode: 'freeform', locale: 'en', sections: SECTIONS, personId: PERSON_A, partnerPersonId: PERSON_B },
+      key,
+    );
+
+    recordPurgeAndErase(db, userId, 'person', PERSON_B, new Date().toISOString(), 'marker-hlc', key);
+
+    const [kept] = listInterpretationResults(db, userId, { personId: PERSON_A }, 'en');
+    expect(kept?.id).toBe(id);
+    expect(kept?.partnerPersonId).toBeNull();
+    db.close();
+  });
+
   it('does not touch results when the purged entity is not a person', () => {
     const db = openDatabase(':memory:');
     const key = randomBytes(32);

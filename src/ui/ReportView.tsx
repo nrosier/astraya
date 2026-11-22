@@ -73,7 +73,8 @@ import { SavedInterpretationsPanel } from './SavedInterpretationsPanel.js';
 import { GlossaryText } from './GlossaryText.js';
 import { GlossaryTerm } from './GlossaryTerm.js';
 import { useSessionUserOrUndefined } from './session-context.js';
-import { useOptionalStore } from './store-context.js';
+import { useOptionalStore, useOptionalStoreState } from './store-context.js';
+import { partnerSuffix } from './saved-partner-label.js';
 import { useUserCorpusLayer } from './user-corpus-layer.js';
 import { CorpusCorrectionEditor, type CorrectionTarget } from './CorpusCorrectionEditor.js';
 import { SuggestCorrectionDialog } from './SuggestCorrectionDialog.js';
@@ -312,6 +313,7 @@ function AiCustomizedPanel({
   chartKind,
   exclude,
   personId,
+  partnerPersonId,
 }: {
   readonly report: Report;
   readonly locale: Locale;
@@ -322,8 +324,11 @@ function AiCustomizedPanel({
   readonly exclude: InterpretationExclusions;
   /** The person the report is for (#768); absent, nothing is listed or generated. */
   readonly personId: string | undefined;
+  /** A composite page's other person (#1852): sent as an id only, and looked up locally for the history entries. */
+  readonly partnerPersonId: string | undefined;
 }): React.JSX.Element {
   const t = useMessages(reportViewMessages);
+  const people = useOptionalStoreState()?.people;
   const shared = useMessages(sharedMessages);
   const online = useOnline();
   const user = useSessionUserOrUndefined();
@@ -373,6 +378,16 @@ function AiCustomizedPanel({
         ? t.tier2GenerateDisabledGuardrail
         : undefined;
 
+  /** `time (description · with Max) (kind)`; with no description the name goes after the kind (#1852). Unchanged when there is no partner. */
+  function savedEntryText(saved: SavedInterpretationSummary): string {
+    const suffix = partnerSuffix(saved.partnerPersonId, people, locale);
+    const kind = savedKindLabel(saved, locale);
+    const time = formatSavedTime(saved.createdAt, locale);
+    return saved.description === null
+      ? t.tier2SavedEntry(time, kind + suffix, null)
+      : t.tier2SavedEntry(time, kind, saved.description + suffix);
+  }
+
   function handleGenerate(): void {
     if (personId === undefined) return;
     setGenerating(true);
@@ -382,9 +397,10 @@ function AiCustomizedPanel({
     // moment this request is dispatched, so a second "Generate" click (or a mode switch
     // afterward sending a broader payload) requires a fresh tick, not a leftover one (#391).
     setConsent(false);
+    const partner = partnerPersonId === undefined ? {} : { partnerPersonId };
     const request =
       mode === 'grounded'
-        ? { mode: 'grounded' as const, placementKeys, customPrompt, locale, personId }
+        ? { mode: 'grounded' as const, placementKeys, customPrompt, locale, personId, ...partner }
         : {
             mode: 'freeform' as const,
             chartData: toTier2ChartPayload(chart, exclude),
@@ -392,6 +408,7 @@ function AiCustomizedPanel({
             ...(customPrompt.trim() === '' ? {} : { customPrompt }),
             locale,
             personId,
+            ...partner,
           };
     generateTier2Interpretation(request)
       .then((sections) => {
@@ -523,11 +540,7 @@ function AiCustomizedPanel({
                     openSaved(saved.id);
                   }}
                 >
-                  {t.tier2SavedEntry(
-                    formatSavedTime(saved.createdAt, locale),
-                    savedKindLabel(saved, locale),
-                    saved.description,
-                  )}
+                  {savedEntryText(saved)}
                 </Button>
               </li>
             ))}
@@ -543,6 +556,7 @@ export function ReportView({
   chartKind = 'natal',
   exclude = NO_EXCLUSIONS,
   personId,
+  partnerPersonId,
   rulership: rulershipProp,
   onRulershipChange,
 }: {
@@ -562,6 +576,8 @@ export function ReportView({
   readonly chartKind?: 'natal' | 'composite';
   /** The person the report is for (#768): its AI readings list and save under them. Absent (until every caller passes it), nothing is listed or generated. */
   readonly personId?: string | undefined;
+  /** The other person of a composite page (#1852): their id is sent and saved with the AI reading, and their name is looked up locally for the history entries. Never the name. */
+  readonly partnerPersonId?: string | undefined;
   /**
    * The planetary rulers for this report (#806): the person's own choice. Left out for a composite, which belongs to
    * no single person, the report follows the device default rulership.
@@ -818,6 +834,7 @@ export function ReportView({
             chartKind={chartKind}
             exclude={exclude}
             personId={personId}
+            partnerPersonId={partnerPersonId}
           />
         ) : (
           <SavedInterpretationsPanel personId={personId} />

@@ -135,6 +135,8 @@ interface GenerateBody {
   readonly locale?: unknown;
   /** The person the page was generated for (#768); required, and only a filter for the saved result. A synastry or composite page files under its primary person. Never reaches the prompt or the basis. */
   readonly personId?: unknown;
+  /** The other person of a composite page (#1852); optional, only a filter for the saved result. The id only: the name never leaves the device. Never reaches the prompt, the basis, the description request or a log line. */
+  readonly partnerPersonId?: unknown;
 }
 
 type ChartKind = 'natal' | 'composite';
@@ -521,6 +523,13 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
       if (!isPersonId(personId)) {
         return reply.code(400).send({ code: 'invalid-request', error: 'personId must be a person id' });
       }
+      // Any mode: a grounded composite page sends no `chartKind`, so the route cannot tell it from a natal one.
+      const { partnerPersonId } = body;
+      if (partnerPersonId !== undefined && (!isPersonId(partnerPersonId) || partnerPersonId === personId)) {
+        return reply
+          .code(400)
+          .send({ code: 'invalid-request', error: 'partnerPersonId must be a person id other than personId' });
+      }
 
       let facts: string[] = [];
       /** Grounded mode only: resolved against the corpus after the Tier 2 config check, so a deployment without a key never loads it. */
@@ -726,7 +735,16 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
       if (resultsKey) {
         saveInterpretationResult(
           db,
-          { userId, mode, locale, sections: result.sections, description, basis, personId },
+          {
+            userId,
+            mode,
+            locale,
+            sections: result.sections,
+            description,
+            basis,
+            personId,
+            ...(partnerPersonId === undefined ? {} : { partnerPersonId }),
+          },
           resultsKey,
         );
       }
