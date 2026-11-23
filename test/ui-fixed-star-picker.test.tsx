@@ -43,6 +43,7 @@ function fakeProvider(): EphemerisProvider {
     positions: notImplemented,
     houses: notImplemented,
     housesFromArmc: notImplemented,
+    riseTransit: notImplemented,
     houseSystemName: (system) => Promise.resolve(`House system ${system}`),
     ayanamsa: notImplemented,
     obliquity: notImplemented,

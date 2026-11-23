@@ -31,6 +31,8 @@ import type {
   FixedStarMagnitude,
   FixedStarPosition,
   GeoPosition,
+  RiseTransitEvent,
+  RiseTransitHorizon,
   HorizontalPosition,
   HousePositions,
   HouseSystem,
@@ -360,6 +362,16 @@ export class WorkerEphemerisProvider implements EphemerisProvider {
 
   nextLunarEclipse(fromJd: JulianDayUT, backwards?: boolean): Promise<LunarEclipse> {
     return this.#call('nextLunarEclipse', [fromJd, backwards]);
+  }
+
+  riseTransit(
+    jd: JulianDayUT,
+    body: BodyId,
+    place: GeoPosition,
+    event: RiseTransitEvent,
+    horizon: RiseTransitHorizon,
+  ): Promise<JulianDayUT | undefined> {
+    return this.#call('riseTransit', [jd, body, place, event, horizon]);
   }
 
   azimuthAltitude(
