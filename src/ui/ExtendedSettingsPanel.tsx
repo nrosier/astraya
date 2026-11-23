@@ -51,6 +51,7 @@ import {
   matchOrbProfile,
   type OrbProfileId,
 } from '../astrology/orb-profiles.js';
+import { DEFAULT_FORTUNE_FORMULA } from '../astrology/arabic-parts.js';
 import { DEFAULT_RULERSHIP_CHOICE, type RulershipChoice } from '../astrology/rulership.js';
 import { isStationWindowK, STATION_WINDOW_DEFAULT_K } from '../astrology/planetary-condition.js';
 import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
@@ -765,6 +766,8 @@ export function ExtendedSettingsPanel({
         return t.summary.lilith(modelName(value.lilithVariant));
       case 'node':
         return t.summary.node(modelName(value.nodeVariant));
+      case 'fortuneFormula':
+        return t.summary.fortuneFormula(t.fortuneSameDayAndNight);
       case 'rainbow':
         return t.summary.rainbow;
       case 'stationWindow':
@@ -1389,6 +1392,24 @@ export function ExtendedSettingsPanel({
                         ]}
                         onChange={(value) => {
                           if (value === 'mean' || value === 'true') patch({ nodeVariant: value });
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div className="settings-card-indent">
+                    <div className="settings-card-choice-line">
+                      <ChoiceGroup
+                        label={t.fortuneFormulaLabel}
+                        showLabel
+                        value={draft.fortuneFormula ?? DEFAULT_FORTUNE_FORMULA}
+                        options={[
+                          { value: 'sect-reversed', label: t.fortuneSectReversed },
+                          { value: 'same-day-and-night', label: t.fortuneSameDayAndNight },
+                        ]}
+                        onChange={(value) => {
+                          if (value === 'sect-reversed' || value === 'same-day-and-night') {
+                            patch({ fortuneFormula: value });
+                          }
                         }}
                       />
                     </div>
