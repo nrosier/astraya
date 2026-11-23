@@ -234,7 +234,7 @@ export async function build(options: BuildOptions = {}) {
   registerCorpusOverrideRoutes(app, db);
   registerCorpusCandidateRoutes(app, db);
   registerCorpusSubmissionRoutes(app, db);
-  registerProfileOverlayRoute(app);
+  registerProfileOverlayRoute(app, db);
   registerInterpretationRoutes(app, db);
 
   await app.register(fastifyStatic, { root: distRoot, index: ['index.html'] });

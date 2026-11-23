@@ -1,29 +1,55 @@
 // @vitest-environment jsdom
-/** The birth-record easter egg (#697): the check, and the overlay's lifecycle. */
+/** The birth-record easter egg (#697): the server check's client side (#1808), and the overlay's lifecycle. */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { checkFeatureFlag, initProfileOverlay, type OverlayConfig } from '../src/ui/profile-overlay.js';
+import { checkFeatureFlag, initProfileOverlay, resetFeatureFlagCache } from '../src/ui/profile-overlay.js';
 
-async function hex(text: string): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+/** A stand-in for the server's answer: the route itself is covered by `server-profile-overlay.test.ts`. */
+function answering(status: number, body: unknown = {}) {
+  return vi.fn<typeof fetch>(() => Promise.resolve(new Response(JSON.stringify(body), { status })));
 }
 
-describe('checkFeatureFlag (#697)', () => {
-  let config: OverlayConfig;
-  beforeEach(async () => {
-    config = { enabled: true, dateDigest: await hex('2001-02-03'), nameDigest: await hex('example') };
+describe('checkFeatureFlag (#697, #1808)', () => {
+  beforeEach(() => {
+    resetFeatureFlagCache();
   });
 
-  it('matches when the date and any one name word match', async () => {
-    expect(await checkFeatureFlag('2001-02-03', 'Jo Example', config)).toBe(true);
-    expect(await checkFeatureFlag('2001-02-03', 'EXAMPLE, Jo', config)).toBe(true);
-    expect(await checkFeatureFlag('2001-02-03', '  Jo   Ex-ample  ', config)).toBe(true);
+  it('sends the date and name to the server and shows only on enabled and match', async () => {
+    const fetchImpl = answering(200, { enabled: true, match: true });
+    expect(await checkFeatureFlag('2001-02-03', 'Jo Example', fetchImpl)).toBe(true);
+    const [url, init] = fetchImpl.mock.calls[0] ?? [];
+    expect(url).toBe('/api/profile-overlay/check');
+    expect(init?.method).toBe('POST');
+    expect(typeof init?.body).toBe('string');
+    expect(JSON.parse(typeof init?.body === 'string' ? init.body : '')).toEqual({
+      date: '2001-02-03',
+      name: 'Jo Example',
+    });
   });
 
-  it('needs both', async () => {
-    expect(await checkFeatureFlag('2001-02-04', 'Jo Example', config)).toBe(false);
-    expect(await checkFeatureFlag('2001-02-03', 'Jo Sample', config)).toBe(false);
-    expect(await checkFeatureFlag('2001-02-03', 'Jo Example', { enabled: false })).toBe(false);
+  it('is no match when the server says no match or off', async () => {
+    expect(await checkFeatureFlag('2001-02-04', 'Jo Example', answering(200, { enabled: true, match: false }))).toBe(
+      false,
+    );
+    expect(await checkFeatureFlag('2001-02-03', 'Jo Sample', answering(200, { enabled: false, match: false }))).toBe(
+      false,
+    );
+  });
+
+  it('stays silent on 401, 429 or a network failure, and does not keep that answer', async () => {
+    expect(await checkFeatureFlag('2001-02-03', 'Jo Example', answering(401))).toBe(false);
+    expect(await checkFeatureFlag('2001-02-03', 'Jo Example', answering(429))).toBe(false);
+    const offline = vi.fn<typeof fetch>(() => Promise.reject(new TypeError('offline')));
+    expect(await checkFeatureFlag('2001-02-03', 'Jo Example', offline)).toBe(false);
+    expect(await checkFeatureFlag('2001-02-03', 'Jo Example', answering(200, { enabled: true, match: true }))).toBe(
+      true,
+    );
+  });
+
+  it('asks once per date and name for the page load', async () => {
+    const fetchImpl = answering(200, { enabled: true, match: true });
+    await checkFeatureFlag('2001-02-03', 'Jo Example', fetchImpl);
+    await checkFeatureFlag('2001-02-03', 'Jo Example', fetchImpl);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 });
 

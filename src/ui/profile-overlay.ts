@@ -1,40 +1,45 @@
 /**
  * @module ui/profile-overlay
- * @purpose An easter egg for the birth-record screen (#697): a short fireworks overlay when the deployment's `ASTRAYA_EASTER_EGG` setting matches the person shown.
- * @conventions Off without the server route (the static demo) or the setting; skipped under reduced motion. The overlay is a fixed, click-through, `aria-hidden` canvas that removes itself once its last spark fades.
- * @exports OverlayConfig, loadOverlayConfig, checkFeatureFlag, initProfileOverlay
+ * @purpose An easter egg for the birth-record screen (#697): a short fireworks overlay when the server says the person shown matches the deployment's `ASTRAYA_EASTER_EGG` setting.
+ * @conventions The match is decided on the server (`POST /api/profile-overlay/check`, signed-in only, #1808); this module sends the saved date and name and reads back only `enabled` and `match`. Silent when off: any failure (no server in the static demo, 401, 429, a network error) is no match and is not cached; a real answer is kept for the page load, one per date and name. Skipped under reduced motion. The overlay is a fixed, click-through, `aria-hidden` canvas that removes itself once its last spark fades.
+ * @exports checkFeatureFlag, resetFeatureFlagCache, initProfileOverlay
  */
 
-export type OverlayConfig =
-  { readonly enabled: false } | { readonly enabled: true; readonly dateDigest: string; readonly nameDigest: string };
-
-const OFF: OverlayConfig = { enabled: false };
-let configRequest: Promise<OverlayConfig> | undefined;
-
-/** The deployment's setting, fetched once per page load; off on any failure. */
-export function loadOverlayConfig(fetchImpl: typeof fetch = fetch): Promise<OverlayConfig> {
-  configRequest ??= fetchImpl('/api/profile-overlay')
-    .then(async (response) => (response.ok ? ((await response.json()) as OverlayConfig) : OFF))
-    .then((config) => (config.enabled && typeof config.dateDigest === 'string' ? config : OFF))
-    .catch(() => OFF);
-  return configRequest;
+interface CheckResponse {
+  readonly enabled?: unknown;
+  readonly match?: unknown;
 }
 
-async function sha256Hex(text: string): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+const checks = new Map<string, Promise<boolean>>();
+
+/** Asks the server whether this date (`YYYY-MM-DD`) and name match the setting; false on any failure, never throws. */
+export function checkFeatureFlag(date: string, name: string, fetchImpl: typeof fetch = fetch): Promise<boolean> {
+  const cacheKey = JSON.stringify([date, name]);
+  let check = checks.get(cacheKey);
+  if (check === undefined) {
+    check = fetchImpl('/api/profile-overlay/check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date, name }),
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('no answer');
+        const body = (await response.json()) as CheckResponse;
+        return body.enabled === true && body.match === true;
+      })
+      .catch(() => {
+        // Only a real answer is kept, so a 401 before sign-in or a 429 does not stick for the page load.
+        checks.delete(cacheKey);
+        return false;
+      });
+    checks.set(cacheKey, check);
+  }
+  return check;
 }
 
-export async function checkFeatureFlag(date: string, name: string, config: OverlayConfig): Promise<boolean> {
-  if (!config.enabled) return false;
-  if ((await sha256Hex(date)) !== config.dateDigest) return false;
-  const tokens = name
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s]/gu, '')
-    .split(/\s+/)
-    .filter((token) => token !== '');
-  const digests = await Promise.all(tokens.map(sha256Hex));
-  return digests.includes(config.nameDigest);
+/** Forgets every answer, e.g. after a sign-in change or between tests. */
+export function resetFeatureFlagCache(): void {
+  checks.clear();
 }
 
 interface Spark {

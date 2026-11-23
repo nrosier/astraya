@@ -46,7 +46,8 @@ import { orbSourceName, useCalculationBasisLine } from './calculation-basis.js';
 import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
 import { PersonFileActions } from './PersonFileActions.js';
-import { checkFeatureFlag, initProfileOverlay, loadOverlayConfig } from './profile-overlay.js';
+import { checkFeatureFlag, initProfileOverlay } from './profile-overlay.js';
+import { useSessionUserOrUndefined } from './session-context.js';
 import { errorDetail } from './api-error.js';
 
 function accuracyOptions(t: typeof personFormMessages.en): Record<TimeAccuracy, string> {
@@ -135,20 +136,20 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
       ? undefined
       : `${String(civil.year).padStart(4, '0')}-${String(civil.month).padStart(2, '0')}-${String(civil.day).padStart(2, '0')}`;
   const savedName = person?.displayName ?? '';
+  // The server decides the match and needs a session (#1808), so a signed-out reader sends nothing.
+  const signedIn = useSessionUserOrUndefined() !== undefined;
   useEffect(() => {
-    if (savedDate === undefined) return undefined;
+    if (savedDate === undefined || !signedIn) return undefined;
     let stop: (() => void) | undefined;
     let cancelled = false;
-    void loadOverlayConfig()
-      .then((config) => checkFeatureFlag(savedDate, savedName, config))
-      .then((matches) => {
-        if (matches && !cancelled) stop = initProfileOverlay();
-      });
+    void checkFeatureFlag(savedDate, savedName).then((matches) => {
+      if (matches && !cancelled) stop = initProfileOverlay();
+    });
     return () => {
       cancelled = true;
       stop?.();
     };
-  }, [savedDate, savedName]);
+  }, [savedDate, savedName, signedIn]);
 
   if (person === undefined) {
     return <PersonNotFound />;
