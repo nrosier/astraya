@@ -9,6 +9,7 @@
  * @conventions Pure, tested without a DOM; the actual wording comes from the Extended settings panel's own messages, keyed by the returned ChangedSetting values.
  * @exports ChangedSetting, changedSettings, sameSettings
  */
+import { DEFAULT_FORTUNE_FORMULA } from '../astrology/arabic-parts.js';
 import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from '../chart/extended-settings.js';
 
 export type ChangedSetting =
@@ -24,6 +25,8 @@ export type ChangedSetting =
   | 'midpoints'
   | 'lilith'
   | 'node'
+  /** The Part of Fortune formula (#1794) is not the default Hellenistic reversal. */
+  | 'fortuneFormula'
   | 'rainbow'
   /** The station window (#724), an Astraya convention, on. */
   | 'stationWindow'
@@ -45,6 +48,7 @@ export function changedSettings(value: ExtendedSettings): readonly ChangedSettin
   if (value.midpointsVisible !== defaults.midpointsVisible) changed.push('midpoints');
   if (value.lilithVariant !== defaults.lilithVariant) changed.push('lilith');
   if (value.nodeVariant !== defaults.nodeVariant) changed.push('node');
+  if ((value.fortuneFormula ?? DEFAULT_FORTUNE_FORMULA) !== DEFAULT_FORTUNE_FORMULA) changed.push('fortuneFormula');
   if (value.rainbowZodiac !== defaults.rainbowZodiac) changed.push('rainbow');
   if (value.stationWindow !== undefined) changed.push('stationWindow');
   if (value.motionScore === true) changed.push('motionScore');
