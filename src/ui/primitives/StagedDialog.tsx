@@ -10,6 +10,7 @@
  * @exports StagedDialog, StagedDialogProps
  */
 import { useEffect, useId, useRef } from 'react';
+import { Button } from './Button.js';
 
 export interface StagedDialogProps {
   readonly open: boolean;
@@ -139,9 +140,9 @@ export function StagedDialog({
         <>
           <div className="settings-card-header">
             <h2 id={headingId}>{heading}</h2>
-            <button type="button" className="quiet primitive-button-circle" aria-label={closeLabel} onClick={onDiscard}>
+            <Button shape="circle" aria-label={closeLabel} onClick={onDiscard}>
               ×
-            </button>
+            </Button>
           </div>
           {subheader !== undefined && <div className="settings-card-subheader">{subheader}</div>}
           <div className="settings-card-body">{children}</div>

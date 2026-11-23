@@ -1,6 +1,6 @@
 /**
  * The app's UI locale (#158) — originally added as a `ReportView`-only picker, then promoted
- * to sit next to `ThemeToggle` as an app-wide setting. It now drives every UI message
+ * to sit next to the theme as an app-wide setting. It now drives every UI message
  * catalogue (`useMessages`, in `messages.ts`) as well as the interpretation report's language.
  *
  * Since #1066 the value is an account preference: it lives in the op log of the open store and follows a signed-in
@@ -8,7 +8,7 @@
  * of that store, kept so the many readers of `useLocale` need no change. The pre-#1066 `astraya:reportLocale` key is
  * read only once, as the one-time migration source.
  *
- * A plain module-level store rather than React context: `LanguageToggle` (mounted once,
+ * A plain module-level store rather than React context: the Preferences language control (mounted once,
  * globally) and `ReportView` (mounted only while that tab is open) both need to read and
  * react to the same value with no provider wiring `App.tsx` would otherwise need.
  */

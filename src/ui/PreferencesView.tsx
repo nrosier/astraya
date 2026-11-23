@@ -3,7 +3,7 @@
  * per `docs/ui/UI-UX_GUIDELINES.md` §3's setting-scope model — a reader should never have to
  * remember that the rulers choice lives in a chart's Extended settings and the symbol class
  * lives in the header. Every control here is the *same* control other screens already use
- * (`RulershipSetting`, `SymbolSetting`, `LanguageToggle`, `ThemeToggle`), writing the same
+ * (`RulershipSetting`, `SymbolSetting`, the language and theme `ChoiceGroup`s), writing the same
  * shared device/account preference those screens read — this page is one more place to reach
  * it, not a second source of truth for it.
  *
@@ -26,7 +26,7 @@
 /**
  * @module ui/PreferencesView
  * @purpose Preferences workspace (#506/#510): Appearance & accessibility/Astrology defaults/Data & privacy as Cards with 60/40 rows (#966), each reusing the screen's own existing device/account-preference controls rather than duplicating them.
- * @conventions Every control is the same shared component/hook other screens already use (RulershipSetting.tsx, SymbolSetting.tsx, ThemeToggle.tsx, locale.ts for the language) — this screen never reads or writes a setting's storage directly. Full-data export reuses domain/full-export.js's pure functions, the same ones AppNav.tsx's Export menu calls. "Check a calculation file" (#582) reuses validateFullExport for the same format/version errors Restore gives, but reads `calculation` off the raw parsed JSON directly, since the validated FullExport never carries that field.
+ * @conventions Every control is the same shared component/hook other screens already use (RulershipSetting.tsx, SymbolSetting.tsx, theme-dom.ts for the theme, locale.ts for the language) — this screen never reads or writes a setting's storage directly. Full-data export reuses domain/full-export.js's pure functions, the same ones AppNav.tsx's Export menu calls. "Check a calculation file" (#582) reuses validateFullExport for the same format/version errors Restore gives, but reads `calculation` off the raw parsed JSON directly, since the validated FullExport never carries that field.
  * @exports PreferencesView
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -80,7 +80,8 @@ import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import { SymbolSetting } from './SymbolSetting.js';
 import { useOptionalStore } from './store-context.js';
-import { ThemeToggle } from './ThemeToggle.js';
+import { applyTheme, readStoredTheme, writeStoredTheme } from './theme-dom.js';
+import { isTheme, THEME_CYCLE, type Theme } from './theme.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { PageHeader } from './PageHeader.js';
 import { PreferencesRow } from './PreferencesRow.js';
@@ -121,8 +122,9 @@ export function PreferencesView({
   const orbLibrary = useOrbLibrary();
   const orbSources = useOrbContextSource();
   const [symbolClass] = useSymbolClass();
-  // The interface language is a shared store (locale.ts), so the header's LanguageToggle and this control stay in step.
+  // The interface language is a shared store (locale.ts), so every place that reads it stays in step with this control.
   const [locale, setLocale] = useLocale();
+  const [theme, setTheme] = useState<Theme>(() => readStoredTheme());
   const [status, setStatus] = useState<ExportStatus | undefined>(undefined);
   const [preview, setPreview] = useState<RestorePreview | undefined>(undefined);
   const [restoring, setRestoring] = useState(false);
@@ -420,7 +422,18 @@ export function PreferencesView({
                   />
                 </PreferencesRow>
                 <PreferencesRow title={t.themeTitle} info={t.themeLabel} infoLabel={t.infoLabel(t.themeTitle)}>
-                  <ThemeToggle />
+                  <ChoiceGroup
+                    label={t.themeTitle}
+                    value={theme}
+                    segmented
+                    options={THEME_CYCLE.map((choice) => ({ value: choice, label: t.themeOptions[choice] }))}
+                    onChange={(value) => {
+                      if (!isTheme(value)) return;
+                      writeStoredTheme(value);
+                      applyTheme(value);
+                      setTheme(value);
+                    }}
+                  />
                 </PreferencesRow>
                 <PreferencesRow title={t.motionLabel} info={t.motionHint} infoLabel={t.infoLabel(t.motionLabel)}>
                   <Select

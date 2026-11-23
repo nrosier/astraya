@@ -81,6 +81,7 @@ const en = {
   cardImport: 'Import & diagnostics',
   languageTitle: 'Language',
   themeTitle: 'Theme',
+  themeOptions: { system: 'System', light: 'Light', dark: 'Dark' },
   tablistLabel: 'Preferences sections',
   tabLabels: { appearance: 'Appearance & Accessibility', astrology: 'Astrology Defaults', data: 'Data & Privacy' },
   // What each tab's settings are stored as. Every one is saved in this browser and none is synced to an account yet,
@@ -214,6 +215,7 @@ const nl: typeof en = {
   cardImport: 'Importeren & diagnose',
   languageTitle: 'Taal',
   themeTitle: 'Thema',
+  themeOptions: { system: 'Systeem', light: 'Licht', dark: 'Donker' },
   tablistLabel: 'Onderdelen van de voorkeuren',
   tabLabels: {
     appearance: 'Weergave & toegankelijkheid',

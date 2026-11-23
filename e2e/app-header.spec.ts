@@ -340,6 +340,28 @@ test.describe('with the shared people (#799)', () => {
     await context.close();
   });
 
+  test('the Export toggle on Progressions is as tall as the chart page PDF link (#1868)', async () => {
+    test.setTimeout(60_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    const pdfLink = page.locator('.page-header-actions > .chart-pdf-link');
+    await expect(pdfLink).toBeVisible();
+    const pdfHeight = (await pdfLink.boundingBox())?.height;
+    const id = /#\/people\/([^/]+)/.exec(page.url())?.[1];
+    if (id === undefined) throw new Error('no person id in the URL');
+    await page.goto(`${baseUrl}/#/people/${id}/timing/progressions`);
+    const exportToggle = page.locator('.page-header-actions .page-header-export-toggle');
+    await expect(exportToggle).toBeVisible();
+    const exportHeight = (await exportToggle.boundingBox())?.height;
+    if (pdfHeight === undefined || exportHeight === undefined) throw new Error('PDF link or Export has no box');
+    // Both are the compact control height (about 32px at 1280x800); text layout can differ by under a pixel.
+    expect(
+      Math.abs(exportHeight - pdfHeight),
+      `Export ${String(exportHeight)} vs PDF ${String(pdfHeight)}`,
+    ).toBeLessThanOrEqual(1);
+    expect(exportHeight).toBeLessThan(36);
+  });
+
   test('the header stays in view and usable while a long page scrolls', async () => {
     test.setTimeout(60_000);
     await openSharedPerson(page, baseUrl, EINSTEIN);

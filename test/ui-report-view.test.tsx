@@ -165,7 +165,7 @@ describe('ReportView corpus loading (locale comes from the shared locale.ts stor
     container.remove();
   });
 
-  it('re-fetches when the shared locale changes (e.g. via LanguageToggle elsewhere in the app)', async () => {
+  it('re-fetches when the shared locale changes (e.g. via the Preferences language control elsewhere in the app)', async () => {
     const { container, root } = await mount();
 
     await act(async () => {
