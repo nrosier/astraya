@@ -31,20 +31,34 @@ export function decodeEntities(s) {
   });
 }
 
+/** Matches one html tag; applied until stable so a split or nested tag cannot survive a pass. */
+const TAG = /<[^<>]*>/g;
+
 /** Converts one html fragment outside <pre> to text (whitespace collapsed). */
 function inline(fragment) {
   return fragment
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/(p|div|h[1-6]|li|ul|ol|tr|table|caption)\s*>/gi, '\n')
     .replace(/<\/(td|th)\s*>/gi, '\t')
-    .replace(/<[^>]*>/g, '')
+    .replace(TAG, '')
     .replace(/[ \r\n\f]+/g, (w) => (w.includes('\n') ? '\n' : ' '))
     .replace(/\n /g, '\n');
 }
 
+/** Applies a removal pattern until nothing matches, so a nested or split tag cannot survive one pass. */
+function stripUntil(text, pattern) {
+  let prev;
+  let out = text;
+  do {
+    prev = out;
+    out = out.replace(pattern, '');
+  } while (out !== prev);
+  return out;
+}
+
 /** Converts an html document to its visible plain text. */
 export function htmlToText(html) {
-  const clean = html.replace(/<!--[\s\S]*?-->/g, '').replace(/<(script|style)\b[\s\S]*?<\/\1\s*>/gi, '');
+  const clean = stripUntil(stripUntil(html, /<!--[\s\S]*?-->/g), /<(script|style)\b[\s\S]*?<\/\1\s*>/gi);
   const parts = clean.split(/(<pre\b[^>]*>[\s\S]*?<\/pre\s*>)/i);
   const out = parts.map((part, i) => {
     if (i % 2 === 1) {
@@ -52,7 +66,7 @@ export function htmlToText(html) {
         .replace(/^<pre\b[^>]*>/i, '')
         .replace(/<\/pre\s*>$/i, '')
         .replace(/<br\s*\/?>/gi, '\n')
-        .replace(/<[^>]*>/g, '');
+        .replace(TAG, '');
       return `\n${decodeEntities(body)}\n`;
     }
     return decodeEntities(inline(part));
