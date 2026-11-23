@@ -37,6 +37,7 @@ import {
   defaultForecastSectionOptions,
   defaultProfectionsSectionOptions,
   defaultProgressionsSectionOptions,
+  defaultPrimaryDirectionsSectionOptions,
   defaultSolarArcSectionOptions,
   defaultSynastrySectionOptions,
   defaultTransitsSectionOptions,
@@ -59,6 +60,7 @@ import {
   type PdfProgressionsSectionOptions,
   type PdfProgressionTechnique,
   type PdfSelection,
+  type PdfPrimaryDirectionsSectionOptions,
   type PdfSolarArcSectionOptions,
   type PdfSynastrySectionOptions,
   type PdfTransitFilterPreset,
@@ -81,6 +83,10 @@ import { useShowDegreeSymbol } from './degree-symbol-setting.js';
 import { useMessages } from './messages.js';
 import { ordered } from './people-list.js';
 import { pdfExportMessages } from './pdf-export.messages.js';
+import { primaryDirectionsViewMessages } from './PrimaryDirectionsView.messages.js';
+import { timingBasisMessages } from './timing-basis.messages.js';
+import { PrimaryDirectionKey } from '../domain/primary-directions.js';
+import type { PrimaryDirectionMode } from '../astrology/primary-directions.js';
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
 import { unreadableSettingsNoticeMessages } from './UnreadableSettingsNotice.messages.js';
 import { orbSourceName, useCalculationBasisLine, withBasisItems } from './calculation-basis.js';
@@ -97,6 +103,16 @@ type BuildStatus =
   | { readonly kind: 'error'; readonly message: string };
 
 type Draft = Omit<PdfSelection, 'personId'>;
+
+/** The three time keys the page offers (#1795), in the page's own order. */
+const PRIMARY_DIRECTION_KEYS: readonly PrimaryDirectionKey[] = [
+  PrimaryDirectionKey.NAIBOD,
+  PrimaryDirectionKey.PTOLEMY,
+  PrimaryDirectionKey.TRUE_SOLAR_ARC,
+];
+
+/** The two direction modes the page offers. */
+const PRIMARY_DIRECTION_MODES: readonly PrimaryDirectionMode[] = ['direct', 'converse'];
 
 function setChart(selection: Draft, options: PdfChartSectionOptions | undefined, type: ChartType): Draft {
   const rest = selection.charts.filter((c) => c.type !== type);
@@ -146,6 +162,7 @@ function summaryLabels(selection: PdfSelection, t: (typeof pdfExportMessages)['e
   if (selection.forecast !== undefined) labels.push(t.forecastLabel);
   if (selection.progressions !== undefined) labels.push(t.progressionsLabel);
   if (selection.solarArc !== undefined) labels.push(t.solarArcLabel);
+  if (selection.primaryDirections !== undefined) labels.push(t.primaryDirectionsLabel);
   if (selection.profections !== undefined) labels.push(t.profectionsLabel);
   if (selection.astrocartography !== undefined) labels.push(t.astrocartographyLabel);
   if (selection.eclipses !== undefined) labels.push(t.eclipsesLabel);
@@ -171,6 +188,8 @@ export function PdfExportBuilder({
 } = {}): React.JSX.Element {
   const t = useMessages(pdfExportMessages);
   const ct = useMessages(chartViewMessages);
+  const timing = useMessages(timingBasisMessages);
+  const directions = useMessages(primaryDirectionsViewMessages);
   const [locale] = useLocale();
   const user = useSessionUserOrUndefined();
   const orbLibrary = useOrbLibrary();
@@ -232,6 +251,7 @@ export function PdfExportBuilder({
     fullSelection.forecast !== undefined ||
     fullSelection.progressions !== undefined ||
     fullSelection.solarArc !== undefined ||
+    fullSelection.primaryDirections !== undefined ||
     fullSelection.profections !== undefined ||
     fullSelection.eclipses !== undefined ||
     fullSelection.charts.some(
@@ -404,6 +424,25 @@ export function PdfExportBuilder({
   const patchSolarArc = (patch: Partial<PdfSolarArcSectionOptions>): void => {
     setSelection((current) =>
       current.solarArc === undefined ? current : { ...current, solarArc: { ...current.solarArc, ...patch } },
+    );
+  };
+
+  const togglePrimaryDirections = (included: boolean): void => {
+    setSelection((current) => {
+      if (!included) {
+        const next = { ...current };
+        delete next.primaryDirections;
+        return next;
+      }
+      return { ...current, primaryDirections: defaultPrimaryDirectionsSectionOptions() };
+    });
+  };
+
+  const patchPrimaryDirections = (patch: Partial<PdfPrimaryDirectionsSectionOptions>): void => {
+    setSelection((current) =>
+      current.primaryDirections === undefined
+        ? current
+        : { ...current, primaryDirections: { ...current.primaryDirections, ...patch } },
     );
   };
 
@@ -1035,6 +1074,64 @@ export function PdfExportBuilder({
                             value={fullSelection.solarArc.asOfDate ?? ''}
                             onChange={(value) => {
                               patchSolarArc({ asOfDate: value });
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <Checkbox
+                        label={t.primaryDirectionsLabel}
+                        checked={fullSelection.primaryDirections !== undefined}
+                        onChange={(value) => {
+                          togglePrimaryDirections(value);
+                        }}
+                      />
+                      {fullSelection.primaryDirections !== undefined && (
+                        <div className="settings-card-indent">
+                          <Select
+                            label={t.primaryDirectionsKeyLabel}
+                            value={fullSelection.primaryDirections.key}
+                            onChange={(value) => {
+                              patchPrimaryDirections({ key: value as PrimaryDirectionKey });
+                            }}
+                            options={PRIMARY_DIRECTION_KEYS.map((key) => ({
+                              value: key,
+                              label: timing.directionKeys[key],
+                            }))}
+                          />{' '}
+                          <Select
+                            label={t.primaryDirectionsModeLabel}
+                            value={fullSelection.primaryDirections.mode}
+                            onChange={(value) => {
+                              patchPrimaryDirections({ mode: value as PrimaryDirectionMode });
+                            }}
+                            options={PRIMARY_DIRECTION_MODES.map((mode) => ({
+                              value: mode,
+                              label: mode === 'direct' ? directions.directMode : directions.converseMode,
+                            }))}
+                          />{' '}
+                          <br />
+                          <Checkbox
+                            label={t.primaryDirectionsActiveTableLabel}
+                            checked={fullSelection.primaryDirections.activeTable}
+                            onChange={(value) => {
+                              patchPrimaryDirections({ activeTable: value });
+                            }}
+                          />{' '}
+                          <Checkbox
+                            label={t.primaryDirectionsAllTableLabel}
+                            checked={fullSelection.primaryDirections.allTable}
+                            onChange={(value) => {
+                              patchPrimaryDirections({ allTable: value });
+                            }}
+                          />{' '}
+                          <Checkbox
+                            label={t.primaryDirectionsWheelLabel}
+                            checked={fullSelection.primaryDirections.wheel}
+                            onChange={(value) => {
+                              patchPrimaryDirections({ wheel: value });
                             }}
                           />
                         </div>
