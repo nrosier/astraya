@@ -29,10 +29,12 @@
  * @module pdf-export-sections
  * @purpose Declarative registry of what can go into a PDF export (#441): which pages/sections are selectable, each section's own options, and ready-made presets.
  * @conventions Pure and DOM-free, with neither jsPDF nor React dependencies, so it's Vitest-testable without a browser; `chart/pdf-export.ts` turns a selection into pages, `ui/PdfExportBuilder.tsx` builds a selection — neither needs this file's internals beyond its exported shape; synastry/composite are single optional fields needing a partner, transits/forecast/progressions/solarArc/profections/astrocartography are single optional fields needing no partner (so, unlike synastry/composite, they can appear in a preset); `charts` is the one array field.
- * @exports PdfSelection, PdfChartSectionOptions, PdfSynastrySectionOptions, PdfCompositeSectionOptions, PdfInterpretationOptions, PdfTransitsSectionOptions, PdfForecastSectionOptions, PdfTransitFilterPreset, PdfProgressionTechnique, PdfProgressionsSectionOptions, PdfSolarArcSectionOptions, PdfProfectionsSectionOptions, PdfAcgLineType, PDF_ACG_LINE_TYPES, PdfAstrocartographySectionOptions, PdfEclipsesSectionOptions, PDF_CHART_TABLES, PDF_VIEW_TABLES, VIEW_TABLES, PDF_CHART_TYPES, EMPTY_SELECTION, PDF_PRESETS, PDF_PRESET_KEYS, applyPdfPreset, matchPdfPreset, pdfSelectionIsEmpty, defaultChartSectionOptions, defaultSynastrySectionOptions, defaultCompositeSectionOptions, defaultTransitsSectionOptions, defaultForecastSectionOptions, defaultProgressionsSectionOptions, defaultSolarArcSectionOptions, defaultProfectionsSectionOptions, defaultAstrocartographySectionOptions, defaultEclipsesSectionOptions
+ * @exports PdfSelection, PdfChartSectionOptions, PdfSynastrySectionOptions, PdfCompositeSectionOptions, PdfInterpretationOptions, PdfTransitsSectionOptions, PdfForecastSectionOptions, PdfTransitFilterPreset, PdfProgressionTechnique, PdfProgressionsSectionOptions, PdfSolarArcSectionOptions, PdfPrimaryDirectionsSectionOptions, PdfProfectionsSectionOptions, PdfAcgLineType, PDF_ACG_LINE_TYPES, PdfAstrocartographySectionOptions, PdfEclipsesSectionOptions, PDF_CHART_TABLES, PDF_VIEW_TABLES, VIEW_TABLES, PDF_CHART_TYPES, EMPTY_SELECTION, PDF_PRESETS, PDF_PRESET_KEYS, applyPdfPreset, matchPdfPreset, pdfSelectionIsEmpty, defaultChartSectionOptions, defaultSynastrySectionOptions, defaultCompositeSectionOptions, defaultTransitsSectionOptions, defaultForecastSectionOptions, defaultProgressionsSectionOptions, defaultSolarArcSectionOptions, defaultPrimaryDirectionsSectionOptions, defaultProfectionsSectionOptions, defaultAstrocartographySectionOptions, defaultEclipsesSectionOptions
  */
 import { utcDay } from '../ui/format.js';
 import type { ProgressedMcMethod } from '../astrology/progressions.js';
+import type { PrimaryDirectionMode } from '../astrology/primary-directions.js';
+import { PrimaryDirectionKey } from './primary-directions.js';
 import { EXTENDED_ACG_BODY_IDS, TRADITIONAL_ACG_BODY_IDS } from './astrocartography.js';
 import type { BodyId } from '../ephemeris/types.js';
 import type { ChartType, ChartViewKind } from '../ui/chart-sections.js';
@@ -167,6 +169,17 @@ export interface PdfSolarArcSectionOptions {
   readonly asOfDate?: string;
 }
 
+/** Primary directions' own place in the export: `PrimaryDirectionsView.tsx`'s time key and
+ * direction mode, the active-at-this-age table and the all-directions table, and the direct
+ * bi-wheel. No "as of" date: the active table is read at the export date, not a chosen one. */
+export interface PdfPrimaryDirectionsSectionOptions {
+  readonly key: PrimaryDirectionKey;
+  readonly mode: PrimaryDirectionMode;
+  readonly activeTable: boolean;
+  readonly allTable: boolean;
+  readonly wheel: boolean;
+}
+
 /** Profections' own place in the export: `ProfectionsView.tsx`'s year/month table and the
  * profected-house meanings beneath it, as of a chosen date. Rulership comes from the same
  * `PdfPlanContext.rulership` every other section reads, not a separate choice here. */
@@ -215,6 +228,7 @@ export interface PdfSelection {
   readonly forecast?: PdfForecastSectionOptions;
   readonly progressions?: PdfProgressionsSectionOptions;
   readonly solarArc?: PdfSolarArcSectionOptions;
+  readonly primaryDirections?: PdfPrimaryDirectionsSectionOptions;
   readonly profections?: PdfProfectionsSectionOptions;
   readonly astrocartography?: PdfAstrocartographySectionOptions;
   readonly eclipses?: PdfEclipsesSectionOptions;
@@ -294,6 +308,22 @@ function fullSolarArcSection(): PdfSolarArcSectionOptions {
   return { positionsTable: true, contactsTable: true };
 }
 
+/** Primary directions' own default parameters, for when it is first ticked in the builder: the Naibod key and direct mode, the page's own defaults. */
+export function defaultPrimaryDirectionsSectionOptions(): PdfPrimaryDirectionsSectionOptions {
+  return {
+    key: PrimaryDirectionKey.NAIBOD,
+    mode: 'direct',
+    activeTable: true,
+    allTable: true,
+    wheel: true,
+  };
+}
+
+/** Primary directions, both tables and the bi-wheel on, Naibod key and direct mode — same defaults as the builder's own. */
+function fullPrimaryDirectionsSection(): PdfPrimaryDirectionsSectionOptions {
+  return defaultPrimaryDirectionsSectionOptions();
+}
+
 /** Profections' own default parameters, for when it is first ticked in the builder. */
 export function defaultProfectionsSectionOptions(): PdfProfectionsSectionOptions {
   return { table: true, meanings: true, asOfDate: todayDateString() };
@@ -366,6 +396,7 @@ export const PDF_PRESETS: Readonly<Record<PdfPresetKey, Omit<PdfSelection, 'pers
     forecast: fullForecastSection(),
     progressions: fullProgressionsSection(),
     solarArc: fullSolarArcSection(),
+    primaryDirections: fullPrimaryDirectionsSection(),
     profections: fullProfectionsSection(),
     astrocartography: fullAstrocartographySection(),
     eclipses: fullEclipsesSection(),
@@ -381,6 +412,7 @@ export const PDF_PRESETS: Readonly<Record<PdfPresetKey, Omit<PdfSelection, 'pers
     transits: fullTransitsSection(),
     progressions: fullProgressionsSection(),
     solarArc: fullSolarArcSection(),
+    primaryDirections: fullPrimaryDirectionsSection(),
   },
 };
 
@@ -437,6 +469,21 @@ function solarArcMatches(
 ): boolean {
   if (preset === undefined) return selection === undefined;
   return selection?.positionsTable === preset.positionsTable && selection.contactsTable === preset.contactsTable;
+}
+
+/** Same reasoning as `transitsMatches`, for the primary directions section. */
+function primaryDirectionsMatches(
+  selection: PdfPrimaryDirectionsSectionOptions | undefined,
+  preset: PdfPrimaryDirectionsSectionOptions | undefined,
+): boolean {
+  if (preset === undefined) return selection === undefined;
+  return (
+    selection?.key === preset.key &&
+    selection.mode === preset.mode &&
+    selection.activeTable === preset.activeTable &&
+    selection.allTable === preset.allTable &&
+    selection.wheel === preset.wheel
+  );
 }
 
 /** Same reasoning as `transitsMatches`, for the profections section. */
@@ -496,6 +543,7 @@ export function matchPdfPreset(selection: PdfSelection): PdfPresetKey | undefine
       forecastMatches(selection.forecast, preset.forecast) &&
       progressionsMatches(selection.progressions, preset.progressions) &&
       solarArcMatches(selection.solarArc, preset.solarArc) &&
+      primaryDirectionsMatches(selection.primaryDirections, preset.primaryDirections) &&
       profectionsMatches(selection.profections, preset.profections) &&
       astrocartographyMatches(selection.astrocartography, preset.astrocartography) &&
       eclipsesMatches(selection.eclipses, preset.eclipses) &&
@@ -526,6 +574,10 @@ export function pdfSelectionIsEmpty(selection: PdfSelection): boolean {
     (selection.progressions === undefined ||
       (!selection.progressions.positionsTable && !selection.progressions.contactsTable)) &&
     (selection.solarArc === undefined || (!selection.solarArc.positionsTable && !selection.solarArc.contactsTable)) &&
+    (selection.primaryDirections === undefined ||
+      (!selection.primaryDirections.activeTable &&
+        !selection.primaryDirections.allTable &&
+        !selection.primaryDirections.wheel)) &&
     (selection.profections === undefined || (!selection.profections.table && !selection.profections.meanings)) &&
     (selection.astrocartography === undefined ||
       (!selection.astrocartography.map && !selection.astrocartography.meanings)) &&

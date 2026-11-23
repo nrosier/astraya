@@ -120,7 +120,7 @@ describe('the Documents page is the PDF builder (#916)', () => {
       'Custom',
       'Executive summary (natal wheel, positions, interpretation)',
       'Complete archive (every chart, every table, interpretation)',
-      'Full predictive report (natal wheel, transits, progressions, solar arc)',
+      'Full predictive report (natal wheel, transits, progressions, solar arc, primary directions)',
     ]);
   });
 

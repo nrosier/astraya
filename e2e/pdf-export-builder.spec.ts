@@ -443,7 +443,11 @@ test.describe('with the shared people (#799)', () => {
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await page.goto(`${baseUrl}/#/documents/pdf`);
     await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Albert Einstein' });
-    await choosePill(page, 'Starting point', 'Full predictive report (natal wheel, transits, progressions, solar arc)');
+    await choosePill(
+      page,
+      'Starting point',
+      'Full predictive report (natal wheel, transits, progressions, solar arc, primary directions)',
+    );
 
     await openGroup(page, 'Progressions, solar arc, profections & astrocartography');
 
