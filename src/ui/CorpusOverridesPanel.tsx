@@ -540,7 +540,14 @@ export function CorpusOverridesPanel(): React.JSX.Element {
                       },
                     }}
                   />
-                  <Button type="button" variant="quiet" disabled={newTag.trim() === ''} onClick={addTag}>
+                  <Button
+                    type="button"
+                    variant="quiet"
+                    shape="capsule"
+                    className="primitive-button-form-action"
+                    disabled={newTag.trim() === ''}
+                    onClick={addTag}
+                  >
                     {t.addTagButton}
                   </Button>
                 </div>

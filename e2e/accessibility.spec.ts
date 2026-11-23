@@ -180,6 +180,38 @@ test('the corpus-overrides table wraps its text instead of scrolling sideways, a
   ).toBeVisible();
 });
 
+test('the corpus editor’s tag field and Add button share a height and a bottom edge, at desktop and phone width (#1933)', async ({
+  page,
+}) => {
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await signIn(page, ADMIN_USERNAME, ADMIN_PASSWORD);
+  await openAdminPanel(page);
+  await page.getByRole('link', { name: 'Corpus overrides', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Corpus corrections' })).toBeVisible();
+  await page.getByRole('button', { name: 'Edit', exact: true }).first().click();
+  const input = page.getByLabel('Add a tag', { exact: true });
+  const add = page.locator('.corpus-tag-add').getByRole('button', { name: 'Add', exact: true });
+  await expect(input).toBeVisible();
+
+  for (const { width, height } of [
+    { width: 1280, height: 800 },
+    { width: 390, height: 844 },
+  ]) {
+    await page.setViewportSize({ width, height });
+    await input.scrollIntoViewIfNeeded();
+    const field = await input.boundingBox();
+    const button = await add.boundingBox();
+    expect(field, `the tag field has a box at ${String(width)}px`).not.toBeNull();
+    expect(button, `the Add button has a box at ${String(width)}px`).not.toBeNull();
+    if (field === null || button === null) return;
+    expect(Math.abs(field.height - button.height), `equal heights at ${String(width)}px`).toBeLessThanOrEqual(0.5);
+    expect(
+      Math.abs(field.y + field.height - (button.y + button.height)),
+      `same bottom edge at ${String(width)}px`,
+    ).toBeLessThanOrEqual(0.5);
+  }
+});
+
 // The collapsed icon rail (#1747): an icon-only column whose entries are named by aria-label, with sibling
 // tooltips. Scanned collapsed at the three reference sizes (below 64rem the preference has no effect), and
 // again with a tooltip showing, since the tooltip surface needs its own contrast.
