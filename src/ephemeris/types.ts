@@ -263,7 +263,11 @@ export interface EphemerisProvider {
    * Houses for an ARMC (sidereal time in degrees), a geographic latitude and an obliquity, with no moment attached
    * (`swe_houses_armc_ex2`). This is what a progressed or directed MC needs once its ARMC is known: Solar Fire derives
    * the progressed Ascendant, Vertex and Equatorial Ascendant from the progressed MC (§30.3.2.1; #1407). Always
-   * tropical: a caller in a sidereal zodiac subtracts the ayanamsa itself. Same polar fallback and warning as `houses`.
+   * tropical, because `swe_houses_armc_ex2` takes no flags. A caller in a sidereal zodiac adds the true ayanamsa
+   * (`ayanamsa()` without `mean`) to a sidereal MC before converting it to an ARMC, subtracts the same value from every
+   * cusp and angle afterwards, and never shifts `armc`, which is a right ascension. That does not hold for the
+   * `SE_SIDBIT_ECL_T0` and `SE_SIDBIT_SSY_PLANE` modes, which project onto another plane. Same polar fallback and
+   * warning as `houses`.
    * The Sunshine system ('I') needs the Sun's declination and is refused.
    */
   housesFromArmc(armc: Degrees, latitude: Degrees, obliquity: Degrees, system: HouseSystem): Promise<HousePositions>;

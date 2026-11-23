@@ -645,7 +645,7 @@ export class SwissEphemerisEngine implements EphemerisProvider {
       const winding = windingCount(cusps.slice(1));
       if (Math.abs(winding - 1) > 1e-6) {
         throw new EphemerisError(
-          `House system 'H' (Horizon) is degenerate at latitude ${latitude}° for this date and time: ` +
+          `House system 'H' (Horizon) is degenerate at latitude ${latitude}° for this sidereal time: ` +
             `its cusps wind ${winding.toFixed(3)}x around the ecliptic instead of once. Swiss Ephemeris's ` +
             `vertical-circle geometry for this system becomes ill-conditioned very close to the celestial ` +
             `equator, depending on the sidereal time of the moment; there is no fallback house system for it. ` +

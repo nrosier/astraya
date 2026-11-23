@@ -22,7 +22,7 @@ beforeAll(async () => {
 describe('housesFromArmc (#1407)', () => {
   it('gives back the chart of a real moment from that moment’s ARMC, latitude and true obliquity', async () => {
     const obliquity = await engine.obliquity(JD);
-    for (const system of ['P', 'K', 'O', 'R', 'C', 'E', 'W', 'B'] as const) {
+    for (const system of ['P', 'K', 'O', 'R', 'C', 'A', 'W', 'B'] as const) {
       const atMoment = await engine.houses(JD, AMSTERDAM, system);
       const fromArmc = await engine.housesFromArmc(atMoment.armc, AMSTERDAM.latitude, obliquity, system);
       expect(fromArmc.system, system).toBe(atMoment.system);
@@ -40,11 +40,24 @@ describe('housesFromArmc (#1407)', () => {
     }
   });
 
-  it('moves the MC by exactly the ARMC step at 0° Aries, where right ascension and longitude coincide', async () => {
+  it('puts the MC at the ARMC at each equinox and solstice, where right ascension and longitude coincide', async () => {
     const obliquity = await engine.obliquity(JD);
-    const result = await engine.housesFromArmc(0, AMSTERDAM.latitude, obliquity, 'P');
-    expect(result.midheaven).toBeCloseTo(0, 9);
-    expect(result.armc).toBeCloseTo(0, 9);
+    for (const armc of [0, 90, 180, 270]) {
+      const result = await engine.housesFromArmc(armc, AMSTERDAM.latitude, obliquity, 'P');
+      expect(result.midheaven, String(armc)).toBeCloseTo(armc, 9);
+      expect(result.armc, String(armc)).toBeCloseTo(armc, 9);
+    }
+  });
+
+  it('returns all 36 Gauquelin sectors through the shared reader, as houses does', async () => {
+    const obliquity = await engine.obliquity(JD);
+    const atMoment = await engine.houses(JD, AMSTERDAM, 'G');
+    const fromArmc = await engine.housesFromArmc(atMoment.armc, AMSTERDAM.latitude, obliquity, 'G');
+    expect(fromArmc.cusps).toHaveLength(atMoment.cusps.length);
+    expect(fromArmc.cusps).toHaveLength(37);
+    for (let sector = 1; sector <= 36; sector += 1) {
+      expect(fromArmc.cusps[sector], `sector ${String(sector)}`).toBeCloseTo(atMoment.cusps[sector] ?? Number.NaN, 6);
+    }
   });
 
   it('falls back to Porphyry inside the polar circle with the library message, as houses does', async () => {
