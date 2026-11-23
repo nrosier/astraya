@@ -6,9 +6,7 @@
       {
         "rule": "flat-type-hierarchy",
         "value": "*",
-        "files": [
-          "docs/references/sources/html/espenak-nasa-moon-phases-1801-1900.html"
-        ],
+        "files": ["docs/references/sources/html/espenak-nasa-moon-phases-1801-1900.html"],
         "createdAt": "2026-11-23T10:34:58.771Z",
         "reason": "Automated triage by Claude (not user-confirmed): file is a verbatim NASA eclipse page saved as a source reference, pinned by sha256 f2bc7758faf1ab693991001f3e68b91a3005dbcacc53d322a43571833dbc8cac in docs/references/sources.json; it is gitignored (docs/references/*) and is not shipped UI, so the type hierarchy cannot be changed without breaking the pinned hash."
       }
