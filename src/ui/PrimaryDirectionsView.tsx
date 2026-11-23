@@ -17,7 +17,7 @@
  * @module PrimaryDirectionsView
  * @purpose Primary directions screen for one person: time-key picker, date and age inputs kept in step, natal/directed bi-wheel at the chosen age, the directions active at that age and the full lifetime list sorted by age.
  * @conventions Gated for unknown birth time like other angle-dependent screens; draws the bi-wheel with renderMultiWheelSvg directly (no cross-ring lines), injected as app-generated SVG the same way TransitView.tsx does; uses PrimaryDirectionsView.messages.ts for en/nl text via useMessages(). Shows a lock notice before the controls (#797): directions are always Placidus/tropical and ignore the client's other calculation settings. Reads the device's natal calculation settings as ChartView does and records them as the artifact's requested snapshot; when they differ from the locked Placidus/tropical settings in house system, zodiac, rulership, node or Lilith, a warning Notice names the differences (#797). Carries its own PrintProvenance footer (#564) labelled with the locked effective settings (PRIMARY_DIRECTIONS_EFFECTIVE_SNAPSHOT).
- * @exports PrimaryDirectionsView
+ * @exports PrimaryDirectionsView, HitRow, toHitRow, hitColumns
  */
 import { GlossaryTerm } from './GlossaryTerm.js';
 import { GlossaryText } from './GlossaryText.js';
@@ -104,7 +104,7 @@ type DirectedLoad =
 
 type Messages = typeof primaryDirectionsViewMessages.en;
 
-interface HitRow {
+export interface HitRow {
   readonly id: string;
   readonly significatorKey: string;
   readonly promissorKey: string;
@@ -114,7 +114,7 @@ interface HitRow {
   readonly age: number;
 }
 
-function toHitRow(hit: PrimaryDirection): HitRow {
+export function toHitRow(hit: PrimaryDirection): HitRow {
   return {
     id: `${hit.significator}-${hit.promissor}-${String(hit.aspectOffset)}`,
     significatorKey: hit.significator,
@@ -141,7 +141,7 @@ function describe(row: HitRow, t: Messages, locale: Locale): string {
   );
 }
 
-function hitColumns(t: Messages, locale: Locale): readonly TableColumn<HitRow>[] {
+export function hitColumns(t: Messages, locale: Locale): readonly TableColumn<HitRow>[] {
   return [
     {
       key: 'significator',

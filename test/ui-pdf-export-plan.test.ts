@@ -13,7 +13,15 @@ import { DEFAULT_RULERSHIP_CHOICE } from '../src/astrology/rulership.js';
 import { DEFAULT_EXTENDED_SETTINGS } from '../src/chart/extended-settings.js';
 import { CURRENT_SNAPSHOT_VERSION } from '../src/domain/calculation-snapshot.js';
 import { TRADITIONAL_ACG_BODY_IDS } from '../src/domain/astrocartography.js';
-import { EMPTY_SELECTION, type PdfChartTable, type PdfSelection } from '../src/domain/pdf-export-sections.js';
+import {
+  EMPTY_SELECTION,
+  type PdfChartTable,
+  type PdfPrimaryDirectionsSectionOptions,
+  type PdfSelection,
+} from '../src/domain/pdf-export-sections.js';
+import { PrimaryDirectionKey } from '../src/domain/primary-directions.js';
+import { primaryDirectionsViewMessages } from '../src/ui/PrimaryDirectionsView.messages.js';
+import { timingBasisMessages } from '../src/ui/timing-basis.messages.js';
 import type { Person } from '../src/domain/person.js';
 import type { SavedInterpretationDetail } from '../src/interpretation/tier2-client.js';
 import { fixedStarsScopeNoteOf } from '../src/ui/ChartView.js';
@@ -1453,5 +1461,182 @@ describe('Hermetic lots table in the PDF (#1797)', () => {
     const eros = lotFormulaByKey('lot-of-eros');
     expect(await erosFormulaCell(LONDON_DAY)).toBe(eros?.dayFormula);
     expect(await erosFormulaCell(LONDON_NIGHT)).toBe(eros?.nightFormula);
+  }, 60_000);
+});
+
+describe('primary directions section in the PDF (#1845)', () => {
+  const provider = () => getEngine();
+  /** Einstein, born 1879-03-14 10:50:02 UT at Ulm (the NASA/Espenak fixture's birth), with a known time. */
+  const EINSTEIN: Person = {
+    id: 'p-einstein',
+    displayName: 'Albert Einstein',
+    moment: {
+      civil: { year: 1879, month: 3, day: 14, hour: 11, minute: 30, second: 0 },
+      coordinates: { latitude: 48.4, longitude: 9.99 },
+      offsetOverrideMinutes: 40,
+    },
+    placeLabel: 'Ulm, Germany',
+    timeAccuracy: 'recorded',
+    notes: '',
+    missing: [],
+  };
+  /** The export date the section reads: 1900-06-01, an age at which both Naibod and the true solar arc have active directions. */
+  const EXPORT_DATE = new Date('1900-06-01T12:00:00Z');
+
+  /** Builds one plan with the given primary-directions options, the clock fixed at the export date. */
+  async function planWith(options: PdfPrimaryDirectionsSectionOptions, locale: 'en' | 'nl' = 'en') {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(EXPORT_DATE);
+    try {
+      const selection: PdfSelection = {
+        personId: EINSTEIN.id,
+        ...EMPTY_SELECTION,
+        primaryDirections: options,
+      };
+      const context: PdfPlanContext = {
+        person: EINSTEIN,
+        provider: await provider(),
+        settings: DEFAULT_EXTENDED_SETTINGS,
+        rulership: DEFAULT_RULERSHIP_CHOICE,
+        locale,
+        corpusFetch,
+      };
+      return await buildPdfPlan(selection, context, chartViewMessages[locale], pdfExportMessages[locale]);
+    } finally {
+      vi.useRealTimers();
+    }
+  }
+
+  const ALL_ON: PdfPrimaryDirectionsSectionOptions = {
+    key: PrimaryDirectionKey.NAIBOD,
+    mode: 'direct',
+    activeTable: true,
+    allTable: true,
+    wheel: true,
+  };
+
+  it('adds the section with both tables and the bi-wheel when every part is on', async () => {
+    const plan = await planWith(ALL_ON);
+    expect(plan.errors).toHaveLength(0);
+    const [section] = plan.sections;
+    if (section?.kind !== 'chart') throw new Error('expected a chart section');
+    expect(section.heading).toContain('Albert Einstein');
+    expect(section.svg?.markup).toContain('<svg');
+    expect(section.tables.map((table) => table.caption)).toEqual([
+      primaryDirectionsViewMessages.en.activeCaption('1'),
+      primaryDirectionsViewMessages.en.allCaption,
+    ]);
+  }, 60_000);
+
+  it('drops the bi-wheel when only that option is off, keeping both tables', async () => {
+    const plan = await planWith({ ...ALL_ON, wheel: false });
+    const [section] = plan.sections;
+    if (section?.kind !== 'chart') throw new Error('expected a chart section');
+    expect(section.svg).toBeUndefined();
+    expect(section.tables).toHaveLength(2);
+  }, 60_000);
+
+  it('drops the active table when only that option is off, keeping the all-directions table and the wheel', async () => {
+    const plan = await planWith({ ...ALL_ON, activeTable: false });
+    const [section] = plan.sections;
+    if (section?.kind !== 'chart') throw new Error('expected a chart section');
+    expect(section.svg?.markup).toContain('<svg');
+    expect(section.tables.map((table) => table.caption)).toEqual([primaryDirectionsViewMessages.en.allCaption]);
+  }, 60_000);
+
+  it('drops the all-directions table when only that option is off', async () => {
+    const plan = await planWith({ ...ALL_ON, allTable: false });
+    const [section] = plan.sections;
+    if (section?.kind !== 'chart') throw new Error('expected a chart section');
+    expect(section.tables.map((table) => table.caption)).toEqual([primaryDirectionsViewMessages.en.activeCaption('1')]);
+  }, 60_000);
+
+  it('adds no section at all when every part is off', async () => {
+    const plan = await planWith({ ...ALL_ON, activeTable: false, allTable: false, wheel: false });
+    expect(plan.sections).toHaveLength(0);
+    expect(plan.errors).toHaveLength(0);
+  }, 60_000);
+
+  it('names the chosen key, mode and method on the basis line, in en and nl', async () => {
+    const naibod = await planWith(ALL_ON);
+    const [naibodSection] = naibod.sections;
+    if (naibodSection?.kind !== 'chart') throw new Error('expected a chart section');
+    expect(naibodSection.hint).toContain(timingBasisMessages.en.directionKeys.naibod);
+    expect(naibodSection.hint).toContain(timingBasisMessages.en.directionMethods.zodiacal);
+
+    const ptolemy = await planWith({ ...ALL_ON, key: PrimaryDirectionKey.PTOLEMY });
+    const [ptolemySection] = ptolemy.sections;
+    if (ptolemySection?.kind !== 'chart') throw new Error('expected a chart section');
+    expect(ptolemySection.hint).toContain(timingBasisMessages.en.directionKeys.ptolemy);
+    expect(ptolemySection.hint).not.toContain(timingBasisMessages.en.directionKeys.naibod);
+
+    const nl = await planWith(ALL_ON, 'nl');
+    const [nlSection] = nl.sections;
+    if (nlSection?.kind !== 'chart') throw new Error('expected a chart section');
+    expect(nlSection.hint).toContain(timingBasisMessages.nl.directionKeys.naibod);
+  }, 60_000);
+
+  it('gives different active ages for the true solar arc key than for Naibod, at the same date', async () => {
+    const naibod = await planWith(ALL_ON);
+    const trueArc = await planWith({ ...ALL_ON, key: PrimaryDirectionKey.TRUE_SOLAR_ARC });
+    const [naibodSection] = naibod.sections;
+    const [trueSection] = trueArc.sections;
+    if (naibodSection?.kind !== 'chart' || trueSection?.kind !== 'chart') {
+      throw new Error('expected chart sections');
+    }
+    const naibodActive = naibodSection.tables[0]?.body ?? [];
+    const trueActive = trueSection.tables[0]?.body ?? [];
+    expect(naibodActive.length).toBeGreaterThan(0);
+    expect(trueActive.length).toBeGreaterThan(0);
+    expect(trueActive).not.toEqual(naibodActive);
+  }, 120_000);
+
+  it('builds a PDF section without error, as the Solar Arc section does (#1845)', async () => {
+    const plan = await planWith(ALL_ON);
+    expect(plan.errors).toHaveLength(0);
+    expect(
+      plan.sections.some((section) => section.kind === 'chart' && section.heading.includes('Albert Einstein')),
+    ).toBe(true);
+  }, 60_000);
+
+  it('prints the converse note in place of the bi-wheel when the mode is converse (rule 1)', async () => {
+    const plan = await planWith({ ...ALL_ON, mode: 'converse' });
+    const [section] = plan.sections;
+    if (section?.kind !== 'chart') throw new Error('expected a chart section');
+    expect(section.svg).toBeUndefined();
+    expect(section.hint).toContain(primaryDirectionsViewMessages.en.converseWheelUnavailable);
+  }, 60_000);
+
+  it('still prints the active table in converse mode, computed from the age (rule 2)', async () => {
+    const plan = await planWith({ ...ALL_ON, mode: 'converse' });
+    const [section] = plan.sections;
+    if (section?.kind !== 'chart') throw new Error('expected a chart section');
+    expect(section.tables.map((table) => table.caption)).toContain(primaryDirectionsViewMessages.en.activeCaption('1'));
+  }, 60_000);
+
+  it('prints the before-birth line in place of the active table when the export date is before birth (rule 3)', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('1850-01-01T12:00:00Z'));
+    try {
+      const selection: PdfSelection = { personId: EINSTEIN.id, ...EMPTY_SELECTION, primaryDirections: ALL_ON };
+      const context: PdfPlanContext = {
+        person: EINSTEIN,
+        provider: await provider(),
+        settings: DEFAULT_EXTENDED_SETTINGS,
+        rulership: DEFAULT_RULERSHIP_CHOICE,
+        locale: 'en',
+        corpusFetch,
+      };
+      const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
+      const [section] = plan.sections;
+      if (section?.kind !== 'chart') throw new Error('expected a chart section');
+      expect(section.hint).toContain(primaryDirectionsViewMessages.en.beforeBirth);
+      expect(section.tables.map((table) => table.caption)).not.toContain(
+        primaryDirectionsViewMessages.en.activeCaption('1'),
+      );
+      expect(section.tables.map((table) => table.caption)).toContain(primaryDirectionsViewMessages.en.allCaption);
+    } finally {
+      vi.useRealTimers();
+    }
   }, 60_000);
 });

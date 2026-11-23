@@ -43,7 +43,7 @@ import {
 import { interpretationExclusions } from '../chart/object-policy.js';
 import type { BoundsScheme } from '../astrology/bounds.js';
 import type { OrbContextSource, OrbLibrary } from '../astrology/orb-library.js';
-import { calculationArtifactIdentity } from '../domain/calculation-artifact.js';
+import { PRIMARY_DIRECTIONS_EFFECTIVE_SNAPSHOT, calculationArtifactIdentity } from '../domain/calculation-artifact.js';
 import {
   buildCalculationSnapshot,
   snapshotCalculationOptions,
@@ -108,6 +108,7 @@ import {
   type PdfProfectionsSectionOptions,
   type PdfProgressionsSectionOptions,
   type PdfSelection,
+  type PdfPrimaryDirectionsSectionOptions,
   type PdfSolarArcSectionOptions,
   type PdfSynastrySectionOptions,
   type PdfTransitsSectionOptions,
@@ -118,7 +119,7 @@ import { computeSynastry, rankedSynastryAspects } from '../domain/synastry.js';
 import { renderChartSheetSvg } from '../chart/chart-sheet.js';
 import { renderAcgMapSvg, type AcgMapInput } from '../chart/acg-map.js';
 import { acgMapLabels } from './acg-map-labels.js';
-import { renderMultiWheelSvg, type CrossRingAspects } from '../chart/multi-wheel.js';
+import { renderMultiWheelSvg, type CrossRingAspects, type WheelRingInput } from '../chart/multi-wheel.js';
 import { standaloneSvg } from '../chart/standalone-svg.js';
 import { resolveWheelDisplayOptions } from '../chart/wheel-options.js';
 import type { EphemerisProvider } from '../ephemeris/types.js';
@@ -197,6 +198,24 @@ import {
   toContactRow as solarArcToContactRow,
 } from './SolarArcView.js';
 import { solarArcViewMessages } from './SolarArcView.messages.js';
+import { buildCalculationBasisLine, withBasisItems, type BasisWords } from './calculation-basis.js';
+import { calculationBasisMessages } from './calculation-basis.messages.js';
+import { rulershipSettingMessages } from './RulershipSetting.messages.js';
+import { extendedSettingsPanelMessages } from './ExtendedSettingsPanel.messages.js';
+import { primaryDirectionsViewMessages } from './PrimaryDirectionsView.messages.js';
+import { hitColumns, toHitRow } from './PrimaryDirectionsView.js';
+import { primaryDirectionsBasisItems } from './timing-basis.js';
+import { timingBasisMessages } from './timing-basis.messages.js';
+import {
+  DEFAULT_MAX_AGE_YEARS,
+  DEFAULT_PRIMARY_DIRECTION_ORB,
+  PRIMARY_DIRECTION_PROMISSORS,
+  PRIMARY_DIRECTION_SIGNIFICATORS,
+  activeDirections,
+  directedChartAt,
+  generatePrimaryDirections,
+} from '../domain/primary-directions.js';
+import { ageInYears } from '../astrology/progressions.js';
 import { toRow as profectionToRow, columns as profectionColumns } from './ProfectionsView.js';
 import { profectionsViewMessages } from './ProfectionsView.messages.js';
 import { eclipseRows, type EclipseRow } from './eclipses.js';
@@ -1255,6 +1274,91 @@ async function buildSolarArcSectionPlan(
   return { kind: 'chart', heading, tables };
 }
 
+/** The Primary directions section's own place in the export: `PrimaryDirectionsView.tsx`'s bi-wheel at the export
+ * date, the directions active at that age and the all-directions list, with the key, mode and method on the basis
+ * line (#1845). Converse mode has no bi-wheel, and an export date before birth has no age to direct to: each gets the
+ * page's own note in the place of the part it cannot show. */
+async function buildPrimaryDirectionsSectionPlan(
+  options: PdfPrimaryDirectionsSectionOptions,
+  context: PdfPlanContext,
+  pt: typeof pdfExportMessages.en,
+): Promise<PdfChartSectionPlan> {
+  const { person, provider, locale } = context;
+  if (person.moment === undefined) throw new Error('this person has no complete birth record');
+  const pdt = primaryDirectionsViewMessages[locale];
+  const timingT = timingBasisMessages[locale];
+  const words: BasisWords = {
+    t: calculationBasisMessages[locale],
+    rulerTitles: rulershipSettingMessages[locale].titles,
+    orbProfileTitles: extendedSettingsPanelMessages[locale].orbProfileOptions,
+  };
+  // The page's basis: the locked Placidus/tropical base with rulers and orbs left out, then the time key, semi-arc
+  // method and the ±1° window, as `PrimaryDirectionsView.tsx` states them.
+  const baseBasis = buildCalculationBasisLine(
+    PRIMARY_DIRECTIONS_EFFECTIVE_SNAPSHOT.settings,
+    PRIMARY_DIRECTIONS_EFFECTIVE_SNAPSHOT.rulership,
+    words,
+    undefined,
+    { rulers: false, orbs: false },
+  );
+  const basisLine = withBasisItems(baseBasis, ...primaryDirectionsBasisItems(options.key, 'zodiacal', timingT));
+  const data = await generatePrimaryDirections(person.moment, provider, options.key, DEFAULT_PRIMARY_DIRECTION_ORB, {
+    mode: options.mode,
+    method: 'zodiacal',
+    significators: PRIMARY_DIRECTION_SIGNIFICATORS,
+    promissors: PRIMARY_DIRECTION_PROMISSORS,
+    maxAgeYears: DEFAULT_MAX_AGE_YEARS,
+  });
+  const targetJd = await targetJdOf(undefined, provider);
+  const columns = hitColumns(pdt, locale);
+  const heading = `${pt.primaryDirectionsLabel}${person.displayName === '' ? '' : ` — ${person.displayName}`}`;
+
+  const notes: string[] = [basisLine];
+  let svg: PdfChartSectionPlan['svg'];
+  const tables: PdfTablePlan[] = [];
+
+  if (!data.defined) {
+    notes.push(pdt.undefinedAtLatitude);
+    return { kind: 'chart', heading, hint: notes.join('\n'), tables };
+  }
+
+  const age = ageInYears(data.natalJd, targetJd);
+  const beforeBirth = age < 0;
+  if (beforeBirth) notes.push(pdt.beforeBirth);
+
+  if (options.wheel) {
+    if (data.mode === 'converse') {
+      notes.push(pdt.converseWheelUnavailable);
+    } else if (!beforeBirth) {
+      const directed = await directedChartAt(data, age, provider);
+      const natalRing = chartWheelRing(data.natal, pdt.natalRingLabel);
+      const directedRing: WheelRingInput = {
+        label: pdt.directedRingLabel,
+        houses: directed.houses,
+        bodies: directed.positions,
+      };
+      const markup = renderMultiWheelSvg([natalRing, directedRing], [], {
+        emphasizedBodies: PRIMARY_DIRECTION_SIGNIFICATORS,
+      });
+      svg = { markup: standaloneSvg(markup), width: 800, height: 800 };
+    }
+  }
+
+  if (options.activeTable && !beforeBirth) {
+    // Converse mode has no directed chart, but the active table needs only the age, so it is read from the age here.
+    const active = activeDirections(data.hits, age).map(toHitRow);
+    tables.push(
+      tablePlanOf(pdt.activeCaption(String(data.orb)), columns, active, active.length === 0 ? pdt.noActive : undefined),
+    );
+  }
+  if (options.allTable) {
+    const all = data.hits.map(toHitRow);
+    tables.push(tablePlanOf(pdt.allCaption, columns, all, all.length === 0 ? pdt.noDirections : undefined));
+  }
+
+  return { kind: 'chart', heading, hint: notes.join('\n'), ...(svg === undefined ? {} : { svg }), tables };
+}
+
 /** The Profections section's own place in the export: `ProfectionsView.tsx`'s year/month table and
  * the profected-house meanings beneath it, as of a chosen date (#441). */
 async function buildProfectionsSectionPlan(
@@ -1578,6 +1682,19 @@ export async function buildPdfPlan(
       sections.push(await buildSolarArcSectionPlan(selection.solarArc, context, pt));
     } catch (error) {
       errors.push(`${pt.solarArcLabel}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  if (
+    selection.primaryDirections !== undefined &&
+    (selection.primaryDirections.activeTable ||
+      selection.primaryDirections.allTable ||
+      selection.primaryDirections.wheel)
+  ) {
+    try {
+      sections.push(await buildPrimaryDirectionsSectionPlan(selection.primaryDirections, context, pt));
+    } catch (error) {
+      errors.push(`${pt.primaryDirectionsLabel}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
