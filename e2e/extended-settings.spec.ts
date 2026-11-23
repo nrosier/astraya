@@ -102,10 +102,9 @@ test.describe('with the shared people (#799)', () => {
     await expect(card.getByText('also sets the planetary rulers to Traditional')).toBeVisible();
     await card.getByRole('button', { name: 'Apply and redraw', exact: true }).click();
     await expect(card).toBeHidden();
-    // Fortune/Chiron visibility now live in one unified policy (#585), so the trigger names the
-    // whole policy as changed rather than each affected object individually.
-    await expect(trigger).toContainText('Object visibility customized');
+    // The pill counts the changes and names none of them (#1929).
     await expect(trigger).toContainText('changed');
+    await expect(trigger).not.toContainText('Object visibility customized');
     await openSettings(page);
     await expect(
       card
@@ -168,7 +167,8 @@ test.describe('with the shared people (#799)', () => {
 
     await card.getByRole('button', { name: 'Apply and redraw', exact: true }).click();
     await expect(card).toBeHidden();
-    await expect(page.locator('button.extended-settings-trigger')).toContainText('Object visibility customized');
+    await expect(page.locator('button.extended-settings-trigger')).toContainText('changed');
+    await expect(page.locator('button.extended-settings-trigger')).not.toContainText('Object visibility customized');
 
     // A fresh pass against the checklist's own interactive state, not just the dialog at rest.
     await openSettings(page);

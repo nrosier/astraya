@@ -719,13 +719,6 @@ export function ExtendedSettingsPanel({
 
   const ayanamsaId = draft.zodiac.kind === 'sidereal' ? draft.zodiac.ayanamsa : undefined;
 
-  const houseName = (code: string): string =>
-    houseSystemNames.get(code) ?? HOUSE_SYSTEMS.find((system) => system.code === code)?.key ?? code;
-  const ayanamsaName = (id: number): string =>
-    id === USER_AYANAMSA_ID
-      ? t.userAyanamsaOption
-      : (ayanamsaNames.get(id) ?? AYANAMSAS.find((ayanamsa) => ayanamsa.id === id)?.key ?? String(id));
-
   // Choosing User-defined (#1407) starts from the current ayanamsa's mean value today, so the chart does not move
   // until the reader changes the date or the degrees.
   const chooseUserAyanamsa = async (fromMode: number): Promise<void> => {
@@ -737,47 +730,9 @@ export function ExtendedSettingsPanel({
     patch({ zodiac: { kind: 'sidereal', ayanamsa: USER_AYANAMSA_ID, user: { referenceDate, degrees } } });
   };
 
-  // What the trigger says: only what differs from the defaults, by name.
-  const changes = changedSettings(value);
-  const percent = value.orbScalePercent > 0 ? `+${String(value.orbScalePercent)}` : String(value.orbScalePercent);
-  const modelName = (model: string): string =>
-    model === 'mean' ? t.mean : model === 'true' ? t.true : model === 'interpolated' ? t.interpolated : model;
-  const segments = changes.map((change): string => {
-    switch (change) {
-      case 'houseSystem':
-        return houseName(value.houseSystem);
-      case 'zodiac':
-        return value.zodiac.kind === 'sidereal'
-          ? t.summary.sidereal(ayanamsaName(value.zodiac.ayanamsa))
-          : t.summary.tropical;
-      case 'orbScale':
-        return t.summary.orbs(percent);
-      case 'orbRules':
-        return t.summary.orbRules;
-      case 'boundsScheme':
-        return t.summary.boundsScheme(value.boundsScheme);
-      case 'minorAspects':
-        return t.summary.minorAspects(String(value.enabledMinorAspects.length));
-      case 'objectPolicies':
-        return t.summary.objectPolicies;
-      case 'midpoints':
-        return t.summary.midpoints;
-      case 'lilith':
-        return t.summary.lilith(modelName(value.lilithVariant));
-      case 'node':
-        return t.summary.node(modelName(value.nodeVariant));
-      case 'fortuneFormula':
-        return t.summary.fortuneFormula(t.fortuneSameDayAndNight);
-      case 'rainbow':
-        return t.summary.rainbow;
-      case 'stationWindow':
-        return t.summary.stationWindow(String(value.stationWindow?.k ?? STATION_WINDOW_DEFAULT_K));
-      case 'motionScore':
-        return t.summary.motionScore;
-    }
-  });
-  const triggerDetail = segments.length === 0 ? '' : `: ${segments.join(' · ')}`;
-  const triggerLabel = `${t.heading}${triggerDetail}`;
+  // What the trigger says: how many settings differ from the defaults, never which ones (the drawer names them).
+  const changeCount = changedSettings(value).length;
+  const triggerLabel = changeCount === 0 ? t.heading : `${t.heading}: ${t.triggerChanged(String(changeCount))}`;
 
   // The orbs now in force, so the slider's percentage is not the only thing said about them.
   const factor = 1 + draft.orbScalePercent / 100;
@@ -909,11 +864,8 @@ export function ExtendedSettingsPanel({
         onClick={openCard}
       >
         <span className="extended-settings-trigger-name">{t.heading}</span>
-        {segments.length > 0 && (
-          <>
-            <span className="extended-settings-trigger-detail">{segments.join(' · ')}</span>
-            <span className="extended-settings-trigger-count">{t.triggerChanged(String(segments.length))}</span>
-          </>
+        {changeCount > 0 && (
+          <span className="extended-settings-trigger-count">{t.triggerChanged(String(changeCount))}</span>
         )}
       </Button>
 
