@@ -2717,6 +2717,13 @@ label.stacked {
   font-weight: var(--h2-weight);
 }
 
+/* A caption with its "?" beside it (#1854): one header, the "?" on the title's line. */
+.data-table-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 .data-table-actions {
   display: flex;
   gap: var(--space-2);
@@ -2827,12 +2834,6 @@ label.stacked {
 .data-table td[data-align='end'] {
   text-align: right;
   font-variant-numeric: tabular-nums;
-}
-
-/* Section headers in the Patterns view: the same spacing for the condition, dispositor and reception tables (#870). */
-.patterns-section-header {
-  margin-top: var(--space-6);
-  margin-bottom: var(--space-2);
 }
 
 .data-table .data-table-muted {

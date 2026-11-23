@@ -160,6 +160,7 @@ export function SortableTable<T>({
   wrap = false,
   headingLevel = 3,
   captionTerm,
+  captionTooltip,
   linking,
   memoizeRows = false,
   rowGroups,
@@ -182,6 +183,11 @@ export function SortableTable<T>({
   readonly headingLevel?: 2 | 3;
   /** A glossary term the caption names (#801): the caption text then opens that term's definition in place. On screen only. */
   readonly captionTerm?: GlossaryTermId | undefined;
+  /**
+   * A "?" beside the caption (#1854): its definition opens on hover, click and keyboard focus, so the caption row is the
+   * table's one header. `label` names the trigger. The caption alone stays the table's accessible name. On screen only.
+   */
+  readonly captionTooltip?: { readonly text: string; readonly label: string } | undefined;
   /** Makes each row hoverable, focusable and selectable, to be linked with a drawing of the same records (#1442). */
   readonly linking?: RowLinking<T> | undefined;
   /** True for a table that redraws often with mostly unchanged rows (a playing animation, #1440): a row then re-renders only when its displayed text changes. Not with `linking`; a cell built by `renderCell` must be fully described by its `render` text. */
@@ -234,6 +240,11 @@ export function SortableTable<T>({
   // aria-labelledby recovers the same table/heading association a real <caption> gives (#69).
   const captionId = useId();
   const Heading = headingLevel === 2 ? 'h2' : 'h3';
+  const captionHeading = (
+    <Heading id={captionId}>
+      {captionTerm === undefined ? caption : <GlossaryTerm id={captionTerm}>{caption}</GlossaryTerm>}
+    </Heading>
+  );
   const aligns = new Map(columns.map((column) => [column.key, columnAlign(column, sorted)]));
 
   const copy = (): void => {
@@ -265,9 +276,16 @@ export function SortableTable<T>({
   return (
     <section className={wrap ? 'data-table data-table-wrap' : 'data-table'}>
       <div className="data-table-head">
-        <Heading id={captionId}>
-          {captionTerm === undefined ? caption : <GlossaryTerm id={captionTerm}>{caption}</GlossaryTerm>}
-        </Heading>
+        {captionTooltip === undefined ? (
+          captionHeading
+        ) : (
+          <div className="data-table-title">
+            {captionHeading}
+            <Tooltip text={captionTooltip.text} label={captionTooltip.label} className="primitive-tooltip-icon">
+              ?
+            </Tooltip>
+          </div>
+        )}
         {(downloadFilename !== undefined || resized) && (
           <div className="data-table-actions">
             {downloadFilename !== undefined && (

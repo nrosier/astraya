@@ -5,7 +5,6 @@
  * @exports dignityColumns, almutenCandidateColumns, conditionColumns, dispositorColumns, receptionColumns, renderDignitiesTable, renderPatternsView, formatElongation
  */
 import { Tooltip } from './primitives/Tooltip.js';
-import { GlossaryTerm } from './GlossaryTerm.js';
 import {
   almutenOfAscendant,
   chartShapeOf,
@@ -676,15 +675,10 @@ export function renderDignitiesTable(
         getRowKey={(row) => row.bodyKey}
         downloadFilename={deriveExportFilename(displayName, 'dignities', 'csv')}
       />
-      <h4 className="condition-section-header patterns-section-header">
-        {t.conditionCaption}{' '}
-        <Tooltip text={t.conditionTooltip} label={t.conditionTooltipLabel} className="primitive-tooltip-icon">
-          ?
-        </Tooltip>
-      </h4>
-      <p className="hint">{t.conditionHint}</p>
+      {/* One header per section (#1854): the table's caption, with the "?" beside it. The shared Tooltip (#456, #508) opens on hover, click and keyboard focus. */}
       <SortableTable
         caption={t.conditionCaption}
+        captionTooltip={{ text: t.conditionTooltip, label: t.conditionTooltipLabel }}
         columns={conditionColumns(t, locale, pointVisibility.motionScoreVisible === true)}
         rows={conditionRows(data, undefined, boundsScheme, {
           motionScore: pointVisibility.motionScoreVisible === true,
@@ -692,34 +686,17 @@ export function renderDignitiesTable(
         getRowKey={(row) => row.bodyKey}
         downloadFilename={deriveExportFilename(displayName, 'condition', 'csv')}
       />
-      <h4 className="dispositors-section-header patterns-section-header">
-        <GlossaryTerm id="dispositor">{t.dispositorsCaption}</GlossaryTerm>{' '}
-        {/* The shared Tooltip (#456, #508) shows the same visible popup on hover, click and
-            keyboard focus — a bare <span title> or an unwired aria-label button only ever
-            reached a mouse-hover user, and never anyone who clicked expecting something to
-            open. */}
-        <Tooltip text={t.dispositorsTooltip} label={t.dispositorsTooltipLabel} className="primitive-tooltip-icon">
-          ?
-        </Tooltip>
-      </h4>
-      <p className="hint">{t.dispositorsHint}</p>
       <SortableTable
         caption={t.dispositorsCaption}
-        captionTerm="dispositor"
+        captionTooltip={{ text: t.dispositorsTooltip, label: t.dispositorsTooltipLabel }}
         columns={dispositorColumns(t, locale)}
         rows={dispositorRows(data, pointVisibility, rulership)}
         getRowKey={(row) => row.bodyKey}
         downloadFilename={deriveExportFilename(displayName, 'dispositors', 'csv')}
       />
-      <h4 className="reception-section-header patterns-section-header">
-        {t.receptionCaption}{' '}
-        <Tooltip text={t.receptionTooltip} label={t.receptionTooltipLabel} className="primitive-tooltip-icon">
-          ?
-        </Tooltip>
-      </h4>
-      <p className="hint">{t.receptionHint}</p>
       <SortableTable
         caption={t.receptionCaption}
+        captionTooltip={{ text: t.receptionTooltip, label: t.receptionTooltipLabel }}
         columns={receptionColumns(t, locale)}
         rows={receptionRows(data, boundsScheme)}
         getRowKey={(row) => `${row.bodyAKey}-${row.bodyBKey}`}

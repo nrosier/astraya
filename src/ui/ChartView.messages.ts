@@ -101,16 +101,12 @@ const en = {
     'lot-of-nemesis': 'Lot of Nemesis',
   } satisfies Readonly<Record<HermeticLotKey, string>>,
   dispositorsCaption: 'Dispositors',
-  dispositorsHint:
-    "A dispositor is the ruler of a planet's sign — the planetary chain traces each ruler forward until it circles back on itself or reaches a final dispositor. Use this to find rulership cycles and understand what each planet depends on.",
   dispositorsTooltip:
-    "A dispositor is the ruler of a planet's sign. Dispositor chains trace where each planet's rulership flows.",
+    "A dispositor is the ruler of a planet's sign. The planetary chain traces each ruler forward until it circles back on itself or reaches a final dispositor. Use this to find rulership cycles and understand what each planet depends on.",
   dispositorsTooltipLabel: 'About dispositors',
   conditionCaption: 'Condition',
-  conditionHint:
-    "A traditional planet's condition: sect alignment, angularity, hayz, motion, besiegement, and solar phase/proximity — the standard first read of a traditional chart, alongside dignity above.",
   conditionTooltip:
-    "Sect alignment (of/contrary to the chart's own day or night sect), angularity (angular/succedent/cadent house), hayz (of sect, on its own side of the horizon, in a sign of its own gender), motion, besiegement (hemmed in by Mars and Saturn), and solar phase/proximity (oriental or occidental, cazimi, combust, or under the beams).",
+    "A traditional planet's condition, the standard first read of a traditional chart alongside dignity above: sect alignment (of/contrary to the chart's own day or night sect), angularity (angular/succedent/cadent house), hayz (of sect, on its own side of the horizon, in a sign of its own gender), motion, besiegement (hemmed in by Mars and Saturn), and solar phase/proximity (oriental or occidental, cazimi, combust, or under the beams).",
   conditionTooltipLabel: 'About condition',
   sectAlignmentLabel: 'Sect',
   sectAlignmentTooltip:
@@ -155,10 +151,8 @@ const en = {
   underTheBeams: 'Under the beams',
   solarConditionFree: 'Free',
   receptionCaption: 'Reception',
-  receptionHint:
-    'Reception: a planet standing in another’s essential dignity. Mutual reception is each planet in the other’s dignity of the same kind (e.g. both by domicile); mixed reception is each in the other’s dignity of a different kind; one-way is only one side. Aspect-linked reception — the pair also in aspect — is traditionally the stronger, more immediately active case.',
   receptionTooltip:
-    'Which pairs of traditional planets receive each other, by which dignity (ruler, exalted, triplicity, bound, face), whether it is the same dignity on both sides, and whether the pair is also in aspect.',
+    'Reception: a planet standing in another’s essential dignity. This table shows which pairs of traditional planets receive each other, by which dignity (ruler, exalted, triplicity, bound, face), whether it is the same dignity on both sides, and whether the pair is also in aspect. Mutual reception is each planet in the other’s dignity of the same kind (e.g. both by domicile); mixed reception is each in the other’s dignity of a different kind; one-way is only one side. Aspect-linked reception — the pair also in aspect — is traditionally the stronger, more immediately active case.',
   receptionTooltipLabel: 'About reception',
   receptionKindLabel: 'Kind',
   mutualReceptionKind: 'Mutual',
@@ -513,16 +507,12 @@ const nl: typeof en = {
     'lot-of-nemesis': 'Lot van Nemesis',
   },
   dispositorsCaption: 'Dispositoren',
-  dispositorsHint:
-    'Een dispositor is de heerser van het teken van een planeet — de planetaire keten volgt elke heerser vooruit totdat deze op zichzelf terugvoert of een uiteindelijke dispositor bereikt. Gebruik dit om heersersakels te vinden en te begrijpen waar elke planeet van afhangt.',
   dispositorsTooltip:
-    'Een dispositor is de heerser van het teken van een planeet. Dispositorketens tonen hoe de heerserschap van elke planeet vloeit.',
+    'Een dispositor is de heerser van het teken van een planeet. De planetaire keten volgt elke heerser vooruit totdat deze op zichzelf terugvoert of een uiteindelijke dispositor bereikt. Gebruik dit om heersersakels te vinden en te begrijpen waar elke planeet van afhangt.',
   dispositorsTooltipLabel: 'Over dispositoren',
   conditionCaption: 'Conditie',
-  conditionHint:
-    'De conditie van een traditionele planeet: sectafstemming, hoekstand, hayz, beweging, belegering en zonnefase/-nabijheid — de gebruikelijke eerste blik op een traditionele horoscoop, naast de waardigheden hierboven.',
   conditionTooltip:
-    'Sectafstemming (overeenstemmend met of in strijd met de eigen dag- of nachtsect van de horoscoop), hoekstand (hoekig/opvolgend/val-huis), hayz (van de sect, aan de eigen kant van de horizon, in een teken van het eigen geslacht), beweging, belegering (ingesloten door Mars en Saturnus), en zonnefase/-nabijheid (oosters of westers, cazimi, combust, of onder de stralen).',
+    'De conditie van een traditionele planeet, de gebruikelijke eerste blik op een traditionele horoscoop naast de waardigheden hierboven: sectafstemming (overeenstemmend met of in strijd met de eigen dag- of nachtsect van de horoscoop), hoekstand (hoekig/opvolgend/val-huis), hayz (van de sect, aan de eigen kant van de horizon, in een teken van het eigen geslacht), beweging, belegering (ingesloten door Mars en Saturnus), en zonnefase/-nabijheid (oosters of westers, cazimi, combust, of onder de stralen).',
   conditionTooltipLabel: 'Over conditie',
   sectAlignmentLabel: 'Sect',
   sectAlignmentTooltip:
@@ -567,10 +557,8 @@ const nl: typeof en = {
   underTheBeams: 'Onder de stralen',
   solarConditionFree: 'Vrij',
   receptionCaption: 'Receptie',
-  receptionHint:
-    'Receptie: een planeet die in de essentiële waardigheid van een andere staat. Wederzijdse receptie is elke planeet in de waardigheid van de ander van hetzelfde type (bijv. beide via heerserschap); gemengde receptie is elk in de waardigheid van de ander van een ander type; eenzijdig is slechts één kant. Receptie met aspect — het paar staat ook in aspect — is traditioneel het sterkere, directer actieve geval.',
   receptionTooltip:
-    'Welke paren traditionele planeten elkaar ontvangen, door welke waardigheid (heerser, verheven, triplicitiet, bound, decaan), of dit dezelfde waardigheid is op beide kanten, en of het paar ook in aspect staat.',
+    'Receptie: een planeet die in de essentiële waardigheid van een andere staat. Deze tabel toont welke paren traditionele planeten elkaar ontvangen, door welke waardigheid (heerser, verheven, triplicitiet, bound, decaan), of dit dezelfde waardigheid is op beide kanten, en of het paar ook in aspect staat. Wederzijdse receptie is elke planeet in de waardigheid van de ander van hetzelfde type (bijv. beide via heerserschap); gemengde receptie is elk in de waardigheid van de ander van een ander type; eenzijdig is slechts één kant. Receptie met aspect — het paar staat ook in aspect — is traditioneel het sterkere, directer actieve geval.',
   receptionTooltipLabel: 'Over receptie',
   receptionKindLabel: 'Soort',
   mutualReceptionKind: 'Wederzijds',
