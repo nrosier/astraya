@@ -1,17 +1,21 @@
 /**
  * The lunar phase return (#1407): a chart for the moment the Sun-Moon phase angle comes back to its natal value. Solar
- * Fire Deluxe lists it with its lunar phase charts ("a chart in which the phase angle between the sun and the moon
- * returns to its natal phase angle", guide §12.10, PDF p. 92) and lets the user pick the return before the search date
- * (Current), the nearest one (Nearest) or the one after it (Next) (§12.10, step 7, p. 94).
+ * Fire Deluxe lists phase returns with its lunar phase charts: "a chart in which the phase angle between the sun and
+ * the moon returns to its natal phase angle), starting one lunar month prior to the search date" (guide §12.10, PDF
+ * p. 92). Read with its sibling list types ("starting 2 phases prior", "Phases to Find"), that is a list of returns, so
+ * `findLunarPhaseReturns` lists them from the most recent return before the date, which always falls within one lunar
+ * month before it. `computeLunarPhaseReturnChart`'s Current/Nearest/Next choice is Astraya's own convenience (owner
+ * decision, 2026-11-23), borrowed from the guide's single-chart "Which One" (§12.10, step 7, p. 94).
  *
- * The phase angle is the Moon-minus-Sun ecliptic elongation that `astrology/lunations.ts` and `lunar-phase.ts` use.
- * The crossing is found with the same sample-then-bisect idiom as `lunations.ts`, whose helpers are private to it.
+ * The phase angle is the Moon-minus-Sun ecliptic elongation that `astrology/lunations.ts` and `lunar-phase.ts` use. No
+ * held source defines Solar Fire's "phase angle" more precisely. The crossing is found with the same sample-then-bisect
+ * idiom as `lunations.ts`, whose helpers are private to it.
  */
 /**
  * @module lunar-phase-return
- * @purpose Finds a lunar phase return (the Sun-Moon elongation back at its natal value) around a search date and casts it as a full chart (#1407).
- * @conventions Solar Fire Deluxe guide §12.10 (PDF pp. 92-94): the phase angle returning to its natal value, with Current/Nearest/Next around the search date. Elongation is Moon minus Sun ecliptic longitude, as in `astrology/lunations.ts`; sampled every half day and bisected to the second. The search reaches `PHASE_RETURN_SEARCH_DAYS` (31) either side of the date, more than the interval between two returns, so a return always lies on each side. Cast with `computeChartDataAtJd` at the birthplace unless a place is given, like `return-chart.ts`.
- * @exports computeLunarPhaseReturnChart, LunarPhaseReturnData, LunarPhaseReturnOptions, LunarPhaseReturnWhich, PHASE_RETURN_SEARCH_DAYS
+ * @purpose Finds lunar phase returns (the Sun-Moon elongation back at its natal value) around a search date, as a list or as one chart (#1407).
+ * @conventions Solar Fire Deluxe guide §12.10 (PDF pp. 92-94): the list starts at the most recent return before the search date (Solar Fire's "starting one lunar month prior"); Current/Nearest/Next is Astraya's own convenience (owner, 2026-11-23). Elongation is Moon minus Sun ecliptic longitude, as in `astrology/lunations.ts` (not defined further by a held source); sampled every half day and bisected to the second. The birth instant itself is never a return. The search reaches `PHASE_RETURN_SEARCH_DAYS` (31) before the date, more than the interval between two returns. Cast with `computeChartDataAtJd` at the birthplace unless a place is given, like `return-chart.ts`.
+ * @exports computeLunarPhaseReturnChart, findLunarPhaseReturns, LunarPhaseReturnData, LunarPhaseReturnList, LunarPhaseReturnOptions, LunarPhaseReturnWhich, PHASE_RETURN_SEARCH_DAYS
  */
 import { bodyByKey } from '../astrology/bodies.js';
 import { DEFAULT_SAMPLE_STEP_DAYS } from '../astrology/lunations.js';
@@ -37,7 +41,16 @@ export const PHASE_RETURN_SEARCH_DAYS = 31;
 
 const BISECTION_TOLERANCE_DAYS = 1 / 86400;
 
-/** Solar Fire's "Which One" (§12.10, step 7): the return before the date, the nearest one, or the one after it. */
+/**
+ * A crossing this close to the birth is the birth itself, not a return. It is wider than the bisection tolerance, so
+ * floating-point error on either side of the natal instant cannot turn the birth into a "return".
+ */
+const NATAL_EXCLUSION_DAYS = 60 / 86400;
+
+/**
+ * Around the search date: the return before it, the nearest one, or the one after it. Astraya's own convenience, after
+ * Solar Fire's single-chart "Which One" (§12.10, step 7); Solar Fire itself lists phase returns (`findLunarPhaseReturns`).
+ */
 export type LunarPhaseReturnWhich = 'current' | 'nearest' | 'next';
 
 export interface LunarPhaseReturnOptions extends ChartCalculationOptions {
@@ -100,7 +113,13 @@ async function phaseCrossings(
   for (let jd = fromJd + DEFAULT_SAMPLE_STEP_DAYS; jd <= toJd; jd += DEFAULT_SAMPLE_STEP_DAYS) {
     const delta = await phaseDelta(provider, jd, target, options);
     // A jump of more than 180 between samples is the wrap at the antipode of `target`, not a crossing (lunations.ts).
-    if (Math.sign(delta) !== Math.sign(previousDelta) && delta !== 0 && Math.abs(delta - previousDelta) < 180) {
+    // A sample exactly on `target` was recorded on its own step, so its neighbour must not bisect to it again.
+    if (
+      previousDelta !== 0 &&
+      Math.sign(delta) !== Math.sign(previousDelta) &&
+      delta !== 0 &&
+      Math.abs(delta - previousDelta) < 180
+    ) {
       let low = previousJd;
       let high = jd;
       let lowValue = previousDelta;
@@ -141,6 +160,67 @@ function pick(crossings: readonly JulianDayUT[], searchJd: JulianDayUT, which: L
   return chosen;
 }
 
+export interface LunarPhaseReturnList {
+  /** The natal phase angle (Moon minus Sun ecliptic longitude, 0-360). */
+  readonly natalPhaseAngle: Degrees;
+  /** In order, starting at the most recent return before the search date. */
+  readonly returns: readonly JulianDayUT[];
+}
+
+/** The natal Julian day and phase angle a search needs. */
+async function natalPhase(
+  natalMoment: BirthMomentInput,
+  provider: EphemerisProvider,
+  options?: PositionOptions,
+): Promise<{ readonly natalJd: JulianDayUT; readonly natalPhaseAngle: Degrees }> {
+  const natalJd = await julianDayFor(provider, resolveMoment(natalMoment));
+  return { natalJd, natalPhaseAngle: await phaseAngle(provider, natalJd, options) };
+}
+
+/** Every return in `[fromJd, toJd]`, leaving out the birth instant itself. */
+async function returnsBetween(
+  provider: EphemerisProvider,
+  natalJd: JulianDayUT,
+  natalPhaseAngle: Degrees,
+  fromJd: JulianDayUT,
+  toJd: JulianDayUT,
+  options?: PositionOptions,
+): Promise<readonly JulianDayUT[]> {
+  const crossings = await phaseCrossings(provider, natalPhaseAngle, fromJd, toJd, options);
+  return crossings.filter((jd) => Math.abs(jd - natalJd) >= NATAL_EXCLUSION_DAYS);
+}
+
+/**
+ * `count` lunar phase returns, Solar Fire's list (§12.10): starting at the most recent return before `searchJd`, which
+ * always lies within one lunar month before it, then each following one. `provider` must already be initialized.
+ */
+export async function findLunarPhaseReturns(
+  natalMoment: BirthMomentInput,
+  searchJd: JulianDayUT,
+  count: number,
+  provider: EphemerisProvider,
+  options: Pick<ChartCalculationOptions, 'zodiac'> = {},
+): Promise<LunarPhaseReturnList> {
+  if (!Number.isInteger(count) || count < 1)
+    throw new RangeError(`count must be a positive integer, got ${String(count)}`);
+  const positionOptions: PositionOptions | undefined =
+    options.zodiac === undefined ? undefined : { zodiac: options.zodiac };
+  const { natalJd, natalPhaseAngle } = await natalPhase(natalMoment, provider, positionOptions);
+  const crossings = await returnsBetween(
+    provider,
+    natalJd,
+    natalPhaseAngle,
+    searchJd - PHASE_RETURN_SEARCH_DAYS,
+    searchJd + PHASE_RETURN_SEARCH_DAYS * count,
+    positionOptions,
+  );
+  // The most recent return before the date starts the list; crossings are in order.
+  const start = Math.max(0, crossings.filter((jd) => jd < searchJd).length - 1);
+  const returns = crossings.slice(start, start + count);
+  if (returns.length < count) throw new ReturnNotFoundError('Fewer lunar phase returns were found than asked for.');
+  return { natalPhaseAngle, returns };
+}
+
 /**
  * The lunar phase return around `searchJd`, as a chart: the instant the Moon-minus-Sun elongation equals its natal
  * value, before the date (`current`), nearest to it, or after it (`next`, the default). `provider` must already be
@@ -154,10 +234,10 @@ export async function computeLunarPhaseReturnChart(
 ): Promise<LunarPhaseReturnData> {
   const positionOptions: PositionOptions | undefined =
     options.zodiac === undefined ? undefined : { zodiac: options.zodiac };
-  const natalJd = await julianDayFor(provider, resolveMoment(natalMoment));
-  const natalPhaseAngle = await phaseAngle(provider, natalJd, positionOptions);
-  const crossings = await phaseCrossings(
+  const { natalJd, natalPhaseAngle } = await natalPhase(natalMoment, provider, positionOptions);
+  const crossings = await returnsBetween(
     provider,
+    natalJd,
     natalPhaseAngle,
     searchJd - PHASE_RETURN_SEARCH_DAYS,
     searchJd + PHASE_RETURN_SEARCH_DAYS,

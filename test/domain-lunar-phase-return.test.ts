@@ -4,7 +4,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { findLunations } from '../src/astrology/lunations.js';
-import { computeLunarPhaseReturnChart } from '../src/domain/lunar-phase-return.js';
+import { computeLunarPhaseReturnChart, findLunarPhaseReturns } from '../src/domain/lunar-phase-return.js';
 import type { JulianDayUT } from '../src/ephemeris/types.js';
 import { civilFromJulianDay, julianDayFor } from '../src/time/julian.js';
 import { resolveMoment } from '../src/time/resolve.js';
@@ -65,5 +65,53 @@ describe('computeLunarPhaseReturnChart (#1407)', () => {
     expect(following).toBeDefined();
     // The birth is rounded to the second, so the natal phase angle is within about 0.5" of 0: a few seconds of time.
     expect(Math.abs(data.returnJd - (following?.jd ?? Number.NaN)) * 86_400).toBeLessThan(60);
+  });
+
+  it('lists N returns from the most recent one before the date, Solar Fire’s list (§12.10)', async () => {
+    const engine = await getEngine();
+    const search: JulianDayUT = 2_460_310.5;
+    const list = await findLunarPhaseReturns(PERSON, search, 3, engine);
+    const current = await computeLunarPhaseReturnChart(PERSON, search, engine, { which: 'current' });
+    expect(list.returns).toHaveLength(3);
+    expect(list.returns[0]).toBe(current.returnJd);
+    expect(search - (list.returns[0] ?? Number.NaN)).toBeGreaterThan(0);
+    expect(search - (list.returns[0] ?? Number.NaN)).toBeLessThan(30.5);
+    for (let index = 1; index < list.returns.length; index += 1) {
+      const gap = (list.returns[index] ?? Number.NaN) - (list.returns[index - 1] ?? Number.NaN);
+      expect(gap).toBeGreaterThan(29);
+      expect(gap).toBeLessThan(30.5);
+    }
+    await expect(findLunarPhaseReturns(PERSON, search, 0, engine)).rejects.toThrow(/positive integer/);
+  });
+
+  it('searched from the birth itself, never returns the birth: Current is pre-natal, Next post-natal', async () => {
+    const engine = await getEngine();
+    const bornJd = await julianDayFor(engine, resolveMoment(PERSON));
+    const next = await computeLunarPhaseReturnChart(PERSON, bornJd, engine, { which: 'next' });
+    const current = await computeLunarPhaseReturnChart(PERSON, bornJd, engine, { which: 'current' });
+    expect(next.returnJd - bornJd).toBeGreaterThan(29);
+    expect(bornJd - current.returnJd).toBeGreaterThan(29);
+  });
+
+  it('finds the same instant in a sidereal zodiac, since the ayanamsa cancels out of the phase angle', async () => {
+    const engine = await getEngine();
+    const search: JulianDayUT = 2_460_310.5;
+    const tropical = await computeLunarPhaseReturnChart(PERSON, search, engine);
+    const sidereal = await computeLunarPhaseReturnChart(PERSON, search, engine, {
+      zodiac: { kind: 'sidereal', ayanamsa: 1 },
+    });
+    expect(Math.abs(sidereal.returnJd - tropical.returnJd) * 86_400).toBeLessThan(2);
+    expect(sidereal.natalPhaseAngle).toBeCloseTo(tropical.natalPhaseAngle, 6);
+  });
+
+  it('casts the return at a given place instead of the birthplace', async () => {
+    const engine = await getEngine();
+    const search: JulianDayUT = 2_460_310.5;
+    const paris = { latitude: 48.85, longitude: 2.35, altitude: 0 };
+    const home = await computeLunarPhaseReturnChart(PERSON, search, engine);
+    const away = await computeLunarPhaseReturnChart(PERSON, search, engine, { place: paris });
+    expect(away.place).toEqual(paris);
+    expect(away.returnJd).toBe(home.returnJd);
+    expect(Math.abs(away.chart.houses.ascendant - home.chart.houses.ascendant)).toBeGreaterThan(1);
   });
 });
