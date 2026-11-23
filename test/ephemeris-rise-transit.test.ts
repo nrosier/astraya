@@ -1,6 +1,7 @@
 /**
- * `riseTransit` (#1407): the first rise, set, culmination or anti-culmination of a body after a moment, through
- * `swe_rise_trans`, against the true or the visual horizon (Solar Fire Deluxe guide §12.9). Checked against the
+ * `riseTransit` (#1407): the first rise, set, culmination or anti-culmination of a body after a moment, against the
+ * true or the visual horizon (Solar Fire Deluxe guide §12.9). Visual times and transits come from `swe_rise_trans`;
+ * true rises and sets are searched directly on the geocentric centre's altitude. Checked against the
  * engine's own horizon transform: at a true-horizon rise the body's centre is on the astronomical horizon (altitude 0,
  * no refraction, no parallax), and at culmination the body is due south from a northern place.
  */

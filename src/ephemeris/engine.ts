@@ -952,13 +952,21 @@ export class SwissEphemerisEngine implements EphemerisProvider {
       const highValue = await at(high);
       if (crosses(lowValue, highValue)) {
         let from = low;
+        let fromValue = lowValue;
         let to = high;
         while (to - from > 1 / 86400) {
           const mid = (from + to) / 2;
-          if (crosses(await at(from), await at(mid))) to = mid;
-          else from = mid;
+          const midValue = await at(mid);
+          if (crosses(fromValue, midValue)) {
+            to = mid;
+          } else {
+            from = mid;
+            fromValue = midValue;
+          }
         }
-        return (from + to) / 2;
+        // The upper end of the final bracket: at most a second after the crossing, never before it, so searching again
+        // from the result finds the next event rather than this one.
+        return to;
       }
       low = high;
       lowValue = highValue;

@@ -354,10 +354,15 @@ export interface EphemerisProvider {
   version(): Promise<string>;
 
   /**
-   * The first rise, set, culmination or anti-culmination of `body` after `jd` at `place` (`swe_rise_trans`; #1407),
-   * against the true or the visual horizon (Solar Fire guide §12.9). `undefined` when the body does not rise or set
-   * that day at that latitude (circumpolar, or never above the horizon). Pressure and temperature are the same
-   * defaults `azimuthAltitude` uses (0 hPa, which the library estimates from the altitude, and 15 °C).
+   * The first rise, set, culmination or anti-culmination of `body` after `jd` at `place` (#1407), against the true or
+   * the visual horizon (Solar Fire guide §12.9).
+   * - Visual rises and sets, and both meridian transits, come from `swe_rise_trans`; `undefined` when the library finds
+   *   none that day (circumpolar, or never above the horizon). Pressure and temperature are the same defaults
+   *   `azimuthAltitude` uses (0 hPa, which the library estimates from the altitude, and 15 °C).
+   * - True rises and sets are the geocentric centre crossing altitude 0, searched directly for up to 36 hours after
+   *   `jd`; `undefined` when there is no crossing in that window. Near the polar-day boundary a true set can therefore
+   *   be a day or more away where the visual one is `undefined`. The result is at most a second after the crossing,
+   *   never before it.
    */
   riseTransit(
     jd: JulianDayUT,
