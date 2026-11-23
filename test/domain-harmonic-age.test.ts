@@ -54,6 +54,13 @@ describe('computeHarmonicAge (#1407)', () => {
     expect(sunAt(age)).toBeCloseTo(harmonicLongitude(natalSun, 10.5), 9);
     expect(sunAt(agePlusOne)).toBeCloseTo(harmonicLongitude(natalSun, 11.5), 9);
     expect(age.harmonic.houses.system).toBe('W');
+    // The Ascendant is transformed like any point, and house 1 starts at the beginning of its sign (whole-sign).
+    expect(age.harmonic.houses.ascendant).toBeCloseTo(harmonicLongitude(age.natal.houses.ascendant, 10.5), 9);
+    expect(age.harmonic.houses.cusps[1]).toBe(Math.floor(age.harmonic.houses.ascendant / 30) * 30);
+  });
+
+  it('measures age in tropical years of 365.2422 days (Astraya’s convention; the guide gives no year length)', () => {
+    expect(TROPICAL_YEAR_DAYS).toBe(365.2422);
   });
 
   it('refuses a target date before birth', async () => {

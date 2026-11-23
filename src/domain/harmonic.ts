@@ -12,7 +12,7 @@
 /**
  * @module harmonic
  * @purpose Computes a harmonic or Vedic Varga chart (e.g. D9 Navamsha) from one person's natal chart (#170).
- * @conventions Synthetic chart, not a comparison, so reuses the single-chart engine on positions/houses already transformed by `astrology/harmonics.ts`; for `computeHarmonic`, `n` must be a positive integer, with `n=1` reproducing the natal chart (whole-sign houses in place of whatever system the natal chart used). The age harmonics (#1407) follow the Solar Fire Deluxe guide §12.6 (PDF p. 85): Harmonic Age multiplies by the exact age in decimal years at the target date (zero at birth), Harmonic Age+1 by that age plus one (one at birth); age is `ageInYears` (tropical years), and a target before birth is refused.
+ * @conventions Synthetic chart, not a comparison, so reuses the single-chart engine on positions/houses already transformed by `astrology/harmonics.ts`; for `computeHarmonic`, `n` must be a positive integer, with `n=1` reproducing the natal chart (whole-sign houses in place of whatever system the natal chart used). The age harmonics (#1407) follow the Solar Fire Deluxe guide §12.6 (PDF p. 85): Harmonic Age multiplies by the exact age in decimal years at the target date (zero at birth), Harmonic Age+1 by that age plus one (one at birth). The guide gives no year length: measuring age in tropical years (`ageInYears`, 365.2422 days) is Astraya's own convention. A target before birth is refused.
  * @exports computeHarmonic, computeHarmonicAge, harmonicPositionProvenance, HarmonicData, HarmonicAgeData, HarmonicAgeOptions, HarmonicPositionProvenanceRow
  */
 import { DEFAULT_ORB_CONFIG, findAspects, subjectsFrom, type Aspect } from '../astrology/aspects.js';
@@ -108,6 +108,11 @@ export async function computeHarmonic(
  * subject's exact age in decimal years at `targetJd`, or by that age plus one. The age harmonic is zero at birth (every
  * point at 0° Aries); the age+1 harmonic is one at birth (the natal chart, with whole-sign houses). The multiplier is
  * not an integer, which is the point of the technique, so this does not go through `computeHarmonic`'s integer check.
+ * Age is in tropical years (`ageInYears`): the guide gives no year length, so that is Astraya's own convention.
+ *
+ * With a non-integer multiplier, two natal points just either side of 0° Aries no longer land about n times their gap
+ * apart, and the chart is very sensitive to the birth time: at age 50, a 4-minute error (about 1° of Ascendant) moves
+ * the harmonic Ascendant by about 50°. Solar Fire's definition has the same properties.
  * `provider` must already be initialized.
  */
 export async function computeHarmonicAge(
