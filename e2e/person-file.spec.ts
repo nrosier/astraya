@@ -80,11 +80,10 @@ test.describe('with the shared people (#799)', () => {
     await expect(replace.getByRole('heading', { name: 'What changes' })).toBeVisible();
     await expect(replace.locator('dd', { hasText: '1882-12-11 → 1879-03-14' })).toBeVisible();
     await replace.getByRole('button', { name: 'Replace birth data' }).click();
-    await expect(replace.getByText('Birth data replaced.')).toBeVisible();
-
-    // The form now shows Einstein's birth date under Born's name.
-    await expect(page.getByLabel('Date', { exact: true })).toHaveValue(EINSTEIN.date);
-    await expect(page.getByLabel('Name', { exact: true })).toHaveValue(BORN.name);
+    // #1921: after the import the app opens the people list, with no person selected.
+    await expect.poll(() => new URL(page.url()).hash).toBe('#/people');
+    await expect(page.getByLabel('Date', { exact: true })).toHaveCount(0);
+    await expect(page.getByLabel('Name', { exact: true })).toHaveCount(0);
   });
 
   test('puts Save at the right content edge, level with the page title, at 1280x800 and 390x844 (#896)', async () => {

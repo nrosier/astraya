@@ -157,6 +157,8 @@ export function PersonFileActions({
       .then(() => {
         cancel();
         onReplaced();
+        // #1921: after an import, open the people list with no person selected, so the user picks or searches.
+        window.location.hash = '#/people';
         setImportStatus({ kind: 'success', text: t.applied });
       })
       .catch((error: unknown) => {
