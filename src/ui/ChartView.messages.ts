@@ -635,7 +635,7 @@ const nl: typeof en = {
   alcocodenLine: (planet: string) => `Alcocoden (gever van jaren): ${planet}`,
   alcocodenRuleLabels: {
     'only-aspecting':
-      'De enige heer van de graad van de hyleg (heerschappij, exaltatie, bound of triplicitair) die er een aspect mee heeft.',
+      'De enige heer van de graad van de hyleg (heerschappij, exaltatie, grens of triplicitair) die er een aspect mee heeft.',
     'closest-aspect': 'Gelijk in waardigheden, maar het dichtst bij een exact aspect met de graad van de hyleg.',
     'more-dignities':
       'Heeft de meeste waardigheden in de graad van de hyleg van de heren die er een aspect mee hebben.',
@@ -645,7 +645,7 @@ const nl: typeof en = {
     oriental: 'Tot hier gelijk, maar is oriëntaal.',
     'closer-to-sun': 'Tot hier gelijk, maar staat dichter bij de Zon en is niet verbrand.',
     'lord-order':
-      'In al het overige gelijk, dus de eerste in de volgorde van heren: bound, heerschappij, exaltatie, triplicitair.',
+      'In al het overige gelijk, dus de eerste in de volgorde van heren: grens, heerschappij, exaltatie, triplicitair.',
   },
   noHyleg: 'Geen hyleg gevonden met deze methode',
   hylegSourceNote:

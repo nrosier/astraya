@@ -96,4 +96,12 @@ describe('hyleg card (#1799)', () => {
     expect(chartViewMessages.en.noHyleg).toBe('No hyleg found by this procedure');
     expect(chartViewMessages.nl.noHyleg).toBe('Geen hyleg gevonden met deze methode');
   });
+
+  it('words the Dutch only-aspecting and lord-order alcocoden rules with grens, not bound (#1799)', () => {
+    for (const key of ['only-aspecting', 'lord-order'] as const) {
+      const label = chartViewMessages.nl.alcocodenRuleLabels[key];
+      expect(label).toContain('grens');
+      expect(label).not.toContain('bound');
+    }
+  });
 });
