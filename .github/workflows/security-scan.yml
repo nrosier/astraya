@@ -125,7 +125,7 @@ jobs:
         id: grype1
         if: always()
         continue-on-error: true
-        uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
+        uses: anchore/scan-action@11983a512817154c80a9db660c1a184be7513ed6 # v7.4.3
         with:
           grype-version: v0.121.2
           sbom: sbom.cyclonedx.json
@@ -145,7 +145,7 @@ jobs:
         id: grype2
         if: always() && steps.grype1.outcome == 'failure'
         continue-on-error: true
-        uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
+        uses: anchore/scan-action@11983a512817154c80a9db660c1a184be7513ed6 # v7.4.3
         with:
           grype-version: v0.121.2
           sbom: sbom.cyclonedx.json
@@ -164,7 +164,7 @@ jobs:
       - name: Grype scan of the SBOM, attempt 3
         id: grype3
         if: always() && steps.grype1.outcome == 'failure' && steps.grype2.outcome == 'failure'
-        uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
+        uses: anchore/scan-action@11983a512817154c80a9db660c1a184be7513ed6 # v7.4.3
         with:
           grype-version: v0.121.2
           sbom: sbom.cyclonedx.json
