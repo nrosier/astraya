@@ -84,4 +84,31 @@ describe('riseTransit (#1407)', () => {
     expect(await engine.riseTransit(JUNE_2024, SUN, TROMSO, 'set', 'true')).toBeUndefined();
     expect(await engine.riseTransit(JUNE_2024, SUN, TROMSO, 'culminate', 'true')).toBeDefined();
   });
+
+  it('at a true-horizon Moon set the centre is on the horizon, and the next set is not skipped from just before it', async () => {
+    const set = await engine.riseTransit(JAN_2024, MOON, AMSTERDAM, 'set', 'true');
+    expect(set).toBeDefined();
+    if (set === undefined) return;
+    expect(Math.abs(await centreAltitude(set, MOON, AMSTERDAM))).toBeLessThan(0.02);
+    // Two minutes before the geocentric set, the topocentric centre has already set (parallax): the answer must still
+    // be this set, not the next day's (astrologer review of PR #1940, finding 1).
+    const again = await engine.riseTransit(set - 2 / 1440, MOON, AMSTERDAM, 'set', 'true');
+    expect(Math.abs((again ?? Number.NaN) - set) * 86_400).toBeLessThan(2);
+  });
+
+  it('the true rise is the first one after the moment, and the altitude rises through it', async () => {
+    const rise = await engine.riseTransit(JAN_2024, MOON, AMSTERDAM, 'rise', 'true');
+    expect(rise).toBeDefined();
+    if (rise === undefined) return;
+    expect(rise).toBeGreaterThan(JAN_2024);
+    expect(await centreAltitude(rise - 1 / 1440, MOON, AMSTERDAM)).toBeLessThan(0);
+    expect(await centreAltitude(rise + 1 / 1440, MOON, AMSTERDAM)).toBeGreaterThan(0);
+  });
+
+  it('gives a Visual Moon rise near the true one', async () => {
+    const trueRise = await engine.riseTransit(JAN_2024, MOON, AMSTERDAM, 'rise', 'true');
+    const visualRise = await engine.riseTransit(JAN_2024, MOON, AMSTERDAM, 'rise', 'visual');
+    expect(visualRise).toBeDefined();
+    expect(Math.abs((visualRise ?? Number.NaN) - (trueRise ?? Number.NaN)) * 1440).toBeLessThan(30);
+  });
 });

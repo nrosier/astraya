@@ -247,6 +247,12 @@ const CIRCUMPOLAR = -2;
 /** The atmosphere `riseTransit` assumes, the same defaults `azimuthAltitude` uses: 0 hPa (estimated by the library). */
 const RISE_PRESSURE_HPA = 0;
 const RISE_TEMPERATURE_C = 15;
+/**
+ * The true-horizon search (#1407): samples every 5 minutes, for up to 36 hours, more than the Moon's 24h50m cycle. A
+ * grazing body that clears the horizon for less than one step can be missed, which then reads as not rising that day.
+ */
+const TRUE_HORIZON_STEP_DAYS = 5 / 1440;
+const TRUE_HORIZON_WINDOW_DAYS = 1.5;
 const HOUSE_ASCMC_DOUBLES = 10;
 
 /** Normalise to the half-open interval [0, 360). */
@@ -905,20 +911,10 @@ export class SwissEphemerisEngine implements EphemerisProvider {
       return this.#riseTrans(jd, body, kind, place);
     }
     // True Altitude (Solar Fire §12.9): the centre on the astronomical horizon, ignoring "atmospheric refraction, the
-    // size of the body and parallax effects". Swiss Ephemeris's disc-centre, no-refraction rise still measures the
-    // topocentric centre, which for the Moon is about 0.9° of parallax away, so its time is refined to the moment the
-    // geocentric centre is at altitude 0.
-    let from = jd;
-    for (let attempt = 0; attempt < 2; attempt += 1) {
-      const topocentric = this.#riseTrans(from, body, kind | SE.SE_BIT_DISC_CENTER | SE.SE_BIT_NO_REFRACTION, place);
-      if (topocentric === undefined) return undefined;
-      const geocentric = await this.#geocentricHorizonCrossing(topocentric, body, place);
-      if (geocentric === undefined) return undefined;
-      if (geocentric > jd) return geocentric;
-      // The refined crossing fell just before `jd`: the event asked for is the next one.
-      from = topocentric + 0.5;
-    }
-    return undefined;
+    // size of the body and parallax effects". Swiss Ephemeris's disc-centre, no-refraction rise measures the
+    // topocentric centre (about 0.9° of parallax away for the Moon), so the geocentric crossing is searched here
+    // directly instead (astrologer review of PR #1940).
+    return this.#trueHorizonCrossing(jd, body, place, event === 'rise');
   }
 
   /** The geocentric altitude of `body`'s centre at `jd` from `place`, without refraction. */
@@ -933,42 +929,39 @@ export class SwissEphemerisEngine implements EphemerisProvider {
   }
 
   /**
-   * The moment nearest `nearJd` (within two hours) that the geocentric centre of `body` crosses altitude 0, bisected to
-   * a second; `undefined` when it doesn't cross in that window. Parallax is at most about a degree, so the geocentric
-   * crossing is minutes from the topocentric one.
+   * The first moment after `jd` the geocentric centre of `body` crosses altitude 0 upwards (`rising`) or downwards, with
+   * no refraction: sampled every `TRUE_HORIZON_STEP_DAYS` for up to `TRUE_HORIZON_WINDOW_DAYS` and bisected to a second.
+   * `undefined` when there is no such crossing in that window: the body does not rise or set that day.
    */
-  async #geocentricHorizonCrossing(
-    nearJd: JulianDayUT,
+  async #trueHorizonCrossing(
+    jd: JulianDayUT,
     body: BodyId,
     place: GeoPosition,
+    rising: boolean,
   ): Promise<JulianDayUT | undefined> {
-    const step = 5 / 1440;
-    const at = (jd: JulianDayUT): Promise<Degrees> => this.#geocentricAltitude(jd, body, place);
-    const start = await at(nearJd);
-    if (start === 0) return nearJd;
-    for (let k = 1; k <= 24; k += 1) {
-      for (const direction of [-1, 1]) {
-        const inner = nearJd + direction * (k - 1) * step;
-        const outer = nearJd + direction * k * step;
-        const innerValue = await at(inner);
-        const outerValue = await at(outer);
-        if (Math.sign(innerValue) !== Math.sign(outerValue)) {
-          let low = Math.min(inner, outer);
-          let high = Math.max(inner, outer);
-          let lowValue = low === inner ? innerValue : outerValue;
-          while (high - low > 1 / 86400) {
-            const mid = (low + high) / 2;
-            const midValue = await at(mid);
-            if (Math.sign(midValue) === Math.sign(lowValue)) {
-              low = mid;
-              lowValue = midValue;
-            } else {
-              high = mid;
-            }
-          }
-          return (low + high) / 2;
+    const at = (t: JulianDayUT): Promise<Degrees> => this.#geocentricAltitude(t, body, place);
+    const crosses = (before: Degrees, after: Degrees): boolean =>
+      rising ? before < 0 && after >= 0 : before > 0 && after <= 0;
+    let low = jd;
+    let lowValue = await at(low);
+    for (
+      let high = jd + TRUE_HORIZON_STEP_DAYS;
+      high <= jd + TRUE_HORIZON_WINDOW_DAYS;
+      high += TRUE_HORIZON_STEP_DAYS
+    ) {
+      const highValue = await at(high);
+      if (crosses(lowValue, highValue)) {
+        let from = low;
+        let to = high;
+        while (to - from > 1 / 86400) {
+          const mid = (from + to) / 2;
+          if (crosses(await at(from), await at(mid))) to = mid;
+          else from = mid;
         }
+        return (from + to) / 2;
       }
+      low = high;
+      lowValue = highValue;
     }
     return undefined;
   }
