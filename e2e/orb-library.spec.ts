@@ -127,7 +127,7 @@ test('a cited Lilly preset is offered on the card, applies, and can be chosen fo
   await orbGroup.getByRole('radio', { name: /^Lilly \(1647\), first column/ }).check();
   await card.getByRole('button', { name: 'Apply and redraw', exact: true }).click();
   await expect(card).toBeHidden();
-  await expect(page.locator('button.extended-settings-trigger')).toContainText('Own orb rules');
+  await expect(page.locator('button.extended-settings-trigger')).toContainText('changed');
   await openSettings(page, 'Orbs & aspects');
   await expect(orbGroup.getByRole('radio', { name: /^Lilly \(1647\), first column/ })).toBeChecked();
   const axe = await new AxeBuilder({ page }).include('dialog.settings-card').analyze();

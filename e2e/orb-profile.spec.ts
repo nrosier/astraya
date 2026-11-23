@@ -92,7 +92,7 @@ test('own orb rules on the natal chart change its aspects, name themselves in th
   await card.getByRole('group', { name: 'Conjunction', exact: true }).getByRole('spinbutton').first().fill('0');
   await card.getByRole('button', { name: 'Apply and redraw', exact: true }).click();
   await expect(card).toBeHidden();
-  await expect(page.locator('button.extended-settings-trigger')).toContainText('Own orb rules');
+  await expect(page.locator('button.extended-settings-trigger')).toContainText('changed');
   await expect.poll(() => rows.count()).toBeLessThan(builtIn);
 
   // The card reopens with the rule, the orb profile reads Custom, and the fixed preview line is gone.

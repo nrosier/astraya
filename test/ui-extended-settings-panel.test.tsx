@@ -610,15 +610,15 @@ describe('the trigger and the starting points (#442)', () => {
       },
     };
     const { container, root } = await mount(fakeProvider(), vi.fn(), changed);
+    // The pill counts the changes and names none of them (#1929); the names stay in the drawer.
     const text = trigger(container).textContent;
-    expect(text).toContain('House system W');
-    expect(text).toContain('Sidereal (Ayanamsa 1)');
-    // Fortune and Chiron's visibility now live in one unified policy (#585) — both changes
-    // collapse into a single "Object visibility customized" segment, not two named ones.
-    expect(text).toContain('Object visibility customized');
     expect(text).toContain('3 changed');
+    expect(text).not.toContain('House system W');
+    expect(text).not.toContain('Sidereal (Ayanamsa 1)');
+    expect(text).not.toContain('Object visibility customized');
     expect(text).not.toContain('Rainbow');
-    expect(trigger(container).getAttribute('aria-label')).toContain('Object visibility customized');
+    expect(trigger(container).getAttribute('aria-label')).toContain('3 changed');
+    expect(trigger(container).getAttribute('aria-label')).not.toContain('Object visibility customized');
     unmount(container, root);
   });
 
