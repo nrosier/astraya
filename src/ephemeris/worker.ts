@@ -42,6 +42,8 @@ export async function dispatch(engine: EphemerisProvider, request: EphemerisRequ
       return engine.positions(...request.args);
     case 'houses':
       return engine.houses(...request.args);
+    case 'housesFromArmc':
+      return engine.housesFromArmc(...request.args);
     case 'houseSystemName':
       return engine.houseSystemName(...request.args);
     case 'ayanamsa':
