@@ -13,7 +13,7 @@
 /**
  * @module solar-arc-directions
  * @purpose Computes a solar arc directions chart for a target date (#47): the natal Sun's own progressed arc applied uniformly to every body and angle.
- * @conventions Mirrors `secondary-progression.ts`'s shape (natal Julian day, one house and one batch position call), but applies the shared solar arc to every body/angle rather than only rotating angles (secondary progression's `'solarArc'` MC method); contacts to the fixed natal chart use `findCrossAspects`, and each found contact is additionally resolved to its exact date against the real ephemeris since the arc is not perfectly linear in time. Both Suns are read in the requested zodiac. Arc kinds and multipliers (#1407) follow the Solar Fire Deluxe guide §12.4 (PDF pp. 78-80): the Ascendant (Vertex) arc is the distance moved by the secondary progressed Ascendant (Vertex), which Solar Fire derives from the progressed MC (§30.3.2.1). Of Solar Fire's five MC methods this fixes True Solar Arc in Longitude: natal MC plus the solar arc in longitude, converted to its ARMC with the progressed date's true obliquity and cast with `housesFromArmc` at the natal latitude (owner decision on #1407, 2026-11-23; obliquity per the astrologer review of PR #1936). That angle work is done in the tropical frame; in a sidereal chart the arc then differs from a sidereal measurement only by the ayanamsa's motion over the progressed days: about 0.14" per year of age for the solar arc, and about 0.14" x (1 + dAsc/dMC) per year for the Ascendant arc, where the Ascendant outruns the MC (astrologer review of PR #1939). The Ascendant and Vertex arcs are summed over quarter-day steps, so an arc past 180 degrees keeps its true size; inside the polar circles the Ascendant can jump within a step, and the arc then follows the shorter way round at that step. The multiplier is one of x1, x2, x0.5, x-1, x-2, x-0.5 (guide p. 80) and scales the arc before it is applied. Exact contact dates are solved for the solar arc only; for the Ascendant and Vertex arcs they are undefined.
+ * @conventions Mirrors `secondary-progression.ts`'s shape (natal Julian day, one house and one batch position call), but applies the shared solar arc to every body/angle rather than only rotating angles (secondary progression's `'solarArc'` MC method); contacts to the fixed natal chart use `findCrossAspects`, and each found contact is additionally resolved to its exact date against the real ephemeris since the arc is not perfectly linear in time. Both Suns are read in the requested zodiac. Arc kinds and multipliers (#1407) follow the Solar Fire Deluxe guide §12.4 (PDF pp. 78-80): the Ascendant (Vertex) arc is the distance moved by the secondary progressed Ascendant (Vertex), which Solar Fire derives from the progressed MC (§30.3.2.1). Of Solar Fire's five MC methods this fixes True Solar Arc in Longitude: natal MC plus the solar arc in longitude, converted to its ARMC with the progressed date's true obliquity and cast with `housesFromArmc` at the natal latitude (owner decision on #1407, 2026-11-23; obliquity per the astrologer review of PR #1936). That angle work is done in the tropical frame; in a sidereal chart the arc then differs from a sidereal measurement only by the ayanamsa's motion over the progressed days: about 0.14" per year of age for the solar arc, and about 0.14" x (1 + dAsc/dMC) per year for the Ascendant arc, where the Ascendant outruns the MC (astrologer review of PR #1939). The Ascendant and Vertex arcs are summed over quarter-day steps, so an arc past 180 degrees keeps its true size; inside the polar circles the Ascendant can jump within a step, and the arc then follows the shorter way round at that step. The multiplier is one of x1, x2, x0.5, x-1, x-2, x-0.5 (guide p. 80) and scales the arc before it is applied. Exact contact dates are solved for the solar arc only; for the Ascendant and Vertex arcs they are undefined. Converse (guide §12.4 p. 80, owner decision on #1407 Q1) evaluates the same arc on the day as many days before birth as the forward one is after it, so the arc is negative; it is separate from the x-1 multiplier and composes with it. "Converse" has more than one meaning: Carter (Symbolic Directions) applies it to moving points backwards by the same forward arc, which here is the x-1 multiplier, not this option (astrologer review of PR #1943).
  * @exports computeSolarArcDirections, SolarArcDirectionsData, SolarArcDirectionsOptions, DirectedContact, SolarArcKind, SolarArcMultiplier, SOLAR_ARC_MULTIPLIERS, SOLAR_ARC_ACTIVE_ORB_DEG
  */
 import { findCrossAspects, type Aspect, type OrbConfig } from '../astrology/aspects.js';
@@ -66,6 +66,13 @@ export interface SolarArcDirectionsOptions extends BodySetOptions {
   readonly arcKind?: SolarArcKind;
   /** Scales the arc before it is applied; 1 when omitted (#1407). */
   readonly arcMultiplier?: SolarArcMultiplier;
+  /**
+   * Converse (#1407; guide §12.4 p. 80: "done backwards in time from the time of the base chart"): the arc is the one
+   * found the same number of days before birth, so the chart is directed backwards. A separate option from the x-1
+   * multiplier, and it composes with it. For the other meaning of "converse" (Carter: back by the same forward arc),
+   * use the x-1 multiplier instead.
+   */
+  readonly converse?: boolean;
 }
 
 /**
@@ -92,6 +99,7 @@ export interface SolarArcDirectionsData {
   readonly arc: Degrees;
   readonly arcKind: SolarArcKind;
   readonly arcMultiplier: SolarArcMultiplier;
+  readonly converse: boolean;
   readonly directedPositions: readonly DirectedPosition[];
   readonly houses: HousePositions;
   readonly contacts: readonly DirectedContact[];
@@ -243,23 +251,29 @@ export async function computeSolarArcDirections(
   const natalSun = natalPositions.find((position) => position.body === sun.id);
   if (natalSun === undefined) throw new Error('unreachable: the ephemeris returned no position for the Sun');
 
+  const converse = options.converse === true;
   const age = ageInYears(natalJd, targetJd);
-  const progressedJd = progressedJulianDay(natalJd, targetJd);
+  // Converse: the progressed day lies as many days before birth as the forward one lies after it (guide p. 80).
+  const forwardJd = progressedJulianDay(natalJd, targetJd);
+  const progressedJd = converse ? natalJd - (forwardJd - natalJd) : forwardJd;
   const [progressedSun] = await provider.positions(progressedJd, [sun.id], positionOptions);
   if (progressedSun === undefined) throw new Error('unreachable: the ephemeris returned no position for the Sun');
   const solarArc = mcArc('solarArc', age, natalSun.longitude, progressedSun.longitude);
 
-  // The default (solar, x1) keeps today's unwrapped arc exactly; any other choice works from the normalised arc.
+  // The default (solar, x1, forward) keeps today's unwrapped arc exactly; any other choice works from the normalised
+  // arc. Converse, the arc is negative: the Sun's position that many days before birth minus the natal Sun.
   let arc: Degrees;
   let arcSpeed: number;
   if (arcKind === 'solar') {
-    arc = arcMultiplier === 1 ? solarArc : norm360(solarArc) * arcMultiplier;
-    arcSpeed = progressedSun.longitudeSpeed * arcMultiplier;
+    const baseArc = converse ? -norm360(natalSun.longitude - progressedSun.longitude) : norm360(solarArc);
+    arc = arcMultiplier === 1 && !converse ? solarArc : baseArc * arcMultiplier;
+    // Going back in time as age grows, the converse arc moves the other way: the speed changes sign.
+    arcSpeed = progressedSun.longitudeSpeed * arcMultiplier * (converse ? -1 : 1);
   } else {
     // The speed per progressed day decides whether a contact is applying or separating.
     const angle = await angleArc(arcKind, provider, natalJd, progressedJd, place, houseSystem);
     arc = angle.arc * arcMultiplier;
-    arcSpeed = angle.speed * arcMultiplier;
+    arcSpeed = angle.speed * arcMultiplier * (converse ? -1 : 1);
   }
 
   const directed = directPositions(natalPositions, arc);
@@ -287,9 +301,12 @@ export async function computeSolarArcDirections(
       // candidate or the candidate - 360, whichever gives a solar arc of 0 or more. Of those, the one nearest today's
       // solar arc is the contact found; for x1 this is exactly the earlier rule. The arc is unwrapped and goes negative
       // once the progressed Sun passes 0 (#1498), hence the normalisation.
-      const wrappedArc = norm360(solarArc);
+      // Converse, the directed arc is minus the Sun's motion before birth, so the sign flips (the search measures that
+      // motion, which only grows with age, like the forward arc).
+      const sign = converse ? -1 : 1;
+      const wrappedArc = converse ? norm360(natalSun.longitude - progressedSun.longitude) : norm360(solarArc);
       const solarCandidates = candidates
-        .flatMap((candidate) => [candidate / arcMultiplier, (candidate - 360) / arcMultiplier])
+        .flatMap((candidate) => [candidate / (sign * arcMultiplier), (candidate - 360) / (sign * arcMultiplier)])
         .filter((value) => value >= 0);
       const requiredArc = solarCandidates.reduce((closest, candidate) =>
         Math.abs(candidate - wrappedArc) < Math.abs(closest - wrappedArc) ? candidate : closest,
@@ -298,11 +315,19 @@ export async function computeSolarArcDirections(
       const orb = SOLAR_ARC_ACTIVE_ORB_DEG / Math.abs(arcMultiplier);
       // Each bound found against the real ephemeris, like the exact date: the arc is not linear in time.
       const [exactJd, activeFromJd, activeUntilJd] = await Promise.all([
-        findExactnessJd(provider, natalJd, natalSun.longitude, requiredArc, undefined, options.zodiac),
+        findExactnessJd(provider, natalJd, natalSun.longitude, requiredArc, undefined, options.zodiac, converse),
         requiredArc - orb <= 0
           ? Promise.resolve(natalJd)
-          : findExactnessJd(provider, natalJd, natalSun.longitude, requiredArc - orb, undefined, options.zodiac),
-        findExactnessJd(provider, natalJd, natalSun.longitude, requiredArc + orb, undefined, options.zodiac),
+          : findExactnessJd(
+              provider,
+              natalJd,
+              natalSun.longitude,
+              requiredArc - orb,
+              undefined,
+              options.zodiac,
+              converse,
+            ),
+        findExactnessJd(provider, natalJd, natalSun.longitude, requiredArc + orb, undefined, options.zodiac, converse),
       ]);
       return { ...contact, exactJd, activeFromJd: exactJd === undefined ? undefined : activeFromJd, activeUntilJd };
     }),
@@ -315,6 +340,7 @@ export async function computeSolarArcDirections(
     arc,
     arcKind,
     arcMultiplier,
+    converse,
     directedPositions: directed,
     houses,
     contacts,

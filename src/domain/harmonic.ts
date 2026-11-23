@@ -13,7 +13,8 @@
  * @module harmonic
  * @purpose Computes a harmonic or Vedic Varga chart (e.g. D9 Navamsha) from one person's natal chart (#170).
  * @conventions Synthetic chart, not a comparison, so reuses the single-chart engine on positions/houses already transformed by `astrology/harmonics.ts`; for `computeHarmonic`, `n` must be a positive integer, with `n=1` reproducing the natal chart (whole-sign houses in place of whatever system the natal chart used). The age harmonics (#1407) follow the Solar Fire Deluxe guide §12.6 (PDF p. 85): Harmonic Age multiplies by the exact age in decimal years at the target date (zero at birth), Harmonic Age+1 by that age plus one (one at birth). The guide gives no year length: measuring age in tropical years (`ageInYears`, 365.2422 days) is Astraya's own convention. A target before birth is refused.
- * @exports computeHarmonic, computeHarmonicAge, harmonicPositionProvenance, HarmonicData, HarmonicAgeData, HarmonicAgeOptions, HarmonicPositionProvenanceRow
+ * The arc-transform chart (#1407) follows §12.6 too, which gives no formula: the harmonic is 360 divided by the raw difference of the pair's longitudes (both in 0-360, so the difference can pass 180), which always lands the pair in exact conjunction; the shorter arc would not when it crosses 0 Aries. That formula is Astraya's reading of the guide (owner decisions on #1407, 2026-11-21 and 2026-11-23), and the result says so in `basis`. Like any non-integer harmonic it depends on where 0 Aries is, so on the chosen zodiac: a sidereal chart can give a different harmonic for the same pair. Only bodies can be chosen, not the angles; that narrower reading of the guide's "pair of points" is Astraya's.
+ * @exports computeHarmonic, computeHarmonicAge, computeArcTransform, arcTransformHarmonic, harmonicPositionProvenance, HarmonicData, HarmonicAgeData, HarmonicAgeOptions, ArcTransformData, HarmonicPositionProvenanceRow
  */
 import { DEFAULT_ORB_CONFIG, findAspects, subjectsFrom, type Aspect } from '../astrology/aspects.js';
 import { bodyByKey, bodyById, type BodyCategory } from '../astrology/bodies.js';
@@ -53,6 +54,18 @@ export interface HarmonicAgeData extends HarmonicData {
   /** The multiplier used: the age, or the age plus one. */
   readonly harmonicNumber: number;
   readonly plusOne: boolean;
+}
+
+/** An arc-transform chart (#1407): the harmonic chart that puts the chosen pair in exact conjunction. */
+export interface ArcTransformData extends HarmonicData {
+  readonly pointA: BodyId;
+  readonly pointB: BodyId;
+  /** The raw difference of the pair's natal longitudes, both in 0-360, in degrees (over 0 and under 360). */
+  readonly separation: number;
+  /** The multiplier used: 360 divided by `separation`. */
+  readonly harmonicNumber: number;
+  /** The formula is Astraya's reading of Solar Fire §12.6 (p. 85), which gives none; the UI says so. */
+  readonly basis: 'astraya-reading-sf-p85';
 }
 
 export interface HarmonicAgeOptions extends ChartCalculationOptions {
@@ -128,6 +141,61 @@ export async function computeHarmonicAge(
   const harmonicNumber = plusOne ? age + 1 : age;
   const natal = await computeChartData(moment, provider, options);
   return { natal, harmonic: harmonicChart(natal, harmonicNumber, options), ageInYears: age, harmonicNumber, plusOne };
+}
+
+/** Below this, two points already conjoin and no harmonic is needed to bring them together. */
+const ARC_TRANSFORM_MIN_SEPARATION = 1e-9;
+
+/**
+ * The arc-transform harmonic for two longitudes (Solar Fire Deluxe guide §12.6, p. 85; #1407): 360 divided by the raw
+ * difference of the two longitudes, both taken in 0-360 (so the difference can pass 180 degrees). Multiplying both
+ * longitudes by it makes them coincide, which is what the guide says the chart does ("bringing that planetary pair
+ * into exact conjunction"). The shorter arc would not do that when it crosses 0 Aries, unless 360 divided by it is a
+ * whole number. The guide gives no formula; this one is Astraya's reading (owner decisions on #1407, 2026-11-21 and
+ * 2026-11-23). Throws when the points already conjoin. A very close pair gives a very large harmonic; every other point
+ * is then off by that harmonic times the ephemeris error (about 0.2"), so past a few hundred the rest of the chart
+ * stops meaning anything. No source gives a limit, so none is enforced here; the UI should flag it.
+ */
+export function arcTransformHarmonic(a: number, b: number): number {
+  const normalise = (degrees: number): number => ((degrees % 360) + 360) % 360;
+  const separation = Math.abs(normalise(a) - normalise(b));
+  if (separation < ARC_TRANSFORM_MIN_SEPARATION) {
+    throw new RangeError('the two points already conjoin, so there is no arc transform to make');
+  }
+  return 360 / separation;
+}
+
+/**
+ * The arc-transform chart of a natal chart for the pair `pointA` and `pointB` (#1407): every longitude multiplied by
+ * `arcTransformHarmonic` of the pair, through the same harmonic path as `computeHarmonic` (whole-sign houses). The
+ * longitudes, and so the harmonic, are in the chosen zodiac. The pair must be bodies, not angles (Astraya's choice).
+ * `provider` must already be initialized.
+ */
+export async function computeArcTransform(
+  moment: BirthMomentInput,
+  pointA: BodyId,
+  pointB: BodyId,
+  provider: EphemerisProvider,
+  options: ChartCalculationOptions = {},
+): Promise<ArcTransformData> {
+  const natal = await computeChartData(moment, provider, options);
+  const longitudeOf = (body: BodyId): number => {
+    const position = natal.positions.find((candidate) => candidate.body === body);
+    if (position === undefined) throw new RangeError(`body ${String(body)} is not in this chart`);
+    return position.longitude;
+  };
+  const a = longitudeOf(pointA);
+  const b = longitudeOf(pointB);
+  const harmonicNumber = arcTransformHarmonic(a, b);
+  return {
+    natal,
+    harmonic: harmonicChart(natal, harmonicNumber, options),
+    pointA,
+    pointB,
+    separation: 360 / harmonicNumber,
+    harmonicNumber,
+    basis: 'astraya-reading-sf-p85',
+  };
 }
 
 /**

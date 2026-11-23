@@ -110,7 +110,9 @@ export function arcsToExactness(
  * linear. Returns undefined when `requiredArc` is not reached within
  * `searchWindowYears` of age (day-for-year, so that many days past `natalJd`).
  * `zodiac` must be the one `natalSunLongitude` was read in; the progressed Sun
- * is read in it too.
+ * is read in it too. With `converse` (#1407), the arc is the Sun's motion over
+ * the same number of days *before* birth (the natal Sun minus the Sun that many
+ * days earlier), which also only grows with age.
  */
 export async function findExactnessJd(
   provider: EphemerisProvider,
@@ -119,18 +121,21 @@ export async function findExactnessJd(
   requiredArc: Degrees,
   searchWindowYears = 150,
   zodiac?: Zodiac,
+  converse = false,
 ): Promise<JulianDayUT | undefined> {
   const sun = bodyByKey('sun');
   if (sun === undefined) throw new Error('unreachable: sun is always in BODIES');
 
   const arcAt = async (jd: JulianDayUT): Promise<Degrees> => {
     const age = ageInYears(natalJd, jd);
+    const forward = progressedJulianDay(natalJd, jd);
     const [position] = await provider.positions(
-      progressedJulianDay(natalJd, jd),
+      converse ? natalJd - (forward - natalJd) : forward,
       [sun.id],
       zodiac === undefined ? undefined : { zodiac },
     );
     if (position === undefined) throw new Error('unreachable: the ephemeris returned no position for the Sun');
+    if (converse) return norm360(natalSunLongitude - position.longitude);
     // mcArc is unwrapped (progressed minus natal), so it drops by 360 once the progressed Sun passes 0/360 (#1498);
     // normalised, the arc is monotonic over the whole window (at most ~150 degrees, so never a full turn).
     return norm360(mcArc('solarArc', age, natalSunLongitude, position.longitude));
