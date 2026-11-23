@@ -201,6 +201,44 @@ const en = {
     'This is the Almuten of the Ascendant, scored by essential dignity and debility only (5/4/3/2/1 for rulership, exaltation, triplicity, bound and face, minus 5 for detriment and 4 for fall, as in Lilly\u2019s fortitudes table). It does not include the planetary hour or the prenatal syzygy that some authors add to an Almuten Figuris.',
   almutenBreakdownCaption: 'Almuten candidates',
   noAlmuten: 'No almuten (no planet scores above 0)',
+  hylegHeading: 'Hyleg and alcocoden',
+  hylegPointLabels: {
+    sun: 'the Sun',
+    moon: 'the Moon',
+    fortune: 'the Part of Fortune',
+    ascendant: 'the Ascendant',
+    syzygy: 'the degree of the prenatal syzygy',
+  },
+  hylegLine: (point: string, position: string) => `Hyleg (giver of life): ${point}, ${position}`,
+  hylegRuleLabels: {
+    'sun-houses-1-10-11': 'The Sun is in the 1st, 10th or 11th house, and a lord of its degree aspects it.',
+    'sun-houses-7-8-9-masculine':
+      'The Sun is in the 7th, 8th or 9th house in a masculine sign, and a lord of its degree aspects it.',
+    'moon-angular-succeedent-feminine':
+      'The Moon is in an angle or a succeedent house in a feminine sign, and a lord of her degree aspects her.',
+    'fortune-angular-succeedent':
+      'The Part of Fortune is in an angle or a succeedent house, and a lord of its degree aspects it.',
+    ascendant: 'The Ascendant, because a lord of its degree aspects it.',
+    'syzygy-degree':
+      'The degree of the prenatal syzygy, in an angle or a succeedent house, because a lord of that degree aspects it.',
+  },
+  alcocodenLine: (planet: string) => `Alcocoden (giver of years): ${planet}`,
+  alcocodenRuleLabels: {
+    'only-aspecting':
+      'The only lord of the hyleg\u2019s degree (domicile, exaltation, bound or triplicity) that aspects it.',
+    'closest-aspect': 'Equal in dignities, but closest to an exact aspect with the hyleg\u2019s degree.',
+    'more-dignities': 'Holds the most dignities in the hyleg\u2019s degree among the lords that aspect it.',
+    'angular-or-succeedent': 'Equal so far, but is in an angle or a succeedent house.',
+    'closer-to-cusp': 'Equal so far, but is closer to the cusp of its house.',
+    'own-dignity': 'Equal so far, but is in a dignity of its own rather than peregrine.',
+    oriental: 'Equal so far, but is oriental.',
+    'closer-to-sun': 'Equal so far, but is closer to the Sun and not combust.',
+    'lord-order':
+      'Equal in everything else, so the first in the order of lords: bound, domicile, exaltation, triplicity.',
+  },
+  noHyleg: 'No hyleg found by this procedure',
+  hylegSourceNote:
+    'After Bonatti, Liber astronomiae, Tr. 9, part 2, chs. 1\u20132 (following \u2018Umar), with whole-sign houses and whole-sign aspects, no orbs. Shows which point and planet, not the length of life.',
   yesLabel: 'Yes',
   noLabel: 'No',
   // Jones' own seven pattern names (#35, #398) have no established Dutch astrological
@@ -573,6 +611,45 @@ const nl: typeof en = {
     'Dit is de almuten van de Ascendant, uitsluitend gescoord met essentiële waardigheid en zwakte (5/4/3/2/1 voor heerschappij, exaltatie, triplicitair, grens en decanaat, min 5 voor detriment en 4 voor val, zoals in Lilly\u2019s fortitudes-tabel). Het omvat niet het planetaire uur of de prenatale syzygie die sommige auteurs toevoegen aan een Almuten Figuris.',
   almutenBreakdownCaption: 'Almuten-kandidaten',
   noAlmuten: 'Geen almuten (geen planeet scoort boven 0)',
+  hylegHeading: 'Hyleg en alcocoden',
+  hylegPointLabels: {
+    sun: 'de Zon',
+    moon: 'de Maan',
+    fortune: 'het Fortuinpunt',
+    ascendant: 'de Ascendant',
+    syzygy: 'de graad van de prenatale syzygie',
+  },
+  hylegLine: (point: string, position: string) => `Hyleg (gever van leven): ${point}, ${position}`,
+  hylegRuleLabels: {
+    'sun-houses-1-10-11': 'De Zon staat in het 1e, 10e of 11e huis en een heer van haar graad heeft er een aspect mee.',
+    'sun-houses-7-8-9-masculine':
+      'De Zon staat in het 7e, 8e of 9e huis in een mannelijk teken en een heer van haar graad heeft er een aspect mee.',
+    'moon-angular-succeedent-feminine':
+      'De Maan staat in een hoekhuis of een volgend huis in een vrouwelijk teken en een heer van haar graad heeft er een aspect mee.',
+    'fortune-angular-succeedent':
+      'Het Fortuinpunt staat in een hoekhuis of een volgend huis en een heer van zijn graad heeft er een aspect mee.',
+    ascendant: 'De Ascendant, omdat een heer van zijn graad er een aspect mee heeft.',
+    'syzygy-degree':
+      'De graad van de prenatale syzygie, in een hoekhuis of een volgend huis, omdat een heer van die graad er een aspect mee heeft.',
+  },
+  alcocodenLine: (planet: string) => `Alcocoden (gever van jaren): ${planet}`,
+  alcocodenRuleLabels: {
+    'only-aspecting':
+      'De enige heer van de graad van de hyleg (heerschappij, exaltatie, bound of triplicitair) die er een aspect mee heeft.',
+    'closest-aspect': 'Gelijk in waardigheden, maar het dichtst bij een exact aspect met de graad van de hyleg.',
+    'more-dignities':
+      'Heeft de meeste waardigheden in de graad van de hyleg van de heren die er een aspect mee hebben.',
+    'angular-or-succeedent': 'Tot hier gelijk, maar staat in een hoekhuis of een volgend huis.',
+    'closer-to-cusp': 'Tot hier gelijk, maar staat dichter bij de spits van zijn huis.',
+    'own-dignity': 'Tot hier gelijk, maar staat in een eigen waardigheid en is niet peregrijn.',
+    oriental: 'Tot hier gelijk, maar is oriëntaal.',
+    'closer-to-sun': 'Tot hier gelijk, maar staat dichter bij de Zon en is niet verbrand.',
+    'lord-order':
+      'In al het overige gelijk, dus de eerste in de volgorde van heren: bound, heerschappij, exaltatie, triplicitair.',
+  },
+  noHyleg: 'Geen hyleg gevonden met deze methode',
+  hylegSourceNote:
+    'Naar Bonatti, Liber astronomiae, Tr. 9, deel 2, hoofdstuk 1\u20132 (naar \u2018Umar), met hele-tekenhuizen en hele-tekenaspecten, zonder orbs. Toont welk punt en welke planeet, niet de levensduur.',
   yesLabel: 'Ja',
   noLabel: 'Nee',
   jonesShapeLabels: {

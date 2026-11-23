@@ -38,6 +38,7 @@ One level above `src/astrology/`: composes pure astrological calculations into s
 - `harmonic.ts` — Harmonic/Vedic Varga charts (D9 Navamsha, etc.). Deps: `astrology/harmonics`, `./chart-compute`.
 - `horary.ts` — Horary chart, question-moment Julian day, considerations-before-judgment, and void-of-course check. Deps: `astrology/horary`, `astrology/void-of-course`, `astrology/emphasis`, `./chart-compute`.
 - `horary-judgment.ts` — Horary significators, perfection/reception, prohibition, and relative-motion timing estimates (#552). Deps: `astrology/dignities`, `astrology/horary`, `astrology/reception`, `astrology/emphasis`, `./chart-compute`.
+- `hyleg.ts` — Hyleg and alcocoden identification with the rule that chose each, per Bonatti Tr. 9 part 2 chs. 1-2 (#1799). Deps: `astrology/almuten`, `astrology/aspects`, `astrology/bodies`, `astrology/bounds`, `astrology/dignities`, `astrology/sect`, `astrology/signs`, `astrology/triplicity`, `./prenatal-syzygy`.
 - `house-overlays.ts` — Synastry house overlays (which houses each person's bodies fall in, both directions). Deps: `astrology/emphasis`, `./synastry`, `./chart-compute`.
 - `id.ts` — Local-first CSPRNG-backed prefixed base32 id generation (people/charts/note revisions/saved queries). Deps: Web Crypto API only.
 - `life-events.ts` — A person's dated life events (#1399): the type, the 100-event atomic reader and write guard, and the date-then-time order, the picker options (S5) and an optional fixed-list category (#1439). Deps: `store/oplog`, `store/ops` (JsonValue).
