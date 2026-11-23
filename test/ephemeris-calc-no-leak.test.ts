@@ -115,3 +115,13 @@ describe('the engine does not leak WASM memory in swe_houses_ex2 (#1859)', () =>
     expect(result.warning).toContain('switched to Porphyry');
   });
 });
+
+describe('the engine does not leak WASM memory in swe_houses_armc_ex2 (#1407)', () => {
+  it('60,000 polar-latitude Placidus calls from an ARMC grow the heap by less than 1 MB', async () => {
+    await engine.housesFromArmc(100, 70, 23.44, 'P');
+    const before = heapBytes();
+    for (let step = 0; step < 60_000; step += 1) await engine.housesFromArmc((step * 0.37) % 360, 70, 23.44, 'P');
+    // sweph-wasm's own swe_houses_armc_ex2 frees nothing when it throws, which every one of these calls does.
+    expect(heapBytes() - before).toBeLessThan(1024 * 1024);
+  }, 120_000);
+});

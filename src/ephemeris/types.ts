@@ -260,6 +260,15 @@ export interface EphemerisProvider {
   houses(jd: JulianDayUT, place: GeoPosition, system: HouseSystem, zodiac?: Zodiac): Promise<HousePositions>;
 
   /**
+   * Houses for an ARMC (sidereal time in degrees), a geographic latitude and an obliquity, with no moment attached
+   * (`swe_houses_armc_ex2`). This is what a progressed or directed MC needs once its ARMC is known: Solar Fire derives
+   * the progressed Ascendant, Vertex and Equatorial Ascendant from the progressed MC (§30.3.2.1; #1407). Always
+   * tropical: a caller in a sidereal zodiac subtracts the ayanamsa itself. Same polar fallback and warning as `houses`.
+   * The Sunshine system ('I') needs the Sun's declination and is refused.
+   */
+  housesFromArmc(armc: Degrees, latitude: Degrees, obliquity: Degrees, system: HouseSystem): Promise<HousePositions>;
+
+  /**
    * The library's own display name for a house system, via `swe_house_name`.
    * The authoritative source for UI labels: the canonical code list lives in
    * `src/astrology/houses.ts`, but the text shown to a user comes from here
