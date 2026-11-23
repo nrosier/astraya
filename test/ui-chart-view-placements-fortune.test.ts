@@ -34,17 +34,17 @@ describe('derived points formula column (#1794)', () => {
     expect(formulaText(fortune, 'sect-reversed')).toBe(formulaText(fortune));
   });
 
-  it('shows the same formula by day and by night for the modern Part of Fortune', () => {
+  it('shows one formula, not a day / night pair, for the modern Part of Fortune', () => {
     const text = formulaText(fortune, 'same-day-and-night');
-    const [day, night] = text.split(' / ');
-    expect(day).toBeTruthy();
-    expect(night).toBe(day);
+    expect(text).toBe(lotFormulaFor('part-of-fortune', 'same-day-and-night')?.dayFormula);
+    expect(text).not.toContain(' / ');
     expect(text).not.toBe(formulaText(fortune));
   });
 
-  it('shows the same formula by day and by night for the modern Part of Spirit', () => {
-    const [day, night] = formulaText(spirit, 'same-day-and-night').split(' / ');
-    expect(night).toBe(day);
+  it('shows one formula, not a day / night pair, for the modern Part of Spirit', () => {
+    const text = formulaText(spirit, 'same-day-and-night');
+    expect(text).toBe(lotFormulaFor('part-of-spirit', 'same-day-and-night')?.dayFormula);
+    expect(text).not.toContain(' / ');
     expect(formulaText(spirit)).not.toBe(formulaText(spirit, 'same-day-and-night'));
   });
 
