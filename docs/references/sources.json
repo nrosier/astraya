@@ -1583,5 +1583,25 @@
     "provisional": false,
     "used_by": ["test/domain-prenatal-syzygy-golden.test.ts"],
     "notes": "Independent table for the prenatal-syzygy golden test (#1798, owner decision 2026-11-20). The page says: \"The following table gives the date and time (Universal Time) of all phases of the Moon for a period of one century.\" The 1879 rows used: New Moon Feb 21 04:03, Full Moon Mar 8 13:10, New Moon Mar 22 21:05. Calculations by Fred Espenak (page credit: 'by Fred Espenak, GSFC Planetary Systems Laboratory')."
+  },
+  {
+    "id": "astrodienst-swiss-ephemeris-programmers-documentation",
+    "title": "Swiss Ephemeris: Programmer's Documentation",
+    "author": "Dieter Koch and Alois Treindl (Astrodienst AG)",
+    "year": null,
+    "edition": "Online documentation for the Swiss Ephemeris library, chapter on swe_rise_trans() (risings, settings and meridian transits). Undated; revised with each library release.",
+    "licence": "Documentation of the AGPL-licensed Swiss Ephemeris; not held locally.",
+    "access_route": "https://www.astro.com/swisseph/swephprg.htm (the swe_rise_trans chapter); the library itself is vendored through sweph-wasm 2.6.9.",
+    "original_name": null,
+    "processed_path": null,
+    "sha256": null,
+    "text_path": null,
+    "pages_path": null,
+    "page_count": null,
+    "status": "unheld-reference",
+    "copyrighted": true,
+    "provisional": true,
+    "used_by": ["src/ephemeris/engine.ts"],
+    "notes": "Recorded for EphemerisProvider.riseTransit (#1407 Step 7): the rsmi event codes (SE_CALC_RISE, SE_CALC_SET, SE_CALC_MTRANSIT, SE_CALC_ITRANSIT), the disc-centre and no-refraction bits, and the -2 circumpolar return code. The owner chose this call and this source on #1407 (Q4, 2026-11-21). Not held; year undeterminable, so provisional."
   }
 ]

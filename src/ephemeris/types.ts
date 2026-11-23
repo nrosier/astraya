@@ -154,6 +154,17 @@ export interface PositionOptions {
   readonly heliocentric?: boolean;
 }
 
+/** Which crossing `riseTransit` finds (#1407): the horizon (rise, set) or the meridian (culminate, anticulminate). */
+export type RiseTransitEvent = 'rise' | 'set' | 'culminate' | 'anticulminate';
+
+/**
+ * The horizon a rise or set is measured against, the two Solar Fire offers (guide §12.9): `true`, the body's
+ * geocentric centre on the astronomical horizon, with no refraction and no parallax ("True Altitude"), or `visual`, the
+ * leading or trailing edge with refraction and, for the Moon, parallax ("Visual"). Culmination and anti-culmination are
+ * meridian crossings, where the two coincide.
+ */
+export type RiseTransitHorizon = 'true' | 'visual';
+
 /** Azimuth/altitude of a point as seen from a place, via `swe_azalt`. */
 export interface HorizontalPosition {
   /**
@@ -341,6 +352,20 @@ export interface EphemerisProvider {
    * network clause obliges us to provide.
    */
   version(): Promise<string>;
+
+  /**
+   * The first rise, set, culmination or anti-culmination of `body` after `jd` at `place` (`swe_rise_trans`; #1407),
+   * against the true or the visual horizon (Solar Fire guide §12.9). `undefined` when the body does not rise or set
+   * that day at that latitude (circumpolar, or never above the horizon). Pressure and temperature are the same
+   * defaults `azimuthAltitude` uses (0 hPa, which the library estimates from the altitude, and 15 °C).
+   */
+  riseTransit(
+    jd: JulianDayUT,
+    body: BodyId,
+    place: GeoPosition,
+    event: RiseTransitEvent,
+    horizon: RiseTransitHorizon,
+  ): Promise<JulianDayUT | undefined>;
 
   /**
    * Topocentric azimuth/altitude of `point` as seen from `place`, via `swe_azalt`.

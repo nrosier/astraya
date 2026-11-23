@@ -41,6 +41,8 @@ import {
   type FixedStarMagnitude,
   type FixedStarPosition,
   type GeoPosition,
+  type RiseTransitEvent,
+  type RiseTransitHorizon,
   type HorizontalPosition,
   type HousePositions,
   type HouseSystem,
@@ -167,6 +169,20 @@ interface SweInstance {
       ascmcSpeed: number,
       serr: number,
     ): number;
+    /** The raw `swe_rise_trans` export `#riseTrans` uses with reused buffers (#1407); `star` is 0 for a planet. */
+    _swe_rise_trans(
+      jd: number,
+      body: number,
+      star: number,
+      ephemerisFlags: number,
+      rsmi: number,
+      geopos: number,
+      pressure: number,
+      temperature: number,
+      tret: number,
+      serr: number,
+    ): number;
+    setValue(pointer: number, value: number, type: 'double'): void;
     getValue(pointer: number, type: 'double'): number;
     UTF8ToString(pointer: number): string;
   };
@@ -226,6 +242,11 @@ const CALC_RESULT_DOUBLES = 6;
  * index 0), the ascmc arrays 10. Every other system fills cusps 0..12 and ascmc 0..7.
  */
 const HOUSE_CUSP_DOUBLES = 37;
+/** `swe_rise_trans` returns -2 when the body does not rise or set that day (circumpolar or never up). */
+const CIRCUMPOLAR = -2;
+/** The atmosphere `riseTransit` assumes, the same defaults `azimuthAltitude` uses: 0 hPa (estimated by the library). */
+const RISE_PRESSURE_HPA = 0;
+const RISE_TEMPERATURE_C = 15;
 const HOUSE_ASCMC_DOUBLES = 10;
 
 /** Normalise to the half-open interval [0, 360). */
@@ -284,6 +305,11 @@ export class SwissEphemerisEngine implements EphemerisProvider {
    * 750 bytes: 100,000 polar calls grew the heap from 16 MB to 83 MB.
    */
   #houseBuffers: HouseBuffers | undefined;
+  /**
+   * The buffers `#riseTrans` reuses (#1407): sweph-wasm 2.6.9's own `swe_rise_trans` never frees its geopos buffer,
+   * frees nothing when it throws, and throws on the circumpolar return code, the same leak pattern as #1856 and #1859.
+   */
+  #riseBuffers: { readonly geopos: number; readonly tret: number; readonly serr: number } | undefined;
   readonly #config: EngineConfig;
 
   constructor(config: EngineConfig = {}) {
@@ -321,6 +347,7 @@ export class SwissEphemerisEngine implements EphemerisProvider {
     this.#swe = swe;
     this.#calcBuffers = undefined;
     this.#houseBuffers = undefined;
+    this.#riseBuffers = undefined;
   }
 
   /**
@@ -860,6 +887,124 @@ export class SwissEphemerisEngine implements EphemerisProvider {
     return jd;
   }
 
+  async riseTransit(
+    jd: JulianDayUT,
+    body: BodyId,
+    place: GeoPosition,
+    event: RiseTransitEvent,
+    horizon: RiseTransitHorizon,
+  ): Promise<JulianDayUT | undefined> {
+    this.#assertInRange(jd, body);
+    const kind = {
+      rise: SE.SE_CALC_RISE,
+      set: SE.SE_CALC_SET,
+      culminate: SE.SE_CALC_MTRANSIT,
+      anticulminate: SE.SE_CALC_ITRANSIT,
+    }[event];
+    if (horizon === 'visual' || event === 'culminate' || event === 'anticulminate') {
+      return this.#riseTrans(jd, body, kind, place);
+    }
+    // True Altitude (Solar Fire §12.9): the centre on the astronomical horizon, ignoring "atmospheric refraction, the
+    // size of the body and parallax effects". Swiss Ephemeris's disc-centre, no-refraction rise still measures the
+    // topocentric centre, which for the Moon is about 0.9° of parallax away, so its time is refined to the moment the
+    // geocentric centre is at altitude 0.
+    let from = jd;
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const topocentric = this.#riseTrans(from, body, kind | SE.SE_BIT_DISC_CENTER | SE.SE_BIT_NO_REFRACTION, place);
+      if (topocentric === undefined) return undefined;
+      const geocentric = await this.#geocentricHorizonCrossing(topocentric, body, place);
+      if (geocentric === undefined) return undefined;
+      if (geocentric > jd) return geocentric;
+      // The refined crossing fell just before `jd`: the event asked for is the next one.
+      from = topocentric + 0.5;
+    }
+    return undefined;
+  }
+
+  /** The geocentric altitude of `body`'s centre at `jd` from `place`, without refraction. */
+  async #geocentricAltitude(jd: JulianDayUT, body: BodyId, place: GeoPosition): Promise<Degrees> {
+    const position = await this.position(jd, body);
+    const horizontal = await this.azimuthAltitude(
+      jd,
+      { longitude: position.longitude, latitude: position.latitude },
+      place,
+    );
+    return horizontal.altitude;
+  }
+
+  /**
+   * The moment nearest `nearJd` (within two hours) that the geocentric centre of `body` crosses altitude 0, bisected to
+   * a second; `undefined` when it doesn't cross in that window. Parallax is at most about a degree, so the geocentric
+   * crossing is minutes from the topocentric one.
+   */
+  async #geocentricHorizonCrossing(
+    nearJd: JulianDayUT,
+    body: BodyId,
+    place: GeoPosition,
+  ): Promise<JulianDayUT | undefined> {
+    const step = 5 / 1440;
+    const at = (jd: JulianDayUT): Promise<Degrees> => this.#geocentricAltitude(jd, body, place);
+    const start = await at(nearJd);
+    if (start === 0) return nearJd;
+    for (let k = 1; k <= 24; k += 1) {
+      for (const direction of [-1, 1]) {
+        const inner = nearJd + direction * (k - 1) * step;
+        const outer = nearJd + direction * k * step;
+        const innerValue = await at(inner);
+        const outerValue = await at(outer);
+        if (Math.sign(innerValue) !== Math.sign(outerValue)) {
+          let low = Math.min(inner, outer);
+          let high = Math.max(inner, outer);
+          let lowValue = low === inner ? innerValue : outerValue;
+          while (high - low > 1 / 86400) {
+            const mid = (low + high) / 2;
+            const midValue = await at(mid);
+            if (Math.sign(midValue) === Math.sign(lowValue)) {
+              low = mid;
+              lowValue = midValue;
+            } else {
+              high = mid;
+            }
+          }
+          return (low + high) / 2;
+        }
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * `swe_rise_trans` through the raw export with buffers allocated once (#1407). Return code -2 means the body does not
+   * rise or set that day (circumpolar or never up), which is an answer, not an error.
+   */
+  #riseTrans(jd: JulianDayUT, body: BodyId, rsmi: number, place: GeoPosition): JulianDayUT | undefined {
+    const { wasm } = this.#instance();
+    this.#riseBuffers ??= {
+      geopos: wasm._malloc(3 * 8),
+      tret: wasm._malloc(8),
+      serr: wasm._malloc(SERR_BYTES),
+    };
+    const buffers = this.#riseBuffers;
+    wasm.setValue(buffers.geopos, place.longitude, 'double');
+    wasm.setValue(buffers.geopos + 8, place.latitude, 'double');
+    wasm.setValue(buffers.geopos + 16, place.altitude, 'double');
+    const code = wasm._swe_rise_trans(
+      jd,
+      body,
+      0,
+      SE.SEFLG_SWIEPH,
+      rsmi,
+      buffers.geopos,
+      RISE_PRESSURE_HPA,
+      RISE_TEMPERATURE_C,
+      buffers.tret,
+      buffers.serr,
+    );
+    if (code === CIRCUMPOLAR) return undefined;
+    if (code < 0) throw new EphemerisError(wasm.UTF8ToString(buffers.serr), { call: 'swe_rise_trans', jd, body });
+    return wasm.getValue(buffers.tret, 'double');
+  }
+
   async azimuthAltitude(
     jd: JulianDayUT,
     point: { readonly longitude: Degrees; readonly latitude: Degrees },
@@ -900,8 +1045,13 @@ export class SwissEphemerisEngine implements EphemerisProvider {
       const { cusps, ascmc, cuspSpeed, ascmcSpeed, serr } = this.#houseBuffers;
       for (const pointer of [cusps, ascmc, cuspSpeed, ascmcSpeed, serr]) this.#swe.wasm._free(pointer);
     }
+    if (this.#swe !== undefined && this.#riseBuffers !== undefined) {
+      const { geopos, tret, serr } = this.#riseBuffers;
+      for (const pointer of [geopos, tret, serr]) this.#swe.wasm._free(pointer);
+    }
     this.#calcBuffers = undefined;
     this.#houseBuffers = undefined;
+    this.#riseBuffers = undefined;
     this.#swe?.swe_close();
     this.#swe = undefined;
     this.#initializing = undefined;
