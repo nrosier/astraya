@@ -13,7 +13,7 @@
 /**
  * @module solar-arc-directions
  * @purpose Computes a solar arc directions chart for a target date (#47): the natal Sun's own progressed arc applied uniformly to every body and angle.
- * @conventions Mirrors `secondary-progression.ts`'s shape (natal Julian day, one house and one batch position call), but applies the shared solar arc to every body/angle rather than only rotating angles (secondary progression's `'solarArc'` MC method); contacts to the fixed natal chart use `findCrossAspects`, and each found contact is additionally resolved to its exact date against the real ephemeris since the arc is not perfectly linear in time. Both Suns are read in the requested zodiac. Arc kinds and multipliers (#1407) follow the Solar Fire Deluxe guide §12.4 (PDF pp. 78-80): the Ascendant (Vertex) arc is the distance moved by the secondary progressed Ascendant (Vertex), which Solar Fire derives from the progressed MC (§30.3.2.1): natal MC plus the solar arc in longitude, converted to its ARMC with the progressed date's true obliquity and cast with `housesFromArmc` at the natal latitude (owner decision on #1407, 2026-11-23; obliquity per the astrologer review of PR #1936). That angle work is done in the tropical frame; in a sidereal chart the arc then differs from a sidereal measurement only by the ayanamsa's motion over the progressed days (about 0.14" per year of age). The multiplier is one of x1, x2, x0.5, x-1, x-2, x-0.5 (guide p. 80) and scales the arc before it is applied. Exact contact dates are solved for the solar arc only; for the Ascendant and Vertex arcs they are undefined.
+ * @conventions Mirrors `secondary-progression.ts`'s shape (natal Julian day, one house and one batch position call), but applies the shared solar arc to every body/angle rather than only rotating angles (secondary progression's `'solarArc'` MC method); contacts to the fixed natal chart use `findCrossAspects`, and each found contact is additionally resolved to its exact date against the real ephemeris since the arc is not perfectly linear in time. Both Suns are read in the requested zodiac. Arc kinds and multipliers (#1407) follow the Solar Fire Deluxe guide §12.4 (PDF pp. 78-80): the Ascendant (Vertex) arc is the distance moved by the secondary progressed Ascendant (Vertex), which Solar Fire derives from the progressed MC (§30.3.2.1). Of Solar Fire's five MC methods this fixes True Solar Arc in Longitude: natal MC plus the solar arc in longitude, converted to its ARMC with the progressed date's true obliquity and cast with `housesFromArmc` at the natal latitude (owner decision on #1407, 2026-11-23; obliquity per the astrologer review of PR #1936). That angle work is done in the tropical frame; in a sidereal chart the arc then differs from a sidereal measurement only by the ayanamsa's motion over the progressed days: about 0.14" per year of age for the solar arc, and about 0.14" x (1 + dAsc/dMC) per year for the Ascendant arc, where the Ascendant outruns the MC (astrologer review of PR #1939). The Ascendant and Vertex arcs are summed over quarter-day steps, so an arc past 180 degrees keeps its true size; inside the polar circles the Ascendant can jump within a step, and the arc then follows the shorter way round at that step. The multiplier is one of x1, x2, x0.5, x-1, x-2, x-0.5 (guide p. 80) and scales the arc before it is applied. Exact contact dates are solved for the solar arc only; for the Ascendant and Vertex arcs they are undefined.
  * @exports computeSolarArcDirections, SolarArcDirectionsData, SolarArcDirectionsOptions, DirectedContact, SolarArcKind, SolarArcMultiplier, SOLAR_ARC_MULTIPLIERS, SOLAR_ARC_ACTIVE_ORB_DEG
  */
 import { findCrossAspects, type Aspect, type OrbConfig } from '../astrology/aspects.js';
@@ -116,10 +116,69 @@ function rightAscensionOf(longitude: Degrees, obliquity: Degrees): Degrees {
 }
 
 /**
- * The Ascendant or Vertex arc at `progressedJd` (Solar Fire Deluxe guide §12.4 p. 78, §30.3.2.1): the progressed MC is
- * the natal MC plus the solar arc in longitude; its ARMC, with the progressed date's true obliquity, gives the
- * progressed Ascendant and Vertex through `housesFromArmc` at the natal latitude. Done in the tropical frame (see the
- * module conventions).
+ * Longest step, in progressed days, between the samples an Ascendant or Vertex arc is summed over. A quarter day is
+ * about three months of life; the angle moves far less than 180 degrees in that time, so each step's shorter arc is
+ * its real motion and the sum keeps an arc past 180 degrees at its true size (astrologer review of PR #1939, finding 1).
+ */
+const ANGLE_ARC_STEP_DAYS = 0.25;
+
+/** What the progressed Ascendant or Vertex is measured from: the natal MC, the natal angle and the natal Sun. */
+interface NatalAngles {
+  readonly midheaven: Degrees;
+  readonly angle: Degrees;
+  readonly sunLongitude: Degrees;
+}
+
+async function natalAngles(
+  kind: 'ascendant' | 'vertex',
+  provider: EphemerisProvider,
+  natalJd: JulianDayUT,
+  place: GeoPosition,
+  houseSystem: HouseSystem,
+): Promise<NatalAngles> {
+  const [houses, sun] = await Promise.all([
+    provider.houses(natalJd, place, houseSystem),
+    provider.position(natalJd, SUN_ID),
+  ]);
+  return {
+    midheaven: houses.midheaven,
+    angle: kind === 'ascendant' ? houses.ascendant : houses.vertex,
+    sunLongitude: sun.longitude,
+  };
+}
+
+/**
+ * The progressed Ascendant or Vertex at `progressedJd` (Solar Fire Deluxe guide §12.4 p. 78, §30.3.2.1), with the MC
+ * progressed by True Solar Arc in Longitude: the natal MC plus the solar arc; its ARMC, with the progressed date's true
+ * obliquity, gives the progressed angle through `housesFromArmc` at the natal latitude. Tropical frame (see the module
+ * conventions).
+ */
+async function progressedAngle(
+  kind: 'ascendant' | 'vertex',
+  provider: EphemerisProvider,
+  natal: NatalAngles,
+  progressedJd: JulianDayUT,
+  place: GeoPosition,
+  houseSystem: HouseSystem,
+): Promise<Degrees> {
+  const [sun, obliquity] = await Promise.all([
+    provider.position(progressedJd, SUN_ID),
+    provider.obliquity(progressedJd),
+  ]);
+  const progressedMc = norm360(natal.midheaven + signedArc(sun.longitude - natal.sunLongitude));
+  const progressed = await provider.housesFromArmc(
+    rightAscensionOf(progressedMc, obliquity),
+    place.latitude,
+    obliquity,
+    houseSystem,
+  );
+  return kind === 'ascendant' ? progressed.ascendant : progressed.vertex;
+}
+
+/**
+ * The Ascendant or Vertex arc from birth to `progressedJd`, unwrapped: summed over steps of at most
+ * `ANGLE_ARC_STEP_DAYS`, so an arc past 180 degrees keeps its true size and a half multiplier halves the real arc.
+ * Also the arc's speed per progressed day at `progressedJd`, by a central difference over one progressed day.
  */
 async function angleArc(
   kind: 'ascendant' | 'vertex',
@@ -128,23 +187,20 @@ async function angleArc(
   progressedJd: JulianDayUT,
   place: GeoPosition,
   houseSystem: HouseSystem,
-): Promise<Degrees> {
-  const [natalHouses, natalSun, progressedSun, obliquity] = await Promise.all([
-    provider.houses(natalJd, place, houseSystem),
-    provider.position(natalJd, SUN_ID),
-    provider.position(progressedJd, SUN_ID),
-    provider.obliquity(progressedJd),
-  ]);
-  const progressedMc = norm360(natalHouses.midheaven + signedArc(progressedSun.longitude - natalSun.longitude));
-  const progressed = await provider.housesFromArmc(
-    rightAscensionOf(progressedMc, obliquity),
-    place.latitude,
-    obliquity,
-    houseSystem,
-  );
-  return kind === 'ascendant'
-    ? signedArc(progressed.ascendant - natalHouses.ascendant)
-    : signedArc(progressed.vertex - natalHouses.vertex);
+): Promise<{ readonly arc: Degrees; readonly speed: number }> {
+  const natal = await natalAngles(kind, provider, natalJd, place, houseSystem);
+  const at = (jd: JulianDayUT): Promise<Degrees> => progressedAngle(kind, provider, natal, jd, place, houseSystem);
+  const span = progressedJd - natalJd;
+  const steps = Math.max(1, Math.ceil(Math.abs(span) / ANGLE_ARC_STEP_DAYS));
+  let arc = 0;
+  let previous = natal.angle;
+  for (let step = 1; step <= steps; step += 1) {
+    const angle = await at(natalJd + (span * step) / steps);
+    arc += signedArc(angle - previous);
+    previous = angle;
+  }
+  const [before, after] = await Promise.all([at(progressedJd - 0.5), at(progressedJd + 0.5)]);
+  return { arc, speed: signedArc(after - before) };
 }
 
 function categoryOf(body: BodyId): BodyCategory {
@@ -200,13 +256,10 @@ export async function computeSolarArcDirections(
     arc = arcMultiplier === 1 ? solarArc : norm360(solarArc) * arcMultiplier;
     arcSpeed = progressedSun.longitudeSpeed * arcMultiplier;
   } else {
-    // Speed per progressed day, from the arc one progressed day later: applying or separating depends on it.
-    const [now, later] = await Promise.all([
-      angleArc(arcKind, provider, natalJd, progressedJd, place, houseSystem),
-      angleArc(arcKind, provider, natalJd, progressedJd + 1, place, houseSystem),
-    ]);
-    arc = now * arcMultiplier;
-    arcSpeed = signedArc(later - now) * arcMultiplier;
+    // The speed per progressed day decides whether a contact is applying or separating.
+    const angle = await angleArc(arcKind, provider, natalJd, progressedJd, place, houseSystem);
+    arc = angle.arc * arcMultiplier;
+    arcSpeed = angle.speed * arcMultiplier;
   }
 
   const directed = directPositions(natalPositions, arc);

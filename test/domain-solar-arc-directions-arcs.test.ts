@@ -19,7 +19,14 @@ const PERSON: BirthMomentInput = {
   offsetOverrideMinutes: -300,
 };
 
-// A birth near the Arctic circle, where the Ascendant moves very unevenly against the MC.
+// At 60°N the Ascendant arc passes 180° by age 80 (181.7°), where halving a folded arc would land 180° off.
+const NORTH_60: BirthMomentInput = {
+  civil: { year: 1975, month: 2, day: 3, hour: 6, minute: 10, second: 0 },
+  coordinates: { latitude: 60, longitude: 18.96 },
+  offsetOverrideMinutes: 60,
+};
+
+// A birth inside the Arctic circle, where the Ascendant moves very unevenly against the MC.
 const TROMSO: BirthMomentInput = {
   civil: { year: 1975, month: 2, day: 3, hour: 9, minute: 10, second: 0 },
   coordinates: { latitude: 69.65, longitude: 18.96 },
@@ -116,8 +123,11 @@ describe('solar arc kinds and multipliers (#1407)', () => {
     const cast = await engine.housesFromArmc(armc, place.latitude, obliquity, 'P');
     expect(Math.abs(signed(cast.midheaven - progressedMc))).toBeLessThan(1e-6);
 
-    const data = await computeSolarArcDirections(TROMSO, target, engine, { arcKind: 'ascendant' });
-    expect(data.arc).toBeCloseTo(signed(cast.ascendant - natalHouses.ascendant), 6);
+    const ascendant = await computeSolarArcDirections(TROMSO, target, engine, { arcKind: 'ascendant' });
+    const vertex = await computeSolarArcDirections(TROMSO, target, engine, { arcKind: 'vertex' });
+    // The arcs are unwrapped, so they match the cast angles modulo 360.
+    expect(signed(ascendant.arc - (cast.ascendant - natalHouses.ascendant))).toBeCloseTo(0, 6);
+    expect(signed(vertex.arc - (cast.vertex - natalHouses.vertex))).toBeCloseTo(0, 6);
   });
 
   it('at a high latitude the Ascendant arc is not the solar arc, as it would be with rigidly rotated angles', async () => {
@@ -142,6 +152,52 @@ describe('solar arc kinds and multipliers (#1407)', () => {
       expect(contact.exactJd).toBeUndefined();
       expect(contact.activeFromJd).toBeUndefined();
       expect(contact.activeUntilJd).toBeUndefined();
+    }
+  });
+
+  it('halves the real Ascendant arc past 180°, not a folded one (review finding 1)', async () => {
+    const engine = await getEngine();
+    const target = (await natalJdOf(NORTH_60)) + 80 * TROPICAL_YEAR_DAYS;
+    const whole = await computeSolarArcDirections(NORTH_60, target, engine, { arcKind: 'ascendant' });
+    const half = await computeSolarArcDirections(NORTH_60, target, engine, {
+      arcKind: 'ascendant',
+      arcMultiplier: 0.5,
+    });
+    expect(whole.arc).toBeGreaterThan(180);
+    expect(half.arc).toBeCloseTo(whole.arc / 2, 9);
+    expect(half.arc).toBeGreaterThan(90);
+  });
+
+  it('dates contacts for a negative multiplier too: the x-1 contact is exact at its exact date', async () => {
+    const engine = await getEngine();
+    const target = (await natalJdOf(PERSON)) + 34.2 * TROPICAL_YEAR_DAYS;
+    const negative = await computeSolarArcDirections(PERSON, target, engine, { arcMultiplier: -1 });
+    const dated = negative.contacts.find((contact) => contact.exactJd !== undefined);
+    expect(dated).toBeDefined();
+    if (dated?.exactJd === undefined) return;
+    const atExact = await computeSolarArcDirections(PERSON, dated.exactJd, engine, { arcMultiplier: -1 });
+    const contact = atExact.contacts.find(
+      (other) =>
+        other.bodyA === dated.bodyA && other.bodyB === dated.bodyB && other.aspect.angle === dated.aspect.angle,
+    );
+    expect(contact?.orb ?? Number.NaN).toBeLessThan(0.01);
+  });
+
+  it('applies the tropical-frame Ascendant arc to a sidereal chart within arcseconds of the tropical arc', async () => {
+    const engine = await getEngine();
+    const target = (await natalJdOf(PERSON)) + 34.2 * TROPICAL_YEAR_DAYS;
+    const tropical = await computeSolarArcDirections(PERSON, target, engine, { arcKind: 'ascendant' });
+    const sidereal = await computeSolarArcDirections(PERSON, target, engine, {
+      arcKind: 'ascendant',
+      zodiac: { kind: 'sidereal', ayanamsa: 1 },
+    });
+    expect(sidereal.arc).toBe(tropical.arc);
+    const natalSidereal = await computeSolarArcDirections(PERSON, await natalJdOf(PERSON), engine, {
+      zodiac: { kind: 'sidereal', ayanamsa: 1 },
+    });
+    for (const [index, position] of sidereal.directedPositions.entries()) {
+      const natal = natalSidereal.directedPositions[index]?.longitude ?? Number.NaN;
+      expect(signed(position.longitude - natal - sidereal.arc)).toBeCloseTo(0, 9);
     }
   });
 });
