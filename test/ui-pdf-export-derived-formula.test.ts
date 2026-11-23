@@ -62,7 +62,7 @@ const MODERN_SETTINGS: ExtendedSettings = {
 };
 
 const PAULUS_TEXT = formulaText(lotFormulaFor('part-of-fortune', 'sect-reversed'));
-const MODERN_TEXT = formulaText(lotFormulaFor('part-of-fortune', 'same-day-and-night'));
+const MODERN_TEXT = lotFormulaFor('part-of-fortune', 'same-day-and-night')?.dayFormula ?? '';
 
 function formulaText(formula: { readonly dayFormula: string; readonly nightFormula: string } | undefined): string {
   return `${formula?.dayFormula} / ${formula?.nightFormula}`;
@@ -117,5 +117,24 @@ describe('PDF derived points formula follows the calculation (#1794)', () => {
       MODERN_SETTINGS,
     );
     expect(cell).toBe(MODERN_TEXT);
+  });
+
+  it('a night natal section shows exactly one formula text under the modern setting (#1794)', async () => {
+    const cell = await fortuneFormulaCell(
+      { personId: NIGHT.id, ...EMPTY_SELECTION, charts: [{ type: 'natal', wheel: false, tables: ['derived'] }] },
+      MODERN_SETTINGS,
+    );
+    expect(cell).not.toContain(' / ');
+    expect(cell).toBe(lotFormulaFor('part-of-fortune', 'same-day-and-night')?.dayFormula);
+  });
+
+  it('a night natal section keeps the day / night pair under the default setting (#1794)', async () => {
+    const defaultSettings: ExtendedSettings = { ...DEFAULT_EXTENDED_SETTINGS, objectPolicies: FORTUNE_SHOWN };
+    const cell = await fortuneFormulaCell(
+      { personId: NIGHT.id, ...EMPTY_SELECTION, charts: [{ type: 'natal', wheel: false, tables: ['derived'] }] },
+      defaultSettings,
+    );
+    expect(cell).toBe(PAULUS_TEXT);
+    expect(cell).toContain(' / ');
   });
 });

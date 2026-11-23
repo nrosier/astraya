@@ -286,7 +286,11 @@ export function derivedPointColumns(
       labelHelp: { text: t.lotFormulaTooltip },
       valueOf: (row) => {
         const formula = row.pointKey === undefined ? undefined : lotFormulaFor(row.pointKey, fortuneFormula);
-        return formula === undefined ? '' : `${formula.dayFormula} / ${formula.nightFormula}`;
+        if (formula === undefined) return '';
+        // The modern same-day-and-night formula has one text (#1794): show it once, not "x / x".
+        return formula.dayFormula === formula.nightFormula
+          ? formula.dayFormula
+          : `${formula.dayFormula} / ${formula.nightFormula}`;
       },
     },
   ];
