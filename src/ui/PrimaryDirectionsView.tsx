@@ -505,7 +505,9 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
                     <section className="timing-card" aria-labelledby="pd-wheel-title">
                       <h2 id="pd-wheel-title">{t.wheelTitle}</h2>
                       <p className="hint">{t.ageLine(formatFixed(directed.chart.ageYears, 2))}</p>
-                      <p className="hint">{t.arcLine(formatFixed(ageToArc(directed.chart.ageYears, data.key), 2))}</p>
+                      <p className="hint">
+                        {t.arcLine(formatFixed(ageToArc(directed.chart.ageYears, data.key, data.clock), 2))}
+                      </p>
                       <p className="hint">
                         {t.wheelEmphasisNote(
                           significators
@@ -572,13 +574,17 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
               options={[
                 { value: PrimaryDirectionKey.NAIBOD, label: t.naibodKey },
                 { value: PrimaryDirectionKey.PTOLEMY, label: t.ptolemyKey },
+                {
+                  value: PrimaryDirectionKey.TRUE_SOLAR_ARC,
+                  label: timingT.directionKeys[PrimaryDirectionKey.TRUE_SOLAR_ARC],
+                },
               ]}
               segmented
               showLabel
               onChange={(value) => {
-                setKey(
-                  value === PrimaryDirectionKey.PTOLEMY ? PrimaryDirectionKey.PTOLEMY : PrimaryDirectionKey.NAIBOD,
-                );
+                if (value === PrimaryDirectionKey.PTOLEMY) setKey(PrimaryDirectionKey.PTOLEMY);
+                else if (value === PrimaryDirectionKey.TRUE_SOLAR_ARC) setKey(PrimaryDirectionKey.TRUE_SOLAR_ARC);
+                else setKey(PrimaryDirectionKey.NAIBOD);
               }}
             />
             <ChoiceGroup
