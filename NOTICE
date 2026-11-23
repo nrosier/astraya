@@ -44,6 +44,16 @@ The compressed ephemeris data files shipped with this application
 ephemeris and are distributed by Astrodienst AG as part of the Swiss Ephemeris
 under the same terms.
 
+Transcribed term tables (bounds)
+--------------------------------
+The Egyptian and Ptolemaic bounds (terms) tables in src/astrology/bounds.ts are
+transcribed from flatlib (MIT licence), github.com/flatangle/flatlib, file
+flatlib/dignities/tables.py. They were cross-checked against pyastra,
+github.com/joaoventura/pyastra, file dignities/tables.py (the licence of
+pyastra is not stated in src/astrology/bounds.ts). Neither project is a
+runtime dependency; the transcribed values are data, and the source files are
+cited in src/astrology/bounds.ts.
+
 Other dependencies
 ------------------
 Remaining runtime and build dependencies are permissively licensed (MIT,

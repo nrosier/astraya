@@ -1457,7 +1457,7 @@
     "copyrighted": true,
     "provisional": false,
     "used_by": ["src/astrology/rectification.ts"],
-    "notes": "The copyright page reads First Edition, First Printing, 2001 (Llewellyn Publications, ISBN 0-7387-0054-2), so the id was renamed from tyl-solar-arcs-undated to tyl-solar-arcs-2001 and the record is no longer provisional (owner decision on #1604, 2026-11-15). The file was made from an .mobi and is not a print copy."
+    "notes": "The copyright page reads First Edition, First Printing, 2001 (Llewellyn Publications, ISBN 0-7387-0054-2), so the id was changed from its provisional undated form to tyl-solar-arcs-2001 and the record is no longer provisional (owner decision on #1604, 2026-11-15). The file was made from an .mobi and is not a print copy."
   },
   {
     "id": "lieske-precession-quantities-1977",
