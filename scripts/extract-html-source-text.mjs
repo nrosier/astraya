@@ -1,81 +1,49 @@
 #!/usr/bin/env node
 /**
- * Regenerates a reference source's extracted text from its saved html original
- * (issue #1798; the html counterpart of extract-source-text.mjs, which reads
- * PDFs only). Usage: node scripts/extract-html-source-text.mjs <html> <out-dir> [id]
- * Writes <id>.txt (the visible text, no page markers: html has no pages) and
- * prints the sha256 of the input html to stdout, to be checked against the
- * `sha256` of the manifest entry in docs/references/sources.json. `id`
- * defaults to the html basename. Uses node built-ins only.
+ * Converts a saved html source page to plain text, for the reference text files that a test reads (#1798).
  *
- * Conversion: <script>, <style> and html comments are dropped with their content; <pre> blocks keep their whitespace
- * exactly (the Espenak tables are column-aligned there); elsewhere runs of
- * whitespace collapse, <br> and block tags end a line, and table cells in one
- * row are separated by a tab. Remaining tags are dropped; entities are decoded.
+ * The page is parsed with jsdom, so markup is never matched by pattern. `script` and `style` are removed from the
+ * parsed tree, `pre` keeps its column spacing, and other elements become line breaks or tabs by element type. The
+ * output is text only: no markup is written.
+ *
+ * Usage: node scripts/extract-html-source-text.mjs <html> <out-dir> [id]
+ * Prints the sha256 of the input to stdout, to check against the `sha256` of the manifest entry in
+ * docs/references/sources.json. `id` defaults to the html basename. Writes <id>.txt into <out-dir>.
+ *
+ * @module
  */
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { JSDOM } from 'jsdom';
 
-const NAMED = { nbsp: ' ', amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", Delta: 'Δ', deg: '°' };
+const BLOCK = /^(p|div|h[1-6]|li|ul|ol|tr|table|caption)$/;
+const CELL = /^(td|th)$/;
 
-/** Decodes numeric and the common named html entities. */
-export function decodeEntities(s) {
-  return s.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (m, e) => {
-    if (e[0] === '#') {
-      const code = e[1] === 'x' || e[1] === 'X' ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
-      return Number.isFinite(code) && code <= 0x10ffff ? String.fromCodePoint(code) : m;
-    }
-    return Object.hasOwn(NAMED, e) ? NAMED[e] : m;
-  });
+/** Renders one parsed node to text. `pre` is kept verbatim; block and cell elements get line and tab breaks. */
+function render(node) {
+  if (node.nodeType === 3) return node.data;
+  if (node.nodeType !== 1) return '';
+  const tag = node.tagName.toLowerCase();
+  if (tag === 'pre') return `\n${node.textContent}\n`;
+  if (tag === 'br') return '\n';
+  const inner = [...node.childNodes].map(render).join('');
+  if (BLOCK.test(tag)) return `${inner}\n`;
+  if (CELL.test(tag)) return `${inner}\t`;
+  return inner;
 }
 
-/** Matches one html tag; applied until stable so a split or nested tag cannot survive a pass. */
-const TAG = /<[^<>]*>/g;
-
-/** Converts one html fragment outside <pre> to text (whitespace collapsed). */
-function inline(fragment) {
-  return fragment
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/(p|div|h[1-6]|li|ul|ol|tr|table|caption)\s*>/gi, '\n')
-    .replace(/<\/(td|th)\s*>/gi, '\t')
-    .replace(TAG, '')
-    .replace(/[ \r\n\f]+/g, (w) => (w.includes('\n') ? '\n' : ' '))
-    .replace(/\n /g, '\n');
-}
-
-/** Applies a removal pattern until nothing matches, so a nested or split tag cannot survive one pass. */
-function stripUntil(text, pattern) {
-  let prev;
-  let out = text;
-  do {
-    prev = out;
-    out = out.replace(pattern, '');
-  } while (out !== prev);
-  return out;
-}
-
-/** Converts an html document to its visible plain text. */
+/** Converts an html document to its visible plain text (whitespace collapsed outside `pre`, trailing spaces trimmed). */
 export function htmlToText(html) {
-  const clean = stripUntil(stripUntil(html, /<!--[\s\S]*?-->/g), /<(script|style)\b[\s\S]*?<\/\1\s*>/gi);
-  const parts = clean.split(/(<pre\b[^>]*>[\s\S]*?<\/pre\s*>)/i);
-  const out = parts.map((part, i) => {
-    if (i % 2 === 1) {
-      const body = part
-        .replace(/^<pre\b[^>]*>/i, '')
-        .replace(/<\/pre\s*>$/i, '')
-        .replace(/<br\s*\/?>/gi, '\n')
-        .replace(TAG, '');
-      return `\n${decodeEntities(body)}\n`;
-    }
-    return decodeEntities(inline(part));
-  });
+  const doc = new JSDOM(html).window.document;
+  for (const el of doc.querySelectorAll('script, style')) el.remove();
+  // A non-breaking space is an ordinary space in this text (the reference table is column-aligned with plain spaces).
+  const raw = render(doc.body).replace(/\u00a0/g, ' ');
   return (
-    out
-      .join('')
+    raw
       .split('\n')
-      .map((l) => l.replace(/[ \t]+$/, ''))
+      .map((line) => line.replace(/[ \t]+$/, ''))
       .join('\n')
       .replace(/\n{3,}/g, '\n\n')
       .trim() + '\n'
@@ -88,8 +56,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     console.error('Usage: extract-html-source-text.mjs <html> <out-dir> [id]');
     process.exit(2);
   }
-  const id = idArg ?? basename(html).replace(/\.html?$/i, '');
   const raw = readFileSync(html);
+  const id = idArg ?? basename(html).replace(/\.html?$/i, '');
   console.log(`${createHash('sha256').update(raw).digest('hex')}  ${html}`);
   mkdirSync(outDir, { recursive: true });
   writeFileSync(join(outDir, `${id}.txt`), htmlToText(raw.toString('utf8')));
