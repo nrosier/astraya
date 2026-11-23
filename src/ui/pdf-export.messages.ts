@@ -41,7 +41,8 @@ const en = {
     custom: 'Custom',
     'executive-summary': 'Executive summary (natal wheel, positions, interpretation)',
     'complete-archive': 'Complete archive (every chart, every table, interpretation)',
-    'full-predictive-report': 'Full predictive report (natal wheel, transits, progressions, solar arc)',
+    'full-predictive-report':
+      'Full predictive report (natal wheel, transits, progressions, solar arc, primary directions)',
   } satisfies Record<'custom' | PdfPresetKey, string>,
   birthRecordLabel: 'Birth record',
   /** The cover's line under the name (#711): the preset's short name, or a generic one for a hand-picked selection. */
@@ -205,7 +206,8 @@ const nl: typeof en = {
     custom: 'Eigen keuze',
     'executive-summary': 'Samenvatting (geboortewiel, posities, interpretatie)',
     'complete-archive': 'Volledig archief (elke horoscoop, elke tabel, interpretatie)',
-    'full-predictive-report': 'Volledig voorspellend verslag (geboortewiel, transits, progressies, solar arc)',
+    'full-predictive-report':
+      'Volledig voorspellend verslag (geboortewiel, transits, progressies, solar arc, primaire directies)',
   } satisfies Record<'custom' | PdfPresetKey, string>,
   birthRecordLabel: 'Geboortegegevens',
   coverKinds: {
