@@ -100,7 +100,7 @@ test.describe('with the shared people (#799)', () => {
 
   test('the Back link keeps one place above the heading on every screen that has one, at each viewport in both themes (#1225)', async () => {
     // 54 page visits (9 screens x 3 viewports x 2 themes): 11.3 s locally, default 30 s too tight on CI shard 4 (#1843).
-    test.setTimeout(90_000);
+    test.setTimeout(120_000);
     const viewports = [
       { width: 390, height: 844 },
       { width: 1280, height: 800 },

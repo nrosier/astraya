@@ -315,6 +315,8 @@ export function PreferencesView({
       .mutate(mutations)
       .then(() => {
         setPreview(undefined);
+        // #1921: after an import, open the people list with no person selected, so the user picks or searches.
+        window.location.hash = '#/people';
         setStatus({
           kind: 'done',
           text: `${t.restoreApplied(preview.newCount, preview.updatedCount, preview.deletedLocallyCount)}${preview.research === undefined || preview.research.mutations.length === 0 ? '' : ` ${t.restoreResearchApplied(preview.research)}`}`,
