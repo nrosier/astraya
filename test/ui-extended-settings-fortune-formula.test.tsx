@@ -25,6 +25,7 @@ const provider: EphemerisProvider = {
   position: unused,
   positions: unused,
   houses: unused,
+  housesFromArmc: unused,
   houseSystemName: (system) => Promise.resolve(`House system ${system}`),
   ayanamsa: unused,
   obliquity: unused,

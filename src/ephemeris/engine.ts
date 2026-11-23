@@ -31,6 +31,7 @@ import { EPHEMERIS_DATA_FILES, EPHEMERIS_YEAR_RANGE, EPHE_BASE_URL, FIXED_STARS_
 import { SE } from './generated-constants.js';
 import {
   EphemerisError,
+  type EphemerisErrorContext,
   type AzimuthAltitudeOptions,
   type BodyId,
   type BodyPosition,
@@ -124,6 +125,15 @@ export interface EngineConfig {
   readonly wasmUrl?: string;
 }
 
+/** The WASM-heap pointers the two raw house calls share (#1859, #1407). */
+interface HouseBuffers {
+  readonly cusps: number;
+  readonly ascmc: number;
+  readonly cuspSpeed: number;
+  readonly ascmcSpeed: number;
+  readonly serr: number;
+}
+
 /** Minimal shape of the sweph-wasm instance, kept local to this module. */
 interface SweInstance {
   wasm: {
@@ -138,6 +148,18 @@ interface SweInstance {
       flags: number,
       latitude: number,
       longitude: number,
+      hsys: number,
+      cusps: number,
+      ascmc: number,
+      cuspSpeed: number,
+      ascmcSpeed: number,
+      serr: number,
+    ): number;
+    /** The raw `swe_houses_armc_ex2` export `#housesArmcEx2` uses with the same reused buffers (#1407). */
+    _swe_houses_armc_ex2(
+      armc: number,
+      latitude: number,
+      obliquity: number,
       hsys: number,
       cusps: number,
       ascmc: number,
@@ -261,15 +283,7 @@ export class SwissEphemerisEngine implements EphemerisProvider {
    * success, so every throw (each polar-latitude Placidus or Koch call, the "switched to Porphyry" path) leaked about
    * 750 bytes: 100,000 polar calls grew the heap from 16 MB to 83 MB.
    */
-  #houseBuffers:
-    | {
-        readonly cusps: number;
-        readonly ascmc: number;
-        readonly cuspSpeed: number;
-        readonly ascmcSpeed: number;
-        readonly serr: number;
-      }
-    | undefined;
+  #houseBuffers: HouseBuffers | undefined;
   readonly #config: EngineConfig;
 
   constructor(config: EngineConfig = {}) {
@@ -323,14 +337,7 @@ export class SwissEphemerisEngine implements EphemerisProvider {
     system: string,
   ): { cusps: readonly number[]; ascmc: readonly number[] } {
     const { wasm } = this.#instance();
-    this.#houseBuffers ??= {
-      cusps: wasm._malloc(HOUSE_CUSP_DOUBLES * 8),
-      ascmc: wasm._malloc(HOUSE_ASCMC_DOUBLES * 8),
-      cuspSpeed: wasm._malloc(HOUSE_CUSP_DOUBLES * 8),
-      ascmcSpeed: wasm._malloc(HOUSE_ASCMC_DOUBLES * 8),
-      serr: wasm._malloc(SERR_BYTES),
-    };
-    const buffers = this.#houseBuffers;
+    const buffers = this.#ensureHouseBuffers();
     const code = wasm._swe_houses_ex2(
       jd,
       flags,
@@ -344,6 +351,55 @@ export class SwissEphemerisEngine implements EphemerisProvider {
       buffers.serr,
     );
     if (code < 0) throw new Error(wasm.UTF8ToString(buffers.serr));
+    return this.#readHouseBuffers(system);
+  }
+
+  /**
+   * `swe_houses_armc_ex2` through the raw export, on the same reused buffers as `#housesEx2` (#1407, #1859): houses
+   * for an ARMC, a latitude and an obliquity, with no moment. sweph-wasm's wrapper frees nothing when it throws, like
+   * the others. `ascmc[9]` is an input only for the Sunshine system, which `housesFromArmc` refuses, so the reused
+   * buffer's old value there is never read.
+   */
+  #housesArmcEx2(
+    armc: number,
+    latitude: number,
+    obliquity: number,
+    system: string,
+  ): { cusps: readonly number[]; ascmc: readonly number[] } {
+    const { wasm } = this.#instance();
+    const buffers = this.#ensureHouseBuffers();
+    const code = wasm._swe_houses_armc_ex2(
+      armc,
+      latitude,
+      obliquity,
+      system.charCodeAt(0),
+      buffers.cusps,
+      buffers.ascmc,
+      buffers.cuspSpeed,
+      buffers.ascmcSpeed,
+      buffers.serr,
+    );
+    if (code < 0) throw new Error(wasm.UTF8ToString(buffers.serr));
+    return this.#readHouseBuffers(system);
+  }
+
+  /** The house buffers, allocated on first use and freed in `dispose()` (#1859). */
+  #ensureHouseBuffers(): HouseBuffers {
+    const { wasm } = this.#instance();
+    this.#houseBuffers ??= {
+      cusps: wasm._malloc(HOUSE_CUSP_DOUBLES * 8),
+      ascmc: wasm._malloc(HOUSE_ASCMC_DOUBLES * 8),
+      cuspSpeed: wasm._malloc(HOUSE_CUSP_DOUBLES * 8),
+      ascmcSpeed: wasm._malloc(HOUSE_ASCMC_DOUBLES * 8),
+      serr: wasm._malloc(SERR_BYTES),
+    };
+    return this.#houseBuffers;
+  }
+
+  /** Cusps 0..12 (0..36 for Gauquelin 'G') and ascmc 0..7, read back from the house buffers after a successful call. */
+  #readHouseBuffers(system: string): { cusps: readonly number[]; ascmc: readonly number[] } {
+    const { wasm } = this.#instance();
+    const buffers = this.#ensureHouseBuffers();
     const read = (pointer: number, count: number): readonly number[] =>
       Array.from({ length: count }, (_, index) => wasm.getValue(pointer + index * 8, 'double'));
     return { cusps: read(buffers.cusps, system === 'G' ? HOUSE_CUSP_DOUBLES : 13), ascmc: read(buffers.ascmc, 8) };
@@ -508,11 +564,43 @@ export class SwissEphemerisEngine implements EphemerisProvider {
 
   async houses(jd: JulianDayUT, place: GeoPosition, system: HouseSystem, zodiac?: Zodiac): Promise<HousePositions> {
     const flags = this.#applyZodiac(zodiac);
+    return this.#housesWithFallback(system, place.latitude, { call: 'swe_houses_ex2', jd }, (candidate) =>
+      this.#housesEx2(jd, flags, place.latitude, place.longitude, candidate),
+    );
+  }
+
+  async housesFromArmc(
+    armc: Degrees,
+    latitude: Degrees,
+    obliquity: Degrees,
+    system: HouseSystem,
+  ): Promise<HousePositions> {
+    if (system === 'I') {
+      throw new EphemerisError(
+        "House system 'I' (Sunshine) needs the Sun's declination, which housesFromArmc does not take.",
+        { call: 'swe_houses_armc_ex2' },
+      );
+    }
+    return this.#housesWithFallback(system, latitude, { call: 'swe_houses_armc_ex2' }, (candidate) =>
+      this.#housesArmcEx2(armc, latitude, obliquity, candidate),
+    );
+  }
+
+  /**
+   * The shared tail of `houses` and `housesFromArmc`: the polar fallback (Placidus and Koch switch to Porphyry inside
+   * the polar circle, with a warning), the Horizon system's degeneracy refusal, and the cusp/angle normalisation.
+   */
+  #housesWithFallback(
+    system: HouseSystem,
+    latitude: Degrees,
+    context: EphemerisErrorContext,
+    compute: (candidate: HouseSystem) => { cusps: readonly (number | null)[]; ascmc: readonly number[] },
+  ): HousePositions {
     let result: { cusps: readonly (number | null)[]; ascmc: readonly number[] };
     let effectiveSystem = system;
     let warning: string | undefined;
     try {
-      result = this.#housesEx2(jd, flags, place.latitude, place.longitude, system);
+      result = compute(system);
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : String(cause);
       const fallbackName = /switched to (.+)$/i.exec(message)?.[1];
@@ -521,22 +609,19 @@ export class SwissEphemerisEngine implements EphemerisProvider {
         // Not the polar-latitude case we know how to recover from — surfacing
         // it is mandatory either way: rendering unlabelled cusps for whatever
         // the C library fell back to internally would be a silently wrong chart.
-        throw new EphemerisError(`${message} (house system '${system}' at latitude ${place.latitude})`, {
-          call: 'swe_houses_ex2',
-          jd,
-        });
+        throw new EphemerisError(`${message} (house system '${system}' at latitude ${latitude})`, context);
       }
       try {
-        result = this.#housesEx2(jd, flags, place.latitude, place.longitude, fallback);
+        result = compute(fallback);
       } catch (fallbackCause) {
         throw new EphemerisError(
           `${fallbackCause instanceof Error ? fallbackCause.message : String(fallbackCause)} ` +
-            `(fallback house system '${fallback}' at latitude ${place.latitude})`,
-          { call: 'swe_houses_ex2', jd },
+            `(fallback house system '${fallback}' at latitude ${latitude})`,
+          context,
         );
       }
       effectiveSystem = fallback;
-      warning = `House system '${system}' is undefined at latitude ${place.latitude}°: ${message}.`;
+      warning = `House system '${system}' is undefined at latitude ${latitude}°: ${message}.`;
     }
 
     // Index 0 is unused; houses are 1..12. See the note at the top of this file.
@@ -544,10 +629,7 @@ export class SwissEphemerisEngine implements EphemerisProvider {
     for (let house = 1; house < result.cusps.length; house += 1) {
       const value = result.cusps[house];
       if (typeof value !== 'number') {
-        throw new EphemerisError(`Cusp ${house} missing from swe_houses_ex2 result`, {
-          call: 'swe_houses_ex2',
-          jd,
-        });
+        throw new EphemerisError(`Cusp ${house} missing from ${context.call} result`, context);
       }
       cusps.push(norm360(value));
     }
@@ -563,12 +645,12 @@ export class SwissEphemerisEngine implements EphemerisProvider {
       const winding = windingCount(cusps.slice(1));
       if (Math.abs(winding - 1) > 1e-6) {
         throw new EphemerisError(
-          `House system 'H' (Horizon) is degenerate at latitude ${place.latitude}° for this date and time: ` +
+          `House system 'H' (Horizon) is degenerate at latitude ${latitude}° for this sidereal time: ` +
             `its cusps wind ${winding.toFixed(3)}x around the ecliptic instead of once. Swiss Ephemeris's ` +
             `vertical-circle geometry for this system becomes ill-conditioned very close to the celestial ` +
             `equator, depending on the sidereal time of the moment; there is no fallback house system for it. ` +
             `Choose a different house system for this location and time.`,
-          { call: 'swe_houses_ex2', jd },
+          context,
         );
       }
     }
@@ -576,10 +658,7 @@ export class SwissEphemerisEngine implements EphemerisProvider {
     const at = (index: number): Degrees => {
       const value = result.ascmc[index];
       if (value === undefined) {
-        throw new EphemerisError(`ascmc[${index}] missing from swe_houses_ex2 result`, {
-          call: 'swe_houses_ex2',
-          jd,
-        });
+        throw new EphemerisError(`ascmc[${index}] missing from ${context.call} result`, context);
       }
       return norm360(value);
     };
@@ -818,7 +897,8 @@ export class SwissEphemerisEngine implements EphemerisProvider {
       this.#swe.wasm._free(this.#calcBuffers.serr);
     }
     if (this.#swe !== undefined && this.#houseBuffers !== undefined) {
-      for (const pointer of Object.values(this.#houseBuffers)) this.#swe.wasm._free(pointer);
+      const { cusps, ascmc, cuspSpeed, ascmcSpeed, serr } = this.#houseBuffers;
+      for (const pointer of [cusps, ascmc, cuspSpeed, ascmcSpeed, serr]) this.#swe.wasm._free(pointer);
     }
     this.#calcBuffers = undefined;
     this.#houseBuffers = undefined;
