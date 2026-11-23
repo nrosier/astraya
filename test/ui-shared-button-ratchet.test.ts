@@ -20,10 +20,8 @@ const PRIMITIVES = 'src/ui/primitives';
  * outside the G-05 scope, so it is recorded here rather than silently left in.
  */
 const ALLOWED_BARE_BUTTONS: Readonly<Record<string, number>> = {
-  // The disabled nav-tab entry helper (#1697, `disabledEntry`) plus the narrow-viewport menu toggle: bespoke `app-nav-*` classes.
+  // The narrow-viewport menu toggle (`app-nav-toggle`): bespoke `app-nav-*` classes.
   'src/ui/AppNav.tsx': 1,
-  // Corner-pill language switch: `corner-pill language-toggle`, not a shared action.
-  'src/ui/LanguageToggle.tsx': 1,
   // Page-header export dropdown toggle and its item buttons: bespoke page-header classes. The toggle is already a pill
   // and the items are menu rows (small radius, owner answer 4); the owner decided to keep them bare (#1865, 2026-11-21).
   'src/ui/PageHeader.tsx': 2,
@@ -31,8 +29,6 @@ const ALLOWED_BARE_BUTTONS: Readonly<Record<string, number>> = {
   'src/ui/PdfAiInterpretationPicker.tsx': 3,
   // Relationship-summary trigger and history entries: bespoke summary markup.
   'src/ui/RelationshipSummary.tsx': 2,
-  // Corner-pill theme switch: `corner-pill theme-toggle`, not a shared action.
-  'src/ui/ThemeToggle.tsx': 1,
 };
 
 /** Every `.tsx` file under `dir`, recursively, as a path relative to the repository root. */
