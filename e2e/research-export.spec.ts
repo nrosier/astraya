@@ -87,7 +87,8 @@ test('export everything, then restore into an empty profile (#1194)', async ({ p
   ).toBeVisible();
   other.once('dialog', (dialog) => void dialog.accept());
   await other.getByRole('button', { name: 'Apply restore', exact: true }).click();
-  await expect(other.getByText(/Added 1 saved query, 1 pin and 1 note version\./)).toBeVisible();
+  // #1921: after a restore the app opens the people list, with no person selected.
+  await expect.poll(() => new URL(other.url()).hash).toBe('#/people');
 
   await openTool(other, 'Ephemeris research');
   await expect(other.locator('.saved-query-list .name', { hasText: 'Round trip query' })).toBeVisible();
