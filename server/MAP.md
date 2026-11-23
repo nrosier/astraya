@@ -11,7 +11,7 @@
 - `csp.ts` — Single CSP definition (structural truth: "shipped app never calls model provider at runtime"). Builds response-header + meta-tag strings, strips static tag once issuer set. Deps: none.
 - `error-codes.ts` — Stable machine `code` for API error bodies (#1365); status-derived fallback for errors Fastify raises itself. Deps: none.
 - `request-body.ts` — Shared JSON-body guard: a missing, null or non-object body becomes a 400 (#1362). Deps: none.
-- `profile-overlay.ts` — Serves the optional `ASTRAYA_EASTER_EGG` setting read-only for the birth-record easter egg (#697). Deps: none.
+- `profile-overlay.ts` — Birth-record easter egg (#697): signed-in, rate-limited server check of a date and name against `ASTRAYA_EASTER_EGG` under an HKDF-derived HMAC key; answers only enabled and match (#1808). Deps: `auth/identity`, `ops/crypto`, `request-body`.
 - `csrf.ts` — CSRF defence (Origin header host check against allowed hosts, never relay on SameSite). Deps: none.
 - `db.ts` — SQLite: accounts, sessions, opaque per-user op-log, admin-curated exceptions (corpus overrides/candidates, Tier 2 usage/results). Opens, numbered migrations, append-only. Deps: node:sqlite.
 - `index.ts` — HTTP server (Fastify, generic 5xx error handler, SPA with SPA fallback, CSP/security headers, CSRF check, database, hourly expired-session sweep timer, route registration). Deps: db, csp, csrf, auth/routes, auth/totp-routes, auth/sessions, auth/admin-routes, auth/oidc, auth/admin-promotion, ops/routes, corpus-overrides-routes, corpus-candidates-routes, interpretation-routes.
