@@ -315,7 +315,7 @@ test.describe('with the shared people (#799)', () => {
     await dispositorsHelp.focus();
     await expect(dispositorsHelp).toBeFocused();
     await expect(popup).toHaveText(
-      "A dispositor is the ruler of a planet's sign. Dispositor chains trace where each planet's rulership flows.",
+      "A dispositor is the ruler of a planet's sign. The planetary chain traces each ruler forward until it circles back on itself or reaches a final dispositor. Use this to find rulership cycles and understand what each planet depends on.",
     );
   });
 

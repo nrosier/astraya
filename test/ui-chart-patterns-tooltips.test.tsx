@@ -124,7 +124,10 @@ describe('the Dispositors chain on Patterns & condition (#870)', () => {
   it('shows the arrows between bodies in a muted token, and keeps the chain text whole', async () => {
     const container = await mountOnPatterns();
     const panel = container.querySelector('#chart-view-patterns');
-    const dispositors = panel?.querySelector('.dispositors-section-header')?.closest('section') ?? panel;
+    const dispositors =
+      [...(panel?.querySelectorAll('section.data-table') ?? [])].find(
+        (section) => section.querySelector('h2, h3')?.textContent === chartViewMessages.en.dispositorsCaption,
+      ) ?? panel;
     const muted = dispositors?.querySelectorAll('.data-table-muted');
     const arrows = Array.from(muted ?? []).filter((el) => el.textContent.trim() === '→');
     expect(arrows.length).toBeGreaterThan(0);

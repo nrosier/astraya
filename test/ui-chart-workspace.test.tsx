@@ -179,7 +179,7 @@ describe('the chart workspace (#801)', () => {
     },
   );
 
-  it('keeps the Dispositors glossary tooltip on Patterns & condition as the replacement (#801)', async () => {
+  it('keeps the Dispositors "?" tooltip on Patterns & condition as the replacement (#801, #1854)', async () => {
     const container = await mount('en');
     await act(async () => {
       Array.from(container.querySelectorAll<HTMLAnchorElement>('.chart-view-link'))
@@ -187,6 +187,8 @@ describe('the chart workspace (#801)', () => {
         ?.click();
       await Promise.resolve();
     });
-    expect(container.querySelector('.dispositors-section-header .glossary-term')).not.toBeNull();
+    expect(
+      container.querySelector(`button[aria-label="${chartViewMessages.en.dispositorsTooltipLabel}"]`),
+    ).not.toBeNull();
   });
 });
