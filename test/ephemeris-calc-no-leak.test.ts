@@ -125,3 +125,18 @@ describe('the engine does not leak WASM memory in swe_houses_armc_ex2 (#1407)', 
     expect(heapBytes() - before).toBeLessThan(1024 * 1024);
   }, 120_000);
 });
+
+describe('the engine does not leak WASM memory in swe_rise_trans (#1407)', () => {
+  it('20,000 rise/set calls, half of them circumpolar, grow the heap by less than 1 MB', async () => {
+    const place = { latitude: 52.37, longitude: 4.9, altitude: 0 };
+    const arctic = { latitude: 75, longitude: 18.96, altitude: 0 };
+    await engine.riseTransit(JD_2024, SE.SE_SUN, place, 'rise', 'visual');
+    const before = heapBytes();
+    for (let step = 0; step < 10_000; step += 1) {
+      await engine.riseTransit(JD_2024 + step * 0.1, SE.SE_SUN, place, 'rise', 'visual');
+      // Midsummer, far north: the Sun does not set, which sweph-wasm's own wrapper throws (and leaks) on.
+      await engine.riseTransit(2_460_482.5, SE.SE_SUN, arctic, 'set', 'visual');
+    }
+    expect(heapBytes() - before).toBeLessThan(1024 * 1024);
+  }, 120_000);
+});

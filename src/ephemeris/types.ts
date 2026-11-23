@@ -154,6 +154,17 @@ export interface PositionOptions {
   readonly heliocentric?: boolean;
 }
 
+/** Which crossing `riseTransit` finds (#1407): the horizon (rise, set) or the meridian (culminate, anticulminate). */
+export type RiseTransitEvent = 'rise' | 'set' | 'culminate' | 'anticulminate';
+
+/**
+ * The horizon a rise or set is measured against, the two Solar Fire offers (guide §12.9): `true`, the body's
+ * geocentric centre on the astronomical horizon, with no refraction and no parallax ("True Altitude"), or `visual`, the
+ * leading or trailing edge with refraction and, for the Moon, parallax ("Visual"). Culmination and anti-culmination are
+ * meridian crossings, where the two coincide.
+ */
+export type RiseTransitHorizon = 'true' | 'visual';
+
 /** Azimuth/altitude of a point as seen from a place, via `swe_azalt`. */
 export interface HorizontalPosition {
   /**
@@ -341,6 +352,25 @@ export interface EphemerisProvider {
    * network clause obliges us to provide.
    */
   version(): Promise<string>;
+
+  /**
+   * The first rise, set, culmination or anti-culmination of `body` after `jd` at `place` (#1407), against the true or
+   * the visual horizon (Solar Fire guide §12.9).
+   * - Visual rises and sets, and both meridian transits, come from `swe_rise_trans`; `undefined` when the library finds
+   *   none that day (circumpolar, or never above the horizon). Pressure and temperature are the same defaults
+   *   `azimuthAltitude` uses (0 hPa, which the library estimates from the altitude, and 15 °C).
+   * - True rises and sets are the geocentric centre crossing altitude 0, searched directly for up to 36 hours after
+   *   `jd`; `undefined` when there is no crossing in that window. Near the polar-day boundary a true set can therefore
+   *   be a day or more away where the visual one is `undefined`. The result is at most a second after the crossing,
+   *   never before it.
+   */
+  riseTransit(
+    jd: JulianDayUT,
+    body: BodyId,
+    place: GeoPosition,
+    event: RiseTransitEvent,
+    horizon: RiseTransitHorizon,
+  ): Promise<JulianDayUT | undefined>;
 
   /**
    * Topocentric azimuth/altitude of `point` as seen from `place`, via `swe_azalt`.

@@ -64,6 +64,8 @@ export async function dispatch(engine: EphemerisProvider, request: EphemerisRequ
       return engine.nextSolarEclipse(...request.args);
     case 'nextLunarEclipse':
       return engine.nextLunarEclipse(...request.args);
+    case 'riseTransit':
+      return engine.riseTransit(...request.args);
     case 'azimuthAltitude':
       return engine.azimuthAltitude(...request.args);
     case 'version':
