@@ -66,4 +66,34 @@ describe('computeArcTransform (#1407)', () => {
     const engine = await getEngine();
     await expect(computeArcTransform(PERSON, SUN, 99_999, engine)).rejects.toThrow(/not in this chart/);
   });
+
+  it('multiplies every body and the Ascendant by the same harmonic', async () => {
+    const engine = await getEngine();
+    const data = await computeArcTransform(PERSON, SUN, MOON, engine);
+    for (const [index, position] of data.harmonic.positions.entries()) {
+      const natal = data.natal.positions[index]?.longitude ?? Number.NaN;
+      expect(position.longitude).toBeCloseTo(harmonicLongitude(natal, data.harmonicNumber), 9);
+    }
+    expect(data.harmonic.houses.ascendant).toBeCloseTo(
+      harmonicLongitude(data.natal.houses.ascendant, data.harmonicNumber),
+      9,
+    );
+  });
+
+  it('conjoins a real pair that straddles 0° Aries', async () => {
+    const engine = await getEngine();
+    const natal = (await computeArcTransform(PERSON, SUN, MOON, engine)).natal;
+    // Find two bodies on either side of 0° Aries in this chart (one in Pisces-Aquarius, one in Aries-Taurus).
+    const late = natal.positions.find((position) => position.longitude > 300);
+    const early = natal.positions.find((position) => position.longitude < 60);
+    expect(late).toBeDefined();
+    expect(early).toBeDefined();
+    if (late === undefined || early === undefined) return;
+    const data = await computeArcTransform(PERSON, late.body, early.body, engine);
+    const a = data.harmonic.positions.find((position) => position.body === late.body)?.longitude ?? Number.NaN;
+    const b = data.harmonic.positions.find((position) => position.body === early.body)?.longitude ?? Number.NaN;
+    const gap = Math.abs(a - b);
+    expect(Math.min(gap, 360 - gap)).toBeLessThan(1e-6);
+    expect(data.separation).toBeGreaterThan(180);
+  });
 });
