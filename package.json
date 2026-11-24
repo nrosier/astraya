@@ -72,7 +72,7 @@
     "fast-check": "^4.9.0",
     "jsdom": "^31.0.0",
     "knip": "6.48.0",
-    "oxlint": "1.94.0",
+    "oxlint": "1.95.0",
     "oxlint-tsgolint": "7.0.2008",
     "prettier": "3.10.1",
     "tsx": "^4.23.13",
