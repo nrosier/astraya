@@ -77,4 +77,38 @@ describe('user-defined ayanamsa (#1407)', () => {
   it('refuses SE_SIDM_USER without its definition', async () => {
     await expect(sunIn({ kind: 'sidereal', ayanamsa: SE.SE_SIDM_USER }, t0)).rejects.toThrow(/user-defined ayanamsa/);
   });
+
+  it('computes the user-defined ayanamsa directly: Lahiri as a user definition gives Lahiri’s value (#1964)', async () => {
+    const degrees = await engine.ayanamsa(t0, LAHIRI, { mean: true });
+    const user = { referenceDate: REFERENCE, degrees };
+    // At the reference date, by construction, and 75 years on, through Swiss Ephemeris's own precession.
+    for (const jd of [t0, t0 + 75 * 365.25]) {
+      for (const mean of [true, false]) {
+        const asUser = await engine.ayanamsa(jd, SE.SE_SIDM_USER, { user, mean });
+        const builtIn = await engine.ayanamsa(jd, LAHIRI, { mean });
+        expect(Math.abs(asUser - builtIn), `jd ${String(jd)}, mean ${String(mean)}`).toBeLessThan(1e-6);
+      }
+    }
+  });
+
+  it('agrees with the user zodiac the positions use: tropical minus sidereal is the ayanamsa (#1964)', async () => {
+    const user = { referenceDate: REFERENCE, degrees: 23.5 };
+    const later = t0 + 40 * 365.25;
+    const ayanamsa = await engine.ayanamsa(later, SE.SE_SIDM_USER, { user });
+    const tropical = await sunIn({ kind: 'tropical' }, later);
+    const sidereal = await sunIn({ kind: 'sidereal', ayanamsa: SE.SE_SIDM_USER, user }, later);
+    expect(arcsecondsBetween((tropical - sidereal + 360) % 360, ayanamsa)).toBeLessThan(0.01);
+  });
+
+  it('refuses the user-defined mode without a definition in ayanamsa() too, with the same message (#1964)', async () => {
+    await expect(engine.ayanamsa(t0, SE.SE_SIDM_USER)).rejects.toThrow(
+      'A user-defined ayanamsa needs its reference date and degrees.',
+    );
+  });
+
+  it('ignores a definition passed with a built-in mode (#1964)', async () => {
+    const plain = await engine.ayanamsa(t0, LAHIRI);
+    const withUser = await engine.ayanamsa(t0, LAHIRI, { user: { referenceDate: REFERENCE, degrees: 10 } });
+    expect(withUser).toBe(plain);
+  });
 });

@@ -310,9 +310,15 @@ export interface EphemerisProvider {
   /**
    * Ayanamsa value in degrees for the given instant and sidereal mode: the true value (with nutation), which is the
    * offset between tropical and sidereal longitudes. `mean: true` leaves nutation out, which is the value a
-   * user-defined ayanamsa takes at its reference date (#1407).
+   * user-defined ayanamsa takes at its reference date (#1407). For the user-defined mode (`SE_SIDM_USER`), `user`
+   * carries its definition, the reference date and the degrees there, as on `Zodiac` (#1964); that mode without a
+   * definition throws, and `user` is ignored for every other mode.
    */
-  ayanamsa(jd: JulianDayUT, mode: number, options?: { readonly mean?: boolean }): Promise<Degrees>;
+  ayanamsa(
+    jd: JulianDayUT,
+    mode: number,
+    options?: { readonly mean?: boolean; readonly user?: UserAyanamsa },
+  ): Promise<Degrees>;
 
   /**
    * True obliquity of the ecliptic at the given instant, in degrees — the
