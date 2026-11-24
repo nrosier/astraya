@@ -13,9 +13,12 @@
  * and the summary: significator houses and rulers, the perfection kind, reception, the considerations and radicality.
  * It leaves out the full aspect, the reception lists and the void-of-course sentence, which belong to the chart.
  *
- * **Versions.** The record is version 1. Part 3 of #1960 adds a practitioner-input marking as version 2, with
- * version 1 still readable. A version above 1 folds to `future-version`, listed and kept, never read with defaults.
- * This build writes only version 1.
+ * **Versions.** The record is version 2: version 1 plus `practitionerInput`, a list of `{key, reason}` over a closed key
+ * list (`domain/horary-judgment`), where each reason is the canonical English text of its key. Version 1 stays readable,
+ * with the list absent (not defaulted); a version 1 record carrying the list, or a version 2 record without it, is
+ * `invalid`. A version above 2 folds to `future-version`, listed and kept, never read with defaults. This build writes
+ * only version 2. An unknown key is `unknown-value`; a duplicate, a wrong type or a reason over 120 code points is
+ * `invalid`, and invalid outranks unknown.
  *
  * **The record is one register.** Moment, place, house system and summary are saved together, so a judgment edited on
  * two devices folds to one coherent saved state, never a mix nobody saved. The `question` is a separate register, so
@@ -37,13 +40,20 @@
  *
  * @module store/horary-judgments
  * @purpose Folds saved horary judgments (a question and one atomic record of moment, place, house system and judgment summary) into readable, unreadable or incomplete entries, and builds and refuses the mutations written to the op-log.
- * @conventions The record is one last-write-wins register carrying its own schema `version` (this build writes and reads 1, keeps a higher one as `future-version`), never merged field by field; it stores the summary and never recomputes it; the moment is stored as typed with an offset witness, never a resolved instant; bodies are stored by key; the question shares the saved-query cap (500 code points, owner decision D1) and the place label the person-text cap; an unreadable or incomplete judgment is listed and kept, never defaulted or hidden; fold functions never throw; refusals carry a code rather than prose, so the UI owns the wording; the list sorts newest save first, then by a plain code-unit id comparison; no permanent-erase control is offered by the UI (owner decision D2), though `Store.purge` stays available as a developer operation.
+ * @conventions The record is one last-write-wins register carrying its own schema `version` (this build writes 2, reads 1 and 2, keeps a higher one as `future-version`), never merged field by field; it stores the summary and never recomputes it; the moment is stored as typed with an offset witness, never a resolved instant; bodies are stored by key; the question shares the saved-query cap (500 code points, owner decision D1) and the place label the person-text cap; an unreadable or incomplete judgment is listed and kept, never defaulted or hidden; fold functions never throw; refusals carry a code rather than prose, so the UI owns the wording; the list sorts newest save first, then by a plain code-unit id comparison; no permanent-erase control is offered by the UI (owner decision D2), though `Store.purge` stays available as a developer operation.
  * @exports HORARY_JUDGMENT_ENTITY, HORARY_QUESTION_FIELD, HORARY_RECORD_FIELD, HORARY_RECORD_VERSION, HORARY_QUESTION_MAX_CHARACTERS, HoraryJudgmentRecord, HoraryJudgmentSummary, HoraryJudgmentUnreadable, SavedHoraryJudgment, HoraryJudgmentRefusal, HoraryJudgmentRefusedError, readHoraryJudgmentRecord, foldHoraryJudgment, horaryJudgmentCreate, horaryQuestionEdit, assertHoraryJudgmentMutation, sortedHoraryJudgments
  */
 import type { HoraryConsiderationKey } from '../astrology/horary.js';
 import type { ReceptionKind } from '../astrology/reception.js';
 import { HORARY_HOUSE_SYSTEMS } from '../domain/horary.js';
-import type { PerfectionKind } from '../domain/horary-judgment.js';
+import {
+  HORARY_PRACTITIONER_KEYS,
+  HORARY_PRACTITIONER_REASONS,
+  HORARY_PRACTITIONER_REASON_MAX_CHARACTERS,
+  type HoraryPractitionerInput,
+  type HoraryPractitionerKey,
+  type PerfectionKind,
+} from '../domain/horary-judgment.js';
 import { isId } from '../domain/id.js';
 import {
   PERSON_TEXT_MAX_CHARACTERS,
@@ -65,7 +75,7 @@ export const HORARY_QUESTION_FIELD = 'question';
 export const HORARY_RECORD_FIELD = 'record';
 
 /** The record schema version this build writes and reads. Independent of the envelope's `opVersion`. */
-export const HORARY_RECORD_VERSION = 1;
+export const HORARY_RECORD_VERSION = 2;
 
 /** The longest a saved question may be, in code points: the saved-query name cap (owner decision D1, #1960). */
 export const HORARY_QUESTION_MAX_CHARACTERS = MAX_CUSTOM_PROMPT_LENGTH;
@@ -95,6 +105,9 @@ const CONSIDERATION_KEYS: Readonly<Record<HoraryConsiderationKey, true>> = {
   'moon-via-combusta': true,
   'saturn-in-seventh': true,
 };
+const PRACTITIONER_KEYS: Readonly<Record<HoraryPractitionerKey, true>> = Object.fromEntries(
+  HORARY_PRACTITIONER_KEYS.map((key) => [key, true] as const),
+) as Record<HoraryPractitionerKey, true>;
 /** The seven classical planets, the only bodies a horary significator or third body can be (`domain/horary-judgment`). */
 const PLANET_KEYS: readonly string[] = ['saturn', 'jupiter', 'mars', 'sun', 'venus', 'mercury', 'moon'];
 
@@ -120,9 +133,12 @@ export interface HoraryJudgmentSummary {
   readonly radical: boolean;
 }
 
-/** A record as read: version 1, the moment as typed, the witness, the system and scheme, and the stored summary. */
+/**
+ * A record as read: the version, the moment as typed, the witness, the system and scheme, and the stored summary.
+ * `practitionerInput` is present on version 2 (possibly empty) and absent on version 1, never defaulted.
+ */
 export interface HoraryJudgmentRecord {
-  readonly version: 1;
+  readonly version: 1 | 2;
   readonly civil: CivilDateTime;
   readonly coordinates: Coordinates;
   readonly witness: OffsetWitness;
@@ -130,6 +146,7 @@ export interface HoraryJudgmentRecord {
   readonly houseSystem: string;
   readonly rulershipScheme: typeof RULERSHIP_SCHEME;
   readonly summary: HoraryJudgmentSummary;
+  readonly practitionerInput?: readonly HoraryPractitionerInput[];
 }
 
 export type HoraryJudgmentUnreadable = 'future-version' | 'unknown-value' | 'invalid' | 'incomplete';
@@ -261,6 +278,38 @@ function readConsiderations(verdict: Verdict, value: unknown): HoraryJudgmentSum
   return read;
 }
 
+function readPractitionerInput(verdict: Verdict, value: unknown): readonly HoraryPractitionerInput[] | undefined {
+  if (!Array.isArray(value)) {
+    verdict.invalid = true;
+    return undefined;
+  }
+  const list: unknown[] = value;
+  const read: HoraryPractitionerInput[] = [];
+  const seen = new Set<string>();
+  for (const entry of list) {
+    if (!isRecord(entry) || typeof entry.reason !== 'string') {
+      verdict.invalid = true;
+      continue;
+    }
+    if (Array.from(entry.reason).length > HORARY_PRACTITIONER_REASON_MAX_CHARACTERS) {
+      verdict.invalid = true;
+      continue;
+    }
+    if (!isKeyOf(PRACTITIONER_KEYS, entry.key)) {
+      markUnknownOrInvalid(verdict, entry.key);
+      continue;
+    }
+    // A key listed twice would make "which reason counts" depend on array order.
+    if (seen.has(entry.key)) {
+      verdict.invalid = true;
+      continue;
+    }
+    seen.add(entry.key);
+    read.push({ key: entry.key as HoraryPractitionerKey, reason: entry.reason });
+  }
+  return read;
+}
+
 function readSummary(verdict: Verdict, value: unknown): HoraryJudgmentSummary | undefined {
   if (!isRecord(value)) {
     verdict.invalid = true;
@@ -339,6 +388,13 @@ function readRecord(value: unknown): RecordVerdict {
   }
   if (rulershipScheme !== RULERSHIP_SCHEME) markUnknownOrInvalid(verdict, rulershipScheme);
   const summary = readSummary(verdict, value.summary);
+  // Version 1 never carries the list and version 2 always does: neither is defaulted, so a record that disagrees with
+  // its own version is broken, not read as if it said something else.
+  let practitionerInput: readonly HoraryPractitionerInput[] | undefined;
+  if (version === 1) {
+    if (value.practitionerInput !== undefined) verdict.invalid = true;
+  } else if (value.practitionerInput === undefined) verdict.invalid = true;
+  else practitionerInput = readPractitionerInput(verdict, value.practitionerInput);
 
   if (verdict.invalid) return { ok: false, reason: 'invalid' };
   if (verdict.unknown) return { ok: false, reason: 'unknown-value' };
@@ -354,7 +410,7 @@ function readRecord(value: unknown): RecordVerdict {
   return {
     ok: true,
     record: {
-      version: 1,
+      version: version === 1 ? 1 : 2,
       civil,
       coordinates,
       witness: { offsetMinutes: witness.offsetMinutes, zone: witness.zone, tzdbFingerprint: witness.tzdbFingerprint },
@@ -362,6 +418,7 @@ function readRecord(value: unknown): RecordVerdict {
       houseSystem,
       rulershipScheme: RULERSHIP_SCHEME,
       summary,
+      ...(practitionerInput === undefined ? {} : { practitionerInput }),
     },
   };
 }
@@ -437,6 +494,9 @@ function recordValue(record: HoraryJudgmentRecord): JsonValue {
       })),
       radical: summary.radical,
     },
+    ...(record.practitionerInput === undefined
+      ? {}
+      : { practitionerInput: record.practitionerInput.map((input) => ({ key: input.key, reason: input.reason })) }),
   };
 }
 
@@ -455,7 +515,7 @@ export function horaryQuestionEdit(id: string, question: string): Mutation {
 /**
  * Refuse a horary-judgment mutation the store must not write. Other entities pass through untouched.
  *
- * Allows only `question` (a string within the cap), `record` (version 1, readable, in a house system this build offers
+ * Allows only `question` (a string within the cap), `record` (the current version, readable, with a practitioner list whose reasons are the canonical text of their keys, in a house system this build offers
  * and with a place label within the person-text cap) and `deleted` (a boolean). Every other field, `purged` included,
  * is refused: a purge goes through `Store.purge`, which appends directly.
  */
@@ -477,6 +537,12 @@ export function assertHoraryJudgmentMutation(mutation: Mutation): void {
       const record = readHoraryJudgmentRecord(mutation.value);
       if (record === undefined || !HORARY_HOUSE_SYSTEMS.includes(record.houseSystem)) {
         throw new HoraryJudgmentRefusedError('invalid');
+      }
+      // A reason is the canonical English text of its key, frozen at write time: anything else is refused.
+      for (const input of record.practitionerInput ?? []) {
+        if (input.reason === '' || input.reason !== HORARY_PRACTITIONER_REASONS[input.key]) {
+          throw new HoraryJudgmentRefusedError('invalid');
+        }
       }
       if (record.placeLabel !== undefined && Array.from(record.placeLabel).length > PERSON_TEXT_MAX_CHARACTERS) {
         throw new HoraryJudgmentRefusedError('invalid');

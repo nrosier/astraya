@@ -24,7 +24,7 @@
  * @module domain/horary-judgment
  * @purpose Horary significator selection, perfection and impediment detection, reception, and relative-motion timing.
  * @conventions Scoped to the seven classical planets; forward station forecasts are supplied by the caller because ChartData has no future ephemeris context.
- * @exports HORARY_PLANET_IDS, Significator, significatorOf, PerfectionKind, PerfectionResult, HoraryMotionForecast, judgePerfection, HoraryJudgmentOptions, HoraryMoonInput, HoraryJudgment, receptionAidsPerfection, judgeHorary
+ * @exports HORARY_PLANET_IDS, Significator, significatorOf, PerfectionKind, PerfectionResult, HoraryMotionForecast, judgePerfection, HoraryJudgmentOptions, HoraryMoonInput, HoraryJudgment, receptionAidsPerfection, judgeHorary, HORARY_PRACTITIONER_KEYS, HoraryPractitionerKey, HoraryPractitionerInput, HORARY_PRACTITIONER_REASON_MAX_CHARACTERS, HORARY_PRACTITIONER_REASONS, practitionerInputFor
  */
 import { bodyById, bodyByKey } from '../astrology/bodies.js';
 import type { Aspect } from '../astrology/aspects.js';
@@ -119,6 +119,40 @@ export interface PerfectionResult {
   /** Linear relative-motion estimate from the current chart to exactness, in days. */
   readonly timeToPerfectDays?: number;
   readonly impedimentBody?: BodyId;
+  /**
+   * Other rules that also held, in the code's fixed order, never the chosen kind (#1960). Absent when none. It only
+   * feeds the practitioner note: the kind above is unchanged by it.
+   */
+  readonly alsoApplies?: readonly PerfectionKind[];
+}
+
+/** The first third body applying from both significators at once, if any (collection of light). */
+function collectorOf(
+  aspects: readonly Aspect[],
+  others: readonly BodyId[],
+  querent: BodyId,
+  quesited: BodyId,
+): BodyId | undefined {
+  return others.find(
+    (third) =>
+      aspectBetween(aspects, third, querent)?.applying === true &&
+      aspectBetween(aspects, third, quesited)?.applying === true,
+  );
+}
+
+function collectionHolds(
+  aspects: readonly Aspect[],
+  others: readonly BodyId[],
+  querent: BodyId,
+  quesited: BodyId,
+): boolean {
+  return collectorOf(aspects, others, querent, quesited) !== undefined;
+}
+
+/** The result with the other rules that also held, in order and without the chosen kind. Absent when there are none. */
+function withAlsoApplies(result: PerfectionResult, kinds: readonly PerfectionKind[]): PerfectionResult {
+  const also = kinds.filter((kind, index) => kind !== result.kind && kinds.indexOf(kind) === index);
+  return also.length === 0 ? result : { ...result, alsoApplies: also };
 }
 
 export interface HoraryMotionForecast {
@@ -158,9 +192,12 @@ export function judgePerfection(
 
   if (direct?.applying === true) {
     const directTiming = timeToPerfect(direct, positions);
+    // Every impediment that holds for the direct aspect is collected in the fixed order below; the first is the
+    // reported kind and the rest are `alsoApplies` (#1960, practitioner note). The order is the code's own choice.
+    const held: PerfectionResult[] = [];
     // Prohibition (simplification — see the module's own header): a third body's applying
     // aspect to either significator with a tighter orb reaches its own perfection first.
-    for (const third of others) {
+    prohibition: for (const third of others) {
       for (const target of [querent, quesited]) {
         const toThird = aspectBetween(aspects, third, target);
         const interferenceTiming = toThird === undefined ? undefined : timeToPerfect(toThird, positions);
@@ -173,19 +210,20 @@ export function judgePerfection(
           // that reaches only one significator, without interposing, frustrates it (p. 72, handled below).
           // Without positions the interposition cannot be read, so it is reported as prohibition as before.
           if (interposes(third, querent, quesited, positions) === false) continue;
-          return {
+          held.push({
             kind: 'prohibition',
             thirdBody: third,
             thirdBodyKey: bodyById(third)?.key ?? String(third),
             ...(interferenceTiming === undefined ? {} : { timeToPerfectDays: interferenceTiming }),
-          };
+          });
+          break prohibition;
         }
       }
     }
     // Frustration (Lilly, p. 72): a third body reaches one significator before the direct aspect
     // perfects, so the matter is frustrated of its perfection. Only a third body that is not a
     // significator itself counts. This is the rule the prohibition check above was approximating.
-    for (const third of others) {
+    frustration: for (const third of others) {
       for (const target of [querent, quesited]) {
         const toTarget = aspectBetween(aspects, third, target);
         if (toTarget?.applying !== true) continue;
@@ -195,14 +233,15 @@ export function judgePerfection(
             ? reachTiming < directTiming
             : toTarget.orb < direct.orb;
         if (reachesFirst) {
-          return {
+          held.push({
             kind: 'frustration',
             aspect: direct,
             thirdBody: third,
             thirdBodyKey: bodyById(third)?.key ?? String(third),
             impedimentBody: target,
             ...(reachTiming === undefined ? {} : { timeToPerfectDays: reachTiming }),
-          };
+          });
+          break frustration;
         }
       }
     }
@@ -210,28 +249,35 @@ export function judgePerfection(
     for (const body of significatorIds) {
       const stationDays = motionForecast?.stationDays?.get(body);
       if (stationDays !== undefined && (directTiming === undefined || stationDays < directTiming)) {
-        return {
+        held.push({
           kind: 'refranation',
           aspect: direct,
           ...(directTiming === undefined ? {} : { timeToPerfectDays: directTiming }),
           impedimentBody: body,
-        };
+        });
       }
       const signChangeDays = motionForecast?.signChangeDays?.get(body);
       if (signChangeDays !== undefined && (directTiming === undefined || signChangeDays < directTiming)) {
-        return {
+        held.push({
           kind: 'signChange',
           aspect: direct,
           ...(directTiming === undefined ? {} : { timeToPerfectDays: directTiming }),
           impedimentBody: body,
-        };
+        });
       }
     }
-    return {
-      kind: 'directAspect',
-      aspect: direct,
-      ...(directTiming === undefined ? {} : { timeToPerfectDays: directTiming }),
-    };
+    const [chosen, ...rest] = held;
+    if (chosen === undefined) {
+      return {
+        kind: 'directAspect',
+        aspect: direct,
+        ...(directTiming === undefined ? {} : { timeToPerfectDays: directTiming }),
+      };
+    }
+    return withAlsoApplies(
+      chosen,
+      rest.map((result) => result.kind),
+    );
   }
 
   // Translation: a third body separating from one significator, applying to the other.
@@ -241,17 +287,17 @@ export function judgePerfection(
     const carriesFromQuerent = toQuerent !== undefined && !toQuerent.applying && toQuesited?.applying === true;
     const carriesFromQuesited = toQuesited !== undefined && !toQuesited.applying && toQuerent?.applying === true;
     if (carriesFromQuerent || carriesFromQuesited) {
-      return { kind: 'translation', thirdBody: third, thirdBodyKey: bodyById(third)?.key ?? String(third) };
+      return withAlsoApplies(
+        { kind: 'translation', thirdBody: third, thirdBodyKey: bodyById(third)?.key ?? String(third) },
+        collectionHolds(aspects, others, querent, quesited) ? ['collection'] : [],
+      );
     }
   }
 
   // Collection: a third body applying from both significators at once.
-  for (const third of others) {
-    const toQuerent = aspectBetween(aspects, third, querent);
-    const toQuesited = aspectBetween(aspects, third, quesited);
-    if (toQuerent?.applying === true && toQuesited?.applying === true) {
-      return { kind: 'collection', thirdBody: third, thirdBodyKey: bodyById(third)?.key ?? String(third) };
-    }
+  const collector = collectorOf(aspects, others, querent, quesited);
+  if (collector !== undefined) {
+    return { kind: 'collection', thirdBody: collector, thirdBodyKey: bodyById(collector)?.key ?? String(collector) };
   }
 
   return { kind: 'none' };
@@ -348,6 +394,80 @@ export function judgeHorary(
     considerations,
     radical: isRadical(considerations),
   };
+}
+
+/**
+ * The points where horary practice differs and this code made a choice (#1960, owner decisions, Part 3). A closed list:
+ * a key cannot be added inside record version 2 without older builds reading the record as unknown.
+ */
+export const HORARY_PRACTITIONER_KEYS = [
+  'non-radical-chart',
+  'late-ascendant-limit',
+  'house-by-exact-cusp',
+  'perfection-orbs',
+  'rule-order',
+  'sign-change',
+] as const;
+export type HoraryPractitionerKey = (typeof HORARY_PRACTITIONER_KEYS)[number];
+
+/** One practitioner note on a judgment: the key and its reason, the canonical English text frozen at save time. */
+export interface HoraryPractitionerInput {
+  readonly key: HoraryPractitionerKey;
+  readonly reason: string;
+}
+
+/** The longest a stored reason may be, in code points. */
+export const HORARY_PRACTITIONER_REASON_MAX_CHARACTERS = 120;
+
+/**
+ * The canonical English reason per key, stored on the record and frozen at save time, so the store can check a stored
+ * reason against its key. The en and nl display text lives in `ui/HoraryView.messages`, and a test keeps its en equal
+ * to this table.
+ */
+export const HORARY_PRACTITIONER_REASONS: Readonly<Record<HoraryPractitionerKey, string>> = {
+  'non-radical-chart': 'The chart is not radical. It is judged anyway; some practitioners would not judge it.',
+  'late-ascendant-limit':
+    "Lilly's late Ascendant (27, 28 or 29 degrees) is read here as from 27°00′; readings of the limit differ.",
+  'house-by-exact-cusp':
+    'A planet is in the house its degree falls in, by exact cusp, with no 5-degree rule; practitioners differ.',
+  'perfection-orbs':
+    "Perfection counts only the five Ptolemaic aspects within Lilly's moieties; orb tables differ by author.",
+  'rule-order':
+    'More than one rule applies. The code reports the first in its own fixed order, not an order from the texts.',
+  'sign-change':
+    'A significator changes sign before the aspect perfects; practitioners differ on whether it still counts.',
+};
+
+/**
+ * The practitioner notes for one judgment, in the closed list's order. Pure, and it changes no verdict: a sign change
+ * stays an impediment, and the note never says it counts as perfection.
+ *
+ * `saturnHouse` is Saturn's house by exact cusp (`judgeHorary` reads it for the considerations but does not keep it);
+ * it is `undefined` when the houses could not be cast. A rule-order note needs two rules that held for one aspect
+ * (`alsoApplies`), so it never appears for a judgment that perfects one way only.
+ */
+export function practitionerInputFor(
+  judgment: HoraryJudgment,
+  saturnHouse: number | undefined,
+): readonly HoraryPractitionerInput[] {
+  const { perfection } = judgment;
+  const kind = perfection.kind;
+  const held = new Set<PerfectionKind>([kind, ...(perfection.alsoApplies ?? [])]);
+  const directRules: readonly PerfectionKind[] = ['prohibition', 'frustration', 'refranation', 'signChange'];
+  const directHeld = directRules.filter((rule) => held.has(rule)).length;
+  const lateAscendant = judgment.considerations.some((c) => c.key === 'ascendant-too-late' && c.applies);
+  const applies: Readonly<Record<HoraryPractitionerKey, boolean>> = {
+    'non-radical-chart': !judgment.radical,
+    'late-ascendant-limit': lateAscendant,
+    'house-by-exact-cusp': saturnHouse === 6 || saturnHouse === 7,
+    'perfection-orbs': kind !== 'none',
+    'rule-order': directHeld >= 2 || (held.has('translation') && held.has('collection')),
+    'sign-change': kind === 'signChange',
+  };
+  return HORARY_PRACTITIONER_KEYS.filter((key) => applies[key]).map((key) => ({
+    key,
+    reason: HORARY_PRACTITIONER_REASONS[key],
+  }));
 }
 
 function signChangeDays(position: BodyPosition): number | undefined {
