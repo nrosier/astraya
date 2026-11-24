@@ -24,7 +24,7 @@
 /**
  * @module ephemeris/engine
  * @purpose Implements EphemerisProvider directly against sweph-wasm — the sole module permitted to import sweph-wasm — so Swiss Ephemeris calculations run identically on the main thread, in a Web Worker, or under Vitest.
- * @conventions House cusps are indexed 1..12 with index 0 unused, matching the C API; sidereal mode and the topocentric observer are global mutable WASM state that must be set before every call that depends on them; dates outside the shipped 1800-2399 CE ephemeris range are refused rather than silently computed via the lower-precision fallback theory.
+ * @conventions House cusps are indexed 1..12 with index 0 unused, matching the C API; sidereal mode and the topocentric observer are global mutable WASM state that must be set before every call that depends on them; dates outside the shipped 1800-2399 CE ephemeris range are refused rather than silently computed via the lower-precision fallback theory. `ayanamsa()` takes the user-defined ayanamsa's definition (reference date and degrees) in its options, the same `UserAyanamsa` a `Zodiac` carries, so `SE_SIDM_USER` can be computed directly (#1964).
  * @exports EngineConfig, SwissEphemerisEngine
  */
 import { EPHEMERIS_DATA_FILES, EPHEMERIS_YEAR_RANGE, EPHE_BASE_URL, FIXED_STARS_ASSET } from './assets.js';
@@ -719,8 +719,13 @@ export class SwissEphemerisEngine implements EphemerisProvider {
     return this.#instance().swe_house_name(system);
   }
 
-  async ayanamsa(jd: JulianDayUT, mode: number, options?: { readonly mean?: boolean }): Promise<Degrees> {
-    this.#setSidMode(mode, undefined);
+  async ayanamsa(
+    jd: JulianDayUT,
+    mode: number,
+    options?: { readonly mean?: boolean; readonly user?: UserAyanamsa },
+  ): Promise<Degrees> {
+    // The definition matters only for the user-defined mode; any other mode ignores it, as `#applyZodiac` does (#1964).
+    this.#setSidMode(mode, mode === SE.SE_SIDM_USER ? options?.user : undefined);
     const flags = options?.mean === true ? SE.SEFLG_SWIEPH | SE.SEFLG_NONUT : SE.SEFLG_SWIEPH;
     return this.#instance().swe_get_ayanamsa_ex_ut(jd, flags);
   }

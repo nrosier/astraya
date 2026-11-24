@@ -40,6 +40,7 @@ import type {
   LunarEclipse,
   PositionOptions,
   SolarEclipse,
+  UserAyanamsa,
   Zodiac,
 } from './types.js';
 
@@ -339,7 +340,11 @@ export class WorkerEphemerisProvider implements EphemerisProvider {
     return this.#call('houseSystemName', [system]);
   }
 
-  ayanamsa(jd: JulianDayUT, mode: number, options?: { readonly mean?: boolean }): Promise<Degrees> {
+  ayanamsa(
+    jd: JulianDayUT,
+    mode: number,
+    options?: { readonly mean?: boolean; readonly user?: UserAyanamsa },
+  ): Promise<Degrees> {
     return this.#call('ayanamsa', options === undefined ? [jd, mode] : [jd, mode, options]);
   }
 

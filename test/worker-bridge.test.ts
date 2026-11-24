@@ -176,6 +176,18 @@ describe('worker bridge', () => {
     expect(ayanamsa).toBeLessThan(25);
   });
 
+  it('forwards a user-defined ayanamsa definition through the bridge, giving the engine’s own value (#1964)', async () => {
+    const client = await bridged();
+    const engine = await getEngine();
+    const user = { referenceDate: '1950-01-01', degrees: 23.2 };
+    const [viaClient, direct] = await Promise.all([
+      client.ayanamsa(JD_2024, SE.SE_SIDM_USER, { user }),
+      engine.ayanamsa(JD_2024, SE.SE_SIDM_USER, { user }),
+    ]);
+    expect(viaClient).toBe(direct);
+    await expect(client.ayanamsa(JD_2024, SE.SE_SIDM_USER)).rejects.toThrow(/user-defined ayanamsa/);
+  });
+
   it('rejects in-flight calls when the worker dies rather than hanging', async () => {
     let failWorker: ((error: Error) => void) | undefined;
     const client = new WorkerEphemerisProvider({
