@@ -335,6 +335,9 @@ export async function createSyncEngine(options: SyncEngineOptions): Promise<Sync
   // Kept across failing runs so the status shows how long it has been failing, not how long
   // since the last attempt — `describeStatus` (ui/status.ts) escalates on that duration.
   let failingSince: number | undefined;
+  // Seqs of pulled rows skipped as undecodable (#320). Cleared at the start of every run, so the
+  // status reports the latest run's drops only and counts never accumulate across runs.
+  let droppedSeqs: number[] = [];
   // Drives the backoff below (#106); reset to 0 on any successful run.
   let consecutiveFailures = 0;
   let retryTimer: ReturnType<typeof setTimeout> | undefined;
@@ -453,8 +456,9 @@ export async function createSyncEngine(options: SyncEngineOptions): Promise<Sync
       for (const row of rows) {
         try {
           decoded.push(fromWire(row));
-        } catch (error) {
-          console.warn('sync: dropping a pulled row that failed to decode', row.seq, error);
+        } catch {
+          // Recorded on the status instead of printed (#320): the drop stays visible and testable.
+          droppedSeqs.push(row.seq);
         }
       }
       trace('sync', 'pull: page fetched, calling store.receive', { deviceId: store.deviceId, decoded: decoded.length });
@@ -517,6 +521,7 @@ export async function createSyncEngine(options: SyncEngineOptions): Promise<Sync
 
   async function runSync(): Promise<void> {
     running = true;
+    droppedSeqs = [];
     trace('sync', 'runSync: starting', { deviceId: store.deviceId });
     try {
       do {
@@ -534,7 +539,9 @@ export async function createSyncEngine(options: SyncEngineOptions): Promise<Sync
         clearScheduledRetry();
         const stillPending = ownOutgoing().length > 0;
         trace('sync', 'runSync: finished', { deviceId: store.deviceId, stillPending });
-        setStatus(stillPending ? { kind: 'syncing' } : { kind: 'synced', at: Date.now() });
+        const dropped =
+          droppedSeqs.length > 0 ? { dropped: { count: droppedSeqs.length, seqs: [...droppedSeqs] } } : {};
+        setStatus(stillPending ? { kind: 'syncing', ...dropped } : { kind: 'synced', at: Date.now(), ...dropped });
       }
     } catch (error) {
       if (!closed && error instanceof SyncError && error.kind === 'quota') {

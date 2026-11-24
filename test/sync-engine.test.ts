@@ -413,6 +413,8 @@ describe('pull resilience (#320)', () => {
       expect(store.state.people.get('p1')?.displayName).toBe('Ada');
       // The row after the dropped one is applied too.
       expect(store.state.people.get('p2')?.displayName).toBe('Grace');
+      // The drop is recorded on the status, not printed (#320): exactly one row, seq 2.
+      expect(engine.status).toMatchObject({ kind: 'synced', dropped: { count: 1, seqs: [2] } });
     } finally {
       engine.close();
       store.close();
