@@ -78,7 +78,7 @@ test('the About page includes an astrology primer section with all subsections',
   await expect(page.getByText(/The app supports two schemes: traditional \(classical\) rulers/)).toBeVisible();
 
   // Closing resources paragraph
-  await expect(page.getByText(/For more, read conventional astrology introductions/)).toBeVisible();
+  await expect(page.getByText(/explore the interpretations throughout this app/)).toBeVisible();
 });
 
 test('the About page primer renders in Dutch with full translation', async ({ page }) => {

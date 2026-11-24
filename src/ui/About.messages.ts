@@ -83,8 +83,7 @@ const en = {
   primerDignityPara:
     'Each sign has a ruler, the planet most at home there. The app supports two schemes: traditional (classical) rulers, and modern rulers, which give Scorpio, Aquarius and Pisces to Pluto, Uranus and Neptune.',
 
-  primerResources:
-    'For more, read conventional astrology introductions or explore the interpretations throughout this app.',
+  primerResources: 'For more, explore the interpretations throughout this app.',
 };
 
 const nl: typeof en = {
@@ -163,8 +162,7 @@ const nl: typeof en = {
   primerDignityPara:
     'Elk teken heeft een heerser, de planeet die daar het meest thuis is. De app ondersteunt twee stelsels: traditionele (klassieke) heersers, en moderne heersers, die Schorpioen, Waterman en Vissen toekennen aan Pluto, Uranus en Neptunus.',
 
-  primerResources:
-    'Voor meer informatie kun je conventionele astrologie-introducties lezen of de interpretaties in deze app verkennen.',
+  primerResources: 'Voor meer informatie kun je de interpretaties in deze app verkennen.',
 };
 
 export const aboutMessages = { en, nl };
