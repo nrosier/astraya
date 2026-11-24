@@ -716,7 +716,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": false,
-    "used_by": [],
+    "used_by": ["src/astrology/fixed-star-registry.ts"],
     "notes": "PDF metadata author reads \"Ptolemy, 2nd cent\"; the title page names Peters and Knobel."
   },
   {
