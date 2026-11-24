@@ -129,6 +129,7 @@ describe('the derived-chart interpretation note (#725)', () => {
       'heliocentric',
       'solar-return',
       'lunar-return',
+      'lunar-phase-return',
       'relocated',
     ]);
   });

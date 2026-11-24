@@ -20,6 +20,7 @@ const en = {
     heliocentric: 'Heliocentric',
     'solar-return': 'Solar return',
     'lunar-return': 'Lunar return',
+    'lunar-phase-return': 'Lunar phase return',
     relocated: 'Relocated',
   } satisfies Record<ChartType, string>,
 };
@@ -34,6 +35,7 @@ const nl: typeof en = {
     heliocentric: 'Heliocentrisch',
     'solar-return': 'Zonneterugkeer',
     'lunar-return': 'Maanterugkeer',
+    'lunar-phase-return': 'Maanfaseterugkeer',
     relocated: 'Verplaatst',
   } satisfies Record<ChartType, string>,
 };

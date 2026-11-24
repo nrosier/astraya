@@ -37,6 +37,7 @@ export const CHART_TYPES = [
   'heliocentric',
   'solar-return',
   'lunar-return',
+  'lunar-phase-return',
   'relocated',
 ] as const;
 export type ChartType = (typeof CHART_TYPES)[number];
