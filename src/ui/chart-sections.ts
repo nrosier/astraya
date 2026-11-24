@@ -38,6 +38,7 @@ export const CHART_TYPES = [
   'solar-return',
   'lunar-return',
   'lunar-phase-return',
+  'rise-set',
   'relocated',
 ] as const;
 export type ChartType = (typeof CHART_TYPES)[number];

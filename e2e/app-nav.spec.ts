@@ -482,6 +482,7 @@ test.describe('with the shared people (#799)', () => {
       'Solar return',
       'Lunar return',
       'Lunar phase return',
+      'Rise/set',
       'Relocated',
     ]);
     await page.keyboard.press('Escape');
