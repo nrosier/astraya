@@ -106,7 +106,8 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `platform.ts` — Apple-keyboard detection (#1654, #1769) so shortcut labels name ⌘K or Ctrl+K. Deps: none.
 - `FocusInterpretation.tsx` + `FocusInterpretation.messages.ts` — Tier 2 AI-interpretation feature (consent + generate). Deps: `interpretation/tier2-client`, `interpretation/focus-context-schema`.
 - `HarmonicView.tsx` + `HarmonicView.messages.ts` — Harmonic & Varga divisional charts with radix-to-result provenance. Deps: `astrology/harmonics`, `domain/harmonic`, `SortableTable`.
-- `HoraryView.tsx` + `HoraryView.messages.ts` — Horary (question-chart) tool + considerations check. States its calculation basis in the header (#1059). Deps: `astrology/horary`, `domain/horary`.
+- `HoraryView.tsx` + `HoraryView.messages.ts` — Horary (question-chart) tool + considerations check; a question field and Save beside the verdict write a judgment to the store (#1960). States its calculation basis in the header (#1059). Deps: `astrology/horary`, `domain/horary`, `store/horary-judgments`, `HoraryJudgments`.
+- `HoraryJudgments.tsx` — Saved-judgments card of the Horary screen: list, read-only reopen of the stored record, confirmed delete (no permanent erase). Deps: `store/horary-judgments`, `store-context`, `HoraryView.messages`, `primitives/StagedDialog`.
 - `OverviewWheel.tsx` — Overview's natal-wheel card (#1173): the chart screen's dial renderer drawn small, linking to the chart. Deps: `chart/chart-sheet`, `domain/chart-compute`, `./feature-registry`.
 - `overview-health.ts` — Birth-data health checklist for the person Overview (#1173): what is missing or uncertain in a birth record and the field that fixes each item. Deps: `domain/person`, `time/resolve`, `feature-registry`.
 - `Overview.tsx` + `Overview.messages.ts` — Canonical per-person Overview screen (#506/#509, #1173): two columns: birth data, now, next actions and resume on the left, the wheel then Sun, Moon and Rising on the right (#1345), calculation basis in the page header (#1059). Deps: `./feature-registry`, `./people-list`, `./person-nav`.
@@ -208,7 +209,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `forward-geocode.ts` — Place-name → coordinates resolution (MapTiler/Nominatim). Deps: `./geocode-provider`.
 - `geocode-provider.ts` — Geocoding backend selection (self-hosted/MapTiler/Nominatim). Deps: build-time env vars.
 - `glyph-variant-setting.ts` — Device preference for Uranus/Pluto glyph variants. Deps: `chart/glyph-variants`, `chart/glyph-weight`.
-- `horary.ts` — Horary screen (form parsing; re-exports the house-system list from `domain/horary`). Deps: `time/types`, `./place-fields`, `domain/horary`.
+- `horary.ts` — Horary screen (form parsing; builds the saved record and its summary; re-exports the house-system list from `domain/horary`). Deps: `time/types`, `./place-fields`, `domain/horary`, `domain/horary-judgment`, `store/horary-judgments`.
 - `last-person.ts` — Remembers most-recently viewed person across app. Deps: localStorage only.
 - `palette-recents.ts` — Command palette recents (last 8) and pins in localStorage (#1654). Deps: localStorage only.
 - `last-chart.ts` — Remembers each person's last-opened chart screen (#1173), so Overview can offer "continue where you left off". Deps: none.

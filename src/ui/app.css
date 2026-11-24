@@ -11043,3 +11043,77 @@ a.quiet,
   color: var(--muted);
   font-size: var(--text-xs);
 }
+
+/*
+ * Horary save (#1960). The verdict row holds the perfection line and Save (owner decision 3); the button keeps the
+ * standard control height and sits on the row's bottom edge. The saved-judgments card sits below the result
+ * (decision 2) with the shared card chrome, and its reopen view is plain content inside it, never a second card.
+ */
+.horary-verdict-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.horary-verdict-row > p {
+  flex: 1 1 20rem;
+  margin: 0;
+}
+
+.horary-saved {
+  margin-top: var(--space-6);
+}
+
+.horary-saved .saved-query-list {
+  margin: 0;
+}
+
+.horary-saved-opened {
+  display: grid;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
+}
+
+.horary-saved-opened-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.horary-saved-opened-header h3 {
+  margin: 0;
+}
+
+.horary-saved-record {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+}
+
+@media (min-width: 52rem) {
+  .horary-saved-record {
+    grid-template-columns: max-content minmax(0, 1fr);
+  }
+}
+
+.horary-saved-record dt {
+  font-weight: 600;
+}
+
+.horary-saved-record dd {
+  margin: 0 0 var(--space-2);
+}
+
+.horary-saved-record dd p {
+  margin: 0 0 var(--space-1);
+}
+
+.horary-saved-considerations {
+  margin: 0;
+  padding-left: var(--space-4);
+}
