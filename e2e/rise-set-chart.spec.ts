@@ -52,7 +52,9 @@ test('a rise and set chart for a body, an event and a horizon, with the event mo
   await expect(page.getByRole('heading', { name: /Rise and Set/, level: 1 })).toBeVisible();
   await expect(page).toHaveURL(/#\/people\/[^/]+\/charts\/rise-set\/wheel$/);
   await expect(page.locator('div.chart-wheel')).toBeVisible();
-  await expect(page.locator('.page-header-basis')).toContainText(/ · Sun Rise \(True horizon\), \d{4}-\d\d-\d\d \d\d:\d\d UTC$/);
+  await expect(page.locator('.page-header-basis')).toContainText(
+    / · Sun Rise \(True horizon\), \d{4}-\d\d-\d\d \d\d:\d\d UTC$/,
+  );
 
   // The Moon always sets within the search window at this latitude.
   await page.getByLabel('Body', { exact: true }).selectOption({ label: 'Moon' });
