@@ -5,18 +5,26 @@
  * app — chart rendering, aspects, dignities and progressions all iterate this
  * list rather than each keeping their own. Three of the entries are not
  * physical bodies at all: the lunar nodes and the three "Lilith" points are
- * orbital elements of the Moon's path, not things with their own gravity, and
- * Swiss Ephemeris computes them from three different models (an osculating
- * ellipse, its instantaneous tangent, and an interpolation between the two) —
- * hence three SE ids rather than one, and why none of them can be checked
- * against JPL Horizons the way a real body can: there is nothing independent
- * to check against, since the model *is* the definition.
+ * orbital elements of the Moon's path, not things with their own gravity.
+ * Swiss Ephemeris computes the nodes as the mean node and the true (osculating)
+ * node, and the lunar apogee ("Black Moon Lilith") under three models: the mean
+ * apogee of the averaged lunar orbit, the osculating apogee of the
+ * instantaneous orbital ellipse, and the interpolated ("natural") apogee, which
+ * smooths away the osculating apogee's spurious oscillation (Swiss Ephemeris
+ * general documentation, the chapter on the lunar node and apogee; #869).
+ * Hence three SE ids for Lilith rather than one, and why none of these points
+ * can be checked against JPL Horizons the way a real body can: there is nothing
+ * independent to check against, since the model *is* the definition.
+ *
+ * Which points Astraya lists, and that it shows all three Lilith models and
+ * both nodes for the user to choose from, is Astraya's own convention; no held
+ * astrological text prescribes the set (owner decision on #869, 2026-11-24).
  */
 
 /**
  * @module Bodies
  * @purpose Defines the canonical set of bodies (luminaries, planets, nodes, Lilith variants, Chiron, main-belt asteroids) Astraya computes positions for, plus the opt-in set (Pholus, #804) that is computed only on request.
- * @conventions Order matches traditional chart-listing order, not SE numeric ids; the lunar nodes and three Lilith variants are orbital elements rather than physical bodies, computed by Swiss Ephemeris under three different models, so none can be checked against JPL Horizons.
+ * @conventions Order matches traditional chart-listing order, not SE numeric ids; the lunar nodes (mean, true) and three Lilith variants (mean, osculating, interpolated apogee) are orbital elements rather than physical bodies, defined by Swiss Ephemeris's models (Swiss Ephemeris general documentation, lunar node and apogee), so none can be checked against JPL Horizons. The set of points listed is Astraya's convention (#869).
  * @exports BODIES, OPT_IN_BODIES, HELIOCENTRIC_ONLY_BODIES, BodySetOptions, bodiesFor, bodyIdsFor, bodyById, bodyByKey, southNode
  */
 import { SE } from '../ephemeris/generated-constants.ts';
