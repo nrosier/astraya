@@ -62,7 +62,7 @@ const en = {
   },
   /**
    * The practitioner note per key (#1960). The en text is the reason stored on a saved judgment, so it equals
-   * `HORARY_PRACTITIONER_REASONS` (a test holds the two together). Not shown yet: the display awaits the owner's visual check.
+   * `HORARY_PRACTITIONER_REASONS` (a test holds the two together). Shown on the live result and on a reopened judgment, by key.
    */
   practitioner: {
     'non-radical-chart': 'The chart is not radical. It is judged anyway; some practitioners would not judge it.',
@@ -132,6 +132,8 @@ const en = {
   close: 'Close',
   openedHeading: 'Saved judgment',
   openedNote: 'Shown as it was saved. It is not recalculated.',
+  practitionerHeading: 'Practitioner input',
+  savedBeforePractitioner: 'Saved before practitioner notes',
   openedQuestion: 'Question',
   openedMoment: 'Moment',
   openedPlace: 'Place',
@@ -280,6 +282,9 @@ const nl: typeof en = {
   close: 'Sluiten',
   openedHeading: 'Opgeslagen oordeel',
   openedNote: 'Getoond zoals het is opgeslagen. Het wordt niet opnieuw berekend.',
+  // Machine-drafted; needs a native Dutch read (#1960).
+  practitionerHeading: 'Inbreng van de beoefenaar',
+  savedBeforePractitioner: 'Opgeslagen vóór de opmerkingen voor beoefenaars',
   openedQuestion: 'Vraag',
   openedMoment: 'Moment',
   openedPlace: 'Plaats',
