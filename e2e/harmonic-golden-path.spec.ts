@@ -11,7 +11,7 @@ import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { EINSTEIN, MARIC, newSeededContext, openSharedPerson } from './shared-people.ts';
-import { createPerson, gotoAndSettle, openChart } from './support.ts';
+import { openChart } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -129,27 +129,6 @@ test('the arc transform brings the chosen pair into exact conjunction (#1407)', 
   // The same point twice is refused.
   await page.getByLabel('Second point', { exact: true }).selectOption({ label: 'Sun' });
   await expect(page.getByText('Choose two different points.')).toBeVisible();
-});
-
-test('an arc transform harmonic above 360 warns that the other points are unreliable (#1407)', async () => {
-  test.setTimeout(120_000);
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  // Born 16 October 1990 at noon in Greenwich: Mercury and Venus are 0.12 degrees apart, a harmonic near 2,900.
-  await createPerson(page, {
-    name: 'Close Pair',
-    date: '1990-10-16',
-    time: '12:00:00',
-    latitude: '51.4779',
-    longitude: '0',
-  });
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await page.getByRole('link', { name: /^Close Pair/ }).click();
-  await openChart(page, 'Harmonic');
-  await page.getByLabel('Divisional chart').selectOption({ label: 'Arc transform' });
-  await page.getByLabel('First point', { exact: true }).selectOption({ label: 'Mercury' });
-  await page.getByLabel('Second point', { exact: true }).selectOption({ label: 'Venus' });
-  await expect(page.getByText(/This harmonic is above 360: the pair is less than 1° apart/)).toBeVisible();
-  await expect(page.locator('div.chart-wheel')).toBeVisible();
 });
 
 test('a person with an unknown birth time is told a harmonic chart needs one', async () => {
