@@ -99,6 +99,46 @@ test('the Solar Arc screen can direct in declination: parallels to the natal bod
   await expect(page.getByText('Longitude only: declination is not directed.')).toBeVisible();
 });
 
+test('the Solar Arc screen takes an arc, a multiplier and converse, and hides them for declination (#1407)', async () => {
+  test.setTimeout(90_000);
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  await page.getByRole('link', { name: 'Progressions & Directions', exact: true }).click();
+  await page.getByRole('tab', { name: 'Solar Arc', exact: true }).click();
+  const arc = page.getByLabel('Arc', { exact: true });
+  const multiplier = page.getByLabel('Multiplier', { exact: true });
+  const converse = page.getByLabel('Converse (backwards in time)', { exact: true });
+  await expect(arc).toHaveValue('solar');
+  await expect(multiplier).toHaveValue('1');
+  await expect(converse).not.toBeChecked();
+  const positions = page.getByRole('table', { name: 'Directed positions' });
+  await expect(positions).toBeVisible();
+  const before = await positions.locator('tbody tr').first().innerText();
+
+  await arc.selectOption('ascendant');
+  await multiplier.selectOption('0.5');
+  await converse.check();
+  await expect(page.locator('.page-header-basis')).toContainText('Ascendant arc');
+  await expect(page.locator('.page-header-basis')).toContainText('MC by solar arc in longitude');
+  await expect(page.locator('.page-header-basis')).toContainText('×0.5');
+  await expect(page.locator('.page-header-basis')).toContainText('converse (backwards in time)');
+  await expect(positions).toBeVisible();
+  await expect.poll(() => positions.locator('tbody tr').first().innerText()).not.toBe(before);
+  // The Ascendant arc has no simple inverse in time, so its contacts carry no exact dates, by design.
+  const contacts = page.getByRole('table', { name: 'Directed-to-natal contacts' });
+  if ((await contacts.count()) > 0) {
+    await expect(contacts.getByText('outside search window')).toHaveCount(0);
+    await expect(contacts.getByText('not dated for this arc').first()).toBeVisible();
+  }
+
+  // Declination takes none of these options: the three controls go, and come back with the longitude view.
+  await page.getByLabel('Directed in', { exact: true }).selectOption('declination');
+  await expect(arc).toHaveCount(0);
+  await expect(multiplier).toHaveCount(0);
+  await expect(converse).toHaveCount(0);
+  await page.getByLabel('Directed in', { exact: true }).selectOption('longitude');
+  await expect(arc).toHaveValue('ascendant');
+});
+
 test('a person with an unknown birth time is told solar arc directions need one', async () => {
   await openSharedPerson(page, baseUrl, MARIC);
 
