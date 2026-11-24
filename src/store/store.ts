@@ -57,7 +57,11 @@ import {
 import { PIN_ENTITY, PinRefusedError, assertPinMutation, pinAnnotationPointer, pinErasedRevision } from './pins.js';
 import { CORRECTION_ENTITY, CorrectionRefusedError, assertCorrectionMutation } from './corpus-corrections.js';
 import { assertChartSearchMutation } from './chart-searches.js';
-import { assertHoraryJudgmentMutation } from './horary-judgments.js';
+import {
+  HORARY_JUDGMENT_ENTITY,
+  HoraryJudgmentRefusedError,
+  assertHoraryJudgmentMutation,
+} from './horary-judgments.js';
 import { assertSavedQueryMutation } from './saved-queries.js';
 import { append, appendAt, emptyLog, latest, purgeEntity, receiveRecords, since } from './oplog.js';
 import { MAX_COUNTER, createClock, encodeHlc, isNodeId, randomNodeId, receive } from './hlc.js';
@@ -569,6 +573,9 @@ export async function openStore(options: StoreOptions = {}): Promise<Store> {
         // An annotation is erased through `eraseAnnotation`, which also points the pin at a fresh id; a bare marker on its
         // id would block annotating that pin again (#1195).
         if (entity === ANNOTATION_ENTITY) throw new AnnotationRefusedError('invalid');
+        // A saved judgment is only ever deleted (a tombstone with Undo); a permanent erase is a developer operation, not a
+        // store call (#1960).
+        if (entity === HORARY_JUDGMENT_ENTITY) throw new HoraryJudgmentRefusedError('invalid');
         if (!tabLock.writable) throw new Error(NOT_WRITABLE_MESSAGE);
         // One marker per entity the purge covers (a person's notes go with it, #919), all in
         // one commit, so no note can survive a person purge that was interrupted part-way.

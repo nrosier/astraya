@@ -664,6 +664,17 @@ describe('the horary-judgment store round trip', () => {
     expect(reopened.state.deleted.horaryJudgments.get(id)).toMatchObject({ question: 'Still deleted' });
   });
 
+  it('refuses Store.purge of a judgment, which is only ever deleted, and keeps it', async () => {
+    const id = newId('h');
+    const store = await openFresh(freshName());
+    await store.mutate(horaryJudgmentCreate(id, 'Kept', RECORD));
+    await store.remove(HORARY_JUDGMENT_ENTITY, id);
+    await expect(store.purge(HORARY_JUDGMENT_ENTITY, id)).rejects.toBeInstanceOf(HoraryJudgmentRefusedError);
+    expect(store.state.deleted.horaryJudgments.get(id)).toMatchObject({ status: 'ready', question: 'Kept' });
+    expect(store.state.erased.horaryJudgments.has(id)).toBe(false);
+    expect(store.outgoing().some((record) => JSON.stringify(record).includes('"purged"'))).toBe(false);
+  });
+
   it('purges: the id is erased, in neither list, the marker is kept and the other records are stripped', async () => {
     const name = freshName();
     const id = newId('h');
@@ -672,7 +683,9 @@ describe('the horary-judgment store round trip', () => {
     await store.mutate(horaryJudgmentCreate(id, 'Gone', RECORD));
     await store.mutate(horaryJudgmentCreate(keep, 'Kept', RECORD));
     await store.remove(HORARY_JUDGMENT_ENTITY, id);
-    await store.purge(HORARY_JUDGMENT_ENTITY, id);
+    // Store.purge refuses a judgment, so the marker arrives the way a developer erase reaches a device: from a peer.
+    const marker: Mutation = { entity: HORARY_JUDGMENT_ENTITY, entityId: id, field: 'purged', value: true };
+    await store.receive(recordsOf([marker], 'b1b2c3d4e5f60718', T0 + 60_000));
     expect(store.state.erased.horaryJudgments.has(id)).toBe(true);
     expect(store.state.horaryJudgments.has(id)).toBe(false);
     expect(store.state.deleted.horaryJudgments.has(id)).toBe(false);
@@ -759,6 +772,37 @@ describe('the horary-judgment store round trip', () => {
     open = [];
     const reopened = await openFresh(name);
     expect(reopened.state.horaryJudgments.get(id)).toMatchObject(expected);
+  });
+
+  it('folds a peer judgment whose place label is over 200 characters as ready, with the label intact', async () => {
+    const id = newId('h');
+    const store = await openFresh(freshName());
+    const longLabel = 'Amsterdam, '.repeat(20) + 'Noord-Holland';
+    expect(Array.from(longLabel).length).toBeGreaterThan(200);
+    // The write guard refuses this label on this device; a peer can still send it, and reading must not throw.
+    const local: Mutation = {
+      entity: HORARY_JUDGMENT_ENTITY,
+      entityId: id,
+      field: 'record',
+      value: { ...recordJson(), placeLabel: longLabel },
+    };
+    expect(refusal(local)).toBe('invalid');
+    const peer = recordsOf(
+      [
+        { entity: HORARY_JUDGMENT_ENTITY, entityId: id, field: 'question', value: 'From a peer' },
+        {
+          entity: HORARY_JUDGMENT_ENTITY,
+          entityId: id,
+          field: 'record',
+          value: { ...recordJson(), placeLabel: longLabel },
+        },
+      ],
+      'b1b2c3d4e5f60718',
+    );
+    expect((await store.receive(peer)).rejected).toHaveLength(0);
+    const saved = store.state.horaryJudgments.get(id);
+    expect(saved).toMatchObject({ status: 'ready', id, question: 'From a peer' });
+    expect(saved?.status === 'ready' ? saved.record.placeLabel : undefined).toBe(longLabel);
   });
 
   it('syncs between two devices in either order and agrees on the list', async () => {
