@@ -63,10 +63,6 @@ const en = {
   primerChartList:
     'The planets (the Sun, the Moon and the planets of our solar system), their positions and movement; the zodiac (12 signs organised in a circle); and the houses (12 angular divisions of the sky, calculated from the time and place of birth).',
 
-  primerHistoryHeading: 'A brief history',
-  primerHistoryPara:
-    'Astrology is one of the oldest continuously practised traditions, with roots in Babylonian celestial omen-reading over three thousand years ago. The Hellenistic astrologers of Egypt and Greece (from roughly the 2nd century BCE) gave it the horoscope, the twelve houses, and much of the technical vocabulary still used today. It spread through the medieval Islamic world, which preserved and extended it, then into medieval and Renaissance Europe. The 20th century brought a split between a psychological, archetype-focused approach and the older, more predictive traditional methods — both of which this app draws on.',
-
   primerBodiesHeading: 'Planets',
   primerBodiesPara:
     'Astrology counts the Sun and Moon among its planets, though astronomically they are not planets. The personal planets (Mercury through Mars) move quickly. The social planets (Jupiter and Saturn) move more slowly. The outer planets (Uranus, Neptune, Pluto) move slowest.',
@@ -146,10 +142,6 @@ const nl: typeof en = {
   primerChart: 'De kaart heeft drie dimensies:',
   primerChartList:
     'De planeten (de Zon, de Maan en de planeten van ons zonnestelsel), hun positie en beweging; de dierenriem (12 tekens georganiseerd in een cirkel); en de huizen (12 hoekige afdelingen van de hemel, berekend uit het tijdstip en de plaats van geboorte).',
-
-  primerHistoryHeading: 'Een korte geschiedenis',
-  primerHistoryPara:
-    'Astrologie is een van de oudste doorlopend beoefende tradities, met wortels in Babylonische hemelse voortekens van ruim drieduizend jaar geleden. De hellenistische astrologen van Egypte en Griekenland (vanaf ongeveer de 2e eeuw v.Chr.) gaven haar de horoscoop, de twaalf huizen en een groot deel van de technische terminologie die nog steeds wordt gebruikt. Ze verspreidde zich via de middeleeuwse islamitische wereld, die haar bewaarde en uitbreidde, en vervolgens naar middeleeuws en renaissance-Europa. De 20e eeuw bracht een splitsing tussen een psychologische, op archetypes gerichte benadering en de oudere, meer voorspellende traditionele methoden — deze app put uit beide.',
 
   primerBodiesHeading: 'Planeten',
   primerBodiesPara:
