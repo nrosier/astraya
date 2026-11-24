@@ -10,7 +10,6 @@ Hand-rolled SVG rendering layer: chart wheels (single/bi-/tri-ring), aspect webs
 - `birth-map.ts` — Draws the PDF birth-place map as SVG (±20° around the birthplace) with an unlabelled pin on the birth coordinates (#711). Deps: `./svg-primitives`.
 - `aspect-web.ts` — Aspect chord rendering (cross-ring variant for bi-/tri-wheels, plus body-to-ASC/MC angle lines, #1508). Deps: `astrology/aspects`, `astrology/bodies`, `./wheel`.
 - `angle-labels.ts` — Text labels AC/DC/MC/IC for the four chart angles, the one source for wheel, tables and PDF. Deps: none.
-- `astrochart-adapter.ts` — Interop with `@astrodraw/astrochart` library (dev-only reference wheel). Deps: `astrology/bodies`, `domain/chart-compute`.
 - `body-id.ts` — Multi-ring body identifier codec (`key@ring`). Deps: none (pure string codec).
 - `calculation-profiles.ts` — Three built-in, versioned calculation profiles (Modern Western/Traditional Western/Sidereal (Lahiri)) as complete settings+rulership snapshots (#506/#510). Deps: `astrology/ayanamsas`, `astrology/rulership`, `./extended-settings`, `./object-policy`.
 - `chart-sheet.ts` — Whole printable/exportable chart sheet (header + wheel + panels), plus the wheel-only dial shown on screen. Deps: `./aspect-matrix`, `./degree-strip`, `./emphasis-grid`, `./multi-wheel`, `./sheet-geometry`.

@@ -1,8 +1,7 @@
 // @vitest-environment jsdom
 /**
- * A jsdom smoke test for `ExtendedSettingsPanel` (#52, #442), in the style of the
- * existing `chart-astrochart-wheel.test.tsx`: mount with `createRoot`,
- * interact with real DOM nodes, no React Testing Library. The provider here
+ * A jsdom smoke test for `ExtendedSettingsPanel` (#52, #442): mount with
+ * `createRoot`, interact with real DOM nodes, no React Testing Library. The provider here
  * is a hand-built fake rather than the real engine (unlike the
  * `chart-compute.ts` integration tests) — this test only exercises the
  * panel's own rendering and state, never an actual ephemeris value, so a

@@ -8,8 +8,7 @@
  * birth time makes the whole screen as meaningless as it makes `ChartView.tsx`'s houses tab
  * or `ProfectionsView.tsx` itself.
  *
- * The wheel bypasses `AstroChartWheel.tsx` (the third-party `@astrodraw/astrochart` wrapper,
- * single-chart only) entirely and calls `renderMultiWheelSvg` directly with two rings built
+ * The wheel calls `renderMultiWheelSvg` directly with two rings built
  * by `transitWheelInput` — natal innermost, transiting outer, matching how most astrology
  * software draws a transit wheel and matching `computeTransit`'s own contacts ordering
  * (moving/transiting first). The result is a complete standalone `<svg>` (default, non-`bare`
@@ -19,7 +18,7 @@
 /**
  * @module TransitView
  * @purpose Transit bi-wheel screen for one saved person against a chosen date: natal chart on the inner ring, transiting positions on the outer ring, with filtered cross-chart contacts and void-of-course Moon.
- * @conventions Calls renderMultiWheelSvg directly, bypassing the single-chart AstroChartWheel wrapper, same as SynastryView.tsx; uses TransitView.messages.ts for en/nl text via useMessages(). Carries its own PrintProvenance footer (#564) labelled with engine defaults, since computeTransit doesn't yet take a user-configurable calculation snapshot. A recalculation keeps the earlier result on screen (aria-busy) so playback never unmounts the wheel or table (#1440). The how-to text (date-bar keys, bi-wheel, live filter count and the Important rule, click-to-select) lives in one collapsed Disclosure under the date bar, from the owner's review text (#1400, #1440).
+ * @conventions Calls renderMultiWheelSvg directly, same as SynastryView.tsx; uses TransitView.messages.ts for en/nl text via useMessages(). Carries its own PrintProvenance footer (#564) labelled with engine defaults, since computeTransit doesn't yet take a user-configurable calculation snapshot. A recalculation keeps the earlier result on screen (aria-busy) so playback never unmounts the wheel or table (#1440). The how-to text (date-bar keys, bi-wheel, live filter count and the Important rule, click-to-select) lives in one collapsed Disclosure under the date bar, from the owner's review text (#1400, #1440).
  * @exports TransitView, contactColumns
  */
 

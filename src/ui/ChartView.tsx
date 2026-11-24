@@ -100,7 +100,6 @@ import {
 } from '../chart/extended-settings.js';
 import { resolveWheelDisplayOptions } from '../chart/wheel-options.js';
 import { interpretationExclusions } from '../chart/object-policy.js';
-import { AstroChartWheel } from './AstroChartWheel.js';
 import { bodyById } from '../astrology/bodies.js';
 import { SIGNS } from '../astrology/signs.js';
 import { aspectDisplayName, bodyDisplayName, bodyShortName, signDisplayName } from './astro-names.messages.js';
@@ -1372,19 +1371,6 @@ export function ChartDataView({
             />
           </div>
         </div>
-
-        {/* AstroChart is a reference rendering kept alongside Astraya's own wheel so the
-                  two can be compared during development (#231) — production users only ever
-                  see Astraya's, and it never participates in export (#67). */}
-        {!import.meta.env.PROD && (
-          <div className="chart-wheel-reference">
-            <p className="hint">{t.astrochartReferenceHeading}</p>
-            <div aria-hidden="true">
-              <AstroChartWheel data={data} signWedgeStyle={toSignWedgeStyle(extendedSettings)} />
-            </div>
-            <p className="hint">{t.astrochartReferenceHint}</p>
-          </div>
-        )}
       </>
     );
 
