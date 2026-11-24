@@ -794,8 +794,13 @@ describe('buildPdfPlan', () => {
       // is anchored to the natal ayanamsa, while the angles derived from it use the progressed-date ayanamsa.
       const mcAyanamsa = mcMethod === 'quotidian' ? atProgressed : atNatal;
       expect(gap(sid.houses.midheaven, tropical.houses.midheaven - mcAyanamsa)).toBeLessThan(1);
-      expect(gap(sid.houses.ascendant, tropical.houses.ascendant - atProgressed)).toBeLessThan(
-        mcMethod === 'quotidian' ? 1 : 10,
+      // The Naibod Ascendant follows the same natal anchor: the progressed-date ayanamsa less the natal one is 5.26 arcsec,
+      // and Placidus is not rigid under a change of zodiac, so that offset appears as about 4 arcsec at the Ascendant
+      // (measured 4.07 arcsec against the progressed-date ayanamsa, -1.20 arcsec against the natal one). So the Naibod
+      // Ascendant is checked against tropical minus the natal ayanamsa, to under 2 arcsec. A mixed zodiac is over 86,000.
+      const ascAyanamsa = mcMethod === 'quotidian' ? atProgressed : atNatal;
+      expect(gap(sid.houses.ascendant, tropical.houses.ascendant - ascAyanamsa)).toBeLessThan(
+        mcMethod === 'quotidian' ? 1 : 2,
       );
       expect(gap(sid.houses.ascendant, tropical.houses.ascendant)).toBeGreaterThan(20 * 3600);
     }
