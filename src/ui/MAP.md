@@ -208,7 +208,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `forward-geocode.ts` — Place-name → coordinates resolution (MapTiler/Nominatim). Deps: `./geocode-provider`.
 - `geocode-provider.ts` — Geocoding backend selection (self-hosted/MapTiler/Nominatim). Deps: build-time env vars.
 - `glyph-variant-setting.ts` — Device preference for Uranus/Pluto glyph variants. Deps: `chart/glyph-variants`, `chart/glyph-weight`.
-- `horary.ts` — Horary screen (form parsing + house-system defaults). Deps: `time/types`, `./place-fields`.
+- `horary.ts` — Horary screen (form parsing; re-exports the house-system list from `domain/horary`). Deps: `time/types`, `./place-fields`, `domain/horary`.
 - `last-person.ts` — Remembers most-recently viewed person across app. Deps: localStorage only.
 - `palette-recents.ts` — Command palette recents (last 8) and pins in localStorage (#1654). Deps: localStorage only.
 - `last-chart.ts` — Remembers each person's last-opened chart screen (#1173), so Overview can offer "continue where you left off". Deps: none.

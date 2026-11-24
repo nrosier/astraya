@@ -75,5 +75,5 @@ export function nowFields(now: Date = new Date()): Pick<HoraryFields, 'date' | '
   };
 }
 
-/** The house systems offered, by Swiss Ephemeris code. The first is the horary tradition's. */
-export const HORARY_HOUSE_SYSTEMS: readonly string[] = ['R', 'P', 'W'];
+/** The house systems offered, by Swiss Ephemeris code. Defined in `domain/horary` (#1960); re-exported for the screen. */
+export { HORARY_HOUSE_SYSTEMS } from '../domain/horary.js';

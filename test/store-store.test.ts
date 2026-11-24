@@ -173,6 +173,23 @@ describe('writing', () => {
     });
   });
 
+  it('leaves state and log untouched when a saved horary judgment batch is refused (#1960)', async () => {
+    // The guard runs over the whole batch before anything is appended, so a refused second write must not leave the
+    // first behind in the log or the state.
+    await withStore(async (store) => {
+      const id = 'h-abcdefghijklmnop';
+      const batch = [
+        { entity: 'horaryJudgment', entityId: id, field: 'question', value: 'Will the ship return?' },
+        { entity: 'horaryJudgment', entityId: id, field: 'record', value: { version: 2 } },
+      ];
+      await expect(store.mutate(batch)).rejects.toThrow();
+      expect(store.state.horaryJudgments.size).toBe(0);
+      expect(store.outgoing().length).toBe(0);
+      await store.mutate([named(PERSON, 'Ada')]);
+      expect(store.outgoing().length).toBe(1);
+    });
+  });
+
   it('keeps serving later mutations after one fails', async () => {
     // A failed mutation must not poison the queue for every mutation after it: the tail is
     // chained with its rejection swallowed, while the caller still sees the failure. The
