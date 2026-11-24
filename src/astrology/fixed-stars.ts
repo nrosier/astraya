@@ -32,7 +32,7 @@
  * @module FixedStars
  * @purpose Computes fixed-star ecliptic conjunctions and mundane parans (angle-crossing contacts) between points.
  * @conventions Conjunctions are ordinary ecliptic-longitude proximity; parans derive each angle-crossing ARMC from the horizon equation sin(alt) = sin(lat)sin(dec) + cos(lat)cos(dec)cos(H) at alt=0, giving the semi-diurnal arc H0 = arccos(-tan(lat)tan(dec)); rising/setting are undefined for circumpolar/never-rising points.
- * @exports fixedStarConjunctions, armcAtAngle, parans
+ * @exports fixedStarConjunctions, armcAtAngle, parans, ANGLE_EVENTS
  */
 import type { BodyId, Degrees } from '../ephemeris/types.js';
 import { angularSeparation } from './aspects.js';
@@ -95,7 +95,8 @@ export interface Paran {
   readonly orb: Degrees;
 }
 
-const ANGLE_EVENTS: readonly AngleEvent[] = ['rising', 'culminating', 'setting', 'anticulminating'];
+/** The four angle events, in the order a paran lists them: rising, culminating, setting, anticulminating. */
+export const ANGLE_EVENTS: readonly AngleEvent[] = ['rising', 'culminating', 'setting', 'anticulminating'];
 
 /**
  * Every pair of angle events at which `a` and `b` paran within `orb` (degrees

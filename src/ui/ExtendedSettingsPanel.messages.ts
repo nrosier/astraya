@@ -170,6 +170,22 @@ const en = {
   midpointTreeOrbLabel: 'Midpoint tree orb',
   midpointTreeOrbDecreaseLabel: 'Decrease midpoint tree orb',
   midpointTreeOrbIncreaseLabel: 'Increase midpoint tree orb',
+  paransLegend: 'Fixed-star parans',
+  paransLabel: 'Fixed-star parans',
+  paransHint:
+    'Adds a table under the fixed-star conjunctions of every chosen star that rises, culminates, sets or anti-culminates at the same sidereal time as a planet, at the latitude the chart is cast for (Solar Fire §21.1.2). It calculates one more position per star, so it is off by default.',
+  paranOrbLabel: 'Paran orb',
+  paranOrbDecreaseLabel: 'Decrease paran orb',
+  paranOrbIncreaseLabel: 'Increase paran orb',
+  paranOrbHint:
+    'In degrees of sidereal time (1° is 4 minutes of time). Solar Fire allows 0° to 10° and gives no default; 1° is Astraya’s choice.',
+  paranEventsLegend: 'Angles a paran may use',
+  paranEvents: {
+    rising: 'Rising',
+    culminating: 'Culminating',
+    setting: 'Setting',
+    anticulminating: 'Anti-culminating',
+  },
 
   motionLegend: 'Station window and motion score',
   motionHint:
@@ -483,6 +499,22 @@ const nl: typeof en = {
   midpointTreeOrbLabel: 'Orb voor de middelpuntenboom',
   midpointTreeOrbDecreaseLabel: 'Orb voor de middelpuntenboom verkleinen',
   midpointTreeOrbIncreaseLabel: 'Orb voor de middelpuntenboom vergroten',
+  paransLegend: 'Parans met vaste sterren',
+  paransLabel: 'Parans met vaste sterren',
+  paransHint:
+    'Voegt onder de conjuncties met vaste sterren een tabel toe van elke gekozen ster die op dezelfde sterrentijd als een planeet opkomt, culmineert, ondergaat of anticulmineert, op de breedtegraad waarvoor de horoscoop is berekend (Solar Fire §21.1.2). Er wordt één extra positie per ster berekend, dus het staat standaard uit.',
+  paranOrbLabel: 'Paranorb',
+  paranOrbDecreaseLabel: 'Paranorb verkleinen',
+  paranOrbIncreaseLabel: 'Paranorb vergroten',
+  paranOrbHint:
+    'In graden sterrentijd (1° is 4 minuten tijd). Solar Fire staat 0° tot 10° toe en geeft geen standaardwaarde; 1° is de keuze van Astraya.',
+  paranEventsLegend: 'Hoeken die een paran mag gebruiken',
+  paranEvents: {
+    rising: 'Opkomend',
+    culminating: 'Culminerend',
+    setting: 'Ondergaand',
+    anticulminating: 'Anti-culminerend',
+  },
 
   motionLegend: 'Stationsvenster en bewegingsscore',
   motionHint:

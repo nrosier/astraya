@@ -2,17 +2,19 @@
  * @module ChartViewPlacements
  * @purpose Renders the Placements chart view (positions, houses and angles, derived points, fixed stars) and the tables' columns.
  * @conventions Pure move out of ChartView.tsx (#817), and the fixed-stars table moved here from the Aspects view (#815): same markup and strings, no behaviour change; takes the chart data and message bundle as arguments and never imports ChartView or ChartViewAspects.
- * @exports degreeColumns, symbolCell, positionColumns, houseCuspColumns, angleColumns, derivedPointColumns, hermeticLotColumns, fixedStarsScopeNoteOf, checkedStarsOf, hasStarSources, fixedStarColumns, renderPositionsTable, renderHousesTable, renderDerivedTable, renderHermeticLotsTable, renderFixedStarsTable, renderPlacementsView
+ * @exports degreeColumns, symbolCell, positionColumns, houseCuspColumns, angleColumns, derivedPointColumns, hermeticLotColumns, fixedStarsScopeNoteOf, checkedStarsOf, hasStarSources, fixedStarColumns, renderPositionsTable, renderHousesTable, renderDerivedTable, renderHermeticLotsTable, renderFixedStarsTable, fixedStarParanColumns, renderFixedStarParansTable, renderPlacementsView
  */
 import { formatFixed, formatOrb } from './format.js';
 import {
   angleRows,
   derivedPointRows,
+  fixedStarParanRows,
   fixedStarRows,
   houseCuspRows,
   positionRows,
   type AngleRow,
   type DerivedPointRow,
+  type FixedStarParanRow,
   type FixedStarRow,
   type HouseCuspRow,
   type PointVisibilityOptions,
@@ -531,6 +533,62 @@ export function renderFixedStarsTable(
   );
 }
 
+export function fixedStarParanColumns(
+  t: typeof chartViewMessages.en,
+  locale: Locale,
+): readonly TableColumn<FixedStarParanRow>[] {
+  return [
+    { key: 'star', label: t.starLabel, labelHelp: { text: t.starTooltip }, valueOf: (row) => row.star },
+    {
+      key: 'starEvent',
+      label: t.paranStarEventLabel,
+      valueOf: (row) => row.starEvent,
+      render: (row) => t.paranEvents[row.starEvent],
+    },
+    {
+      key: 'bodyName',
+      label: t.bodyLabel,
+      valueOf: (row) => row.bodyName,
+      render: (row) => bodyDisplayName(row.bodyKey, locale),
+    },
+    {
+      key: 'bodyEvent',
+      label: t.paranBodyEventLabel,
+      valueOf: (row) => row.bodyEvent,
+      render: (row) => t.paranEvents[row.bodyEvent],
+    },
+    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => formatOrb(row.orb) },
+  ];
+}
+
+/**
+ * The fixed-star paran table (#1407), under the fixed-star conjunctions in the Placements view. Nothing when the table is
+ * off or the chart holds no paran coordinates; a note, not an empty table, when it is on and no paran is in orb.
+ */
+export function renderFixedStarParansTable(
+  data: ChartData,
+  displayName: string,
+  pointVisibility: PointVisibilityOptions,
+  t: typeof chartViewMessages.en,
+  locale: Locale,
+): React.ReactNode {
+  if (pointVisibility.fixedStarParans === undefined || data.paranPoints === undefined) return null;
+  const rows = fixedStarParanRows(data, pointVisibility);
+  if (rows.length === 0) return <p className="hint">{t.fixedStarParansNone}</p>;
+  return (
+    <>
+      <SortableTable
+        caption={t.fixedStarParansCaption}
+        columns={fixedStarParanColumns(t, locale)}
+        rows={rows}
+        getRowKey={(row) => `${row.star}-${row.starEvent}-${row.bodyKey}-${row.bodyEvent}`}
+        downloadFilename={deriveExportFilename(displayName, 'fixed-star-parans', 'csv')}
+      />
+      <p className="hint">{t.fixedStarParansNote}</p>
+    </>
+  );
+}
+
 /**
  * The Placements view (#511): Positions, Houses & angles, and Derived points, stacked with visible
  * headings rather than as separate tabs — `docs/ui/UI-UX_GUIDELINES.md` §2's exact wording. Houses and
@@ -559,6 +617,7 @@ export function renderPlacementsView(
         </>
       )}
       {renderFixedStarsTable(data, displayName, pointVisibility, t, locale)}
+      {renderFixedStarParansTable(data, displayName, pointVisibility, t, locale)}
     </>
   );
 }

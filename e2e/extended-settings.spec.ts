@@ -586,6 +586,59 @@ test.describe('with the shared people (#799)', () => {
     await expectSavedAfterClose(0);
   });
 
+  test('the fixed-star paran table is off by default, and its settings choose the orb and the angles (#1407)', async () => {
+    test.setTimeout(150_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page, 'Placements');
+    // The Placements tables have drawn before "no paran table" means anything.
+    await expect(page.locator('main table').first()).toBeVisible();
+    const parans = page.getByRole('table', { name: 'Fixed-star parans' });
+    await expect(parans).toHaveCount(0);
+
+    // Off by default: the trigger counts no change, and switching it on is one setting among the Advanced ones.
+    const card = page.locator('dialog.settings-card');
+    const openParanSettings = async (): Promise<void> => {
+      await openSettings(page, 'Special points');
+      const advanced = card.getByRole('button', { name: /^Advanced/ });
+      if ((await advanced.getAttribute('aria-expanded')) !== 'true') await advanced.click();
+    };
+    await openParanSettings();
+    const switchOn = card.getByRole('checkbox', { name: 'Fixed-star parans', exact: true });
+    await expect(switchOn).not.toBeChecked();
+    await expect(card.getByLabel('Paran orb', { exact: true })).toHaveCount(0);
+    await switchOn.check();
+    // Switched on: the 1 degree orb of the owner's choice, and all four angles.
+    await expect(card.getByLabel('Paran orb', { exact: true })).toHaveValue('1');
+    for (const angle of ['Rising', 'Culminating', 'Setting', 'Anti-culminating']) {
+      await expect(card.getByRole('checkbox', { name: angle, exact: true })).toBeChecked();
+    }
+    await card.getByLabel('Paran orb', { exact: true }).fill('10');
+    await card.getByRole('button', { name: 'Apply and redraw', exact: true }).click();
+    await expect(card).toBeHidden();
+
+    // The table sits under the fixed-star conjunctions, with the angle each of the two is on.
+    await expect(parans).toBeVisible();
+    await expect(parans.getByRole('columnheader', { name: /Star on/ })).toBeVisible();
+    await expect(parans.getByRole('columnheader', { name: /Body on/ })).toBeVisible();
+    await expect(parans.getByRole('cell', { name: 'Culminating', exact: true }).first()).toBeVisible();
+
+    // Unticking Culminating removes every paran that uses it, on either side, and keeps the rest.
+    await openParanSettings();
+    await card.getByRole('checkbox', { name: 'Culminating', exact: true }).uncheck();
+    await card.getByRole('button', { name: 'Apply and redraw', exact: true }).click();
+    await expect(card).toBeHidden();
+    await expect(parans).toBeVisible();
+    await expect(parans.getByRole('cell', { name: 'Culminating', exact: true })).toHaveCount(0);
+    await expect(parans.locator('tbody tr').first()).toBeVisible();
+
+    // Back to the 1 degree default and one angle: few or none, and a note rather than an empty table when none.
+    await openParanSettings();
+    await card.getByRole('checkbox', { name: 'Fixed-star parans', exact: true }).uncheck();
+    await card.getByRole('button', { name: 'Apply and redraw', exact: true }).click();
+    await expect(card).toBeHidden();
+    await expect(parans).toHaveCount(0);
+  });
+
   test('an Advanced group starts closed on Profile and Special, none on Orbs or Display, and the open state is remembered (#856)', async () => {
     test.setTimeout(90_000);
     await openSharedPerson(page, baseUrl, EINSTEIN);
