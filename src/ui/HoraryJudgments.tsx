@@ -6,7 +6,7 @@
  * @module HoraryJudgments
  * @purpose Renders the Saved judgments card of the Horary screen: the saved judgments (question and saved date), a read-only reopen view of the stored question, moment, place, house system and summary, and a confirmed delete.
  * @conventions Thin: folding, sorting and refusals live in `store/horary-judgments`; a delete goes through `Store.remove` behind a `StagedDialog` that names the judgment and the consequence; there is deliberately no permanent-erase control (owner decision D2, #1960); an unreadable judgment is listed as could-not-be-read with no detail and can only be deleted; the reopen view reads only the stored record and never calls the ephemeris or the judgment code. Text comes from `HoraryView.messages.ts`.
- * @exports HoraryJudgments
+ * @exports HoraryJudgments, PractitionerNotes
  */
 import { useRef, useState } from 'react';
 import { decodeHlc, isHlc } from '../store/hlc.js';
@@ -16,6 +16,7 @@ import {
   type HoraryJudgmentRecord,
   type SavedHoraryJudgment,
 } from '../store/horary-judgments.js';
+import type { HoraryPractitionerInput } from '../domain/horary-judgment.js';
 import type { Store } from '../store/store.js';
 import { formatOffset } from '../time/resolve.js';
 import { formatCivilDate, formatCoordinate, formatFixed, formatTimestamp } from './format.js';
@@ -44,6 +45,30 @@ export function HoraryJudgments(): React.JSX.Element {
         <Panel store={store} />
       )}
     </section>
+  );
+}
+
+/**
+ * The practitioner notes (#1960), the text taken from the messages by key so each reads in the current language. The
+ * list is given, never computed here: the live result passes the fresh list and a reopened judgment its stored one.
+ * An empty list renders nothing.
+ */
+export function PractitionerNotes({
+  notes,
+}: {
+  readonly notes: readonly HoraryPractitionerInput[];
+}): React.JSX.Element | null {
+  const t = useMessages(horaryViewMessages);
+  if (notes.length === 0) return null;
+  return (
+    <div className="horary-practitioner">
+      <p className="hint">{t.practitionerHeading}</p>
+      <ul className="horary-saved-considerations">
+        {notes.map((note) => (
+          <li key={note.key}>{t.practitioner[note.key]}</li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -229,6 +254,12 @@ function SavedRecord({
         )}
         <p>{t.reception[summary.reception.kind]}</p>
         {summary.receptionAidsPerfection && <p className="hint">{t.receptionAidsPerfection}</p>}
+        {/* The stored list, never recomputed. A version 1 record has none and says so; version 2 empty shows nothing. */}
+        {record.practitionerInput === undefined ? (
+          <p className="hint">{t.savedBeforePractitioner}</p>
+        ) : (
+          <PractitionerNotes notes={record.practitionerInput} />
+        )}
       </dd>
       <dt>{t.openedConsiderations}</dt>
       <dd>

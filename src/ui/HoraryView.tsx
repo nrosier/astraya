@@ -27,7 +27,7 @@ import {
   HoraryJudgmentRefusedError,
   horaryJudgmentCreate,
 } from '../store/horary-judgments.js';
-import { HoraryJudgments } from './HoraryJudgments.js';
+import { HoraryJudgments, PractitionerNotes } from './HoraryJudgments.js';
 import { useOptionalStore } from './store-context.js';
 import { isRadical } from '../astrology/horary.js';
 import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
@@ -57,7 +57,7 @@ import { voidOfCourseSentence } from './void-of-course-text.js';
 import type { BirthMomentInput } from '../time/types.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { formatFixed } from './format.js';
-import { judgeHoraryWithMotion, type HoraryJudgment } from '../domain/horary-judgment.js';
+import { judgeHoraryWithMotion, practitionerInputFor, type HoraryJudgment } from '../domain/horary-judgment.js';
 import { replaceRoute } from './nav-history.js';
 import { PageHeader } from './PageHeader.js';
 import { useCalculationBasisLine } from './calculation-basis.js';
@@ -364,6 +364,8 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
                     {t.saveJudgment}
                   </Button>
                 </div>
+                {/* The notes the save would store (#1960), one entry per key, so the non-radical note shows once. */}
+                <PractitionerNotes notes={practitionerInputFor(judgment, saturnHouseOf(ready.chart.data))} />
                 {!isHoraryQuestionSavable(question) && <p className="hint">{t.saveNeedsQuestion}</p>}
                 {saveError !== undefined && <StatusMessage kind="error">{saveError}</StatusMessage>}
                 {saveError === undefined && saveMessage !== undefined && (
