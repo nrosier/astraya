@@ -39,6 +39,7 @@ export const CHART_TYPES = [
   'lunar-return',
   'lunar-phase-return',
   'rise-set',
+  'trutine',
   'relocated',
 ] as const;
 export type ChartType = (typeof CHART_TYPES)[number];

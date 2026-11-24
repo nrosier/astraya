@@ -67,6 +67,7 @@ const RelocatedChartView = lazy(async () => ({ default: (await personScreens()).
 const ReturnView = lazy(async () => ({ default: (await personScreens()).ReturnView }));
 const LunarPhaseReturnView = lazy(async () => ({ default: (await personScreens()).LunarPhaseReturnView }));
 const RiseSetView = lazy(async () => ({ default: (await personScreens()).RiseSetView }));
+const TrutineView = lazy(async () => ({ default: (await personScreens()).TrutineView }));
 const ReportScreen = lazy(async () => ({ default: (await personScreens()).ReportScreen }));
 const SolarArcView = lazy(async () => ({ default: (await personScreens()).SolarArcView }));
 const PrimaryDirectionsView = lazy(async () => ({ default: (await personScreens()).PrimaryDirectionsView }));
@@ -592,6 +593,8 @@ function renderChart(parsed: Extract<Route, { kind: 'chart' }>): React.JSX.Eleme
       return <LunarPhaseReturnView key={personId} personId={personId} view={view} />;
     case 'rise-set':
       return <RiseSetView key={personId} personId={personId} view={view} />;
+    case 'trutine':
+      return <TrutineView key={personId} personId={personId} view={view} />;
     case 'relocated':
       return <RelocatedChartView key={personId} personId={personId} view={view} />;
     case 'natal':

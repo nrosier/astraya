@@ -131,6 +131,7 @@ describe('the derived-chart interpretation note (#725)', () => {
       'lunar-return',
       'lunar-phase-return',
       'rise-set',
+      'trutine',
       'relocated',
     ]);
   });

@@ -63,6 +63,7 @@ import { computeHarmonic } from '../domain/harmonic.js';
 import { computeSolarReturnChart, computeLunarReturnChart } from '../domain/return-chart.js';
 import { computeLunarPhaseReturnChart } from '../domain/lunar-phase-return.js';
 import { computeRiseSetChart } from '../domain/rise-set-chart.js';
+import { computeTrutineConception } from '../domain/trutine.js';
 import {
   allMidpointsRows,
   almutenOfAscendant,
@@ -694,6 +695,7 @@ export function sectionCalculationOptions(
     case 'lunar-return':
     case 'lunar-phase-return':
     case 'rise-set':
+    case 'trutine':
       return { ...toChartCalculationOptions(settings), rulership };
     case 'draconic':
     case 'harmonic':
@@ -717,6 +719,7 @@ function derivedFormulaOfSection(type: PdfChartSectionOptions['type'], settings:
     case 'lunar-return':
     case 'lunar-phase-return':
     case 'rise-set':
+    case 'trutine':
       return settings.fortuneFormula ?? DEFAULT_FORTUNE_FORMULA;
     case 'draconic':
     case 'harmonic':
@@ -790,6 +793,10 @@ async function computeSectionChartData(
       if (result.chart === undefined) throw new Error('the Sun does not rise at the birthplace on that date');
       return result.chart;
     }
+    case 'trutine':
+      // Not selectable from PdfExportBuilder's own UI either (PDF_CHART_TYPES omits it, #1407); here so the switch stays
+      // exhaustive over the full ChartType union. Throws for a Gregorian birth, as the domain does.
+      return (await computeTrutineConception(person.moment, provider, calcOptions)).chart;
     case 'relocated': {
       // Not currently selectable from PdfExportBuilder's own UI (PDF_CHART_TYPES omits it) — this
       // case exists only so the switch stays exhaustive over the full ChartType union (#559).

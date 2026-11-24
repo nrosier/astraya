@@ -22,6 +22,7 @@ const en = {
     'lunar-return': 'Lunar return',
     'lunar-phase-return': 'Lunar phase return',
     'rise-set': 'Rise/set',
+    trutine: 'Trutine of Hermes',
     relocated: 'Relocated',
   } satisfies Record<ChartType, string>,
 };
@@ -38,6 +39,7 @@ const nl: typeof en = {
     'lunar-return': 'Maanterugkeer',
     'lunar-phase-return': 'Maanfaseterugkeer',
     'rise-set': 'Op- en ondergang',
+    trutine: 'Trutina Hermetis',
     relocated: 'Verplaatst',
   } satisfies Record<ChartType, string>,
 };

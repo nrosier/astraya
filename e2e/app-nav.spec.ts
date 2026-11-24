@@ -483,6 +483,7 @@ test.describe('with the shared people (#799)', () => {
       'Lunar return',
       'Lunar phase return',
       'Rise/set',
+      'Trutine of Hermes',
       'Relocated',
     ]);
     await page.keyboard.press('Escape');

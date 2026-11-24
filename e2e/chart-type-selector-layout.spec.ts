@@ -63,6 +63,7 @@ const CHART_TYPE_LABELS = [
   'Lunar return',
   'Lunar phase return',
   'Rise/set',
+  'Trutine of Hermes',
   'Relocated',
 ] as const;
 
