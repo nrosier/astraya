@@ -14,7 +14,7 @@
 /**
  * @module SolarArcDirections
  * @purpose Carries every natal body and angle forward by the secondary-progressed Sun's true solar arc, and finds exact contacts to the (unmoving) natal chart.
- * @conventions Reuses mcArc('solarArc', ...) from progressions.ts for the shared arc formula, but unlike secondary progression's own solarArc MC method, applies the arc to every body, not just the angles; exactness is found by bisection against the real ephemeris, since the true Sun's daily motion is not perfectly linear. Both Suns are read in the requested zodiac.
+ * @conventions Reuses mcArc('solarArc', ...) from progressions.ts for the shared arc formula, but unlike secondary progression's own solarArc MC method, applies the arc to every body, not just the angles; exactness is found by bisection against the real ephemeris, since the true Sun's daily motion is not perfectly linear. Both Suns are read in the requested zodiac. Tyl, *Solar Arcs* (2001): the arc is each individual's own progressed Sun motion, not Naibod's mean (PDF 24-26), added to every planet and point, the nodal axis and the angles (PDF 29). Tyl uses only the hard aspects (conjunction, square, opposition, semisquare, sesquiquadrate; PDF 35); Astraya finds every aspect in the orb settings, a recorded difference kept by the owner (#1604, 2026-11-24).
  * @exports directPositions, directedSubjects, fixedNatalSubjects, arcsToExactness, findExactnessJd
  */
 import { type AspectSubject } from './aspects.js';
