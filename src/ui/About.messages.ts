@@ -61,7 +61,7 @@ const en = {
     'Astrology is the practice of understanding human experience through the apparent positions of the Sun, Moon and planets in the sky at a given moment and place. A natal chart is a snapshot of that sky at the moment of birth.',
   primerChart: 'The chart has three dimensions:',
   primerChartList:
-    'The planets (the Sun, the Moon and the planets of our solar system), their positions and movement; the zodiac (12 signs organised in a circle); and the houses (12 angular divisions of the sky, calculated from the time and place of birth).',
+    'The planets (the Sun, the Moon and the planets of our solar system), their positions and movement; the zodiac (12 signs organised in a circle); and the houses (divisions of the sky into life areas, usually 12, calculated from the time and place of birth).',
 
   primerBodiesHeading: 'Planets',
   primerBodiesPara:
@@ -69,7 +69,7 @@ const en = {
 
   primerSignsHeading: 'The zodiac and signs',
   primerSignsPara:
-    'The 12 signs represent archetypal energies and qualities. The sign of a planet describes how that planet expresses itself. Your Sun sign is determined by your birth date (roughly March 21 to April 19 is Aries); your Moon sign and rising sign (the "first house") depend on your exact birth time and place.',
+    'The 12 signs represent archetypal energies and qualities. The sign of a planet describes how that planet expresses itself. Your Sun sign is determined by your birth date (in the tropical zodiac, roughly March 21 to April 19 is Aries); your Moon sign can depend on your birth time, and your rising sign (the sign on the Ascendant, the eastern horizon) depends on your exact birth time and place.',
 
   primerHousesHeading: 'Houses',
   primerHousesPara:
@@ -81,7 +81,7 @@ const en = {
 
   primerDignityHeading: 'Dignity and rulership',
   primerDignityPara:
-    'Each sign has a natural ruler, the planet most at home there. The app includes both traditional (classical) rulers and modern ones (Uranus, Neptune, Pluto).',
+    'Each sign has a ruler, the planet most at home there. The app supports two schemes: traditional (classical) rulers, and modern rulers, which give Scorpio, Aquarius and Pisces to Pluto, Uranus and Neptune.',
 
   primerResources:
     'For more, read conventional astrology introductions or explore the interpretations throughout this app.',
@@ -141,7 +141,7 @@ const nl: typeof en = {
     'Astrologie is de praktijk om menselijke ervaring te begrijpen door de schijnbare posities van de Zon, Maan en planeten aan de hemel op een gegeven moment en plaats. Een geboortechart is een momentopname van die hemel op het moment van geboorte.',
   primerChart: 'De kaart heeft drie dimensies:',
   primerChartList:
-    'De planeten (de Zon, de Maan en de planeten van ons zonnestelsel), hun positie en beweging; de dierenriem (12 tekens georganiseerd in een cirkel); en de huizen (12 hoekige afdelingen van de hemel, berekend uit het tijdstip en de plaats van geboorte).',
+    'De planeten (de Zon, de Maan en de planeten van ons zonnestelsel), hun positie en beweging; de dierenriem (12 tekens georganiseerd in een cirkel); en de huizen (indelingen van de hemel in levensgebieden, meestal 12, berekend uit het tijdstip en de plaats van geboorte).',
 
   primerBodiesHeading: 'Planeten',
   primerBodiesPara:
@@ -149,7 +149,7 @@ const nl: typeof en = {
 
   primerSignsHeading: 'De dierenriem en tekens',
   primerSignsPara:
-    'De 12 tekens vertegenwoordigen archetypische energieën en kwaliteiten. Het teken van een planeet beschrijft hoe die planeet zich uit. Je Zonneteken wordt bepaald door je geboortedatum (ruwweg 21 maart tot 19 april is Ram); je Maanteken en rijzend teken (het "eerste huis") hangen af van je exacte geboortemoment en -plaats.',
+    'De 12 tekens vertegenwoordigen archetypische energieën en kwaliteiten. Het teken van een planeet beschrijft hoe die planeet zich uit. Je Zonneteken wordt bepaald door je geboortedatum (in de tropische dierenriem, ruwweg 21 maart tot 19 april is Ram); je Maanteken kan afhangen van je geboortemoment, en je rijzend teken (het teken op de Ascendant, de oostelijke horizon) hangt af van je exacte geboortemoment en -plaats.',
 
   primerHousesHeading: 'Huizen',
   primerHousesPara:
@@ -161,7 +161,7 @@ const nl: typeof en = {
 
   primerDignityHeading: 'Waardigheid en heerschappij',
   primerDignityPara:
-    'Elk teken heeft een natuurlijke heerser, de planeet die daar het meest thuis is. De app bevat zowel traditionele (klassieke) heersers als moderne (Uranus, Neptunus, Pluto).',
+    'Elk teken heeft een heerser, de planeet die daar het meest thuis is. De app ondersteunt twee stelsels: traditionele (klassieke) heersers, en moderne heersers, die Schorpioen, Waterman en Vissen toekennen aan Pluto, Uranus en Neptunus.',
 
   primerResources:
     'Voor meer informatie kun je conventionele astrologie-introducties lezen of de interpretaties in deze app verkennen.',
