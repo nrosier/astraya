@@ -320,8 +320,19 @@ export class WorkerEphemerisProvider implements EphemerisProvider {
     return this.#call('houses', [jd, place, system, zodiac]);
   }
 
-  housesFromArmc(armc: Degrees, latitude: Degrees, obliquity: Degrees, system: HouseSystem): Promise<HousePositions> {
-    return this.#call('housesFromArmc', [armc, latitude, obliquity, system]);
+  housesFromArmc(
+    armc: Degrees,
+    latitude: Degrees,
+    obliquity: Degrees,
+    system: HouseSystem,
+    sunDeclination?: Degrees,
+  ): Promise<HousePositions> {
+    return this.#call(
+      'housesFromArmc',
+      sunDeclination === undefined
+        ? [armc, latitude, obliquity, system]
+        : [armc, latitude, obliquity, system, sunDeclination],
+    );
   }
 
   houseSystemName(system: HouseSystem): Promise<string> {
