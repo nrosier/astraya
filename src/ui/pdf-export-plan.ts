@@ -62,6 +62,7 @@ import { computeRelocatedChart } from '../domain/relocated-chart.js';
 import { computeHarmonic } from '../domain/harmonic.js';
 import { computeSolarReturnChart, computeLunarReturnChart } from '../domain/return-chart.js';
 import { computeLunarPhaseReturnChart } from '../domain/lunar-phase-return.js';
+import { computeRiseSetChart } from '../domain/rise-set-chart.js';
 import {
   allMidpointsRows,
   almutenOfAscendant,
@@ -692,6 +693,7 @@ export function sectionCalculationOptions(
     case 'solar-return':
     case 'lunar-return':
     case 'lunar-phase-return':
+    case 'rise-set':
       return { ...toChartCalculationOptions(settings), rulership };
     case 'draconic':
     case 'harmonic':
@@ -714,6 +716,7 @@ function derivedFormulaOfSection(type: PdfChartSectionOptions['type'], settings:
     case 'solar-return':
     case 'lunar-return':
     case 'lunar-phase-return':
+    case 'rise-set':
       return settings.fortuneFormula ?? DEFAULT_FORTUNE_FORMULA;
     case 'draconic':
     case 'harmonic':
@@ -770,6 +773,21 @@ async function computeSectionChartData(
         ...calcOptions,
         ...(place === undefined ? {} : { place }),
       });
+      return result.chart;
+    }
+    case 'rise-set': {
+      // Not selectable from PdfExportBuilder's own UI either (PDF_CHART_TYPES omits it, #1407); here so the switch stays
+      // exhaustive over the full ChartType union. It is the next Sun rise (True horizon) after the date, at the birthplace.
+      const fromDate = options.returnFromDate ?? utcDay();
+      const [y, m, d] = fromDate.split('-').map(Number);
+      const searchJd = await provider.julianDay(y ?? 2000, m ?? 1, d ?? 1, 0);
+      const sun = bodyByKey('sun');
+      if (sun === undefined) throw new Error('the Sun is not a known body');
+      const result = await computeRiseSetChart(person.moment, sun.id, 'rise', 'true', provider, {
+        ...calcOptions,
+        searchJd,
+      });
+      if (result.chart === undefined) throw new Error('the Sun does not rise at the birthplace on that date');
       return result.chart;
     }
     case 'relocated': {

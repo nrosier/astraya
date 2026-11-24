@@ -62,6 +62,7 @@ const CHART_TYPE_LABELS = [
   'Solar return',
   'Lunar return',
   'Lunar phase return',
+  'Rise/set',
   'Relocated',
 ] as const;
 

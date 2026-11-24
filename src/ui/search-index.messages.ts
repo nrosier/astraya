@@ -100,6 +100,7 @@ const en = {
     'solar-return': ['solar return', 'sr', 'revolution', 'birthday chart', 'annual return', 'solar revolution'],
     'lunar-return': ['lunar return', 'lr', 'monthly return', 'moon return'],
     'lunar-phase-return': ['lunar phase return', 'phase return', 'lunation return'],
+    'rise-set': ['rise', 'set', 'rising', 'setting', 'culmination'],
     relocated: ['relocated', 'relocation', 'location chart', 'moved chart'],
   } satisfies Record<ChartType, readonly string[]>,
   chartTypeDescriptions: {
@@ -110,6 +111,7 @@ const en = {
     'solar-return': 'The chart for the moment the Sun returns to its natal place.',
     'lunar-return': 'The chart for the moment the Moon returns to its natal place.',
     'lunar-phase-return': 'The chart for the moment the Sun-Moon phase angle returns to its natal value.',
+    'rise-set': 'The chart for the moment a body rises, sets or culminates.',
     relocated: 'The natal chart cast for another place.',
   } satisfies Record<ChartType, string>,
   chartViewKeywords: {
@@ -244,6 +246,7 @@ const nl: typeof en = {
     'solar-return': ['zonneterugkeer', 'sr', 'zonnerevolutie', 'verjaardagshoroscoop', 'jaarlijkse terugkeer'],
     'lunar-return': ['maanterugkeer', 'lr', 'maandelijkse terugkeer', 'maanterugkeer horoscoop'],
     'lunar-phase-return': ['maanfaseterugkeer', 'faseterugkeer'],
+    'rise-set': ['opkomst', 'ondergang', 'culminatie'],
     relocated: ['verplaatst', 'verplaatsing', 'locatiehoroscoop', 'verhuisde horoscoop'],
   } satisfies Record<ChartType, readonly string[]>,
   chartTypeDescriptions: {
@@ -255,6 +258,7 @@ const nl: typeof en = {
     'lunar-return': 'De horoscoop op het moment dat de maan terugkeert naar haar geboortestand.',
     'lunar-phase-return':
       'De horoscoop op het moment dat de fasehoek tussen zon en maan terugkeert naar die bij de geboorte.',
+    'rise-set': 'De horoscoop op het moment dat een hemellichaam opkomt, ondergaat of culmineert.',
     relocated: 'De geboortehoroscoop, berekend voor een andere plaats.',
   } satisfies Record<ChartType, string>,
   chartViewKeywords: {
