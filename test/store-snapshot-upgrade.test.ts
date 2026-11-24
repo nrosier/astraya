@@ -85,3 +85,47 @@ describe('resuming a snapshot across a build upgrade (#919)', () => {
     expect(materialise(resumed.registers).people).toEqual(materialise(rebuilt.registers).people);
   });
 });
+
+describe('resuming a snapshot across the saved horary judgment kind (#1960)', () => {
+  // The build before #1960: every kind but `horaryJudgment`.
+  const BEFORE_HORARY_KINDS: readonly string[] = [
+    'person',
+    'chart',
+    'birthNote',
+    'consultationNote',
+    'savedQuery',
+    'chartSearch',
+    'pin',
+    'annotation',
+    'account',
+    'corpusCorrection',
+  ];
+  const JUDGMENT = 'h-abcdefghijklmnop';
+
+  it('rebuilds a snapshot stamped without horaryJudgment, so a judgment from a newer device appears after upgrade', () => {
+    const judgment = write(
+      B,
+      [
+        { entity: 'horaryJudgment', entityId: JUDGMENT, field: 'question', value: 'Will the ship return?' },
+        { entity: 'horaryJudgment', entityId: JUDGMENT, field: 'record', value: { version: 2 } },
+      ],
+      T0 + 5_000,
+    );
+    const laterEdit = write(
+      A,
+      [{ entity: 'person', entityId: PERSON, field: 'placeLabel', value: 'Vevay' }],
+      T0 + 10_000,
+    );
+    const all = [...PERSON_RECORDS, ...judgment, ...laterEdit];
+    const oldSnapshot = snapshotOf(
+      applyRecords(EMPTY_REGISTERS, all, BEFORE_HORARY_KINDS).registers,
+      all,
+      BEFORE_HORARY_KINDS,
+    );
+    expect(oldSnapshot.applied).toBe(all.length);
+
+    const resumed = resume(oldSnapshot, all);
+    expect(resumed.rebuilt).toBe(true);
+    expect(resumed.registers.horaryJudgment?.[JUDGMENT]?.question?.value).toBe('Will the ship return?');
+  });
+});

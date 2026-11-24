@@ -191,6 +191,66 @@ describe('pushing', () => {
   });
 });
 
+describe('a saved horary judgment on the wire (#1960)', () => {
+  it('survives the relay between two devices, with Dutch and CJK question text intact', async () => {
+    globalThis.fetch = await loginAs('alice', 'correct-horse-battery');
+    const record = {
+      version: 1,
+      civil: { year: 2026, month: 11, day: 24, hour: 20, minute: 15, second: 0 },
+      coordinates: { latitude: 52.3676, longitude: 4.9041 },
+      witness: { offsetMinutes: 60, zone: 'Europe/Amsterdam', tzdbFingerprint: 'tzdb-2026a' },
+      placeLabel: 'Zürich',
+      houseSystem: 'R',
+      rulershipScheme: 'traditional',
+      summary: {
+        querent: { house: 1, rulerKey: 'venus' },
+        quesited: { house: 7, rulerKey: 'mars' },
+        perfection: { kind: 'translation', thirdBodyKey: 'mercury', timeToPerfectDays: 12.5 },
+        reception: { kind: 'oneWay', sameDignityType: false },
+        receptionAidsPerfection: false,
+        considerations: [{ key: 'moon-void-of-course', applies: true, softened: true }],
+        radical: true,
+      },
+    };
+    const dutch = 'Komt mijn broer terug uit Zürich?';
+    const cjk = '我的船会回来吗？';
+
+    const deviceA = await openStore({ name: freshDbName() });
+    await deviceA.mutate([
+      { entity: 'horaryJudgment', entityId: 'h-abcdefghijklmnop', field: 'question', value: dutch },
+      { entity: 'horaryJudgment', entityId: 'h-abcdefghijklmnop', field: 'record', value: record },
+      { entity: 'horaryJudgment', entityId: 'h-bcdefghijklmnopq', field: 'question', value: cjk },
+      { entity: 'horaryJudgment', entityId: 'h-bcdefghijklmnopq', field: 'record', value: record },
+    ]);
+    const engineA = await createSyncEngine({ store: deviceA, accountId: aliceId });
+    await vi.waitFor(() => {
+      expect(engineA.status.kind).toBe('synced');
+    }, WAIT);
+    engineA.close();
+    deviceA.close();
+
+    const deviceB = await openStore({ name: freshDbName() });
+    const engineB = await createSyncEngine({ store: deviceB, accountId: aliceId });
+    try {
+      await vi.waitFor(() => {
+        expect(deviceB.state.horaryJudgments.size).toBe(2);
+      }, WAIT);
+      expect(deviceB.state.horaryJudgments.get('h-abcdefghijklmnop')).toMatchObject({
+        status: 'ready',
+        question: dutch,
+        record: { placeLabel: 'Zürich', summary: { perfection: { timeToPerfectDays: 12.5 } } },
+      });
+      expect(deviceB.state.horaryJudgments.get('h-bcdefghijklmnopq')).toMatchObject({
+        status: 'ready',
+        question: cjk,
+      });
+    } finally {
+      engineB.close();
+      deviceB.close();
+    }
+  });
+});
+
 describe('pulling', () => {
   it('merges a record another device already pushed under the same account', async () => {
     globalThis.fetch = await loginAs('alice', 'correct-horse-battery');

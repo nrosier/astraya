@@ -10,7 +10,7 @@
  * @module horary
  * @purpose Computes a horary chart (#406): an ordinary chart for the moment a question was asked, plus the traditional considerations-before-judgment.
  * @conventions Reuses `computeChartData` unchanged (a horary chart is a chart-for-a-moment, not a new computation); defaults to Regiomontanus houses (`HORARY_DEFAULT_HOUSE_SYSTEM`), the system the horary tradition (Lilly onward) used, versus the natal screens' Placidus default; void-of-course Moon comes from `findVoidOfCourseMoon`.
- * @exports computeHoraryChart, HoraryChart, HORARY_DEFAULT_HOUSE_SYSTEM
+ * @exports computeHoraryChart, HoraryChart, HORARY_DEFAULT_HOUSE_SYSTEM, HORARY_HOUSE_SYSTEMS
  */
 import { bodyByKey } from '../astrology/bodies.js';
 import { houseOf } from '../astrology/emphasis.js';
@@ -27,6 +27,13 @@ import { computeChartData, housesAreDefined, type ChartData } from './chart-comp
  * natal screens default to Placidus; a horary chart is offered in the system its sources use.
  */
 export const HORARY_DEFAULT_HOUSE_SYSTEM: HouseSystem = 'R';
+
+/**
+ * The house systems a horary chart is offered in, by Swiss Ephemeris code. The first is the horary tradition's. Lives
+ * here, not in `ui/horary.ts`, so the saved-judgment guard in `src/store/` can check membership without importing
+ * from `src/ui/` (#1960); the UI module re-exports it.
+ */
+export const HORARY_HOUSE_SYSTEMS: readonly string[] = ['R', 'P', 'W'];
 
 export interface HoraryChart {
   readonly data: ChartData;

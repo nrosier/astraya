@@ -30,7 +30,7 @@
 
 /**
  * @module store/fold
- * @purpose Folds the append-only operation log into materialised people, charts, notes, saved queries, account preferences and the reader's own interpretation corrections — the pure, deterministic function every rendered screen's state depends on.
+ * @purpose Folds the append-only operation log into materialised people, charts, notes, saved queries, saved chart searches, saved horary judgments, account preferences and the reader's own interpretation corrections — the pure, deterministic function every rendered screen's state depends on.
  * @conventions Last-write-wins per field by HLC timestamp, deliberately not a full CRDT, since one person typically creates a record once and rarely edits it concurrently; deleting sets a `deleted` field rather than removing the record, so undo is just another write; a `purged` field (once set, never unset) hides an entity entirely regardless of any other field's timestamp; registers are serialisable so they can be persisted as a snapshot and `resume`d from, with a full rebuild as the correctness fallback whenever a snapshot cannot be trusted.
  * @exports DELETED_FIELD, PURGED_FIELD, Register, Registers, EMPTY_REGISTERS, FoldSkips, Applied, applyRecords, State, materialise, fold, Snapshot, snapshotOf, Resumed, resume
  */
@@ -57,6 +57,7 @@ import {
 import { foldPin, PIN_ENTITY, type Pin } from './pins.js';
 import { CORRECTION_ENTITY, foldCorrection, type CorpusCorrection } from './corpus-corrections.js';
 import { CHART_SEARCH_ENTITY, foldChartSearch, type SavedChartSearch } from './chart-searches.js';
+import { foldHoraryJudgment, HORARY_JUDGMENT_ENTITY, type SavedHoraryJudgment } from './horary-judgments.js';
 import { foldSavedQuery, SAVED_QUERY_ENTITY, type SavedQuery } from './saved-queries.js';
 
 /** The field that hides a record. A register like any other, so undo needs no new machinery. */
@@ -112,6 +113,7 @@ const KNOWN_ENTITIES: readonly string[] = [
   CONSULTATION_NOTE_ENTITY,
   SAVED_QUERY_ENTITY,
   CHART_SEARCH_ENTITY,
+  HORARY_JUDGMENT_ENTITY,
   PIN_ENTITY,
   ANNOTATION_ENTITY,
   ACCOUNT_ENTITY,
@@ -210,6 +212,8 @@ export interface State {
     readonly savedQueries: ReadonlyMap<string, SavedQuery>;
     /** Saved chart searches hidden by a tombstone, so the list can offer Undo and Erase (#1405). */
     readonly chartSearches: ReadonlyMap<string, SavedChartSearch>;
+    /** Saved horary judgments hidden by a tombstone, so the list can offer Undo (#1960). */
+    readonly horaryJudgments: ReadonlyMap<string, SavedHoraryJudgment>;
     /** Pins hidden by a tombstone, so the list can offer Undo (#1061). */
     readonly pins: ReadonlyMap<string, Pin>;
   };
@@ -232,6 +236,11 @@ export interface State {
    * hiding them would be silent loss. Map order is not part of the contract: sort before showing.
    */
   readonly chartSearches: ReadonlyMap<string, SavedChartSearch>;
+  /**
+   * Live saved horary judgments, by id (#1960). Unreadable and incomplete ones are included, with their reason, because
+   * hiding them would be silent loss. Map order is not part of the contract: sort before showing.
+   */
+  readonly horaryJudgments: ReadonlyMap<string, SavedHoraryJudgment>;
   /** Live pinned event-search results, by derived id (#1061). Unreadable ones are included, with their reason. */
   readonly pins: ReadonlyMap<string, Pin>;
   /**
@@ -256,6 +265,7 @@ export interface State {
   readonly erased: {
     readonly savedQueries: ReadonlySet<string>;
     readonly chartSearches: ReadonlySet<string>;
+    readonly horaryJudgments: ReadonlySet<string>;
     readonly pins: ReadonlySet<string>;
     readonly annotations: ReadonlySet<string>;
   };
@@ -348,6 +358,21 @@ export function materialise(registers: Registers): State {
     else chartSearches.set(id, search);
   }
 
+  const horaryJudgments = new Map<string, SavedHoraryJudgment>();
+  const deletedHoraryJudgments = new Map<string, SavedHoraryJudgment>();
+  const erasedHoraryJudgments = new Set<string>();
+  for (const [id, fields] of Object.entries(registers[HORARY_JUDGMENT_ENTITY] ?? {})) {
+    // Purged first, as for saved queries: a purge leaves only its marker, which would otherwise fold as incomplete.
+    if (isPurged(fields)) {
+      erasedHoraryJudgments.add(id);
+      continue;
+    }
+    const judgment = foldHoraryJudgment(id, fields);
+    if (judgment === undefined) continue;
+    if (isDeleted(fields)) deletedHoraryJudgments.set(id, judgment);
+    else horaryJudgments.set(id, judgment);
+  }
+
   const pins = new Map<string, Pin>();
   const deletedPins = new Map<string, Pin>();
   for (const [id, fields] of Object.entries(registers[PIN_ENTITY] ?? {})) {
@@ -407,6 +432,7 @@ export function materialise(registers: Registers): State {
       charts: deletedCharts,
       savedQueries: deletedSavedQueries,
       chartSearches: deletedChartSearches,
+      horaryJudgments: deletedHoraryJudgments,
       pins: deletedPins,
     },
     orphanCharts,
@@ -414,6 +440,7 @@ export function materialise(registers: Registers): State {
     consultationNotes,
     savedQueries,
     chartSearches,
+    horaryJudgments,
     pins,
     annotations,
     annotationEntities,
@@ -421,6 +448,7 @@ export function materialise(registers: Registers): State {
     erased: {
       savedQueries: erasedQueries,
       chartSearches: erasedChartSearches,
+      horaryJudgments: erasedHoraryJudgments,
       pins: erasedPins,
       annotations: erasedAnnotations,
     },
