@@ -64,11 +64,17 @@ import {
   type CalculationProfileId,
 } from '../chart/calculation-profiles.js';
 import {
+  canonicalParanEvents,
   DEFAULT_EXTENDED_SETTINGS,
+  DEFAULT_FIXED_STAR_PARANS,
+  FIXED_STAR_PARAN_ORB_MAX,
+  isParanOrb,
   withMotionScore,
+  withoutFixedStarParans,
   withoutStationWindow,
   type ExtendedSettings,
 } from '../chart/extended-settings.js';
+import { ANGLE_EVENTS } from '../astrology/fixed-stars.js';
 import {
   isInterpreted,
   matchObjectPolicyPreset,
@@ -1443,6 +1449,62 @@ export function ExtendedSettingsPanel({
                     </div>
                     <p className="hint settings-card-indent">{t.dial90Hint}</p>
                   </div>
+                </fieldset>
+
+                <fieldset className="field-group settings-card-group">
+                  <legend>{t.paransLegend}</legend>
+                  <Checkbox
+                    label={t.paransLabel}
+                    checked={draft.fixedStarParans !== undefined}
+                    onChange={(value) => {
+                      setDraft((current) =>
+                        value
+                          ? { ...current, fixedStarParans: DEFAULT_FIXED_STAR_PARANS }
+                          : withoutFixedStarParans(current),
+                      );
+                    }}
+                  />
+                  <p className="hint settings-card-indent">{t.paransHint}</p>
+                  {draft.fixedStarParans !== undefined && (
+                    <div className="settings-card-indent">
+                      <NumberField
+                        label={t.paranOrbLabel}
+                        value={String(draft.fixedStarParans.orb)}
+                        min={0}
+                        max={FIXED_STAR_PARAN_ORB_MAX}
+                        step={0.5}
+                        decreaseLabel={t.paranOrbDecreaseLabel}
+                        increaseLabel={t.paranOrbIncreaseLabel}
+                        onChange={(value) => {
+                          const parsed = Number(value);
+                          const current = draft.fixedStarParans;
+                          // Rounded to four places so a stepper's float arithmetic never leaves a stray tail in the draft.
+                          if (current !== undefined && value !== '' && isParanOrb(parsed)) {
+                            patch({ fixedStarParans: { ...current, orb: Math.round(parsed * 10000) / 10000 } });
+                          }
+                        }}
+                      />
+                      <p className="hint">{t.paranOrbHint}</p>
+                      <fieldset className="field-group">
+                        <legend>{t.paranEventsLegend}</legend>
+                        {ANGLE_EVENTS.map((event) => (
+                          <Checkbox
+                            key={event}
+                            label={t.paranEvents[event]}
+                            checked={draft.fixedStarParans?.events.includes(event) === true}
+                            onChange={(checked) => {
+                              const current = draft.fixedStarParans;
+                              if (current === undefined) return;
+                              const next = checked
+                                ? canonicalParanEvents([...current.events, event])
+                                : current.events.filter((candidate) => candidate !== event);
+                              patch({ fixedStarParans: { ...current, events: next } });
+                            }}
+                          />
+                        ))}
+                      </fieldset>
+                    </div>
+                  )}
                 </fieldset>
 
                 <fieldset className="field-group settings-card-group">

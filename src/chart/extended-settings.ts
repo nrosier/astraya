@@ -14,11 +14,12 @@
  * @module chart/extended-settings
  * @purpose Defines the Extended settings panel's single settings bag (`ExtendedSettings`) and the pure split functions that derive each of its three consumers' own option shapes from it.
  * @conventions One settings object is split three ways rather than kept as three separate pieces of UI state: `toChartCalculationOptions` feeds `computeChartData`, `toPointVisibilityOptions` feeds `chart-tables.ts`'s display filtering, and `toSignWedgeStyle` feeds the wheel's cosmetic fill — keeping the split here means neither the panel component nor `ChartView` needs to know any destination's shape.
- * @exports DEFAULT_EXTENDED_SETTINGS, orbsOf, withOrbsOf, withoutStationWindow, withMotionScore, settingsForContext, toChartCalculationOptions, toPointVisibilityOptions, toSignWedgeStyle; ExtendedSettings type.
+ * @exports FixedStarParansSetting, FIXED_STAR_PARAN_ORB_DEFAULT, FIXED_STAR_PARAN_ORB_MAX, isParanOrb, isAngleEvent, canonicalParanEvents, DEFAULT_FIXED_STAR_PARANS, withoutFixedStarParans, DEFAULT_EXTENDED_SETTINGS, orbsOf, withOrbsOf, withoutStationWindow, withMotionScore, settingsForContext, toChartCalculationOptions, toPointVisibilityOptions, toSignWedgeStyle; ExtendedSettings type.
  */
 import { DEFAULT_ORB_CONFIG, type OrbConfig, type OrbRule } from '../astrology/aspects.js';
 import type { BoundsScheme } from '../astrology/bounds.js';
 import { DEFAULT_FORTUNE_FORMULA, type FortuneFormula } from '../astrology/arabic-parts.js';
+import { ANGLE_EVENTS, type AngleEvent } from '../astrology/fixed-stars.js';
 import {
   CARD_SOURCE,
   orbSettingsFor,
@@ -99,7 +100,47 @@ export interface ExtendedSettings {
    * never the Almuten. Absent or `false` means off, the default.
    */
   readonly motionScore?: boolean;
+  /**
+   * The fixed-star paran table (#1407; Solar Fire Deluxe guide §21.1.2): present means on, absent (the default) means
+   * off, so every existing settings bag, snapshot and chart calculation is as before. `orb` is the paran orb in degrees
+   * of sidereal time, 0-10 as Solar Fire lets the user enter it; its default of 1 degree is the owner's choice
+   * (2026-11-21), since Solar Fire states none. `events` are the angle events a paran may use, in the canonical order of
+   * `ANGLE_EVENTS`: a paran is listed only when both its events are in the set, as in Solar Fire's "Parans to Use".
+   */
+  readonly fixedStarParans?: FixedStarParansSetting;
 }
+
+/** The fixed-star paran table's own settings (#1407): the orb and the angle events a paran may use. */
+export interface FixedStarParansSetting {
+  readonly orb: Degrees;
+  readonly events: readonly AngleEvent[];
+}
+
+/** The paran orb a newly switched-on table starts with: 1 degree, the owner's choice (#1407, 2026-11-21). */
+export const FIXED_STAR_PARAN_ORB_DEFAULT: Degrees = 1;
+/** The widest paran orb Solar Fire lets the user enter (guide ch. 21, "any orb may be entered from 0 to 10 degrees"). */
+export const FIXED_STAR_PARAN_ORB_MAX: Degrees = 10;
+
+/** Whether `value` is a usable paran orb: a finite number from 0 to `FIXED_STAR_PARAN_ORB_MAX` degrees. */
+export function isParanOrb(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= FIXED_STAR_PARAN_ORB_MAX;
+}
+
+/** Whether `value` is one of the four angle events a paran can use. */
+export function isAngleEvent(value: unknown): value is AngleEvent {
+  return typeof value === 'string' && (ANGLE_EVENTS as readonly string[]).includes(value);
+}
+
+/** The paran events in canonical order, without duplicates or anything that is not an angle event. */
+export function canonicalParanEvents(events: readonly unknown[]): readonly AngleEvent[] {
+  return ANGLE_EVENTS.filter((event) => events.includes(event));
+}
+
+/** The settings of a switched-on paran table: one degree, every event. */
+export const DEFAULT_FIXED_STAR_PARANS: FixedStarParansSetting = {
+  orb: FIXED_STAR_PARAN_ORB_DEFAULT,
+  events: ANGLE_EVENTS,
+};
 
 /** Placidus, tropical, every default as documented on `DEFAULT_ORB_CONFIG` and `DEFAULT_OBJECT_POLICIES` — matches what a chart looks like with the panel never opened. */
 export const DEFAULT_EXTENDED_SETTINGS: ExtendedSettings = {
@@ -174,6 +215,16 @@ export function withoutStationWindow(settings: ExtendedSettings): ExtendedSettin
   return copy;
 }
 
+/**
+ * `settings` with the fixed-star paran table switched off (#1407), by removing the field rather than storing
+ * `undefined`: an absent field is the off state, and the canonical form every serializer and comparison relies on.
+ */
+export function withoutFixedStarParans(settings: ExtendedSettings): ExtendedSettings {
+  const copy = { ...settings };
+  delete copy.fixedStarParans;
+  return copy;
+}
+
 /** `settings` with the motion score set (#724), keeping the canonical form: off is the field absent, not `false`. */
 export function withMotionScore(settings: ExtendedSettings, on: boolean): ExtendedSettings {
   const copy = { ...settings };
@@ -205,6 +256,8 @@ export function toChartCalculationOptions(settings: ExtendedSettings): ChartCalc
     // Pholus (#804) is computed only when the user turned it on, so every other chart's options are unchanged.
     ...(pholus.visible || pholus.aspectParticipant ? { includePholus: true } : {}),
     ...(settings.stationWindow === undefined ? {} : { stationWindow: settings.stationWindow }),
+    // The star and body equatorial coordinates the paran table needs are computed only when it is on (#1407).
+    ...(settings.fixedStarParans === undefined ? {} : { paranStars: true }),
   };
 }
 
@@ -223,6 +276,7 @@ export function toPointVisibilityOptions(settings: ExtendedSettings): PointVisib
     dial90Visible: settings.dial90Visible,
     midpointTreeOrb: settings.midpointTreeOrb,
     motionScoreVisible: settings.motionScore === true,
+    ...(settings.fixedStarParans === undefined ? {} : { fixedStarParans: settings.fixedStarParans }),
   };
 }
 
