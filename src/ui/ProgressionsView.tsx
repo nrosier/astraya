@@ -188,12 +188,11 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
   const [asOf, setAsOf] = useAsOfDate();
   const timingT = useMessages(timingBasisMessages);
   const timelineT = useMessages(timingTimelineViewMessages);
-  // Secondary progressions read the person's own zodiac, as the timing timeline does (#1935, owner decision 2026-11-24);
-  // the other techniques and every other setting stay on the engine defaults.
+  // Every technique reads the person's own zodiac, as the timing timeline does (#1935, owner decisions 2026-11-24),
+  // so the zodiac does not change when the technique is switched; every other setting stays on the engine defaults.
   const { settings: personSettings } = usePersonCalculationSettings(personId);
   const zodiac = personSettings.zodiac;
-  const basisSettings =
-    technique === 'secondary' ? { ...DEFAULT_EXTENDED_SETTINGS, zodiac } : DEFAULT_EXTENDED_SETTINGS;
+  const basisSettings = { ...DEFAULT_EXTENDED_SETTINGS, zodiac };
   const baseBasis = useCalculationBasisLine(basisSettings, DEFAULT_RULERSHIP_CHOICE, undefined, {
     rulers: false,
   });
@@ -221,8 +220,8 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
         const data: ProgressionData =
           technique === 'secondary'
             ? await computeSecondaryProgression(moment, targetJd, provider, { mcMethod, zodiac })
-            : await computeMinorProgression(technique, moment, targetJd, provider);
-        const transitContacts = await transitsToProgressed(targetJd, data.positions, provider);
+            : await computeMinorProgression(technique, moment, targetJd, provider, { zodiac });
+        const transitContacts = await transitsToProgressed(targetJd, data.positions, provider, { zodiac });
         if (!effect.cancelled) {
           setLoad({ kind: 'ready', data, transitContacts });
           setRefreshing(false);

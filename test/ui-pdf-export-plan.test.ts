@@ -46,6 +46,9 @@ import {
 import { pdfExportMessages } from '../src/ui/pdf-export.messages.js';
 import { solarArcViewMessages } from '../src/ui/SolarArcView.messages.js';
 import { getEngine } from './engine-harness.js';
+import { computeSecondaryProgression } from '../src/domain/secondary-progression.js';
+import { julianDayFor } from '../src/time/julian.js';
+import { resolveMoment } from '../src/time/resolve.js';
 
 const repoRoot = resolve(import.meta.dirname, '..');
 
@@ -771,6 +774,31 @@ describe('buildPdfPlan', () => {
     };
     // #1935: the progressions section now reads the person's zodiac too, so the sidereal tables differ from the tropical ones.
     expect(await tablesOf(sidereal, progressions)).not.toEqual(await tablesOf(DEFAULT_EXTENDED_SETTINGS, progressions));
+    // The stronger check: the sidereal progressed angles are the tropical ones minus the ayanamsa, to the arcsecond
+    // (natal 1990-06-15 14:30 UTC+2, 45N 5E, Placidus, as of 2020-06-15), for the same zodiac the section is given.
+    const natal = {
+      civil: { year: 1990, month: 6, day: 15, hour: 14, minute: 30, second: 0 },
+      coordinates: { latitude: 45, longitude: 5 },
+      offsetOverrideMinutes: 120,
+    };
+    const targetJd = await provider.julianDayFromUtc(2020, 6, 15, 12, 0, 0);
+    const zodiac = { kind: 'sidereal' as const, ayanamsa: lahiri };
+    const gap = (a: number, b: number): number => Math.abs(((((a - b) % 360) + 540) % 360) - 180) * 3600;
+    const natalJd = await julianDayFor(provider, resolveMoment(natal));
+    for (const mcMethod of ['quotidian', 'naibod'] as const) {
+      const tropical = await computeSecondaryProgression(natal, targetJd, provider, { mcMethod });
+      const sid = await computeSecondaryProgression(natal, targetJd, provider, { mcMethod, zodiac });
+      const atProgressed = await provider.ayanamsa(sid.progressedJd, lahiri);
+      const atNatal = await provider.ayanamsa(natalJd, lahiri);
+      // Quotidian reads both angles at the progressed date. The Naibod MC is the natal sidereal MC plus the arc, so it
+      // is anchored to the natal ayanamsa, while the angles derived from it use the progressed-date ayanamsa.
+      const mcAyanamsa = mcMethod === 'quotidian' ? atProgressed : atNatal;
+      expect(gap(sid.houses.midheaven, tropical.houses.midheaven - mcAyanamsa)).toBeLessThan(1);
+      expect(gap(sid.houses.ascendant, tropical.houses.ascendant - atProgressed)).toBeLessThan(
+        mcMethod === 'quotidian' ? 1 : 10,
+      );
+      expect(gap(sid.houses.ascendant, tropical.houses.ascendant)).toBeGreaterThan(20 * 3600);
+    }
   }, 60_000);
 
   it('notes the rigid angle shift in the progressions hint for a user-defined ayanamsa only (#1935)', async () => {

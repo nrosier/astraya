@@ -113,4 +113,26 @@ describe('computeMinorProgression (#48)', () => {
     expect(tight.contacts).toHaveLength(0);
     expect(wide.contacts.length).toBeGreaterThan(0);
   });
+
+  it.each(['tertiary', 'minor'] as const)(
+    '%s: the sidereal zodiac moves the bodies and houses by the ayanamsa (#1935)',
+    async (method) => {
+      const engine = await getEngine();
+      const zodiac = { kind: 'sidereal', ayanamsa: 1 } as const;
+      const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
+      const targetJd = natalJd + TROPICAL_YEAR_DAYS * 30;
+      const tropical = await computeMinorProgression(method, NATAL, targetJd, engine);
+      const sidereal = await computeMinorProgression(method, NATAL, targetJd, engine, { zodiac });
+      const ayanamsa = await engine.ayanamsa(sidereal.progressedJd, zodiac.ayanamsa);
+      expect(ayanamsa).toBeGreaterThan(23);
+      const gap = (a: number, b: number): number => angularSeparation(a, b) * 3600;
+      for (const position of sidereal.positions) {
+        const trop = tropical.positions.find((p) => p.body === position.body);
+        if (trop === undefined) throw new Error('missing body');
+        expect(gap(position.longitude, trop.longitude - ayanamsa)).toBeLessThan(1);
+      }
+      expect(gap(sidereal.houses.ascendant, tropical.houses.ascendant - ayanamsa)).toBeLessThan(1);
+      expect(gap(sidereal.houses.midheaven, tropical.houses.midheaven - ayanamsa)).toBeLessThan(1);
+    },
+  );
 });

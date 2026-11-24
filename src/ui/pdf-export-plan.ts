@@ -1216,7 +1216,9 @@ async function buildProgressionsSectionPlan(
           mcMethod: options.mcMethod,
           zodiac: context.settings.zodiac,
         })
-      : await computeMinorProgression(options.technique, person.moment, targetJd, provider);
+      : await computeMinorProgression(options.technique, person.moment, targetJd, provider, {
+          zodiac: context.settings.zodiac,
+        });
   const namePart = person.displayName === '' ? '' : ` — ${person.displayName}`;
   const heading = `${pt.progressionsLabel} — ${pt.progressionTechniqueOptions[options.technique]}${namePart}`;
 
