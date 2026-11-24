@@ -13,6 +13,8 @@ import {
   significatorOf,
 } from '../src/domain/horary-judgment.js';
 import { computeChartData, type ChartData } from '../src/domain/chart-compute.js';
+import { computeHoraryChart, HORARY_ORB_PROFILE } from '../src/domain/horary.js';
+import { CITED_ORB_PRESETS } from '../src/astrology/orb-profiles.js';
 import { getEngine } from './engine-harness.js';
 
 const SUN = bodyByKey('sun')?.id;
@@ -277,3 +279,71 @@ describe('judgeHorary end to end (#552)', () => {
     expect(isVoid.considerations.find((c) => c.key === 'moon-void-of-course')?.applies).toBe(true);
   });
 });
+
+describe('horary perfection uses only the Ptolemaic aspects, in Lilly moieties (#1960)', () => {
+  function semisquare(bodyA: number, bodyB: number): Aspect {
+    return {
+      bodyA,
+      bodyB,
+      aspect: { key: 'semisquare', name: 'Semisquare', angle: 45, family: 'minor', tone: 'hard' },
+      separation: 45,
+      orb: 0,
+      allowedOrb: 2.5,
+      applying: true,
+    };
+  }
+
+  it('does not perfect by an exact, applying minor aspect (a semisquare)', () => {
+    expect(judgePerfection([semisquare(SUN, MOON)], SUN, MOON).kind).toBe('none');
+  });
+
+  it('does not use a minor aspect as the carrier of a translation or collection', () => {
+    expect(judgePerfection([semisquare(MARS, SUN), semisquare(MARS, MOON)], SUN, MOON).kind).toBe('none');
+  });
+
+  it('still perfects by a major aspect, even when a minor aspect between the same pair is listed first', () => {
+    const trine = aspect(SUN, MOON, true);
+    expect(judgePerfection([semisquare(SUN, MOON), trine], SUN, MOON)).toEqual({ kind: 'directAspect', aspect: trine });
+  });
+
+  it('computes the horary chart in the moieties of lilly-1647-first-v1, and a major aspect inside them perfects', async () => {
+    const engine = await getEngine();
+    expect(HORARY_ORB_PROFILE).toBe('lilly-1647-first-v1');
+    const moieties = CITED_ORB_PRESETS[HORARY_ORB_PROFILE].bodyOrbs;
+    let checked = 0;
+    for (let i = 0; i < 40 && checked < 3; i++) {
+      const chart = await computeHoraryChart(
+        {
+          civil: { year: 2024, month: 3, day: 1 + (i % 28), hour: (i * 5) % 24, minute: 0, second: 0 },
+          coordinates: { latitude: 51.5072, longitude: -0.1276 },
+          zoneOverride: 'Europe/London',
+        },
+        engine,
+      );
+      for (const found of chart.data.aspects) {
+        const keyA = bodyKeyOf(found.bodyA);
+        const keyB = bodyKeyOf(found.bodyB);
+        const halfA = moieties[keyA];
+        const halfB = moieties[keyB];
+        if (halfA === undefined || halfB === undefined) continue;
+        expect(found.aspect.family).toBe('major');
+        expect(found.allowedOrb).toBeCloseTo(halfA + halfB, 9);
+        expect(found.orb).toBeLessThanOrEqual(found.allowedOrb);
+        if (found.applying) {
+          const result = judgePerfection([found], found.bodyA, found.bodyB);
+          expect(result.kind).toBe('directAspect');
+          expect(result.aspect).toBe(found);
+          checked++;
+        }
+      }
+    }
+    expect(checked).toBeGreaterThan(0);
+  }, 120_000);
+});
+
+function bodyKeyOf(id: number): string {
+  for (const key of ['saturn', 'jupiter', 'mars', 'sun', 'venus', 'mercury', 'moon', 'uranus', 'neptune', 'pluto']) {
+    if (bodyByKey(key)?.id === id) return key;
+  }
+  return String(id);
+}

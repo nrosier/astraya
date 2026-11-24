@@ -42,8 +42,9 @@ describe('horaryConsiderations (#406)', () => {
     expect(applying({ ascendant: 30 + 3.0 })).toEqual([]);
   });
 
-  it('calls the Ascendant too late above 27° into its sign — and exactly 27° is fine', () => {
-    expect(applying({ ascendant: 60 + 27.0 })).toEqual([]);
+  it('calls the Ascendant too late from 27° into its sign — exactly 27° is flagged, 26.999° is not (#1960)', () => {
+    expect(applying({ ascendant: 60 + 26.999 })).toEqual([]);
+    expect(applying({ ascendant: 60 + 27.0 })).toEqual(['ascendant-too-late']);
     expect(applying({ ascendant: 60 + 27.01 })).toEqual(['ascendant-too-late']);
     expect(applying({ ascendant: 60 + 29.99 })).toEqual(['ascendant-too-late']);
   });
@@ -212,7 +213,7 @@ describe('computeHoraryChart (#406)', () => {
         chart.voidOfCourse.isVoid && [1, 3, 8, 11].includes(Math.floor(moon / 30)),
       );
       expect(byKey.get('ascendant-too-early')).toBe(asc < 3);
-      expect(byKey.get('ascendant-too-late')).toBe(asc > 27);
+      expect(byKey.get('ascendant-too-late')).toBe(asc >= 27);
       expect(byKey.get('moon-via-combusta')).toBe(moon >= 195 && moon < 225);
       expect(byKey.get('moon-void-of-course')).toBe(chart.voidOfCourse.isVoid);
       for (const consideration of chart.considerations) {
