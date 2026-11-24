@@ -37,37 +37,33 @@ test('the About page includes an astrology primer section with all subsections',
 
   // Primer section heading and introduction
   await expect(page.getByRole('heading', { name: 'Astrology primer', exact: true })).toBeVisible();
-  await expect(page.getByText(/Astrology is the ancient practice/)).toBeVisible();
+  await expect(page.getByText(/Astrology is the practice of understanding/)).toBeVisible();
 
   // Chart fundamentals paragraph with three dimensions
   await expect(page.getByText('The chart has three dimensions:')).toBeVisible();
-  await expect(page.getByText(/The planets.*zodiac.*houses.*angular divisions/)).toBeVisible();
+  await expect(
+    page.getByText(/The planets.*zodiac.*houses.*divisions of the sky into life areas, usually 12/),
+  ).toBeVisible();
 
   // All subsections are present
-  const expectedSections = [
-    'A brief history',
-    'Planets and points',
-    'The zodiac and signs',
-    'Houses',
-    'Aspects',
-    'Dignity and rulership',
-  ];
+  const expectedSections = ['Planets', 'The zodiac and signs', 'Houses', 'Aspects', 'Dignity and rulership'];
 
   for (const section of expectedSections) {
     await expect(page.getByRole('heading', { name: section, level: 3 })).toBeVisible();
   }
 
-  // History subsection
-  await expect(page.getByText(/one of the oldest continuously practised traditions/)).toBeVisible();
-  await expect(page.getByText(/Babylonian celestial omen-reading/)).toBeVisible();
-
   // Planets subsection
-  await expect(page.getByText(/Sun and Moon are not true planets/)).toBeVisible();
+  await expect(page.getByText(/counts the Sun and Moon among its planets/)).toBeVisible();
   await expect(page.getByText(/personal planets.*Mercury through Mars/)).toBeVisible();
 
   // Zodiac signs subsection
-  await expect(page.getByText(/Twelve signs represent archetypal energies/)).toBeVisible();
-  await expect(page.getByText(/Sun sign is determined by your birth date/)).toBeVisible();
+  await expect(page.getByText(/The 12 signs represent archetypal energies/)).toBeVisible();
+  await expect(page.getByText(/Sun sign is determined by your birth date \(in the tropical zodiac/)).toBeVisible();
+  await expect(
+    page.getByText(
+      /your Moon sign can depend on your birth time, and your rising sign \(the sign on the Ascendant, the eastern horizon\) depends on your exact birth time and place/,
+    ),
+  ).toBeVisible();
 
   // Houses subsection
   await expect(page.getByText(/12 houses divide the chart into life areas/)).toBeVisible();
@@ -78,11 +74,11 @@ test('the About page includes an astrology primer section with all subsections',
   await expect(page.getByText(/0° conjunction/)).toBeVisible();
 
   // Dignity subsection
-  await expect(page.getByText(/Each sign has a natural ruler/)).toBeVisible();
-  await expect(page.getByText(/planet in its own sign.*strong and natural/)).toBeVisible();
+  await expect(page.getByText(/Each sign has a ruler, the planet most at home there/)).toBeVisible();
+  await expect(page.getByText(/The app supports two schemes: traditional \(classical\) rulers/)).toBeVisible();
 
   // Closing resources paragraph
-  await expect(page.getByText(/For more, read conventional astrology introductions/)).toBeVisible();
+  await expect(page.getByText(/explore the interpretations throughout this app/)).toBeVisible();
 });
 
 test('the About page primer renders in Dutch with full translation', async ({ page }) => {
@@ -111,8 +107,7 @@ test('the About page primer renders in Dutch with full translation', async ({ pa
     'Licentie en broncode',
     'Dankwoord',
     'Astrologie-primer',
-    'Een korte geschiedenis',
-    'Planeten en punten',
+    'Planeten',
     'De dierenriem en tekens',
     'Huizen',
     'Aspecten',
@@ -125,8 +120,8 @@ test('the About page primer renders in Dutch with full translation', async ({ pa
 
   // Spot-check actual body prose too, not just headings — a locale switch that left the
   // headings translated but the body text English would still be a real bug this should catch.
-  await expect(page.getByText(/Astrologie is de oude praktijk/)).toBeVisible();
-  await expect(page.getByText(/Elk teken heeft een natuurlijke heerser/)).toBeVisible();
+  await expect(page.getByText(/Astrologie is de praktijk om menselijke/)).toBeVisible();
+  await expect(page.getByText(/Elk teken heeft een heerser, de planeet die daar/)).toBeVisible();
 });
 
 test('the primer section is accessible and follows semantic structure', async ({ page }) => {
