@@ -169,7 +169,7 @@ export interface GlyphRingOptions extends WheelOrientationOptions {
 /**
  * An invisible circle covering a symbol's whole box, so a click anywhere on it hits — the
  * glyph itself is stroked paths with no fill, which are only hit-testable on the stroke pixels
- * (`@astrodraw/astrochart`'s `ADD_CLICK_AREA` solves the same problem with a transparent rect).
+ * (the usual fix is a transparent shape covering the box as the hit area; this is that technique with a circle).
  * `pointer-events="all"` makes it hittable despite `fill="none"`, and the explicit
  * `fill`/`stroke` keep it invisible in an exported SVG with no stylesheet (#412).
  */
