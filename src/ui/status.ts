@@ -22,17 +22,23 @@
  * @module ui/status
  * @purpose Decides what the sync-status indicator says and why (#101): computes a Status (tone/label/detail/action) from sync/persistence/pending/quarantine state, so the user can always tell whether their data exists anywhere but this device.
  * @conventions Pure functions taking an explicit `t` of status.messages.ts's shape rather than reading locale themselves; deliberately avoids showing "Offline" to a signed-out user and avoids "Synced" while any local change is unacknowledged; a failing sync is worded by its failure kind, never by the error's own English text (#1365), and escalates tone only after staying stale past LOUD_AFTER_MS, to avoid training users to ignore transient blips.
- * @exports SyncState, StatusInput, Tone, Status, ago, describeStatus
+ * @exports DroppedRows, SyncState, StatusInput, Tone, Status, ago, describeStatus
  */
 import type { statusMessages } from './status.messages.js';
 import type { Persistence } from '../store/persist.js';
 import type { SyncErrorKind } from '../sync/engine.js';
 
+/** Pulled rows that failed to decode and were skipped during one sync run (#320); `seqs` are the relay sequence numbers. */
+export interface DroppedRows {
+  readonly count: number;
+  readonly seqs: readonly number[];
+}
+
 export type SyncState =
   /** Not signed in. The local store is the whole system, and that is a supported way to run. */
   | { readonly kind: 'off' }
-  | { readonly kind: 'syncing' }
-  | { readonly kind: 'synced'; readonly at: number }
+  | { readonly kind: 'syncing'; readonly dropped?: DroppedRows }
+  | { readonly kind: 'synced'; readonly at: number; readonly dropped?: DroppedRows }
   | {
       readonly kind: 'failing';
       readonly since: number;
