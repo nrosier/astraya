@@ -22,6 +22,7 @@ import {
 import { PrimaryDirectionKey } from '../src/domain/primary-directions.js';
 import { primaryDirectionsViewMessages } from '../src/ui/PrimaryDirectionsView.messages.js';
 import { timingBasisMessages } from '../src/ui/timing-basis.messages.js';
+import { timingTimelineViewMessages } from '../src/ui/TimingTimelineView.messages.js';
 import type { Person } from '../src/domain/person.js';
 import type { SavedInterpretationDetail } from '../src/interpretation/tier2-client.js';
 import { fixedStarsScopeNoteOf } from '../src/ui/ChartView.js';
@@ -736,7 +737,7 @@ describe('buildPdfPlan', () => {
     ).toBe(true);
   }, 30_000);
 
-  it("reads the solar arc section in the person's zodiac while secondary progressions stay on engine defaults (#1492)", async () => {
+  it("reads the solar arc and secondary progressions sections in the person's zodiac (#1492, #1935)", async () => {
     const provider = await getEngine();
     const lahiri = ayanamsaByKey('lahiri')?.id;
     if (lahiri === undefined) throw new Error('expected the Lahiri ayanamsa');
@@ -768,8 +769,51 @@ describe('buildPdfPlan', () => {
         asOfDate: '2025-01-01',
       },
     };
-    expect(await tablesOf(sidereal, progressions)).toEqual(await tablesOf(DEFAULT_EXTENDED_SETTINGS, progressions));
+    // #1935: the progressions section now reads the person's zodiac too, so the sidereal tables differ from the tropical ones.
+    expect(await tablesOf(sidereal, progressions)).not.toEqual(await tablesOf(DEFAULT_EXTENDED_SETTINGS, progressions));
   }, 60_000);
+
+  it('notes the rigid angle shift in the progressions hint for a user-defined ayanamsa only (#1935)', async () => {
+    const provider = await getEngine();
+    const lahiri = ayanamsaByKey('lahiri')?.id;
+    if (lahiri === undefined) throw new Error('expected the Lahiri ayanamsa');
+    const userDefined = {
+      ...DEFAULT_EXTENDED_SETTINGS,
+      zodiac: { kind: 'sidereal' as const, ayanamsa: 255, user: { referenceDate: '2000-01-01', degrees: 24 } },
+    };
+    const builtIn = { ...DEFAULT_EXTENDED_SETTINGS, zodiac: { kind: 'sidereal' as const, ayanamsa: lahiri } };
+    async function hintOf(settings: typeof DEFAULT_EXTENDED_SETTINGS, mcMethod: 'naibod' | 'quotidian') {
+      const selection: PdfSelection = {
+        personId: ADA.id,
+        ...EMPTY_SELECTION,
+        progressions: {
+          technique: 'secondary',
+          mcMethod,
+          positionsTable: true,
+          contactsTable: false,
+          asOfDate: '2025-01-01',
+        },
+      };
+      const context: PdfPlanContext = {
+        person: ADA,
+        provider,
+        settings,
+        rulership: DEFAULT_RULERSHIP_CHOICE,
+        locale: 'en',
+        corpusFetch,
+      };
+      const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
+      expect(plan.errors).toHaveLength(0);
+      const [section] = plan.sections;
+      if (section?.kind !== 'chart') throw new Error('expected a chart section');
+      return section.hint ?? '';
+    }
+    const note = timingTimelineViewMessages.en.progressedAnglesRigidNote;
+    expect(await hintOf(userDefined, 'naibod')).toContain(note);
+    expect(await hintOf(userDefined, 'quotidian')).not.toContain(note);
+    expect(await hintOf(builtIn, 'naibod')).not.toContain(note);
+    expect(await hintOf(DEFAULT_EXTENDED_SETTINGS, 'naibod')).not.toContain(note);
+  }, 90_000);
 
   it('builds a profections section with the year/month table and profected-house meanings (#441)', async () => {
     const provider = await getEngine();

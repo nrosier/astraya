@@ -26,7 +26,7 @@ import { signDegreeColumn } from './position-column.js';
 import { Tooltip } from './primitives/Tooltip.js';
 import { useEffect, useMemo, useState } from 'react';
 import { bodyById } from '../astrology/bodies.js';
-import type { ProgressedMcMethod } from '../astrology/progressions.js';
+import { progressedAnglesKeepRigidShift, type ProgressedMcMethod } from '../astrology/progressions.js';
 import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
 import { crossAspectRows, degreeParts, type AspectRow, type DegreeParts } from '../domain/chart-tables.js';
@@ -47,6 +47,8 @@ import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { progressionsViewMessages } from './ProgressionsView.messages.js';
+import { timingTimelineViewMessages } from './TimingTimelineView.messages.js';
+import { usePersonCalculationSettings } from './person-calculation-settings.js';
 import { SortableTable, csvExportTable, useCsvExports } from './SortableTable.js';
 import { useStoreState } from './store-context.js';
 import type { TableColumn } from './table-sort.js';
@@ -185,8 +187,14 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
   const [contactTarget, setContactTarget] = useState<ProgressionContactTarget>('natal');
   const [asOf, setAsOf] = useAsOfDate();
   const timingT = useMessages(timingBasisMessages);
-  // Progressions are calculated with the engine defaults plus the technique and MC method chosen below.
-  const baseBasis = useCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE, undefined, {
+  const timelineT = useMessages(timingTimelineViewMessages);
+  // Secondary progressions read the person's own zodiac, as the timing timeline does (#1935, owner decision 2026-11-24);
+  // the other techniques and every other setting stay on the engine defaults.
+  const { settings: personSettings } = usePersonCalculationSettings(personId);
+  const zodiac = personSettings.zodiac;
+  const basisSettings =
+    technique === 'secondary' ? { ...DEFAULT_EXTENDED_SETTINGS, zodiac } : DEFAULT_EXTENDED_SETTINGS;
+  const baseBasis = useCalculationBasisLine(basisSettings, DEFAULT_RULERSHIP_CHOICE, undefined, {
     rulers: false,
   });
   const basisLine = withBasisItems(baseBasis, ...progressionBasisItems(technique, mcMethod, timingT));
@@ -212,7 +220,7 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
         const targetJd = await provider.julianDayFromUtc(targetDate.year, targetDate.month, targetDate.day, 12, 0, 0);
         const data: ProgressionData =
           technique === 'secondary'
-            ? await computeSecondaryProgression(moment, targetJd, provider, { mcMethod })
+            ? await computeSecondaryProgression(moment, targetJd, provider, { mcMethod, zodiac })
             : await computeMinorProgression(technique, moment, targetJd, provider);
         const transitContacts = await transitsToProgressed(targetJd, data.positions, provider);
         if (!effect.cancelled) {
@@ -230,7 +238,7 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
     return () => {
       effect.cancelled = true;
     };
-  }, [personMoment, provider, targetDate, technique, mcMethod]);
+  }, [personMoment, provider, targetDate, technique, mcMethod, zodiac]);
 
   const positions = load.kind === 'ready' ? positionRows(load.data.positions, load.data.houses) : undefined;
   const contacts =
@@ -382,6 +390,9 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
               )}
             </p>
             {usedMcMethod !== undefined && <p className="hint">{t.mcMethodLine(mcMethodLabel(t, usedMcMethod))}</p>}
+            {usedMcMethod !== undefined && progressedAnglesKeepRigidShift(zodiac, usedMcMethod) && (
+              <p className="hint">{timelineT.progressedAnglesRigidNote}</p>
+            )}
 
             {/* The shared timing layout (#1234): contacts left, positions right, one column below 52rem. */}
             <div className="timing-layout">
