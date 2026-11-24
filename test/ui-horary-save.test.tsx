@@ -67,6 +67,16 @@ async function settle(): Promise<void> {
   });
 }
 
+/** Polls (inside act) until the condition holds, up to a bound, so a loaded runner cannot beat a fixed sleep. */
+async function waitUntil(condition: () => boolean, limitMs = 2000): Promise<void> {
+  const start = Date.now();
+  while (!condition() && Date.now() - start < limitMs) {
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    });
+  }
+}
+
 async function castChart(): Promise<void> {
   await act(async () => {
     root?.render(
@@ -108,10 +118,10 @@ describe('saving a horary judgment (#1960)', () => {
       setNativeValue(inputByLabel(t.questionLabel), 'Will I get the house?');
     });
     expect(save.disabled).toBe(false);
-    await act(async () => {
+    act(() => {
       save.click();
-      await new Promise((resolve) => setTimeout(resolve, 50));
     });
+    await waitUntil(() => store.state.horaryJudgments.size === 1);
 
     const saved = sortedHoraryJudgments(store.state.horaryJudgments);
     expect(saved).toHaveLength(1);
@@ -143,10 +153,10 @@ describe('saving a horary judgment (#1960)', () => {
     act(() => {
       setNativeValue(inputByLabel(t.questionLabel), 'Where is my ring?');
     });
-    await act(async () => {
+    act(() => {
       buttonByText(t.saveJudgment).click();
-      await new Promise((resolve) => setTimeout(resolve, 50));
     });
+    await waitUntil(() => store.state.horaryJudgments.size === 1);
     expect(store.state.horaryJudgments.size).toBe(1);
 
     act(() => {
@@ -159,10 +169,10 @@ describe('saving a horary judgment (#1960)', () => {
     // There is no permanent-erase control anywhere on the card.
     expect(document.body.textContent).not.toMatch(/erase permanently|permanent/i);
 
-    await act(async () => {
+    act(() => {
       buttonByText(t.deleteConfirm).click();
-      await new Promise((resolve) => setTimeout(resolve, 50));
     });
+    await waitUntil(() => store.state.horaryJudgments.size === 0);
     expect(store.state.horaryJudgments.size).toBe(0);
   });
 
