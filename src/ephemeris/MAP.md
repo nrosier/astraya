@@ -9,5 +9,5 @@ Swiss Ephemeris boundary (only place `sweph-wasm` imported; lint-enforced). Rest
 - `generated-constants.ts` — Swiss Ephemeris C library constants (body IDs, flags, ayanamsa modes) read from live `sweph-wasm` instance. Deps: none.
 - `protocol.ts` — Wire contract between UI thread and ephemeris worker (request/response types, error serialization). Deps: types.
 - `star-catalogue.ts` — Fixed-star naming data. Parses and searches the shipped `sefstars.txt`, hashes it for the stored source-file version, holds the user-star orb constant; stars are asked for by `,designation` (#803). Deps: none.
-- `types.ts` — Engine-agnostic vocabulary (Degrees, JulianDayUT, BodyPosition, HousePositions, EphemerisProvider interface). Deps: none.
+- `types.ts` — Engine-agnostic vocabulary (Degrees, JulianDayUT, BodyPosition, HousePositions, EphemerisProvider interface) and the Sunshine `needsSunDeclination` predicate. Deps: none.
 - `worker.ts` — Web Worker host for engine; explicit `dispatch` switch, request queue. Deps: engine, protocol.

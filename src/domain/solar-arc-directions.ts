@@ -35,15 +35,16 @@ import {
 } from '../astrology/solar-arc-directions.js';
 import { julianDayFor } from '../time/julian.js';
 import { resolveMoment } from '../time/resolve.js';
-import type {
-  BodyId,
-  Degrees,
-  EphemerisProvider,
-  GeoPosition,
-  HousePositions,
-  HouseSystem,
-  JulianDayUT,
-  Zodiac,
+import {
+  needsSunDeclination,
+  type BodyId,
+  type Degrees,
+  type EphemerisProvider,
+  type GeoPosition,
+  type HousePositions,
+  type HouseSystem,
+  type JulianDayUT,
+  type Zodiac,
 } from '../ephemeris/types.js';
 import type { BirthMomentInput } from '../time/types.js';
 
@@ -164,7 +165,7 @@ async function natalAngles(
 /**
  * The progressed Ascendant or Vertex at `progressedJd` (Solar Fire Deluxe guide §12.4 p. 78, §30.3.2.1), with the MC
  * progressed by True Solar Arc in Longitude: the natal MC plus the solar arc; its ARMC, with the progressed date's true
- * obliquity, gives the progressed angle through `housesFromArmc` at the natal latitude. Sunshine ('I') also gets the
+ * obliquity, gives the progressed angle through `housesFromArmc` at the natal latitude. Sunshine ('I' and 'i') also gets the
  * progressed Sun's tropical declination (#1935). Tropical frame (see the module conventions).
  */
 async function progressedAngle(
@@ -178,7 +179,7 @@ async function progressedAngle(
   const [sun, obliquity, sunDeclination] = await Promise.all([
     provider.position(progressedJd, SUN_ID),
     provider.obliquity(progressedJd),
-    houseSystem === 'I' ? progressedSunDeclination(provider, progressedJd) : Promise.resolve(undefined),
+    needsSunDeclination(houseSystem) ? progressedSunDeclination(provider, progressedJd) : Promise.resolve(undefined),
   ]);
   const progressedMc = norm360(natal.midheaven + signedArc(sun.longitude - natal.sunLongitude));
   const progressed = await provider.housesFromArmc(

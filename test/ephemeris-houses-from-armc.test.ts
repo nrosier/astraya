@@ -71,7 +71,7 @@ describe('housesFromArmc (#1407)', () => {
   it('still refuses the Sunshine system when no Sun declination is given (#1935 regression guard)', async () => {
     const call = engine.housesFromArmc(100, AMSTERDAM.latitude, 23.44, 'I');
     await expect(call).rejects.toBeInstanceOf(EphemerisError);
-    await expect(call).rejects.toThrow(/Sunshine\) needs the Sun's declination/);
+    await expect(call).rejects.toThrow(/^House system 'I' \(Sunshine\) needs the Sun's declination\.$/);
   });
 
   it('casts Sunshine from an explicit Sun declination, and the cusps move when it changes (#1935)', async () => {

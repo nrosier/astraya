@@ -162,6 +162,27 @@ describe('progressed angles from the progressed MC (#1935)', () => {
       }
     }
 
+    it("'i' (Makransky's Sunshine) under naibod at 38.75 N gets the declination: finite cusps, no throw", async () => {
+      const engine = await getEngine();
+      const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
+      const result = await computeProgressedHouses(
+        engine,
+        natalJd,
+        natalJd + TROPICAL_YEAR_DAYS * 25,
+        await engine.houses(natalJd, NATAL_PLACE, 'i'),
+        (await engine.position(natalJd, 0)).longitude,
+        NATAL_PLACE,
+        { mcMethod: 'naibod', houseSystem: 'i' },
+      );
+      expect(result.houses.system).toBe('i');
+      for (let house = 1; house <= 12; house += 1) expect(Number.isFinite(result.houses.cusps[house])).toBe(true);
+      // It used the progressed Sun's declination, not a leftover value in the reused buffer.
+      const declination = await progressedSunDeclination(engine, result.progressedJd);
+      const obliquity = await engine.obliquity(result.progressedJd);
+      const direct = await engine.housesFromArmc(result.houses.armc, NATAL_PLACE.latitude, obliquity, 'i', declination);
+      expect(arcsecondsBetween(result.houses.cusps[2] ?? Number.NaN, direct.cusps[2] ?? Number.NaN)).toBeLessThan(1);
+    });
+
     it('the declination used equals eclipticToEquatorial of the tropical progressed Sun (1e-6 degrees)', async () => {
       // Tolerance: both sides are the same apparent place of date through the same true obliquity; only floating-point
       // rounding separates them, far below 1e-6 degrees.
