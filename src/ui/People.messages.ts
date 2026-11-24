@@ -9,7 +9,7 @@
  */
 const en = {
   heading: 'People',
-  tagline: 'Charts belong to a person, so this is where they start. Everything here is stored on this device.',
+  tagline: 'Charts belong to a person, so this is where they start. Signed out, everything here is stored on this device. Signed in, it also syncs to this server.',
   saveFailed: 'That did not save.',
   addPerson: 'Add a person',
   toolbarLabel: 'Find people',
@@ -34,7 +34,7 @@ const en = {
 
 const nl: typeof en = {
   heading: 'Personen',
-  tagline: 'Horoscopen horen bij een persoon, dus hier begint het. Alles hier wordt op dit apparaat opgeslagen.',
+  tagline: 'Horoscopen horen bij een persoon, dus hier begint het. Uitgelogd wordt alles hier op dit apparaat opgeslagen. Ingelogd wordt het ook met deze server gesynchroniseerd.',
   saveFailed: 'Dat is niet opgeslagen.',
   addPerson: 'Persoon toevoegen',
   toolbarLabel: 'Personen zoeken',

@@ -1,7 +1,7 @@
 {
   "name": "Astraya",
   "short_name": "Astraya",
-  "description": "Astrological chart calculation built on the Swiss Ephemeris. Works offline; your birth data stays on your device.",
+  "description": "Astrological chart calculation built on the Swiss Ephemeris. Works offline. Signed out, your birth data stays on your device; signed in, it also syncs to your server.",
   "id": "/",
   "start_url": "/",
   "scope": "/",
