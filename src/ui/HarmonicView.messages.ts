@@ -37,6 +37,26 @@ const en = {
 
   divisionalChartLabel: 'Divisional chart',
   customHarmonicOption: 'Custom harmonic…',
+  modeAge: 'Age at a date',
+  modeAgePlusOne: 'Age+1 at a date',
+  modeArcTransform: 'Arc transform',
+  ageDateLabel: 'Age at',
+  ageHarmonicLabel: (n: string, date: string) => `Age harmonic ${n} (age at ${date})`,
+  agePlusOneHarmonicLabel: (n: string, date: string) => `Age+1 harmonic ${n} (age at ${date})`,
+  ageDescription:
+    'Every longitude is multiplied by the exact age in years at the date: zero at birth. Solar Fire §12.6. The year is the tropical year (365.2422 days), Astraya’s own choice; the guide gives no length.',
+  agePlusOneDescription:
+    'Every longitude is multiplied by the exact age in years at the date, plus one: one at birth, so the chart then is the natal chart. Solar Fire §12.6. The year is the tropical year (365.2422 days), Astraya’s own choice; the guide gives no length.',
+  invalidDate: 'Enter a date.',
+  firstPointLabel: 'First point',
+  secondPointLabel: 'Second point',
+  arcTransformLabel: (a: string, b: string, n: string) => `Arc transform ${a}–${b}, harmonic ${n}`,
+  arcTransformBasisNote: 'Astraya’s reading of Solar Fire §12.6',
+  arcTransformDescription:
+    'Every longitude is multiplied by the harmonic that brings the two points into exact conjunction: 360° divided by the difference of their longitudes (each 0°–360°). Solar Fire §12.6 gives no formula; this is Astraya’s reading of it.',
+  arcTransformSamePoint: 'Choose two different points.',
+  arcTransformLargeHarmonic:
+    'This harmonic is above 360: the pair is less than 1° apart, so the other points’ positions are not reliable at this harmonic.',
   harmonicNumberLabel: 'Harmonic number',
   harmonicLabel: (n: string) => `Harmonic ${n}`,
   invalidHarmonicNumber: 'Enter a whole number of 1 or more.',
@@ -71,6 +91,26 @@ const nl: typeof en = {
 
   divisionalChartLabel: 'Divisionele horoscoop',
   customHarmonicOption: 'Aangepast harmonisch getal…',
+  modeAge: 'Leeftijd op een datum',
+  modeAgePlusOne: 'Leeftijd+1 op een datum',
+  modeArcTransform: 'Boogtransformatie',
+  ageDateLabel: 'Leeftijd op',
+  ageHarmonicLabel: (n: string, date: string) => `Leeftijdsharmonische ${n} (leeftijd op ${date})`,
+  agePlusOneHarmonicLabel: (n: string, date: string) => `Leeftijd+1-harmonische ${n} (leeftijd op ${date})`,
+  ageDescription:
+    'Elke lengte wordt vermenigvuldigd met de exacte leeftijd in jaren op de datum: nul bij de geboorte. Solar Fire §12.6. Het jaar is het tropische jaar (365,2422 dagen), een eigen keuze van Astraya; de gids geeft geen lengte.',
+  agePlusOneDescription:
+    'Elke lengte wordt vermenigvuldigd met de exacte leeftijd in jaren op de datum, plus één: één bij de geboorte, dus dan is de horoscoop de geboortehoroscoop. Solar Fire §12.6. Het jaar is het tropische jaar (365,2422 dagen), een eigen keuze van Astraya; de gids geeft geen lengte.',
+  invalidDate: 'Voer een datum in.',
+  firstPointLabel: 'Eerste punt',
+  secondPointLabel: 'Tweede punt',
+  arcTransformLabel: (a: string, b: string, n: string) => `Boogtransformatie ${a}–${b}, harmonische ${n}`,
+  arcTransformBasisNote: 'Astraya’s lezing van Solar Fire §12.6',
+  arcTransformDescription:
+    'Elke lengte wordt vermenigvuldigd met de harmonische die de twee punten exact in conjunctie brengt: 360° gedeeld door het verschil van hun lengtes (elk 0°–360°). Solar Fire §12.6 geeft geen formule; dit is Astraya’s lezing ervan.',
+  arcTransformSamePoint: 'Kies twee verschillende punten.',
+  arcTransformLargeHarmonic:
+    'Deze harmonische is groter dan 360: het paar staat minder dan 1° uit elkaar, dus de posities van de andere punten zijn bij deze harmonische niet betrouwbaar.',
   harmonicNumberLabel: 'Harmonisch getal',
   harmonicLabel: (n: string) => `Harmonisch ${n}`,
   invalidHarmonicNumber: 'Voer een geheel getal van 1 of meer in.',
