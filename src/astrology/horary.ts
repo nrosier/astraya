@@ -12,7 +12,8 @@
  *
  * - **Ascendant too early / too late** — Lilly says not to judge when 0, 1 or 2 degrees ascend, or when
  *   27, 28 or 29 degrees ascend (p. 122), which is the first and last 3° of the sign: too early, the
- *   matter is not yet ripe to judge; too late, it is already decided.
+ *   matter is not yet ripe to judge; too late, it is already decided. The flags cover [0°, 3°) and
+ *   [27°, 30°): the late flag starts at exactly 27°00′ (owner decision, #1960).
  * - **Moon void of course** — the Moon will make no further exact aspect before leaving its sign
  *   (see `void-of-course.ts` for the convention used: major aspects to the Sun and Mercury–Pluto).
  *   "Nothing will come of the matter." Lilly (Book I p. 122; Book II aphorism 9, p. 299) says matters "goe hardly on"
@@ -49,7 +50,7 @@ import { degreesInSign, signIndex } from './signs.js';
 export type HoraryConsiderationKey =
   'ascendant-too-early' | 'ascendant-too-late' | 'moon-void-of-course' | 'moon-via-combusta' | 'saturn-in-seventh';
 
-/** The Ascendant is "too early" below 3° into its sign and "too late" above 27° (Lilly, Book I, p. 122: 0-2 and 27-29 degrees). */
+/** The Ascendant is "too early" below 3° into its sign and "too late" from 27° on (Lilly, Book I, p. 122: 0-2 and 27-29 degrees; #1960). */
 export const ASCENDANT_EARLY_LIMIT_DEG = 3;
 export const ASCENDANT_LATE_LIMIT_DEG = 27;
 
@@ -90,7 +91,7 @@ export function horaryConsiderations(input: HoraryInput): readonly HoraryConside
   const voidMoonSoftened = input.moonIsVoid && VOID_MOON_SOFTENED_SIGNS.includes(signIndex(moon));
   return [
     { key: 'ascendant-too-early', applies: ascendantDegree < ASCENDANT_EARLY_LIMIT_DEG, softened: false },
-    { key: 'ascendant-too-late', applies: ascendantDegree > ASCENDANT_LATE_LIMIT_DEG, softened: false },
+    { key: 'ascendant-too-late', applies: ascendantDegree >= ASCENDANT_LATE_LIMIT_DEG, softened: false },
     { key: 'moon-void-of-course', applies: input.moonIsVoid, softened: voidMoonSoftened },
     {
       key: 'moon-via-combusta',

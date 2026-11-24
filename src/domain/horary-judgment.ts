@@ -68,9 +68,16 @@ export function significatorOf(
   return { house, ruler, rulerKey: bodyById(ruler)?.key ?? String(ruler) };
 }
 
+/**
+ * The Ptolemaic aspect (conjunction, sextile, square, trine, opposition) between two bodies, if any. Only the major
+ * family perfects in horary (#1960): a minor or higher-harmonic aspect is never returned, however exact. Each
+ * aspect in `aspects` was admitted within its own `allowedOrb`, which for a horary chart is Lilly's moiety sum.
+ */
 function aspectBetween(aspects: readonly Aspect[], a: BodyId, b: BodyId): Aspect | undefined {
   return aspects.find(
-    (aspect) => (aspect.bodyA === a && aspect.bodyB === b) || (aspect.bodyA === b && aspect.bodyB === a),
+    (aspect) =>
+      aspect.aspect.family === 'major' &&
+      ((aspect.bodyA === a && aspect.bodyB === b) || (aspect.bodyA === b && aspect.bodyB === a)),
   );
 }
 
