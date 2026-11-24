@@ -60,6 +60,7 @@ export const PLACEMENT: Readonly<Record<keyof ExtendedSettings, SettingPlacement
   midpointTreeOrb: 'special',
   stationWindow: 'special',
   motionScore: 'special',
+  fixedStarParans: 'special',
 };
 
 /** The settings a tab's Advanced group holds. */

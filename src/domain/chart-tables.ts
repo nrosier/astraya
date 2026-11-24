@@ -11,7 +11,7 @@
  * @module chart-tables
  * @purpose Shapes a computed `ChartData` into the flat rows a chart's data tables, wheel ring and sheet actually render (#44).
  * @conventions Pure and framework-free; kept separate from `chart-compute.ts` so the slow real-engine chart test and the fast pure row-shaping test can run independently; longitude is rounded to the nearest arcsecond before sign-splitting (`degreeParts`) to avoid a seconds rounding bumping the sign; the wheel's aspect web is limited to major aspects, tables show every aspect found.
- * @exports DEFAULT_DECLINATION_ORB, positionRows, houseCuspRows, angleRows, aspectRows, crossAspectRows, crossContactRows, dignityRows, conditionRows, receptionRows, dispositorRows, declinationContactRows, antisciaRows, midpointTreeRows, allMidpointsRows, fixedStarRows, chartShapeOf, derivedPointRows, chartWheelRing, chartSheetMetaLines, chartSheetInput, degreeParts, visiblePositions, visibleAspects, visibleAngleAspects, almutenOfAscendant, AlmutenCandidateRow
+ * @exports DEFAULT_DECLINATION_ORB, positionRows, houseCuspRows, angleRows, aspectRows, crossAspectRows, crossContactRows, dignityRows, conditionRows, receptionRows, dispositorRows, declinationContactRows, antisciaRows, midpointTreeRows, allMidpointsRows, fixedStarRows, FixedStarParanRow, fixedStarParanRows, chartShapeOf, derivedPointRows, chartWheelRing, chartSheetMetaLines, chartSheetInput, degreeParts, visiblePositions, visibleAspects, visibleAngleAspects, almutenOfAscendant, AlmutenCandidateRow
  */
 import { almutenOf, essentialDignityScoreOf } from '../astrology/almuten.js';
 import { antiscialContacts, type AntiscialContact } from '../astrology/antiscia.js';
@@ -23,7 +23,7 @@ import { declinationContacts, isOutOfBounds } from '../astrology/declinations.js
 import { rulerOf } from '../astrology/dignities.js';
 import { dispositorChain, isMutualReception } from '../astrology/dispositors.js';
 import { elementBalance, houseOf, modalityBalance } from '../astrology/emphasis.js';
-import { fixedStarConjunctions } from '../astrology/fixed-stars.js';
+import { fixedStarConjunctions, parans, type AngleEvent } from '../astrology/fixed-stars.js';
 import { jonesBodyPositions, jonesShapeOf, type JonesShapeResult } from '../astrology/jones-shapes.js';
 import { derivedPointByKey, type DerivedPointKey } from '../astrology/derived-points.js';
 import { allMidpoints, midpointOf, midpointTree, oppositeMidpointOf } from '../astrology/midpoints.js';
@@ -131,6 +131,8 @@ export interface PointVisibilityOptions {
   readonly midpointTreeOrb?: Degrees; // default 1
   /** The motion score column on the condition table (#724), a display-only option: off by default, and it changes no calculated value. */
   readonly motionScoreVisible?: boolean; // default false
+  /** The fixed-star paran table (#1407): its orb and the angle events it may use. Absent means the table is off. */
+  readonly fixedStarParans?: { readonly orb: Degrees; readonly events: readonly AngleEvent[] };
 }
 
 /** Stable display/selection key for an ephemeris body or a materialized user formula point. */
@@ -1016,6 +1018,55 @@ export function fixedStarRows(
       ...(source === undefined ? {} : { designation: source.designation, sourceSha256: source.sourceSha256 }),
     };
   });
+}
+
+/** One paran of a chosen fixed star and a visible body (#1407): which angle each is on, and how close in sidereal time. */
+export interface FixedStarParanRow {
+  readonly star: string;
+  readonly bodyKey: string;
+  readonly bodyName: string;
+  /** The angle event the star is on. */
+  readonly starEvent: AngleEvent;
+  /** The angle event the body is on. */
+  readonly bodyEvent: AngleEvent;
+  /** Degrees of sidereal time (ARMC) between the two events; 1 degree is 4 minutes of time. */
+  readonly orb: Degrees;
+}
+
+/**
+ * The fixed-star parans (#1407; Solar Fire Deluxe guide §21.1.2): every chosen star against every visible body, at the
+ * latitude the chart is cast for, within the setting's orb, keeping a paran only when both its events are among the
+ * events the setting allows ("Parans to Use"). Empty when the setting is off or the chart holds no paran coordinates
+ * (a composite or harmonic chart, or one calculated without `paranStars`).
+ */
+export function fixedStarParanRows(
+  data: ChartData,
+  options: PointVisibilityOptions = {},
+): readonly FixedStarParanRow[] {
+  const setting = options.fixedStarParans;
+  const points = data.paranPoints;
+  if (setting === undefined || points === undefined) return [];
+  const allowed = new Set<AngleEvent>(setting.events);
+  const rows: FixedStarParanRow[] = [];
+  for (const position of visiblePositions(data.positions, options)) {
+    const bodyPoint = points.bodies.get(position.body);
+    if (bodyPoint === undefined) continue;
+    const body = bodyById(position.body);
+    for (const [star, starPoint] of points.stars) {
+      for (const paran of parans(starPoint, bodyPoint, points.latitude, setting.orb)) {
+        if (!allowed.has(paran.angleA) || !allowed.has(paran.angleB)) continue;
+        rows.push({
+          star,
+          bodyKey: body?.key ?? String(position.body),
+          bodyName: body?.name ?? String(position.body),
+          starEvent: paran.angleA,
+          bodyEvent: paran.angleB,
+          orb: paran.orb,
+        });
+      }
+    }
+  }
+  return rows;
 }
 
 /**

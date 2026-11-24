@@ -17,7 +17,7 @@ import {
   PLACEMENT,
 } from '../src/ui/settings-groups.js';
 
-const OPTIONAL_KEYS = ['orbRules', 'stationWindow', 'motionScore', 'fortuneFormula'];
+const OPTIONAL_KEYS = ['orbRules', 'stationWindow', 'motionScore', 'fortuneFormula', 'fixedStarParans'];
 
 describe('the placement table', () => {
   it('names every Extended setting exactly once, and nothing that is not one', () => {
@@ -43,6 +43,7 @@ describe('the placement table', () => {
       'midpointTreeOrb',
       'stationWindow',
       'motionScore',
+      'fixedStarParans',
     ]);
   });
 

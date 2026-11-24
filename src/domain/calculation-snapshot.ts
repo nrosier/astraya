@@ -20,9 +20,13 @@
  * @exports CURRENT_SNAPSHOT_VERSION, MAX_SNAPSHOT_FIXED_STARS, decodeStrictExtendedSettings, CalculationSnapshot, buildCalculationSnapshot, snapshotCalculationOptions, calculationSnapshotIdentity, parseCalculationSnapshot, decodeCalculationSnapshot, SnapshotDecodeError, SNAPSHOT_ORB_SCALE_RANGE, calculationSnapshotToJson, normalizeFortuneFormula
  */
 import {
+  canonicalParanEvents,
   DEFAULT_EXTENDED_SETTINGS,
+  isAngleEvent,
+  isParanOrb,
   toChartCalculationOptions,
   type ExtendedSettings,
+  type FixedStarParansSetting,
 } from '../chart/extended-settings.js';
 import {
   DEFAULT_OBJECT_POLICIES,
@@ -55,6 +59,8 @@ import { readCustomPoints, readFixedStars, type ChosenFixedStar, type CustomPoin
  * all) still parses — it simply had no way to carry formula points, so it reads back with none.
  * #724's optional `stationWindow` and `motionScore` are not a bump either: absent means off, so every existing snapshot
  * reads back unchanged and one with both off serializes byte for byte as before.
+ * #1407's optional `fixedStarParans` is not a bump either: absent means off, so every existing snapshot reads back
+ * unchanged and one with it off serializes byte for byte as before.
  * #1794's optional `fortuneFormula` is not a bump either: it is present only when it is `'same-day-and-night'`, and a
  * missing one reads back as the default `DEFAULT_FORTUNE_FORMULA`, so every existing snapshot reads back unchanged and a
  * default snapshot keeps its old serialized form and identity.
@@ -333,6 +339,16 @@ function parseStationWindow(value: unknown): { stationWindow?: { readonly k: num
   return { stationWindow: { k: value.k } };
 }
 
+/**
+ * The fixed-star paran table (#1407): kept only when it is a record with a valid orb and a list of events. The events
+ * are put in canonical order and stripped of duplicates and anything that is not an angle event. An absent or invalid
+ * one is the off state, the same result as a settings bag with none.
+ */
+function parseFixedStarParans(value: unknown): { fixedStarParans?: FixedStarParansSetting } {
+  if (!isRecord(value) || !isParanOrb(value.orb) || !Array.isArray(value.events)) return {};
+  return { fixedStarParans: { orb: value.orb, events: canonicalParanEvents(value.events) } };
+}
+
 function parseExtendedSettings(value: unknown): ExtendedSettings {
   if (!isRecord(value)) return DEFAULT_EXTENDED_SETTINGS;
   const d = DEFAULT_EXTENDED_SETTINGS;
@@ -373,6 +389,8 @@ function parseExtendedSettings(value: unknown): ExtendedSettings {
     ...(value.motionScore === true ? { motionScore: true } : {}),
     // Last, beside motionScore (#1794): the non-default value only, so a default bag is unchanged and key order is fixed.
     ...(value.fortuneFormula === 'same-day-and-night' ? { fortuneFormula: 'same-day-and-night' as const } : {}),
+    // After fortuneFormula (#1407): present only when on, so a default bag is unchanged and key order is fixed.
+    ...parseFixedStarParans(value.fixedStarParans),
   };
 }
 
@@ -484,6 +502,17 @@ function invalidSettingFields(settings: Record<string, unknown>, requireAll = fa
     if (!isRecord(window) || !isStationWindowK(window.k)) problems.push('stationWindow');
   }
   if (settings.motionScore !== undefined && typeof settings.motionScore !== 'boolean') problems.push('motionScore');
+  if (settings.fixedStarParans !== undefined) {
+    const parans = settings.fixedStarParans;
+    if (
+      !isRecord(parans) ||
+      !isParanOrb(parans.orb) ||
+      !Array.isArray(parans.events) ||
+      !parans.events.every(isAngleEvent)
+    ) {
+      problems.push('fixedStarParans');
+    }
+  }
   return problems;
 }
 
