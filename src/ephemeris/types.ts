@@ -10,7 +10,7 @@
  * @module ephemeris/types
  * @purpose Defines the engine-agnostic types and the EphemerisProvider interface that form the boundary between the Swiss Ephemeris implementation and the rest of Astraya's astrology code.
  * @conventions Nothing in this file mentions sweph-wasm, so src/astrology/** and the UI depend only on these types and the engine stays swappable and testable without WebAssembly; every EphemerisProvider method is async because the real implementation runs in a Web Worker, and failures are thrown as EphemerisError rather than encoded as sentinel values.
- * @exports Degrees, JulianDayUT, CalendarSystem, BodyId, UserAyanamsa, Zodiac, GeoPosition, BodyPosition, HousePositions, HouseSystem, FixedStarPosition, FixedStarMagnitude, PositionOptions, HorizontalPosition, AzimuthAltitudeOptions, SolarEclipseKind, LunarEclipseKind, SolarEclipse, LunarEclipse, EphemerisProvider, EphemerisError, EphemerisErrorContext
+ * @exports Degrees, JulianDayUT, CalendarSystem, BodyId, UserAyanamsa, Zodiac, GeoPosition, BodyPosition, HousePositions, HouseSystem, needsSunDeclination, FixedStarPosition, FixedStarMagnitude, PositionOptions, HorizontalPosition, AzimuthAltitudeOptions, SolarEclipseKind, LunarEclipseKind, SolarEclipse, LunarEclipse, EphemerisProvider, EphemerisError, EphemerisErrorContext
  */
 
 /** Ecliptic longitude in degrees, 0 <= lon < 360, measured from 0° Aries. */
@@ -112,6 +112,14 @@ export interface HousePositions {
  * the boundary should not need editing when a system is added to the UI.
  */
 export type HouseSystem = string;
+
+/**
+ * Whether a house system divides the Sun's semi-arcs and so reads the Sun's declination: the two Sunshine solutions in
+ * Swiss Ephemeris, 'I' (Treindl) and 'i' (Makransky), both read it from `ascmc[9]` (#1935).
+ */
+export function needsSunDeclination(system: HouseSystem): boolean {
+  return system === 'I' || system === 'i';
+}
 
 /** A fixed star's position and motion at an instant. Identified by name, not `BodyId`. */
 export interface FixedStarPosition {
@@ -279,9 +287,17 @@ export interface EphemerisProvider {
    * cusp and angle afterwards, and never shifts `armc`, which is a right ascension. That does not hold for the
    * `SE_SIDBIT_ECL_T0` and `SE_SIDBIT_SSY_PLANE` modes, which project onto another plane. Same polar fallback and
    * warning as `houses`.
-   * The Sunshine system ('I') needs the Sun's declination and is refused.
+   * The Sunshine systems ('I', Treindl, and 'i', Makransky; see `needsSunDeclination`) divide the Sun's semi-arcs, so
+   * they read `sunDeclination`, the TROPICAL Sun's declination in degrees at the moment being cast (never derived from
+   * a sidereal longitude); without it 'I' and 'i' are refused (#1935). Every other system ignores `sunDeclination`.
    */
-  housesFromArmc(armc: Degrees, latitude: Degrees, obliquity: Degrees, system: HouseSystem): Promise<HousePositions>;
+  housesFromArmc(
+    armc: Degrees,
+    latitude: Degrees,
+    obliquity: Degrees,
+    system: HouseSystem,
+    sunDeclination?: Degrees,
+  ): Promise<HousePositions>;
 
   /**
    * The library's own display name for a house system, via `swe_house_name`.

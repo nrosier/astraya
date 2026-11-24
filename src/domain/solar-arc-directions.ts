@@ -18,7 +18,13 @@
  */
 import { findCrossAspects, type Aspect, type OrbConfig } from '../astrology/aspects.js';
 import { bodyIdsFor, type BodySetOptions, bodyByKey, bodyById, type BodyCategory } from '../astrology/bodies.js';
-import { ageInYears, mcArc, progressedJulianDay, shiftHouses } from '../astrology/progressions.js';
+import {
+  ageInYears,
+  mcArc,
+  progressedJulianDay,
+  progressedSunDeclination,
+  shiftHouses,
+} from '../astrology/progressions.js';
 import {
   arcsToExactness,
   directedSubjects,
@@ -29,15 +35,16 @@ import {
 } from '../astrology/solar-arc-directions.js';
 import { julianDayFor } from '../time/julian.js';
 import { resolveMoment } from '../time/resolve.js';
-import type {
-  BodyId,
-  Degrees,
-  EphemerisProvider,
-  GeoPosition,
-  HousePositions,
-  HouseSystem,
-  JulianDayUT,
-  Zodiac,
+import {
+  needsSunDeclination,
+  type BodyId,
+  type Degrees,
+  type EphemerisProvider,
+  type GeoPosition,
+  type HousePositions,
+  type HouseSystem,
+  type JulianDayUT,
+  type Zodiac,
 } from '../ephemeris/types.js';
 import type { BirthMomentInput } from '../time/types.js';
 
@@ -158,8 +165,8 @@ async function natalAngles(
 /**
  * The progressed Ascendant or Vertex at `progressedJd` (Solar Fire Deluxe guide §12.4 p. 78, §30.3.2.1), with the MC
  * progressed by True Solar Arc in Longitude: the natal MC plus the solar arc; its ARMC, with the progressed date's true
- * obliquity, gives the progressed angle through `housesFromArmc` at the natal latitude. Tropical frame (see the module
- * conventions).
+ * obliquity, gives the progressed angle through `housesFromArmc` at the natal latitude. Sunshine ('I' and 'i') also gets the
+ * progressed Sun's tropical declination (#1935). Tropical frame (see the module conventions).
  */
 async function progressedAngle(
   kind: 'ascendant' | 'vertex',
@@ -169,9 +176,10 @@ async function progressedAngle(
   place: GeoPosition,
   houseSystem: HouseSystem,
 ): Promise<Degrees> {
-  const [sun, obliquity] = await Promise.all([
+  const [sun, obliquity, sunDeclination] = await Promise.all([
     provider.position(progressedJd, SUN_ID),
     provider.obliquity(progressedJd),
+    needsSunDeclination(houseSystem) ? progressedSunDeclination(provider, progressedJd) : Promise.resolve(undefined),
   ]);
   const progressedMc = norm360(natal.midheaven + signedArc(sun.longitude - natal.sunLongitude));
   const progressed = await provider.housesFromArmc(
@@ -179,6 +187,7 @@ async function progressedAngle(
     place.latitude,
     obliquity,
     houseSystem,
+    sunDeclination,
   );
   return kind === 'ascendant' ? progressed.ascendant : progressed.vertex;
 }

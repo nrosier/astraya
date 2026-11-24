@@ -8,7 +8,13 @@
  * interface issue lands.
  */
 import { describe, expect, it } from 'vitest';
-import { computeProgressedHouses, shiftHouses, TROPICAL_YEAR_DAYS } from '../src/astrology/progressions.js';
+import { eclipticToEquatorial } from '../src/astrology/primary-directions.js';
+import {
+  computeProgressedHouses,
+  progressedSunDeclination,
+  shiftHouses,
+  TROPICAL_YEAR_DAYS,
+} from '../src/astrology/progressions.js';
 import { computeSecondaryProgression } from '../src/domain/secondary-progression.js';
 import type { GeoPosition, HousePositions, Zodiac } from '../src/ephemeris/types.js';
 import { julianDayFor } from '../src/time/julian.js';
@@ -132,5 +138,95 @@ describe('progressed angles from the progressed MC (#1935)', () => {
     const arc = 30 * (360 / TROPICAL_YEAR_DAYS);
     expect(arcsecondsBetween(result.houses.ascendant, natalHouses.ascendant + arc)).toBeLessThan(1);
     expect(arcsecondsBetween(result.houses.cusps[1] ?? 0, (natalHouses.cusps[1] ?? 0) + arc)).toBeLessThan(1);
+  });
+  describe('Sunshine (house system I) gets the progressed Sun declination (#1935)', () => {
+    const SUNSHINE_PLACES: readonly GeoPosition[] = [NATAL_PLACE, { latitude: 51.5, longitude: -0.12, altitude: 0 }];
+
+    for (const mcMethod of ['naibod', 'solarArc'] as const) {
+      for (const place of SUNSHINE_PLACES) {
+        it(`${mcMethod} at ${String(place.latitude)} N returns finite cusps and does not throw`, async () => {
+          const engine = await getEngine();
+          const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
+          const result = await computeProgressedHouses(
+            engine,
+            natalJd,
+            natalJd + TROPICAL_YEAR_DAYS * 25,
+            await engine.houses(natalJd, place, 'I'),
+            (await engine.position(natalJd, 0)).longitude,
+            place,
+            { mcMethod, houseSystem: 'I' },
+          );
+          expect(result.houses.system).toBe('I');
+          for (let house = 1; house <= 12; house += 1) expect(Number.isFinite(result.houses.cusps[house])).toBe(true);
+        });
+      }
+    }
+
+    it("'i' (Makransky's Sunshine) under naibod at 38.75 N gets the declination: finite cusps, no throw", async () => {
+      const engine = await getEngine();
+      const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
+      const result = await computeProgressedHouses(
+        engine,
+        natalJd,
+        natalJd + TROPICAL_YEAR_DAYS * 25,
+        await engine.houses(natalJd, NATAL_PLACE, 'i'),
+        (await engine.position(natalJd, 0)).longitude,
+        NATAL_PLACE,
+        { mcMethod: 'naibod', houseSystem: 'i' },
+      );
+      expect(result.houses.system).toBe('i');
+      for (let house = 1; house <= 12; house += 1) expect(Number.isFinite(result.houses.cusps[house])).toBe(true);
+      // It used the progressed Sun's declination, not a leftover value in the reused buffer.
+      const declination = await progressedSunDeclination(engine, result.progressedJd);
+      const obliquity = await engine.obliquity(result.progressedJd);
+      const direct = await engine.housesFromArmc(result.houses.armc, NATAL_PLACE.latitude, obliquity, 'i', declination);
+      expect(arcsecondsBetween(result.houses.cusps[2] ?? Number.NaN, direct.cusps[2] ?? Number.NaN)).toBeLessThan(1);
+    });
+
+    it('the declination used equals eclipticToEquatorial of the tropical progressed Sun (1e-6 degrees)', async () => {
+      // Tolerance: both sides are the same apparent place of date through the same true obliquity; only floating-point
+      // rounding separates them, far below 1e-6 degrees.
+      const engine = await getEngine();
+      const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
+      const progressedJd = natalJd + 25;
+      const [tropicalSun] = await engine.positions(progressedJd, [0]);
+      const obliquity = await engine.obliquity(progressedJd);
+      const expected = eclipticToEquatorial(
+        tropicalSun?.longitude ?? Number.NaN,
+        tropicalSun?.latitude ?? Number.NaN,
+        obliquity,
+      );
+      const used = await progressedSunDeclination(engine, progressedJd);
+      expect(Math.abs(used - expected.declination)).toBeLessThan(1e-6);
+    });
+
+    it('a sidereal chart uses the TROPICAL declination, not the one from the sidereal longitude', async () => {
+      const engine = await getEngine();
+      const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
+      const targetJd = natalJd + TROPICAL_YEAR_DAYS * 25;
+      const natalHouses = await engine.houses(natalJd, NATAL_PLACE, 'I', SIDEREAL);
+      const natalSun = (await engine.positions(natalJd, [0], { zodiac: SIDEREAL }))[0]?.longitude ?? Number.NaN;
+      const result = await computeProgressedHouses(engine, natalJd, targetJd, natalHouses, natalSun, NATAL_PLACE, {
+        mcMethod: 'naibod',
+        houseSystem: 'I',
+        zodiac: SIDEREAL,
+      });
+      const progressedJd = result.progressedJd;
+      const ayanamsa = await engine.ayanamsa(progressedJd, 1);
+      const obliquity = await engine.obliquity(progressedJd);
+      const [tropicalSun] = await engine.positions(progressedJd, [0]);
+      const [siderealSun] = await engine.positions(progressedJd, [0], { zodiac: SIDEREAL });
+      const tropicalDec = eclipticToEquatorial(tropicalSun?.longitude ?? Number.NaN, 0, obliquity).declination;
+      const siderealDec = eclipticToEquatorial(siderealSun?.longitude ?? Number.NaN, 0, obliquity).declination;
+      expect(Math.abs(tropicalDec - siderealDec)).toBeGreaterThan(0.5); // the wrong source would be visibly wrong
+      const cast = async (declination: number): Promise<number> =>
+        (await engine.housesFromArmc(result.houses.armc, NATAL_PLACE.latitude, obliquity, 'I', declination)).cusps[2] ??
+        Number.NaN;
+      const expectedCusp2 = ((((await cast(tropicalDec)) - ayanamsa) % 360) + 360) % 360;
+      const wrongCusp2 = ((((await cast(siderealDec)) - ayanamsa) % 360) + 360) % 360;
+      const actual = result.houses.cusps[2] ?? Number.NaN;
+      expect(arcsecondsBetween(actual, expectedCusp2)).toBeLessThan(1);
+      expect(arcsecondsBetween(actual, wrongCusp2)).toBeGreaterThan(10);
+    });
   });
 });
