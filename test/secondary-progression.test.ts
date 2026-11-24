@@ -77,10 +77,11 @@ describe('computeSecondaryProgression (#46)', () => {
     const quotidian = await computeSecondaryProgression(NATAL, targetJd, engine, { mcMethod: 'quotidian' });
 
     // The MCs stay close between the two methods (see progressions.ts's doc comment
-    // for why), but the Ascendant is a non-linear function of sidereal time,
-    // latitude and obliquity for quotidian rather than a rigid rotation of the
-    // natal one, so it diverges from naibod's by a large margin over a decade.
-    expect(arcsecondsBetween(naibod.houses.ascendant, quotidian.houses.ascendant)).toBeGreaterThan(3600);
+    // for why). Since #1935 naibod derives the Ascendant from its progressed MC
+    // (Solar Fire Deluxe guide §30.3.2.1), not from a rigid rotation of the natal
+    // one, so the Ascendants are closer than before; they still differ materially
+    // over a decade (measured 1572.7" on the #1935 engine path, bound 1000").
+    expect(arcsecondsBetween(naibod.houses.ascendant, quotidian.houses.ascendant)).toBeGreaterThan(1000);
   });
 
   it('respects an explicit house system for the houses that follow the progressed MC', async () => {
