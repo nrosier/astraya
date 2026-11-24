@@ -194,6 +194,10 @@ export function conceptionFromGestation(
 ): { readonly year: number; readonly dayOfYear: number } {
   const direct = birthDayOfYear - gestationDays;
   if (direct >= 1) return { year: birthYear, dayOfYear: direct };
+  // The page (Lilly 1647, p. 503-504) does not state this edge case; this is the owner's decision recorded on #1407. A
+  // zero count falls on 31 December of the year before, the closest date the page's method gives. The length is that of
+  // the previous year, which may be common (365) while the birth year is bissextile (366).
+  if (direct === 0) return { year: birthYear - 1, dayOfYear: daysInYear(birthYear - 1) };
   return { year: birthYear - 1, dayOfYear: direct + daysInYear(birthYear) };
 }
 

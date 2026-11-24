@@ -162,3 +162,33 @@ describe('computeTrutineConception on the real engine (pp. 502-504)', () => {
     await expect(computeTrutineConception(gregorian, engine)).rejects.toThrow(RangeError);
   });
 });
+
+describe('the year-boundary wrap at a zero or minus-one count (p. 504 bissextile rule; the zero case is the owner decision on #1407)', () => {
+  it('returns 31 December 1615 for the 1616 bissextile birth with count 0 (birth day 285, gestation 285) without throwing (owner decision on #1407)', () => {
+    const conception = conceptionFromGestation(1616, 285, 285);
+    expect(conception).toEqual({ year: 1615, dayOfYear: 365 });
+    expect(julianDateFromDayOfYear(conception.year, conception.dayOfYear)).toEqual({ year: 1615, month: 12, day: 31 });
+  });
+
+  it('returns 31 December of the year before for a zero count in a leap and a common birth year (owner decision on #1407)', () => {
+    // 1616 is bissextile (year before 1615 is common, 365). 1617 is common (year before 1616 is bissextile, 366).
+    expect(conceptionFromGestation(1616, 285, 285)).toEqual({ year: 1615, dayOfYear: 365 });
+    expect(conceptionFromGestation(1617, 285, 285)).toEqual({ year: 1616, dayOfYear: 366 });
+    expect(julianDateFromDayOfYear(1616, 366)).toEqual({ year: 1616, month: 12, day: 31 });
+  });
+
+  it('gives a valid calendar day for counts 0 and -1 in a leap birth year 1616 and a common birth year 1617 (p. 504; the -1 result is an extension the page does not state)', () => {
+    // gestation 285 throughout; the birth day is 285 + count, so the direct count is exactly `count`.
+    const cases = [
+      { birthYear: 1616, count: 0, year: 1615, dayOfYear: 365, date: { year: 1615, month: 12, day: 31 } },
+      { birthYear: 1616, count: -1, year: 1615, dayOfYear: 365, date: { year: 1615, month: 12, day: 31 } },
+      { birthYear: 1617, count: 0, year: 1616, dayOfYear: 366, date: { year: 1616, month: 12, day: 31 } },
+      { birthYear: 1617, count: -1, year: 1616, dayOfYear: 364, date: { year: 1616, month: 12, day: 29 } },
+    ];
+    for (const row of cases) {
+      const conception = conceptionFromGestation(row.birthYear, 285 + row.count, 285);
+      expect(conception).toEqual({ year: row.year, dayOfYear: row.dayOfYear });
+      expect(julianDateFromDayOfYear(conception.year, conception.dayOfYear)).toEqual(row.date);
+    }
+  });
+});
