@@ -32,7 +32,15 @@ export interface AdminUser {
 
 /** Mirrors `server/ops/deletion-impact.ts`'s `DeletionImpact`. */
 export type DeletionImpact =
-  | { readonly kind: 'counted'; readonly people: number; readonly charts: number }
+  | {
+      readonly kind: 'counted';
+      readonly people: number;
+      readonly charts: number;
+      readonly pins: number;
+      readonly savedQueries: number;
+      readonly chartSearches: number;
+      readonly horaryJudgments: number;
+    }
   | { readonly kind: 'approximate'; readonly opRows: number };
 
 /** Thrown for a request the server actively rejected (not an admin, last-admin guard, ...). */

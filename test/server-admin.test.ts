@@ -891,7 +891,59 @@ describe('POST /api/admin/users/:id/deletion-impact', () => {
       cookies: { [SESSION_COOKIE]: adminCookie },
     });
     expect(impact.statusCode).toBe(200);
-    expect(impact.json()).toEqual({ kind: 'counted', people: 2, charts: 1 });
+    expect(impact.json()).toEqual({
+      kind: 'counted',
+      people: 2,
+      charts: 1,
+      pins: 0,
+      savedQueries: 0,
+      chartSearches: 0,
+      horaryJudgments: 0,
+    });
+  });
+
+  it('counts every stored kind the server can see, once per distinct id (#1960)', async () => {
+    const adminCookie = await setupAdmin(app);
+    const bobCookie = await createAndLoginUser(app, 'bob', 'correct-horse-battery');
+    const bob = (
+      await app.inject({ method: 'GET', url: '/api/admin/users', cookies: { [SESSION_COOKIE]: adminCookie } })
+    )
+      .json<{ users: { id: string; username: string }[] }>()
+      .users.find((u) => u.username === 'bob');
+    if (!bob) throw new Error('bob not found');
+
+    const clockRef: ClockRef = { current: createClock(randomNodeId()) };
+    const write = (entity: string, entityId: string, field: string, value: string) =>
+      pushOp(app, bobCookie, clockRef, { entity, entityId, field, value });
+    await write('person', 'p-1', 'name', 'Ada');
+    await write('chart', 'c-1', 'title', 'Natal');
+    await write('chart', 'c-2', 'title', 'Solar');
+    await write('pin', 'n-1', 'target', 'x');
+    await write('pin', 'n-1', 'deleted', 'x');
+    await write('pin', 'n-2', 'target', 'x');
+    await write('pin', 'n-3', 'target', 'x');
+    await write('savedQuery', 'q-1', 'name', 'Mars');
+    await write('chartSearch', 's-1', 'name', 'Sun');
+    await write('chartSearch', 's-2', 'name', 'Moon');
+    await write('horaryJudgment', 'h-1', 'question', 'Will it?');
+    // A kind the confirmation does not name is not counted under any of them.
+    await write('birthNote', 'b-1', 'text', 'note');
+
+    const impact = await app.inject({
+      method: 'POST',
+      url: `/api/admin/users/${bob.id}/deletion-impact`,
+      cookies: { [SESSION_COOKIE]: adminCookie },
+    });
+    expect(impact.statusCode).toBe(200);
+    expect(impact.json()).toEqual({
+      kind: 'counted',
+      people: 1,
+      charts: 2,
+      pins: 3,
+      savedQueries: 1,
+      chartSearches: 2,
+      horaryJudgments: 1,
+    });
   });
 
   it('returns an approximate row count when no encryption key is configured', async () => {
