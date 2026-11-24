@@ -14,7 +14,7 @@
  * @module solar-arc-directions
  * @purpose Computes a solar arc directions chart for a target date (#47): the natal Sun's own progressed arc applied uniformly to every body and angle.
  * @conventions Moving every house cusp and angle by the solar arc follows Tyl, *Solar Arcs* (2001): the Ascendant and Midheaven "arc the same in all House systems" (PDF 284). Mirrors `secondary-progression.ts`'s shape (natal Julian day, one house and one batch position call), but applies the shared solar arc to every body/angle rather than only rotating angles (secondary progression's `'solarArc'` MC method); contacts to the fixed natal chart use `findCrossAspects`, and each found contact is additionally resolved to its exact date against the real ephemeris since the arc is not perfectly linear in time. Both Suns are read in the requested zodiac. Arc kinds and multipliers (#1407) follow the Solar Fire Deluxe guide §12.4 (PDF pp. 78-80): the Ascendant (Vertex) arc is the distance moved by the secondary progressed Ascendant (Vertex), which Solar Fire derives from the progressed MC (§30.3.2.1). Of Solar Fire's five MC methods this fixes True Solar Arc in Longitude: natal MC plus the solar arc in longitude, converted to its ARMC with the progressed date's true obliquity and cast with `housesFromArmc` at the natal latitude (owner decision on #1407, 2026-11-23; obliquity per the astrologer review of PR #1936). That angle work is done in the tropical frame; in a sidereal chart the arc then differs from a sidereal measurement only by the ayanamsa's motion over the progressed days: about 0.14" per year of age for the solar arc, and about 0.14" x (1 + dAsc/dMC) per year for the Ascendant arc, where the Ascendant outruns the MC (astrologer review of PR #1939). The Ascendant and Vertex arcs are summed over quarter-day steps, so an arc past 180 degrees keeps its true size; inside the polar circles the Ascendant can jump within a step, and the arc then follows the shorter way round at that step. The multiplier is one of x1, x2, x0.5, x-1, x-2, x-0.5 (guide p. 80) and scales the arc before it is applied. Exact contact dates are solved for the solar arc only; for the Ascendant and Vertex arcs they are undefined. Converse (guide §12.4 p. 80, owner decision on #1407 Q1) evaluates the same arc on the day as many days before birth as the forward one is after it, so the arc is negative; it is separate from the x-1 multiplier and composes with it. "Converse" has more than one meaning: Carter (Symbolic Directions) applies it to moving points backwards by the same forward arc, which here is the x-1 multiplier, not this option (astrologer review of PR #1943).
- * @exports computeSolarArcDirections, SolarArcDirectionsData, SolarArcDirectionsOptions, DirectedContact, SolarArcKind, SolarArcMultiplier, SOLAR_ARC_MULTIPLIERS, SOLAR_ARC_ACTIVE_ORB_DEG
+ * @exports computeSolarArcDirections, SolarArcDirectionsData, SolarArcDirectionsOptions, DirectedContact, SolarArcKind, SolarArcMultiplier, SOLAR_ARC_KINDS, SOLAR_ARC_MULTIPLIERS, SOLAR_ARC_ACTIVE_ORB_DEG
  */
 import { findCrossAspects, type Aspect, type OrbConfig } from '../astrology/aspects.js';
 import { bodyIdsFor, type BodySetOptions, bodyByKey, bodyById, type BodyCategory } from '../astrology/bodies.js';
@@ -31,7 +31,11 @@ import {
   directPositions,
   findExactnessJd,
   fixedNatalSubjects,
+  SOLAR_ARC_KINDS,
+  SOLAR_ARC_MULTIPLIERS,
   type DirectedPosition,
+  type SolarArcKind,
+  type SolarArcMultiplier,
 } from '../astrology/solar-arc-directions.js';
 import { julianDayFor } from '../time/julian.js';
 import { resolveMoment } from '../time/resolve.js';
@@ -57,12 +61,9 @@ const SUN_ID: BodyId = ((): BodyId => {
 /** Placidus, matching `chart-compute.ts` and `secondary-progression.ts`'s default. */
 const DEFAULT_HOUSE_SYSTEM: HouseSystem = 'P';
 
-/** Which arc directs the chart (Solar Fire Deluxe guide §12.4, p. 78): the Sun's, the Ascendant's or the Vertex's. */
-export type SolarArcKind = 'solar' | 'ascendant' | 'vertex';
-
-/** The arc multipliers Solar Fire offers (guide §12.4, p. 80): Normal, Double, Half and their negatives. */
-export const SOLAR_ARC_MULTIPLIERS = [1, 2, 0.5, -1, -2, -0.5] as const;
-export type SolarArcMultiplier = (typeof SOLAR_ARC_MULTIPLIERS)[number];
+// The kinds and multipliers live in `astrology/solar-arc-directions.ts` so a screen can list them without importing this
+// module's calculation; they are re-exported here, where they were first defined (#1407).
+export { SOLAR_ARC_KINDS, SOLAR_ARC_MULTIPLIERS, type SolarArcKind, type SolarArcMultiplier };
 
 export interface SolarArcDirectionsOptions extends BodySetOptions {
   /** The orbs the cross-chart aspects are found with (#590); the Extended settings' orbs when a chart is drawn from them. */

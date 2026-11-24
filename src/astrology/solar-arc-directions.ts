@@ -15,7 +15,7 @@
  * @module SolarArcDirections
  * @purpose Carries every natal body and angle forward by the secondary-progressed Sun's true solar arc, and finds exact contacts to the (unmoving) natal chart.
  * @conventions Reuses mcArc('solarArc', ...) from progressions.ts for the shared arc formula, but unlike secondary progression's own solarArc MC method, applies the arc to every body, not just the angles; exactness is found by bisection against the real ephemeris, since the true Sun's daily motion is not perfectly linear. Both Suns are read in the requested zodiac. Tyl, *Solar Arcs* (2001): the arc is each individual's own progressed Sun motion, not Naibod's mean (PDF 24-26), added to every planet and point, the nodal axis and the angles (PDF 29). Tyl uses only the hard aspects (conjunction, square, opposition, semisquare, sesquiquadrate; PDF 35); Astraya finds every aspect in the orb settings, a recorded difference kept by the owner (#1604, 2026-11-24).
- * @exports directPositions, directedSubjects, fixedNatalSubjects, arcsToExactness, findExactnessJd
+ * @exports directPositions, directedSubjects, fixedNatalSubjects, arcsToExactness, findExactnessJd, SOLAR_ARC_KINDS, SolarArcKind, SOLAR_ARC_MULTIPLIERS, SolarArcMultiplier
  */
 import { type AspectSubject } from './aspects.js';
 import { bodyByKey, type BodyCategory } from './bodies.js';
@@ -37,6 +37,14 @@ export interface DirectedPosition {
 export function directPositions(natalPositions: readonly BodyPosition[], arc: Degrees): readonly DirectedPosition[] {
   return natalPositions.map((position) => ({ body: position.body, longitude: norm360(position.longitude + arc) }));
 }
+
+/** Which arc directs the chart (Solar Fire Deluxe guide §12.4, p. 78): the Sun's, the Ascendant's or the Vertex's (#1407). */
+export const SOLAR_ARC_KINDS = ['solar', 'ascendant', 'vertex'] as const;
+export type SolarArcKind = (typeof SOLAR_ARC_KINDS)[number];
+
+/** The arc multipliers Solar Fire offers (guide §12.4, p. 80): Normal, Double, Half and their negatives (#1407). */
+export const SOLAR_ARC_MULTIPLIERS = [1, 2, 0.5, -1, -2, -0.5] as const;
+export type SolarArcMultiplier = (typeof SOLAR_ARC_MULTIPLIERS)[number];
 
 /**
  * Aspect subjects for the moving, directed side of a directed-to-natal
