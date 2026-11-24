@@ -16,7 +16,7 @@
  * @module AdminPanel
  * @purpose Renders the admin user-management screen (create/disable/enable/reset-password/change-role/delete) and the separate AI-customized interpretation usage report screen.
  * @conventions Server enforces the real role check (super-admin vs admin vs user); this component only reads `useSessionUserOrUndefined()` to decide which controls to render. Text comes from co-located `AdminPanel.messages.ts` via `useMessages()`.
- * @exports AdminPanel, AdminUsagePanel
+ * @exports AdminPanel, AdminUsagePanel, describeImpact
  */
 import { useLocale } from './locale.js';
 import { formatCents, formatInteger, formatTimestamp } from './format.js';
@@ -58,11 +58,19 @@ function roleLabel(role: Role, t: typeof adminPanelMessages.en): string {
   return role === 'super_admin' ? t.superAdminRoleLabel : role === 'admin' ? t.adminRoleLabel : t.memberRoleLabel;
 }
 
-function describeImpact(impact: DeletionImpact, t: typeof adminPanelMessages.en): string {
+/** One localised line naming each non-zero stored kind, in a fixed order (#1960). Informational only. */
+export function describeImpact(impact: DeletionImpact, t: typeof adminPanelMessages.en): string {
   if (impact.kind === 'counted') {
-    const people = impact.people === 1 ? t.onePerson : t.peopleCount(String(impact.people));
-    const charts = impact.charts === 1 ? t.oneChart : t.chartsCount(String(impact.charts));
-    return t.peopleAndCharts(people, charts);
+    const kinds: readonly (readonly [number, string, (n: string) => string])[] = [
+      [impact.people, t.onePerson, t.peopleCount],
+      [impact.charts, t.oneChart, t.chartsCount],
+      [impact.pins, t.onePin, t.pinsCount],
+      [impact.savedQueries, t.oneSavedQuery, t.savedQueriesCount],
+      [impact.chartSearches, t.oneChartSearch, t.chartSearchesCount],
+      [impact.horaryJudgments, t.oneHoraryJudgment, t.horaryJudgmentsCount],
+    ];
+    const parts = kinds.filter(([n]) => n > 0).map(([n, one, many]) => (n === 1 ? one : many(String(n))));
+    return parts.length === 0 ? t.noStoredItems : t.joinKinds(parts);
   }
   const rows = impact.opRows === 1 ? t.oneStoredChange : t.storedChangesCount(String(impact.opRows));
   return t.unconfiguredSyncSuffix(rows);
