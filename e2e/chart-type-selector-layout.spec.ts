@@ -55,7 +55,15 @@ async function box(locator: Locator): Promise<{ top: number; bottom: number; hei
   return { top: result.y, bottom: result.y + result.height, height: result.height };
 }
 
-const CHART_TYPE_LABELS = ['Natal', 'Draconic', 'Harmonic', 'Solar return', 'Lunar return', 'Relocated'] as const;
+const CHART_TYPE_LABELS = [
+  'Natal',
+  'Draconic',
+  'Harmonic',
+  'Solar return',
+  'Lunar return',
+  'Lunar phase return',
+  'Relocated',
+] as const;
 
 /** Computed CSS values of the selector wrapper, its field and its label. */
 interface SelectorStyles {

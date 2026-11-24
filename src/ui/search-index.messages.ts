@@ -99,6 +99,7 @@ const en = {
     heliocentric: ['heliocentric', 'sun centred', 'sun-centred', 'helio'],
     'solar-return': ['solar return', 'sr', 'revolution', 'birthday chart', 'annual return', 'solar revolution'],
     'lunar-return': ['lunar return', 'lr', 'monthly return', 'moon return'],
+    'lunar-phase-return': ['lunar phase return', 'phase return', 'lunation return'],
     relocated: ['relocated', 'relocation', 'location chart', 'moved chart'],
   } satisfies Record<ChartType, readonly string[]>,
   chartTypeDescriptions: {
@@ -108,6 +109,7 @@ const en = {
     heliocentric: 'The planets as seen from the Sun.',
     'solar-return': 'The chart for the moment the Sun returns to its natal place.',
     'lunar-return': 'The chart for the moment the Moon returns to its natal place.',
+    'lunar-phase-return': 'The chart for the moment the Sun-Moon phase angle returns to its natal value.',
     relocated: 'The natal chart cast for another place.',
   } satisfies Record<ChartType, string>,
   chartViewKeywords: {
@@ -241,6 +243,7 @@ const nl: typeof en = {
     heliocentric: ['heliocentrisch', 'zon als middelpunt', 'helio'],
     'solar-return': ['zonneterugkeer', 'sr', 'zonnerevolutie', 'verjaardagshoroscoop', 'jaarlijkse terugkeer'],
     'lunar-return': ['maanterugkeer', 'lr', 'maandelijkse terugkeer', 'maanterugkeer horoscoop'],
+    'lunar-phase-return': ['maanfaseterugkeer', 'faseterugkeer'],
     relocated: ['verplaatst', 'verplaatsing', 'locatiehoroscoop', 'verhuisde horoscoop'],
   } satisfies Record<ChartType, readonly string[]>,
   chartTypeDescriptions: {
@@ -250,6 +253,8 @@ const nl: typeof en = {
     heliocentric: 'De planeten gezien vanuit de zon.',
     'solar-return': 'De horoscoop op het moment dat de zon terugkeert naar haar geboortestand.',
     'lunar-return': 'De horoscoop op het moment dat de maan terugkeert naar haar geboortestand.',
+    'lunar-phase-return':
+      'De horoscoop op het moment dat de fasehoek tussen zon en maan terugkeert naar die bij de geboorte.',
     relocated: 'De geboortehoroscoop, berekend voor een andere plaats.',
   } satisfies Record<ChartType, string>,
   chartViewKeywords: {

@@ -61,6 +61,7 @@ import { computeHeliocentric } from '../domain/heliocentric.js';
 import { computeRelocatedChart } from '../domain/relocated-chart.js';
 import { computeHarmonic } from '../domain/harmonic.js';
 import { computeSolarReturnChart, computeLunarReturnChart } from '../domain/return-chart.js';
+import { computeLunarPhaseReturnChart } from '../domain/lunar-phase-return.js';
 import {
   allMidpointsRows,
   almutenOfAscendant,
@@ -690,6 +691,7 @@ export function sectionCalculationOptions(
       return { ...toChartCalculationOptions(settings), rulership, ...customPoints, ...fixedStars };
     case 'solar-return':
     case 'lunar-return':
+    case 'lunar-phase-return':
       return { ...toChartCalculationOptions(settings), rulership };
     case 'draconic':
     case 'harmonic':
@@ -711,6 +713,7 @@ function derivedFormulaOfSection(type: PdfChartSectionOptions['type'], settings:
     case 'natal':
     case 'solar-return':
     case 'lunar-return':
+    case 'lunar-phase-return':
       return settings.fortuneFormula ?? DEFAULT_FORTUNE_FORMULA;
     case 'draconic':
     case 'harmonic':
@@ -752,6 +755,18 @@ async function computeSectionChartData(
       const [y, m, d] = fromDate.split('-').map(Number);
       const fromJd = await provider.julianDay(y ?? 2000, m ?? 1, d ?? 1, 0);
       const result = await computeLunarReturnChart(person.moment, fromJd, provider, {
+        ...calcOptions,
+        ...(place === undefined ? {} : { place }),
+      });
+      return result.chart;
+    }
+    case 'lunar-phase-return': {
+      // Not selectable from PdfExportBuilder's own UI either (PDF_CHART_TYPES omits it, #1407); here so the switch stays
+      // exhaustive over the full ChartType union. It is the return after the date, at the chosen place or the birthplace.
+      const fromDate = options.returnFromDate ?? utcDay();
+      const [y, m, d] = fromDate.split('-').map(Number);
+      const searchJd = await provider.julianDay(y ?? 2000, m ?? 1, d ?? 1, 0);
+      const result = await computeLunarPhaseReturnChart(person.moment, searchJd, provider, {
         ...calcOptions,
         ...(place === undefined ? {} : { place }),
       });
