@@ -4230,14 +4230,6 @@ button.app-nav-search.primitive-button-circle {
   margin: 0;
 }
 
-/* The AstroChart reference wheel shown alongside Astraya's own rendering in dev builds
-   only, for side-by-side comparison (#231-adjacent). */
-.chart-wheel-reference {
-  margin: 1.5rem auto 0;
-  max-width: 55rem;
-  text-align: center;
-}
-
 /*
  * The chart wheel (#39-#42, #52's single-ring case). Every shape in the generated
  * markup carries a class and no inline colour, by design (see `src/chart/glyphs.ts`'s
@@ -5744,7 +5736,6 @@ svg text.chart-symbol-text-unicode {
   .back,
   .tab-row--always,
   .person-nav,
-  .chart-wheel-reference,
   .data-table-actions,
   .report-controls,
   .pwastatus,

@@ -9,8 +9,8 @@
  * same requirement `person` itself is gated on below — since a bi-wheel needs houses on both
  * rings.
  *
- * The wheel bypasses `AstroChartWheel.tsx` (single-chart only) the same way `TransitView.tsx`
- * does, calling `renderMultiWheelSvg` directly. Unlike a transit wheel, neither side is a
+ * The wheel calls `renderMultiWheelSvg` directly, the same way `TransitView.tsx`
+ * does. Unlike a transit wheel, neither side is a
  * "reference at rest" the other moves against, so `computeSynastry` uses each chart's own real
  * speed on both sides (see that module's doc comment) — and correspondingly there is no
  * inner/outer convention rooted in the astrology here, only in the SVG's ring order.
@@ -18,7 +18,7 @@
 /**
  * @module SynastryView
  * @purpose Synastry bi-wheel screen comparing a saved person against a second saved person: cross-chart aspects, ranked contacts, house overlays via RelationshipSummary, and interpretation text.
- * @conventions Calls renderMultiWheelSvg directly like TransitView.tsx does, bypassing the single-chart AstroChartWheel; uses SynastryView.messages.ts for en/nl text via useMessages(). Carries its own PrintProvenance footer (#564) labelled with engine defaults, since computeSynastry doesn't yet take a user-configurable calculation snapshot.
+ * @conventions Calls renderMultiWheelSvg directly like TransitView.tsx does; uses SynastryView.messages.ts for en/nl text via useMessages(). Carries its own PrintProvenance footer (#564) labelled with engine defaults, since computeSynastry doesn't yet take a user-configurable calculation snapshot.
  * @exports SynastryView, aspectColumns
  */
 import { GlossaryText } from './GlossaryText.js';

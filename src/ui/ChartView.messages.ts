@@ -357,9 +357,6 @@ const en = {
   calculating: 'Calculating…',
   chartError: (message: string) => `The chart could not be calculated. ${message}`,
 
-  astrochartReferenceHeading: 'AstroChart reference rendering (dev only)',
-  astrochartReferenceHint: 'Shown for comparison only — exports always use Astraya’s own rendering above.',
-
   exportPdfCreator: 'Export PDF',
 
   thisPerson: 'this person',
@@ -759,10 +756,6 @@ const nl: typeof en = {
 
   calculating: 'Berekenen…',
   chartError: (message: string) => `De horoscoop kon niet worden berekend. ${message}`,
-
-  astrochartReferenceHeading: 'AstroChart-referentieweergave (alleen dev)',
-  astrochartReferenceHint:
-    'Alleen getoond ter vergelijking — exports gebruiken altijd Astraya’s eigen weergave hierboven.',
 
   exportPdfCreator: 'PDF exporteren',
 
