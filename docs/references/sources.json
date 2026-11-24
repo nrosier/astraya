@@ -1442,7 +1442,7 @@
     "status": "extracted",
     "copyrighted": true,
     "provisional": false,
-    "used_by": [],
+    "used_by": ["src/astrology/arabic-parts.ts", "src/astrology/rectification.ts", "src/chart/extended-settings.ts"],
     "notes": "Title page and copyright page confirmed by OCR. The scanned file is a 123-page OCR copy (ABBYY FineReader 14). Directions and rectification chapters are the relevant parts; not yet checked against any Astraya code."
   },
   {
@@ -1462,7 +1462,11 @@
     "status": "extracted",
     "copyrighted": true,
     "provisional": false,
-    "used_by": ["src/astrology/rectification.ts"],
+    "used_by": [
+      "src/astrology/rectification.ts",
+      "src/astrology/solar-arc-directions.ts",
+      "src/domain/solar-arc-directions.ts"
+    ],
     "notes": "The copyright page reads First Edition, First Printing, 2001 (Llewellyn Publications, ISBN 0-7387-0054-2), so the id was changed from its provisional undated form to tyl-solar-arcs-2001 and the record is no longer provisional (owner decision on #1604, 2026-11-15). The file was made from an .mobi and is not a print copy."
   },
   {
