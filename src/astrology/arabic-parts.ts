@@ -11,7 +11,9 @@
  * repeating the day/night branch at every call site.
  *
  * The catalogue is exactly Paulus's seven (Introduction 23, as presented in
- * Hellenistic astrology, Chapter 16, printed pp. 525-526): Fortune and Spirit
+ * Hellenistic astrology, Chapter 16, printed pp. 525-526), checked against Paulus's own
+ * text in Greenbaum's translation, *Late Classical Astrology* (2011), ch. 23, PDF pp. 57-58
+ * (#869, 2026-11-24): every formula, by day and by night, matches. Fortune and Spirit
  * from the luminaries, and Eros, Necessity, Courage, Victory and Nemesis from
  * a planet and Fortune or Spirit. Eros, Necessity, Courage, Victory and Nemesis
  * take the Fortune and Spirit longitudes as inputs, so compute those first.
@@ -25,7 +27,7 @@
 /**
  * @module ArabicParts
  * @purpose Computes Paulus's seven Hermetic lots (Fortune, Spirit, Eros, Necessity, Courage, Victory, Nemesis) and records each lot's cited formula.
- * @conventions General lot formula is base + a - b wrapped to 360; day/night sect reverses the a/b operand order (sectReversingPart); Eros, Necessity, Courage, Victory and Nemesis take the Fortune/Spirit longitudes as inputs; only Paulus's set is implemented (one named authority per lot). Fortune and Spirit take an optional FortuneFormula: 'sect-reversed' (default, Paulus) or 'same-day-and-night' (Marr, Prediction II, p. 29). LotKey is separate from DerivedPointKey (the corpus vocabulary), so these lots are not in the Derived points table or corpus.
+ * @conventions General lot formula is base + a - b wrapped to 360; day/night sect reverses the a/b operand order (sectReversingPart); Eros, Necessity, Courage, Victory and Nemesis take the Fortune/Spirit longitudes as inputs; only Paulus's set is implemented (one named authority per lot), checked against Paulus's text in Greenbaum's translation (2011), ch. 23, PDF pp. 57-58. Fortune and Spirit take an optional FortuneFormula: 'sect-reversed' (default, Paulus) or 'same-day-and-night' (Marr, Prediction II, p. 29). LotKey is separate from DerivedPointKey (the corpus vocabulary), so these lots are not in the Derived points table or corpus.
  * @exports arabicPart, sectReversingPart, FortuneFormula, DEFAULT_FORTUNE_FORMULA, partOfFortune, partOfSpirit, lotOfEros, lotOfNecessity, lotOfCourage, lotOfVictory, lotOfNemesis, LotKey, LotFormula, LOT_FORMULAS, lotFormulaByKey, lotFormulaFor
  */
 import type { Degrees } from '../ephemeris/types.js';
@@ -245,7 +247,7 @@ export const LOT_FORMULAS: readonly LotFormula[] = [
     reversesBySect: true,
     authority: PAULUS_AUTHORITY,
     source:
-      'Hellenistic astrology, Chapter 16, printed p. 526: from the Lot of Spirit to Jupiter by day, by night from Jupiter to the Lot of Spirit. The book gives no explicit "then from the Ascendant" clause for Victory; the chapter’s pattern for the other Hermetic lots is applied.',
+      'Hellenistic astrology, Chapter 16, printed p. 526: from the Lot of Spirit to Jupiter by day, by night from Jupiter to the Lot of Spirit. Brennan gives no explicit "then from the Ascendant" clause for Victory, but Paulus does: "and an equal amount from the Hōroskopos" (Greenbaum 2011, ch. 23, PDF p. 58).',
   },
   {
     key: 'lot-of-nemesis',
