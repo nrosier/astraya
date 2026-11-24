@@ -17,6 +17,7 @@ import { computeTrutineConception, type TrutineConception } from '../domain/trut
 import { housesAreDefined, type ChartData } from '../domain/chart-compute.js';
 import { ChartDataView, type ChartOverlayContext } from './ChartView.js';
 import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
+import { ChartViewNav } from './ChartViewNav.js';
 import { useCalculationBasisLine, withBasisItems } from './calculation-basis.js';
 import { type ChartViewKind } from './chart-sections.js';
 import { chartHref, personHref } from './route.js';
@@ -160,7 +161,21 @@ export function TrutineView({
         variant="return"
       />
       <ChartTypeSelector personId={personId} type="trutine" view={view} />
-      {isJulian === false && <StatusMessage kind="empty">{t.julianOnly}</StatusMessage>}
+      {isJulian === false && (
+        <>
+          {/* No chart is calculated for a Gregorian birth, so `ChartDataView` is not mounted; the page still carries the
+              shared view bar, as `ChartDataView` draws it while a chart loads (no views until there is a chart). */}
+          <ChartViewNav
+            activeView={view ?? 'wheel'}
+            buildHref={(next) => chartHref(personId, next, 'trutine')}
+            onNavigate={(next) => {
+              changeChartView(personId, 'trutine', next);
+            }}
+            availableViews={[]}
+          />
+          <StatusMessage kind="empty">{t.julianOnly}</StatusMessage>
+        </>
+      )}
       <div aria-busy={load.kind === 'loading'}>
         {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
