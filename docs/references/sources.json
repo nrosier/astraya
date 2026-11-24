@@ -1609,5 +1609,25 @@
     "provisional": true,
     "used_by": ["src/ephemeris/engine.ts"],
     "notes": "Recorded for EphemerisProvider.riseTransit (#1407 Step 7): the rsmi event codes (SE_CALC_RISE, SE_CALC_SET, SE_CALC_MTRANSIT, SE_CALC_ITRANSIT), the disc-centre and no-refraction bits, and the -2 circumpolar return code. The owner chose this call and this source on #1407 (Q4, 2026-11-21). Not held; year undeterminable, so provisional."
+  },
+  {
+    "id": "astrodienst-swiss-ephemeris-general-documentation",
+    "title": "Swiss Ephemeris: General Documentation",
+    "author": "Dieter Koch and Alois Treindl (Astrodienst AG)",
+    "year": null,
+    "edition": "Online general documentation of the Swiss Ephemeris library, chapter on the lunar node and apogee (mean and true node; mean, osculating and interpolated apogee). Undated; revised with each library release.",
+    "licence": "Documentation of the AGPL-licensed Swiss Ephemeris; not held locally.",
+    "access_route": "https://www.astro.com/swisseph/swisseph.htm (the lunar node and apogee chapter); the library itself is vendored through sweph-wasm 2.6.9.",
+    "original_name": null,
+    "processed_path": null,
+    "sha256": null,
+    "text_path": null,
+    "pages_path": null,
+    "page_count": null,
+    "status": "unheld-reference",
+    "copyrighted": true,
+    "provisional": true,
+    "used_by": ["src/astrology/bodies.ts"],
+    "notes": "Recorded for the modern-point conventions in src/astrology/bodies.ts (#869, the #560 line): the models behind the mean and true node and the mean, osculating and interpolated lunar apogee (Lilith). Owner decision on #869, 2026-11-24: cite the Swiss Ephemeris documentation for the models and record the choice of points as Astraya's convention. Not held; year undeterminable, so provisional."
   }
 ]
