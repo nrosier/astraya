@@ -1382,7 +1382,7 @@
     "status": "extracted",
     "copyrighted": true,
     "provisional": false,
-    "used_by": [],
+    "used_by": ["src/astrology/arabic-parts.ts"],
     "notes": "Scanned (1-bit CCITT, no fonts). Year is the PDF creation year (2011); the translation year is not on the title page. Title page: Late Classical Astrology, translated by Dorian Gieseler Greenbaum (ARHAT), foreword by Robert Hand. OCR text layer added on 2026-11-15 (ocrmypdf --deskew, Tesseract 5, eng; owner decision on #1602); the PDF in sources/pdf is now the OCRed copy. Brennan's bibliography (Hellenistic Astrology, 2017) gives this translation as ARHAT, Reston, VA, 2001, so 2011 is likely only the scan's creation year; the id keeps 2011 so nothing that cites it breaks (#1602)."
   },
   {
