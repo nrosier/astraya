@@ -7,8 +7,19 @@
  * @module ui/horary
  * @purpose Pure logic backing the horary screen (#406): parsing the question-form's text fields into the moment a chart is cast for, plus the form's opening defaults.
  * @conventions Kept apart from HoraryView.tsx so parsing edge cases (what a typo does) are testable without a DOM.
- * @exports HoraryFields, HoraryFieldError, ParsedHoraryFields, parseHoraryFields, nowFields, HORARY_HOUSE_SYSTEMS
+ * @exports HoraryFields, HoraryFieldError, ParsedHoraryFields, parseHoraryFields, nowFields, HORARY_HOUSE_SYSTEMS, horarySummaryFrom, buildHoraryRecord, saturnHouseOf, isHoraryQuestionSavable
  */
+import { bodyById, bodyByKey } from '../astrology/bodies.js';
+import { houseOf } from '../astrology/emphasis.js';
+import type { ChartData } from '../domain/chart-compute.js';
+import { practitionerInputFor, type HoraryJudgment } from '../domain/horary-judgment.js';
+import { PERSON_TEXT_MAX_CHARACTERS } from '../domain/person.js';
+import {
+  HORARY_RECORD_VERSION,
+  type HoraryJudgmentRecord,
+  type HoraryJudgmentSummary,
+} from '../store/horary-judgments.js';
+import { resolveMoment } from '../time/resolve.js';
 import type { BirthMomentInput } from '../time/types.js';
 import { parseLatitude, parseLongitude } from './place-fields.js';
 
@@ -77,3 +88,71 @@ export function nowFields(now: Date = new Date()): Pick<HoraryFields, 'date' | '
 
 /** The house systems offered, by Swiss Ephemeris code. Defined in `domain/horary` (#1960); re-exported for the screen. */
 export { HORARY_HOUSE_SYSTEMS } from '../domain/horary.js';
+
+/** A question can be saved once it holds something other than white space. */
+export function isHoraryQuestionSavable(question: string): boolean {
+  return question.trim() !== '';
+}
+
+/** The summary a saved judgment stores, taken from the judgment as shown: only the fields the record type declares. */
+export function horarySummaryFrom(judgment: HoraryJudgment): HoraryJudgmentSummary {
+  const { perfection } = judgment;
+  const impedimentBodyKey =
+    perfection.impedimentBody === undefined ? undefined : bodyById(perfection.impedimentBody)?.key;
+  return {
+    querent: { house: judgment.querent.house, rulerKey: judgment.querent.rulerKey },
+    quesited: { house: judgment.quesited.house, rulerKey: judgment.quesited.rulerKey },
+    perfection: {
+      kind: perfection.kind,
+      ...(perfection.thirdBodyKey === undefined ? {} : { thirdBodyKey: perfection.thirdBodyKey }),
+      ...(impedimentBodyKey === undefined ? {} : { impedimentBodyKey }),
+      ...(perfection.timeToPerfectDays === undefined ? {} : { timeToPerfectDays: perfection.timeToPerfectDays }),
+    },
+    reception: { kind: judgment.reception.kind, sameDignityType: judgment.reception.sameDignityType },
+    receptionAidsPerfection: judgment.receptionAidsPerfection,
+    considerations: judgment.considerations.map((consideration) => ({
+      key: consideration.key,
+      applies: consideration.applies,
+      softened: consideration.softened,
+    })),
+    radical: judgment.radical,
+  };
+}
+
+/** The house Saturn falls in, or undefined when the chart has no Saturn position or no houses. */
+export function saturnHouseOf(data: ChartData): number | undefined {
+  const saturn = bodyByKey('saturn');
+  const longitude = data.positions.find((position) => position.body === saturn?.id)?.longitude;
+  if (longitude === undefined || data.houses.cusps.length < 2) return undefined;
+  return houseOf(longitude, data.houses.cusps);
+}
+
+/**
+ * The record a save writes: the moment as typed (never a resolved instant), the offset witness that
+ * `resolveMoment` reports for it, the house system the chart was cast in, the judgment's summary and the
+ * practitioner notes for it. A place label is kept only when it fits the person-text cap.
+ */
+export function buildHoraryRecord(input: {
+  readonly moment: BirthMomentInput;
+  readonly houseSystem: string;
+  readonly judgment: HoraryJudgment;
+  readonly saturnHouse: number | undefined;
+  readonly placeLabel: string | undefined;
+}): HoraryJudgmentRecord {
+  const resolved = resolveMoment(input.moment);
+  const label =
+    input.placeLabel === undefined
+      ? ''
+      : Array.from(input.placeLabel).slice(0, PERSON_TEXT_MAX_CHARACTERS).join('').trim();
+  return {
+    version: HORARY_RECORD_VERSION,
+    civil: input.moment.civil,
+    coordinates: input.moment.coordinates,
+    witness: { offsetMinutes: resolved.offsetMinutes, zone: resolved.zone, tzdbFingerprint: resolved.tzdbFingerprint },
+    ...(label === '' ? {} : { placeLabel: label }),
+    houseSystem: input.houseSystem,
+    rulershipScheme: 'traditional',
+    summary: horarySummaryFrom(input.judgment),
+    practitionerInput: practitionerInputFor(input.judgment, input.saturnHouse),
+  };
+}
