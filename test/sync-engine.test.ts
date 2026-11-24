@@ -367,6 +367,7 @@ describe('pull resilience (#320)', () => {
     const clock = createClock(randomNodeId());
     const first = tick(clock, Date.now());
     const second = tick(first.clock, Date.now() + 1);
+    const third = tick(second.clock, Date.now() + 2);
     const goodBody = { entity: 'person', entityId: 'p1', field: 'displayName', value: 'Ada' };
     const goodRow = {
       seq: 1,
@@ -380,14 +381,25 @@ describe('pull resilience (#320)', () => {
       hlc: second.hlc,
       deviceId: second.clock.nodeId,
       opVersion: 1,
-      // Not valid base64 (`!` isn't in the alphabet) — `fromWire`'s `atob` throws on this row.
-      payload: 'not-valid-base64!!!',
+      // Well-formed base64 whose decoded bytes are not JSON: `atob` succeeds and `fromWire`'s
+      // `JSON.parse` throws. The relay validates base64 on write and re-encodes on read
+      // (`server/ops/routes.ts`), so it can never send a non-base64 payload; corrupt stored
+      // bytes behind valid base64 are the only way a bad row reaches `pull()`.
+      payload: Buffer.from('not json {').toString('base64'),
+    };
+    const laterBody = { entity: 'person', entityId: 'p2', field: 'displayName', value: 'Grace' };
+    const laterRow = {
+      seq: 3,
+      hlc: third.hlc,
+      deviceId: third.clock.nodeId,
+      opVersion: 1,
+      payload: Buffer.from(JSON.stringify(laterBody)).toString('base64'),
     };
 
     globalThis.fetch = async (input) => {
       const url = new URL(input instanceof Request ? input.url : String(input), 'http://localhost');
       if (url.pathname === '/api/ops') {
-        return new Response(JSON.stringify({ ops: [badRow, goodRow] }), { status: 200 });
+        return new Response(JSON.stringify({ ops: [goodRow, badRow, laterRow] }), { status: 200 });
       }
       return new Response(JSON.stringify({ ops: [] }), { status: 200 });
     };
@@ -399,6 +411,8 @@ describe('pull resilience (#320)', () => {
         expect(engine.status.kind).toBe('synced');
       }, WAIT);
       expect(store.state.people.get('p1')?.displayName).toBe('Ada');
+      // The row after the dropped one is applied too.
+      expect(store.state.people.get('p2')?.displayName).toBe('Grace');
     } finally {
       engine.close();
       store.close();
