@@ -22,15 +22,16 @@
  * editing it never overwrites the record. A write to `question` after a delete does not undelete: it is a different
  * register from `deleted`.
  *
- * **Reopen is exact or it says so.** A record this build cannot read exactly (a newer `version`, an unknown
- * perfection kind, reception kind, consideration key or body, a wrong-typed or out-of-range value) folds to an
+ * **Reopen is exact or it says so.** A record this build cannot read exactly (a newer `version`, an unknown house
+ * system, perfection kind, reception kind, consideration key or body, a wrong-typed or out-of-range value) folds to an
  * `unreadable` entry that is listed and kept, never replaced by defaults. An entity holding only one of its two
  * registers is `incomplete`.
  *
  * **Reads are total, writes are guarded.** `foldHoraryJudgment` never throws, because records also arrive from peers,
- * which only the envelope validates. The fold accepts any non-empty house-system string, so a newer build's code stays
- * readable; `assertHoraryJudgmentMutation` refuses a local write of a system this build does not offer, and refuses a
- * bad write before the log is touched.
+ * which only the envelope validates. A non-empty house-system code this build does not offer (`HORARY_HOUSE_SYSTEMS`)
+ * folds to `unknown-value`, like any other newer build's word (owner decision on PR #1970): the judgment is listed and
+ * kept, but never shown as if complete, and no house system is guessed or defaulted. `assertHoraryJudgmentMutation`
+ * refuses a local write of such a system, and refuses a bad write before the log is touched.
  *
  * Pure: no IndexedDB and no clock. `materialise` in fold.ts calls `foldHoraryJudgment`; `store.ts` calls the guard.
  *
@@ -332,7 +333,10 @@ function readRecord(value: unknown): RecordVerdict {
   if (civil === undefined || coordinates === undefined || witness === undefined) verdict.invalid = true;
   const { placeLabel, houseSystem, rulershipScheme } = value;
   if (placeLabel !== undefined && typeof placeLabel !== 'string') verdict.invalid = true;
-  if (typeof houseSystem !== 'string' || houseSystem === '') verdict.invalid = true;
+  // A code this build does not offer is a newer build's word, not a house to read with a default (#1960).
+  if (typeof houseSystem !== 'string' || !HORARY_HOUSE_SYSTEMS.includes(houseSystem)) {
+    markUnknownOrInvalid(verdict, houseSystem);
+  }
   if (rulershipScheme !== RULERSHIP_SCHEME) markUnknownOrInvalid(verdict, rulershipScheme);
   const summary = readSummary(verdict, value.summary);
 

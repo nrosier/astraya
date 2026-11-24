@@ -276,10 +276,23 @@ describe('foldHoraryJudgment', () => {
     expect(foldHoraryJudgment(JUDGMENT_ID, fieldsOf('q', value))).toMatchObject({ reason: 'invalid' });
   });
 
-  it('accepts any non-empty house-system string, so a newer build code stays readable', () => {
+  it('keeps a house-system code this build does not offer as unknown-value, never read with a default', () => {
     expect(foldHoraryJudgment(JUDGMENT_ID, fieldsOf('q', { ...recordJson(), houseSystem: 'K' }))).toMatchObject({
-      status: 'ready',
+      status: 'unreadable',
+      reason: 'unknown-value',
     });
+  });
+
+  it('still reads each house system this build offers as ready', () => {
+    for (const code of HORARY_HOUSE_SYSTEMS) {
+      const judgment = foldHoraryJudgment(JUDGMENT_ID, fieldsOf('q', { ...recordJson(), houseSystem: code }));
+      expect(judgment).toMatchObject({ status: 'ready', record: { houseSystem: code } });
+    }
+  });
+
+  it('lets invalid outrank an unknown house system', () => {
+    const value = { ...(withSummary((s) => (s.radical = 'yes')) as Record<string, JsonValue>), houseSystem: 'K' };
+    expect(foldHoraryJudgment(JUDGMENT_ID, fieldsOf('q', value))).toMatchObject({ reason: 'invalid' });
   });
 
   it('never throws, whatever the registers hold', () => {
@@ -724,6 +737,28 @@ describe('the horary-judgment store round trip', () => {
     await store.remove(HORARY_JUDGMENT_ENTITY, JUDGMENT_ID);
     expect(store.state.chartSearches.get(CHART_SEARCH_ID)).toMatchObject({ name: 'Search' });
     expect(store.state.horaryJudgments.size).toBe(0);
+  });
+
+  it('lists and keeps a peer judgment with an unknown house system as unreadable, with its id and question', async () => {
+    const name = freshName();
+    const id = newId('h');
+    const store = await openFresh(name);
+    const peer = recordsOf(
+      [
+        { entity: HORARY_JUDGMENT_ENTITY, entityId: id, field: 'question', value: 'From a newer build' },
+        { entity: HORARY_JUDGMENT_ENTITY, entityId: id, field: 'record', value: { ...recordJson(), houseSystem: 'K' } },
+      ],
+      'b1b2c3d4e5f60718',
+    );
+    expect((await store.receive(peer)).rejected).toHaveLength(0);
+    const expected = { status: 'unreadable', reason: 'unknown-value', id, question: 'From a newer build' };
+    expect(store.state.horaryJudgments.get(id)).toMatchObject(expected);
+    expect(sortedHoraryJudgments(store.state.horaryJudgments).map((j) => j.id)).toEqual([id]);
+    expect(store.state.deleted.horaryJudgments.has(id)).toBe(false);
+    store.close();
+    open = [];
+    const reopened = await openFresh(name);
+    expect(reopened.state.horaryJudgments.get(id)).toMatchObject(expected);
   });
 
   it('syncs between two devices in either order and agrees on the list', async () => {
