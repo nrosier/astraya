@@ -13,7 +13,7 @@
  * @module ui/format
  * @purpose Locale-aware display formatting (#158) for values that aren't fixed strings — dates and geographic coordinates — complementing messages.ts's fixed-string i18n.
  * @conventions Framework-free like src/domain and src/chart: every function takes Locale explicitly rather than reading locale.ts's store, so non-UI modules (chart-tables.ts, multi-wheel.ts) can call in without a React/localStorage dependency.
- * @exports todayInputValue, formatCoordinate, formatSignDegree, formatFixed, formatDecimal, formatInteger, formatTimestamp, formatCivilDate, formatAxisMonth, formatCents, utcDay
+ * @exports todayInputValue, formatCoordinate, formatSignDegree, formatFixed, formatDecimal, formatDecimalExact, formatInteger, formatTimestamp, formatCivilDate, formatAxisMonth, formatCents, utcDay
  */
 import { degreeParts } from '../domain/degree-parts.js';
 import type { Locale } from '../interpretation/schema.js';
@@ -87,6 +87,17 @@ export function formatFixed(value: number, digits: number): string {
  */
 export function formatDecimal(value: number, maxDigits: number, locale: Locale): string {
   return new Intl.NumberFormat(locale === 'nl' ? 'nl-NL' : 'en-GB', { maximumFractionDigits: maxDigits }).format(value);
+}
+
+/**
+ * A number in the reader's own notation with exactly `digits` decimals (35.00, comma in Dutch), for figures whose
+ * precision is part of the reading, such as a harmonic (#1407). `formatDecimal` drops trailing zeros instead.
+ */
+export function formatDecimalExact(value: number, digits: number, locale: Locale): string {
+  return new Intl.NumberFormat(locale === 'nl' ? 'nl-NL' : 'en-GB', {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(value);
 }
 
 /** A whole number grouped the way the reader's language groups it (1,234 / 1.234), for counts in tables and sentences. */

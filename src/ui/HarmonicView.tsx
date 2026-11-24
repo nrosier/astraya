@@ -15,12 +15,16 @@
  */
 import { GlossaryText } from './GlossaryText.js';
 import { NumberField } from './primitives/NumberField.js';
+import { DateField } from './primitives/DateField.js';
 import { Select } from './primitives/Select.js';
 import { useEffect, useMemo, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { VARGA_PRESETS } from '../astrology/harmonics.js';
+import { BODIES, bodyById } from '../astrology/bodies.js';
 import {
+  computeArcTransform,
   computeHarmonic,
+  computeHarmonicAge,
   harmonicPositionProvenance,
   type HarmonicData,
   type HarmonicPositionProvenanceRow,
@@ -38,7 +42,9 @@ import type { ChartData } from '../domain/chart-compute.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { SortableTable, csvExportTable, useCsvExports } from './SortableTable.js';
 import type { TableColumn } from './table-sort.js';
-import { formatFixed } from './format.js';
+import { formatDecimalExact, formatFixed, todayInputValue } from './format.js';
+import { bodyDisplayName } from './astro-names.messages.js';
+import { useLocale } from './locale.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
 import { useEngineBasisLine, withBasisItems } from './calculation-basis.js';
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
@@ -51,14 +57,39 @@ import { ChartHelpTooltip } from './ChartHelpTooltip.js';
 type Load =
   | { readonly kind: 'idle' }
   | { readonly kind: 'loading' }
-  | { readonly kind: 'ready'; readonly data: ChartData; readonly provenance: readonly HarmonicPositionProvenanceRow[] }
+  | {
+      readonly kind: 'ready';
+      readonly data: ChartData;
+      readonly provenance: readonly HarmonicPositionProvenanceRow[];
+      /** The multiplier the chart was cast with: a whole number for a harmonic, the real number for an age or arc transform. */
+      readonly harmonicNumber: number;
+      /** The exact age in tropical years, for the age modes (#1407). */
+      readonly ageInYears?: number;
+    }
   | { readonly kind: 'error'; readonly message: string };
 
 const CUSTOM = 'custom';
+/**
+ * The three modes beside the presets (#1407): Harmonic Age and Age+1 at a date, and the arc transform of two points. They
+ * sit in the same picker as the Varga presets, so one screen serves every harmonic.
+ */
+const AGE = 'age';
+const AGE_PLUS_ONE = 'age-plus-one';
+const ARC_TRANSFORM = 'arc-transform';
+/**
+ * Above this harmonic the arc transform's other points are unreliable: a pair closer than 1° gives a harmonic over 360,
+ * and every other point is off by that harmonic times the ephemeris error. The owner's choice (#1407, 2026-11-24), not a
+ * sourced value; no source gives a limit.
+ */
+const ARC_TRANSFORM_WARNING_HARMONIC = 360;
+/** The bodies the arc transform can pair: the luminaries and the planets, which every chart carries. */
+const PAIRABLE_BODIES = BODIES.filter((body) => body.category === 'luminary' || body.category === 'planet');
+const SUN_ID = PAIRABLE_BODIES.find((body) => body.key === 'sun')?.id ?? 0;
+const MOON_ID = PAIRABLE_BODIES.find((body) => body.key === 'moon')?.id ?? 1;
 
 function provenanceColumns(
   t: typeof harmonicViewMessages.en,
-  n: number,
+  nText: string,
 ): readonly TableColumn<HarmonicPositionProvenanceRow>[] {
   return [
     { key: 'bodyName', label: t.bodyLabel, valueOf: (row) => row.bodyName },
@@ -70,7 +101,7 @@ function provenanceColumns(
     },
     {
       key: 'harmonicLongitude',
-      label: t.harmonicLongitudeLabel(String(n)),
+      label: t.harmonicLongitudeLabel(nText),
       valueOf: (row) => row.harmonicLongitude,
       render: (row) => `${formatFixed(row.harmonicLongitude, 4)}°`,
     },
@@ -91,16 +122,46 @@ export function HarmonicView({
 
   const [presetKey, setPresetKey] = useState<string>(VARGA_PRESETS[0]?.key ?? CUSTOM);
   const [customN, setCustomN] = useState<string>('5');
+  const [locale] = useLocale();
+  const [ageDate, setAgeDate] = useState<string>(todayInputValue);
+  const [pointA, setPointA] = useState<number>(SUN_ID);
+  const [pointB, setPointB] = useState<number>(MOON_ID);
   const preset = useMemo(() => VARGA_PRESETS.find((candidate) => candidate.key === presetKey), [presetKey]);
+  const isAge = presetKey === AGE || presetKey === AGE_PLUS_ONE;
+  const isArcTransform = presetKey === ARC_TRANSFORM;
+  const isPlainHarmonic = !isAge && !isArcTransform;
   const n = preset !== undefined ? preset.n : Number.parseInt(customN, 10);
-  const nValid = Number.isInteger(n) && n >= 1;
+  // A whole harmonic must be a positive integer; the age modes need a date, and the arc transform two different points.
+  const dateValid = /^\d{4}-\d{2}-\d{2}$/.test(ageDate);
+  const nValid = isAge ? dateValid : isArcTransform ? pointA !== pointB : Number.isInteger(n) && n >= 1;
+  const [load, setLoad] = useState<Load>({ kind: 'idle' });
 
-  const label = preset !== undefined ? preset.label : t.harmonicLabel(String(n));
+  // The multiplier on screen: the chosen whole harmonic, or, for the age and arc modes, the one the chart was cast with.
+  const harmonicNumber = isPlainHarmonic ? n : load.kind === 'ready' ? load.harmonicNumber : undefined;
+  const nText =
+    harmonicNumber === undefined
+      ? ''
+      : isPlainHarmonic
+        ? String(harmonicNumber)
+        : formatDecimalExact(harmonicNumber, 2, locale);
+  const pointName = (id: number): string => bodyDisplayName(bodyById(id)?.key ?? '', locale);
+  const label = isAge
+    ? harmonicNumber === undefined
+      ? presetKey === AGE
+        ? t.modeAge
+        : t.modeAgePlusOne
+      : (presetKey === AGE ? t.ageHarmonicLabel : t.agePlusOneHarmonicLabel)(nText, ageDate)
+    : isArcTransform
+      ? harmonicNumber === undefined
+        ? t.modeArcTransform
+        : t.arcTransformLabel(pointName(pointA), pointName(pointB), nText)
+      : preset !== undefined
+        ? preset.label
+        : t.harmonicLabel(String(n));
   // Memoised: a new array each render (a change of view re-renders this screen) would redraw the wheel and drop a selection.
   const metaLines = useMemo(() => [label], [label]);
 
   const { provider } = useEphemerisProvider();
-  const [load, setLoad] = useState<Load>({ kind: 'idle' });
   const customPoints = useStableBy(person?.customPoints, (points) => JSON.stringify(points ?? []));
   // The aspects use the device's orbs (#590), as the natal chart does.
   const {
@@ -111,7 +172,13 @@ export function HarmonicView({
   const orbs = useStableBy(orbsOf(extendedSettings), (config) => JSON.stringify(config));
   // The harmonic chart calculates with the engine defaults, the person's orbs and rulers, at the harmonic on screen.
   const baseBasis = useEngineBasisLine(rulership, extendedSettings);
-  const basisLine = nValid ? withBasisItems(baseBasis, label) : baseBasis;
+  // The arc transform's formula is Astraya's reading of Solar Fire §12.6, which gives none; the line says so (#1407).
+  const basisLine = nValid
+    ? withBasisItems(
+        baseBasis,
+        isArcTransform && harmonicNumber !== undefined ? `${label} (${t.arcTransformBasisNote})` : label,
+      )
+    : baseBasis;
 
   // Memoised (#1333): a new object each render reruns the overlay effect and drops the wheel selection, as on the natal chart.
   const overlayContext = useMemo(
@@ -138,12 +205,45 @@ export function HarmonicView({
 
     void (async () => {
       try {
-        const data: HarmonicData = await computeHarmonic(moment, n, provider, {
-          ...orbs,
-          ...(customPoints === undefined ? {} : { customPoints }),
-        });
+        const options = { ...orbs, ...(customPoints === undefined ? {} : { customPoints }) };
+        if (isAge) {
+          const [year, month, day] = ageDate.split('-').map(Number);
+          if (year === undefined || month === undefined || day === undefined)
+            throw new Error(`Invalid date: ${ageDate}`);
+          const targetJd = await provider.julianDayFromUtc(year, month, day, 12, 0, 0);
+          const result = await computeHarmonicAge(moment, targetJd, provider, {
+            ...options,
+            plusOne: presetKey === AGE_PLUS_ONE,
+          });
+          if (!effect.cancelled)
+            setLoad({
+              kind: 'ready',
+              data: result.harmonic,
+              provenance: harmonicPositionProvenance(result),
+              harmonicNumber: result.harmonicNumber,
+              ageInYears: result.ageInYears,
+            });
+          return;
+        }
+        if (isArcTransform) {
+          const result = await computeArcTransform(moment, pointA, pointB, provider, options);
+          if (!effect.cancelled)
+            setLoad({
+              kind: 'ready',
+              data: result.harmonic,
+              provenance: harmonicPositionProvenance(result),
+              harmonicNumber: result.harmonicNumber,
+            });
+          return;
+        }
+        const data: HarmonicData = await computeHarmonic(moment, n, provider, options);
         if (!effect.cancelled)
-          setLoad({ kind: 'ready', data: data.harmonic, provenance: harmonicPositionProvenance(data) });
+          setLoad({
+            kind: 'ready',
+            data: data.harmonic,
+            provenance: harmonicPositionProvenance(data),
+            harmonicNumber: n,
+          });
       } catch (error) {
         if (!effect.cancelled)
           setLoad({ kind: 'error', message: error instanceof Error ? error.message : String(error) });
@@ -153,7 +253,21 @@ export function HarmonicView({
     return () => {
       effect.cancelled = true;
     };
-  }, [settingsUnreadable, personMoment, provider, n, nValid, customPoints, orbs]);
+  }, [
+    settingsUnreadable,
+    personMoment,
+    provider,
+    n,
+    nValid,
+    customPoints,
+    orbs,
+    isAge,
+    isArcTransform,
+    presetKey,
+    ageDate,
+    pointA,
+    pointB,
+  ]);
 
   // The provenance table's CSV, offered in the page header (#887).
   useCsvExports(
@@ -167,7 +281,7 @@ export function HarmonicView({
               'harmonic-provenance',
               'csv',
             ),
-            provenanceColumns(t, n),
+            provenanceColumns(t, nText),
             load.provenance,
           ),
         ]
@@ -238,23 +352,60 @@ export function HarmonicView({
           options={[
             ...VARGA_PRESETS.map((candidate) => ({ value: candidate.key, label: candidate.label })),
             { value: CUSTOM, label: t.customHarmonicOption },
+            { value: AGE, label: t.modeAge },
+            { value: AGE_PLUS_ONE, label: t.modeAgePlusOne },
+            { value: ARC_TRANSFORM, label: t.modeArcTransform },
           ]}
           onChange={setPresetKey}
         />
         {presetKey === CUSTOM && (
           <NumberField label={t.harmonicNumberLabel} min={1} value={customN} onChange={setCustomN} />
         )}
+        {isAge && <DateField label={t.ageDateLabel} value={ageDate} onChange={setAgeDate} />}
+        {isArcTransform && (
+          <>
+            <Select
+              label={t.firstPointLabel}
+              value={String(pointA)}
+              options={PAIRABLE_BODIES.map((body) => ({
+                value: String(body.id),
+                label: bodyDisplayName(body.key, locale),
+              }))}
+              onChange={(value) => {
+                setPointA(Number(value));
+              }}
+            />
+            <Select
+              label={t.secondPointLabel}
+              value={String(pointB)}
+              options={PAIRABLE_BODIES.map((body) => ({
+                value: String(body.id),
+                label: bodyDisplayName(body.key, locale),
+              }))}
+              onChange={(value) => {
+                setPointB(Number(value));
+              }}
+            />
+          </>
+        )}
       </div>
 
       {preset !== undefined && <p className="hint">{t.presetDescriptions[preset.key] ?? preset.description}</p>}
       {presetKey === CUSTOM && !nValid && <StatusMessage kind="error">{t.invalidHarmonicNumber}</StatusMessage>}
+      {isAge && <p className="hint">{presetKey === AGE ? t.ageDescription : t.agePlusOneDescription}</p>}
+      {isAge && !dateValid && <StatusMessage kind="error">{t.invalidDate}</StatusMessage>}
+      {isArcTransform && <p className="hint">{t.arcTransformDescription}</p>}
+      {isArcTransform && !nValid && <StatusMessage kind="error">{t.arcTransformSamePoint}</StatusMessage>}
+      {isArcTransform && load.kind === 'ready' && load.harmonicNumber > ARC_TRANSFORM_WARNING_HARMONIC && (
+        <StatusMessage kind="partial">{t.arcTransformLargeHarmonic}</StatusMessage>
+      )}
 
       {nValid && load.kind === 'ready' && (
         <>
-          <p className="hint">{t.provenanceHint(String(n))}</p>
+          <p className="hint">{t.provenanceHint(nText)}</p>
           <SortableTable
             caption={t.provenanceCaption}
-            columns={provenanceColumns(t, n)}
+            columns={provenanceColumns(t, nText)}
             rows={load.provenance}
             getRowKey={(row) => row.bodyKey}
             downloadFilename={deriveExportFilename(displayName, 'harmonic-provenance', 'csv')}
