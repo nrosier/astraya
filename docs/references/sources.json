@@ -1222,7 +1222,7 @@
     "status": "extracted",
     "copyrighted": true,
     "provisional": false,
-    "used_by": [],
+    "used_by": ["src/domain/trutine.ts"],
     "notes": "Title page: Christian Astrology, treated of in three books, 1647. OCR text layer added (ocrmypdf, skip-text)."
   },
   {
