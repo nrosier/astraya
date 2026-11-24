@@ -36,7 +36,7 @@
  * @module Progressions
  * @purpose Computes secondary (day-for-year) progressions, with a selectable method (quotidian, naibod, solarArc) for progressing the MC and houses.
  * @conventions Bodies progress by direct day-for-year substitution; 'quotidian' recomputes houses outright at the progressed moment; 'naibod' advances the MC by the mean Sun's daily motion (NAIBOD_DAILY_MOTION) times age; 'solarArc' advances it by the true solar arc traveled; naibod/solarArc then derive the other angles and cusps from the progressed MC via housesFromArmc with the progressed-date obliquity (Solar Fire Deluxe guide §30.3.2.1, #1935), sidereal charts subtracting the standard ayanamsa afterwards; a user-defined ayanamsa keeps the rigid rotation via shiftHouses until the engine interface takes it; both Suns and the quotidian progressed houses are read in the requested zodiac.
- * @exports TROPICAL_YEAR_DAYS, NAIBOD_DAILY_MOTION, ageInYears, progressedJulianDay, mcArc, shiftHouses, computeProgressedHouses
+ * @exports TROPICAL_YEAR_DAYS, NAIBOD_DAILY_MOTION, ageInYears, progressedJulianDay, mcArc, progressedAnglesKeepRigidShift, shiftHouses, computeProgressedHouses
  */
 import type {
   Degrees,
@@ -89,6 +89,14 @@ export function mcArc(
   progressedSunLongitude: Degrees,
 ): Degrees {
   return method === 'naibod' ? age * NAIBOD_DAILY_MOTION : progressedSunLongitude - natalSunLongitude;
+}
+
+/**
+ * True when the progressed angles of a naibod or solar-arc chart still use the older rigid shift: the chart's zodiac is a
+ * user-defined ayanamsa, which the engine cannot yet subtract from a derived MC. The views and the PDF show a note for it.
+ */
+export function progressedAnglesKeepRigidShift(zodiac: Zodiac | undefined, method: ProgressedMcMethod): boolean {
+  return method !== 'quotidian' && zodiac?.kind === 'sidereal' && zodiac.user !== undefined;
 }
 
 /** Rigidly rotates every natal cusp and angle by `arc`, for the two symbolic methods. */
@@ -165,7 +173,7 @@ export async function computeProgressedHouses(
 
   // A user-defined ayanamsa keeps the rigid shift. It waits on the split-out engine interface issue: provider.ayanamsa
   // takes no user definition, so the recipe below cannot run for it (#1935, owner decision 2026-11-24).
-  if (zodiac?.kind === 'sidereal' && zodiac.user !== undefined) {
+  if (progressedAnglesKeepRigidShift(zodiac, options.mcMethod)) {
     return { progressedJd, ageInYears: age, mcMethod: options.mcMethod, houses: shifted };
   }
 

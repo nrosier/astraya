@@ -195,6 +195,28 @@ describe('the timing timeline uses the person settings (#1492)', () => {
     expect(explicit).toEqual(defaults);
   }, 240_000);
 
+  it('notes the rigid angle shift for a user-defined ayanamsa, and for no other zodiac (#1935)', async () => {
+    const note = 'keeps the older rigid angle shift';
+    setPerson({
+      calculationSettings: {
+        ...DEFAULT_EXTENDED_SETTINGS,
+        zodiac: { kind: 'sidereal', ayanamsa: 255, user: { referenceDate: '2000-01-01', degrees: 24 } },
+      },
+    });
+    const container = await render();
+    await settled(container);
+    expect(container.textContent).toContain(note);
+    act(() => {
+      mounted?.root.unmount();
+    });
+    mounted?.container.remove();
+    mounted = undefined;
+    setPerson({ calculationSettings: SIDEREAL });
+    const lahiri = await render();
+    await settled(lahiri);
+    expect(lahiri.textContent).not.toContain(note);
+  }, 240_000);
+
   it('shows the notice, and no timeline, when the saved settings are unreadable', async () => {
     setPerson({ calculationSettingsUnreadable: true });
     const container = await render();

@@ -27,6 +27,9 @@ const en = {
   filterLegend: 'Techniques shown',
   /** The toolbar button that opens the technique filter, with how many techniques are shown (#1442). */
   techniquesButton: (count: number) => `Techniques (${String(count)})`,
+  /** Shown under the timeline while a user-defined ayanamsa keeps the rigid angle shift for progressions (#1935). */
+  progressedAnglesRigidNote:
+    'A user-defined ayanamsa keeps the older rigid angle shift for progressed angles until the engine supports it (#1964).',
   bodiesLabel: 'Bodies',
   bodiesNote: 'Applies to events that name a body. Zodiacal releasing, firdaria and profections stay.',
   bodyGroups: { all: 'All', major: 'Major planets', minor: 'Asteroids and Lilith' },
@@ -102,6 +105,8 @@ const nl = {
   columnEnd: 'Einde',
   filterLegend: 'Getoonde technieken',
   techniquesButton: (count) => `Technieken (${String(count)})`,
+  progressedAnglesRigidNote:
+    'Bij een zelfgedefinieerde ayanamsa blijft voor geprogresseerde hoeken de oudere vaste verschuiving gelden tot de engine dit ondersteunt (#1964).',
   bodiesLabel: 'Lichamen',
   bodiesNote: 'Geldt voor gebeurtenissen met een lichaam. Zodiacal releasing, firdaria en profecties blijven.',
   bodyGroups: { all: 'Alle', major: 'Hoofdplaneten', minor: 'Asteroïden en Lilith' },

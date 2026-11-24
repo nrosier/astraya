@@ -3,11 +3,12 @@ import {
   ageInYears,
   mcArc,
   NAIBOD_DAILY_MOTION,
+  progressedAnglesKeepRigidShift,
   progressedJulianDay,
   shiftHouses,
   TROPICAL_YEAR_DAYS,
 } from '../src/astrology/progressions.js';
-import type { HousePositions } from '../src/ephemeris/types.js';
+import type { HousePositions, Zodiac } from '../src/ephemeris/types.js';
 
 const NATAL_JD = 2448423.5; // arbitrary fixed epoch, exact value is not the point
 
@@ -107,5 +108,26 @@ describe('shiftHouses (#46)', () => {
       const arc = mcArc(method, 10, 0, 10);
       expect(shiftHouses(NATAL_HOUSES, arc).midheaven).toBeGreaterThanOrEqual(0);
     }
+  });
+});
+
+describe('progressedAnglesKeepRigidShift (#1935)', () => {
+  const user: Zodiac = { kind: 'sidereal', ayanamsa: 255, user: { referenceDate: '2000-01-01', degrees: 24 } };
+  const lahiri: Zodiac = { kind: 'sidereal', ayanamsa: 1 };
+  const tropical: Zodiac = { kind: 'tropical' };
+
+  it('is true for a user-defined ayanamsa under naibod and solar arc', () => {
+    expect(progressedAnglesKeepRigidShift(user, 'naibod')).toBe(true);
+    expect(progressedAnglesKeepRigidShift(user, 'solarArc')).toBe(true);
+  });
+
+  it('is false for a user-defined ayanamsa under quotidian', () => {
+    expect(progressedAnglesKeepRigidShift(user, 'quotidian')).toBe(false);
+  });
+
+  it('is false for a built-in ayanamsa, a tropical zodiac and no zodiac', () => {
+    expect(progressedAnglesKeepRigidShift(lahiri, 'naibod')).toBe(false);
+    expect(progressedAnglesKeepRigidShift(tropical, 'solarArc')).toBe(false);
+    expect(progressedAnglesKeepRigidShift(undefined, 'naibod')).toBe(false);
   });
 });

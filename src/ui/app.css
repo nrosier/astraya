@@ -1129,7 +1129,7 @@ footer {
   margin-bottom: var(--space-4);
 }
 
-/* A field never grows wider than the row (#1834): a long option label ("Naibod (mean solar motion)") otherwise sets
+/* A field never grows wider than the row (#1834): a long option label ("Naibod (mean solar motion, in longitude)") otherwise sets
    the select's width, and at 390px the page scrolled sideways. The select shrinks with its field. */
 .progressions-controls > * {
   min-width: 0;
