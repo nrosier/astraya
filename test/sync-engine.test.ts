@@ -24,6 +24,7 @@ import { openStore } from '../src/store/store.ts';
 import { openDatabase, allRecords } from '../src/store/db.ts';
 import { birthNoteRevision } from '../src/store/notes.ts';
 import { createClock, randomNodeId, tick } from '../src/store/hlc.ts';
+import { HORARY_PRACTITIONER_REASONS } from '../src/domain/horary-judgment.ts';
 
 const BOOTSTRAP_TOKEN = 'test-bootstrap-token';
 const WAIT = { timeout: 5000 };
@@ -195,7 +196,7 @@ describe('a saved horary judgment on the wire (#1960)', () => {
   it('survives the relay between two devices, with Dutch and CJK question text intact', async () => {
     globalThis.fetch = await loginAs('alice', 'correct-horse-battery');
     const record = {
-      version: 1,
+      version: 2,
       civil: { year: 2026, month: 11, day: 24, hour: 20, minute: 15, second: 0 },
       coordinates: { latitude: 52.3676, longitude: 4.9041 },
       witness: { offsetMinutes: 60, zone: 'Europe/Amsterdam', tzdbFingerprint: 'tzdb-2026a' },
@@ -211,6 +212,7 @@ describe('a saved horary judgment on the wire (#1960)', () => {
         considerations: [{ key: 'moon-void-of-course', applies: true, softened: true }],
         radical: true,
       },
+      practitionerInput: [{ key: 'perfection-orbs', reason: HORARY_PRACTITIONER_REASONS['perfection-orbs'] }],
     };
     const dutch = 'Komt mijn broer terug uit Zürich?';
     const cjk = '我的船会回来吗？';
@@ -240,6 +242,10 @@ describe('a saved horary judgment on the wire (#1960)', () => {
         question: dutch,
         record: { placeLabel: 'Zürich', summary: { perfection: { timeToPerfectDays: 12.5 } } },
       });
+      const relayed = deviceB.state.horaryJudgments.get('h-abcdefghijklmnop');
+      expect(relayed?.status === 'ready' ? relayed.record.practitionerInput : undefined).toEqual(
+        record.practitionerInput,
+      );
       expect(deviceB.state.horaryJudgments.get('h-bcdefghijklmnopq')).toMatchObject({
         status: 'ready',
         question: cjk,

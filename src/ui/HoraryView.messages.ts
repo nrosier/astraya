@@ -60,6 +60,23 @@ const en = {
     refranation: 'A significator stations before perfection and refrains from completing the aspect.',
     none: 'No perfection is found among the classical significators.',
   },
+  /**
+   * The practitioner note per key (#1960). The en text is the reason stored on a saved judgment, so it equals
+   * `HORARY_PRACTITIONER_REASONS` (a test holds the two together). Not shown yet: the display awaits the owner's visual check.
+   */
+  practitioner: {
+    'non-radical-chart': 'The chart is not radical. It is judged anyway; some practitioners would not judge it.',
+    'late-ascendant-limit':
+      "Lilly's late Ascendant (27, 28 or 29 degrees) is read here as from 27°00′; readings of the limit differ.",
+    'house-by-exact-cusp':
+      'A planet is in the house its degree falls in, by exact cusp, with no 5-degree rule; practitioners differ.',
+    'perfection-orbs':
+      "Perfection counts only the five Ptolemaic aspects within Lilly's moieties; orb tables differ by author.",
+    'rule-order':
+      'More than one rule applies. The code reports the first in its own fixed order, not an order from the texts.',
+    'sign-change':
+      'A significator changes sign before the aspect perfects; practitioners differ on whether it still counts.',
+  },
   timing: (days: string) => `Estimated time to perfection: ${days} days.`,
   reception: {
     none: 'No essential reception is found.',
@@ -149,6 +166,21 @@ const nl: typeof en = {
     signChange: 'Een significator verandert van teken vóór het aspect perfectioneert.',
     refranation: 'Een significator stationeert vóór de perfectionering en voltooit het aspect niet.',
     none: 'Er is geen perfectionering onder de klassieke significatoren.',
+  },
+  // Machine-drafted; needs a native Dutch read (#1960).
+  practitioner: {
+    'non-radical-chart':
+      'De kaart is niet radicaal. Ze wordt toch beoordeeld; sommige beoefenaars zouden dat niet doen.',
+    'late-ascendant-limit':
+      "Lilly's late Ascendant (27, 28 of 29 graden) geldt hier vanaf 27°00′; de lezingen van die grens verschillen.",
+    'house-by-exact-cusp':
+      'Een planeet staat in het huis waar haar graad valt, op de exacte spits, zonder 5-gradenregel; beoefenaars verschillen.',
+    'perfection-orbs':
+      "Perfectie telt alleen de vijf Ptolemaeïsche aspecten binnen Lilly's moieties; orbtabellen verschillen per auteur.",
+    'rule-order':
+      'Meer dan één regel geldt. De code meldt de eerste in haar eigen vaste volgorde, niet een volgorde uit de teksten.',
+    'sign-change':
+      'Een significator verandert van teken voordat het aspect perfectioneert; beoefenaars verschillen of het nog telt.',
   },
   timing: (days: string) => `Geschatte tijd tot perfectionering: ${days} dagen.`,
   reception: {

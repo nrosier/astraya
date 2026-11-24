@@ -1,10 +1,15 @@
 /**
- * Saved horary judgments (#1960, record version 1): the pure fold and guard rules, the fold into the person-store
+ * Saved horary judgments (#1960, record version 2): the pure fold and guard rules, the fold into the person-store
  * state, the older-build behaviour, and the live store round trip over fake IndexedDB (save, reopen, delete with
  * Undo, purge, determinism across merge order).
  */
 import { afterEach, describe, expect, it } from 'vitest';
 import { HORARY_HOUSE_SYSTEMS } from '../src/domain/horary.js';
+import {
+  HORARY_PRACTITIONER_KEYS,
+  HORARY_PRACTITIONER_REASONS,
+  HORARY_PRACTITIONER_REASON_MAX_CHARACTERS,
+} from '../src/domain/horary-judgment.js';
 import { isId, newId } from '../src/domain/id.js';
 import { MAX_CUSTOM_PROMPT_LENGTH } from '../src/interpretation/prompt-guardrail.js';
 import { applyRecords, EMPTY_REGISTERS, fold, materialise, resume, snapshotOf } from '../src/store/fold.js';
@@ -34,7 +39,7 @@ const OTHER_ID = 'h-bcdefghijklmnopq';
 const CHART_SEARCH_ID = 's-abcdefghijklmnop';
 
 const RECORD: HoraryJudgmentRecord = {
-  version: 1,
+  version: 2,
   civil: { year: 2026, month: 11, day: 24, hour: 20, minute: 15, second: 0 },
   coordinates: { latitude: 52.3676, longitude: 4.9041 },
   witness: { offsetMinutes: 60, zone: 'Europe/Amsterdam', tzdbFingerprint: 'tzdb-2026a' },
@@ -56,7 +61,12 @@ const RECORD: HoraryJudgmentRecord = {
     ],
     radical: true,
   },
+  practitionerInput: [],
 };
+
+/** The same record as version 1 wrote it: no practitioner list at all. */
+const { practitionerInput: _none, ...RECORD_V1_BODY } = RECORD;
+const RECORD_V1: HoraryJudgmentRecord = { ...RECORD_V1_BODY, version: 1 };
 
 /** A record as a plain JSON value, for the cases that need to break one field of it. */
 function recordJson(): Record<string, JsonValue> {
@@ -119,7 +129,7 @@ describe('the id prefix and the shared house-system list', () => {
   it('caps the question at the saved-query name cap, not the note cap', () => {
     expect(HORARY_QUESTION_MAX_CHARACTERS).toBe(MAX_CUSTOM_PROMPT_LENGTH);
     expect(HORARY_QUESTION_MAX_CHARACTERS).toBe(500);
-    expect(HORARY_RECORD_VERSION).toBe(1);
+    expect(HORARY_RECORD_VERSION).toBe(2);
   });
 });
 
@@ -199,14 +209,14 @@ describe('foldHoraryJudgment', () => {
     });
   });
 
-  it('keeps a version above 1 as future-version, even when the rest is unreadable', () => {
-    for (const version of [2, 3, 99]) {
+  it('keeps a version above 2 as future-version, even when the rest is unreadable', () => {
+    for (const version of [3, 99]) {
       expect(foldHoraryJudgment(JUDGMENT_ID, fieldsOf('q', { ...recordJson(), version }))).toMatchObject({
         status: 'unreadable',
         reason: 'future-version',
       });
     }
-    expect(foldHoraryJudgment(JUDGMENT_ID, fieldsOf('q', { version: 2, anything: 'else' }))).toMatchObject({
+    expect(foldHoraryJudgment(JUDGMENT_ID, fieldsOf('q', { version: 3, anything: 'else' }))).toMatchObject({
       reason: 'future-version',
     });
   });
@@ -296,7 +306,17 @@ describe('foldHoraryJudgment', () => {
   });
 
   it('never throws, whatever the registers hold', () => {
-    const odd: readonly unknown[] = [undefined, null, 0, '', [], [[]], { version: {} }, { version: 1, summary: [] }];
+    const odd: readonly unknown[] = [
+      undefined,
+      null,
+      0,
+      '',
+      [],
+      [[]],
+      { version: {} },
+      { version: 2, summary: [] },
+      { version: 2, practitionerInput: [{}] },
+    ];
     for (const value of odd) {
       expect(() => foldHoraryJudgment(JUDGMENT_ID, fieldsOf(value, value))).not.toThrow();
     }
@@ -359,11 +379,11 @@ describe('the guard (assertHoraryJudgmentMutation)', () => {
     expect(refusal(write('deleted', 1))).toBe('invalid');
   });
 
-  it('refuses a record at a version other than 1, including a future one', () => {
-    for (const version of [0, 2, 3]) {
+  it('refuses a record at a version other than 2, including version 1 and a future one', () => {
+    for (const version of [0, 1, 3]) {
       expect(refusal(write('record', { ...recordJson(), version }))).toBe('invalid');
     }
-    expect(refusal(write('record', { ...recordJson(), version: '1' }))).toBe('invalid');
+    expect(refusal(write('record', { ...recordJson(), version: '2' }))).toBe('invalid');
   });
 
   it('refuses an unreadable record: unknown perfection kind, bad coordinates, not a record', () => {
@@ -462,7 +482,7 @@ describe('materialise', () => {
     const state = fold(
       recordsOf([
         put(JUDGMENT_ID, 'question', 'Newer'),
-        put(JUDGMENT_ID, 'record', { ...recordJson(), version: 2 }),
+        put(JUDGMENT_ID, 'record', { ...recordJson(), version: 3 }),
         put(OTHER_ID, 'question', 'Half'),
       ]),
     );
@@ -556,14 +576,14 @@ describe('an older build', () => {
     expect(resume(snapshotOf(registers, all), all).rebuilt).toBe(false);
   });
 
-  it('this build keeps a version-2 record from a newer one, listed and unread', () => {
+  it('this build keeps a version-3 record from a newer one, listed and unread', () => {
     const newer = recordsOf([
       { entity: HORARY_JUDGMENT_ENTITY, entityId: JUDGMENT_ID, field: 'question', value: 'Newer' },
       {
         entity: HORARY_JUDGMENT_ENTITY,
         entityId: JUDGMENT_ID,
         field: 'record',
-        value: { ...recordJson(), version: 2, practitionerInput: true },
+        value: { ...recordJson(), version: 3, practitionerInput: true },
       },
     ]);
     const applied = applyRecords(EMPTY_REGISTERS, newer);
@@ -818,5 +838,160 @@ describe('the horary-judgment store round trip', () => {
     expect((await one.receive(fromTwo)).rejected).toHaveLength(0);
     expect(sortedHoraryJudgments(one.state.horaryJudgments)).toEqual(sortedHoraryJudgments(two.state.horaryJudgments));
     expect(one.state.horaryJudgments.size).toBe(2);
+  });
+});
+
+describe('record version 2: the practitioner list (#1960)', () => {
+  const REASON = HORARY_PRACTITIONER_REASONS['sign-change'];
+  const v2 = (practitionerInput: JsonValue): Record<string, JsonValue> => ({ ...recordJson(), practitionerInput });
+  const fold2 = (value: unknown) => foldHoraryJudgment(JUDGMENT_ID, fieldsOf('q', value));
+  const write = (value: JsonValue): Mutation => ({
+    entity: HORARY_JUDGMENT_ENTITY,
+    entityId: JUDGMENT_ID,
+    field: 'record',
+    value,
+  });
+
+  describe('the upgrade path', () => {
+    const v1Json = (): Record<string, JsonValue> => {
+      const { practitionerInput: _dropped, ...rest } = recordJson();
+      return { ...rest, version: 1 };
+    };
+
+    it('folds a version 1 record ready, with the list absent and not defaulted', () => {
+      const judgment = fold2(v1Json());
+      if (judgment?.status !== 'ready') throw new Error('expected ready');
+      expect(judgment.record.version).toBe(1);
+      expect(judgment.record.practitionerInput).toBeUndefined();
+      expect('practitionerInput' in judgment.record).toBe(false);
+      expect(judgment.record).toEqual(RECORD_V1);
+    });
+
+    it('folds a version 1 record carrying the list as invalid', () => {
+      expect(fold2({ ...v1Json(), practitionerInput: [] })).toMatchObject({ status: 'unreadable', reason: 'invalid' });
+    });
+
+    it('folds a version 2 record without the list as invalid, never defaulted to an empty list', () => {
+      const { practitionerInput: _dropped, ...rest } = recordJson();
+      expect(fold2(rest)).toMatchObject({ status: 'unreadable', reason: 'invalid' });
+    });
+
+    it('folds a version 2 record with an empty list ready', () => {
+      expect(fold2(v2([]))).toMatchObject({ status: 'ready', record: { version: 2, practitionerInput: [] } });
+    });
+
+    it('reads a version 3 record as future-version, as a version 1 build reads version 2', () => {
+      expect(fold2({ ...v2([]), version: 3 })).toMatchObject({ reason: 'future-version' });
+    });
+
+    it('refuses to write a version 1 record, and the version 2 round trip keeps its list', () => {
+      expect(refusal(write(JSON.parse(JSON.stringify(v1Json())) as JsonValue))).toBe('invalid');
+      const input = [{ key: 'sign-change', reason: REASON }] as const;
+      const state = fold(recordsOf(horaryJudgmentCreate(JUDGMENT_ID, 'q', { ...RECORD, practitionerInput: input })));
+      const judgment = state.horaryJudgments.get(JUDGMENT_ID);
+      if (judgment?.status !== 'ready') throw new Error('expected ready');
+      expect(judgment.record.practitionerInput).toEqual(input);
+    });
+  });
+
+  describe('the closed key list', () => {
+    it('accepts every key with its own reason', () => {
+      for (const key of HORARY_PRACTITIONER_KEYS) {
+        const value = v2([{ key, reason: HORARY_PRACTITIONER_REASONS[key] }]);
+        expect(fold2(value)).toMatchObject({ status: 'ready' });
+        expect(refusal(write(value))).toBeUndefined();
+      }
+    });
+
+    it('accepts all six keys at once', () => {
+      const all = HORARY_PRACTITIONER_KEYS.map((key) => ({ key, reason: HORARY_PRACTITIONER_REASONS[key] }));
+      expect(fold2(v2(all))).toMatchObject({ status: 'ready' });
+    });
+
+    it('folds an unknown key to unknown-value and refuses to write it', () => {
+      const value = v2([{ key: 'moiety-of-the-moon', reason: REASON }]);
+      expect(fold2(value)).toMatchObject({ status: 'unreadable', reason: 'unknown-value' });
+      expect(refusal(write(value))).toBe('invalid');
+    });
+
+    it('folds a duplicate key to invalid and refuses to write it', () => {
+      const entry = { key: 'sign-change', reason: REASON };
+      expect(fold2(v2([entry, entry]))).toMatchObject({ status: 'unreadable', reason: 'invalid' });
+      expect(refusal(write(v2([entry, entry])))).toBe('invalid');
+    });
+
+    it('folds an empty or non-string key to invalid, and lets invalid outrank unknown', () => {
+      expect(fold2(v2([{ key: '', reason: REASON }]))).toMatchObject({ reason: 'invalid' });
+      expect(fold2(v2([{ key: 7, reason: REASON }]))).toMatchObject({ reason: 'invalid' });
+      const mixed = v2([
+        { key: 'moiety-of-the-moon', reason: REASON },
+        { key: 'sign-change', reason: 7 },
+      ]);
+      expect(fold2(mixed)).toMatchObject({ reason: 'invalid' });
+    });
+
+    it('folds and refuses a list that is not an array, or holds a non-record', () => {
+      for (const bad of [true, 'sign-change', { key: 'sign-change' }, null, [null], ['sign-change']] as const) {
+        expect(fold2(v2(bad as JsonValue))).toMatchObject({ reason: 'invalid' });
+        expect(refusal(write(v2(bad as JsonValue)))).toBe('invalid');
+      }
+    });
+  });
+
+  describe('the reason', () => {
+    const key = 'sign-change';
+    const long = (count: number): string => REASON.slice(0, 10) + 'x'.repeat(count - 10);
+
+    it('keeps the cap at 120 code points and every canonical reason within it', () => {
+      expect(HORARY_PRACTITIONER_REASON_MAX_CHARACTERS).toBe(120);
+      for (const k of HORARY_PRACTITIONER_KEYS) {
+        expect(Array.from(HORARY_PRACTITIONER_REASONS[k]).length).toBeLessThanOrEqual(120);
+      }
+    });
+
+    it('folds 120 code points ready and 121 invalid', () => {
+      expect(fold2(v2([{ key, reason: long(120) }]))).toMatchObject({ status: 'ready' });
+      expect(fold2(v2([{ key, reason: long(121) }]))).toMatchObject({ status: 'unreadable', reason: 'invalid' });
+    });
+
+    it('counts code points, not UTF-16 units', () => {
+      const astral = '\u{1F52D}'.repeat(120);
+      expect(astral.length).toBe(240);
+      expect(fold2(v2([{ key, reason: astral }]))).toMatchObject({ status: 'ready' });
+      expect(fold2(v2([{ key, reason: astral + '\u{1F52D}' }]))).toMatchObject({ reason: 'invalid' });
+      const marks = '°′'.repeat(60);
+      expect(fold2(v2([{ key, reason: marks }]))).toMatchObject({ status: 'ready' });
+      expect(fold2(v2([{ key, reason: marks + '°' }]))).toMatchObject({ reason: 'invalid' });
+    });
+
+    it('refuses to write 121 code points, an empty reason, a wrong type and a reason that is not its key text', () => {
+      expect(refusal(write(v2([{ key, reason: long(121) }])))).toBe('invalid');
+      expect(refusal(write(v2([{ key, reason: '' }])))).toBe('invalid');
+      expect(refusal(write(v2([{ key, reason: 7 }])))).toBe('invalid');
+      expect(refusal(write(v2([{ key, reason: 'Practitioners differ.' }])))).toBe('invalid');
+      expect(refusal(write(v2([{ key, reason: HORARY_PRACTITIONER_REASONS['rule-order'] }])))).toBe('invalid');
+      expect(refusal(write(v2([{ key, reason: long(120) }])))).toBe('invalid');
+    });
+
+    it('lets a peer record with a reason that is not the canonical text fold ready: the fold checks length, the guard checks text', () => {
+      expect(fold2(v2([{ key, reason: 'A newer build worded this differently.' }]))).toMatchObject({ status: 'ready' });
+    });
+
+    it('folds a peer over-long reason invalid without throwing', () => {
+      expect(() => fold2(v2([{ key, reason: 'x'.repeat(100_000) }]))).not.toThrow();
+      expect(fold2(v2([{ key, reason: 'x'.repeat(100_000) }]))).toMatchObject({ reason: 'invalid' });
+    });
+
+    it('refuses before the log is touched', async () => {
+      const store = await openStore({ name: 'astraya-horary-judgment-v2-guard', now: () => T0 });
+      const id = newId('h');
+      const [questionWrite, recordWrite] = horaryJudgmentCreate(id, 'q', RECORD);
+      if (questionWrite === undefined || recordWrite === undefined) throw new Error('fixture');
+      const bad = { ...recordWrite, value: v2([{ key, reason: 'wrong' }]) };
+      await expect(store.mutate([questionWrite, bad])).rejects.toBeInstanceOf(HoraryJudgmentRefusedError);
+      expect(store.outgoing()).toHaveLength(0);
+      expect(store.state.horaryJudgments.size).toBe(0);
+      store.close();
+    });
   });
 });
