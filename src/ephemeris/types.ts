@@ -279,9 +279,17 @@ export interface EphemerisProvider {
    * cusp and angle afterwards, and never shifts `armc`, which is a right ascension. That does not hold for the
    * `SE_SIDBIT_ECL_T0` and `SE_SIDBIT_SSY_PLANE` modes, which project onto another plane. Same polar fallback and
    * warning as `houses`.
-   * The Sunshine system ('I') needs the Sun's declination and is refused.
+   * The Sunshine system ('I') divides the Sun's semi-arcs, so it needs `sunDeclination`, the TROPICAL Sun's declination
+   * in degrees at the moment being cast (never derived from a sidereal longitude); without it 'I' is refused (#1935).
+   * Every other system ignores `sunDeclination`.
    */
-  housesFromArmc(armc: Degrees, latitude: Degrees, obliquity: Degrees, system: HouseSystem): Promise<HousePositions>;
+  housesFromArmc(
+    armc: Degrees,
+    latitude: Degrees,
+    obliquity: Degrees,
+    system: HouseSystem,
+    sunDeclination?: Degrees,
+  ): Promise<HousePositions>;
 
   /**
    * The library's own display name for a house system, via `swe_house_name`.

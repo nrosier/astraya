@@ -68,7 +68,40 @@ describe('housesFromArmc (#1407)', () => {
     expect(result.ascendant).toBeCloseTo(atMoment.ascendant, 6);
   });
 
-  it('refuses the Sunshine system, which needs the Sun’s declination', async () => {
-    await expect(engine.housesFromArmc(100, AMSTERDAM.latitude, 23.44, 'I')).rejects.toBeInstanceOf(EphemerisError);
+  it('still refuses the Sunshine system when no Sun declination is given (#1935 regression guard)', async () => {
+    const call = engine.housesFromArmc(100, AMSTERDAM.latitude, 23.44, 'I');
+    await expect(call).rejects.toBeInstanceOf(EphemerisError);
+    await expect(call).rejects.toThrow(/Sunshine\) needs the Sun's declination/);
+  });
+
+  it('casts Sunshine from an explicit Sun declination, and the cusps move when it changes (#1935)', async () => {
+    const obliquity = await engine.obliquity(JD);
+    const low = await engine.housesFromArmc(100, AMSTERDAM.latitude, obliquity, 'I', 5);
+    const high = await engine.housesFromArmc(100, AMSTERDAM.latitude, obliquity, 'I', 20);
+    for (const result of [low, high]) {
+      expect(result.system).toBe('I');
+      for (let house = 1; house <= 12; house += 1) expect(Number.isFinite(result.cusps[house])).toBe(true);
+    }
+    expect(Math.abs((low.cusps[2] ?? 0) - (high.cusps[2] ?? 0))).toBeGreaterThan(0.01);
+  });
+
+  it('reads the declination from ascmc[9]: matches the engine own Sunshine cast at a real moment (#1935)', async () => {
+    // Reference: swe_houses_ex2 for 'I' at a real moment, which finds the Sun's declination itself. Feeding
+    // housesFromArmc that moment's ARMC, true obliquity and tropical Sun declination must give the same cusps.
+    const obliquity = await engine.obliquity(JD);
+    const [sun] = await engine.positions(JD, [0], { equatorial: true });
+    const atMoment = await engine.houses(JD, AMSTERDAM, 'I');
+    const fromArmc = await engine.housesFromArmc(
+      atMoment.armc,
+      AMSTERDAM.latitude,
+      obliquity,
+      'I',
+      sun?.latitude ?? Number.NaN,
+    );
+    expect(fromArmc.system).toBe('I');
+    for (let house = 1; house <= 12; house += 1) {
+      expect(fromArmc.cusps[house], `cusp ${String(house)}`).toBeCloseTo(atMoment.cusps[house] ?? Number.NaN, 4);
+    }
+    expect(fromArmc.ascendant).toBeCloseTo(atMoment.ascendant, 4);
   });
 });

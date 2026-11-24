@@ -390,17 +390,19 @@ export class SwissEphemerisEngine implements EphemerisProvider {
   /**
    * `swe_houses_armc_ex2` through the raw export, on the same reused buffers as `#housesEx2` (#1407, #1859): houses
    * for an ARMC, a latitude and an obliquity, with no moment. sweph-wasm's wrapper frees nothing when it throws, like
-   * the others. `ascmc[9]` is an input only for the Sunshine system, which `housesFromArmc` refuses, so the reused
-   * buffer's old value there is never read.
+   * the others. `ascmc[9]` is an input only for the Sunshine system: for 'I' the Sun's declination is written there
+   * before the call (#1935); for every other system the reused buffer's old value is never read.
    */
   #housesArmcEx2(
     armc: number,
     latitude: number,
     obliquity: number,
     system: string,
+    sunDeclination?: number,
   ): { cusps: readonly number[]; ascmc: readonly number[] } {
     const { wasm } = this.#instance();
     const buffers = this.#ensureHouseBuffers();
+    if (system === 'I' && sunDeclination !== undefined) wasm.setValue(buffers.ascmc + 9 * 8, sunDeclination, 'double');
     const code = wasm._swe_houses_armc_ex2(
       armc,
       latitude,
@@ -607,15 +609,16 @@ export class SwissEphemerisEngine implements EphemerisProvider {
     latitude: Degrees,
     obliquity: Degrees,
     system: HouseSystem,
+    sunDeclination?: Degrees,
   ): Promise<HousePositions> {
-    if (system === 'I') {
+    if (system === 'I' && sunDeclination === undefined) {
       throw new EphemerisError(
         "House system 'I' (Sunshine) needs the Sun's declination, which housesFromArmc does not take.",
         { call: 'swe_houses_armc_ex2' },
       );
     }
     return this.#housesWithFallback(system, latitude, { call: 'swe_houses_armc_ex2' }, (candidate) =>
-      this.#housesArmcEx2(armc, latitude, obliquity, candidate),
+      this.#housesArmcEx2(armc, latitude, obliquity, candidate, sunDeclination),
     );
   }
 
