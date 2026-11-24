@@ -10,7 +10,7 @@
 
 /**
  * @module deletion-impact
- * @purpose Previews how many people/charts deleting a user's operation log would take with it, shown to an admin immediately before confirming an irreversible account delete.
+ * @purpose Previews how many people, charts, pins, saved queries, chart searches and horary judgments deleting a user's operation log would take with it, shown to an admin immediately before confirming an irreversible account delete.
  * @conventions A deliberate, narrow exception to ADR 0002's "opaque relay never interprets a payload" rule, used only for this one admin-confirmed, destructive-consequence preview — never a general route for browsing another user's data; bounded by `SCAN_LIMIT` rows, and reports `'approximate'` rather than a possibly-undercounted `'counted'` result whenever the scan was truncated or no encryption key is available to decrypt with.
  * @exports DeletionImpact, previewDeletionImpact
  */
@@ -18,7 +18,15 @@ import type { Database } from '../db.ts';
 import { decryptPayload } from './crypto.ts';
 
 export type DeletionImpact =
-  | { readonly kind: 'counted'; readonly people: number; readonly charts: number }
+  | {
+      readonly kind: 'counted';
+      readonly people: number;
+      readonly charts: number;
+      readonly pins: number;
+      readonly savedQueries: number;
+      readonly chartSearches: number;
+      readonly horaryJudgments: number;
+    }
   | { readonly kind: 'approximate'; readonly opRows: number };
 
 interface PayloadRow {
@@ -26,14 +34,21 @@ interface PayloadRow {
   readonly iv: Buffer | null;
 }
 
-/** Mirrors `src/store/fold.ts`'s `KNOWN_ENTITIES` — the only two entities anything writes today. */
-const KNOWN_ENTITIES = ['person', 'chart'] as const;
+/**
+ * The stored kinds the delete confirmation names (#1960): a subset of `src/store/fold.ts`'s
+ * `KNOWN_ENTITIES`, not a mirror of it. The strings are copied, not imported: the store's entity
+ * modules use bundler-style `.js` imports that Node cannot resolve on the server.
+ * `test/server-deletion-impact-entities.test.ts` pins each one to its store export
+ * (`PIN_ENTITY`, `SAVED_QUERY_ENTITY`, `CHART_SEARCH_ENTITY`, `HORARY_JUDGMENT_ENTITY`; `person` and
+ * `chart` are the fold's own literals).
+ */
+const KNOWN_ENTITIES = ['person', 'chart', 'pin', 'savedQuery', 'chartSearch', 'horaryJudgment'] as const;
 
 /**
  * Caps how many rows a single preview will scan and decrypt (#326) — comfortably above
  * any real account's log today, so this only ever bites a runaway one. Hitting the cap
  * means the scan was partial, so the count below must say "approximate" rather than
- * "counted": an undercounted people/chart total that looks precise would understate an
+ * "counted": an undercounted total that looks precise would understate an
  * irreversible delete's real impact.
  */
 const SCAN_LIMIT = 50_000;
@@ -67,5 +82,14 @@ export function previewDeletionImpact(db: Database, userId: string, key: Buffer 
     seen.get(entity)?.add(entityId);
   }
 
-  return { kind: 'counted', people: seen.get('person')?.size ?? 0, charts: seen.get('chart')?.size ?? 0 };
+  const count = (entity: (typeof KNOWN_ENTITIES)[number]): number => seen.get(entity)?.size ?? 0;
+  return {
+    kind: 'counted',
+    people: count('person'),
+    charts: count('chart'),
+    pins: count('pin'),
+    savedQueries: count('savedQuery'),
+    chartSearches: count('chartSearch'),
+    horaryJudgments: count('horaryJudgment'),
+  };
 }

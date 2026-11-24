@@ -50,7 +50,18 @@ const en = {
   peopleCount: (n: string) => `${n} people`,
   oneChart: '1 chart',
   chartsCount: (n: string) => `${n} charts`,
-  peopleAndCharts: (people: string, charts: string) => `${people} and ${charts}`,
+  onePin: '1 pin',
+  pinsCount: (n: string) => `${n} pins`,
+  oneSavedQuery: '1 saved query',
+  savedQueriesCount: (n: string) => `${n} saved queries`,
+  oneChartSearch: '1 chart search',
+  chartSearchesCount: (n: string) => `${n} chart searches`,
+  oneHoraryJudgment: '1 saved judgment',
+  horaryJudgmentsCount: (n: string) => `${n} saved judgments`,
+  /** Joins the named kinds: "A", "A and B", "A, B and C". */
+  joinKinds: (parts: readonly string[]) =>
+    parts.length < 2 ? (parts[0] ?? '') : `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1] ?? ''}`,
+  noStoredItems: 'no stored items',
   oneStoredChange: '1 stored change',
   storedChangesCount: (n: string) => `${n} stored changes`,
   unconfiguredSyncSuffix: (rows: string) =>
@@ -118,7 +129,17 @@ const nl: typeof en = {
   peopleCount: (n: string) => `${n} personen`,
   oneChart: '1 horoscoop',
   chartsCount: (n: string) => `${n} horoscopen`,
-  peopleAndCharts: (people: string, charts: string) => `${people} en ${charts}`,
+  onePin: '1 pin',
+  pinsCount: (n: string) => `${n} pins`,
+  oneSavedQuery: '1 opgeslagen zoekopdracht',
+  savedQueriesCount: (n: string) => `${n} opgeslagen zoekopdrachten`,
+  oneChartSearch: '1 horoscoopzoekopdracht',
+  chartSearchesCount: (n: string) => `${n} horoscoopzoekopdrachten`,
+  oneHoraryJudgment: '1 opgeslagen oordeel',
+  horaryJudgmentsCount: (n: string) => `${n} opgeslagen oordelen`,
+  joinKinds: (parts: readonly string[]) =>
+    parts.length < 2 ? (parts[0] ?? '') : `${parts.slice(0, -1).join(', ')} en ${parts[parts.length - 1] ?? ''}`,
+  noStoredItems: 'geen opgeslagen items',
   oneStoredChange: '1 opgeslagen wijziging',
   storedChangesCount: (n: string) => `${n} opgeslagen wijzigingen`,
   unconfiguredSyncSuffix: (rows: string) =>

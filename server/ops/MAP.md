@@ -4,7 +4,7 @@ Op-log sync relay: HTTP routes, at-rest encryption, right-to-erasure purge, key-
 
 - `cli.ts` — Shared operator-CLI helpers: entry-point test that handles spaces and Windows paths, the not-entry-point stderr line, and `ASTRAYA_DB_PATH` refusal of a blank value (#1792). Deps: none.
 - `crypto.ts` — Whole-payload AES-256-GCM encrypt/decrypt (authenticated); decrypt zeroes its intermediate plaintext chunks. Loads/validates `ASTRAYA_ENCRYPTION_KEY`. "Never store unencrypted" guarantee. Deps: node:crypto.
-- `deletion-impact.ts` — Pre-delete preview: scan (bounded) + decrypt user's ops, count distinct people/charts, approximate if truncated/no key. Deps: db, crypto.
+- `deletion-impact.ts` — Pre-delete preview: scan (bounded) + decrypt user's ops, count distinct people, charts, pins, saved queries, chart searches, horary judgments, approximate if truncated/no key. Deps: db, crypto.
 - `purge.ts` — Right-to-erasure (#308): maintains `purged_entities` deny-list, on purge-marker push erases every op row naming that entity (except marker itself). Deps: db, crypto.
 - `reset-totp.ts` — CLI script (server stopped, refuses without `--yes`): clears TOTP for every user, deletes all recovery codes and the pepper in one transaction, keeps sessions. Key-leak step after rotation (#1782). Deps: db.
 - `reset-user-totp.ts` — CLI script (`--username <name> --yes`): clears TOTP and that user's recovery codes only, keeps sessions, passwords and the pepper; operator recovery for one locked-out user (#1500). Deps: db, auth/totp-store, cli.

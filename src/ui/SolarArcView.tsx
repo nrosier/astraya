@@ -24,7 +24,13 @@ import { GlossaryText } from './GlossaryText.js';
 import { personHref } from './route.js';
 import { useEffect, useMemo, useState } from 'react';
 import { bodyById } from '../astrology/bodies.js';
-import type { DirectedPosition } from '../astrology/solar-arc-directions.js';
+import {
+  SOLAR_ARC_KINDS,
+  SOLAR_ARC_MULTIPLIERS,
+  type DirectedPosition,
+  type SolarArcKind,
+  type SolarArcMultiplier,
+} from '../astrology/solar-arc-directions.js';
 import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
 import { degreeParts, type AspectRow, type DegreeParts } from '../domain/chart-tables.js';
@@ -54,6 +60,7 @@ import { useCalculationBasisLine, withBasisItems } from './calculation-basis.js'
 import { solarArcBasisItems } from './timing-basis.js';
 import { computeSolarArcDeclinations, type SolarArcDeclinationData } from '../domain/solar-arc-declination.js';
 import { Select } from './primitives/Select.js';
+import { Checkbox } from './primitives/Checkbox.js';
 import { timingBasisMessages } from './timing-basis.messages.js';
 import { toChartCalculationOptions } from '../chart/extended-settings.js';
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
@@ -142,14 +149,23 @@ export function toContactRow(contact: DirectedContact): ContactRow {
   };
 }
 
-export function formatExactDate(jd: JulianDayUT | undefined, t: typeof solarArcViewMessages.en): string {
-  if (jd === undefined) return t.exactOnUnknown;
+export function formatExactDate(
+  jd: JulianDayUT | undefined,
+  t: typeof solarArcViewMessages.en,
+  datedByThisArc = true,
+): string {
+  // The Ascendant and Vertex arcs have no simple inverse in time, so their contacts carry no dates by design (#1407).
+  if (jd === undefined) return datedByThisArc ? t.exactOnUnknown : t.exactNotDated;
   const civil = civilFromJulianDay(jd);
   const pad = (n: number): string => String(n).padStart(2, '0');
   return `${String(civil.year)}-${pad(civil.month)}-${pad(civil.day)}`;
 }
 
-export function contactColumns(t: typeof solarArcViewMessages.en, locale: Locale): readonly TableColumn<ContactRow>[] {
+export function contactColumns(
+  t: typeof solarArcViewMessages.en,
+  locale: Locale,
+  datedByThisArc = true,
+): readonly TableColumn<ContactRow>[] {
   return [
     {
       key: 'bodyAName',
@@ -181,7 +197,7 @@ export function contactColumns(t: typeof solarArcViewMessages.en, locale: Locale
       key: 'exactJd',
       label: t.exactOnLabel,
       valueOf: (row) => row.exactJd ?? '',
-      render: (row) => formatExactDate(row.exactJd, t),
+      render: (row) => formatExactDate(row.exactJd, t, datedByThisArc),
     },
   ];
 }
@@ -294,7 +310,14 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
   } = usePersonCalculationSettings(personId);
   const baseBasis = useCalculationBasisLine(personSettings, rulership, undefined, { rulers: false });
   const [directedIn, setDirectedIn] = useState<DirectedIn>('longitude');
-  const basisLine = withBasisItems(baseBasis, ...solarArcBasisItems(timingT, directedIn));
+  // The arc, its multiplier and the direction in time (#1407). The defaults leave the screen as it was.
+  const [arcKind, setArcKind] = useState<SolarArcKind>('solar');
+  const [arcMultiplier, setArcMultiplier] = useState<SolarArcMultiplier>(1);
+  const [converse, setConverse] = useState(false);
+  const basisLine = withBasisItems(
+    baseBasis,
+    ...solarArcBasisItems(timingT, directedIn, { arcKind, arcMultiplier, converse }),
+  );
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
 
@@ -316,7 +339,12 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
         const targetJd = await provider.julianDayFromUtc(targetDate.year, targetDate.month, targetDate.day, 12, 0, 0);
         const calculationOptions = toChartCalculationOptions(personSettings);
         const [data, declination] = await Promise.all([
-          computeSolarArcDirections(moment, targetJd, provider, calculationOptions),
+          computeSolarArcDirections(moment, targetJd, provider, {
+            ...calculationOptions,
+            arcKind,
+            arcMultiplier,
+            converse,
+          }),
           computeSolarArcDeclinations(moment, targetJd, provider, calculationOptions),
         ]);
         if (!effect.cancelled) setLoad({ kind: 'ready', data, declination });
@@ -329,7 +357,7 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
     return () => {
       effect.cancelled = true;
     };
-  }, [personMoment, provider, targetDate, personSettings, settingsUnreadable]);
+  }, [personMoment, provider, targetDate, personSettings, settingsUnreadable, arcKind, arcMultiplier, converse]);
 
   // The positions and contacts tables' CSVs, offered in the page header (#887). Positions first, as the screen lists them.
   const positions = load.kind === 'ready' ? positionRows(load.data.directedPositions, load.data.houses) : undefined;
@@ -384,7 +412,7 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
                     'contacts',
                     t.contactsCaption,
                     deriveExportFilename(person.displayName, 'solar-arc-contacts', 'csv'),
-                    contactColumns(t, locale),
+                    contactColumns(t, locale, arcKind === 'solar'),
                     contacts,
                   ),
                 ]),
@@ -461,6 +489,33 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
             if (next !== undefined) setDirectedIn(next);
           }}
         />
+        {/* The arc options apply to directing in longitude only: the declination module takes none of them (#1407). */}
+        {!byDeclination && (
+          <>
+            <Select
+              label={t.arcLabel}
+              value={arcKind}
+              options={SOLAR_ARC_KINDS.map((value) => ({ value, label: t.arcKinds[value] }))}
+              onChange={(value) => {
+                const next = SOLAR_ARC_KINDS.find((candidate) => candidate === value);
+                if (next !== undefined) setArcKind(next);
+              }}
+            />
+            <Select
+              label={t.multiplierLabel}
+              value={String(arcMultiplier)}
+              options={SOLAR_ARC_MULTIPLIERS.map((value) => ({
+                value: String(value),
+                label: t.multipliers[String(value) as keyof typeof t.multipliers],
+              }))}
+              onChange={(value) => {
+                const next = SOLAR_ARC_MULTIPLIERS.find((candidate) => String(candidate) === value);
+                if (next !== undefined) setArcMultiplier(next);
+              }}
+            />
+            <Checkbox label={t.converseLabel} checked={converse} onChange={setConverse} />
+          </>
+        )}
       </div>
 
       {/* The result region: busy while the directions (re)calculate, as the Astrocartography map is. */}
@@ -532,7 +587,7 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
                       <SortableTable
                         caption={t.contactsCaption}
                         headingLevel={2}
-                        columns={contactColumns(t, locale)}
+                        columns={contactColumns(t, locale, arcKind === 'solar')}
                         rows={contacts}
                         getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
                         downloadFilename={deriveExportFilename(person.displayName, 'solar-arc-contacts', 'csv')}
