@@ -22,6 +22,7 @@ import {
 import { PrimaryDirectionKey } from '../src/domain/primary-directions.js';
 import { primaryDirectionsViewMessages } from '../src/ui/PrimaryDirectionsView.messages.js';
 import { timingBasisMessages } from '../src/ui/timing-basis.messages.js';
+import { timingTimelineViewMessages } from '../src/ui/TimingTimelineView.messages.js';
 import type { Person } from '../src/domain/person.js';
 import type { SavedInterpretationDetail } from '../src/interpretation/tier2-client.js';
 import { fixedStarsScopeNoteOf } from '../src/ui/ChartView.js';
@@ -45,6 +46,9 @@ import {
 import { pdfExportMessages } from '../src/ui/pdf-export.messages.js';
 import { solarArcViewMessages } from '../src/ui/SolarArcView.messages.js';
 import { getEngine } from './engine-harness.js';
+import { computeSecondaryProgression } from '../src/domain/secondary-progression.js';
+import { julianDayFor } from '../src/time/julian.js';
+import { resolveMoment } from '../src/time/resolve.js';
 
 const repoRoot = resolve(import.meta.dirname, '..');
 
@@ -736,7 +740,7 @@ describe('buildPdfPlan', () => {
     ).toBe(true);
   }, 30_000);
 
-  it("reads the solar arc section in the person's zodiac while secondary progressions stay on engine defaults (#1492)", async () => {
+  it("reads the solar arc and secondary progressions sections in the person's zodiac (#1492, #1935)", async () => {
     const provider = await getEngine();
     const lahiri = ayanamsaByKey('lahiri')?.id;
     if (lahiri === undefined) throw new Error('expected the Lahiri ayanamsa');
@@ -768,8 +772,81 @@ describe('buildPdfPlan', () => {
         asOfDate: '2025-01-01',
       },
     };
-    expect(await tablesOf(sidereal, progressions)).toEqual(await tablesOf(DEFAULT_EXTENDED_SETTINGS, progressions));
+    // #1935: the progressions section now reads the person's zodiac too, so the sidereal tables differ from the tropical ones.
+    expect(await tablesOf(sidereal, progressions)).not.toEqual(await tablesOf(DEFAULT_EXTENDED_SETTINGS, progressions));
+    // The stronger check: the sidereal progressed angles are the tropical ones minus the ayanamsa, to the arcsecond
+    // (natal 1990-06-15 14:30 UTC+2, 45N 5E, Placidus, as of 2020-06-15), for the same zodiac the section is given.
+    const natal = {
+      civil: { year: 1990, month: 6, day: 15, hour: 14, minute: 30, second: 0 },
+      coordinates: { latitude: 45, longitude: 5 },
+      offsetOverrideMinutes: 120,
+    };
+    const targetJd = await provider.julianDayFromUtc(2020, 6, 15, 12, 0, 0);
+    const zodiac = { kind: 'sidereal' as const, ayanamsa: lahiri };
+    const gap = (a: number, b: number): number => Math.abs(((((a - b) % 360) + 540) % 360) - 180) * 3600;
+    const natalJd = await julianDayFor(provider, resolveMoment(natal));
+    for (const mcMethod of ['quotidian', 'naibod'] as const) {
+      const tropical = await computeSecondaryProgression(natal, targetJd, provider, { mcMethod });
+      const sid = await computeSecondaryProgression(natal, targetJd, provider, { mcMethod, zodiac });
+      const atProgressed = await provider.ayanamsa(sid.progressedJd, lahiri);
+      const atNatal = await provider.ayanamsa(natalJd, lahiri);
+      // Quotidian reads both angles at the progressed date. The Naibod MC is the natal sidereal MC plus the arc, so it
+      // is anchored to the natal ayanamsa, while the angles derived from it use the progressed-date ayanamsa.
+      const mcAyanamsa = mcMethod === 'quotidian' ? atProgressed : atNatal;
+      expect(gap(sid.houses.midheaven, tropical.houses.midheaven - mcAyanamsa)).toBeLessThan(1);
+      // The Naibod Ascendant follows the same natal anchor: the progressed-date ayanamsa less the natal one is 5.26 arcsec,
+      // and Placidus is not rigid under a change of zodiac, so that offset appears as about 4 arcsec at the Ascendant
+      // (measured 4.07 arcsec against the progressed-date ayanamsa, -1.20 arcsec against the natal one). So the Naibod
+      // Ascendant is checked against tropical minus the natal ayanamsa, to under 2 arcsec. A mixed zodiac is over 86,000.
+      const ascAyanamsa = mcMethod === 'quotidian' ? atProgressed : atNatal;
+      expect(gap(sid.houses.ascendant, tropical.houses.ascendant - ascAyanamsa)).toBeLessThan(
+        mcMethod === 'quotidian' ? 1 : 2,
+      );
+      expect(gap(sid.houses.ascendant, tropical.houses.ascendant)).toBeGreaterThan(20 * 3600);
+    }
   }, 60_000);
+
+  it('notes the rigid angle shift in the progressions hint for a user-defined ayanamsa only (#1935)', async () => {
+    const provider = await getEngine();
+    const lahiri = ayanamsaByKey('lahiri')?.id;
+    if (lahiri === undefined) throw new Error('expected the Lahiri ayanamsa');
+    const userDefined = {
+      ...DEFAULT_EXTENDED_SETTINGS,
+      zodiac: { kind: 'sidereal' as const, ayanamsa: 255, user: { referenceDate: '2000-01-01', degrees: 24 } },
+    };
+    const builtIn = { ...DEFAULT_EXTENDED_SETTINGS, zodiac: { kind: 'sidereal' as const, ayanamsa: lahiri } };
+    async function hintOf(settings: typeof DEFAULT_EXTENDED_SETTINGS, mcMethod: 'naibod' | 'quotidian') {
+      const selection: PdfSelection = {
+        personId: ADA.id,
+        ...EMPTY_SELECTION,
+        progressions: {
+          technique: 'secondary',
+          mcMethod,
+          positionsTable: true,
+          contactsTable: false,
+          asOfDate: '2025-01-01',
+        },
+      };
+      const context: PdfPlanContext = {
+        person: ADA,
+        provider,
+        settings,
+        rulership: DEFAULT_RULERSHIP_CHOICE,
+        locale: 'en',
+        corpusFetch,
+      };
+      const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
+      expect(plan.errors).toHaveLength(0);
+      const [section] = plan.sections;
+      if (section?.kind !== 'chart') throw new Error('expected a chart section');
+      return section.hint ?? '';
+    }
+    const note = timingTimelineViewMessages.en.progressedAnglesRigidNote;
+    expect(await hintOf(userDefined, 'naibod')).toContain(note);
+    expect(await hintOf(userDefined, 'quotidian')).not.toContain(note);
+    expect(await hintOf(builtIn, 'naibod')).not.toContain(note);
+    expect(await hintOf(DEFAULT_EXTENDED_SETTINGS, 'naibod')).not.toContain(note);
+  }, 90_000);
 
   it('builds a profections section with the year/month table and profected-house meanings (#441)', async () => {
     const provider = await getEngine();

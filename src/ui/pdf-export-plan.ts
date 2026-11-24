@@ -206,6 +206,7 @@ import { primaryDirectionsViewMessages } from './PrimaryDirectionsView.messages.
 import { hitColumns, toHitRow } from './PrimaryDirectionsView.js';
 import { primaryDirectionsBasisItems } from './timing-basis.js';
 import { timingBasisMessages } from './timing-basis.messages.js';
+import { timingTimelineViewMessages } from './TimingTimelineView.messages.js';
 import {
   DEFAULT_MAX_AGE_YEARS,
   DEFAULT_PRIMARY_DIRECTION_ORB,
@@ -215,7 +216,7 @@ import {
   directedChartAt,
   generatePrimaryDirections,
 } from '../domain/primary-directions.js';
-import { ageInYears } from '../astrology/progressions.js';
+import { ageInYears, progressedAnglesKeepRigidShift } from '../astrology/progressions.js';
 import { toRow as profectionToRow, columns as profectionColumns } from './ProfectionsView.js';
 import { profectionsViewMessages } from './ProfectionsView.messages.js';
 import { eclipseRows, type EclipseRow } from './eclipses.js';
@@ -1211,8 +1212,13 @@ async function buildProgressionsSectionPlan(
   const targetJd = await targetJdOf(options.asOfDate, provider);
   const data =
     options.technique === 'secondary'
-      ? await computeSecondaryProgression(person.moment, targetJd, provider, { mcMethod: options.mcMethod })
-      : await computeMinorProgression(options.technique, person.moment, targetJd, provider);
+      ? await computeSecondaryProgression(person.moment, targetJd, provider, {
+          mcMethod: options.mcMethod,
+          zodiac: context.settings.zodiac,
+        })
+      : await computeMinorProgression(options.technique, person.moment, targetJd, provider, {
+          zodiac: context.settings.zodiac,
+        });
   const namePart = person.displayName === '' ? '' : ` — ${person.displayName}`;
   const heading = `${pt.progressionsLabel} — ${pt.progressionTechniqueOptions[options.technique]}${namePart}`;
 
@@ -1234,7 +1240,15 @@ async function buildProgressionsSectionPlan(
 
   // Only secondary progressions carry an `mcMethod` — tertiary/minor have no MC-method choice to show.
   const usedMcMethod = 'mcMethod' in data ? data.mcMethod : undefined;
-  const hint = usedMcMethod === undefined ? undefined : `${pt.mcMethodLabel}: ${pt.mcMethodOptions[usedMcMethod]}`;
+  const methodHint =
+    usedMcMethod === undefined ? undefined : `${pt.mcMethodLabel}: ${pt.mcMethodOptions[usedMcMethod]}`;
+  // The same note the Progressions view shows while a user-defined ayanamsa keeps the rigid angle shift (#1935).
+  const hint =
+    methodHint !== undefined &&
+    usedMcMethod !== undefined &&
+    progressedAnglesKeepRigidShift(context.settings.zodiac, usedMcMethod)
+      ? `${methodHint}. ${timingTimelineViewMessages[locale].progressedAnglesRigidNote}`
+      : methodHint;
 
   return { kind: 'chart', heading, ...(hint === undefined ? {} : { hint }), tables };
 }

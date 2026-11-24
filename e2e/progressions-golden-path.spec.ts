@@ -58,6 +58,8 @@ test('a person with a known birth time gets a Progressions screen with technique
 
   await expect(page.getByLabel('Technique')).toBeVisible();
   await expect(page.getByLabel('MC method')).toBeVisible();
+  // The Naibod option names its frame (#1935).
+  await expect(page.getByRole('option', { name: 'Naibod (mean solar motion, in longitude)' })).toHaveCount(1);
   await expect(page.getByRole('table', { name: 'Progressed positions' })).toBeVisible();
 
   // Switching to a technique with no MC method (tertiary/minor always recompute houses

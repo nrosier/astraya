@@ -53,6 +53,31 @@ describe('transits to progressed (#1407)', () => {
     }
   });
 
+  it("reads the transits in the person's zodiac for a sidereal progression (#1935)", async () => {
+    const zodiac = { kind: 'sidereal', ayanamsa: 1 } as const;
+    const progression = await computeSecondaryProgression(NATAL, targetJd, engine, { zodiac });
+    const sidereal = await transitsToProgressed(targetJd, progression.positions, engine, { zodiac });
+    const tropicalTransits = await transitsToProgressed(targetJd, progression.positions, engine);
+    const ayanamsa = await engine.ayanamsa(targetJd, zodiac.ayanamsa);
+    expect(ayanamsa).toBeGreaterThan(23);
+    expect(sidereal.length).toBeGreaterThan(0);
+    const key = (c: { bodyA: number; bodyB: number; aspect: { key: string } }): string =>
+      `${String(c.bodyA)}|${String(c.bodyB)}|${c.aspect.key}`;
+    // The mixed-zodiac result the screen showed before: tropical transits against sidereal progressed bodies.
+    expect(sidereal.map(key).sort()).not.toEqual(tropicalTransits.map(key).sort());
+    for (const contact of sidereal) {
+      const tropical = await engine.position(targetJd, contact.bodyA);
+      const inZodiac = await engine.position(targetJd, contact.bodyA, { zodiac });
+      const expected = (((tropical.longitude - ayanamsa) % 360) + 360) % 360;
+      expect(angularSeparation(inZodiac.longitude, expected) * 3600).toBeLessThan(1);
+      const progressed = progression.positions.find((position) => position.body === contact.bodyB);
+      if (progressed === undefined) throw new Error('contact to a body the progression does not have');
+      // The contact's angle is the sidereal transit to the sidereal progressed body, within the orb.
+      const separation = angularSeparation(inZodiac.longitude, progressed.longitude);
+      expect(Math.abs(separation - contact.aspect.angle)).toBeLessThanOrEqual(contact.allowedOrb + 1e-9);
+    }
+  });
+
   it('differs from the progressed-to-natal contacts the screen showed before', async () => {
     const progression = await computeSecondaryProgression(NATAL, targetJd, engine);
     const transit = await transitsToProgressed(targetJd, progression.positions, engine);

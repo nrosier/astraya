@@ -6,6 +6,7 @@
  */
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { firdariaPeriods } from '../astrology/firdaria.js';
+import { progressedAnglesKeepRigidShift } from '../astrology/progressions.js';
 import { zodiacalReleasingPeriods, zodiacalReleasingSubperiods } from '../astrology/zodiacal-releasing.js';
 import { computeChartData } from '../domain/chart-compute.js';
 import { computeProfections } from '../domain/profections.js';
@@ -111,6 +112,8 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
     rulership,
   } = usePersonCalculationSettings(personId);
   const basisLine = useCalculationBasisLine(personSettings, rulership, undefined, { rulers: false });
+  // The timeline's progressions use the default (naibod) MC method; a user-defined ayanamsa keeps the older angle shift (#1935).
+  const rigidAngleNote = progressedAnglesKeepRigidShift(personSettings.zodiac, 'naibod');
   const [asOf, setAsOf] = useState(todayInputValue);
   const [range, setRange] = useState<Range>('5');
   const [query, setQuery] = useState('');
@@ -358,6 +361,7 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
                 }}
               />
               <p className="hint">{t.targetLine(dateLabel(load.centreJd))}</p>
+              {rigidAngleNote && <p className="hint">{t.progressedAnglesRigidNote}</p>}
             </section>
 
             {/* The event table on the left, the technique filter on the right (#1237, the shared timing layout). */}
