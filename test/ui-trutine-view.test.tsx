@@ -107,6 +107,23 @@ describe('TrutineView (#1407)', () => {
     expect(expected.conceptionGregorian).toBeDefined();
   }, 60_000);
 
+  it('shows 29 February 1900 on the Julian card, not 1 March, for a conception on 13 March 1900 Gregorian', async () => {
+    // Born 1 December 1900 Gregorian, 20:00 UT at London: gestation 263 days, conception 29 February 1900 Julian
+    // (= 13 March 1900 Gregorian). 1900 is a Julian leap year but not a Gregorian one.
+    const leapDay: BirthMomentInput = {
+      ...gregorianMoment,
+      civil: { year: 1900, month: 12, day: 1, hour: 20, minute: 0, second: 0 },
+    };
+    const expected = await computeTrutineConception(leapDay, await getEngine());
+    expect(expected.conception).toEqual({ year: 1900, month: 2, day: 29 });
+    expect(expected.conceptionGregorian).toEqual({ year: 1900, month: 3, day: 13 });
+    const container = await mountView(leapDay);
+    const text = container.querySelector('.metric-cards')?.textContent ?? '';
+    expect(text).toContain('February 29, 1900');
+    expect(text).toContain('March 13, 1900');
+    expect(text).not.toContain('March 1, 1900');
+  }, 60_000);
+
   it('shows the outside-the-ephemeris-range message, and no chart, for a birth before 1800', async () => {
     const container = await mountView(earlyGregorianMoment);
     for (let i = 0; i < 100 && !(container.textContent ?? '').includes('outside the ephemeris range'); i += 1) {

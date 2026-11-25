@@ -121,14 +121,19 @@ export function formatCivilDate(
   civil: { readonly year: number; readonly month: number; readonly day: number },
   locale: Locale,
 ): string {
-  const date = new Date(0);
-  date.setUTCFullYear(civil.year, civil.month - 1, civil.day);
+  // Only the month name and the locale's field order come from Intl, using a fixed reference date. The day and the
+  // year are written from the given fields, so a Julian 29 February (1800, 1900, 2100, 2200, 2300) is not rolled to
+  // 1 March by a proleptic-Gregorian `Date`.
+  const reference = new Date(Date.UTC(2000, civil.month - 1, 1));
   return new Intl.DateTimeFormat(locale === 'nl' ? 'nl-NL' : 'en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
     timeZone: 'UTC',
-  }).format(date);
+  })
+    .formatToParts(reference)
+    .map((part) => (part.type === 'day' ? String(civil.day) : part.type === 'year' ? String(civil.year) : part.value))
+    .join('');
 }
 
 /** An amount of US cents as dollars. The app prices only in USD, so the currency is named once, here. */

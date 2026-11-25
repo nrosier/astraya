@@ -187,6 +187,7 @@ describe('the exact Gregorian to Julian conversion (#1407 owner decision, 2026-1
   it('agrees with the engine: the converted Julian date has the same Julian day as the Gregorian one', async () => {
     const engine = await getEngine();
     const dates = [
+      { year: 1582, month: 10, day: 15 },
       { year: 1650, month: 7, day: 1 },
       { year: 1700, month: 3, day: 1 },
       { year: 1750, month: 7, day: 1 },
@@ -209,7 +210,7 @@ describe('the exact Gregorian to Julian conversion (#1407 owner decision, 2026-1
     }
   });
 
-  it('gives the century offsets the owner listed: 10, 11, 12, 13, 14 and 15 days', () => {
+  it('gives the century offsets the owner listed: 10, 11, 12, 13, 14, 15 and (from 1 March 2300) 16 days', () => {
     const cases = [
       { year: 1650, offset: 10 },
       { year: 1750, offset: 11 },
@@ -217,6 +218,7 @@ describe('the exact Gregorian to Julian conversion (#1407 owner decision, 2026-1
       { year: 1950, offset: 13 },
       { year: 2150, offset: 14 },
       { year: 2250, offset: 15 },
+      { year: 2350, offset: 16 },
     ];
     for (const { year, offset } of cases) {
       const julian = gregorianToJulianCivil({ year, month: 7, day: 1 });
@@ -261,6 +263,21 @@ describe('Trutine for a Gregorian birth, within the 1800-2399 range (#1407)', ()
     const early: BirthMomentInput = { ...GREGORIAN, civil: { ...GREGORIAN.civil, year: 1800, month: 2, day: 1 } };
     const outcome = await computeTrutine(early, engine);
     expect(outcome).toEqual({ kind: 'outside-range', first: 1800, last: 2399 });
+  });
+
+  it('accepts a birth on 1 December 1800, whose conception chart is inside 1800-2399 (finite result)', async () => {
+    const engine = await getEngine();
+    // Calculated: at 12:00 this birth gives a conception on 10 February 1800 Julian (gestation 283), at 00:00 on
+    // 28 February 1800 Julian (gestation 265); both are in 1800, so the conception chart is in range.
+    const outcome = await computeTrutine(
+      { ...GREGORIAN, civil: { ...GREGORIAN.civil, year: 1800, month: 12, day: 1 } },
+      engine,
+    );
+    expect(outcome.kind).not.toBe('outside-range');
+    if (outcome.kind === 'outside-range') return;
+    expect(outcome.result.conception.year).toBe(1800);
+    expect(Number.isFinite(outcome.result.conceptionJd)).toBe(true);
+    expect(Number.isFinite(outcome.result.check.distance)).toBe(true);
   });
 
   it('returns the outside-range result for a birth before 1800 and for one after 2399', async () => {
