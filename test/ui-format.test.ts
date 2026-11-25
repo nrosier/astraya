@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   formatCents,
+  formatCivilDate,
   formatCoordinate,
   formatDecimal,
   formatFixed,
@@ -65,6 +66,20 @@ describe('formatDecimal and formatInteger', () => {
     expect(formatDecimal(6.34, 1, 'nl')).toBe('6,3');
     expect(formatInteger(1234567, 'en')).toBe('1,234,567');
     expect(formatInteger(1234567, 'nl')).toBe('1.234.567');
+  });
+});
+
+describe('formatCivilDate', () => {
+  it('prints a Julian 29 February as given in a year the Gregorian calendar does not make leap, in both languages', () => {
+    for (const year of [1800, 1900, 2100, 2200, 2300]) {
+      expect(formatCivilDate({ year, month: 2, day: 29 }, 'en')).toBe(`February 29, ${String(year)}`);
+      expect(formatCivilDate({ year, month: 2, day: 29 }, 'nl')).toBe(`29 februari ${String(year)}`);
+    }
+  });
+
+  it('keeps the ordinary shape of a date', () => {
+    expect(formatCivilDate({ year: 1970, month: 3, day: 10 }, 'en')).toBe('March 10, 1970');
+    expect(formatCivilDate({ year: 1970, month: 3, day: 10 }, 'nl')).toBe('10 maart 1970');
   });
 });
 

@@ -17,10 +17,11 @@ const en = {
   hint: 'William Lilly’s conception chart: the gestation in days is read from his table from the birth Moon and Ascendant, and the chart is cast for noon on the conception day.',
   calculating: 'Calculating…',
   error: (message: string) => `The Trutine of Hermes could not be calculated. ${message}`,
-  julianOnly:
-    'Lilly’s table is reckoned in the Julian calendar, so the Trutine of Hermes can only be cast for a birth dated in the Julian calendar. This birth is read in the Gregorian calendar. Change the calendar on the person page if the date was written in the Julian one.',
+  outsideRange: (first: string, last: string) =>
+    `The Trutine of Hermes is outside the ephemeris range: it needs a conception chart between ${first} and ${last}, and this birth falls outside it.`,
   basis: 'Trutine of Hermes (Lilly, Christian Astrology, 1647, pp. 503-504)',
   conceptionLabel: 'Conception (Julian date)',
+  conceptionGregorianLabel: 'Conception (Gregorian date)',
   gestationLabel: 'Gestation',
   gestationDays: (n: string) => `${n} days`,
   columnUnder: 'Moon under the earth',
@@ -44,10 +45,11 @@ const nl: typeof en = {
   hint: 'De conceptiehoroscoop van William Lilly: de zwangerschapsduur in dagen wordt uit zijn tabel gelezen aan de hand van de maan en de ascendant bij de geboorte, en de horoscoop wordt opgesteld voor het middaguur van de conceptiedag.',
   calculating: 'Berekenen…',
   error: (message: string) => `De Trutina Hermetis kon niet worden berekend. ${message}`,
-  julianOnly:
-    'Lilly’s tabel rekent in de juliaanse kalender, dus de Trutina Hermetis kan alleen worden opgesteld voor een geboorte met een juliaanse datum. Deze geboorte wordt in de gregoriaanse kalender gelezen. Pas de kalender aan op de persoonspagina als de datum juliaans is geschreven.',
+  outsideRange: (first: string, last: string) =>
+    `De Trutina Hermetis valt buiten het bereik van de efemeriden: er is een conceptiehoroscoop tussen ${first} en ${last} nodig, en deze geboorte valt daarbuiten.`,
   basis: 'Trutina Hermetis (Lilly, Christian Astrology, 1647, blz. 503-504)',
   conceptionLabel: 'Conceptie (juliaanse datum)',
+  conceptionGregorianLabel: 'Conceptie (gregoriaanse datum)',
   gestationLabel: 'Zwangerschapsduur',
   gestationDays: (n: string) => `${n} dagen`,
   columnUnder: 'Maan onder de aarde',

@@ -7,13 +7,13 @@
 /**
  * @module TrutineView
  * @purpose Trutine of Hermes conception chart screen for one person: a summary of the conception day and Lilly's 13-degree check above the conception chart.
- * @conventions A derived chart shown through `ChartDataView` like the other Charts-page types, with no PDF link because the PDF builder does not offer this type; gated for an incomplete or unknown-time birth record; Lilly's table is Julian-calendar reckoning, so a Gregorian birth is explained rather than calculated; a failed check is a warning, not an error; text from TrutineView.messages.ts via useMessages().
+ * @conventions A derived chart shown through `ChartDataView` like the other Charts-page types, with no PDF link because the PDF builder does not offer this type; gated for an incomplete or unknown-time birth record; Lilly's table is Julian-calendar reckoning, so a Gregorian birth is converted to the Julian date by the domain and calculated like a Julian one; a birth whose conception chart falls outside the engine's 1800-2399 range gets the outside-range message and no chart; a failed check is a warning, not an error; text from TrutineView.messages.ts via useMessages().
  * @exports TrutineView
  */
 import { useEffect, useMemo, useState } from 'react';
 import { GlossaryText } from './GlossaryText.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
-import { computeTrutineConception, type TrutineConception } from '../domain/trutine.js';
+import { computeTrutine, type TrutineConception } from '../domain/trutine.js';
 import { housesAreDefined, type ChartData } from '../domain/chart-compute.js';
 import { ChartDataView, type ChartOverlayContext } from './ChartView.js';
 import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
@@ -34,12 +34,12 @@ import { StatusMessage } from './primitives/StatusMessage.js';
 import { useStableBy, useStableMoment } from './use-stable-moment.js';
 import { PageHeader } from './PageHeader.js';
 import { ChartHelpTooltip } from './ChartHelpTooltip.js';
-import { resolveMoment } from '../time/resolve.js';
 
 type Load =
   | { readonly kind: 'idle' }
   | { readonly kind: 'loading' }
   | { readonly kind: 'ready'; readonly result: TrutineConception }
+  | { readonly kind: 'outside-range'; readonly first: number; readonly last: number }
   | { readonly kind: 'error'; readonly message: string };
 
 export function TrutineView({
@@ -60,18 +60,8 @@ export function TrutineView({
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'idle' });
 
-  // Lilly's table is Julian-calendar reckoning (the domain refuses a Gregorian birth), so say so before calculating.
-  const isJulian = useMemo(() => {
-    if (personMoment === undefined) return undefined;
-    try {
-      return resolveMoment(personMoment).calendar === 'julian';
-    } catch {
-      return undefined;
-    }
-  }, [personMoment]);
-
   useEffect(() => {
-    if (personMoment === undefined || provider === undefined || settingsUnreadable || isJulian !== true) {
+    if (personMoment === undefined || provider === undefined || settingsUnreadable) {
       setLoad({ kind: 'idle' });
       return undefined;
     }
@@ -86,8 +76,13 @@ export function TrutineView({
           rulership,
           ...(fixedStars === undefined ? {} : { fixedStars }),
         };
-        const result = await computeTrutineConception(moment, provider, options);
-        if (!effect.cancelled) setLoad({ kind: 'ready', result });
+        const outcome = await computeTrutine(moment, provider, options);
+        if (effect.cancelled) return;
+        setLoad(
+          outcome.kind === 'ready'
+            ? { kind: 'ready', result: outcome.result }
+            : { kind: 'outside-range', first: outcome.first, last: outcome.last },
+        );
       } catch (error) {
         if (!effect.cancelled)
           setLoad({ kind: 'error', message: error instanceof Error ? error.message : String(error) });
@@ -97,7 +92,7 @@ export function TrutineView({
     return () => {
       effect.cancelled = true;
     };
-  }, [settingsUnreadable, personMoment, provider, isJulian, rulership, settings, fixedStars]);
+  }, [settingsUnreadable, personMoment, provider, rulership, settings, fixedStars]);
 
   const result = load.kind === 'ready' ? load.result : undefined;
   const data: ChartData | undefined = result?.chart;
@@ -161,10 +156,10 @@ export function TrutineView({
         variant="return"
       />
       <ChartTypeSelector personId={personId} type="trutine" view={view} />
-      {isJulian === false && (
+      {load.kind === 'outside-range' && (
         <>
-          {/* No chart is calculated for a Gregorian birth, so `ChartDataView` is not mounted; the page still carries the
-              shared view bar, as `ChartDataView` draws it while a chart loads (no views until there is a chart). */}
+          {/* No chart is calculated outside the engine's range, so `ChartDataView` is not mounted; the page still carries
+              the shared view bar, as `ChartDataView` draws it while a chart loads (no views until there is a chart). */}
           <ChartViewNav
             activeView={view ?? 'wheel'}
             buildHref={(next) => chartHref(personId, next, 'trutine')}
@@ -173,7 +168,7 @@ export function TrutineView({
             }}
             availableViews={[]}
           />
-          <StatusMessage kind="empty">{t.julianOnly}</StatusMessage>
+          <StatusMessage kind="empty">{t.outsideRange(String(load.first), String(load.last))}</StatusMessage>
         </>
       )}
       <div aria-busy={load.kind === 'loading'}>
@@ -185,6 +180,12 @@ export function TrutineView({
               <dt>{t.conceptionLabel}</dt>
               <dd>{formatCivilDate(result.conception, locale)}</dd>
             </div>
+            {result.conceptionGregorian !== undefined && (
+              <div className="flat-card">
+                <dt>{t.conceptionGregorianLabel}</dt>
+                <dd>{formatCivilDate(result.conceptionGregorian, locale)}</dd>
+              </div>
+            )}
             <div className="flat-card">
               <dt>{t.gestationLabel}</dt>
               <dd>{t.gestationDays(formatInteger(result.gestationDays, locale))}</dd>
