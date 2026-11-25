@@ -56,15 +56,7 @@ tracking, not licence compliance.
 | `oxlint`                                                          | The lint gate (`npm run lint`, in CI's `check` job). Rules of Hooks and exhaustive effect dependencies for the React source (#638) are its own `react` plugin. Replaced ESLint 2026-11-08 (#1284, #1329). | MIT                  |
 | `oxlint-tsgolint`                                                 | Type-aware engine behind `oxlint --type-aware`, Go-based, tracks TypeScript 7 (#1329).                                                                                                                    | MIT                  |
 
-`@axe-core/playwright` is MPL-2.0, outside the MIT/BSD/Apache-2.0/ISC/CC0/BlueOak-1.0.0 set
-`CLAUDE.md` names. It is a devDependency used only by the Playwright a11y suite
-and is never bundled or distributed with Astraya: the Docker runtime stage
-installs with `npm ci --omit=dev`. MPL-2.0's copyleft obligations, such as
-making modified files available, are triggered only by distributing the
-software, so none applies to a tool that stays on the developer's and CI's
-machines. It is called out here rather than silently folded into the "all
-permissive" summary, since `CLAUDE.md`'s rule is written without a scope
-qualifier.
+MPL-2.0 is allowed for development-only dependencies that are not shipped in the client bundle or the runtime image (`CLAUDE.md`, #1987). `@axe-core/playwright` (MPL-2.0) and its dependency `axe-core` are dev-only: they are used only by the Playwright a11y suite, are listed under `devDependencies`, and are never bundled or distributed with Astraya, since the Docker runtime stage installs with `npm ci --omit=dev`. MPL-2.0's copyleft obligations, such as making modified files available, are triggered only by distributing the software, so none applies to a tool that stays on the developer's and CI's machines. A shipped MPL dependency would need its own decision before it is added.
 
 ## CI security scanners (#1279)
 
