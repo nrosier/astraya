@@ -10,7 +10,7 @@
 /**
  * @module chart-tables
  * @purpose Shapes a computed `ChartData` into the flat rows a chart's data tables, wheel ring and sheet actually render (#44).
- * @conventions Pure and framework-free; kept separate from `chart-compute.ts` so the slow real-engine chart test and the fast pure row-shaping test can run independently; longitude is rounded to the nearest arcsecond before sign-splitting (`degreeParts`) to avoid a seconds rounding bumping the sign; the wheel's aspect web is limited to major aspects, tables show every aspect found.
+ * @conventions Pure and framework-free; paran rows list each unordered body pair once (earlier body first) with every in-orb event combination, mirror pairs included, as star rows do (#1996); kept separate from `chart-compute.ts` so the slow real-engine chart test and the fast pure row-shaping test can run independently; longitude is rounded to the nearest arcsecond before sign-splitting (`degreeParts`) to avoid a seconds rounding bumping the sign; the wheel's aspect web is limited to major aspects, tables show every aspect found.
  * @exports DEFAULT_DECLINATION_ORB, positionRows, houseCuspRows, angleRows, aspectRows, crossAspectRows, crossContactRows, dignityRows, conditionRows, receptionRows, dispositorRows, declinationContactRows, antisciaRows, midpointTreeRows, allMidpointsRows, fixedStarRows, FixedStarParanRow, fixedStarParanRows, chartShapeOf, derivedPointRows, chartWheelRing, chartSheetMetaLines, chartSheetInput, degreeParts, visiblePositions, visibleAspects, visibleAngleAspects, almutenOfAscendant, AlmutenCandidateRow
  */
 import { almutenOf, essentialDignityScoreOf } from '../astrology/almuten.js';
@@ -1020,12 +1020,15 @@ export function fixedStarRows(
   });
 }
 
-/** One paran of a chosen fixed star and a visible body (#1407): which angle each is on, and how close in sidereal time. */
+/** One paran of a chosen fixed star (or, #1996, of an earlier visible body) and a visible body (#1407): which angle each is on, and how close in sidereal time. */
 export interface FixedStarParanRow {
+  /** The star's name; for a body-to-body paran (#1996), the first body's English name. */
   readonly star: string;
+  /** Set only on a body-to-body paran (#1996): the first body's key, whose name is `star`. Absent on a star row. */
+  readonly firstBodyKey?: string;
   readonly bodyKey: string;
   readonly bodyName: string;
-  /** The angle event the star is on. */
+  /** The angle event the star (or first body) is on. */
   readonly starEvent: AngleEvent;
   /** The angle event the body is on. */
   readonly bodyEvent: AngleEvent;
@@ -1038,6 +1041,11 @@ export interface FixedStarParanRow {
  * latitude the chart is cast for, within the setting's orb, keeping a paran only when both its events are among the
  * events the setting allows ("Parans to Use"). Empty when the setting is off or the chart holds no paran coordinates
  * (a composite or harmonic chart, or one calculated without `paranStars`).
+ *
+ * Body-to-body parans (#1996) join the same rows: every unordered pair of distinct visible bodies, with the same orb
+ * and event filter. A pair is taken once, the earlier body in `data.positions` order as the first point, and lists
+ * every (first event, second event) combination in orb, so mirror pairs (culminating/anticulminating and
+ * anticulminating/culminating) both appear, as they do for a star.
  */
 export function fixedStarParanRows(
   data: ChartData,
@@ -1059,6 +1067,30 @@ export function fixedStarParanRows(
           star,
           bodyKey: body?.key ?? String(position.body),
           bodyName: body?.name ?? String(position.body),
+          starEvent: paran.angleA,
+          bodyEvent: paran.angleB,
+          orb: paran.orb,
+        });
+      }
+    }
+  }
+  const visible = visiblePositions(data.positions, options);
+  for (const [index, first] of visible.entries()) {
+    const firstPoint = points.bodies.get(first.body);
+    if (firstPoint === undefined) continue;
+    const firstBody = bodyById(first.body);
+    const firstKey = firstBody?.key ?? String(first.body);
+    for (const second of visible.slice(index + 1)) {
+      const secondPoint = points.bodies.get(second.body);
+      if (secondPoint === undefined) continue;
+      const secondBody = bodyById(second.body);
+      for (const paran of parans(firstPoint, secondPoint, points.latitude, setting.orb)) {
+        if (!allowed.has(paran.angleA) || !allowed.has(paran.angleB)) continue;
+        rows.push({
+          star: firstBody?.name ?? firstKey,
+          firstBodyKey: firstKey,
+          bodyKey: secondBody?.key ?? String(second.body),
+          bodyName: secondBody?.name ?? String(second.body),
           starEvent: paran.angleA,
           bodyEvent: paran.angleB,
           orb: paran.orb,

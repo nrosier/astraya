@@ -72,7 +72,7 @@ describe('the paran coordinates (#1407)', () => {
 
 describe('fixedStarParanRows (#1407)', () => {
   it('lists parans, each row agreeing with an independent recomputation of the two ARMCs', () => {
-    const rows = rowsFor(10);
+    const rows = rowsFor(10).filter((row) => row.firstBodyKey === undefined);
     expect(rows.length).toBeGreaterThan(0);
     const points = data.paranPoints;
     expect(points).toBeDefined();
@@ -136,4 +136,78 @@ describe('fixedStarParanRows (#1407)', () => {
     });
     expect(hidden.some((row) => row.bodyKey === 'mars')).toBe(false);
   });
+});
+
+describe('body-to-body parans (#1996)', () => {
+  const bodyRows = (rows: readonly FixedStarParanRow[]) => rows.filter((row) => row.firstBodyKey !== undefined);
+
+  it('lists every unordered pair of visible bodies once, each row agreeing with an independent ARMC recomputation', () => {
+    const rows = bodyRows(rowsFor(10));
+    expect(rows.length).toBeGreaterThan(0);
+    const points = data.paranPoints;
+    if (points === undefined) throw new Error('no paran points');
+    for (const row of rows) {
+      expect(row.firstBodyKey).not.toBe(row.bodyKey);
+      const a = points.bodies.get(bodyByKey(row.firstBodyKey ?? '')?.id ?? -1);
+      const b = points.bodies.get(bodyByKey(row.bodyKey)?.id ?? -1);
+      if (a === undefined || b === undefined) throw new Error('missing body point');
+      const armcA = armcAtAngle(a, points.latitude, row.starEvent);
+      const armcB = armcAtAngle(b, points.latitude, row.bodyEvent);
+      expect(angularSeparation(armcA ?? Number.NaN, armcB ?? Number.NaN)).toBeCloseTo(row.orb, 9);
+    }
+    // A pair appears under one ordering only: the reverse (second, first) never occurs.
+    const pairs = new Set(rows.map((row) => `${row.firstBodyKey ?? ''}|${row.bodyKey}`));
+    for (const row of rows) expect(pairs.has(`${row.bodyKey}|${row.firstBodyKey ?? ''}`)).toBe(false);
+  });
+
+  it('uses the same orb and event filter as star parans', () => {
+    const horizon = bodyRows(rowsFor(10, ['rising', 'setting']));
+    expect(horizon.length).toBeGreaterThan(0);
+    for (const row of horizon) {
+      expect(['rising', 'setting']).toContain(row.starEvent);
+      expect(['rising', 'setting']).toContain(row.bodyEvent);
+    }
+    expect(bodyRows(rowsFor(10)).length).toBeGreaterThan(bodyRows(rowsFor(1)).length);
+    expect(bodyRows(rowsFor(10, []))).toEqual([]);
+  });
+
+  it('leaves out a hidden body', () => {
+    const hidden = fixedStarParanRows(data, {
+      fixedStarParans: { orb: 10, events: ANGLE_EVENTS },
+      bodyVisibility: { mars: false },
+    });
+    expect(bodyRows(hidden).some((row) => row.bodyKey === 'mars' || row.firstBodyKey === 'mars')).toBe(false);
+    expect(bodyRows(rowsFor(10)).some((row) => row.bodyKey === 'mars' || row.firstBodyKey === 'mars')).toBe(true);
+  });
+});
+
+describe('body-to-body parans on the owner reference chart (#1996)', () => {
+  const REFERENCE: BirthMomentInput = {
+    civil: { year: 2025, month: 5, day: 5, hour: 5, minute: 5, second: 5 },
+    coordinates: { latitude: 5 + 5 / 60 + 5 / 3600, longitude: 5 + 5 / 60 + 5 / 3600 },
+    offsetOverrideMinutes: 60,
+  };
+  // The reference orb is 2 minutes of time, which is 0.5 degrees of sidereal time.
+  const REFERENCE_ORB = 0.5;
+
+  it('has the Venus-Neptune and Sun-Mars parans of the reference listing', async () => {
+    const chart = await computeChartData(REFERENCE, engine, { paranStars: true });
+    const at = (orb: number) => fixedStarParanRows(chart, { fixedStarParans: { orb, events: ANGLE_EVENTS } });
+    const has = (rows: readonly FixedStarParanRow[], a: string, ea: AngleEvent, b: string, eb: AngleEvent): boolean =>
+      rows.some(
+        (r) =>
+          (r.firstBodyKey === a && r.bodyKey === b && r.starEvent === ea && r.bodyEvent === eb) ||
+          (r.firstBodyKey === b && r.bodyKey === a && r.starEvent === eb && r.bodyEvent === ea),
+      );
+    // Within the reference orb: Sun anticulminating with Mars setting, and Venus with Neptune rising.
+    const tight = at(REFERENCE_ORB);
+    expect(has(tight, 'sun', 'anticulminating', 'mars', 'setting')).toBe(true);
+    expect(has(tight, 'venus', 'rising', 'neptune', 'rising')).toBe(true);
+    // The reference's other Venus-Neptune events (culminating, setting, anticulminating) are 2.6-3.4 minutes apart in
+    // Astraya, which holds every body at the chart moment; they appear at a one-degree (4 minute) orb.
+    const wide = at(1);
+    for (const event of ['culminating', 'setting', 'anticulminating'] as const) {
+      expect(has(wide, 'venus', event, 'neptune', event)).toBe(true);
+    }
+  }, 60_000);
 });
