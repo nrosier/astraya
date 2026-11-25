@@ -6,8 +6,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   checkMoonNearAscendant,
+  computeTrutine,
   computeTrutineConception,
   conceptionFromGestation,
+  gregorianToJulianCivil,
+  julianToGregorianCivil,
   julianDateFromDayOfYear,
   julianDayOfYear,
   nearestTrutineRow,
@@ -156,10 +159,122 @@ describe('computeTrutineConception on the real engine (pp. 502-504)', () => {
     expect(result.chart.positions.length).toBeGreaterThan(0);
   });
 
-  it('refuses a Gregorian birth, since Lilly reckons in the Julian calendar (p. 503)', async () => {
+  it('keeps the Julian path as a Julian result with no Gregorian counterpart', async () => {
     const engine = await getEngine();
-    const gregorian: BirthMomentInput = { ...BIRTH, calendar: 'gregorian' };
-    await expect(computeTrutineConception(gregorian, engine)).rejects.toThrow(RangeError);
+    const result = await computeTrutineConception(BIRTH, engine);
+    expect(result.calendar).toBe('julian');
+    expect(result.conceptionGregorian).toBeUndefined();
+  });
+});
+
+describe('the exact Gregorian to Julian conversion (#1407 owner decision, 2026-11-25)', () => {
+  // Pairs as supplied in the #1407 task brief; the first is also the reform itself (Inter gravissimas, 1582: Thursday
+  // 4 October Julian was followed by Friday 15 October Gregorian, so 15 October Gregorian is 5 October Julian). All are
+  // cross-checked below against the engine's own Julian day for each calendar, an independent computation.
+  const PAIRS = [
+    { gregorian: { year: 1582, month: 10, day: 15 }, julian: { year: 1582, month: 10, day: 5 } },
+    { gregorian: { year: 1900, month: 3, day: 1 }, julian: { year: 1900, month: 2, day: 17 } },
+    { gregorian: { year: 2000, month: 1, day: 1 }, julian: { year: 1999, month: 12, day: 19 } },
+  ] as const;
+
+  it('maps the known pairs both ways', () => {
+    for (const pair of PAIRS) {
+      expect(gregorianToJulianCivil(pair.gregorian)).toEqual(pair.julian);
+      expect(julianToGregorianCivil(pair.julian)).toEqual(pair.gregorian);
+    }
+  });
+
+  it('agrees with the engine: the converted Julian date has the same Julian day as the Gregorian one', async () => {
+    const engine = await getEngine();
+    const dates = [
+      { year: 1650, month: 7, day: 1 },
+      { year: 1700, month: 3, day: 1 },
+      { year: 1750, month: 7, day: 1 },
+      { year: 1800, month: 3, day: 1 },
+      { year: 1850, month: 7, day: 1 },
+      { year: 1900, month: 2, day: 28 },
+      { year: 1900, month: 3, day: 1 },
+      { year: 1950, month: 7, day: 1 },
+      { year: 2000, month: 1, day: 1 },
+      { year: 2100, month: 3, day: 1 },
+      { year: 2150, month: 7, day: 1 },
+      { year: 2250, month: 7, day: 1 },
+      { year: 2300, month: 3, day: 1 },
+    ];
+    for (const date of dates) {
+      const julian = gregorianToJulianCivil(date);
+      const gregorianJd = await engine.julianDay(date.year, date.month, date.day, 0, 'gregorian');
+      const julianJd = await engine.julianDay(julian.year, julian.month, julian.day, 0, 'julian');
+      expect(julianJd).toBe(gregorianJd);
+    }
+  });
+
+  it('gives the century offsets the owner listed: 10, 11, 12, 13, 14 and 15 days', () => {
+    const cases = [
+      { year: 1650, offset: 10 },
+      { year: 1750, offset: 11 },
+      { year: 1850, offset: 12 },
+      { year: 1950, offset: 13 },
+      { year: 2150, offset: 14 },
+      { year: 2250, offset: 15 },
+    ];
+    for (const { year, offset } of cases) {
+      const julian = gregorianToJulianCivil({ year, month: 7, day: 1 });
+      // Both dates read as plain day counts; the difference is the offset (July, so no February in between).
+      const gap = Date.UTC(year, 6, 1) - Date.UTC(julian.year, julian.month - 1, julian.day);
+      expect(gap / 86_400_000).toBe(offset);
+    }
+  });
+});
+
+describe('Trutine for a Gregorian birth, within the 1800-2399 range (#1407)', () => {
+  const GREGORIAN: BirthMomentInput = {
+    civil: { year: 1850, month: 6, day: 27, hour: 12, minute: 0, second: 0 },
+    coordinates: { latitude: 51.5074, longitude: -0.1278 },
+    offsetOverrideMinutes: 0,
+    calendar: 'gregorian',
+  };
+
+  it('gives the conception date the Julian result gives for the exactly converted birth date', async () => {
+    const engine = await getEngine();
+    // 27 June 1850 Gregorian is 15 June 1850 Julian (12 days), the Julian birth of the tests above.
+    const julianBirth: BirthMomentInput = {
+      ...GREGORIAN,
+      civil: { ...GREGORIAN.civil, ...gregorianToJulianCivil(GREGORIAN.civil) },
+      calendar: 'julian',
+    };
+    expect(gregorianToJulianCivil(GREGORIAN.civil)).toEqual({ year: 1850, month: 6, day: 15 });
+    const viaJulian = await computeTrutineConception(julianBirth, engine);
+    const viaGregorian = await computeTrutineConception(GREGORIAN, engine);
+    expect(viaGregorian.calendar).toBe('gregorian');
+    expect(viaGregorian.conception).toEqual(viaJulian.conception);
+    expect(viaGregorian.gestationDays).toBe(viaJulian.gestationDays);
+    expect(viaGregorian.column).toBe(viaJulian.column);
+    expect(viaGregorian.conceptionGregorian).toEqual(julianToGregorianCivil(viaJulian.conception));
+    expect(viaGregorian.conceptionJd).toBeCloseTo(viaJulian.conceptionJd, 6);
+    expect(viaGregorian.check.distance).toBeCloseTo(viaJulian.check.distance, 6);
+  });
+
+  it('returns the outside-range result, without throwing, when the conception falls before 1800', async () => {
+    const engine = await getEngine();
+    // Born 1 February 1800: the shortest gestation in the table (258 days) puts the conception in 1799.
+    const early: BirthMomentInput = { ...GREGORIAN, civil: { ...GREGORIAN.civil, year: 1800, month: 2, day: 1 } };
+    const outcome = await computeTrutine(early, engine);
+    expect(outcome).toEqual({ kind: 'outside-range', first: 1800, last: 2399 });
+  });
+
+  it('returns the outside-range result for a birth before 1800 and for one after 2399', async () => {
+    const engine = await getEngine();
+    for (const year of [1750, 2400]) {
+      const outcome = await computeTrutine({ ...GREGORIAN, civil: { ...GREGORIAN.civil, year } }, engine);
+      expect(outcome.kind).toBe('outside-range');
+    }
+  });
+
+  it('makes computeTrutineConception throw a RangeError, not an engine error, outside the range', async () => {
+    const engine = await getEngine();
+    const early: BirthMomentInput = { ...GREGORIAN, civil: { ...GREGORIAN.civil, year: 1700 } };
+    await expect(computeTrutineConception(early, engine)).rejects.toThrow(RangeError);
   });
 });
 

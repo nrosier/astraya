@@ -1,10 +1,11 @@
 /**
  * @module trutine
  * @purpose The Trutine of Hermes conception chart (#1407, Step 9c): the gestation days from Lilly's table, the conception day and the 13-degree check.
- * @conventions William Lilly, Christian Astrology (1647), "The Correction of an uncertaine Scheame of Heaven by the Trutine of Hermes", pp. 502-504; the table is transcribed in docs/research/trutine-table-lilly-1647.md and encoded below as printed. Julian calendar throughout, Lilly's own dating, so the birth must be a Julian-calendar date. Under the earth when (Moon - Ascendant) mod 360 < 180 (p. 502), and the column then reads from the Ascendant; above it, from the Descendant ("the 7th house", p. 502). The 12-sign wrap adds 360 degrees to the Moon when she is less than the angle (p. 502). Nearest-row lookup (p. 503, "seek out the neerest number unto mine"); a tie goes to the earlier, smaller row, a rule the page does not state. Birth day B is the day of the Julian year (Table of Months, Bissextile column, p. 504). Gestation N = B - G; when N < 1, the conception falls in the year before and N = B + Y - G, with Y = 366 for a bissextile birth year, as Lilly prints (p. 504), and 365 otherwise (the spec gives no common-year rule; the 365 follows from his "full number of 366 dayes ... in a Leap-yeer"). Lilly's 366 correction is kept, so his worked example gives 10 December 1615 (p. 504), one day later than a strict 365-day count (owner decision, 2026-11-23). Lilly gives the day only and rejects an hour method (p. 505); the conception chart is cast at local noon on the conception day, the moment the check reads (p. 503, step 5). The check: the Moon at noon on the conception day within 13 degrees of the birth Ascendant (p. 503), an angular distance of 13 or less passes; Lilly's "benefics advanced" clause is not implemented.
- * @exports TRUTINE_TABLE, TRUTINE_CHECK_DEGREES, TrutineTableRow, TrutineColumn, TrutineDistance, JulianCivilDate, TrutineCheck, TrutineConception, trutineDistance, nearestTrutineRow, julianDayOfYear, julianDateFromDayOfYear, conceptionFromGestation, checkMoonNearAscendant, computeTrutineConception
+ * @conventions William Lilly, Christian Astrology (1647), "The Correction of an uncertaine Scheame of Heaven by the Trutine of Hermes", pp. 502-504; the table is transcribed in docs/research/trutine-table-lilly-1647.md and encoded below as printed. Julian calendar throughout, Lilly's own dating; a Gregorian birth date is first converted to the Julian date that names the same day by the exact calendar rule (gregorianToJulianCivil, #1407 owner decision 2026-11-25), never by a fixed 10-day shift. The engine ships 1800-2399 only (EPHEMERIS_YEAR_RANGE), so a birth whose birth chart or conception chart would fall outside it returns an outside-range result without calling the engine. Under the earth when (Moon - Ascendant) mod 360 < 180 (p. 502), and the column then reads from the Ascendant; above it, from the Descendant ("the 7th house", p. 502). The 12-sign wrap adds 360 degrees to the Moon when she is less than the angle (p. 502). Nearest-row lookup (p. 503, "seek out the neerest number unto mine"); a tie goes to the earlier, smaller row, a rule the page does not state. Birth day B is the day of the Julian year (Table of Months, Bissextile column, p. 504). Gestation N = B - G; when N < 1, the conception falls in the year before and N = B + Y - G, with Y = 366 for a bissextile birth year, as Lilly prints (p. 504), and 365 otherwise (the spec gives no common-year rule; the 365 follows from his "full number of 366 dayes ... in a Leap-yeer"). Lilly's 366 correction is kept, so his worked example gives 10 December 1615 (p. 504), one day later than a strict 365-day count (owner decision, 2026-11-23). Lilly gives the day only and rejects an hour method (p. 505); the conception chart is cast at local noon on the conception day, the moment the check reads (p. 503, step 5). The check: the Moon at noon on the conception day within 13 degrees of the birth Ascendant (p. 503), an angular distance of 13 or less passes; Lilly's "benefics advanced" clause is not implemented.
+ * @exports TRUTINE_TABLE, TRUTINE_CHECK_DEGREES, TrutineTableRow, TrutineColumn, TrutineDistance, JulianCivilDate, GregorianCivilDate, TrutineCheck, TrutineConception, TrutineOutcome, trutineDistance, nearestTrutineRow, julianDayOfYear, julianDateFromDayOfYear, conceptionFromGestation, checkMoonNearAscendant, gregorianToJulianCivil, julianToGregorianCivil, computeTrutine, computeTrutineConception
  */
 import { bodyByKey } from '../astrology/bodies.js';
+import { EPHEMERIS_YEAR_RANGE } from '../ephemeris/assets.js';
 import type { BodyId, Degrees, EphemerisProvider, GeoPosition, JulianDayUT } from '../ephemeris/types.js';
 import { julianDayFor } from '../time/julian.js';
 import { resolveMoment } from '../time/resolve.js';
@@ -70,6 +71,13 @@ export interface JulianCivilDate {
   readonly day: number;
 }
 
+/** A calendar date in the Gregorian calendar. */
+export interface GregorianCivilDate {
+  readonly year: number;
+  readonly month: number;
+  readonly day: number;
+}
+
 /** The Trutine check: the Moon at noon on the conception day against the birth Ascendant (p. 503, step 5). */
 export interface TrutineCheck {
   /** True when the Moon is within `TRUTINE_CHECK_DEGREES` of the Ascendant. */
@@ -79,7 +87,11 @@ export interface TrutineCheck {
 }
 
 export interface TrutineConception {
+  /** The calendar the birth was dated in; the conception is always reckoned, and given, in the Julian calendar. */
+  readonly calendar: 'gregorian' | 'julian';
   readonly conception: JulianCivilDate;
+  /** The same conception day in the Gregorian calendar, for a Gregorian birth; undefined for a Julian one. */
+  readonly conceptionGregorian: GregorianCivilDate | undefined;
   /** The conception chart's instant: local noon on the conception day, at the birthplace. */
   readonly conceptionJd: JulianDayUT;
   readonly gestationDays: number;
@@ -115,6 +127,73 @@ function norm360(degrees: Degrees): Degrees {
 
 function rowDistance(row: TrutineTableRow): Degrees {
   return row.signs * SIGN_DEGREES + row.degrees;
+}
+
+/**
+ * Julian Day Number (the day beginning at the preceding noon UT) of a Gregorian civil date. Meeus, Astronomical
+ * Algorithms, 2nd ed., ch. 7, through the integer form of Fliegel and Van Flandern (1968); proleptic Gregorian.
+ */
+function jdnFromGregorian(year: number, month: number, day: number): number {
+  const a = Math.floor((14 - month) / 12);
+  const y = year + 4800 - a;
+  const m = month + 12 * a - 3;
+  return (
+    day +
+    Math.floor((153 * m + 2) / 5) +
+    365 * y +
+    Math.floor(y / 4) -
+    Math.floor(y / 100) +
+    Math.floor(y / 400) -
+    32045
+  );
+}
+
+function jdnFromJulian(year: number, month: number, day: number): number {
+  const a = Math.floor((14 - month) / 12);
+  const y = year + 4800 - a;
+  const m = month + 12 * a - 3;
+  return day + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - 32083;
+}
+
+function julianFromJdn(jdn: number): JulianCivilDate {
+  const c = jdn + 32082;
+  const d = Math.floor((4 * c + 3) / 1461);
+  const e = c - Math.floor((1461 * d) / 4);
+  const m = Math.floor((5 * e + 2) / 153);
+  return {
+    year: d - 4800 + Math.floor(m / 10),
+    month: m + 3 - 12 * Math.floor(m / 10),
+    day: e - Math.floor((153 * m + 2) / 5) + 1,
+  };
+}
+
+function gregorianFromJdn(jdn: number): GregorianCivilDate {
+  const a = jdn + 32044;
+  const b = Math.floor((4 * a + 3) / 146097);
+  const c = a - Math.floor((146097 * b) / 4);
+  const d = Math.floor((4 * c + 3) / 1461);
+  const e = c - Math.floor((1461 * d) / 4);
+  const m = Math.floor((5 * e + 2) / 153);
+  return {
+    year: 100 * b + d - 4800 + Math.floor(m / 10),
+    month: m + 3 - 12 * Math.floor(m / 10),
+    day: e - Math.floor((153 * m + 2) / 5) + 1,
+  };
+}
+
+/**
+ * The Julian-calendar date that names the same day as a Gregorian date, by the exact calendar rule (both calendars
+ * counted through the Julian Day Number, Meeus ch. 7), not a fixed shift: the Julian date runs 10 days behind the
+ * Gregorian one from the 1582 reform to 28 February 1700 (Gregorian), then 11, 12, 13, 14 and 15 days behind as the
+ * Gregorian calendar drops 1700, 1800, 1900, 2100 and 2200 as non-leap years. Proleptic before 15 October 1582.
+ */
+export function gregorianToJulianCivil(date: GregorianCivilDate): JulianCivilDate {
+  return julianFromJdn(jdnFromGregorian(date.year, date.month, date.day));
+}
+
+/** The inverse of `gregorianToJulianCivil`: the Gregorian date that names the same day as a Julian date. */
+export function julianToGregorianCivil(date: JulianCivilDate): GregorianCivilDate {
+  return gregorianFromJdn(jdnFromJulian(date.year, date.month, date.day));
 }
 
 function monthLengths(year: number): readonly number[] {
@@ -208,22 +287,45 @@ export function checkMoonNearAscendant(moon: Degrees, ascendant: Degrees): Truti
   return { passed: distance <= TRUTINE_CHECK_DEGREES, distance };
 }
 
+/** The outcome of `computeTrutine`: a conception chart, or the range the engine ships when the birth lies outside it. */
+export type TrutineOutcome =
+  | { readonly kind: 'ready'; readonly result: TrutineConception }
+  | { readonly kind: 'outside-range'; readonly first: number; readonly last: number };
+
+const OUTSIDE_RANGE: TrutineOutcome = {
+  kind: 'outside-range',
+  first: EPHEMERIS_YEAR_RANGE.first,
+  last: EPHEMERIS_YEAR_RANGE.last,
+};
+
+/** Julian day (UT) of 0h on 1 January of a Gregorian year; the range bounds of the engine (it compares the same way). */
+function rangeBoundJd(year: number): number {
+  return jdnFromGregorian(year, 1, 1) - 0.5;
+}
+
+function inEngineRange(jd: JulianDayUT): boolean {
+  return jd >= rangeBoundJd(EPHEMERIS_YEAR_RANGE.first) && jd < rangeBoundJd(EPHEMERIS_YEAR_RANGE.last + 1);
+}
+
 /**
- * The Trutine of Hermes conception chart for a birth (#1407, Step 9c). The birth must be a Julian-calendar date with a
- * known time, so the Ascendant is defined. `provider` must already be initialized. Throws `RangeError` for a Gregorian
- * birth or one without houses; the check failing is a result, not an error.
+ * The Trutine of Hermes conception chart for a birth (#1407, Step 9c), for a Julian or a Gregorian birth date and a
+ * known time, so the Ascendant is defined. A Gregorian date is converted to the exact Julian date before the table runs
+ * (owner decision, 2026-11-25). When the birth chart, or the conception chart (local noon on the conception day, up to
+ * 288 days earlier), falls outside the engine's 1800-2399 range, no chart is cast beyond the range and the outcome is
+ * `outside-range`. `provider` must already be initialized. Throws `RangeError` for a birth without houses; the check
+ * failing is a result, not an error.
  */
-export async function computeTrutineConception(
+export async function computeTrutine(
   birth: BirthMomentInput,
   provider: EphemerisProvider,
   options: ChartCalculationOptions = {},
-): Promise<TrutineConception> {
+): Promise<TrutineOutcome> {
   const resolved = resolveMoment(birth);
-  if (resolved.calendar !== 'julian') {
-    throw new RangeError("The Trutine of Hermes table is Lilly's Julian-calendar reckoning; the birth must be Julian.");
-  }
+  const gregorian = resolved.calendar === 'gregorian';
   const place: GeoPosition = { ...birth.coordinates, altitude: 0 };
   const birthJd = await julianDayFor(provider, resolved);
+  // The conception is earlier than the birth, so a birth chart before the range ends the matter without an engine call.
+  if (!inEngineRange(birthJd)) return OUTSIDE_RANGE;
   const birthChart = await computeChartDataAtJd(birthJd, place, provider, options);
   if (!housesAreDefined(birthChart.houses)) {
     throw new RangeError('The Trutine of Hermes needs a birth time: the Ascendant is not defined.');
@@ -236,31 +338,58 @@ export async function computeTrutineConception(
   const tableRow = nearestTrutineRow(distance);
   const gestationDays = column === 'under' ? tableRow.underDays : tableRow.aboveDays;
 
-  const birthDayOfYear = julianDayOfYear(resolved.civil.year, resolved.civil.month, resolved.civil.day);
-  const conceptionDay = conceptionFromGestation(resolved.civil.year, birthDayOfYear, gestationDays);
+  // Lilly's table counts days of the Julian year, so a Gregorian birth date is first named in the Julian calendar.
+  const birthDate: JulianCivilDate = gregorian ? gregorianToJulianCivil(resolved.civil) : resolved.civil;
+  const birthDayOfYear = julianDayOfYear(birthDate.year, birthDate.month, birthDate.day);
+  const conceptionDay = conceptionFromGestation(birthDate.year, birthDayOfYear, gestationDays);
   const conception = julianDateFromDayOfYear(conceptionDay.year, conceptionDay.dayOfYear);
+  const conceptionGregorian = gregorian ? julianToGregorianCivil(conception) : undefined;
 
   const noonMoment = resolveMoment({
-    civil: { ...conception, hour: NOON_HOUR, minute: 0, second: 0 },
+    civil: { ...(conceptionGregorian ?? conception), hour: NOON_HOUR, minute: 0, second: 0 },
     coordinates: birth.coordinates,
     offsetOverrideMinutes: resolved.offsetMinutes,
-    calendar: 'julian',
+    calendar: gregorian ? 'gregorian' : 'julian',
   });
   const conceptionJd = await julianDayFor(provider, noonMoment);
+  if (!inEngineRange(conceptionJd)) return OUTSIDE_RANGE;
   const chart = await computeChartDataAtJd(conceptionJd, place, provider, options);
   const noonMoon = chart.positions.find((position) => position.body === MOON);
   if (noonMoon === undefined) throw new Error('unreachable: the Moon is always in the chart');
   const check = checkMoonNearAscendant(noonMoon.longitude, ascendant);
 
   return {
-    conception,
-    conceptionJd,
-    gestationDays,
-    column,
-    tableRow,
-    moonLongitude: norm360(moonPosition.longitude),
-    ascendant: norm360(ascendant),
-    check,
-    chart,
+    kind: 'ready',
+    result: {
+      calendar: resolved.calendar,
+      conception,
+      conceptionGregorian,
+      conceptionJd,
+      gestationDays,
+      column,
+      tableRow,
+      moonLongitude: norm360(moonPosition.longitude),
+      ascendant: norm360(ascendant),
+      check,
+      chart,
+    },
   };
+}
+
+/**
+ * `computeTrutine` for a caller that wants the chart or an error: throws `RangeError` when the birth lies outside the
+ * engine's range, as the other Julian-path failures do.
+ */
+export async function computeTrutineConception(
+  birth: BirthMomentInput,
+  provider: EphemerisProvider,
+  options: ChartCalculationOptions = {},
+): Promise<TrutineConception> {
+  const outcome = await computeTrutine(birth, provider, options);
+  if (outcome.kind === 'outside-range') {
+    throw new RangeError(
+      `The Trutine of Hermes is outside the ephemeris range ${String(outcome.first)}-${String(outcome.last)}.`,
+    );
+  }
+  return outcome.result;
 }

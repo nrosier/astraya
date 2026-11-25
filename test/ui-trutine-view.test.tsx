@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
  * The Trutine of Hermes screen (#1407): a Julian-calendar birth gets the conception summary and the check line from
- * the real engine; a Gregorian birth is told why there is no chart. The numbers are read back from the domain result,
+ * the real engine; a Gregorian birth is converted and calculated; one outside the engine's range gets the range message. The numbers are read back from the domain result,
  * not invented. Text is the English catalogue, with Dutch parity checked on the key set.
  */
 import { act } from 'react';
@@ -20,7 +20,15 @@ const julianMoment: BirthMomentInput = {
   offsetOverrideMinutes: 0,
   calendar: 'julian',
 };
-const gregorianMoment: BirthMomentInput = { ...julianMoment, calendar: 'gregorian' };
+const gregorianMoment: BirthMomentInput = {
+  ...julianMoment,
+  civil: { ...julianMoment.civil, day: 27 },
+  calendar: 'gregorian',
+};
+const earlyGregorianMoment: BirthMomentInput = {
+  ...gregorianMoment,
+  civil: { ...julianMoment.civil, year: 1750 },
+};
 
 const holder = vi.hoisted(() => ({ moment: undefined as unknown, engine: undefined as unknown }));
 
@@ -90,9 +98,23 @@ describe('TrutineView (#1407)', () => {
     expect(container.querySelector('.page-header-basis')?.textContent).toContain('Trutine of Hermes (Lilly');
   }, 60_000);
 
-  it('explains, and does not calculate, for a birth read in the Gregorian calendar', async () => {
+  it('calculates a Gregorian birth within the range and shows both conception dates', async () => {
+    const expected = await computeTrutineConception(gregorianMoment, await getEngine());
     const container = await mountView(gregorianMoment);
-    expect(container.textContent).toContain('Julian calendar');
+    const text = container.querySelector('.metric-cards')?.textContent ?? '';
+    expect(text).toContain(formatCivilDate(expected.conception, 'en'));
+    expect(text).toContain('Conception (Gregorian date)');
+    expect(expected.conceptionGregorian).toBeDefined();
+  }, 60_000);
+
+  it('shows the outside-the-ephemeris-range message, and no chart, for a birth before 1800', async () => {
+    const container = await mountView(earlyGregorianMoment);
+    for (let i = 0; i < 100 && !(container.textContent ?? '').includes('outside the ephemeris range'); i += 1) {
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      });
+    }
+    expect(container.textContent).toContain('outside the ephemeris range');
     expect(container.querySelector('.metric-cards')).toBeNull();
   }, 60_000);
 
