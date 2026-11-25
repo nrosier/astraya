@@ -109,6 +109,17 @@ async function settle(): Promise<void> {
   });
 }
 
+/** Polls until the QR image is in the DOM (the QR module is a dynamic import); fails clearly if it never appears. */
+async function waitForQrImage(timeoutMs = 2000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (container.querySelector('img') === null) {
+    if (Date.now() >= deadline) throw new Error(`QR image did not appear within ${timeoutMs} ms`);
+    await act(async () => {
+      await new Promise((done) => setTimeout(done, 10));
+    });
+  }
+}
+
 beforeEach(() => {
   setLocale('en');
 });
@@ -138,7 +149,7 @@ describe('the states', () => {
     stubFetch({ '/api/auth/totp/enrol': () => json({ secret: SECRET, otpauthUri: URI }) });
     await mount();
     await submitPassword();
-    await settle();
+    await waitForQrImage();
 
     const image = container.querySelector('img');
     expect(image?.getAttribute('alt')).toBe(en.qrAlt);
