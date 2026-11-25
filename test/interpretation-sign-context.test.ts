@@ -15,6 +15,7 @@ import { getEngine } from './engine-harness.js';
 let natal: ChartData;
 let wholeSign: ChartData;
 let northern: ChartData;
+let gauquelin: ChartData;
 
 const ARIES = 0;
 const SCORPIO = 7;
@@ -29,6 +30,7 @@ beforeAll(async () => {
   const engine = await getEngine();
   natal = await computeChartData(BIRTH, engine);
   wholeSign = await computeChartData(BIRTH, engine, { houseSystem: 'W' });
+  gauquelin = await computeChartData(BIRTH, engine, { houseSystem: 'G' });
   // 52° N at local midnight: Placidus houses here are unequal enough that two signs fall wholly inside a house
   // and two others hold two cusps each.
   northern = await computeChartData(
@@ -278,6 +280,15 @@ describe('validateSignContext (#1998): closed-set, no extra keys', () => {
     expect(errorsOf({ ...withOccupants, occupants: [{ ...withOccupants.occupants[0], house: 0 }] })).toContain(
       'occupants[0].house must be 1-12 or null',
     );
+  });
+
+  it('sends no cusp houses and no interception for a Gauquelin chart (36 sectors, not 12 houses)', () => {
+    expect(gauquelin.houses.system).toBe('G');
+    for (let sign = 0; sign < 12; sign++) {
+      const context = build(gauquelin, sign, 'modern');
+      expect(context.cusp_houses).toEqual([]);
+      expect(context.intercepted_in_house).toBeNull();
+    }
   });
 
   it('refuses a free-text sign, a transit perspective and a non-object', () => {
