@@ -15,7 +15,8 @@ import {
 } from '../src/chart/extended-settings.js';
 import { computeChartData, NATAL_FIXED_STARS, type ChartData } from '../src/domain/chart-compute.js';
 import { fixedStarParanRows, type FixedStarParanRow } from '../src/domain/chart-tables.js';
-import type { EphemerisProvider } from '../src/ephemeris/types.js';
+import type { ChosenFixedStar } from '../src/domain/person.js';
+import type { EphemerisProvider, GeoPosition } from '../src/ephemeris/types.js';
 import type { BirthMomentInput } from '../src/time/types.js';
 import { getEngine } from './engine-harness.js';
 
@@ -79,9 +80,9 @@ describe('fixedStarParanRows (#1407)', () => {
     expect(points).toBeDefined();
     if (points === undefined) return;
     for (const row of rows) {
-      const star = points.stars.get(row.star);
+      const star = points.stars.get(row.star)?.[row.starEvent];
       const bodyId = bodyByKey(row.bodyKey)?.id;
-      const body = bodyId === undefined ? undefined : points.bodies.get(bodyId);
+      const body = bodyId === undefined ? undefined : points.bodies.get(bodyId)?.[row.bodyEvent];
       expect(star, row.star).toBeDefined();
       expect(body, row.bodyKey).toBeDefined();
       if (star === undefined || body === undefined) continue;
@@ -149,8 +150,8 @@ describe('body-to-body parans (#1996)', () => {
     if (points === undefined) throw new Error('no paran points');
     for (const row of rows) {
       expect(row.firstBodyKey).not.toBe(row.bodyKey);
-      const a = points.bodies.get(bodyByKey(row.firstBodyKey ?? '')?.id ?? -1);
-      const b = points.bodies.get(bodyByKey(row.bodyKey)?.id ?? -1);
+      const a = points.bodies.get(bodyByKey(row.firstBodyKey ?? '')?.id ?? -1)?.[row.starEvent];
+      const b = points.bodies.get(bodyByKey(row.bodyKey)?.id ?? -1)?.[row.bodyEvent];
       if (a === undefined || b === undefined) throw new Error('missing body point');
       const armcA = armcAtAngle(a, points.latitude, row.starEvent);
       const armcB = armcAtAngle(b, points.latitude, row.bodyEvent);
@@ -215,11 +216,190 @@ describe('body-to-body parans on the owner reference chart (#1996)', () => {
     const tight = at(REFERENCE_ORB);
     expect(has(tight, 'sun', 'anticulminating', 'mars', 'setting')).toBe(true);
     expect(has(tight, 'venus', 'rising', 'neptune', 'rising')).toBe(true);
-    // The reference's other Venus-Neptune events (culminating, setting, anticulminating) are 2.6-3.4 minutes apart in
-    // Astraya, which holds every body at the chart moment; they appear at a one-degree (4 minute) orb.
+    // The reference's other Venus-Neptune events (culminating, setting, anticulminating) used to be 2.6-3.4 minutes
+    // apart, when every body was held at the chart moment (the snapshot convention of #1407/#1996). Since #2003 each
+    // body is read at the instant of its own event, so they now fall inside the tight orb too (see the gap test
+    // below); this wider orb stays as the unchanged superset check.
     const wide = at(1);
     for (const event of ['culminating', 'setting', 'anticulminating'] as const) {
       expect(has(wide, 'venus', event, 'neptune', event)).toBe(true);
     }
+  }, 60_000);
+});
+
+describe("parans at each event's instant, with a topocentric Moon (#2003)", () => {
+  const REFERENCE: BirthMomentInput = {
+    civil: { year: 2025, month: 5, day: 5, hour: 5, minute: 5, second: 5 },
+    coordinates: { latitude: 5 + 5 / 60 + 5 / 3600, longitude: 5 + 5 / 60 + 5 / 3600 },
+    offsetOverrideMinutes: 60,
+  };
+  const PLACE: GeoPosition = { ...REFERENCE.coordinates, altitude: 5 };
+  const MOON = 1;
+  const star = (name: string, designation: string): ChosenFixedStar => ({
+    id: `,${designation}`,
+    name,
+    designation,
+    equinox: 'ICRS',
+    sourceSha256: '0'.repeat(64),
+  });
+  const MINUTES_PER_DEGREE = 4;
+  const rowsOf = async (orb: number) => {
+    const chart = await computeChartData(REFERENCE, engine, {
+      paranStars: true,
+      fixedStars: [
+        star('Algol', 'bePer'),
+        star('Deneb Adige', 'alCyg'),
+        star('Zubeneshamali', 'beLib'),
+        star('Alphecca', 'alCrB'),
+      ],
+    });
+    return fixedStarParanRows(chart, { fixedStarParans: { orb, events: ANGLE_EVENTS } });
+  };
+
+  it("puts the Venus-Neptune gaps at the listing's 0.62, 1.95 and 1.85 minutes of time, each within 0.1", async () => {
+    const rows = await rowsOf(0.5);
+    const gap = (event: AngleEvent): number => {
+      const row = rows.find(
+        (r) => r.firstBodyKey === 'venus' && r.bodyKey === 'neptune' && r.starEvent === event && r.bodyEvent === event,
+      );
+      expect(row, event).toBeDefined();
+      return (row?.orb ?? Number.NaN) * MINUTES_PER_DEGREE;
+    };
+    expect(Math.abs(gap('culminating') - 0.62)).toBeLessThan(0.1);
+    expect(Math.abs(gap('setting') - 1.95)).toBeLessThan(0.1);
+    expect(Math.abs(gap('anticulminating') - 1.85)).toBeLessThan(0.1);
+  }, 60_000);
+
+  it("holds the Moon at the listing's four event times (topocentric centre, altitude 0, no refraction), within 0.5 minute", async () => {
+    // The listing's CET clock times, as UT. The window opens 23 hours before the chart moment, matching the window the table uses.
+    const start = (await engine.julianDay(2025, 5, 5, 4 + 5 / 60 + 5 / 3600)) - 1;
+    const utJd = (day: number, h: number, m: number, sec: number) =>
+      engine.julianDay(2025, 5, day, h + m / 60 + sec / 3600);
+    const listing = [
+      ['anticulminate', await utJd(4, 5, 44, 11)],
+      ['rise', await utJd(4, 11, 53, 0)],
+      ['culminate', await utJd(4, 18, 8, 40)],
+      ['set', await utJd(5, 0, 23, 8)],
+    ] as const;
+    for (const [event, expected] of listing) {
+      const instant = await engine.riseTransit(start, MOON, PLACE, event, 'centre-topocentric');
+      expect(instant, event).toBeDefined();
+      expect(Math.abs(((instant ?? Number.NaN) - expected) * 1440), event).toBeLessThan(0.5);
+    }
+  }, 60_000);
+
+  it('has the Moon rows of the listing: Algol, Deneb Adige, Zubeneshamali, Alphecca and Uranus', async () => {
+    const rows = await rowsOf(0.5);
+    const has = (starName: string, starEvent: AngleEvent, bodyKey: string, bodyEvent: AngleEvent): boolean =>
+      rows.some(
+        (r) => r.star === starName && r.bodyKey === bodyKey && r.starEvent === starEvent && r.bodyEvent === bodyEvent,
+      );
+    expect(has('Algol', 'rising', 'moon', 'anticulminating')).toBe(true);
+    expect(has('Deneb Adige', 'setting', 'moon', 'rising')).toBe(true);
+    expect(has('Zubeneshamali', 'rising', 'moon', 'culminating')).toBe(true);
+    expect(has('Alphecca', 'culminating', 'moon', 'setting')).toBe(true);
+    expect(
+      rows.some(
+        (r) =>
+          r.firstBodyKey === 'moon' &&
+          r.bodyKey === 'uranus' &&
+          r.starEvent === 'setting' &&
+          r.bodyEvent === 'anticulminating',
+      ),
+    ).toBe(true);
+  }, 60_000);
+
+  it("has the listing's Mercury Rise / Spica Set paran, its gap within 0.5 minute of the listing's 0.90", async () => {
+    const chart = await computeChartData(REFERENCE, engine, {
+      paranStars: true,
+      fixedStars: [
+        star('Algol', 'bePer'),
+        star('Alphard', 'alHya'),
+        star('Alphecca', 'alCrB'),
+        star('Alpheratz', 'alAnd'),
+        star('Bellatrix', 'gaOri'),
+        star('Betelgeuse', 'alOri'),
+        star('Canopus', 'alCar'),
+        star('Deneb Adige', 'alCyg'),
+        star('Rigel', 'beOri'),
+        star('Spica', 'alVir'),
+        star('Zubeneshamali', 'beLib'),
+      ],
+    });
+    const rows = fixedStarParanRows(chart, { fixedStarParans: { orb: 0.5, events: ANGLE_EVENTS } });
+    const row = rows.find(
+      (r) =>
+        r.firstBodyKey === undefined &&
+        r.star === 'Spica' &&
+        r.starEvent === 'setting' &&
+        r.bodyKey === 'mercury' &&
+        r.bodyEvent === 'rising',
+    );
+    expect(row).toBeDefined();
+    expect(Math.abs((row?.orb ?? Number.NaN) * MINUTES_PER_DEGREE - 0.9)).toBeLessThan(0.5);
+  }, 60_000);
+
+  it("reads each body at the event's own instant, not the chart moment: the Moon's four positions differ", async () => {
+    const chart = await computeChartData(REFERENCE, engine, { paranStars: true });
+    const moon = chart.paranPoints?.bodies.get(MOON);
+    const positions = ANGLE_EVENTS.map((event) => moon?.[event]?.rightAscension);
+    expect(positions.every((ra) => ra !== undefined)).toBe(true);
+    expect(new Set(positions).size).toBe(4);
+  }, 60_000);
+});
+
+describe('paran rows are limited to Sun through Pluto (#2003 owner decision)', () => {
+  const REFERENCE: BirthMomentInput = {
+    civil: { year: 2025, month: 5, day: 5, hour: 5, minute: 5, second: 5 },
+    coordinates: { latitude: 5 + 5 / 60 + 5 / 3600, longitude: 5 + 5 / 60 + 5 / 3600 },
+    offsetOverrideMinutes: 60,
+  };
+  const EXCLUDED_KEYS = [
+    'chiron',
+    'pholus',
+    'ceres',
+    'pallas',
+    'juno',
+    'vesta',
+    'meanNode',
+    'trueNode',
+    'meanLilith',
+    'osculatingLilith',
+    'interpolatedLilith',
+  ];
+
+  it('has no row whose first or second body is an asteroid, a node or a Lilith, with every event and a 10 degree orb', async () => {
+    const chart = await computeChartData(REFERENCE, engine, { paranStars: true });
+    const rows = fixedStarParanRows(chart, { fixedStarParans: { orb: 10, events: ANGLE_EVENTS } });
+    expect(rows.some((r) => r.firstBodyKey !== undefined)).toBe(true);
+    expect(rows.some((r) => r.firstBodyKey === undefined)).toBe(true);
+    for (const row of rows) {
+      expect(EXCLUDED_KEYS).not.toContain(row.bodyKey);
+      expect(EXCLUDED_KEYS).not.toContain(row.firstBodyKey ?? 'sun');
+    }
+    // The chart itself still holds the excluded bodies.
+    expect(chart.positions.some((p) => bodyByKey('chiron')?.id === p.body)).toBe(true);
+  }, 60_000);
+
+  it('keeps the Sun-Pluto rows the review matched: Venus-Neptune culminating at 0.62 min, Sun anticulminating with Mars setting', async () => {
+    const chart = await computeChartData(REFERENCE, engine, { paranStars: true });
+    const rows = fixedStarParanRows(chart, { fixedStarParans: { orb: 0.5, events: ANGLE_EVENTS } });
+    const venusNeptune = rows.find(
+      (r) =>
+        r.firstBodyKey === 'venus' &&
+        r.bodyKey === 'neptune' &&
+        r.starEvent === 'culminating' &&
+        r.bodyEvent === 'culminating',
+    );
+    expect(Math.abs((venusNeptune?.orb ?? Number.NaN) * 4 - 0.62)).toBeLessThan(0.1);
+    expect(
+      rows.some(
+        (r) =>
+          r.firstBodyKey === 'sun' &&
+          r.bodyKey === 'mars' &&
+          r.starEvent === 'anticulminating' &&
+          r.bodyEvent === 'setting',
+      ),
+    ).toBe(true);
   }, 60_000);
 });

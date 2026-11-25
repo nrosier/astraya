@@ -24,7 +24,7 @@ Pure astrological calculation (no DOM/React): bodies, aspects, houses, dignities
 - `firdaria.ts` — Firdaria time-lord periods and their seven equal planet sub-periods (Bonatti Tr. 9 ch. 3; nodes, fixed years, day/night sect order) (#554, #1796). Deps: `sect`, `ephemeris/types`.
 - `fixed-star-registry.ts` — Yemen fixed-star baseline table (al-Fārisī, c. 1270, as printed) + longitude helper. Deps: `signs`.
 - `kite-registry.ts` — Cited Kite pattern definitions (#741): school, required aspects, orb policy, authority. Data only. Deps: none.
-- `fixed-stars.ts` — Fixed-star conjunctions + paran (angle-crossing). Deps: `aspects`.
+- `fixed-stars.ts` — Fixed-star conjunctions + paran (angle-crossing), incl. per-event-instant parans (#2003). Deps: `aspects`.
 - `formula-parser.ts` — Safe recursive-descent arithmetic-expression parser/evaluator for user-defined points, no eval (#566). Deps: `ephemeris/types`.
 - `harmonics.ts` — Harmonic charts (Western) + Vedic Varga/divisional (D1/D9/D10). Deps: `signs`.
 - `horary.ts` — Horary "considerations before judgment" (radicality check via Lilly). Deps: `signs`.

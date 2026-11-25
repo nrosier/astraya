@@ -52,6 +52,7 @@ One level above `src/astrology/`: composes pure astrological calculations into s
 - `pdf-export-sections.ts` — PDF export builder content (selectable chart types/tables/sections + presets); view-only tables (`PDF_VIEW_TABLES`, `VIEW_TABLES`) that only a chart page's link adds, and `chartSectionForView` (#915); primary directions section (#1845). Deps: `ui/chart-sections` (ChartType, ChartViewKind), `domain/primary-directions`, `astrology/primary-directions`.
 - `prenatal-syzygy.ts` — Prenatal syzygy: last New/Full Moon before birth and its Bonatti Tr. 9 degree (#1798). Deps: `astrology/lunations`, `astrology/sect`, `astrology/bodies`, `ephemeris/types`.
 - `periodic-transit.ts` — Periodic transit forecast (daily/weekly/monthly/yearly sky events). Deps: `astrology/transit-events`, `astrology/stations`, `astrology/aspects`, `./demibirthday`, `./lunar-returns`, `./progressed-lunar-return`, `./solar-return`, `./chart-compute`.
+- `paran-points.ts` — Paran-table coordinates (#2003): each body and star read at each angle event's own instant, the Moon topocentric. Deps: `astrology/fixed-stars`, `ephemeris/types`.
 - `person-form.messages.ts` — i18n for birth-record form validation errors. Deps: none.
 - `person-form.ts` — Birth-data entry form logic: Draft validation + minimal op-log mutations. Deps: `./person`, `./person-form.messages`, `time/types`, `store/oplog`, `store/ops`.
 - `person-file.ts` — One person to and from a file (#699): reads AAF/Astraya JSON into people, stages replacing a person's birth data. Deps: `./aaf-people`, `./full-export-importer`.
