@@ -21,6 +21,7 @@ import {
   Tier2Error,
   toTier2ChartPayload,
 } from '../src/interpretation/tier2-client.ts';
+import type { SignContext } from '../src/interpretation/sign-context-schema.ts';
 import { bodyByKey } from '../src/astrology/bodies.ts';
 import type { ChartData } from '../src/domain/chart-compute.ts';
 import type { BodyId, HousePositions } from '../src/ephemeris/types.ts';
@@ -307,6 +308,39 @@ describe('generateTier2Interpretation', () => {
     const sent = requestBodies.at(-1);
     expect(sent).toEqual({ mode: 'freeform', chartData, locale: 'nl', personId: PERSON });
     expect(sent).not.toHaveProperty('customPrompt');
+  });
+
+  it('sends mode, signContext and locale in sign mode (#1998), and the server generates from it', async () => {
+    await setupAdmin();
+    const signContext: SignContext = {
+      perspective: 'natal',
+      rulership: 'modern',
+      sign: 'Aries',
+      cusp_houses: [1],
+      intercepted_in_house: null,
+      rulers: [
+        {
+          scheme: 'shared',
+          placement: {
+            key: 'mars',
+            sign: 'Leo',
+            house: 5,
+            rules_houses: [1],
+            is_chart_ruler: true,
+            on_angle: false,
+            angle: null,
+            dispositor: 'sun',
+            co_dispositor: null,
+          },
+          aspects: [],
+        },
+      ],
+      occupants: [],
+    };
+    const sections = await generateTier2Interpretation({ mode: 'sign', signContext, locale: 'en', personId: PERSON });
+
+    expect(requestBodies.at(-1)).toEqual({ mode: 'sign', signContext, locale: 'en', personId: PERSON });
+    expect(sections.length).toBeGreaterThan(0);
   });
 
   it('throws a Tier2Error carrying the server’s own message and status on a non-2xx response', async () => {

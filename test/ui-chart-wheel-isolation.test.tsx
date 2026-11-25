@@ -138,9 +138,12 @@ describe('wheel click-to-isolate (#412)', () => {
     expect(button?.disabled).toBe(true);
     expect(focus()?.textContent).toContain('Sign in to generate an AI interpretation of this placement.');
 
-    // A sign, and an aspect line, are not placements: no button.
+    // A sign gets its own sign-ruler control (#1998, which reversed the planets-only rule of #424); signed out, it
+    // says why it cannot be used. An aspect line is not a placement: no button.
     await clickHitArea(wheel, '.chart-sign[data-sign="libra"]');
-    expect(focus()).toBeNull();
+    expect(focus()?.querySelector('button')?.textContent).toBe('Interpret how this sign operates');
+    expect(focus()?.querySelector('button')?.disabled).toBe(true);
+    expect(focus()?.textContent).toContain('Sign in to generate an AI interpretation of this sign.');
     const link = wheel.querySelector('.chart-aspect-link');
     const a = link?.getAttribute('data-aspect-body-a') ?? '';
     const b = link?.getAttribute('data-aspect-body-b') ?? '';

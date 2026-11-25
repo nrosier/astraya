@@ -128,6 +128,9 @@ COPY --from=build /app/src/astrology/derived-points.ts ./src/astrology/derived-p
 # is missing from this list, so a new server import cannot ship without its line.
 COPY --from=build /app/src/interpretation/focus-context-schema.ts ./src/interpretation/focus-context-schema.ts
 COPY --from=build /app/src/astrology/rulership.ts ./src/astrology/rulership.ts
+# Sign mode (#1998) validates its payload with `validateSignContext`: the focus schema's per-item
+# validators plus rulership, both copied above; no calculation imports.
+COPY --from=build /app/src/interpretation/sign-context-schema.ts ./src/interpretation/sign-context-schema.ts
 # The kind and basis stored with each saved AI interpretation (#423): no imports of its own.
 COPY --from=build /app/src/interpretation/result-basis.ts ./src/interpretation/result-basis.ts
 # The Tier 2 wire shapes and their validators, shared with the browser client (#588): imports only

@@ -15,7 +15,7 @@
  */
 import { kindForMode, type ResultBasis, type ResultKind } from '../interpretation/result-basis.js';
 import type { Locale } from '../interpretation/schema.js';
-import { bodyDisplayName } from './astro-names.messages.js';
+import { bodyDisplayName, signDisplayName } from './astro-names.messages.js';
 import { labelForKey } from './placement-label.js';
 
 /** How many placements are named before "and N more". */
@@ -31,6 +31,8 @@ interface Wording {
   readonly pairing: string;
   readonly natal: string;
   readonly transit: string;
+  /** The sign tag in the Past interpretations list (#1998): "Scorpio (sign)". */
+  readonly sign: string;
   readonly of: string;
   readonly and: (count: number) => string;
 }
@@ -42,6 +44,7 @@ const WORDING: Readonly<Record<Locale, Wording>> = {
       'whole-chart': 'AI interpretation',
       focus: 'AI interpretation',
       relationship: 'AI pairing reading',
+      sign: 'AI interpretation',
     },
     entireChart: 'the entire chart',
     bothCharts: 'both charts',
@@ -50,6 +53,7 @@ const WORDING: Readonly<Record<Locale, Wording>> = {
     pairing: 'Relationship between two charts',
     natal: 'natal',
     transit: 'transit',
+    sign: 'sign',
     of: 'of',
     and: (count) => `and ${String(count)} more`,
   },
@@ -59,6 +63,7 @@ const WORDING: Readonly<Record<Locale, Wording>> = {
       'whole-chart': 'AI-interpretatie',
       focus: 'AI-interpretatie',
       relationship: 'AI-relatie-interpretatie',
+      sign: 'AI-interpretatie',
     },
     entireChart: 'de hele horoscoop',
     bothCharts: 'beide horoscopen',
@@ -67,6 +72,7 @@ const WORDING: Readonly<Record<Locale, Wording>> = {
     pairing: 'Relatie tussen twee horoscopen',
     natal: 'geboortehoroscoop',
     transit: 'transit',
+    sign: 'teken',
     of: 'van',
     and: (count) => `en ${String(count)} meer`,
   },
@@ -82,6 +88,8 @@ export function basisLabel(basis: ResultBasis, locale: Locale): string {
       return `${bodyDisplayName(basis.body, locale)} (${basis.perspective === 'transit' ? words.transit : words.natal})`;
     case 'relationship':
       return words.bothCharts;
+    case 'sign':
+      return signDisplayName(basis.sign, locale);
     case 'placements':
       return placementList(basis.keys, locale);
   }
@@ -143,5 +151,8 @@ export function savedTypeLabel(
     case 'placements':
       if (basis?.kind !== 'placements' || basis.keys.length === 0) return undefined;
       return placementList(basis.keys, locale);
+    case 'sign':
+      if (basis?.kind !== 'sign') return undefined;
+      return `${signDisplayName(basis.sign, locale)} (${words.sign})`;
   }
 }

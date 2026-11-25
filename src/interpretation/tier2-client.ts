@@ -25,6 +25,8 @@
  * - `'focus'` (#424) sends `focusContext`: the sign, house, dispositor, rulerships and aspects of ONE
  *   selected placement (see `focus-context.ts`), and asks the model for that placement's tensions.
  *   There is no instruction, so nothing for the verifier to judge.
+ * - `'sign'` (#1998) sends `signContext`: one selected sign's cusp houses, its ruler(s) with their
+ *   placement and aspects, and the bodies in it (see `sign-context.ts`). Also a fixed task.
  *
  * `locale` is sent alongside either payload so the server responds in the
  * language the report is already showing.
@@ -32,7 +34,7 @@
 /**
  * @module interpretation/tier2-client
  * @purpose Thin fetch() client for POST /api/interpretation/generate — the one runtime path in Astraya that calls a third-party model provider, proxied entirely through the server per ADR 0003.
- * @conventions Three modes: 'grounded' sends only de-identified placementKeys (server re-resolves Tier-1 text, no interpretation prose crosses the wire); 'freeform' sends computed chartData and gives up the "no chart data crosses the wire" guarantee for that mode only; 'focus' sends one placement's enriched FocusContext. The wire shapes are defined once in ./tier2-contract and shared with the server, never redeclared here (#588). `locale` always rides alongside the payload.
+ * @conventions Three modes: 'grounded' sends only de-identified placementKeys (server re-resolves Tier-1 text, no interpretation prose crosses the wire); 'freeform' sends computed chartData and gives up the "no chart data crosses the wire" guarantee for that mode only; 'focus' sends one placement's enriched FocusContext; 'sign' sends one sign's SignContext (#1998). The wire shapes are defined once in ./tier2-contract and shared with the server, never redeclared here (#588). `locale` always rides alongside the payload.
  * @exports Tier2Error, Tier2Section, Tier2ChartDataPayload, toTier2ChartPayload, Tier2PositionsHousesPayload, Tier2RelationshipDataPayload, toTier2RelationshipPayload, Tier2Request, SavedInterpretationsScope, SavedInterpretationSummary, SavedInterpretationDetail, deleteSavedInterpretation
  */
 import { bodyById, bodyByKey } from '../astrology/bodies.js';
@@ -40,6 +42,7 @@ import type { ChartData } from '../domain/chart-compute.js';
 import { ApiError } from '../sync/api-error.js';
 import type { SynastryData } from '../domain/synastry.js';
 import type { FocusContext } from './focus-context-schema.js';
+import type { SignContext } from './sign-context-schema.js';
 import type { ResultBasis, ResultKind } from './result-basis.js';
 import type { Locale } from './schema.js';
 import { NO_EXCLUSIONS, type InterpretationExclusions } from './rules.js';
@@ -187,6 +190,12 @@ type Tier2RequestPayload =
       /** The tensions of one selected placement (#424): a fixed task, so no instruction. */
       readonly mode: 'focus';
       readonly focusContext: FocusContext;
+      readonly locale: Locale;
+    }
+  | {
+      /** How one selected sign operates (#1998): its cusp houses, ruler(s) and occupants. A fixed task, so no instruction. */
+      readonly mode: 'sign';
+      readonly signContext: SignContext;
       readonly locale: Locale;
     }
   | {
