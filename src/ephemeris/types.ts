@@ -170,8 +170,13 @@ export type RiseTransitEvent = 'rise' | 'set' | 'culminate' | 'anticulminate';
  * geocentric centre on the astronomical horizon, with no refraction and no parallax ("True Altitude"), or `visual`, the
  * leading or trailing edge with refraction and, for the Moon, parallax ("Visual"). Culmination and anti-culmination are
  * meridian crossings, where the two coincide.
+ *
+ * `centre-topocentric` (#2003) is the third: the body's topocentric disc centre at altitude 0 with no refraction, which
+ * is `swe_rise_trans` with `SE_CALC_RISE | SE_BIT_DISC_CENTER | SE_BIT_NO_REFRACTION`. On the test chart (2025-05-05
+ * 05:05:05 +01:00, 5°05'05" N and E, 5 m) it gives the Moon rise of 2025-05-04 at 12:53:00, the reference listing's time
+ * to the second; `true` gives 12:48:50 and `visual` 12:49:23.
  */
-export type RiseTransitHorizon = 'true' | 'visual';
+export type RiseTransitHorizon = 'true' | 'visual' | 'centre-topocentric';
 
 /** Azimuth/altitude of a point as seen from a place, via `swe_azalt`. */
 export interface HorizontalPosition {

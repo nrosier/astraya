@@ -916,7 +916,16 @@ export class SwissEphemerisEngine implements EphemerisProvider {
       culminate: SE.SE_CALC_MTRANSIT,
       anticulminate: SE.SE_CALC_ITRANSIT,
     }[event];
-    if (horizon === 'visual' || event === 'culminate' || event === 'anticulminate') {
+    if (horizon === 'centre-topocentric' && (event === 'rise' || event === 'set')) {
+      // #2003: topocentric disc centre, no refraction, altitude 0 (SE_BIT_DISC_CENTER | SE_BIT_NO_REFRACTION).
+      return this.#riseTrans(jd, body, kind | SE.SE_BIT_DISC_CENTER | SE.SE_BIT_NO_REFRACTION, place);
+    }
+    if (
+      horizon === 'visual' ||
+      horizon === 'centre-topocentric' ||
+      event === 'culminate' ||
+      event === 'anticulminate'
+    ) {
       return this.#riseTrans(jd, body, kind, place);
     }
     // True Altitude (Solar Fire §12.9): the centre on the astronomical horizon, ignoring "atmospheric refraction, the
