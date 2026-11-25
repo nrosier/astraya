@@ -1140,6 +1140,13 @@ footer {
   max-width: 100%;
 }
 
+/* The Converse checkbox (#1407) is as tall as a select and carries the same bottom margin as a field, so with the row's
+   flex-end alignment its box shares the selects' bottom edge and its tick and label sit level with the select text. */
+.progressions-controls > .primitive-choice {
+  min-height: var(--control-height);
+  margin-bottom: var(--space-4);
+}
+
 .timing-toolbar > * {
   flex: 0 1 19rem;
   min-width: min(100%, 10rem);
