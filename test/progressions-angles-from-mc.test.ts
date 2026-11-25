@@ -16,7 +16,14 @@ import {
   TROPICAL_YEAR_DAYS,
 } from '../src/astrology/progressions.js';
 import { computeSecondaryProgression } from '../src/domain/secondary-progression.js';
-import type { GeoPosition, HousePositions, Zodiac } from '../src/ephemeris/types.js';
+import type {
+  Degrees,
+  EphemerisProvider,
+  GeoPosition,
+  HousePositions,
+  JulianDayUT,
+  Zodiac,
+} from '../src/ephemeris/types.js';
 import { julianDayFor } from '../src/time/julian.js';
 import { resolveMoment } from '../src/time/resolve.js';
 import type { BirthMomentInput } from '../src/time/types.js';
@@ -43,6 +50,33 @@ const SIDEREAL: Zodiac = { kind: 'sidereal', ayanamsa: 1 };
 /** Tolerance the brief requires for the Ascendant against `provider.houses` at the progressed ARMC. */
 const ANGLE_TOLERANCE_DEG = 1e-6;
 
+/** Mean sidereal rate in degrees per day (360.98564736629 per 365.2422 mean days is close enough for a seed). */
+const SIDEREAL_RATE_DEG_PER_DAY = 360.98564736629;
+
+/**
+ * A real moment whose ARMC, at `place`, equals `targetArmc`. It starts from `startJd` and corrects by the ARMC error
+ * (wrapped to (-180, 180]) until the error is below 1e-7 degrees. The floor is the Julian day's double-precision
+ * resolution (about 5e-10 day, about 4e-8 degree of ARMC), so a tighter bound cannot be reached. Uses only `provider.houses`, so the moment is a genuine
+ * engine sky, not a number built from the formula under test.
+ */
+async function momentWithArmc(
+  provider: EphemerisProvider,
+  startJd: JulianDayUT,
+  targetArmc: Degrees,
+  place: GeoPosition,
+): Promise<{ readonly jd: JulianDayUT; readonly armc: Degrees }> {
+  let jd = startJd;
+  for (let i = 0; i < 20; i += 1) {
+    const { armc } = await provider.houses(jd, place, 'P');
+    let error = (targetArmc - armc) % 360;
+    if (error > 180) error -= 360;
+    if (error <= -180) error += 360;
+    if (Math.abs(error) < 1e-7) return { jd, armc };
+    jd = jd + error / SIDEREAL_RATE_DEG_PER_DAY;
+  }
+  throw new Error('momentWithArmc did not converge');
+}
+
 describe('progressed angles from the progressed MC (#1935)', () => {
   it('keeps the progressed MC unchanged: the naibod MC is the natal MC plus age times the mean solar rate', async () => {
     const engine = await getEngine();
@@ -56,19 +90,31 @@ describe('progressed angles from the progressed MC (#1935)', () => {
     expect(arcsecondsBetween(progressed.houses.midheaven, expectedMc)).toBeLessThan(1);
   });
 
-  it('gives the naibod progressed Ascendant at the progressed ARMC, equal to engine houses within 1e-6 degrees', async () => {
+  it('gives the naibod progressed Ascendant equal to provider.houses at a moment whose ARMC is the progressed ARMC (1e-6 degrees)', async () => {
     const engine = await getEngine();
     const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
     const targetJd = natalJd + TROPICAL_YEAR_DAYS * 30;
     const progressed = await computeSecondaryProgression(NATAL, targetJd, engine, { mcMethod: 'naibod' });
 
-    // Cast the same angles from the progressed ARMC at the natal place. `houses` at a moment whose ARMC equals the
-    // progressed ARMC is the reference the brief requires; the moment is the progressed one itself.
-    const obliquity = await engine.obliquity(progressed.progressedJd);
-    const ascendantFromArmc = await engine.housesFromArmc(progressed.houses.armc, NATAL_PLACE.latitude, obliquity, 'P');
-    expect(arcsecondsBetween(progressed.houses.ascendant, ascendantFromArmc.ascendant) / 3600).toBeLessThan(
+    // Find a real moment (within a day of the progressed one) whose sidereal ARMC, at the natal place, equals the
+    // progressed ARMC. `provider.houses` there is the independent reference: it is a full engine cast, not the
+    // housesFromArmc call the code makes.
+    const moment = await momentWithArmc(engine, progressed.progressedJd, progressed.houses.armc, NATAL_PLACE);
+    const reference = await engine.houses(moment.jd, NATAL_PLACE, 'P');
+    expect(arcsecondsBetween(reference.armc, progressed.houses.armc) / 3600).toBeLessThan(ANGLE_TOLERANCE_DEG);
+    expect(arcsecondsBetween(progressed.houses.ascendant, reference.ascendant) / 3600).toBeLessThan(
       ANGLE_TOLERANCE_DEG,
     );
+  });
+
+  it('round-trips the progressed MC: housesFromArmc at the progressed ARMC returns the progressed MC within 1 arcsecond', async () => {
+    const engine = await getEngine();
+    const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
+    const targetJd = natalJd + TROPICAL_YEAR_DAYS * 30;
+    const progressed = await computeSecondaryProgression(NATAL, targetJd, engine, { mcMethod: 'naibod' });
+    const obliquity = await engine.obliquity(progressed.progressedJd);
+    const cast = await engine.housesFromArmc(progressed.houses.armc, NATAL_PLACE.latitude, obliquity, 'P');
+    expect(arcsecondsBetween(cast.midheaven, progressed.houses.midheaven)).toBeLessThan(1);
   });
 
   it('gives a high-latitude Ascendant whose motion differs from the MC motion (Stockholm, 59.33 N, 30 years of age)', async () => {
