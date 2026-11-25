@@ -113,3 +113,28 @@ describe('riseTransit (#1407)', () => {
     expect(Math.abs((visualRise ?? Number.NaN) - (trueRise ?? Number.NaN)) * 1440).toBeLessThan(30);
   });
 });
+
+describe('riseTransit centre-topocentric horizon (#2003)', () => {
+  const DMS = 5 + 5 / 60 + 5 / 3600;
+  const CHART_PLACE: GeoPosition = { latitude: DMS, longitude: DMS, altitude: 5 };
+  // Local midnight 2025-05-04 at +01:00 is 2025-05-03 23:00 UT.
+  const searchFrom = (): Promise<JulianDayUT> => engine.julianDay(2025, 5, 3, 23);
+  const localMinutes = (jd: JulianDayUT | undefined): number => {
+    const dayFraction = ((((jd ?? Number.NaN) + 0.5 + 1 / 24) % 1) + 1) % 1;
+    return dayFraction * 1440;
+  };
+
+  it('gives the Moon rise of 2025-05-04 at 12:53:00 local on the test chart, within a second', async () => {
+    const rise = await engine.riseTransit(await searchFrom(), MOON, CHART_PLACE, 'rise', 'centre-topocentric');
+    expect(Math.abs(localMinutes(rise) - (12 * 60 + 53)) * 60).toBeLessThanOrEqual(1);
+  });
+
+  it('differs from visual by about 3.6 min and from true by about 4.2 min on the test chart', async () => {
+    const from = await searchFrom();
+    const centre = await engine.riseTransit(from, MOON, CHART_PLACE, 'rise', 'centre-topocentric');
+    const visual = await engine.riseTransit(from, MOON, CHART_PLACE, 'rise', 'visual');
+    const trueRise = await engine.riseTransit(from, MOON, CHART_PLACE, 'rise', 'true');
+    expect(((centre ?? Number.NaN) - (visual ?? Number.NaN)) * 1440).toBeCloseTo(3.6, 0);
+    expect(((centre ?? Number.NaN) - (trueRise ?? Number.NaN)) * 1440).toBeCloseTo(4.2, 0);
+  });
+});

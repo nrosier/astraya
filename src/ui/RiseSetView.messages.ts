@@ -21,7 +21,7 @@ const en = {
   eventLabel: 'Event',
   event: { rise: 'Rise', set: 'Set', culminate: 'Culmination', anticulminate: 'Anti-culmination' },
   horizonLabel: 'Horizon',
-  horizon: { true: 'True', visual: 'Visual' },
+  horizon: { true: 'True', visual: 'Visual', 'centre-topocentric': 'Disc centre, topocentric' },
   horizonHint:
     'True puts the centre of the body on the astronomical horizon, with no refraction or parallax. Visual uses the upper edge of the body, with refraction.',
   dateLabel: 'From the date',
@@ -53,7 +53,7 @@ const nl: typeof en = {
   eventLabel: 'Gebeurtenis',
   event: { rise: 'Opkomst', set: 'Ondergang', culminate: 'Culminatie', anticulminate: 'Anticulminatie' },
   horizonLabel: 'Horizon',
-  horizon: { true: 'Ware', visual: 'Zichtbare' },
+  horizon: { true: 'Ware', visual: 'Zichtbare', 'centre-topocentric': 'Schijfcentrum, topocentrisch' },
   horizonHint:
     'Ware zet het middelpunt van het lichaam op de astronomische horizon, zonder refractie of parallax. Zichtbare gebruikt de bovenrand van het lichaam, met refractie.',
   dateLabel: 'Vanaf de datum',
