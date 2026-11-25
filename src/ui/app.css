@@ -11094,8 +11094,9 @@ a.quiet,
   margin: 0;
 }
 
+/* --space-12 is twice --space-6: the chart's Selection card overhangs the workbench by one --space-6 (#817), so this leaves one --space-6 of clear space under it (#1960 owner review). */
 .horary-saved {
-  margin-top: var(--space-6);
+  margin-top: var(--space-12);
 }
 
 .horary-saved .saved-query-list {
