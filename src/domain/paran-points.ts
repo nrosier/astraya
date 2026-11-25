@@ -1,7 +1,7 @@
 /**
  * @module paran-points
  * @purpose Builds the coordinates the fixed-star and body-pair paran table reads: each point's right ascension and declination at each angle event's own instant (#2003).
- * @conventions A body's instant is the first rise, set, culmination or anti-culmination after 24 hours before the chart moment (`riseTransit`, topocentric disc centre at altitude 0, no refraction), so the window is the day leading up to the chart; its position is geocentric and equatorial there, except the Moon's, which is topocentric at the chart place (#2011). A star has no `BodyId`, so its instant is found from sidereal time: the moment the ARMC reaches the star's `armcAtAngle`, refined twice because the star moves slightly. An event the point does not have in that window (circumpolar, or never rising) is absent from its record, so no paran uses it. Tropical and equatorial whatever the zodiac.
+ * @conventions The window starts `WINDOW_START_DAYS` (23 hours) before the chart moment and has no end bound: a body's instant is the first rise, set, culmination or anti-culmination at or after that start (`riseTransit`, topocentric disc centre at altitude 0, no refraction), so an event can fall after the chart moment; its position is geocentric and equatorial there, except the Moon's, which is topocentric at the chart place (#2011). A star has no `BodyId`, so its instant is found from sidereal time: the moment the ARMC reaches the star's `armcAtAngle`, refined twice because the star moves slightly. An event the point does not have in that window (circumpolar, or never rising) is absent from its record, so no paran uses it. Tropical and equatorial whatever the zodiac. The Moon's rise, set, culmination and anti-culmination use the topocentric disc centre at altitude 0 with no refraction (SE_BIT_DISC_CENTER | SE_BIT_NO_REFRACTION, the 'centre-topocentric' horizon), and the Moon's position is topocentric at the chart place; the other Sun-to-Pluto bodies use their geocentric equatorial positions at their own event instants.
  * @exports ParanPoints, paranPointsOf
  */
 import {
@@ -111,8 +111,12 @@ async function starEventPoint(
 }
 
 /**
- * The paran table's coordinates (#1407, #2003): every body and star at each of its own angle events in the 24 hours
- * before the chart moment. Both reads are tropical and equatorial, with no zodiac: a paran is the simultaneous rising,
+ * The paran table's coordinates (#1407, #2003): every body and star at each of its own angle events in a window that
+ * starts 23 hours (`WINDOW_START_DAYS`) before the chart moment and has no end bound. A point is recorded once per
+ * angle type, at its first event after the window start (`bodyEventPoints` per `riseTransit` call, `starEventPoint` at
+ * the first matching ARMC). This prevents duplicate rows from the sidereal and synodic diurnal periods: a fast mover's
+ * period differs from the sidereal day, so a body can cross an angle again within a long window. The window length does
+ * not prevent duplicates; the one-event-per-type rule does. Both reads are tropical and equatorial, with no zodiac: a paran is the simultaneous rising,
  * culmination or setting of two points, which depends on right ascension and declination only.
  */
 export async function paranPointsOf(
