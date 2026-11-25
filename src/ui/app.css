@@ -1007,6 +1007,32 @@ footer {
 }
 
 /*
+ * The harmonic control bar (#1407): the Divisional chart select, the date and its computed readout in one wrapping row
+ * under the wheel. Fields keep their natural width instead of stretching, and the bar is capped at the dial's
+ * 46rem minimum so it never runs under the Selection card (whose overhang reaches one --space-6 below the wheel's row).
+ */
+.harmonic-control-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-4);
+  max-width: 46rem;
+  margin-top: var(--space-6);
+}
+
+.harmonic-control-bar > * {
+  flex: 0 1 11.5rem;
+}
+
+.harmonic-control-bar > .harmonic-control-bar-readout {
+  flex: 1 1 11.5rem;
+  min-width: 0;
+  padding-block: var(--space-2);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+/*
  * The tool-page layout (owner decision 2026-11-03; #1051-#1054; written into the guidelines by #1057): the search form
  * and a side panel share a top zone, 60/40 at desktop widths, and the results run full width below it. On a phone the
  * zones stack in the same order. The pair stretches to one bottom edge (§10.1 rule 1) and is balanced by content, not
