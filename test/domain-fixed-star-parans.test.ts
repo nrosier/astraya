@@ -271,7 +271,7 @@ describe("parans at each event's instant, with a topocentric Moon (#2003)", () =
   }, 60_000);
 
   it("holds the Moon at the listing's four event times (topocentric centre, altitude 0, no refraction), within 0.5 minute", async () => {
-    // The listing's CET clock times, as UT. The window opens 24 hours before the chart moment, as the table's does.
+    // The listing's CET clock times, as UT. The window opens 23 hours before the chart moment, matching the window the table uses.
     const start = (await engine.julianDay(2025, 5, 5, 4 + 5 / 60 + 5 / 3600)) - 1;
     const utJd = (day: number, h: number, m: number, sec: number) =>
       engine.julianDay(2025, 5, day, h + m / 60 + sec / 3600);
@@ -312,7 +312,19 @@ describe("parans at each event's instant, with a topocentric Moon (#2003)", () =
   it("has the listing's Mercury Rise / Spica Set paran, its gap within 0.5 minute of the listing's 0.90", async () => {
     const chart = await computeChartData(REFERENCE, engine, {
       paranStars: true,
-      fixedStars: [star('Spica', 'alVir'), star('Algol', 'bePer'), star('Alphecca', 'alCrB')],
+      fixedStars: [
+        star('Algol', 'bePer'),
+        star('Alphard', 'alHya'),
+        star('Alphecca', 'alCrB'),
+        star('Alpheratz', 'alAnd'),
+        star('Bellatrix', 'gaOri'),
+        star('Betelgeuse', 'alOri'),
+        star('Canopus', 'alCar'),
+        star('Deneb Adige', 'alCyg'),
+        star('Rigel', 'beOri'),
+        star('Spica', 'alVir'),
+        star('Zubeneshamali', 'beLib'),
+      ],
     });
     const rows = fixedStarParanRows(chart, { fixedStarParans: { orb: 0.5, events: ANGLE_EVENTS } });
     const row = rows.find(
