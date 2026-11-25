@@ -11045,20 +11045,19 @@ a.quiet,
 }
 
 /*
- * Horary save (#1960). The verdict row holds the perfection line and Save (owner decision 3); the button keeps the
- * standard control height and sits on the row's bottom edge. The saved-judgments card sits below the result
+ * Horary save (#1960). Save sits in the Judgment toolkit heading row (owner review): heading left, button right,
+ * centred on one line, wrapping below the heading on narrow widths. The saved-judgments card sits below the result
  * (decision 2) with the shared card chrome, and its reopen view is plain content inside it, never a second card.
  */
-.horary-verdict-row {
+.horary-judgment-head {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
 }
 
-.horary-verdict-row > p {
-  flex: 1 1 20rem;
+.horary-judgment-head > h2 {
   margin: 0;
 }
 

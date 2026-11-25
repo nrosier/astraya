@@ -108,6 +108,16 @@ function mountRoot(): void {
 }
 
 describe('saving a horary judgment (#1960)', () => {
+  it('puts Save judgment in the same row as the Judgment toolkit heading', async () => {
+    mountRoot();
+    await castChart();
+    const heading = [...document.querySelectorAll('h2')].find((h) => h.textContent === t.judgmentHeading);
+    expect(heading).toBeDefined();
+    const row = heading?.parentElement;
+    expect(row?.classList.contains('horary-judgment-head')).toBe(true);
+    expect(row?.contains(buttonByText(t.saveJudgment))).toBe(true);
+  });
+
   it('keeps Save off without a question, then writes a ready judgment that the list shows and reopen reads back', async () => {
     mountRoot();
     await castChart();
