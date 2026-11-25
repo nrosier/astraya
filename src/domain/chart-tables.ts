@@ -23,7 +23,7 @@ import { declinationContacts, isOutOfBounds } from '../astrology/declinations.js
 import { rulerOf } from '../astrology/dignities.js';
 import { dispositorChain, isMutualReception } from '../astrology/dispositors.js';
 import { elementBalance, houseOf, modalityBalance } from '../astrology/emphasis.js';
-import { fixedStarConjunctions, parans, type AngleEvent } from '../astrology/fixed-stars.js';
+import { eventParans, fixedStarConjunctions, type AngleEvent } from '../astrology/fixed-stars.js';
 import { jonesBodyPositions, jonesShapeOf, type JonesShapeResult } from '../astrology/jones-shapes.js';
 import { derivedPointByKey, type DerivedPointKey } from '../astrology/derived-points.js';
 import { allMidpoints, midpointOf, midpointTree, oppositeMidpointOf } from '../astrology/midpoints.js';
@@ -1061,7 +1061,7 @@ export function fixedStarParanRows(
     if (bodyPoint === undefined) continue;
     const body = bodyById(position.body);
     for (const [star, starPoint] of points.stars) {
-      for (const paran of parans(starPoint, bodyPoint, points.latitude, setting.orb)) {
+      for (const paran of eventParans(starPoint, bodyPoint, points.latitude, setting.orb)) {
         if (!allowed.has(paran.angleA) || !allowed.has(paran.angleB)) continue;
         rows.push({
           star,
@@ -1084,7 +1084,7 @@ export function fixedStarParanRows(
       const secondPoint = points.bodies.get(second.body);
       if (secondPoint === undefined) continue;
       const secondBody = bodyById(second.body);
-      for (const paran of parans(firstPoint, secondPoint, points.latitude, setting.orb)) {
+      for (const paran of eventParans(firstPoint, secondPoint, points.latitude, setting.orb)) {
         if (!allowed.has(paran.angleA) || !allowed.has(paran.angleB)) continue;
         rows.push({
           star: firstBody?.name ?? firstKey,

@@ -32,7 +32,7 @@
  * @module FixedStars
  * @purpose Computes fixed-star ecliptic conjunctions and mundane parans (angle-crossing contacts) between points.
  * @conventions Conjunctions are ordinary ecliptic-longitude proximity; parans derive each angle-crossing ARMC from the horizon equation sin(alt) = sin(lat)sin(dec) + cos(lat)cos(dec)cos(H) at alt=0, giving the semi-diurnal arc H0 = arccos(-tan(lat)tan(dec)); rising/setting are undefined for circumpolar/never-rising points.
- * @exports fixedStarConjunctions, armcAtAngle, parans, ANGLE_EVENTS
+ * @exports fixedStarConjunctions, armcAtAngle, parans, eventParans, ANGLE_EVENTS, EventPoints
  */
 import type { BodyId, Degrees } from '../ephemeris/types.js';
 import { angularSeparation } from './aspects.js';
@@ -109,6 +109,33 @@ export function parans(a: EquatorialPoint, b: EquatorialPoint, latitude: Degrees
     if (armcA === undefined) continue;
     for (const angleB of ANGLE_EVENTS) {
       const armcB = armcAtAngle(b, latitude, angleB);
+      if (armcB === undefined) continue;
+      const separation = angularSeparation(armcA, armcB);
+      if (separation <= orb) results.push({ angleA, angleB, orb: separation });
+    }
+  }
+  return results;
+}
+
+/**
+ * A point's equatorial position at each angle event's own instant (#2003). An event the point does not have (it never
+ * rises, or no such event fell in the window) is absent.
+ */
+export type EventPoints = Partial<Record<AngleEvent, EquatorialPoint>>;
+
+/**
+ * Like `parans`, but each point is read at the instant of its own event: angle A of `a` uses `a[angleA]`, angle B of `b`
+ * uses `b[angleB]`. The same orb and the same rows as `parans` when every event holds one position.
+ */
+export function eventParans(a: EventPoints, b: EventPoints, latitude: Degrees, orb: Degrees): readonly Paran[] {
+  const results: Paran[] = [];
+  for (const angleA of ANGLE_EVENTS) {
+    const pointA = a[angleA];
+    const armcA = pointA === undefined ? undefined : armcAtAngle(pointA, latitude, angleA);
+    if (armcA === undefined) continue;
+    for (const angleB of ANGLE_EVENTS) {
+      const pointB = b[angleB];
+      const armcB = pointB === undefined ? undefined : armcAtAngle(pointB, latitude, angleB);
       if (armcB === undefined) continue;
       const separation = angularSeparation(armcA, armcB);
       if (separation <= orb) results.push({ angleA, angleB, orb: separation });

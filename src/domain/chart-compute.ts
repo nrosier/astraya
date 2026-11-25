@@ -18,7 +18,7 @@
  * @module chart-compute
  * @purpose Computes a chart's positions, houses, aspects, dignities, sect and derived points from a birth moment (#44).
  * @conventions One ephemeris pass (one Julian day, one batch position call, one house call) then pure arithmetic; nothing is cached — results are cheap to recompute, not stored as a second source of truth; `housesAreDefined` must be checked before trusting house-derived fields. Point aspects (Asc/MC always; Vertex, Part of Fortune/Spirit opt-in via `aspectsTo`) are point-to-body only, use the aspecting body's moiety under a body-moiety profile (Lilly p. 208 for the Ascendant; an Astraya extension for MC/Vertex/lots) else the planet tiers, record the rule used (#796), and drop a part's aspect to its own "+" luminary (#516). Enrichments (declinations, fixedStars, obliquity) are optional fields computed alongside core chart data (#589) but can be lazy-loaded separately for better performance when not needed.
- * @exports computeChartData, computeChartDataAtJd, enrichChartData, housesAreDefined, isAspectParticipant, ChartData, ChartCalculationOptions, ParanPoints, AngleAspect, NATAL_FIXED_STARS
+ * @exports computeChartData, computeChartDataAtJd, enrichChartData, housesAreDefined, isAspectParticipant, ChartData, ChartCalculationOptions, AngleAspect, NATAL_FIXED_STARS
  */
 import {
   DEFAULT_ORB_CONFIG,
@@ -36,7 +36,7 @@ import type { EssentialDignities } from '../astrology/dignities.js';
 import { DEFAULT_RULERSHIP_CHOICE, essentialDignitiesFor, type RulershipChoice } from '../astrology/rulership.js';
 import { partOfFortune, partOfSpirit, type FortuneFormula } from '../astrology/arabic-parts.js';
 import { sectOf, type Sect } from '../astrology/sect.js';
-import type { EquatorialPoint } from '../astrology/fixed-stars.js';
+import { paranPointsOf, type ParanPoints } from './paran-points.js';
 import { isWithinStationWindow, stationTypeOf, type StationType } from '../astrology/planetary-condition.js';
 import { julianDayFor } from '../time/julian.js';
 import { resolveMoment } from '../time/resolve.js';
@@ -425,47 +425,6 @@ function findPointAspects(
   return result;
 }
 
-/** What the paran table reads: the latitude the chart is cast for and each point's right ascension and declination. */
-export interface ParanPoints {
-  readonly latitude: Degrees;
-  readonly bodies: ReadonlyMap<BodyId, EquatorialPoint>;
-  /** Keyed like `ChartData.fixedStars`: by the requested star key. */
-  readonly stars: ReadonlyMap<string, EquatorialPoint>;
-}
-
-/**
- * The paran table's coordinates (#1407). Both calls are tropical and equatorial, with no zodiac: a paran is the
- * simultaneous rising, culmination or setting of two points, which depends on right ascension and declination only.
- */
-async function paranPointsOf(
-  jd: JulianDayUT,
-  latitude: Degrees,
-  bodyIds: readonly BodyId[],
-  stars: readonly { readonly id: string; readonly key: string }[],
-  provider: EphemerisProvider,
-): Promise<ParanPoints> {
-  const [equatorial, starPositions] = await Promise.all([
-    provider.positions(jd, bodyIds, { equatorial: true }),
-    Promise.all(stars.map((star) => provider.fixedStar(jd, star.id, { equatorial: true }))),
-  ]);
-  // With `equatorial`, the library's `longitude` is right ascension and its `latitude` is declination.
-  return {
-    latitude,
-    bodies: new Map(
-      equatorial.map((position) => [
-        position.body,
-        { rightAscension: position.longitude, declination: position.latitude },
-      ]),
-    ),
-    stars: new Map(
-      starPositions.map((star, index) => [
-        stars[index]?.key ?? star.name,
-        { rightAscension: star.longitude, declination: star.latitude },
-      ]),
-    ),
-  };
-}
-
 /**
  * Extracts chart enrichments (declinations, fixedStars, obliquity) for a computed chart.
  * These are optional fields that can be lazy-loaded after the core chart is already computed (#589).
@@ -702,7 +661,7 @@ export async function computeChartDataAtJd(
     options.paranStars === true
       ? await paranPointsOf(
           jd,
-          place.latitude,
+          place,
           bodies.map((body) => body.id),
           stars,
           provider,
