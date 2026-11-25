@@ -189,9 +189,9 @@ const en = {
     setting: 'Setting',
     anticulminating: 'Anti-culminating',
   },
-  fixedStarParansNone: 'No fixed-star paran within the orb for the chosen angles.',
+  fixedStarParansNone: 'No paran within the orb for the chosen angles.',
   fixedStarParansNote:
-    'A paran is a star and a planet on the angles at the same sidereal time, at the latitude the chart is cast for, the same stars as the table above. The orb is in degrees of sidereal time (1° is 4 minutes of time).',
+    'A paran is two points on the angles at the same sidereal time, at the latitude the chart is cast for: a star (the same stars as the table above) with a body, or two bodies, where the first column is the first point and the Body column the second. Each pair of bodies is listed once. The orb is in degrees of sidereal time (1° is 4 minutes of time).',
   // The list is deliberately short (#398, #725): said next to the table and in the PDF so an empty table is not read as "no star is near".
   fixedStarsScopeNote: (count: number, names: string) =>
     `This table checks only ${count === 1 ? '1 star' : `${String(count)} stars`}: ${names}. No other fixed star is looked for, so an empty or short list does not mean no star is near a planet.`,
@@ -604,9 +604,9 @@ const nl: typeof en = {
     setting: 'Ondergaand',
     anticulminating: 'Anti-culminerend',
   },
-  fixedStarParansNone: 'Geen paran met een vaste ster binnen de orb voor de gekozen hoeken.',
+  fixedStarParansNone: 'Geen paran binnen de orb voor de gekozen hoeken.',
   fixedStarParansNote:
-    'Een paran is een ster en een planeet op de hoeken op dezelfde sterrentijd, op de breedtegraad waarvoor de horoscoop is berekend, met dezelfde sterren als de tabel hierboven. De orb is in graden sterrentijd (1° is 4 minuten tijd).',
+    'Een paran is twee punten op de hoeken op dezelfde sterrentijd, op de breedtegraad waarvoor de horoscoop is berekend: een ster (dezelfde sterren als de tabel hierboven) met een lichaam, of twee lichamen, waarbij de eerste kolom het eerste punt is en de kolom Hemellichaam het tweede. Elk paar lichamen staat één keer in de lijst. De orb is in graden sterrentijd (1° is 4 minuten tijd).',
   fixedStarsScopeNote: (count: number, names: string) =>
     `Deze tabel controleert slechts ${count === 1 ? '1 ster' : `${String(count)} sterren`}: ${names}. Er wordt naar geen enkele andere vaste ster gezocht, dus een lege of korte lijst betekent niet dat er geen ster bij een planeet staat.`,
   derivedChartInterpretationNote: (chartKind: string) =>

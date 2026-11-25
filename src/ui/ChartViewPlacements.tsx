@@ -538,7 +538,13 @@ export function fixedStarParanColumns(
   locale: Locale,
 ): readonly TableColumn<FixedStarParanRow>[] {
   return [
-    { key: 'star', label: t.starLabel, labelHelp: { text: t.starTooltip }, valueOf: (row) => row.star },
+    {
+      key: 'star',
+      label: t.starLabel,
+      labelHelp: { text: t.starTooltip },
+      valueOf: (row) => row.star,
+      render: (row) => (row.firstBodyKey === undefined ? row.star : bodyDisplayName(row.firstBodyKey, locale)),
+    },
     {
       key: 'starEvent',
       label: t.paranStarEventLabel,
