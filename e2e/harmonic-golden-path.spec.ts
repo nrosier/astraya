@@ -86,6 +86,8 @@ test('Age at a date multiplies by the exact age, and Age+1 by the age plus one (
   await page.getByLabel('Age at', { exact: true }).fill('1914-03-14');
   // Einstein was born on 14 March 1879, so on 14 March 1914 he is 35 years old (a little over 35.00 in tropical years, as noon UT is after his birth time).
   await expect(page.locator('.page-header-basis')).toContainText(/Age harmonic 35\.\d{2} \(age at 1914-03-14\)$/);
+  // #1407: the date sits in the control bar under the wheel, and its computed readout refreshes beside it.
+  await expect(page.getByTestId('harmonic-age-readout')).toHaveText(/^Age harmonic 35\.\d{2} \(age at 1914-03-14\)$/);
   await expect(page.locator('div.chart-wheel')).toBeVisible();
   await expect(page.getByRole('table', { name: 'Radix → harmonic provenance' })).toBeVisible();
 

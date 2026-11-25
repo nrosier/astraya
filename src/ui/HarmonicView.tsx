@@ -345,7 +345,9 @@ export function HarmonicView({
         </>
       )}
 
-      <div className="field-grid">
+      {/* One control bar under the wheel (#1407): the chart select, the date and the computed readout side by side,
+          clear of the Selection card, which only inspects chart elements. */}
+      <div className="harmonic-control-bar">
         <Select
           label={t.divisionalChartLabel}
           value={presetKey}
@@ -362,6 +364,11 @@ export function HarmonicView({
           <NumberField label={t.harmonicNumberLabel} min={1} value={customN} onChange={setCustomN} />
         )}
         {isAge && <DateField label={t.ageDateLabel} value={ageDate} onChange={setAgeDate} />}
+        {isAge && nValid && harmonicNumber !== undefined && (
+          <output className="harmonic-control-bar-readout" data-testid="harmonic-age-readout">
+            {label}
+          </output>
+        )}
         {isArcTransform && (
           <>
             <Select
