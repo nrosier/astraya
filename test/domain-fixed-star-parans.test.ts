@@ -309,6 +309,24 @@ describe("parans at each event's instant, with a topocentric Moon (#2003)", () =
     ).toBe(true);
   }, 60_000);
 
+  it("has the listing's Mercury Rise / Spica Set paran, its gap within 0.5 minute of the listing's 0.90", async () => {
+    const chart = await computeChartData(REFERENCE, engine, {
+      paranStars: true,
+      fixedStars: [star('Spica', 'alVir'), star('Algol', 'bePer'), star('Alphecca', 'alCrB')],
+    });
+    const rows = fixedStarParanRows(chart, { fixedStarParans: { orb: 0.5, events: ANGLE_EVENTS } });
+    const row = rows.find(
+      (r) =>
+        r.firstBodyKey === undefined &&
+        r.star === 'Spica' &&
+        r.starEvent === 'setting' &&
+        r.bodyKey === 'mercury' &&
+        r.bodyEvent === 'rising',
+    );
+    expect(row).toBeDefined();
+    expect(Math.abs((row?.orb ?? Number.NaN) * MINUTES_PER_DEGREE - 0.9)).toBeLessThan(0.5);
+  }, 60_000);
+
   it("reads each body at the event's own instant, not the chart moment: the Moon's four positions differ", async () => {
     const chart = await computeChartData(REFERENCE, engine, { paranStars: true });
     const moon = chart.paranPoints?.bodies.get(MOON);

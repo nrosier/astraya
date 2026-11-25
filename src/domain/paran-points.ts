@@ -38,8 +38,12 @@ const RISE_TRANSIT_EVENT: Readonly<Record<AngleEvent, RiseTransitEvent>> = {
 
 /** The sidereal day in solar days' degrees: how fast the ARMC advances per day. */
 const ARMC_DEGREES_PER_DAY = 360.98564736629;
-/** The window of events starts this long before the chart moment, in days. */
-const WINDOW_START_DAYS = 1;
+/**
+ * The window of events starts 23 hours before the chart moment, in days (owner decision on #2003, "23 hours"). The
+ * window-start table measured on #2003 shows a 23-hour start admits the listing's Mercury Rise 05/05 05:08:04 and Spica
+ * Set 05/05 05:08:58, which a 24-hour start places a day earlier, and keeps every other row the 24-hour start gives.
+ */
+const WINDOW_START_DAYS = 23 / 24;
 
 function norm360(degrees: Degrees): Degrees {
   return ((degrees % 360) + 360) % 360;
