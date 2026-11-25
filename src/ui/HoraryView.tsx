@@ -342,7 +342,13 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
 
             {judgment !== undefined && (
               <section aria-labelledby="horary-judgment-heading">
-                <h2 id="horary-judgment-heading">{t.judgmentHeading}</h2>
+                {/* Save lives in the heading row (#1960 owner review), so its position never depends on the notes below. */}
+                <div className="horary-judgment-head">
+                  <h2 id="horary-judgment-heading">{t.judgmentHeading}</h2>
+                  <Button variant="primary" disabled={!canSave} onClick={save}>
+                    {t.saveJudgment}
+                  </Button>
+                </div>
                 <p className="hint">
                   <GlossaryText text={t.judgmentSource} />
                 </p>
@@ -355,15 +361,9 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
                     )}
                   />
                 </p>
-                {/* The verdict row (owner decision 3, #1960): the perfection line and Save share one row. */}
-                <div className="horary-verdict-row">
-                  <p>
-                    <GlossaryText text={t.perfection[judgment.perfection.kind]} />
-                  </p>
-                  <Button variant="primary" disabled={!canSave} onClick={save}>
-                    {t.saveJudgment}
-                  </Button>
-                </div>
+                <p>
+                  <GlossaryText text={t.perfection[judgment.perfection.kind]} />
+                </p>
                 {/* The notes the save would store (#1960), one entry per key, so the non-radical note shows once. */}
                 <PractitionerNotes notes={practitionerInputFor(judgment, saturnHouseOf(ready.chart.data))} />
                 {!isHoraryQuestionSavable(question) && <p className="hint">{t.saveNeedsQuestion}</p>}
