@@ -139,6 +139,26 @@ test('the Solar Arc screen takes an arc, a multiplier and converse, and hides th
   await expect(arc).toHaveValue('ascendant');
 });
 
+test('the Solar Arc converse control shares its bottom edge with the Arc select at 1280x800 (#1407)', async () => {
+  test.setTimeout(60_000);
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  await page.getByRole('link', { name: 'Progressions & Directions', exact: true }).click();
+  await page.getByRole('tab', { name: 'Solar Arc', exact: true }).click();
+  const arc = page.getByLabel('Arc', { exact: true });
+  const converse = page.getByLabel('Converse (backwards in time)', { exact: true });
+  await expect(converse).toBeVisible();
+  const boxOf = async (control: typeof arc): Promise<{ y: number; height: number }> => {
+    const box = await control.boundingBox();
+    if (box === null) throw new Error('control has no bounding box');
+    return box;
+  };
+  const arcBox = await boxOf(arc);
+  const converseBox = await boxOf(page.locator('.progressions-controls .primitive-choice'));
+  // The label row above a select is not part of the select's own box, so compare bottom edges of the controls.
+  expect(Math.abs(arcBox.y + arcBox.height - (converseBox.y + converseBox.height))).toBeLessThanOrEqual(1);
+});
+
 test('a person with an unknown birth time is told solar arc directions need one', async () => {
   await openSharedPerson(page, baseUrl, MARIC);
 
