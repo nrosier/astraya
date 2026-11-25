@@ -320,9 +320,9 @@ describe('a selected sign (#1998)', () => {
     expect(box().querySelector('h3')?.textContent).toBe('AI interpretation of this sign');
     expect(button().textContent).toBe('Interpret how this sign operates');
     const label = consentBox().closest('label')?.textContent ?? '';
-    expect(label).toContain('house cusps');
-    expect(label).toContain('ruler’s sign, house, rulerships and aspects');
-    expect(label).toContain('the bodies in it');
+    expect(label).toContain('house numbers whose cusp lies in it');
+    expect(label).toContain('placement (sign, house, rulerships) and aspects');
+    expect(label).toContain('the bodies in the sign');
     expect(label).toContain('no name or birth data');
   });
 

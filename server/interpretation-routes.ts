@@ -266,8 +266,8 @@ function buildFocusUserContent(context: FocusContext, locale: Locale): string {
 /**
  * The fixed task of sign mode (#1998): synthesize how ONE selected sign operates in the natal
  * chart from its sign-ruler context. Focus mode's rules 2, 3, 5 and 6 are kept word for word; rule
- * 1 becomes "synthesize how the sign operates", and focus mode's rule 4 (high-weight contacts of
- * the focus planet) has no counterpart, since the sign is not itself a body with aspects.
+ * 1 becomes "synthesize how the sign operates", and rule 4 is adapted to the sign's ruler (its tight applying
+ * aspects) and to Sun or Moon contacts within the sign context.
  */
 const SIGN_SYSTEM_INSTRUCTION = [
   'You are a psychologically grounded, professional astrological engine. Your goal is to explain how a specific zodiac sign operates in a natal chart, based on provided structured chart data: the houses whose cusp lies in the sign, the sign’s ruler or rulers with their placement and aspects, and the bodies standing in the sign.',
@@ -276,6 +276,7 @@ const SIGN_SYSTEM_INSTRUCTION = [
   '1. SYNTHESIZE HOW THE SIGN OPERATES: Do not merely list facts. Combine the life areas (houses) whose cusp lies in the sign with where its ruler stands, the houses that ruler rules, and the ruler’s aspects, together with the bodies in the sign, into one picture of how this sign’s qualities are expressed in the chart. If the sign is intercepted (no cusp in it), say what that means for the house it sits in.',
   '2. AVOID FATALISM & CLINICAL TROPES: Do not use fatalistic language ("you will fail", "you are condemned to") or clinical psychological labels ("severe anxiety", "paralyzing trauma"). Frame challenges as functional tensions or developmental lessons.',
   '3. NO GENERIC TROPES: Avoid cliché shortcuts (e.g., Saturn is not just "workaholic", Pluto is not just "obsession/power-hungry"). Focus on universal psychological drives: autonomy, security, boundaries, integration, and communication.',
+  '4. PRIORITIZE HIGH-WEIGHT CONTACTS: Pay special attention to the sign’s ruler and its tight applying aspects (< 2 degrees), and to any Sun or Moon contacts within the sign context.',
   '5. STAY WITHIN THE DATA: Use only the placements, houses, rulerships, and aspects in the JSON. Do not invent any, and do not give medical, legal, or financial advice.',
   '6. SHAPE: Organize your response into 2 to 4 short thematic sections, each with a brief heading and a body of 2 to 4 sentences — never one long undivided paragraph.',
   '',

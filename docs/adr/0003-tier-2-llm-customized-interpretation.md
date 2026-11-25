@@ -84,8 +84,10 @@ planet (natal or transiting), and, since #1998, a selected sign on the natal
 wheel (the `'sign'` mode below). For a planet the client sends `focusContext`:
 that placement's sign, house, dispositor, the houses it rules, and each aspect it
 makes with the other planet's sign, house and rulerships (`focus-context.ts`).
-Only the selected planet's or sign's data is sent, never the whole chart, and
-nothing identifying: no name, date, time or place. Like `chartData`, it is not a
+Only the selected planet's or sign's data is sent (for a sign: the sign name, the
+house numbers whose cusp lies in it, its ruler or rulers with their placement
+(sign, house, rulerships) and aspects, and the bodies in the sign), never the
+whole chart, and nothing identifying: no name, date, time or place. Like `chartData`, it is not a
 placement key, so focus mode shares freeform's departure from the "no chart data
 crosses the wire" guarantee, and the consent text says what is sent. The task is
 fixed and carries no reader-written text, so there is **no instruction and

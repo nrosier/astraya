@@ -20,7 +20,7 @@ const en = {
   signHeading: 'AI interpretation of this sign',
   signGenerate: 'Interpret how this sign operates',
   signConsent:
-    'Send this sign’s house cusps, its ruler’s sign, house, rulerships and aspects, and the bodies in it (no name or birth data) to a third-party AI model for this one request.',
+    'Send this sign’s name, the house numbers whose cusp lies in it, its ruler or rulers with their placement (sign, house, rulerships) and aspects, and the bodies in the sign (no name or birth data) to a third-party AI model for this one request.',
   signSignIn: 'Sign in to generate an AI interpretation of this sign.',
 };
 
@@ -36,7 +36,7 @@ const nl: typeof en = {
   signHeading: 'AI-interpretatie van dit teken',
   signGenerate: 'Interpreteer hoe dit teken werkt',
   signConsent:
-    'Verstuur de huiscuspen van dit teken, het teken, het huis, de heerserschappen en de aspecten van zijn heerser, en de hemellichamen erin (geen naam of geboortegegevens) naar een AI-model van derden voor dit ene verzoek.',
+    'Verstuur de naam van dit teken, de huisnummers waarvan de cusp in dit teken ligt, de heerser of heersers met hun plaatsing (teken, huis, heerserschappen) en aspecten, en de hemellichamen in het teken (geen naam of geboortegegevens) naar een AI-model van derden voor dit ene verzoek.',
   signSignIn: 'Log in om een AI-interpretatie van dit teken te genereren.',
 };
 

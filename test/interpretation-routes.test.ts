@@ -1355,13 +1355,14 @@ describe('POST /api/interpretation/generate', () => {
       });
     });
 
-    it('sends the sign prompt: focus rules 2, 3, 5 and 6 kept, rule 1 about how the sign operates, the JSON in the user prompt', async () => {
+    it('sends the sign prompt: focus rules 2, 3, 5 and 6 kept, rule 4 adapted to the ruler, rule 1 about how the sign operates, the JSON in the user prompt', async () => {
       await generateWith({ ...SIGN_BODY, locale: 'nl' });
       const { system, user } = generationPrompt();
       for (const rule of [
         '1. SYNTHESIZE HOW THE SIGN OPERATES',
         '2. AVOID FATALISM & CLINICAL TROPES',
         '3. NO GENERIC TROPES',
+        '4. PRIORITIZE HIGH-WEIGHT CONTACTS: Pay special attention to the sign’s ruler and its tight applying aspects (< 2 degrees), and to any Sun or Moon contacts within the sign context.',
         '5. STAY WITHIN THE DATA',
         'Do not invent any, and do not give medical, legal, or financial advice.',
         '6. SHAPE',
