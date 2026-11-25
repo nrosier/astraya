@@ -31,6 +31,7 @@ import { bodyById } from '../astrology/bodies.js';
 import { rulerOf } from '../astrology/dignities.js';
 import { houseOf } from '../astrology/emphasis.js';
 import { rulersOf, type RulershipChoice } from '../astrology/rulership.js';
+import { houseSystemByCode } from '../astrology/houses.js';
 import { SIGNS } from '../astrology/signs.js';
 import { housesAreDefined, type ChartData } from '../domain/chart-compute.js';
 import { buildFocusObjectContext } from './focus-context.js';
@@ -106,10 +107,14 @@ export function buildSignContext(
     });
   }
 
-  const cuspHouses = cuspHousesIn(natal, signIndex);
+  // Gauquelin's 36 sectors are not 12 house cusps: send no cusps and claim no interception (#1998).
+  const twelveHouses = houseSystemByCode(natal.houses.system)?.cuspCount === HOUSE_COUNT;
+  const cuspHouses = twelveHouses ? cuspHousesIn(natal, signIndex) : [];
   // A sign with no cusp in it, in a chart with houses, lies wholly inside one house: any point of it names that house.
   const intercepted =
-    cuspHouses.length === 0 && housesAreDefined(natal.houses) ? houseOf(signIndex * 30 + 15, natal.houses.cusps) : null;
+    twelveHouses && cuspHouses.length === 0 && housesAreDefined(natal.houses)
+      ? houseOf(signIndex * 30 + 15, natal.houses.cusps)
+      : null;
 
   return {
     perspective: 'natal',
