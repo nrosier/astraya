@@ -8,6 +8,7 @@ import { bodyByKey } from '../src/astrology/bodies.js';
 import { ANGLE_EVENTS, armcAtAngle, type AngleEvent } from '../src/astrology/fixed-stars.js';
 import {
   DEFAULT_EXTENDED_SETTINGS,
+  FIXED_STAR_PARAN_ORB_DEFAULT,
   toChartCalculationOptions,
   toPointVisibilityOptions,
   type ExtendedSettings,
@@ -178,6 +179,17 @@ describe('body-to-body parans (#1996)', () => {
     });
     expect(bodyRows(hidden).some((row) => row.bodyKey === 'mars' || row.firstBodyKey === 'mars')).toBe(false);
     expect(bodyRows(rowsFor(10)).some((row) => row.bodyKey === 'mars' || row.firstBodyKey === 'mars')).toBe(true);
+  });
+
+  it('has no Sun-Mars body-to-body paran at the default orb, though the same pair appears at a wider orb', () => {
+    const sunMars = (rows: readonly FixedStarParanRow[]): FixedStarParanRow[] =>
+      bodyRows(rows).filter(
+        (row) =>
+          (row.firstBodyKey === 'sun' && row.bodyKey === 'mars') ||
+          (row.firstBodyKey === 'mars' && row.bodyKey === 'sun'),
+      );
+    expect(sunMars(rowsFor(FIXED_STAR_PARAN_ORB_DEFAULT))).toEqual([]);
+    expect(sunMars(rowsFor(10)).length).toBeGreaterThan(0);
   });
 });
 
