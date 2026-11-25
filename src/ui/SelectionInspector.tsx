@@ -239,7 +239,16 @@ export function SelectionInspector({
             {facts.relatedAspects.length > 0 && (
               <ul>
                 {facts.relatedAspects.map((row) => {
-                  const otherKey = row.bodyAKey === facts.positionRow?.bodyKey ? row.bodyBKey : row.bodyAKey;
+                  // The body the aspect is to: the side not in the selection. For a body that is the body
+                  // itself; for a sign it is the bodies drawn in it (#1997). When both sides are selected
+                  // (both bodies in the sign), the stored first body (bodyA) is named.
+                  const selectedKeys = new Set<string>(
+                    [facts.positionRow?.bodyKey, ...(facts.bodiesInSign ?? []).map((spot) => spot.bodyKey)].filter(
+                      (key): key is string => key !== undefined,
+                    ),
+                  );
+                  const otherKey =
+                    selectedKeys.has(row.bodyAKey) && !selectedKeys.has(row.bodyBKey) ? row.bodyBKey : row.bodyAKey;
                   return (
                     <li key={`${row.bodyAKey}-${row.aspectKey}-${row.bodyBKey}`}>
                       {aspectDisplayName(row.aspectKey, locale)} {bodyDisplayName(otherKey, locale)} (
