@@ -8,9 +8,47 @@ feature and fixes is a minor release. See [docs/ops/RELEASING.md](docs/ops/RELEA
 
 ## [Unreleased]
 
+## [1.0.0] — 2026-11-25
+
+**Astraya 1.0.0: new chart types (Trutine of Hermes, rise and set, lunar phase return, harmonic age, arc transform), saved horary judgments, optional two-factor sign-in, a sign-ruler AI interpretation, and a primary-directions section in the PDF.**
+
+### Added
+
+- **More chart types (#1407).** Trutine of Hermes (for Gregorian births, within the engine's range), Rise/set, Lunar phase return, and Harmonic Age and Age+1 charts. Solar Arc takes an arc, a multiplier and a converse option, with Ascendant and Vertex arcs, and an arc-transform chart is available. A fixed-star paran table has an orb and angle filter.
+- **Saved horary judgments (#1960).** Save a judgment from the horary page and reopen it later. The practitioner-input notes show on the result and on reopened judgments, and the account-delete confirmation counts every stored item.
+- **Two-factor sign-in (#1500).** An enrolment panel, a code step at sign-in for accounts that enrolled, and a way to disable it with a code. Operators can reset one user's enrolment with `npm run ops:reset-user-totp`.
+- **Sign-ruler AI interpretation (#1998)** for sign selections, and the aspected body is named on sign aspect rows (#1997).
+- **Body-to-body parans for all planet pairs (#1996).**
+- **Primary directions in the PDF (#1845),** as a section of the full predictive report.
+- **Hyleg and alcocoden (#1799),** identified following Bonatti, Tr. 9.
+- **Part of Fortune formula and true solar arc key (#1794, #1795).** Extended settings choose the Part of Fortune formula, the Primary Directions page offers the true solar arc key, and the chosen formula shows in the placements and the PDF.
+- **User-defined ayanamsa (#1964)** is honoured by the ayanamsa calculation, and a note appears on progressed angles (#1935).
+- **Importing opens the People page (#1921),** with no person selected.
+- **Partner named in a relationship reading's history (#1852).** A saved composite interpretation records the other person's id, and the history entry reads "<description> · with <name>", the name looked up on the device. For people running their own server: migration 22 is applied on start and adds one nullable column, `partner_person_id`, to `interpretation_results`. No action is needed, and the name never reaches the server.
+
 ### Changed
 
-- **Partner named in a relationship reading's history (#1852).** A saved composite interpretation records the other person's id, and the history entry reads "<description> · with <name>", the name looked up on the device. For people running their own server: migration 22 is applied on start and adds one nullable column, `partner_person_id`, to `interpretation_results`. No action is needed, and the name never reaches the server.
+- **Progressed angles, Vertex and cusps come from the progressed MC (#1935),** Sunshine cusps use the Sun's declination under Naibod and solar arc, and transits to progressed charts use the person's zodiac.
+- **Extended settings pill shows how many settings changed (#1929).**
+- **Layout polish.** One header per Patterns and condition section (#1854), the sidebar toggle moved into the header's brand row with an icon (#1851), links styled as quiet buttons are pills (#1855), and unified card tokens (#1850).
+- **The easter egg is checked on the server (#1808),** behind sign-in.
+
+### Fixed
+
+- **The engine no longer aborts on a memory leak (#1856, #1859),** and restarts if it dies.
+- **Horary fixes (#1960).** The late-ascendant flag starts at 27 degrees and perfection uses Lilly's moiety orbs.
+- **Key rotation (#1801, #1782).** It fails on a busy checkpoint, says what it may have left behind, and clears key material from memory.
+- **Sign-in throttle (#1500)** counts concurrent and wrong-password guesses.
+- **Smaller fixes.** Dutch hyleg labels (#1799), the Retrograde popup (#1867), natal comparison hints (#1810), SVG text escaping (#1809), the corpus tag Add button (#1933), and sync now records dropped rows on its status (#320).
+
+### Documentation
+
+- **About copy (#1961)** drops unsourced claims, and its privacy wording is conditional.
+- **Citations (#1601, #1603, #1604, #869):** attribution for the Flatlib and PyAstra term tables, and the Paulus, Peters, Tyl and Marr references. The key-leak runbook is in `docs/ops/KEY-LEAK-RUNBOOK.md`.
+
+### Under the hood
+
+- **The AstroChart reference wheel and its library are gone (#1941);** `uqr` is added for the TOTP QR code. Dependencies are updated, including React and Node 26.x images.
 
 ## [0.57.0] — 2026-11-20
 
