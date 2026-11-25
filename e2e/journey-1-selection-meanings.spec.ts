@@ -77,6 +77,10 @@ test('a sign, body, cusp, house and aspect each show their meaning in the Select
   await expect(wheelLink).toHaveAttribute('aria-current', 'page');
   await expect(facts.locator('.chart-isolation-head strong')).toHaveText('Pisces');
   await expectMeaning(page);
+  // #1998: a sign also offers the AI control; nobody is signed in here, so it says why it cannot be used.
+  const signAi = page.locator('.focus-interpretation');
+  await expect(signAi.getByRole('button', { name: 'Interpret how this sign operates' })).toBeDisabled();
+  await expect(signAi).toContainText('Sign in to generate an AI interpretation of this sign.');
 
   // 2. Body: the Sun on the wheel.
   await page.getByRole('button', { name: 'Clear', exact: true }).first().click();

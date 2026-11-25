@@ -8,6 +8,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FocusContext } from '../src/interpretation/focus-context.js';
+import type { SignContext } from '../src/interpretation/sign-context-schema.js';
 import { setLocale } from '../src/ui/locale.js';
 import { apiErrorMessages } from '../src/ui/api-error.messages.js';
 
@@ -87,6 +88,7 @@ const PERSON = 'p-abcdefghijklmnop';
 
 interface Props {
   context: FocusContext | undefined;
+  signContext?: SignContext;
   resetKey: string;
   locale?: 'en' | 'nl';
 }
@@ -95,9 +97,17 @@ async function mount(props: Props): Promise<(next: Props) => Promise<void>> {
   const container = document.createElement('div');
   document.body.append(container);
   const root = createRoot(container);
-  const render = async ({ context, resetKey, locale = 'en' }: Props): Promise<void> => {
+  const render = async ({ context, signContext, resetKey, locale = 'en' }: Props): Promise<void> => {
     await act(async () => {
-      root.render(<FocusInterpretation context={context} locale={locale} resetKey={resetKey} personId={PERSON} />);
+      root.render(
+        <FocusInterpretation
+          context={context}
+          signContext={signContext}
+          locale={locale}
+          resetKey={resetKey}
+          personId={PERSON}
+        />,
+      );
       await Promise.resolve();
     });
   };
@@ -291,5 +301,56 @@ describe('FocusInterpretation (#424)', () => {
     await vi.waitFor(() => {
       expect(box().querySelector('.tier2-result')).not.toBeNull();
     });
+  });
+});
+
+describe('a selected sign (#1998)', () => {
+  const SIGN: SignContext = {
+    perspective: 'natal',
+    rulership: 'modern',
+    sign: 'Scorpio',
+    cusp_houses: [1],
+    intercepted_in_house: null,
+    rulers: [{ scheme: 'modern', placement: CONTEXT.focus_object, aspects: CONTEXT.aspects }],
+    occupants: [{ key: 'moon', house: 1, rules_houses: [9], is_chart_ruler: false, on_angle: false, angle: null }],
+  };
+
+  it('uses the sign wording, and its consent text says what a sign request sends', async () => {
+    await mount({ context: undefined, signContext: SIGN, resetKey: 'sign:scorpio' });
+    expect(box().querySelector('h3')?.textContent).toBe('AI interpretation of this sign');
+    expect(button().textContent).toBe('Interpret how this sign operates');
+    const label = consentBox().closest('label')?.textContent ?? '';
+    expect(label).toContain('house numbers whose cusp lies in it');
+    expect(label).toContain('placement (sign, house, rulerships) and aspects');
+    expect(label).toContain('the bodies in the sign');
+    expect(label).toContain('no name or birth data');
+  });
+
+  it('sends a sign request with only the sign context', async () => {
+    await mount({ context: undefined, signContext: SIGN, resetKey: 'sign:scorpio' });
+    await tickConsent();
+    await generate();
+    const [, init] = firstGenerateCall();
+    expect(JSON.parse(init.body as string)).toEqual({
+      mode: 'sign',
+      signContext: SIGN,
+      locale: 'en',
+      personId: PERSON,
+    });
+  });
+
+  it('signed out: the sign sign-in reason and no consent box', async () => {
+    signedIn = false;
+    await mount({ context: undefined, signContext: SIGN, resetKey: 'sign:scorpio' });
+    expect(box().querySelector('input[type="checkbox"]')).toBeNull();
+    expect(button().disabled).toBe(true);
+    expect(box().textContent).toContain('Sign in to generate an AI interpretation of this sign.');
+  });
+
+  it('is in Dutch when the language is Dutch', async () => {
+    setLocale('nl');
+    await mount({ context: undefined, signContext: SIGN, resetKey: 'sign:scorpio', locale: 'nl' });
+    expect(button().textContent).toBe('Interpreteer hoe dit teken werkt');
+    expect(consentBox().closest('label')?.textContent ?? '').toContain('geen naam of geboortegegevens');
   });
 });

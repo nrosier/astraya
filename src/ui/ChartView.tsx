@@ -138,6 +138,7 @@ import { usePageActionsTarget } from './page-actions-slot.js';
 import { useNarrowViewport } from './use-narrow-viewport.js';
 import { parseSelectionKey } from '../interpretation/selection.js';
 import { buildFocusObjectContext } from '../interpretation/focus-context.js';
+import { buildSignContext } from '../interpretation/sign-context.js';
 import { AspectMatrixGrid } from './AspectMatrixGrid.js';
 import { PresetTimeLords } from './PresetTimeLords.js';
 import { orbSourceName, useCalculationBasisLine } from './calculation-basis.js';
@@ -1221,6 +1222,33 @@ export function ChartDataView({
       : undefined;
   }, [isolatedKey, load, rulership, overlayRingData]);
 
+  // What the sign's AI button would send (#1998): only for a selected sign on this natal wheel, never the
+  // transit bi-wheel. The occupants are the inspector's own list, so the payload matches what the panel shows.
+  // Without a known birth time the chart was still cast with cusps, but they are not shown, so none are sent.
+  const bodiesInSign = isolation?.bodiesInSign;
+  const signContext = useMemo(() => {
+    if (isolatedKey === undefined || load.kind !== 'ready' || bodiesInSign === undefined) return undefined;
+    const selection = parseSelectionKey(isolatedKey);
+    if (selection?.kind !== 'sign') return undefined;
+    const chart = housesRenderable
+      ? load.data
+      : {
+          ...load.data,
+          houses: {
+            ...load.data.houses,
+            cusps: load.data.houses.cusps.map(() => Number.NaN),
+            ascendant: Number.NaN,
+            midheaven: Number.NaN,
+          },
+        };
+    return buildSignContext(
+      chart,
+      selection.signIndex,
+      rulership,
+      bodiesInSign.map((row) => row.bodyKey),
+    );
+  }, [isolatedKey, load, rulership, bodiesInSign, housesRenderable]);
+
   // The views this chart can show (#511): the Wheel is built on the Ascendant, so a chart without
   // houses has none of it and opens on the next view instead. Aspects/Placements/Patterns & condition
   // always have at least their Positions/Aspects/shape content, so they're never dropped outright —
@@ -1345,6 +1373,7 @@ export function ChartDataView({
               selectionKey={isolatedKey}
               data={inspectorData ?? data}
               focusContext={focusContext}
+              signContext={signContext}
               locale={locale}
               exclude={interpretationExcluded}
               personId={personId}

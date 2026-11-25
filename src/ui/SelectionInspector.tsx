@@ -16,6 +16,7 @@ import type { ChartData } from '../domain/chart-compute.js';
 import type { AspectRow, PositionRow } from '../domain/chart-tables.js';
 import type { FocusContext } from '../interpretation/focus-context-schema.js';
 import type { Locale } from '../interpretation/schema.js';
+import type { SignContext } from '../interpretation/sign-context-schema.js';
 import { aspectDisplayName, bodyDisplayName, signDisplayName } from './astro-names.messages.js';
 import { chartViewMessages } from './ChartView.messages.js';
 import { FocusInterpretation } from './FocusInterpretation.js';
@@ -144,6 +145,7 @@ export function SelectionInspector({
   selectionKey,
   data,
   focusContext,
+  signContext,
   locale,
   exclude,
   onClear,
@@ -157,6 +159,8 @@ export function SelectionInspector({
   readonly selectionKey: string | undefined;
   readonly data: ChartData;
   readonly focusContext: FocusContext | undefined;
+  /** A selected sign's sign-ruler context (#1998); natal wheel only. */
+  readonly signContext?: SignContext | undefined;
   readonly locale: Locale;
   /** Objects left out of the written reading (#721): the "What it means" text leaves them out too. */
   readonly exclude?: InterpretationExclusions;
@@ -266,8 +270,14 @@ export function SelectionInspector({
             )}
             <WheelSelectionText chart={data} selectionKey={selectionKey} locale={locale} exclude={exclude} />
           </div>
-          {focusContext !== undefined && (
-            <FocusInterpretation context={focusContext} locale={locale} resetKey={selectionKey} personId={personId} />
+          {(focusContext !== undefined || signContext !== undefined) && (
+            <FocusInterpretation
+              context={focusContext}
+              signContext={signContext}
+              locale={locale}
+              resetKey={selectionKey}
+              personId={personId}
+            />
           )}
         </>
       )}

@@ -6,7 +6,7 @@ Prose corpus (committed JSON per locale) + composition pipeline → written repo
 - `corpus-client.ts` — Lazy-loads one locale's corpus chunk + overlays admin overrides, then an injected per-reader corrections layer (#1338). Deps: `./schema`.
 - `corpus/` — Committed JSON interpretation corpus (`en.json`, `nl.json`, mid-regen); see `corpus/MAP.md`.
 - `dedupe.ts` — Finds near-duplicate corpus entries via trigram similarity. Deps: `./schema`.
-- `focus-context-schema.ts` — Wire shape + validation for Tier 2 "focus" request (structure chart data). Deps: `astrology/aspects`, `astrology/bodies`, `astrology/rulership`, `astrology/signs`.
+- `focus-context-schema.ts` — Wire shape + validation for Tier 2 "focus" request (structure chart data); exports its per-item validators for the sign schema. Deps: `astrology/aspects`, `astrology/bodies`, `astrology/rulership`, `astrology/signs`.
 - `focus-context.ts` — Enriches focus-body context (sign/house/dispositor/aspects/ruled-houses) for Tier 2. Deps: `astrology/aspects`, `astrology/bodies`, `astrology/rulership`, `astrology/emphasis`, `astrology/signs`, `domain/chart-compute`, `./focus-context-schema`.
 - `index.ts` — Loads both-locales corpus synchronously for validation/tests; the server reaches it only lazily via `server/interpretation/corpus`. Deps: `./corpus/en.json`, `./corpus/nl.json`, `./loader`, `./schema`.
 - `lint.ts` — Style gate for corpus entries and shared plain-text (no HTML/link) check (length/fatalistic phrasing/medical claims/pronouns/language mismatch). Deps: `./schema`.
@@ -22,6 +22,8 @@ Prose corpus (committed JSON per locale) + composition pipeline → written repo
 - `schema.ts` — Single source of truth for corpus-entry shape + key parsing + validation. Deps: `astrology/bodies`, `astrology/aspects`, `astrology/signs`, `astrology/nakshatras`, `astrology/dignities`.
 - `selection-key.ts` — Wheel selection keys: builders and parser for body/sign/house/derived/aspect keys. Deps: `astrology/derived-points`, `astrology/signs`, `chart/body-id`.
 - `selection.ts` — Wheel click → matching placements, same salience ranking as report. Deps: `astrology/signs`, `chart/body-id`, `domain/chart-compute`, `./rules`.
+- `sign-context-schema.ts` — Wire shape + closed-set validation (unknown fields refused) for the Tier 2 "sign" request (#1998). Deps: `astrology/rulership`, `./focus-context-schema`.
+- `sign-context.ts` — Builds a selected sign's Tier 2 context: cusp houses (Lilly p. 49), ruler placement and aspects, occupants (#1998). Deps: `astrology/bodies`, `astrology/dignities`, `astrology/emphasis`, `astrology/rulership`, `astrology/signs`, `domain/chart-compute`, `./focus-context`, `./sign-context-schema`.
 - `symbolism.ts` — Reference symbolism sheets (core meaning + keywords, en/nl) + generation context builder. Deps: `astrology/bodies`, `astrology/signs`, `./compose`, `./schema`.
-- `tier2-client.ts` — Thin client for opt-in Tier 2 AI-customized interpretation (via server). Deps: `astrology/bodies`, `domain/chart-compute`, `domain/synastry`, `./focus-context-schema`, `./result-basis`, `./schema`, `./tier2-contract`.
+- `tier2-client.ts` — Thin client for opt-in Tier 2 AI-customized interpretation (via server). Deps: `astrology/bodies`, `domain/chart-compute`, `domain/synastry`, `./focus-context-schema`, `./sign-context-schema`, `./result-basis`, `./schema`, `./tier2-contract`.
 - `tier2-contract.ts` — Tier 2 freeform/relationship wire shapes, section shape and their closed-set validators, defined once for both browser and server (#588). Deps: `astrology/aspects`, `astrology/bodies`.

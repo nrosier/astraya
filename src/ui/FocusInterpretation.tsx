@@ -7,16 +7,21 @@
  * server-side limits. What is sent is only `context` — the placement's own sign, house, rulerships
  * and aspects — never the whole chart, and no name, date, time or place. The reading resets
  * whenever the selection changes, so an answer never sits under a different placement.
+ *
+ * A selected sign (#1998) uses the same control with a `signContext` instead: what is sent is that
+ * sign's cusp houses, its ruler's placement and aspects, and the bodies in it, and the heading,
+ * button, consent and sign-in text say so.
  */
 /**
  * @module FocusInterpretation
  * @purpose Renders the "interpret the tensions of this placement" Tier 2 AI-interpretation control shown under a selected chart placement,
- * @conventions A Tier 2 feature per ADR 0003: requires sign-in, a plain consent checkbox that is never remembered and is spent the moment the request is sent; sends only the placement's own `FocusContext` (sign, house, rulerships, aspects) via `generateTier2Interpretation`, never the whole chart or any name/date/time/place. Resets whenever `resetKey` (the selection) changes. Text comes from co-located `FocusInterpretation.messages.ts` via `useMessages()`.
+ * @conventions A Tier 2 feature per ADR 0003: requires sign-in, a plain consent checkbox that is never remembered and is spent the moment the request is sent; sends only the placement's own `FocusContext` (sign, house, rulerships, aspects), or a selected sign's `SignContext` (#1998), via `generateTier2Interpretation`, never the whole chart or any name/date/time/place. Resets whenever `resetKey` (the selection) changes. Text comes from co-located `FocusInterpretation.messages.ts` via `useMessages()`.
  * @exports FocusInterpretation
  */
 import { useEffect, useId, useState } from 'react';
 import type { FocusContext } from '../interpretation/focus-context-schema.js';
 import type { Locale } from '../interpretation/schema.js';
+import type { SignContext } from '../interpretation/sign-context-schema.js';
 import { generateTier2Interpretation, type Tier2Section } from '../interpretation/tier2-client.js';
 import { Button } from './primitives/Button.js';
 import { Checkbox } from './primitives/Checkbox.js';
@@ -30,11 +35,14 @@ import { apiErrorText } from './api-error.js';
 
 export function FocusInterpretation({
   context,
+  signContext,
   locale,
   resetKey,
   personId,
 }: {
   readonly context: FocusContext | undefined;
+  /** A selected sign's sign-ruler context (#1998); used when `context` is absent, with the sign wording. */
+  readonly signContext?: SignContext | undefined;
   readonly locale: Locale;
   /** Changes with the selection: the consent, the answer and any error start over. */
   readonly resetKey: string;
@@ -57,18 +65,29 @@ export function FocusInterpretation({
     setError(undefined);
   }, [resetKey]);
 
-  if (context === undefined) return null;
+  if (context === undefined && signContext === undefined) return null;
 
-  const disabledReason = user === undefined ? t.signIn : !consent ? t.disabledConsent : undefined;
+  const forSign = context === undefined;
+  const words = forSign
+    ? { heading: t.signHeading, generate: t.signGenerate, consent: t.signConsent, signIn: t.signSignIn }
+    : { heading: t.heading, generate: t.generate, consent: t.consent, signIn: t.signIn };
+  const disabledReason = user === undefined ? words.signIn : !consent ? t.disabledConsent : undefined;
 
   function generate(): void {
-    if (context === undefined || personId === undefined) return;
+    if (personId === undefined) return;
+    const request =
+      context !== undefined
+        ? ({ mode: 'focus', focusContext: context, locale, personId } as const)
+        : signContext !== undefined
+          ? ({ mode: 'sign', signContext, locale, personId } as const)
+          : undefined;
+    if (request === undefined) return;
     setGenerating(true);
     setError(undefined);
     setSections(undefined);
     // Consent authorizes this one request: spent as it is sent, as in the report's AI panel (#391).
     setConsent(false);
-    generateTier2Interpretation({ mode: 'focus', focusContext: context, locale, personId })
+    generateTier2Interpretation(request)
       .then((generated) => {
         setSections(generated);
       })
@@ -81,11 +100,11 @@ export function FocusInterpretation({
   }
 
   return (
-    <section className="focus-interpretation" aria-label={t.heading}>
-      <h3>{t.heading}</h3>
+    <section className="focus-interpretation" aria-label={words.heading}>
+      <h3>{words.heading}</h3>
       {user !== undefined && (
         <Checkbox
-          label={t.consent}
+          label={words.consent}
           checked={consent}
           onChange={(value) => {
             setConsent(value);
@@ -98,7 +117,7 @@ export function FocusInterpretation({
         aria-describedby={disabledReason === undefined ? undefined : reasonId}
         onClick={generate}
       >
-        {generating ? t.generating : t.generate}
+        {generating ? t.generating : words.generate}
       </Button>
       {!online && <StatusMessage kind="offline">{shared.offlineNeeded}</StatusMessage>}
       {disabledReason !== undefined && (

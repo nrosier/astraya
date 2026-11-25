@@ -18,11 +18,11 @@
  * @module interpretation/result-basis
  * @purpose Defines and (de)serializes what a saved AI interpretation was based on and which kind it is, so a saved result's history can describe its origin rather than just say "AI interpretation".
  * @conventions Every generation records a `kind` plus a small `basis`, both derived from the already-validated request (never from the model or free text), so they are stored as plain metadata rather than encrypted like the prose. Adding a new kind requires updating RESULT_KINDS, ResultBasis, parseBasis here, and the label in src/ui/result-basis-label.ts for both locales. Imported by the server, so deliberately has no imports.
- * @exports RESULT_KINDS, ResultKind, ResultBasis, isResultKind, kindForMode, parseBasis
+ * @exports RESULT_KINDS, ResultKind, ResultBasis, BASIS_SIGN_NAMES, isResultKind, kindForMode, parseBasis
  */
 
-/** The kinds, one per way of asking: the reader's own wording over chosen placements, a whole-chart reading, a single body, a relationship between two charts. */
-export const RESULT_KINDS = ['placements', 'whole-chart', 'focus', 'relationship'] as const;
+/** The kinds, one per way of asking: the reader's own wording over chosen placements, a whole-chart reading, a single body, a relationship between two charts, a single sign (#1998). */
+export const RESULT_KINDS = ['placements', 'whole-chart', 'focus', 'relationship', 'sign'] as const;
 export type ResultKind = (typeof RESULT_KINDS)[number];
 
 export type ResultBasis =
@@ -33,7 +33,28 @@ export type ResultBasis =
   /** The tensions of one body: its `BodyDefinition.key` and whose chart it is read from (`transit` = a transit against the natal chart). */
   | { readonly kind: 'focus'; readonly body: string; readonly perspective: 'natal' | 'transit' }
   /** A synastry reading between two people's charts (#422) — naming a side isn't meaningful the way `focus` names one body, so this stays as plain as `whole-chart`. */
-  | { readonly kind: 'relationship' };
+  | { readonly kind: 'relationship' }
+  /** How one selected sign operates in the natal chart (#1998): the sign's English name, as `SIGNS` spells it. */
+  | { readonly kind: 'sign'; readonly sign: string };
+
+/**
+ * The zodiac's sign names, as `astrology/signs.ts` spells them. Written out because this file has no
+ * imports (see the file doc); `test/result-basis.test.ts` checks it against `SIGNS`.
+ */
+export const BASIS_SIGN_NAMES: readonly string[] = [
+  'Aries',
+  'Taurus',
+  'Gemini',
+  'Cancer',
+  'Leo',
+  'Virgo',
+  'Libra',
+  'Scorpio',
+  'Sagittarius',
+  'Capricorn',
+  'Aquarius',
+  'Pisces',
+];
 
 export function isResultKind(value: unknown): value is ResultKind {
   return typeof value === 'string' && (RESULT_KINDS as readonly string[]).includes(value);
@@ -45,6 +66,7 @@ export function kindForMode(mode: string): ResultKind | undefined {
   if (mode === 'freeform' || mode === 'synthesis') return 'whole-chart';
   if (mode === 'focus') return 'focus';
   if (mode === 'relationship') return 'relationship';
+  if (mode === 'sign') return 'sign';
   return undefined;
 }
 
@@ -78,6 +100,11 @@ export function parseBasis(json: string | null): ResultBasis | undefined {
     }
     case 'relationship':
       return { kind: 'relationship' };
+    case 'sign': {
+      const { sign } = record;
+      if (typeof sign !== 'string' || !BASIS_SIGN_NAMES.includes(sign)) return undefined;
+      return { kind: 'sign', sign };
+    }
     default:
       return undefined;
   }

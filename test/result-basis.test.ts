@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { SIGNS } from '../src/astrology/signs.js';
 import {
+  BASIS_SIGN_NAMES,
   isResultKind,
   kindForMode,
   parseBasis,
@@ -13,6 +15,7 @@ const SAMPLES: Readonly<Record<(typeof RESULT_KINDS)[number], ResultBasis>> = {
   'whole-chart': { kind: 'whole-chart' },
   focus: { kind: 'focus', body: 'mars', perspective: 'natal' },
   relationship: { kind: 'relationship' },
+  sign: { kind: 'sign', sign: 'Scorpio' },
 };
 
 describe('the kinds of AI interpretation (#423)', () => {
@@ -98,6 +101,31 @@ describe('kindForMode and parseBasis', () => {
   });
 });
 
+describe('the sign kind (#1998)', () => {
+  const basis: ResultBasis = { kind: 'sign', sign: 'Scorpio' };
+
+  it('maps the sign mode, round-trips its basis, and labels it in English and Dutch', () => {
+    expect(kindForMode('sign')).toBe('sign');
+    expect(isResultKind('sign')).toBe(true);
+    expect(parseBasis(JSON.stringify(basis))).toEqual(basis);
+    expect(savedKindLabel({ mode: 'sign', kind: 'sign', basis }, 'en')).toBe('AI interpretation of Scorpio');
+    expect(savedKindLabel({ mode: 'sign', kind: 'sign', basis }, 'nl')).toBe('AI-interpretatie van Schorpioen');
+  });
+
+  it('refuses a sign basis that is not a zodiac sign, and still opens an older entry without one', () => {
+    for (const bad of ['{"kind":"sign"}', '{"kind":"sign","sign":3}', '{"kind":"sign","sign":"Ophiuchus"}']) {
+      expect(parseBasis(bad)).toBeUndefined();
+    }
+    expect(savedKindLabel({ mode: 'sign', kind: null, basis: null }, 'en')).toBe(
+      'AI interpretation, basis not recorded',
+    );
+  });
+
+  it('spells the basis sign names exactly as the sign table does', () => {
+    expect(BASIS_SIGN_NAMES).toEqual(SIGNS.map((sign) => sign.name));
+  });
+});
+
 describe('savedTypeLabel (#761 Past interpretations)', () => {
   it('names the type without the generic AI label', () => {
     expect(savedTypeLabel({ kind: 'whole-chart', basis: { kind: 'whole-chart' } }, 'en')).toBe('Entire horoscope');
@@ -119,6 +147,13 @@ describe('savedTypeLabel (#761 Past interpretations)', () => {
     expect(savedTypeLabel({ kind: null, basis: null }, 'en')).toBeUndefined();
     expect(savedTypeLabel({}, 'en')).toBeUndefined();
     expect(savedTypeLabel({ kind: 'focus', basis: null }, 'en')).toBeUndefined();
+  });
+
+  it('names a sign reading by its sign, tagged as a sign (#1998)', () => {
+    const basis: ResultBasis = { kind: 'sign', sign: 'Scorpio' };
+    expect(savedTypeLabel({ kind: 'sign', basis }, 'en')).toBe('Scorpio (sign)');
+    expect(savedTypeLabel({ kind: 'sign', basis }, 'nl')).toBe('Schorpioen (teken)');
+    expect(savedTypeLabel({ kind: 'sign', basis: null }, 'en')).toBeUndefined();
   });
 
   it('has Dutch wording that is not the generic label', () => {

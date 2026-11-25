@@ -4,7 +4,7 @@
  * docs/adr/0003-tier-2-llm-customized-interpretation.md for the full
  * architecture — this file is the route itself.
  *
- * Three modes (#425, #424; `'synthesis'` (#377) was folded into the second):
+ * The modes (#425, #424, #422, #1998; `'synthesis'` (#377) was folded into the second):
  * - `'grounded'` (default, unchanged since #360): the client sends
  *   `placementKeys` (from `report.ts`'s `reportPlacementKeys`) rather than
  *   birth data or chart-derived text; each key is re-resolved against this
@@ -29,6 +29,11 @@
  *   text, so there is no `customPrompt` and nothing for the instruction verifier to judge; the
  *   payload is rebuilt from closed sets (`validateFocusContext`) before it reaches the prompt,
  *   and it holds no name, date, time or place.
+ * - `'sign'` (#1998): the client sends `signContext`, one selected sign's sign-ruler context (the
+ *   houses whose cusp lies in it, its ruler(s) with placement and aspects, the bodies in it — see
+ *   `src/interpretation/sign-context.ts`), and the model synthesizes how that sign operates. Like
+ *   focus mode it is a fixed task: a `customPrompt` is refused, and the payload is rebuilt from
+ *   closed sets (`validateSignContext`, which also refuses unknown fields) before any model call.
  * - `'synthesis'` is still accepted, as an older client's spelling of
  *   `'freeform'` with no instruction; it is stored as `'freeform'`.
  *
@@ -59,7 +64,7 @@
 /**
  * @module interpretation-routes
  * @purpose The Tier 2 (AI-customized interpretation) HTTP routes: the one runtime surface in Astraya that calls a third-party LLM, plus listing/reopening a user's own saved results and an admin usage view.
- * @conventions Every untrusted field (placement keys, chart data, focus context, relationship data, the free-text custom prompt) is re-derived and closed-set-validated against reference data before it reaches a model prompt; a custom instruction additionally passes a phrase-list pre-filter (`checkCustomPrompt`) and then a separate model verification call, failing closed on any error or unparseable verdict; generation is gated by `requireUser` and bounded by both a per-user rate limit and two real per-day dollar caps (`ASTRAYA_INTERPRETATION_USER_DAILY_CENTS`/`ASTRAYA_INTERPRETATION_TOTAL_DAILY_CENTS`) read via `envCapCents`, which fails closed (cap of 0) on a non-numeric env value.
+ * @conventions Every untrusted field (placement keys, chart data, focus context, sign context, relationship data, the free-text custom prompt) is re-derived and closed-set-validated against reference data before it reaches a model prompt; a custom instruction additionally passes a phrase-list pre-filter (`checkCustomPrompt`) and then a separate model verification call, failing closed on any error or unparseable verdict; generation is gated by `requireUser` and bounded by both a per-user rate limit and two real per-day dollar caps (`ASTRAYA_INTERPRETATION_USER_DAILY_CENTS`/`ASTRAYA_INTERPRETATION_TOTAL_DAILY_CENTS`) read via `envCapCents`, which fails closed (cap of 0) on a non-numeric env value.
  * @exports registerInterpretationRoutes
  */
 import type { FastifyInstance, FastifyRequest } from 'fastify';
@@ -77,6 +82,7 @@ import { totalCostCentsSince, usageByUser, costCentsSinceByUser } from './interp
 import { reserveCostCents, releaseReservation, reconcileReservation } from './interpretation/cost-reservation.ts';
 import { checkCustomPrompt } from '../src/interpretation/prompt-guardrail.ts';
 import { validateFocusContext, type FocusContext } from '../src/interpretation/focus-context-schema.ts';
+import { validateSignContext, type SignContext } from '../src/interpretation/sign-context-schema.ts';
 import { loadEncryptionKey } from './ops/crypto.ts';
 import type { ResultBasis } from '../src/interpretation/result-basis.ts';
 import { sanitizeDescription } from './interpretation/description.ts';
@@ -108,7 +114,7 @@ function isLocale(value: unknown): value is Locale {
   return typeof value === 'string' && (CORPUS_LOCALES as readonly string[]).includes(value);
 }
 
-type Mode = 'grounded' | 'freeform' | 'focus' | 'relationship';
+type Mode = 'grounded' | 'freeform' | 'focus' | 'relationship' | 'sign';
 
 /** What a request may name: `'synthesis'` is the older spelling of `'freeform'` (see the file doc). */
 function isRequestedMode(value: unknown): value is Mode | 'synthesis' {
@@ -117,6 +123,7 @@ function isRequestedMode(value: unknown): value is Mode | 'synthesis' {
     value === 'freeform' ||
     value === 'focus' ||
     value === 'relationship' ||
+    value === 'sign' ||
     value === 'synthesis'
   );
 }
@@ -132,6 +139,8 @@ interface GenerateBody {
   readonly relationshipData?: unknown;
   readonly customPrompt?: unknown;
   readonly focusContext?: unknown;
+  /** Sign mode only (#1998): one selected sign's cusp houses, ruler(s) and occupants. */
+  readonly signContext?: unknown;
   readonly locale?: unknown;
   /** The person the page was generated for (#768); required, and only a filter for the saved result. A synastry or composite page files under its primary person. Never reaches the prompt or the basis. */
   readonly personId?: unknown;
@@ -249,6 +258,54 @@ function buildFocusUserContent(context: FocusContext, locale: Locale): string {
     '',
     ...note,
     ...rulershipNote,
+    'JSON Data:',
+    JSON.stringify(context),
+  ].join('\n');
+}
+
+/**
+ * The fixed task of sign mode (#1998): synthesize how ONE selected sign operates in the natal
+ * chart from its sign-ruler context. Focus mode's rules 2, 3, 5 and 6 are kept word for word; rule
+ * 1 becomes "synthesize how the sign operates", and rule 4 is adapted to the sign's ruler (its tight applying
+ * aspects) and to Sun or Moon contacts within the sign context.
+ */
+const SIGN_SYSTEM_INSTRUCTION = [
+  'You are a psychologically grounded, professional astrological engine. Your goal is to explain how a specific zodiac sign operates in a natal chart, based on provided structured chart data: the houses whose cusp lies in the sign, the sign’s ruler or rulers with their placement and aspects, and the bodies standing in the sign.',
+  '',
+  'RULES:',
+  '1. SYNTHESIZE HOW THE SIGN OPERATES: Do not merely list facts. Combine the life areas (houses) whose cusp lies in the sign with where its ruler stands, the houses that ruler rules, and the ruler’s aspects, together with the bodies in the sign, into one picture of how this sign’s qualities are expressed in the chart. If the sign is intercepted (no cusp in it), say what that means for the house it sits in.',
+  '2. AVOID FATALISM & CLINICAL TROPES: Do not use fatalistic language ("you will fail", "you are condemned to") or clinical psychological labels ("severe anxiety", "paralyzing trauma"). Frame challenges as functional tensions or developmental lessons.',
+  '3. NO GENERIC TROPES: Avoid cliché shortcuts (e.g., Saturn is not just "workaholic", Pluto is not just "obsession/power-hungry"). Focus on universal psychological drives: autonomy, security, boundaries, integration, and communication.',
+  '4. PRIORITIZE HIGH-WEIGHT CONTACTS: Pay special attention to the sign’s ruler and its tight applying aspects (< 2 degrees), and to any Sun or Moon contacts within the sign context.',
+  '5. STAY WITHIN THE DATA: Use only the placements, houses, rulerships, and aspects in the JSON. Do not invent any, and do not give medical, legal, or financial advice.',
+  '6. SHAPE: Organize your response into 2 to 4 short thematic sections, each with a brief heading and a body of 2 to 4 sentences — never one long undivided paragraph.',
+  '',
+  DESCRIPTION_RULE,
+].join('\n');
+
+/** Sign mode's user content: the task, the language, and what the rulership choice and an empty house set mean. */
+function buildSignUserContent(context: SignContext, locale: Locale): string {
+  const language = locale === 'nl' ? 'Dutch' : 'English';
+  const rulershipNote =
+    context.rulership === 'both' && context.rulers.length > 1
+      ? [
+          "Rulership is 'both': this sign has a traditional and a modern ruler, and both count as its",
+          'rulers (each ruler has a scheme of traditional or modern).',
+          '',
+        ]
+      : [];
+  const housesNote =
+    context.cusp_houses.length === 0 && context.intercepted_in_house === null
+      ? ['The chart has no house data (no birth time): reason from the sign, its rulers and its bodies only.', '']
+      : [];
+  return [
+    `Write in ${language}.`,
+    '',
+    'Analyze the following sign, its ruler or rulers, and the bodies in it based on the provided JSON data. ',
+    'Explain how this sign operates in the chart: the life departments (houses) it colours, how its ruler carries that quality into the rest of the chart, and how the person can constructively work with it.',
+    '',
+    ...rulershipNote,
+    ...housesNote,
     'JSON Data:',
     JSON.stringify(context),
   ].join('\n');
@@ -473,17 +530,20 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
       // this isn't a breaking change for any caller that predates freeform mode.
       const requested = rawMode === undefined ? 'grounded' : isRequestedMode(rawMode) ? rawMode : undefined;
       if (requested === undefined) {
-        return reply
-          .code(400)
-          .send({ code: 'invalid-request', error: "mode must be 'grounded', 'freeform', 'focus' or 'relationship'" });
+        return reply.code(400).send({
+          code: 'invalid-request',
+          error: "mode must be 'grounded', 'freeform', 'focus', 'relationship' or 'sign'",
+        });
       }
       // `'synthesis'` is an older client's spelling of `'freeform'` with no instruction.
       const mode: Mode = requested === 'synthesis' ? 'freeform' : requested;
 
-      if (mode === 'focus' && customPrompt !== undefined) {
+      if ((mode === 'focus' || mode === 'sign') && customPrompt !== undefined) {
         // A fixed task with no reader-written text: there is nothing for the verifier to judge, so an
         // instruction is refused rather than silently ignored or let through unchecked.
-        return reply.code(400).send({ code: 'invalid-request', error: "customPrompt is not accepted in 'focus' mode" });
+        return reply
+          .code(400)
+          .send({ code: 'invalid-request', error: `customPrompt is not accepted in '${mode}' mode` });
       }
       if (customPrompt !== undefined && typeof customPrompt !== 'string') {
         return reply.code(400).send({ code: 'invalid-request', error: 'customPrompt must be a string' });
@@ -535,6 +595,7 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
       /** Grounded mode only: resolved against the corpus after the Tier 2 config check, so a deployment without a key never loads it. */
       let groundedPlacements: readonly NonNullable<ReturnType<typeof parsePlacementKey>>[] | undefined;
       let focusContext: FocusContext | undefined;
+      let signContext: SignContext | undefined;
       let basis: ResultBasis;
       let systemInstruction: string;
       /** Freeform mode only (#454); irrelevant, so left `'natal'`, for 'grounded'/'focus'. */
@@ -579,6 +640,16 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
         focusContext = validated.context;
         systemInstruction = FOCUS_SYSTEM_INSTRUCTION;
         basis = { kind: 'focus', body: validated.context.focus_object.key, perspective: validated.context.perspective };
+      } else if (mode === 'sign') {
+        const validated = validateSignContext(body.signContext);
+        if ('errors' in validated) {
+          return reply
+            .code(400)
+            .send({ code: 'invalid-request', error: `signContext is invalid: ${validated.errors.join('; ')}` });
+        }
+        signContext = validated.context;
+        systemInstruction = SIGN_SYSTEM_INSTRUCTION;
+        basis = { kind: 'sign', sign: validated.context.sign };
       } else if (mode === 'freeform') {
         const validated = validateChartData(chartData);
         if ('errors' in validated) {
@@ -688,11 +759,13 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
       const userContent =
         focusContext !== undefined
           ? buildFocusUserContent(focusContext, locale)
-          : mode === 'grounded' && instruction !== undefined
-            ? buildUserContent(facts, instruction, locale)
-            : mode === 'relationship'
-              ? buildRelationshipUserContent(facts, instruction, locale)
-              : buildFreeformUserContent(facts, instruction, locale, chartKind);
+          : signContext !== undefined
+            ? buildSignUserContent(signContext, locale)
+            : mode === 'grounded' && instruction !== undefined
+              ? buildUserContent(facts, instruction, locale)
+              : mode === 'relationship'
+                ? buildRelationshipUserContent(facts, instruction, locale)
+                : buildFreeformUserContent(facts, instruction, locale, chartKind);
 
       const generationReservation = reserveCostCents(db, {
         userId,

@@ -79,11 +79,15 @@ as AI-based like the rest. An empty or whitespace-only instruction means none:
 there is nothing to check or verify, so no verification call is made.
 
 **Focus mode (#424) explains the tensions of one selected placement.** From the
-selection card on a wheel (a planet, natal or transiting), the client sends
-`focusContext`: that placement's sign, house, dispositor, the houses it rules, and
-each aspect it makes with the other planet's sign, house and rulerships
-(`focus-context.ts`). Only that planet's data is sent, never the whole chart, and
-nothing identifying: no name, date, time or place. Like `chartData`, it is not a
+selection card on a wheel, focus context comes from two sources: a selected
+planet (natal or transiting), and, since #1998, a selected sign on the natal
+wheel (the `'sign'` mode below). For a planet the client sends `focusContext`:
+that placement's sign, house, dispositor, the houses it rules, and each aspect it
+makes with the other planet's sign, house and rulerships (`focus-context.ts`).
+Only the selected planet's or sign's data is sent (for a sign: the sign name, the
+house numbers whose cusp lies in it, its ruler or rulers with their placement
+(sign, house, rulerships) and aspects, and the bodies in the sign), never the
+whole chart, and nothing identifying: no name, date, time or place. Like `chartData`, it is not a
 placement key, so focus mode shares freeform's departure from the "no chart data
 crosses the wire" guarantee, and the consent text says what is sent. The task is
 fixed and carries no reader-written text, so there is **no instruction and
@@ -103,6 +107,30 @@ the Ascendant's sign (both co-rulers under Both, with a `co_dispositor`), and
 "on an angle" means within 5° of the Ascendant, Midheaven, Descendant or Imum
 Coeli. It goes through the same route, consent,
 rate limit, cost caps, fail-closed handling and saved history as the other modes.
+
+**Sign selections (#1998) use a sibling mode, `'sign'`.** A selected sign on the
+natal wheel sends `signContext` (`sign-context.ts`, validated by
+`validateSignContext` in `sign-context-schema.ts`) instead of `focusContext`: the
+sign, the houses whose cusp lies in it, its ruler or rulers with their placement
+and aspects (the same payload a planet selection sends for that ruler), and the
+bodies in the sign without their own aspects. Everything else is as for focus
+mode: no instruction (a `customPrompt` is refused with 400), the payload is
+rebuilt from closed sets and an unknown field is refused, nothing identifying is
+sent, and the consent text for signs says what is sent. Two decisions, recorded
+on the issue by the owner:
+
+- **D1, "ruled house cusps".** Read as the houses whose cusp falls in the sign
+  (Lilly, _Christian Astrology_, 1647, p. 49: a house's significator is the lord
+  of the sign on its cusp), which matches how focus mode already decides which
+  houses a planet rules. Whole Sign and Equal give exactly one house per sign; a
+  quadrant system gives none (an intercepted sign, sent as `cusp_houses: []` with
+  the house it sits in) or two.
+- **D2, rulers.** From `rulersOf` under the reader's rulership choice (#426): the
+  setting's ruler only, so one under Modern or Traditional, and two under Both
+  (traditional first) for Scorpio, Aquarius and Pisces only. The bodies in the
+  sign are the selection inspector's own list, which can include the nodes,
+  Chiron and Lilith when shown. Sign selections on the transit bi-wheel are out
+  of scope.
 
 **`customPrompt` is the one field that structural guarantee doesn't cover.**
 Free-form style/tone/focus instructions can't be made structurally incapable
