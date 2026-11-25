@@ -1037,6 +1037,19 @@ export interface FixedStarParanRow {
 }
 
 /**
+ * The body categories that get a paran row: the two luminaries and the eight planets, Sun through Pluto. The owner's
+ * decision on #2003 ("Limit parans to Sun through Pluto, matching the listing's body set") leaves out the lunar nodes,
+ * the Lilith points, Chiron, Pholus and the main-belt asteroids. It limits paran rows only; the chart's own body list
+ * and every other table are unchanged.
+ */
+const PARAN_BODY_CATEGORIES: ReadonlySet<string> = new Set(['luminary', 'planet']);
+
+function isParanBody(body: BodyId): boolean {
+  const category = bodyById(body)?.category;
+  return category !== undefined && PARAN_BODY_CATEGORIES.has(category);
+}
+
+/**
  * The fixed-star parans (#1407; Solar Fire Deluxe guide §21.1.2): every chosen star against every visible body, at the
  * latitude the chart is cast for, within the setting's orb, keeping a paran only when both its events are among the
  * events the setting allows ("Parans to Use"). Empty when the setting is off or the chart holds no paran coordinates
@@ -1056,7 +1069,8 @@ export function fixedStarParanRows(
   if (setting === undefined || points === undefined) return [];
   const allowed = new Set<AngleEvent>(setting.events);
   const rows: FixedStarParanRow[] = [];
-  for (const position of visiblePositions(data.positions, options)) {
+  const visible = visiblePositions(data.positions, options).filter((position) => isParanBody(position.body));
+  for (const position of visible) {
     const bodyPoint = points.bodies.get(position.body);
     if (bodyPoint === undefined) continue;
     const body = bodyById(position.body);
@@ -1074,7 +1088,6 @@ export function fixedStarParanRows(
       }
     }
   }
-  const visible = visiblePositions(data.positions, options);
   for (const [index, first] of visible.entries()) {
     const firstPoint = points.bodies.get(first.body);
     if (firstPoint === undefined) continue;

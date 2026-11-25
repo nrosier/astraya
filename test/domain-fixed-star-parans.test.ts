@@ -317,3 +317,59 @@ describe("parans at each event's instant, with a topocentric Moon (#2003)", () =
     expect(new Set(positions).size).toBe(4);
   }, 60_000);
 });
+
+describe('paran rows are limited to Sun through Pluto (#2003 owner decision)', () => {
+  const REFERENCE: BirthMomentInput = {
+    civil: { year: 2025, month: 5, day: 5, hour: 5, minute: 5, second: 5 },
+    coordinates: { latitude: 5 + 5 / 60 + 5 / 3600, longitude: 5 + 5 / 60 + 5 / 3600 },
+    offsetOverrideMinutes: 60,
+  };
+  const EXCLUDED_KEYS = [
+    'chiron',
+    'pholus',
+    'ceres',
+    'pallas',
+    'juno',
+    'vesta',
+    'meanNode',
+    'trueNode',
+    'meanLilith',
+    'osculatingLilith',
+    'interpolatedLilith',
+  ];
+
+  it('has no row whose first or second body is an asteroid, a node or a Lilith, with every event and a 10 degree orb', async () => {
+    const chart = await computeChartData(REFERENCE, engine, { paranStars: true });
+    const rows = fixedStarParanRows(chart, { fixedStarParans: { orb: 10, events: ANGLE_EVENTS } });
+    expect(rows.some((r) => r.firstBodyKey !== undefined)).toBe(true);
+    expect(rows.some((r) => r.firstBodyKey === undefined)).toBe(true);
+    for (const row of rows) {
+      expect(EXCLUDED_KEYS).not.toContain(row.bodyKey);
+      expect(EXCLUDED_KEYS).not.toContain(row.firstBodyKey ?? 'sun');
+    }
+    // The chart itself still holds the excluded bodies.
+    expect(chart.positions.some((p) => bodyByKey('chiron')?.id === p.body)).toBe(true);
+  }, 60_000);
+
+  it('keeps the Sun-Pluto rows the review matched: Venus-Neptune culminating at 0.62 min, Sun anticulminating with Mars setting', async () => {
+    const chart = await computeChartData(REFERENCE, engine, { paranStars: true });
+    const rows = fixedStarParanRows(chart, { fixedStarParans: { orb: 0.5, events: ANGLE_EVENTS } });
+    const venusNeptune = rows.find(
+      (r) =>
+        r.firstBodyKey === 'venus' &&
+        r.bodyKey === 'neptune' &&
+        r.starEvent === 'culminating' &&
+        r.bodyEvent === 'culminating',
+    );
+    expect(Math.abs((venusNeptune?.orb ?? Number.NaN) * 4 - 0.62)).toBeLessThan(0.1);
+    expect(
+      rows.some(
+        (r) =>
+          r.firstBodyKey === 'sun' &&
+          r.bodyKey === 'mars' &&
+          r.starEvent === 'anticulminating' &&
+          r.bodyEvent === 'setting',
+      ),
+    ).toBe(true);
+  }, 60_000);
+});
