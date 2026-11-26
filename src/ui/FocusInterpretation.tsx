@@ -39,6 +39,7 @@ export function FocusInterpretation({
   locale,
   resetKey,
   personId,
+  restingHeading = true,
 }: {
   readonly context: FocusContext | undefined;
   /** A selected sign's sign-ruler context (#1998); used when `context` is absent, with the sign wording. */
@@ -48,6 +49,8 @@ export function FocusInterpretation({
   readonly resetKey: string;
   /** The person the readings are saved under (#768). Absent (until every caller passes it), nothing is generated. */
   readonly personId?: string | undefined;
+  /** False in the docked sign foot (#1998): the resting footer is the single button, and the heading shows only in the open consent drawer. */
+  readonly restingHeading?: boolean;
 }): React.JSX.Element | null {
   const t = useMessages(focusInterpretationMessages);
   const shared = useMessages(sharedMessages);
@@ -108,7 +111,7 @@ export function FocusInterpretation({
 
   return (
     <section className="focus-interpretation" aria-label={words.heading}>
-      <h3>{words.heading}</h3>
+      {(restingHeading || drawerOpen) && <h3>{words.heading}</h3>}
       {user !== undefined && drawerOpen ? (
         <div className="focus-interpretation-drawer">
           <Checkbox

@@ -92,13 +92,20 @@ interface Props {
   signContext?: SignContext;
   resetKey: string;
   locale?: 'en' | 'nl';
+  restingHeading?: boolean;
 }
 
 async function mount(props: Props): Promise<(next: Props) => Promise<void>> {
   const container = document.createElement('div');
   document.body.append(container);
   const root = createRoot(container);
-  const render = async ({ context, signContext, resetKey, locale = 'en' }: Props): Promise<void> => {
+  const render = async ({
+    context,
+    signContext,
+    resetKey,
+    locale = 'en',
+    restingHeading = true,
+  }: Props): Promise<void> => {
     await act(async () => {
       root.render(
         <FocusInterpretation
@@ -107,6 +114,7 @@ async function mount(props: Props): Promise<(next: Props) => Promise<void>> {
           locale={locale}
           resetKey={resetKey}
           personId={PERSON}
+          restingHeading={restingHeading}
         />,
       );
       await Promise.resolve();
@@ -417,6 +425,22 @@ describe('a selected sign (#1998)', () => {
     expect(label).toContain('placement (sign, house, rulerships) and aspects');
     expect(label).toContain('the bodies in the sign');
     expect(label).toContain('no name or birth data');
+  });
+
+  it('keeps the docked resting footer to the Interpret button, and shows the heading only in the open drawer', async () => {
+    await mount({ context: undefined, signContext: SIGN, resetKey: 'sign:scorpio', restingHeading: false });
+    expect(box().querySelector('h3')).toBeNull();
+    expect(box().textContent).not.toContain('AI interpretation of this sign');
+    expect(button().textContent).toBe('Interpret how this sign operates');
+    await openDrawer();
+    expect(box().querySelector('h3')?.textContent).toBe('AI interpretation of this sign');
+  });
+
+  it('signed out, the docked resting footer is the button and the sign-in hint, with no heading', async () => {
+    signedIn = false;
+    await mount({ context: undefined, signContext: SIGN, resetKey: 'sign:scorpio', restingHeading: false });
+    expect(box().querySelector('h3')).toBeNull();
+    expect(button().disabled).toBe(true);
   });
 
   it('sends a sign request with only the sign context', async () => {

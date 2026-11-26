@@ -4599,6 +4599,8 @@ dl.primitive-stat-list {
 
 .selection-inspector-foot .focus-interpretation {
   margin-top: 0;
+  padding: 0;
+  border: 0;
 }
 
 /* The signed-in consent checkbox and its label sit on one row (the box beside the text, not above it), with no extra
