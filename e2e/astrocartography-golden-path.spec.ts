@@ -108,6 +108,36 @@ test.describe('with the shared people (#799)', () => {
     await expect(mcLines).toHaveCount(0);
   });
 
+  test('the Fixed Stars pill is off by default, draws labelled star lines when on and shows a tooltip (#2018)', async () => {
+    test.setTimeout(90_000);
+    await openSharedEinstein(page);
+    const pill = page.getByRole('button', { name: 'Fixed Stars', exact: true });
+    await expect(pill).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('div.acg-map .acg-line-mc')).not.toHaveCount(0);
+    await expect(page.locator('div.acg-map .acg-star-line')).toHaveCount(0);
+    const planetaryBefore = await page.locator('div.acg-map .acg-line-mc, div.acg-map .acg-line-ac').count();
+
+    await pill.click();
+    await expect(pill).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('div.acg-map .acg-star-line').first()).toBeAttached();
+    await expect(page.locator('div.acg-map text.acg-label', { hasText: /^Regulus (MC|IC|AC|DC)$/ }).first()).toBeAttached();
+    // The planetary lines are still all there.
+    await expect(page.locator('div.acg-map .acg-line-mc, div.acg-map .acg-line-ac')).toHaveCount(planetaryBefore);
+
+    // Hovering a star line (its wide hit stroke) names the star and the angle with its right ascension and declination.
+    const hit = page.locator('div.acg-map g[data-star="Regulus"][data-angle="MC"] .acg-star-hit');
+    await expect(hit).toBeAttached();
+    await hit.dispatchEvent('mouseover');
+    const tip = page.locator('.acg-star-tooltip');
+    await expect(tip).toContainText('Regulus MC');
+    await expect(tip).toContainText(/RA \d+\.\d{2}° · Dec -?\d+\.\d{2}°/);
+    await expect(tip).not.toContainText(/orb|distance/i);
+
+    await pill.click();
+    await expect(pill).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('div.acg-map .acg-star-line')).toHaveCount(0);
+  });
+
   test('the map has a text equivalent that follows the line filters and relocation (#1371)', async () => {
     test.setTimeout(90_000);
     await openSharedEinstein(page);

@@ -29,6 +29,8 @@ const en = {
   ac: 'AC (Ascendant)',
   dc: 'DC (Descendant)',
   localSpaceLegend: 'Local Space',
+  fixedStars: 'Fixed Stars',
+  starPosition: (rightAscension: string, declination: string) => `RA ${rightAscension} · Dec ${declination}`,
 
   meaningsHeading: 'What the lines mean',
   meaningsHint:
@@ -84,6 +86,8 @@ const nl: typeof en = {
   ac: 'AC (Ascendant)',
   dc: 'DC (Descendant)',
   localSpaceLegend: 'Local Space',
+  fixedStars: 'Vaste sterren',
+  starPosition: (rightAscension: string, declination: string) => `RA ${rightAscension} · Decl. ${declination}`,
 
   meaningsHeading: 'Wat de lijnen betekenen',
   meaningsHint:

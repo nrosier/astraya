@@ -2,9 +2,16 @@
  * @module ui/acg-map-equivalent
  * @purpose The rows of the Astrocartography map's text equivalent (#1371): one per line and marker the map draws, with its body, line type and geography, in the reader's language.
  * @conventions Pure; built only from `acgMapEntries`/`acgMapPlaces` of the same `AcgMapInput` the map is drawn from, so the table and the map cannot disagree. Coordinates use `formatCoordinate`; words come from AstrocartographyView.messages and astro-names.
- * @exports AcgEquivalentRow, acgEquivalentRows
+ * @exports AcgEquivalentRow, acgEquivalentRows, starPositionText
  */
-import { acgMapEntries, acgMapPlaces, type AcgMapEntry, type AcgMapInput, type AcgMapPoint } from '../chart/acg-map.js';
+import {
+  acgMapEntries,
+  acgMapPlaces,
+  acgStarEntries,
+  type AcgMapEntry,
+  type AcgMapInput,
+  type AcgMapPoint,
+} from '../chart/acg-map.js';
 import type { Locale } from '../interpretation/schema.js';
 import { bodyDisplayName } from './astro-names.messages.js';
 import { astrocartographyViewMessages } from './AstrocartographyView.messages.js';
@@ -19,6 +26,14 @@ export interface AcgEquivalentRow {
 }
 
 type Messages = typeof astrocartographyViewMessages.en;
+
+/** `RA 152.09° · Dec 11.97°`: the star's position as the tooltip and the text equivalent state it (#2018). */
+export function starPositionText(
+  entry: { readonly rightAscension: number; readonly declination: number },
+  t: Messages,
+): string {
+  return t.starPosition(`${formatFixed(entry.rightAscension, 2)}°`, `${formatFixed(entry.declination, 2)}°`);
+}
 
 function place(point: AcgMapPoint, t: Messages, locale: Locale): string {
   return t.coordinates(
@@ -80,6 +95,24 @@ export function acgEquivalentRows(input: AcgMapInput, locale: Locale): readonly 
     shownAs: kindName(entry, t),
     where: whereOf(entry, t, locale),
   }));
+  const stars = acgStarEntries(input).map((entry) => {
+    const spans = (entry.spans ?? [])
+      .map((span) =>
+        t.horizonSpan(formatCoordinate(span.from, 'lat', locale), formatCoordinate(span.to, 'lat', locale)),
+      )
+      .join(t.listSeparator);
+    return {
+      key: `star-${entry.kind}-${entry.star}`,
+      body: entry.star,
+      shownAs: `${t.fixedStars}: ${entry.kind}`,
+      where: [
+        entry.longitude === undefined
+          ? t.horizonWhere(spans)
+          : t.meridianWhere(formatCoordinate(entry.longitude, 'lon', locale)),
+        starPositionText(entry, t),
+      ].join(t.listSeparator),
+    };
+  });
   const places = acgMapPlaces(input);
   const markers: AcgEquivalentRow[] = [
     { key: 'marker-natal', body: '', shownAs: t.birthplaceMarker, where: place(places.natal, t, locale) },
@@ -92,5 +125,5 @@ export function acgEquivalentRows(input: AcgMapInput, locale: Locale): readonly 
       where: place(places.relocation, t, locale),
     });
   }
-  return [...lines, ...markers];
+  return [...lines, ...stars, ...markers];
 }

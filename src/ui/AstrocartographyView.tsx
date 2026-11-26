@@ -14,7 +14,7 @@
 /**
  * @module AstrocartographyView
  * @purpose Renders the Astrocartography (ACG) and Local Space map screen for a saved person's natal chart.
- * @conventions Map drawn aria-hidden, with a SortableTable text equivalent built from the same AcgMapInput (#1371). Gated like PeriodicTransitView/TransitView on a known birth time (ACG lines shift ~15° longitude per hour of time error); embeds the SVG map via `dangerouslySetInnerHTML` and exports it through `standaloneSvg`/`downloadText`/`svgToPngBlob`, matching ChartView's trust-boundary pattern for app-generated markup. Reads interpretive text from the shared wheel corpus via `resolvePlacementText`.
+ * @conventions Map drawn aria-hidden, with a SortableTable text equivalent built from the same AcgMapInput (#1371). Gated like PeriodicTransitView/TransitView on a known birth time (ACG lines shift ~15° longitude per hour of time error); embeds the SVG map via `dangerouslySetInnerHTML` and exports it through `standaloneSvg`/`downloadText`/`svgToPngBlob`, matching ChartView's trust-boundary pattern for app-generated markup. Reads interpretive text from the shared wheel corpus via `resolvePlacementText`. The Fixed Stars pill (#2018) is one more field of the applied map settings, default off; on, it draws the person's paran star list (`starLookups` of `person.fixedStars`) as faint dashed lines, and hovering or clicking one shows its tooltip (name, angle, right ascension and declination).
  * @exports AstrocartographyView
  */
 import { GlossaryText } from './GlossaryText.js';
@@ -50,7 +50,10 @@ import type { BodyId, GeoPosition } from '../ephemeris/types.js';
 import type { CorpusEntry, Locale } from '../interpretation/schema.js';
 import { wheelCorpus } from './wheel-corpus.js';
 import { useUserCorpusLayer } from './user-corpus-layer.js';
-import { useStableMoment } from './use-stable-moment.js';
+import { useStableBy, useStableMoment } from './use-stable-moment.js';
+import { starLookups } from '../domain/chart-compute.js';
+import { starTooltipOf, type StarTooltip } from './acg-star-tooltip.js';
+import { Button } from './primitives/Button.js';
 import { useCalculationBasisLine } from './calculation-basis.js';
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
 
@@ -96,7 +99,16 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
   // What the map is drawn from. Edited as a draft in the Map settings dialog and replaced as a whole on Apply, so
   // one commit is one recalculation and opening or cancelling the dialog never changes the map (#512).
   const [settings, setSettings] = useState<MapSettings>(DEFAULT_MAP_SETTINGS);
-  const { lineTypes, bodies, localSpace } = settings;
+  const { lineTypes, bodies, localSpace, fixedStars: showStars } = settings;
+  // The paran star list (ChartData.fixedStars): the person's chosen stars, else the seven-star preset (#2018).
+  const chosenStars = useStableBy(person?.fixedStars, (stars) => JSON.stringify(stars ?? []));
+  const starRefs = useMemo(
+    () => starLookups(chosenStars).map((star) => ({ key: star.key, id: star.id })),
+    [chosenStars],
+  );
+  const [starTip, setStarTip] = useState<(StarTooltip & { readonly x: number; readonly y: number }) | undefined>(
+    undefined,
+  );
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   // True while a recalculation runs. The last valid map stays on screen meanwhile, marked as updating, never blanked.
   const [updating, setUpdating] = useState(false);
@@ -148,6 +160,7 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
           bodies,
           lineTypes,
           localSpace,
+          ...(showStars ? { fixedStars: starRefs } : {}),
           ...(relocationPlace === undefined ? {} : { relocationPlace }),
         });
         if (!effect.cancelled) {
@@ -165,7 +178,7 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
     return () => {
       effect.cancelled = true;
     };
-  }, [personMoment, provider, bodies, lineTypes, localSpace, relocationPlace]);
+  }, [personMoment, provider, bodies, lineTypes, localSpace, showStars, starRefs, relocationPlace]);
 
   const data = load.kind === 'ready' ? load.data : undefined;
   // One input for both the drawn map and its text equivalent (#1371), so the two always show the same lines and places.
@@ -174,6 +187,7 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
     return {
       lines: data.lines,
       localSpaceLines: data.localSpaceLines,
+      ...(data.fixedStarLines === undefined ? {} : { fixedStarLines: data.fixedStarLines }),
       natalPlace: data.natalPlace,
       ...(relocationPlace === undefined ? {} : { relocationPlace }),
       ...(coastline === undefined ? {} : { coastline }),
@@ -213,6 +227,22 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
     [mapInput, locale],
   );
 
+  /** Hover or click on a fixed-star line (#2018): its name, angle and position, beside the pointer. */
+  const showStarTip = (event: React.MouseEvent<HTMLDivElement>): void => {
+    if (mapInput === undefined || !(event.target instanceof Element)) return;
+    const group = event.target.closest('.acg-star-line-group');
+    const tip =
+      group === null
+        ? undefined
+        : starTooltipOf(mapInput, group.getAttribute('data-star'), group.getAttribute('data-angle'), locale);
+    if (tip === undefined) {
+      setStarTip(undefined);
+      return;
+    }
+    const card = event.currentTarget.parentElement?.getBoundingClientRect();
+    setStarTip({ ...tip, x: event.clientX - (card?.left ?? 0) + 12, y: event.clientY - (card?.top ?? 0) + 12 });
+  };
+
   if (person === undefined) {
     return <PersonNotFound />;
   }
@@ -247,6 +277,16 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
         subtitle={t.subtitle}
         basis={basisLine}
       >
+        <Button
+          variant="plain"
+          className="acg-star-pill"
+          aria-pressed={showStars}
+          onClick={() => {
+            setSettings((current) => ({ ...current, fixedStars: !current.fixedStars }));
+          }}
+        >
+          {t.fixedStars}
+        </Button>
         <MapSettingsDialog applied={settings} onApply={setSettings} lineTypeLabels={lineTypeLabels(t)} />
         <a
           className="primitive-button-primary"
@@ -288,8 +328,23 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
               // markup — the same trust boundary `ChartView.tsx` documents for its own wheel.
               // Hidden from assistive technology on purpose (#1371): the table below is its full text equivalent.
               aria-hidden="true"
+              onMouseOver={(event) => {
+                showStarTip(event);
+              }}
+              onClick={(event) => {
+                showStarTip(event);
+              }}
+              onMouseLeave={() => {
+                setStarTip(undefined);
+              }}
               dangerouslySetInnerHTML={{ __html: map.markup }}
             />
+            {starTip !== undefined && (
+              <div className="acg-star-tooltip" role="status" style={{ left: starTip.x, top: starTip.y }}>
+                <strong>{starTip.title}</strong>
+                <span>{starTip.position}</span>
+              </div>
+            )}
           </section>
 
           {map.omittedLabels > 0 && <p className="hint">{t.omittedLabels(map.omittedLabels)}</p>}
