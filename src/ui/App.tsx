@@ -505,6 +505,7 @@ function renderScreen(parsed: Route, seVersion: string | undefined): React.JSX.E
           personId={parsed.personId}
           section={parsed.section}
           view={parsed.view}
+          fixedStars={parsed.fixedStars}
         />
       </Stored>
     );

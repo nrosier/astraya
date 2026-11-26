@@ -290,7 +290,12 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
         <MapSettingsDialog applied={settings} onApply={setSettings} lineTypeLabels={lineTypeLabels(t)} />
         <a
           className="primitive-button-primary"
-          href={routeHref({ kind: 'export-builder', personId, section: 'astrocartography' })}
+          href={routeHref({
+            kind: 'export-builder',
+            personId,
+            section: 'astrocartography',
+            ...(showStars ? { fixedStars: true } : {}),
+          })}
         >
           {t.buildPdf}
         </a>

@@ -136,6 +136,8 @@ export type Route =
       readonly personId?: string;
       readonly section?: ExportBuilderSection;
       readonly view?: ChartViewKind;
+      /** The page's Fixed Stars toggle (#2018), carried as `fixedStars=1`; absent when off. */
+      readonly fixedStars?: true;
     }
   // The Preferences workspace (#506/#510): durable account/device settings in one stable place,
   // per docs/ui/UI-UX_GUIDELINES.md's setting-scope model. `section` links straight to one of its headings.
@@ -255,6 +257,7 @@ function exportBuilderRoute(hash: string): Route {
     ...(isPersonId(personId) ? { personId } : {}),
     ...(isExportBuilderSection(section) ? { section } : {}),
     ...(isChartView(view) ? { view } : {}),
+    ...(query.get('fixedStars') === '1' ? { fixedStars: true } : {}),
   };
 }
 
@@ -373,6 +376,7 @@ export function routeHref(route: Route): string {
         ...(route.personId === undefined ? [] : [`person=${route.personId}`]),
         ...(route.section === undefined ? [] : [`section=${route.section}`]),
         ...(route.view === undefined ? [] : [`view=${route.view}`]),
+        ...(route.fixedStars === true ? ['fixedStars=1'] : []),
       ];
       return query.length === 0 ? '#/documents/pdf' : `#/documents/pdf?${query.join('&')}`;
     }
