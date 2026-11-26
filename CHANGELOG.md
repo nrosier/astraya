@@ -8,9 +8,50 @@ feature and fixes is a minor release. See [docs/ops/RELEASING.md](docs/ops/RELEA
 
 ## [Unreleased]
 
+- **Partner named in a relationship reading's history (#1852).** A saved composite interpretation records the other person's id, and the history entry reads "<description> · with <name>", the name looked up on the device. For people running their own server: migration 22 is applied on start and adds one nullable column, `partner_person_id`, to `interpretation_results`. No action is needed, and the name never reaches the server.
+
+## [0.58.0] — 2026-11-26
+
+**Trutine of Hermes, rise and set, lunar phase return, harmonic age and the arc transform, saved horary judgments, two-factor sign-in, a sign-ruler AI interpretation for sign selections, and body-to-body parans for every planet pair.**
+
+### Added
+
+- **More chart types (#1407).** The Trutine of Hermes (for Gregorian births within the engine's range), Rise/set, Lunar phase return, and Harmonic Age and Age+1 charts. The Solar Arc takes an arc, a multiplier and a converse option, with Ascendant and Vertex arcs, and an arc-transform chart is available. A fixed-star paran table has an orb and angle filter.
+- **Saved horary judgments (#1960).** Save a judgment from the horary page and reopen it later. Practitioner-input notes show on the result and on reopened judgments, and the account-delete confirmation counts every stored item.
+- **Sign-ruler AI interpretation (#1998).** Sign selections can be interpreted with the AI control, and each aspect row names the body it aspects (#1997).
+- **Body-to-body parans for all planet pairs (#1996).**
+- **Primary directions in the PDF (#1845).** A section of the full predictive report.
+- **Part of Fortune formula and true solar arc key (#1794, #1795).** Extended settings choose the Part of Fortune formula, the Primary Directions page offers the true solar arc key, and the chosen formula shows in the placements and the PDF.
+- **User-defined ayanamsa (#1964)** is honoured by the ayanamsa calculation, with a note on progressed angles (#1935).
+- **Importing opens the People page (#1921),** with no person selected.
+- **Two-factor sign-in (#1500).** An enrolment panel, a code step at sign-in for accounts that enrolled, and a way to disable it with a code. Operators can reset one user's enrolment with `npm run ops:reset-totp -- --yes`.
+- **Partner named in a relationship reading's history (#1852).** A saved composite interpretation records the other person's id, and the history entry names the partner, looked up on the device. For people running their own server, migration 22 adds one nullable column, `partner_person_id`, to `interpretation_results`. No action is needed, and the name never reaches the server.
+
 ### Changed
 
-- **Partner named in a relationship reading's history (#1852).** A saved composite interpretation records the other person's id, and the history entry reads "<description> · with <name>", the name looked up on the device. For people running their own server: migration 22 is applied on start and adds one nullable column, `partner_person_id`, to `interpretation_results`. No action is needed, and the name never reaches the server.
+- **Progressed angles, Vertex and cusps come from the progressed MC (#1935).** Sunshine cusps use the Sun's declination under Naibod and solar arc, and transits to progressed charts use the person's zodiac.
+- **The extended-settings pill shows how many settings changed (#1929).**
+- **Layout polish.** One header per Patterns and condition section (#1854), the sidebar toggle moved into the header's brand row with an icon (#1851), and unified card tokens (#1850).
+- **The easter egg is checked on the server (#1808),** behind sign-in.
+
+### Fixed
+
+- **The engine no longer aborts on a memory leak (#1856, #1859),** and restarts if it dies.
+- **Horary fixes (#1960).** The late-ascendant flag starts at 27 degrees, and perfection uses Lilly's moiety orbs.
+- **Key rotation (#1801, #1782).** It fails cleanly on a busy checkpoint, says what it may have left behind, and clears key material from memory.
+- **Sign-in throttle (#1500)** counts concurrent and wrong-password guesses.
+- **Paran window (#2003).** Rows are limited to Sun through Pluto and start 23 hours before the chart moment. Moon rise and set can use the topocentric disc centre.
+- **Gauquelin charts (#1998)** send no sign cusps, since their 36 sectors are not 12 houses.
+- **Smaller fixes.** Dutch hyleg labels (#1799), the Retrograde popup (#1867), natal comparison hints (#1810), SVG text escaping (#1809), and sync records dropped rows on its status (#320).
+
+### Documentation
+
+- **About copy (#1961)** drops unsourced claims, and its privacy wording is conditional.
+- **Citations (#1601, #1603, #1604, #869):** attribution for the Flatlib and PyAstra term tables, and the Paulus, Peters, Tyl and Marr references. The key-leak runbook is in `docs/ops/KEY-LEAK-RUNBOOK.md`.
+
+### Coming next
+
+- **Fixed-star lines on the astrocartography map (#2018)** are not in this release. They are built from a stated derivation and await the owner's visual sign-off.
 
 ## [0.57.0] — 2026-11-20
 
