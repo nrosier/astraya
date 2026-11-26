@@ -5717,6 +5717,12 @@ svg text.chart-symbol-text-unicode {
   font-size: inherit;
 }
 
+/* The title and the position are two lines: stack them, as the tooltip's own two-line content describes. */
+.acg-star-tooltip-text > strong,
+.acg-star-tooltip-text > span {
+  display: block;
+}
+
 /* The Fixed Stars toggle, a rounded-full pill beside the other map controls. */
 .acg-star-pill {
   min-height: var(--control-height-compact);
