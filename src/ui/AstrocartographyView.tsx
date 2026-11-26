@@ -20,7 +20,7 @@
 import { GlossaryText } from './GlossaryText.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { personHref, routeHref } from './route.js';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { resolvePlacementText } from '../interpretation/compose.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { ACG_LABEL_PX, ACG_MAP_WIDTH, renderAcgMapSvg, type AcgMapInput } from '../chart/acg-map.js';
@@ -52,7 +52,7 @@ import { wheelCorpus } from './wheel-corpus.js';
 import { useUserCorpusLayer } from './user-corpus-layer.js';
 import { useStableBy, useStableMoment } from './use-stable-moment.js';
 import { starLookups } from '../domain/chart-compute.js';
-import { starTooltipOf, type StarTooltip } from './acg-star-tooltip.js';
+import { starTooltipLeft, starTooltipOf, type StarTooltip } from './acg-star-tooltip.js';
 import { Button } from './primitives/Button.js';
 import { useCalculationBasisLine } from './calculation-basis.js';
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
@@ -106,9 +106,9 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
     () => starLookups(chosenStars).map((star) => ({ key: star.key, id: star.id })),
     [chosenStars],
   );
-  const [starTip, setStarTip] = useState<(StarTooltip & { readonly x: number; readonly y: number }) | undefined>(
-    undefined,
-  );
+  const [starTip, setStarTip] = useState<
+    (StarTooltip & { readonly x: number; readonly y: number; readonly pointerX: number }) | undefined
+  >(undefined);
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   // True while a recalculation runs. The last valid map stays on screen meanwhile, marked as updating, never blanked.
   const [updating, setUpdating] = useState(false);
@@ -180,6 +180,17 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
     };
   }, [personMoment, provider, bodies, lineTypes, localSpace, showStars, starRefs, relocationPlace]);
 
+  // Once the tooltip has rendered and its width is known, flip it left if the right placement overflows (#2018).
+  useLayoutEffect(() => {
+    if (starTip === undefined) return;
+    const tipEl = starTipRef.current;
+    const card = tipEl?.parentElement?.getBoundingClientRect();
+    if (tipEl === null || tipEl === undefined || card === undefined) return;
+    const width = tipEl.getBoundingClientRect().width;
+    const left = starTooltipLeft(starTip.pointerX, width, card.width);
+    if (left !== starTip.x) setStarTip({ ...starTip, x: left });
+  }, [starTip]);
+
   const data = load.kind === 'ready' ? load.data : undefined;
   // One input for both the drawn map and its text equivalent (#1371), so the two always show the same lines and places.
   const mapInput = useMemo((): AcgMapInput | undefined => {
@@ -196,6 +207,7 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
   // The map's real width in px (#1370). Narrower than the map's design width the map is drawn at that width, so one
   // map unit is one screen pixel and names keep their full size instead of shrinking with the scaled-down drawing.
   const mapBox = useRef<HTMLDivElement>(null);
+  const starTipRef = useRef<HTMLDivElement>(null);
   const [mapPx, setMapPx] = useState<number | undefined>(undefined);
   const hasMap = mapInput !== undefined;
   useEffect(() => {
@@ -240,7 +252,16 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
       return;
     }
     const card = event.currentTarget.parentElement?.getBoundingClientRect();
-    setStarTip({ ...tip, x: event.clientX - (card?.left ?? 0) + 12, y: event.clientY - (card?.top ?? 0) + 12 });
+    const pointerX = event.clientX - (card?.left ?? 0);
+    const cardWidth = card?.width ?? 0;
+    // The tooltip's own width once rendered; until then it is measured as 0 and placed to the right.
+    const width = starTipRef.current?.getBoundingClientRect().width ?? 0;
+    setStarTip({
+      ...tip,
+      pointerX,
+      x: starTooltipLeft(pointerX, width, cardWidth),
+      y: event.clientY - (card?.top ?? 0) + 12,
+    });
   };
 
   if (person === undefined) {
@@ -345,7 +366,7 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
               dangerouslySetInnerHTML={{ __html: map.markup }}
             />
             {starTip !== undefined && (
-              <div className="acg-star-tooltip" style={{ left: starTip.x, top: starTip.y }}>
+              <div ref={starTipRef} className="acg-star-tooltip" style={{ left: starTip.x, top: starTip.y }}>
                 <StatusMessage kind="success" className="acg-star-tooltip-text">
                   <strong>{starTip.title}</strong>
                   <span>{starTip.position}</span>

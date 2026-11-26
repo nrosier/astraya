@@ -61,7 +61,8 @@ vi.mock('../src/ui/person-calculation-settings.js', async () => {
 });
 
 const { AstrocartographyView } = await import('../src/ui/AstrocartographyView.js');
-const { parseRoute } = await import('../src/ui/route.js');
+const { parseRoute, pdfBuilderKey } = await import('../src/ui/route.js');
+const { starTooltipLeft } = await import('../src/ui/acg-star-tooltip.js');
 const { buildPdfPlan } = await import('../src/ui/pdf-export-plan.js');
 const { DEFAULT_EXTENDED_SETTINGS: EXTENDED } = await import('../src/chart/extended-settings.js');
 const { DEFAULT_RULERSHIP_CHOICE: RULERSHIP } = await import('../src/astrology/rulership.js');
@@ -194,4 +195,75 @@ describe('Fixed Stars PDF handoff (#2018)', () => {
     expect(drawnStarLines(await svgOf(onHref))).toBeGreaterThan(0);
     expect(drawnStarLines(await svgOf(offHref))).toBe(0);
   }, 90_000);
+});
+
+describe('Fixed Stars handoff in one route session (#2018)', () => {
+  it('remounts the PDF creator when the flag changes, so an ON build followed by an OFF build has no star lines', async () => {
+    const onRoute = parseRoute('#/documents/pdf?person=p1&section=astrocartography&fixedStars=1');
+    const offRoute = parseRoute('#/documents/pdf?person=p1&section=astrocartography');
+    if (onRoute.kind !== 'export-builder' || offRoute.kind !== 'export-builder')
+      throw new Error('expected creator routes');
+    // The key the App mounts the creator with: a flag change must change it, or the creator keeps the ON selection.
+    expect(pdfBuilderKey(onRoute)).not.toBe(pdfBuilderKey(offRoute));
+
+    const context: PdfPlanContext = {
+      person: {
+        id: 'p1',
+        displayName: 'Test',
+        timeAccuracy: 'recorded',
+        placeLabel: 'Test',
+        notes: '',
+        missing: [],
+        moment: {
+          civil: { year: 1970, month: 1, day: 1, hour: 0, minute: 0, second: 0 },
+          coordinates: { latitude: 41.1833, longitude: -84.7333 },
+          offsetOverrideMinutes: 0,
+        },
+      },
+      provider: engine,
+      settings: EXTENDED,
+      rulership: RULERSHIP,
+      locale: 'en',
+      corpusFetch,
+    };
+    // The second build starts from the OFF route's own selection, as a remounted creator does.
+    const selectionOf = (route: typeof offRoute): PdfSelection => ({
+      personId: 'p1',
+      ...EMPTY_SELECTION,
+      astrocartography: {
+        map: true,
+        lineTypes: ['MC', 'AC'],
+        bodies: TRADITIONAL_ACG_BODY_IDS.slice(0, 2),
+        localSpace: false,
+        meanings: false,
+        ...(route.fixedStars === true ? { fixedStars: true } : {}),
+      },
+    });
+    const onPlan = await buildPdfPlan(selectionOf(onRoute), context, chartViewMessages.en, pdfExportMessages.en);
+    const offPlan = await buildPdfPlan(selectionOf(offRoute), context, chartViewMessages.en, pdfExportMessages.en);
+    const markupOf = (plan: typeof onPlan): string => {
+      const chart = plan.sections[0];
+      if (chart?.kind !== 'chart') throw new Error('expected a chart section');
+      return chart.svg?.markup ?? '';
+    };
+    const drawnStarLines = (markup: string): number => markup.split('class="acg-star-line"').length - 1;
+    expect(drawnStarLines(markupOf(onPlan))).toBeGreaterThan(0);
+    expect(drawnStarLines(markupOf(offPlan))).toBe(0);
+  }, 90_000);
+});
+
+describe('star tooltip placement (#2018)', () => {
+  it('keeps the tooltip inside the card at 390 and 1280 widths, flipping left near the right edge', () => {
+    const width = 67; // the tooltip's measured width (box width in the captures)
+    for (const cardWidth of [390, 1280]) {
+      // Near the right edge the tooltip would overflow on the right, so it must flip left and stay inside.
+      const pointerX = cardWidth - 20;
+      const left = starTooltipLeft(pointerX, width, cardWidth);
+      expect(left).toBeGreaterThanOrEqual(0);
+      expect(left + width).toBeLessThanOrEqual(cardWidth);
+      expect(left).toBeLessThan(pointerX);
+    }
+    // Away from the edge it stays to the right of the pointer, as before.
+    expect(starTooltipLeft(100, width, 1280)).toBe(112);
+  });
 });
