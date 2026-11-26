@@ -61,6 +61,8 @@ import { readCustomPoints, readFixedStars, type ChosenFixedStar, type CustomPoin
  * reads back unchanged and one with both off serializes byte for byte as before.
  * #1407's optional `fixedStarParans` is not a bump either: absent means off, so every existing snapshot reads back
  * unchanged and one with it off serializes byte for byte as before.
+ * #2012's optional `polarMc` is not a bump either: it is present only when it is `'aboveHorizon'`, and a missing one reads
+ * back as 'towardsEquator', so every default snapshot keeps its serialized form and identity.
  * #1794's optional `fortuneFormula` is not a bump either: it is present only when it is `'same-day-and-night'`, and a
  * missing one reads back as the default `DEFAULT_FORTUNE_FORMULA`, so every existing snapshot reads back unchanged and a
  * default snapshot keeps its old serialized form and identity.
@@ -389,6 +391,8 @@ function parseExtendedSettings(value: unknown): ExtendedSettings {
     ...(value.motionScore === true ? { motionScore: true } : {}),
     // Last, beside motionScore (#1794): the non-default value only, so a default bag is unchanged and key order is fixed.
     ...(value.fortuneFormula === 'same-day-and-night' ? { fortuneFormula: 'same-day-and-night' as const } : {}),
+    // After fortuneFormula (#2012): the non-default convention only, so a default bag is unchanged and key order is fixed.
+    ...(value.polarMc === 'aboveHorizon' ? { polarMc: 'aboveHorizon' as const } : {}),
     // After fortuneFormula (#1407): present only when on, so a default bag is unchanged and key order is fixed.
     ...parseFixedStarParans(value.fixedStarParans),
   };
@@ -440,6 +444,7 @@ export class SnapshotDecodeError extends Error {
 const SNAPSHOT_BOUNDS_SCHEMES = ['egyptian', 'ptolemaic'] as const;
 const SNAPSHOT_LILITH_VARIANTS = ['mean', 'true', 'interpolated'] as const;
 const SNAPSHOT_NODE_VARIANTS = ['mean', 'true'] as const;
+const SNAPSHOT_POLAR_MC = ['towardsEquator', 'aboveHorizon'] as const;
 const SNAPSHOT_FORTUNE_FORMULAS = ['sect-reversed', 'same-day-and-night'] as const;
 
 function isNonNegativeNumber(value: unknown): value is number {
@@ -486,6 +491,8 @@ function invalidSettingFields(settings: Record<string, unknown>, requireAll = fa
   check('boundsScheme', (v) => isOneOf(v, SNAPSHOT_BOUNDS_SCHEMES));
   check('lilithVariant', (v) => isOneOf(v, SNAPSHOT_LILITH_VARIANTS));
   check('nodeVariant', (v) => isOneOf(v, SNAPSHOT_NODE_VARIANTS));
+  // Not a `check`: a chart saved before the setting existed (#2012) has no polarMc and reads as the default.
+  if (settings.polarMc !== undefined && !isOneOf(settings.polarMc, SNAPSHOT_POLAR_MC)) problems.push('polarMc');
   // Not a `check`: a missing fortuneFormula is an old register (default), never invalid, even with requireAll.
   if (settings.fortuneFormula !== undefined && !isOneOf(settings.fortuneFormula, SNAPSHOT_FORTUNE_FORMULAS)) {
     problems.push('fortuneFormula');

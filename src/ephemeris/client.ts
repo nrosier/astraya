@@ -38,6 +38,7 @@ import type {
   HouseSystem,
   JulianDayUT,
   LunarEclipse,
+  PolarMc,
   PositionOptions,
   SolarEclipse,
   UserAyanamsa,
@@ -317,8 +318,17 @@ export class WorkerEphemerisProvider implements EphemerisProvider {
     return this.#call('positions', [jd, bodies, options]);
   }
 
-  houses(jd: JulianDayUT, place: GeoPosition, system: HouseSystem, zodiac?: Zodiac): Promise<HousePositions> {
-    return this.#call('houses', [jd, place, system, zodiac]);
+  houses(
+    jd: JulianDayUT,
+    place: GeoPosition,
+    system: HouseSystem,
+    zodiac?: Zodiac,
+    polarMc?: PolarMc,
+  ): Promise<HousePositions> {
+    return this.#call(
+      'houses',
+      polarMc === undefined ? [jd, place, system, zodiac] : [jd, place, system, zodiac, polarMc],
+    );
   }
 
   housesFromArmc(
@@ -327,12 +337,15 @@ export class WorkerEphemerisProvider implements EphemerisProvider {
     obliquity: Degrees,
     system: HouseSystem,
     sunDeclination?: Degrees,
+    polarMc?: PolarMc,
   ): Promise<HousePositions> {
     return this.#call(
       'housesFromArmc',
-      sunDeclination === undefined
-        ? [armc, latitude, obliquity, system]
-        : [armc, latitude, obliquity, system, sunDeclination],
+      polarMc !== undefined
+        ? [armc, latitude, obliquity, system, sunDeclination, polarMc]
+        : sunDeclination === undefined
+          ? [armc, latitude, obliquity, system]
+          : [armc, latitude, obliquity, system, sunDeclination],
     );
   }
 
