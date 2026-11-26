@@ -135,6 +135,19 @@ No registry value was changed by this check.
 | 63          | 844           | β Col     | I p. 68, III p. 114     | Verified: Canis Major, unformed stars, "β Columbae"                                                                     |
 | 65          | 425           | β Gem     | I p. 58                 | Verified: Gemini 2, "Quae est in capite sequentis Geminorum, subrufa", β (the number prints as "42s")                   |
 
+## Map lines (#2018)
+
+Status: owner-accepted derivation (#2012 dialogue answer, "Accept a stated derivation"; recorded on #2018). No held source states the geometry of a fixed-star line on a map, so this is a stated Astraya convention, not a cited rule. The derivation uses only the horizon relation already in `armcAtAngle` (src/astrology/fixed-stars.ts).
+
+With α, δ the star's equatorial right ascension and declination, ARMC0 the ARMC at longitude 0, and φ, λ latitude and geographic longitude (east positive):
+
+- MC: λ = norm180(α − ARMC0), at every latitude.
+- IC: λ = norm180(α + 180° − ARMC0), at every latitude.
+- AC: λ = norm180(α − H0(φ) − ARMC0). DC: λ = norm180(α + H0(φ) − ARMC0).
+- H0(φ) = arccos(−tan φ · tan δ), on [0°, 180°]. AC and DC exist only where |φ| ≤ 90° − |δ|. Beyond that, same-sign φ and δ is circumpolar (no DC); opposite-sign is never rising (no AC).
+
+The implementation is `fixedStarLines` in src/astrology/astrocartography.ts. Sampling follows `horizonLine`: 1° latitude steps, |φ| ≤ 85°. Tests in test/astrology-fixed-star-lines.test.ts check each line against `engine.azimuthAltitude`. Related: #2012 (polar MC convention), #2018 (this section).
+
 ## Out of scope for the first build
 
 - Positions in the chart and report. Chart display is a separate decision (see #748 for the analogous lots question).

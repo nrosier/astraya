@@ -13,9 +13,10 @@
 
 /**
  * @module Astrocartography
- * @purpose Computes astrocartography (ACG) MC/IC/AC/DC lines and Local Space lines for mapping a chart's angles and azimuths onto the globe.
+ * @purpose Computes astrocartography (ACG) MC/IC/AC/DC lines, fixed-star map lines (#2018) and Local Space lines for mapping a chart's angles and azimuths onto the globe.
  * @conventions MC/IC/AC/DC lines reuse armcAtAngle/EquatorialPoint from fixed-stars.ts, since an ACG line is every place whose local sidereal time equals the ARMC a point needs for that angle; great-circle paths use the standard forward-geodesic spherical-navigation formula; longitude is wrapped to [-180, 180) rather than clamped so an antimeridian crossing shows up as a jump.
- * @exports longitudeFromArmc, meridianLine, horizonLine, greatCirclePath, localSpaceLine
+ * Fixed-star map lines (#2018) are a stated derivation, not a held-source rule (docs/domain/FIXED_STAR_REGISTRY.md, "Map lines"). With α, δ the star's RA/Dec and ARMC0 the ARMC at longitude 0, and H0(φ) = arccos(−tan φ · tan δ) on [0°, 180°]: MC λ = norm180(α − ARMC0) and IC λ = norm180(α + 180° − ARMC0) at every latitude; AC λ = norm180(α − H0 − ARMC0) and DC λ = norm180(α + H0 − ARMC0). H0 is not computed separately: AC and DC use armcAtAngle 'rising'/'setting', which is α ∓ H0. AC/DC exist only where |φ| ≤ 90° − |δ|; beyond that, same-sign φ and δ is circumpolar (no DC) and opposite-sign is never rising (no AC). Sampled like horizonLine: 1° latitude step, |φ| ≤ 85°, poles not sampled.
+ * @exports longitudeFromArmc, meridianLine, horizonLine, fixedStarLines, greatCirclePath, localSpaceLine
  */
 import type { BodyId, Degrees, GeoPosition } from '../ephemeris/types.js';
 import { armcAtAngle, type EquatorialPoint } from './fixed-stars.js';
@@ -81,9 +82,23 @@ export function horizonLine(
   armc0: Degrees,
   options?: AcgSamplingOptions,
 ): HorizonLine {
+  const angle = kind === 'AC' ? 'rising' : 'setting';
+  return { kind, body, segments: horizonSegments(angle, point, armc0, options) };
+}
+
+/**
+ * Latitude-sampled longitude segments for a rising or setting angle. Shared by
+ * `horizonLine` (bodies) and `fixedStarLines` (stars). H0 is never computed here:
+ * `armcAtAngle` already returns α ∓ H0, and `longitudeFromArmc` wraps it.
+ */
+function horizonSegments(
+  angle: 'rising' | 'setting',
+  point: EquatorialPoint,
+  armc0: Degrees,
+  options?: AcgSamplingOptions,
+): HorizonLinePoint[][] {
   const step = options?.latitudeStepDeg ?? 1;
   const maxAbsLatitude = options?.maxAbsLatitude ?? 85;
-  const angle = kind === 'AC' ? 'rising' : 'setting';
 
   const segments: HorizonLinePoint[][] = [];
   let current: HorizonLinePoint[] = [];
@@ -98,7 +113,43 @@ export function horizonLine(
     current.push({ latitude, longitude: longitudeFromArmc(armc, armc0) });
   }
   if (current.length > 0) segments.push(current);
-  return { kind, body, segments };
+  return segments;
+}
+
+/** A fixed star's map lines, keyed by the star's name (stars have no `BodyId`). See the #2018 convention in the module header. */
+export interface FixedStarLines {
+  readonly star: string;
+  /** MC (culmination) and IC (anticulmination) — constant-longitude meridians at every latitude. */
+  readonly mc: Degrees;
+  readonly ic: Degrees;
+  /** AC (rising) and DC (setting) segments. Empty where the star never rises or is circumpolar. */
+  readonly ac: readonly (readonly HorizonLinePoint[])[];
+  readonly dc: readonly (readonly HorizonLinePoint[])[];
+}
+
+/**
+ * Map lines for a fixed star from its RA/Dec (#2018), using the stated derivation in
+ * the module header. MC/IC are single longitudes; AC/DC reuse the latitude sampler
+ * shared with `horizonLine`.
+ */
+export function fixedStarLines(
+  star: string,
+  point: EquatorialPoint,
+  armc0: Degrees,
+  options?: AcgSamplingOptions,
+): FixedStarLines {
+  const culmination = armcAtAngle(point, 0, 'culminating');
+  const anticulmination = armcAtAngle(point, 0, 'anticulminating');
+  if (culmination === undefined || anticulmination === undefined) {
+    throw new Error('unreachable: culmination/anticulmination is always defined');
+  }
+  return {
+    star,
+    mc: longitudeFromArmc(culmination, armc0),
+    ic: longitudeFromArmc(anticulmination, armc0),
+    ac: horizonSegments('rising', point, armc0, options),
+    dc: horizonSegments('setting', point, armc0, options),
+  };
 }
 
 export interface GreatCirclePoint {
