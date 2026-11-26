@@ -29,6 +29,7 @@
  */
 import { EPHEMERIS_DATA_FILES, EPHEMERIS_YEAR_RANGE, EPHE_BASE_URL, FIXED_STARS_ASSET } from './assets.js';
 import { SE } from './generated-constants.js';
+import { DEFAULT_POLAR_MC, polarMidheaven, POLAR_MC_SYSTEMS, MERIDIAN_CUSPS } from './polar-mc.js';
 import {
   EphemerisError,
   type EphemerisErrorContext,
@@ -37,6 +38,7 @@ import {
   type BodyPosition,
   type CalendarSystem,
   type Degrees,
+  type PolarMc,
   type EphemerisProvider,
   type FixedStarMagnitude,
   type FixedStarPosition,
@@ -599,11 +601,21 @@ export class SwissEphemerisEngine implements EphemerisProvider {
     return out;
   }
 
-  async houses(jd: JulianDayUT, place: GeoPosition, system: HouseSystem, zodiac?: Zodiac): Promise<HousePositions> {
+  async houses(
+    jd: JulianDayUT,
+    place: GeoPosition,
+    system: HouseSystem,
+    zodiac?: Zodiac,
+    polarMc: PolarMc = DEFAULT_POLAR_MC,
+  ): Promise<HousePositions> {
     const flags = this.#applyZodiac(zodiac);
-    return this.#housesWithFallback(system, place.latitude, { call: 'swe_houses_ex2', jd }, (candidate) =>
+    const houses = this.#housesWithFallback(system, place.latitude, { call: 'swe_houses_ex2', jd }, (candidate) =>
       this.#housesEx2(jd, flags, place.latitude, place.longitude, candidate),
     );
+    if (!this.#followsPolarMc(houses.system, place.latitude)) return houses;
+    // A sidereal MC is the tropical one less the ayanamsa (under 90 degrees), which `#withPolarMc` tolerates.
+    const obliquity = this.#calcUt(jd, SE.SE_ECL_NUT, SE.SEFLG_SWIEPH)[0] ?? 0;
+    return this.#withPolarMc(houses, place.latitude, obliquity, polarMc);
   }
 
   async housesFromArmc(
@@ -612,15 +624,46 @@ export class SwissEphemerisEngine implements EphemerisProvider {
     obliquity: Degrees,
     system: HouseSystem,
     sunDeclination?: Degrees,
+    polarMc: PolarMc = DEFAULT_POLAR_MC,
   ): Promise<HousePositions> {
     if (needsSunDeclination(system) && sunDeclination === undefined) {
       throw new EphemerisError(`House system '${system}' (Sunshine) needs the Sun's declination.`, {
         call: 'swe_houses_armc_ex2',
       });
     }
-    return this.#housesWithFallback(system, latitude, { call: 'swe_houses_armc_ex2' }, (candidate) =>
+    const houses = this.#housesWithFallback(system, latitude, { call: 'swe_houses_armc_ex2' }, (candidate) =>
       this.#housesArmcEx2(armc, latitude, obliquity, candidate, sunDeclination),
     );
+    if (!this.#followsPolarMc(houses.system, latitude)) return houses;
+    return this.#withPolarMc(houses, latitude, obliquity, polarMc);
+  }
+
+  /**
+   * Whether the polar MC setting can matter: Regiomontanus and Campanus (see `polar-mc.ts`), and only from 60 degrees
+   * of latitude, since Swiss Ephemeris agrees with both conventions below the polar circle (checked at 60 and 66).
+   */
+  #followsPolarMc(system: HouseSystem, latitude: Degrees): boolean {
+    return POLAR_MC_SYSTEMS.includes(system) && Math.abs(latitude) >= 60;
+  }
+
+  /**
+   * Puts the MC where the chosen Solar Fire convention puts it (guide section 30.3.1.6, quoted in `polar-mc.ts`). Swiss
+   * Ephemeris returns, for Regiomontanus and Campanus from about 67 degrees, the meridian point above the horizon, and
+   * the whole meridian side of the chart with it (every cusp but the Ascendant and Descendant). When that is the
+   * antipode of the convention's point, the MC and those cusps turn by 180 degrees, the same circle's other
+   * intersection with the ecliptic, so every cusp keeps its place relative to the MC. Nothing else moves.
+   */
+  #withPolarMc(houses: HousePositions, latitude: Degrees, obliquity: Degrees, polarMc: PolarMc): HousePositions {
+    const target = polarMidheaven(polarMc, houses.armc, latitude, obliquity);
+    const gap = Math.abs(((houses.midheaven - target + 540) % 360) - 180);
+    // 180 degrees apart means the antipode; the two points are never within 90 degrees of each other otherwise.
+    if (gap < 90) return houses;
+    const turn = (value: Degrees): Degrees => norm360(value + 180);
+    return {
+      ...houses,
+      midheaven: turn(houses.midheaven),
+      cusps: houses.cusps.map((cusp, index) => (MERIDIAN_CUSPS.includes(index) ? turn(cusp) : cusp)),
+    };
   }
 
   /**

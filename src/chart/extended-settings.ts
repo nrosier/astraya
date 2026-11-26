@@ -14,7 +14,7 @@
  * @module chart/extended-settings
  * @purpose Defines the Extended settings panel's single settings bag (`ExtendedSettings`) and the pure split functions that derive each of its three consumers' own option shapes from it.
  * @conventions One settings object is split three ways rather than kept as three separate pieces of UI state: `toChartCalculationOptions` feeds `computeChartData`, `toPointVisibilityOptions` feeds `chart-tables.ts`'s display filtering, and `toSignWedgeStyle` feeds the wheel's cosmetic fill — keeping the split here means neither the panel component nor `ChartView` needs to know any destination's shape.
- * @exports FixedStarParansSetting, FIXED_STAR_PARAN_ORB_DEFAULT, FIXED_STAR_PARAN_ORB_MAX, isParanOrb, isAngleEvent, canonicalParanEvents, DEFAULT_FIXED_STAR_PARANS, withoutFixedStarParans, DEFAULT_EXTENDED_SETTINGS, orbsOf, withOrbsOf, withoutStationWindow, withMotionScore, settingsForContext, toChartCalculationOptions, toPointVisibilityOptions, toSignWedgeStyle; ExtendedSettings type.
+ * @exports FixedStarParansSetting, FIXED_STAR_PARAN_ORB_DEFAULT, FIXED_STAR_PARAN_ORB_MAX, isParanOrb, isAngleEvent, canonicalParanEvents, DEFAULT_FIXED_STAR_PARANS, withoutFixedStarParans, DEFAULT_EXTENDED_SETTINGS, orbsOf, withOrbsOf, withoutStationWindow, withMotionScore, withPolarMc, settingsForContext, toChartCalculationOptions, toPointVisibilityOptions, toSignWedgeStyle; ExtendedSettings type.
  */
 import { DEFAULT_ORB_CONFIG, type OrbConfig, type OrbRule } from '../astrology/aspects.js';
 import type { BoundsScheme } from '../astrology/bounds.js';
@@ -29,12 +29,20 @@ import {
 } from '../astrology/orb-library.js';
 import type { ChartCalculationOptions } from '../domain/chart-compute.js';
 import type { PointVisibilityOptions } from '../domain/chart-tables.js';
-import type { Degrees, HouseSystem, Zodiac } from '../ephemeris/types.js';
+import { DEFAULT_POLAR_MC } from '../ephemeris/polar-mc.js';
+import type { Degrees, HouseSystem, PolarMc, Zodiac } from '../ephemeris/types.js';
 import { DEFAULT_OBJECT_POLICIES, OBJECT_KEYS, type ObjectKey, type ObjectPolicies } from './object-policy.js';
 import type { SignWedgeStyle } from './wheel.js';
 
 export interface ExtendedSettings {
   readonly houseSystem: HouseSystem;
+  /**
+   * Solar Fire's "MC in Polar Regions" (#2012; guide section 30.3.1.6): which of the two meridian points is the MC
+   * where Regiomontanus and Campanus houses are cast at polar latitudes. Saved with the chart, so a chart keeps the
+   * convention it was calculated with. Absent is the default, 'towardsEquator' (`DEFAULT_POLAR_MC`): the stored form
+   * keeps a default chart's snapshot identity and register byte for byte as before, like `fortuneFormula`.
+   */
+  readonly polarMc?: PolarMc;
   readonly zodiac: Zodiac;
   /** -90..90, matching `OrbConfig.scalePercent`. */
   readonly orbScalePercent: number;
@@ -225,6 +233,13 @@ export function withoutFixedStarParans(settings: ExtendedSettings): ExtendedSett
   return copy;
 }
 
+/** `settings` with the polar MC convention set (#2012), keeping the canonical form: the default is the field absent. */
+export function withPolarMc(settings: ExtendedSettings, polarMc: PolarMc): ExtendedSettings {
+  const copy = { ...settings };
+  delete copy.polarMc;
+  return polarMc === DEFAULT_POLAR_MC ? copy : { ...copy, polarMc };
+}
+
 /** `settings` with the motion score set (#724), keeping the canonical form: off is the field absent, not `false`. */
 export function withMotionScore(settings: ExtendedSettings, on: boolean): ExtendedSettings {
   const copy = { ...settings };
@@ -247,6 +262,7 @@ export function toChartCalculationOptions(settings: ExtendedSettings): ChartCalc
   const pholus = settings.objectPolicies.pholus;
   return {
     houseSystem: settings.houseSystem,
+    polarMc: settings.polarMc ?? DEFAULT_POLAR_MC,
     zodiac: settings.zodiac,
     orbConfig,
     lilithVariant: settings.lilithVariant,
