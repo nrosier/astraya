@@ -135,21 +135,30 @@ describe('the chart workspace (#801)', () => {
     expect(headings).toEqual([t.signSectionHeading, t.houseSectionHeading, t.degreeSectionHeading]);
   });
 
-  it("keeps 'Interpret tensions' disabled until the consent box is ticked", async () => {
+  it("opens the consent drawer on 'Interpret tensions' and keeps Confirm disabled until the consent box is ticked", async () => {
     const container = await mount('en');
     await select(container, '.chart-point[data-body="sun"]');
     const inspector = container.querySelector('.selection-inspector');
     const generate = [...(inspector?.querySelectorAll('button') ?? [])].find(
       (b) => b.textContent === focusInterpretationMessages.en.generate,
     );
+    if (generate === undefined) throw new Error('no AI block');
+    expect(generate.disabled).toBe(false);
+    await act(async () => {
+      generate.click();
+      await Promise.resolve();
+    });
+    const confirm = [...(inspector?.querySelectorAll('button') ?? [])].find(
+      (b) => b.textContent === focusInterpretationMessages.en.confirm,
+    );
     const consent = inspector?.querySelector<HTMLInputElement>('input[type="checkbox"]');
-    if (generate === undefined || consent === null || consent === undefined) throw new Error('no AI block');
-    expect(generate.disabled).toBe(true);
+    if (confirm === undefined || consent === null || consent === undefined) throw new Error('no consent drawer');
+    expect(confirm.disabled).toBe(true);
     await act(async () => {
       consent.click();
       await Promise.resolve();
     });
-    expect(generate.disabled).toBe(false);
+    expect(confirm.disabled).toBe(false);
   });
 
   // The definitions list left the top of the view (#801); its terms now live only as tooltips where they appear.

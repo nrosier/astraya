@@ -278,6 +278,7 @@ export function SelectionInspector({
                 locale={locale}
                 resetKey={selectionKey}
                 personId={personId}
+                restingHeading={false}
               />
             </div>
           )}
