@@ -132,7 +132,21 @@ const consentBox = (): HTMLInputElement => {
   if (found === null) throw new Error('fixture bug: no consent checkbox');
   return found;
 };
+/** The Interpret click that opens the consent drawer (#1998); a no-op when it is already open. */
+async function openDrawer(): Promise<void> {
+  if (box().querySelector('input[type="checkbox"]') !== null) return;
+  await act(async () => {
+    button().click();
+    await Promise.resolve();
+  });
+}
+const buttonLabelled = (label: string): HTMLButtonElement => {
+  const found = [...box().querySelectorAll('button')].find((b) => b.textContent === label);
+  if (found === undefined) throw new Error(`fixture bug: no "${label}" button`);
+  return found;
+};
 async function tickConsent(): Promise<void> {
+  await openDrawer();
   await act(async () => {
     consentBox().click();
     await Promise.resolve();
@@ -195,19 +209,69 @@ describe('FocusInterpretation (#424)', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('signed in: disabled until consent is given, with the reason shown', async () => {
+  it('signed in: the resting footer is only the enabled button; the drawer asks for consent and Confirm waits for the tick', async () => {
     await mount({ context: CONTEXT, resetKey: 'a' });
-    expect(button().disabled).toBe(true);
-    expect(box().textContent).toContain('(check the consent box first)');
-    expect(consentBox().checked).toBe(false);
-    await tickConsent();
     expect(button().disabled).toBe(false);
-    expect(button().getAttribute('aria-describedby')).toBeNull();
+    expect(box().querySelector('input[type="checkbox"]')).toBeNull();
     expect(box().textContent).not.toContain('check the consent box first');
+    await openDrawer();
+    expect(consentBox().checked).toBe(false);
+    expect(buttonLabelled('Confirm & send').disabled).toBe(true);
+    expect(box().textContent).toContain('(check the consent box first)');
+    await tickConsent();
+    expect(buttonLabelled('Confirm & send').disabled).toBe(false);
+    expect(box().textContent).not.toContain('check the consent box first');
+  });
+
+  it('signed out: the hint is its own block below the button, not appended in the same line (#1998)', async () => {
+    signedIn = false;
+    await mount({ context: CONTEXT, resetKey: 'a' });
+    const reasonId = button().getAttribute('aria-describedby') ?? '';
+    const hint = box().querySelector(`[id="${reasonId}"]`);
+    expect(hint?.tagName).toBe('P');
+    expect(hint?.previousElementSibling).toBe(button());
+    expect(button().nextSibling).toBe(hint);
+    expect(hint?.textContent).toBe('Sign in to generate an AI interpretation of this placement.');
+  });
+
+  it('signed in: clicking Interpret with the box unticked opens the drawer and does not call the server', async () => {
+    await mount({ context: CONTEXT, resetKey: 'a' });
+    await act(async () => {
+      button().click();
+      await Promise.resolve();
+    });
+    expect(box().querySelector('.focus-interpretation-drawer')).not.toBeNull();
+    expect(consentBox().checked).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('signed in: the confirm hint is its own block below the Confirm and Cancel buttons (#1998)', async () => {
+    await mount({ context: CONTEXT, resetKey: 'a' });
+    await openDrawer();
+    const hint = box().querySelector('.focus-interpretation-drawer .hint');
+    expect(hint?.tagName).toBe('P');
+    expect(hint?.previousElementSibling?.className).toBe('focus-interpretation-actions');
+    expect(buttonLabelled('Confirm & send').getAttribute('aria-describedby')).toBe(hint?.id);
+  });
+
+  it('Cancel closes the drawer and unticks the box', async () => {
+    await mount({ context: CONTEXT, resetKey: 'a' });
+    await tickConsent();
+    expect(consentBox().checked).toBe(true);
+    await act(async () => {
+      buttonLabelled('Cancel').click();
+      await Promise.resolve();
+    });
+    expect(box().querySelector('.focus-interpretation-drawer')).toBeNull();
+    expect(box().querySelector('input[type="checkbox"]')).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+    await openDrawer();
+    expect(consentBox().checked).toBe(false);
   });
 
   it('says in the consent text what is sent, and that no name or birth data is', async () => {
     await mount({ context: CONTEXT, resetKey: 'a' });
+    await openDrawer();
     const label = consentBox().closest('label')?.textContent ?? '';
     expect(label).toContain('sign, house, rulerships and aspects');
     expect(label).toContain('no name or birth data');
@@ -215,6 +279,7 @@ describe('FocusInterpretation (#424)', () => {
 
   it('docked in the inspector foot, the consent checkbox and its label are one row with a scoped compact rule (#1998)', async () => {
     await mount({ context: CONTEXT, resetKey: 'a' });
+    await openDrawer();
     // SelectionInspector puts this component inside `.selection-inspector-foot`; do the same here.
     const foot = document.createElement('div');
     foot.className = 'selection-inspector-foot';
@@ -261,8 +326,13 @@ describe('FocusInterpretation (#424)', () => {
     await vi.waitFor(() => {
       expect(box().querySelector('.tier2-result')).not.toBeNull();
     });
+    // The drawer closed with the send; the next Interpret click opens it again, unticked and with Confirm disabled.
+    expect(box().querySelector('input[type="checkbox"]')).toBeNull();
+    expect(generateCalls()).toHaveLength(1);
+    await openDrawer();
     expect(consentBox().checked).toBe(false);
-    expect(button().disabled).toBe(true);
+    expect(buttonLabelled('Confirm & send').disabled).toBe(true);
+    expect(generateCalls()).toHaveLength(1);
   });
 
   it('shows the translated message for the refusal code, not the server text', async () => {
@@ -283,10 +353,10 @@ describe('FocusInterpretation (#424)', () => {
       );
     });
     expect(box().querySelector('.tier2-result')).toBeNull();
-    // The button works again, behind a fresh consent.
-    expect(button().disabled).toBe(true);
-    await tickConsent();
+    // The button works again, behind a fresh consent in the drawer.
     expect(button().disabled).toBe(false);
+    await tickConsent();
+    expect(buttonLabelled('Confirm & send').disabled).toBe(false);
   });
 
   it('starts over when the selection changes: the answer, an error and the consent are cleared', async () => {
@@ -302,11 +372,13 @@ describe('FocusInterpretation (#424)', () => {
       resetKey: 'saturn',
     });
     expect(box().querySelector('.tier2-result')).toBeNull();
-    expect(consentBox().checked).toBe(false);
+    expect(box().querySelector('input[type="checkbox"]')).toBeNull();
 
     await tickConsent();
     expect(consentBox().checked).toBe(true);
     await render({ context: CONTEXT, resetKey: 'pluto' });
+    expect(box().querySelector('input[type="checkbox"]')).toBeNull();
+    await openDrawer();
     expect(consentBox().checked).toBe(false);
   });
 
@@ -339,6 +411,7 @@ describe('a selected sign (#1998)', () => {
     await mount({ context: undefined, signContext: SIGN, resetKey: 'sign:scorpio' });
     expect(box().querySelector('h3')?.textContent).toBe('AI interpretation of this sign');
     expect(button().textContent).toBe('Interpret how this sign operates');
+    await openDrawer();
     const label = consentBox().closest('label')?.textContent ?? '';
     expect(label).toContain('house numbers whose cusp lies in it');
     expect(label).toContain('placement (sign, house, rulerships) and aspects');
@@ -371,6 +444,8 @@ describe('a selected sign (#1998)', () => {
     setLocale('nl');
     await mount({ context: undefined, signContext: SIGN, resetKey: 'sign:scorpio', locale: 'nl' });
     expect(button().textContent).toBe('Interpreteer hoe dit teken werkt');
+    await openDrawer();
+    expect(buttonLabelled('Bevestigen en versturen').disabled).toBe(true);
     expect(consentBox().closest('label')?.textContent ?? '').toContain('geen naam of geboortegegevens');
   });
 });

@@ -15,6 +15,8 @@ const en = {
     'Send this placement’s sign, house, rulerships and aspects (no name or birth data) to a third-party AI model for this one request.',
   signIn: 'Sign in to generate an AI interpretation of this placement.',
   disabledConsent: 'check the consent box first',
+  confirm: 'Confirm & send',
+  cancel: 'Cancel',
   error: (message: string) => `Could not generate: ${message}`,
   // A selected sign (#1998): the same control, saying what a sign request sends.
   signHeading: 'AI interpretation of this sign',
@@ -32,6 +34,8 @@ const nl: typeof en = {
     'Verstuur het teken, het huis, de heerserschappen en de aspecten van deze plaatsing (geen naam of geboortegegevens) naar een AI-model van derden voor dit ene verzoek.',
   signIn: 'Log in om een AI-interpretatie van deze plaatsing te genereren.',
   disabledConsent: 'vink eerst het toestemmingsvakje aan',
+  confirm: 'Bevestigen en versturen',
+  cancel: 'Annuleren',
   error: (message) => `Kon niet genereren: ${message}`,
   signHeading: 'AI-interpretatie van dit teken',
   signGenerate: 'Interpreteer hoe dit teken werkt',

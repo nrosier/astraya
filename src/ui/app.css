@@ -6015,6 +6015,16 @@ svg text.chart-symbol-text-unicode {
   color: var(--muted);
   font-size: var(--text-caption);
 }
+.focus-interpretation .hint {
+  display: block;
+  margin: var(--space-1) 0 0;
+}
+.focus-interpretation-actions {
+  display: flex;
+  margin-top: var(--space-2);
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
 .focus-interpretation h4 {
   margin: var(--space-3) 0 var(--space-1);
   font-size: var(--text-sm);

@@ -3,7 +3,7 @@
  * *that* placement (#424), and shows the answer below it.
  *
  * It is a Tier 2 feature, so it follows Tier 2's rules (ADR 0003): signed in, a plain consent
- * checkbox that is never remembered and is spent the moment the request is sent, and the same
+ * checkbox, asked in a drawer opened by every click, that is never remembered and is spent the moment the request is sent, and the same
  * server-side limits. What is sent is only `context` — the placement's own sign, house, rulerships
  * and aspects — never the whole chart, and no name, date, time or place. The reading resets
  * whenever the selection changes, so an answer never sits under a different placement.
@@ -54,6 +54,8 @@ export function FocusInterpretation({
   const online = useOnline();
   const user = useSessionUserOrUndefined();
   const [consent, setConsent] = useState(false);
+  // The per-request consent drawer (#1998). Closed by default; every Interpret click opens it, as consent is never remembered.
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [sections, setSections] = useState<readonly Tier2Section[] | undefined>(undefined);
   const [error, setError] = useState<string | undefined>(undefined);
@@ -61,6 +63,7 @@ export function FocusInterpretation({
 
   useEffect(() => {
     setConsent(false);
+    setDrawerOpen(false);
     setSections(undefined);
     setError(undefined);
   }, [resetKey]);
@@ -71,7 +74,10 @@ export function FocusInterpretation({
   const words = forSign
     ? { heading: t.signHeading, generate: t.signGenerate, consent: t.signConsent, signIn: t.signSignIn }
     : { heading: t.heading, generate: t.generate, consent: t.consent, signIn: t.signIn };
-  const disabledReason = user === undefined ? words.signIn : !consent ? t.disabledConsent : undefined;
+  // Signed out the button is disabled with the sign-in reason; signed in it is enabled and the consent is asked in the drawer.
+  const signInReason = user === undefined ? words.signIn : undefined;
+  const confirmReason = consent ? undefined : t.disabledConsent;
+  const confirmReasonId = `${reasonId}-confirm`;
 
   function generate(): void {
     if (personId === undefined) return;
@@ -87,6 +93,7 @@ export function FocusInterpretation({
     setSections(undefined);
     // Consent authorizes this one request: spent as it is sent, as in the report's AI panel (#391).
     setConsent(false);
+    setDrawerOpen(false);
     generateTier2Interpretation(request)
       .then((generated) => {
         setSections(generated);
@@ -102,29 +109,56 @@ export function FocusInterpretation({
   return (
     <section className="focus-interpretation" aria-label={words.heading}>
       <h3>{words.heading}</h3>
-      {user !== undefined && (
-        <Checkbox
-          label={words.consent}
-          checked={consent}
-          onChange={(value) => {
-            setConsent(value);
+      {user !== undefined && drawerOpen ? (
+        <div className="focus-interpretation-drawer">
+          <Checkbox
+            label={words.consent}
+            checked={consent}
+            onChange={(value) => {
+              setConsent(value);
+            }}
+          />
+          <div className="focus-interpretation-actions">
+            <Button
+              variant="primary"
+              disabled={!consent || generating || !online}
+              aria-describedby={confirmReason === undefined ? undefined : confirmReasonId}
+              onClick={generate}
+            >
+              {t.confirm}
+            </Button>
+            <Button
+              onClick={() => {
+                setConsent(false);
+                setDrawerOpen(false);
+              }}
+            >
+              {t.cancel}
+            </Button>
+          </div>
+          {confirmReason !== undefined && (
+            <p id={confirmReasonId} className="hint">
+              ({confirmReason})
+            </p>
+          )}
+        </div>
+      ) : (
+        <Button
+          variant="primary"
+          disabled={signInReason !== undefined || generating || !online}
+          aria-describedby={signInReason === undefined ? undefined : reasonId}
+          onClick={() => {
+            setDrawerOpen(true);
           }}
-        />
+        >
+          {generating ? t.generating : words.generate}
+        </Button>
       )}
-      <Button
-        variant="primary"
-        disabled={disabledReason !== undefined || generating || !online}
-        aria-describedby={disabledReason === undefined ? undefined : reasonId}
-        onClick={generate}
-      >
-        {generating ? t.generating : words.generate}
-      </Button>
       {!online && <StatusMessage kind="offline">{shared.offlineNeeded}</StatusMessage>}
-      {disabledReason !== undefined && (
-        <span id={reasonId} className="hint">
-          {' '}
-          {user === undefined ? disabledReason : `(${disabledReason})`}
-        </span>
+      {signInReason !== undefined && (
+        <p id={reasonId} className="hint">
+          {signInReason}
+        </p>
       )}
       {error !== undefined && <StatusMessage kind="error">{t.error(error)}</StatusMessage>}
       {sections !== undefined && (
