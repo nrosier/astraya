@@ -570,6 +570,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
             <h2 id="pd-controls-title">{t.controlsLabel}</h2>
             <ChoiceGroup
               label={t.keyLabel}
+              groupClassName="timing-key-choice"
               value={key}
               options={[
                 { value: PrimaryDirectionKey.NAIBOD, label: t.naibodKey },

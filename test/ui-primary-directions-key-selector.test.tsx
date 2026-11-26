@@ -97,6 +97,18 @@ async function untilSettled(container: HTMLElement): Promise<void> {
   }
 }
 
+it('gives only the Time key group the multi-row track class, so Direction and Placidus method are unchanged (#2029)', async () => {
+  setLocale('en');
+  const container = mount();
+  await untilSettled(container);
+  const groups = Array.from(container.querySelectorAll('.timing-controls [role="radiogroup"]'));
+  expect(groups.length).toBeGreaterThanOrEqual(3);
+  expect(groups[0]?.classList.contains('timing-key-choice')).toBe(true);
+  for (const other of groups.slice(1)) {
+    expect(other.classList.contains('timing-key-choice')).toBe(false);
+  }
+}, 90_000);
+
 function keyGroup(container: HTMLElement): Element {
   const group = container.querySelector('.timing-controls [role="radiogroup"]');
   if (group === null) throw new Error('test fixture bug: no key radiogroup');
