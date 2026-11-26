@@ -340,9 +340,11 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
               dangerouslySetInnerHTML={{ __html: map.markup }}
             />
             {starTip !== undefined && (
-              <div className="acg-star-tooltip" role="status" style={{ left: starTip.x, top: starTip.y }}>
-                <strong>{starTip.title}</strong>
-                <span>{starTip.position}</span>
+              <div className="acg-star-tooltip" style={{ left: starTip.x, top: starTip.y }}>
+                <StatusMessage kind="success" className="acg-star-tooltip-text">
+                  <strong>{starTip.title}</strong>
+                  <span>{starTip.position}</span>
+                </StatusMessage>
               </div>
             )}
           </section>

@@ -5709,6 +5709,14 @@ svg text.chart-symbol-text-unicode {
   pointer-events: none;
 }
 
+/* StatusMessage's neutral look is a muted, small paragraph; the tooltip keeps its own text style. */
+.acg-star-tooltip-text {
+  margin: 0;
+  max-width: none;
+  color: inherit;
+  font-size: inherit;
+}
+
 /* The Fixed Stars toggle, a rounded-full pill beside the other map controls. */
 .acg-star-pill {
   min-height: var(--control-height-compact);
