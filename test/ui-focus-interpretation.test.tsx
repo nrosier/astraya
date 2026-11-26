@@ -4,6 +4,7 @@
  * reason until the viewer is signed in and has consented; sends only the placement's own context;
  * spends the consent on sending; and starts over when the selection changes.
  */
+import { readFileSync } from 'node:fs';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -210,6 +211,25 @@ describe('FocusInterpretation (#424)', () => {
     const label = consentBox().closest('label')?.textContent ?? '';
     expect(label).toContain('sign, house, rulerships and aspects');
     expect(label).toContain('no name or birth data');
+  });
+
+  it('docked in the inspector foot, the consent checkbox and its label are one row with a scoped compact rule (#1998)', async () => {
+    await mount({ context: CONTEXT, resetKey: 'a' });
+    // SelectionInspector puts this component inside `.selection-inspector-foot`; do the same here.
+    const foot = document.createElement('div');
+    foot.className = 'selection-inspector-foot';
+    document.body.append(foot);
+    foot.append(box());
+    const label = consentBox().closest('label');
+    expect(label).not.toBeNull();
+    expect(label?.closest('.selection-inspector-foot')).toBe(foot);
+    expect(label?.contains(consentBox())).toBe(true);
+    foot.remove();
+    const css = readFileSync('src/ui/app.css', 'utf8');
+    const rule =
+      /\.selection-inspector-foot \.focus-interpretation \.primitive-choice \{([^}]*)\}/.exec(css)?.[1] ?? '';
+    expect(rule).toContain('display: flex');
+    expect(rule).toContain('margin-bottom: 0');
   });
 
   it('sends only the placement’s context in a focus request, and shows the answer', async () => {
