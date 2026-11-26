@@ -23,7 +23,7 @@ import { WorkspaceUtilityProvider } from './workspace-utility-slot.js';
 import { PwaStatus } from './PwaStatus.js';
 import { RailCollapseButton } from './RailCollapseButton.js';
 import { SidebarFooter } from './SidebarFooter.js';
-import { canonicalPeopleHash, parseRoute, routeShowsBackLink } from './route.js';
+import { canonicalPeopleHash, parseRoute, pdfBuilderKey, routeShowsBackLink } from './route.js';
 import { writeLastChart } from './last-chart.js';
 import { SessionProvider, useStoreStatus } from './session-context.js';
 import { AccountPreferencesNotices } from './AccountPreferencesNotices.js';
@@ -501,7 +501,7 @@ function renderScreen(parsed: Route, seVersion: string | undefined): React.JSX.E
     return (
       <Stored>
         <PdfExportBuilder
-          key={`${parsed.personId ?? ''}/${parsed.section ?? ''}/${parsed.view ?? ''}`}
+          key={pdfBuilderKey(parsed)}
           personId={parsed.personId}
           section={parsed.section}
           view={parsed.view}

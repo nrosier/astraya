@@ -357,6 +357,14 @@ function withQuery(base: string, parts: readonly string[]): string {
   return parts.length === 0 ? base : `${base}?${parts.join('&')}`;
 }
 
+/**
+ * The React key of the PDF creator for an export-builder route (#2018). Every field the creator reads at mount is in
+ * the key, so a change to any of them (the Fixed Stars flag included) remounts it instead of keeping the old selection.
+ */
+export function pdfBuilderKey(route: Extract<Route, { readonly kind: 'export-builder' }>): string {
+  return `${route.personId ?? ''}/${route.section ?? ''}/${route.view ?? ''}/${route.fixedStars === true ? 'stars' : ''}`;
+}
+
 /** The canonical hash for a route: the one place any link in the app is written. */
 export function routeHref(route: Route): string {
   const person = (id: string, ...tail: string[]): string => `#/people/${id}/${tail.join('/')}`;
