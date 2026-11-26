@@ -6,7 +6,7 @@
  * closed form; an AC or DC point is on the horizon. No mocks.
  */
 import { describe, expect, it } from 'vitest';
-import { fixedStarLines, type HorizonLinePoint } from '../src/astrology/astrocartography.js';
+import { fixedStarLines, type FixedStarLine, type HorizonLinePoint } from '../src/astrology/astrocartography.js';
 import { armcAtAngle, parans, type AngleEvent, type EquatorialPoint } from '../src/astrology/fixed-stars.js';
 import { getEngine } from './engine-harness.js';
 
@@ -39,6 +39,20 @@ function allSegmentPoints(segments: readonly (readonly HorizonLinePoint[])[]): H
   return segments.flat();
 }
 
+/** Longitude of the MC or IC line in the returned array. */
+function meridianLon(lines: readonly FixedStarLine[], kind: 'MC' | 'IC'): number {
+  const line = lines.find((l) => l.kind === kind);
+  if (line === undefined || !('longitude' in line)) throw new Error(`missing ${kind} line`);
+  return line.longitude;
+}
+
+/** Segments of the AC or DC line in the returned array; empty when the star has no such line. */
+function segmentsOf(lines: readonly FixedStarLine[], kind: 'AC' | 'DC'): readonly (readonly HorizonLinePoint[])[] {
+  const line = lines.find((l) => l.kind === kind);
+  if (line === undefined || !('segments' in line)) return [];
+  return line.segments;
+}
+
 const STARS = ['Regulus', 'Sirius', 'Menkar'] as const;
 
 describe('fixedStarLines (#2018): MC and IC', () => {
@@ -51,7 +65,7 @@ describe('fixedStarLines (#2018): MC and IC', () => {
         const alt = await engine.azimuthAltitude(
           JD_2024,
           { longitude: point.rightAscension, latitude: point.declination },
-          { latitude: lat, longitude: lines.mc, altitude: 0 },
+          { latitude: lat, longitude: meridianLon(lines, 'MC'), altitude: 0 },
           { equatorial: true },
         );
         expect(alt.altitude).toBeCloseTo(90 - Math.abs(lat - point.declination), 3);
@@ -66,7 +80,7 @@ describe('fixedStarLines (#2018): MC and IC', () => {
         const alt = await engine.azimuthAltitude(
           JD_2024,
           { longitude: point.rightAscension, latitude: point.declination },
-          { latitude: lat, longitude: lines.ic, altitude: 0 },
+          { latitude: lat, longitude: meridianLon(lines, 'IC'), altitude: 0 },
           { equatorial: true },
         );
         expect(alt.altitude).toBeCloseTo(-(90 - Math.abs(lat + point.declination)), 3);
@@ -80,8 +94,8 @@ describe('fixedStarLines (#2018): MC and IC', () => {
       const icArmc = armcAtAngle(point, 0, 'anticulminating');
       expect(mcArmc).toBeDefined();
       expect(icArmc).toBeDefined();
-      expect(Math.abs(angleDiff(armc0 + lines.mc, mcArmc ?? NaN))).toBeLessThan(1e-9);
-      expect(Math.abs(angleDiff(armc0 + lines.ic, icArmc ?? NaN))).toBeLessThan(1e-9);
+      expect(Math.abs(angleDiff(armc0 + meridianLon(lines, 'MC'), mcArmc ?? NaN))).toBeLessThan(1e-9);
+      expect(Math.abs(angleDiff(armc0 + meridianLon(lines, 'IC'), icArmc ?? NaN))).toBeLessThan(1e-9);
     });
   }
 });
@@ -94,8 +108,8 @@ describe('fixedStarLines (#2018): AC and DC', () => {
       const engine = await getEngine();
       const star = { longitude: point.rightAscension, latitude: point.declination };
       const sampled = [
-        ...allSegmentPoints(lines.ac).map((p) => ({ p, east: true })),
-        ...allSegmentPoints(lines.dc).map((p) => ({ p, east: false })),
+        ...allSegmentPoints(segmentsOf(lines, 'AC')).map((p) => ({ p, east: true })),
+        ...allSegmentPoints(segmentsOf(lines, 'DC')).map((p) => ({ p, east: false })),
       ];
       expect(sampled.length).toBeGreaterThan(0);
       for (const { p, east } of sampled) {
@@ -115,8 +129,8 @@ describe('fixedStarLines (#2018): AC and DC', () => {
       const { point, armc0 } = await starCase(name);
       const lines = fixedStarLines(name, point, armc0);
       const checks: readonly (readonly [readonly (readonly HorizonLinePoint[])[], AngleEvent])[] = [
-        [lines.ac, 'rising'],
-        [lines.dc, 'setting'],
+        [segmentsOf(lines, 'AC'), 'rising'],
+        [segmentsOf(lines, 'DC'), 'setting'],
       ];
       for (const [segments, event] of checks) {
         for (const p of allSegmentPoints(segments)) {
@@ -131,7 +145,7 @@ describe('fixedStarLines (#2018): AC and DC', () => {
       const { point, armc0 } = await starCase(name);
       const lines = fixedStarLines(name, point, armc0);
       const limit = 90 - Math.abs(point.declination);
-      for (const p of [...allSegmentPoints(lines.ac), ...allSegmentPoints(lines.dc)]) {
+      for (const p of [...allSegmentPoints(segmentsOf(lines, 'AC')), ...allSegmentPoints(segmentsOf(lines, 'DC'))]) {
         expect(Math.abs(p.latitude)).toBeLessThanOrEqual(limit + 1e-9);
       }
     });
@@ -142,7 +156,7 @@ describe('fixedStarLines (#2018): AC and DC', () => {
       const { point, armc0 } = await starCase(name);
       const lines = fixedStarLines(name, point, armc0);
       const limit = 90 - Math.abs(point.declination);
-      const maxNorth = Math.max(...allSegmentPoints(lines.ac).map((p) => p.latitude));
+      const maxNorth = Math.max(...allSegmentPoints(segmentsOf(lines, 'AC')).map((p) => p.latitude));
       // Tolerance is 2°, not 1°: the sampler steps 1° in latitude (fixedStarLines, as horizonLine), so the last
       // sample can sit up to one full step short of the limit, and the 2° bound covers that step.
       expect(maxNorth).toBeGreaterThan(limit - 2);
@@ -159,14 +173,14 @@ describe('fixedStarLines (#2018): AC and DC', () => {
     expect(self).toContainEqual(expect.objectContaining({ angleA: 'culminating', angleB: 'culminating' }));
     const eventArmc = armcAtAngle(point, lat, 'culminating');
     expect(eventArmc).toBeDefined();
-    expect(Math.abs(angleDiff(armc0 + lines.mc, eventArmc ?? NaN))).toBeLessThan(1e-9);
+    expect(Math.abs(angleDiff(armc0 + meridianLon(lines, 'MC'), eventArmc ?? NaN))).toBeLessThan(1e-9);
   });
 
   it('Menkar (|δ| < 5°): one segment per line covering ±85°', async () => {
     const { point, armc0 } = await starCase('Menkar');
     expect(Math.abs(point.declination)).toBeLessThan(5);
     const lines = fixedStarLines('Menkar', point, armc0);
-    for (const segments of [lines.ac, lines.dc]) {
+    for (const segments of [segmentsOf(lines, 'AC'), segmentsOf(lines, 'DC')]) {
       expect(segments).toHaveLength(1);
       const first = segments[0]?.[0];
       const last = segments[0]?.[segments[0].length - 1];

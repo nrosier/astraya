@@ -15,7 +15,7 @@
  * @module Astrocartography
  * @purpose Computes astrocartography (ACG) MC/IC/AC/DC lines, fixed-star map lines (#2018) and Local Space lines for mapping a chart's angles and azimuths onto the globe.
  * @conventions MC/IC/AC/DC lines reuse armcAtAngle/EquatorialPoint from fixed-stars.ts, since an ACG line is every place whose local sidereal time equals the ARMC a point needs for that angle; great-circle paths use the standard forward-geodesic spherical-navigation formula; longitude is wrapped to [-180, 180) rather than clamped so an antimeridian crossing shows up as a jump.
- * Fixed-star map lines (#2018) are a stated derivation, not a held-source rule (docs/domain/FIXED_STAR_REGISTRY.md, "Map lines"). With α, δ the star's RA/Dec and ARMC0 the ARMC at longitude 0, and H0(φ) = arccos(−tan φ · tan δ) on [0°, 180°]: MC λ = norm180(α − ARMC0) and IC λ = norm180(α + 180° − ARMC0) at every latitude; AC λ = norm180(α − H0 − ARMC0) and DC λ = norm180(α + H0 − ARMC0). H0 is not computed separately: AC and DC use armcAtAngle 'rising'/'setting', which is α ∓ H0. AC/DC exist only where |φ| ≤ 90° − |δ|; beyond that, a circumpolar star (same-sign φ and δ) has neither DC nor AC, and a star that never rises (opposite-sign) has neither AC nor DC, since it cannot set either. The epoch is apparent RA/Dec of date on the true equator, as the engine returns for the chart moment (not J2000 or catalogue coordinates). The lines are geometric (altitude 0, no refraction) and mark geometric rising and setting, not the moment the star becomes visible. Sampled like horizonLine: 1° latitude step, |φ| ≤ 85°, poles not sampled.
+ * `fixedStarLines` (#2018) returns kind-tagged lines (`FixedStarMeridianLine` for MC/IC, `FixedStarHorizonLine` for AC/DC) per star, not joined to `AcgLine`; the star set is chosen by the map task. Fixed-star map lines (#2018) are a stated derivation, not a held-source rule (docs/domain/FIXED_STAR_REGISTRY.md, "Map lines"). With α, δ the star's RA/Dec and ARMC0 the ARMC at longitude 0, and H0(φ) = arccos(−tan φ · tan δ) on [0°, 180°]: MC λ = norm180(α − ARMC0) and IC λ = norm180(α + 180° − ARMC0) at every latitude; AC λ = norm180(α − H0 − ARMC0) and DC λ = norm180(α + H0 − ARMC0). H0 is not computed separately: AC and DC use armcAtAngle 'rising'/'setting', which is α ∓ H0. AC/DC exist only where |φ| ≤ 90° − |δ|; beyond that, a circumpolar star (same-sign φ and δ) has neither DC nor AC, and a star that never rises (opposite-sign) has neither AC nor DC, since it cannot set either. The epoch is apparent RA/Dec of date on the true equator, as the engine returns for the chart moment (not J2000 or catalogue coordinates). The lines are geometric (altitude 0, no refraction) and mark geometric rising and setting, not the moment the star becomes visible. Sampled like horizonLine: 1° latitude step, |φ| ≤ 85°, poles not sampled.
  * @exports longitudeFromArmc, meridianLine, horizonLine, fixedStarLines, greatCirclePath, localSpaceLine
  */
 import type { BodyId, Degrees, GeoPosition } from '../ephemeris/types.js';
@@ -116,40 +116,50 @@ function horizonSegments(
   return segments;
 }
 
-/** A fixed star's map lines, keyed by the star's name (stars have no `BodyId`). See the #2018 convention in the module header. */
-export interface FixedStarLines {
+/** MC or IC map line for a fixed star, keyed by the star's name (stars have no `BodyId`). Same shape as `MeridianLine`. */
+export interface FixedStarMeridianLine {
+  readonly kind: 'MC' | 'IC';
   readonly star: string;
-  /** MC (culmination) and IC (anticulmination) — constant-longitude meridians at every latitude. */
-  readonly mc: Degrees;
-  readonly ic: Degrees;
-  /** AC (rising) and DC (setting) segments. Empty where the star never rises or is circumpolar. */
-  readonly ac: readonly (readonly HorizonLinePoint[])[];
-  readonly dc: readonly (readonly HorizonLinePoint[])[];
+  /** Constant across every latitude. */
+  readonly longitude: Degrees;
 }
+
+/** AC or DC map line for a fixed star. Same shape as `HorizonLine`; `segments` is never empty (see `fixedStarLines`). */
+export interface FixedStarHorizonLine {
+  readonly kind: 'AC' | 'DC';
+  readonly star: string;
+  readonly segments: readonly (readonly HorizonLinePoint[])[];
+}
+
+export type FixedStarLine = FixedStarMeridianLine | FixedStarHorizonLine;
 
 /**
  * Map lines for a fixed star from its RA/Dec (#2018), using the stated derivation in
- * the module header. MC/IC are single longitudes; AC/DC reuse the latitude sampler
- * shared with `horizonLine`.
+ * the module header. Returns one kind-tagged line per drawn line, in the order MC, IC,
+ * AC, DC. MC/IC are single longitudes; AC/DC reuse the latitude sampler shared with
+ * `horizonLine`, and are omitted when the star has no AC or DC segments (never rises
+ * or is circumpolar).
  */
 export function fixedStarLines(
   star: string,
   point: EquatorialPoint,
   armc0: Degrees,
   options?: AcgSamplingOptions,
-): FixedStarLines {
+): FixedStarLine[] {
   const culmination = armcAtAngle(point, 0, 'culminating');
   const anticulmination = armcAtAngle(point, 0, 'anticulminating');
   if (culmination === undefined || anticulmination === undefined) {
     throw new Error('unreachable: culmination/anticulmination is always defined');
   }
-  return {
-    star,
-    mc: longitudeFromArmc(culmination, armc0),
-    ic: longitudeFromArmc(anticulmination, armc0),
-    ac: horizonSegments('rising', point, armc0, options),
-    dc: horizonSegments('setting', point, armc0, options),
-  };
+  const lines: FixedStarLine[] = [
+    { kind: 'MC', star, longitude: longitudeFromArmc(culmination, armc0) },
+    { kind: 'IC', star, longitude: longitudeFromArmc(anticulmination, armc0) },
+  ];
+  const ac = horizonSegments('rising', point, armc0, options);
+  if (ac.length > 0) lines.push({ kind: 'AC', star, segments: ac });
+  const dc = horizonSegments('setting', point, armc0, options);
+  if (dc.length > 0) lines.push({ kind: 'DC', star, segments: dc });
+  return lines;
 }
 
 export interface GreatCirclePoint {

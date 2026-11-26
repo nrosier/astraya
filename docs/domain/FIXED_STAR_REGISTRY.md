@@ -148,7 +148,7 @@ With α, δ the star's equatorial right ascension and declination, ARMC0 the ARM
 - Epoch: apparent right ascension and declination of date, on the true equator, as the engine returns for the chart moment (not J2000 or catalogue coordinates).
 - Refraction: the lines are geometric (altitude 0, no refraction). They mark geometric rising and setting, not the moment the star becomes visible.
 
-The implementation is `fixedStarLines` in src/astrology/astrocartography.ts. Sampling follows `horizonLine`: 1° latitude steps, |φ| ≤ 85°. Both values are defaults (`latitudeStepDeg`, `maxAbsLatitude` in `AcgSamplingOptions`); callers may override them. Tests in test/astrology-fixed-star-lines.test.ts check each line against `engine.azimuthAltitude`. Related: #2012 (polar MC convention), #2018 (this section).
+The implementation is `fixedStarLines` in src/astrology/astrocartography.ts. It returns an array of kind-tagged lines, one per drawn line: `FixedStarMeridianLine` (`kind` MC or IC, `longitude`) and `FixedStarHorizonLine` (`kind` AC or DC, `segments`), each with the star's `star` name. AC or DC is omitted when the star has no segments. These lines are not yet part of `AcgLine`; the star set is chosen by the map task. Sampling follows `horizonLine`: 1° latitude steps, |φ| ≤ 85°. Both values are defaults (`latitudeStepDeg`, `maxAbsLatitude` in `AcgSamplingOptions`); callers may override them. Tests in test/astrology-fixed-star-lines.test.ts check each line against `engine.azimuthAltitude`. Related: #2012 (polar MC convention), #2018 (this section).
 
 ## Out of scope for the first build
 
