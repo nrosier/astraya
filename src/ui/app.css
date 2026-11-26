@@ -4601,6 +4601,17 @@ dl.primitive-stat-list {
   margin-top: 0;
 }
 
+/* The signed-in consent checkbox and its label sit on one row (the box beside the text, not above it), with no extra
+   bottom margin, so the pinned foot stays near its signed-out height (#1998). */
+.selection-inspector-foot .focus-interpretation .primitive-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin-bottom: 0;
+  min-height: 0;
+  line-height: var(--leading-tight);
+}
+
 .selection-inspector-title {
   margin: 0 0 var(--space-2);
   font-size: var(--h2-size);
