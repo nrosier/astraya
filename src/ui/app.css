@@ -4588,6 +4588,19 @@ dl.primitive-stat-list {
   font-size: var(--text-sm);
 }
 
+/* The AI block is docked at the foot of the card: it stays visible while the corpus text above it scrolls (#1998). */
+.selection-inspector-foot {
+  position: sticky;
+  bottom: 0;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.selection-inspector-foot .focus-interpretation {
+  margin-top: 0;
+}
+
 .selection-inspector-title {
   margin: 0 0 var(--space-2);
   font-size: var(--h2-size);
