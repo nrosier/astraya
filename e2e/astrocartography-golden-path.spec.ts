@@ -120,7 +120,9 @@ test.describe('with the shared people (#799)', () => {
     await pill.click();
     await expect(pill).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('div.acg-map .acg-star-line').first()).toBeAttached();
-    await expect(page.locator('div.acg-map text.acg-label', { hasText: /^Regulus (MC|IC|AC|DC)$/ }).first()).toBeAttached();
+    await expect(
+      page.locator('div.acg-map text.acg-label', { hasText: /^Regulus (MC|IC|AC|DC)$/ }).first(),
+    ).toBeAttached();
     // The planetary lines are still all there.
     await expect(page.locator('div.acg-map .acg-line-mc, div.acg-map .acg-line-ac')).toHaveCount(planetaryBefore);
 
