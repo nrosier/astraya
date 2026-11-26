@@ -144,6 +144,8 @@ describe('wheel click-to-isolate (#412)', () => {
     expect(focus()?.querySelector('button')?.textContent).toBe('Interpret how this sign operates');
     expect(focus()?.querySelector('button')?.disabled).toBe(true);
     expect(focus()?.textContent).toContain('Sign in to generate an AI interpretation of this sign.');
+    // Docked in the sticky foot of the card so it stays visible while the corpus text scrolls (#1998).
+    expect(focus()?.parentElement?.classList.contains('selection-inspector-foot')).toBe(true);
     const link = wheel.querySelector('.chart-aspect-link');
     const a = link?.getAttribute('data-aspect-body-a') ?? '';
     const b = link?.getAttribute('data-aspect-body-b') ?? '';

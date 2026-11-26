@@ -271,13 +271,15 @@ export function SelectionInspector({
             <WheelSelectionText chart={data} selectionKey={selectionKey} locale={locale} exclude={exclude} />
           </div>
           {(focusContext !== undefined || signContext !== undefined) && (
-            <FocusInterpretation
-              context={focusContext}
-              signContext={signContext}
-              locale={locale}
-              resetKey={selectionKey}
-              personId={personId}
-            />
+            <div className="selection-inspector-foot">
+              <FocusInterpretation
+                context={focusContext}
+                signContext={signContext}
+                locale={locale}
+                resetKey={selectionKey}
+                personId={personId}
+              />
+            </div>
           )}
         </>
       )}
