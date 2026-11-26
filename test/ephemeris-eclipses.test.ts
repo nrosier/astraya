@@ -1,6 +1,6 @@
 /**
  * Eclipse search (#404), against the real Swiss Ephemeris and NASA's published eclipse
- * catalogue (times of greatest eclipse, UTC, to the minute). The binding's own type
+ * catalogue (times of greatest eclipse, UT, to the second). The binding's own type
  * declarations promise a `{ flag, data }` result that the live call does not return, so the
  * kind of each eclipse is derived in the engine — this is the test that proves that derivation
  * gives the same answer as the catalogue, hybrids included.
@@ -13,28 +13,32 @@ import { getEngine } from './engine-harness.js';
 let engine: EphemerisProvider;
 let from2023: JulianDayUT;
 
-const MINUTE = 1 / 1440;
+const SECOND = 1 / 86400;
 
+// UT (second precision) = NASA TD of greatest eclipse minus the printed ΔT, from
+// https://eclipse.gsfc.nasa.gov/SEcat5/SE2001-2100.html (catalogue 09559-09566), checked 2026-11-26.
 const SOLAR: readonly (readonly [string, SolarEclipseKind])[] = [
-  ['2023-04-20 04:16', 'hybrid'],
-  ['2023-10-14 17:59', 'annular'],
-  ['2024-04-08 18:17', 'total'],
-  ['2024-10-02 18:45', 'annular'],
-  ['2025-03-29 10:47', 'partial'],
-  ['2025-09-21 19:43', 'partial'],
-  ['2026-02-17 12:12', 'annular'],
-  ['2026-08-12 17:46', 'total'],
+  ['2023-04-20 04:16:43', 'hybrid'], // 09559: TD 04:17:56, ΔT 73
+  ['2023-10-14 17:59:27', 'annular'], // 09560: TD 18:00:41, ΔT 74
+  ['2024-04-08 18:17:15', 'total'], // 09561: TD 18:18:29, ΔT 74
+  ['2024-10-02 18:44:59', 'annular'], // 09562: TD 18:46:13, ΔT 74
+  ['2025-03-29 10:47:21', 'partial'], // 09563: TD 10:48:36, ΔT 75
+  ['2025-09-21 19:41:49', 'partial'], // 09564: TD 19:43:04, ΔT 75
+  ['2026-02-17 12:11:51', 'annular'], // 09565: TD 12:13:06, ΔT 75
+  ['2026-08-12 17:45:51', 'total'], // 09566: TD 17:47:06, ΔT 75
 ];
 
+// UT (second precision) = NASA TD of greatest eclipse minus the printed ΔT, from
+// https://eclipse.gsfc.nasa.gov/LEcat5/LE2001-2100.html (catalogue 09702-09709), checked 2026-11-26.
 const LUNAR: readonly (readonly [string, LunarEclipseKind])[] = [
-  ['2023-05-05 17:23', 'penumbral'],
-  ['2023-10-28 20:14', 'partial'],
-  ['2024-03-25 07:13', 'penumbral'],
-  ['2024-09-18 02:44', 'partial'],
-  ['2025-03-14 06:59', 'total'],
-  ['2025-09-07 18:12', 'total'],
-  ['2026-03-03 11:33', 'total'],
-  ['2026-08-28 04:13', 'partial'],
+  ['2023-05-05 17:22:52', 'penumbral'], // 09702: TD 17:24:05, ΔT 73
+  ['2023-10-28 20:14:04', 'partial'], // 09703: TD 20:15:18, ΔT 74
+  ['2024-03-25 07:12:45', 'penumbral'], // 09704: TD 07:13:59, ΔT 74
+  ['2024-09-18 02:44:11', 'partial'], // 09705: TD 02:45:25, ΔT 74
+  ['2025-03-14 06:58:41', 'total'], // 09706: TD 06:59:56, ΔT 75
+  ['2025-09-07 18:11:43', 'total'], // 09707: TD 18:12:58, ΔT 75
+  ['2026-03-03 11:33:37', 'total'], // 09708: TD 11:34:52, ΔT 75
+  ['2026-08-28 04:12:49', 'partial'], // 09709: TD 04:14:04, ΔT 75
 ];
 
 function stamp(jd: JulianDayUT): string {
@@ -46,8 +50,8 @@ function stamp(jd: JulianDayUT): string {
 async function jdOf(text: string): Promise<JulianDayUT> {
   const [date = '', time = ''] = text.split(' ');
   const [y = 0, m = 0, d = 0] = date.split('-').map(Number);
-  const [hh = 0, mm = 0] = time.split(':').map(Number);
-  return engine.julianDayFromUtc(y, m, d, hh, mm, 0);
+  const [hh = 0, mm = 0, ss = 0] = time.split(':').map(Number);
+  return engine.julianDayFromUtc(y, m, d, hh, mm, ss);
 }
 
 beforeAll(async () => {
@@ -60,7 +64,7 @@ describe('nextSolarEclipse (#404)', () => {
     let from = from2023;
     for (const [expectedTime, expectedKind] of SOLAR) {
       const eclipse = await engine.nextSolarEclipse(from);
-      expect(Math.abs(eclipse.maxJd - (await jdOf(expectedTime)))).toBeLessThan(10 * MINUTE);
+      expect(Math.abs(eclipse.maxJd - (await jdOf(expectedTime)))).toBeLessThan(15 * SECOND);
       expect(eclipse.kind, `${stamp(eclipse.maxJd)} should be ${expectedKind}`).toBe(expectedKind);
       from = eclipse.maxJd + 20;
     }
@@ -101,7 +105,7 @@ describe('nextLunarEclipse (#404)', () => {
     let from = from2023;
     for (const [expectedTime, expectedKind] of LUNAR) {
       const eclipse = await engine.nextLunarEclipse(from);
-      expect(Math.abs(eclipse.maxJd - (await jdOf(expectedTime)))).toBeLessThan(10 * MINUTE);
+      expect(Math.abs(eclipse.maxJd - (await jdOf(expectedTime)))).toBeLessThan(15 * SECOND);
       expect(eclipse.kind, `${stamp(eclipse.maxJd)} should be ${expectedKind}`).toBe(expectedKind);
       from = eclipse.maxJd + 20;
     }
