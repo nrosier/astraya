@@ -119,12 +119,12 @@ async function click(button: HTMLButtonElement): Promise<void> {
   });
 }
 
-const corpusFetch: typeof fetch = async (input) => {
+const corpusFetch: typeof fetch = (input) => {
   const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-  if (url.includes('/api/corpus-overrides/')) return new Response(JSON.stringify({ entries: [] }));
+  if (url.includes('/api/corpus-overrides/')) return Promise.resolve(new Response(JSON.stringify({ entries: [] })));
   const locale = url.endsWith('/nl.json') ? 'nl' : 'en';
   const body = readFileSync(resolve(import.meta.dirname, '..', 'public/corpus', `${locale}.json`), 'utf8');
-  return new Response(body, { status: 200 });
+  return Promise.resolve(new Response(body, { status: 200 }));
 };
 
 describe('Fixed Stars PDF handoff (#2018)', () => {
