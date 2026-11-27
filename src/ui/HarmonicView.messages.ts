@@ -28,6 +28,11 @@ const en = {
   headingFallback: 'Harmonic Chart',
   hint: 'Every longitude multiplied by a whole number and wrapped back into the zodiac, with whole-sign houses built from the multiplied Ascendant — the general mechanism behind both harmonic charts and Vedic Varga (divisional) charts. See the named presets’ own note on which Varga convention each one follows. This screen computes divisional-chart positions only — it has no Vimshottari dasha timing or planetary-yoga detection, so it is not a full Jyotish toolkit.',
 
+  presetLabels: {
+    D1: 'D1 — Rashi (natal)',
+    D9: 'D9 — Navamsha',
+    D10: 'D10 — Dashamsha (simplified)',
+  } as Readonly<Record<string, string>>,
   presetDescriptions: {
     D1: 'The natal chart itself; the trivial harmonic.',
     D9: 'Marriage and inner strength. This module’s continuous rule matches the classical Parashari result exactly.',
@@ -82,6 +87,11 @@ const nl: typeof en = {
   headingFallback: 'Harmonische horoscoop',
   hint: 'Elke lengtegraad vermenigvuldigd met een geheel getal en teruggevouwen in de dierenriem, met huizen-per-heel-teken opgebouwd uit de vermenigvuldigde Ascendant — het algemene mechanisme achter zowel harmonische horoscopen als Vedische Varga (divisionele) horoscopen. Zie de eigen toelichting van de benoemde presets over welke Varga-conventie elke preset volgt. Dit scherm berekent alleen divisionele posities — er is geen Vimshottari-dasha-timing of yoga-detectie, dus dit is geen volledig Jyotish-instrumentarium.',
 
+  presetLabels: {
+    D1: 'D1 — Rashi (geboorte)',
+    D9: 'D9 — Navamsha',
+    D10: 'D10 — Dashamsha (vereenvoudigd)',
+  },
   presetDescriptions: {
     D1: 'De geboortehoroscoop zelf; de triviale harmonische.',
     D9: 'Huwelijk en innerlijke kracht. De doorlopende regel van deze module komt exact overeen met het klassieke Parashari-resultaat.',

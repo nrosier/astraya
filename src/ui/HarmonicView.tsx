@@ -156,7 +156,7 @@ export function HarmonicView({
         ? t.modeArcTransform
         : t.arcTransformLabel(pointName(pointA), pointName(pointB), nText)
       : preset !== undefined
-        ? preset.label
+        ? (t.presetLabels[preset.key] ?? preset.label)
         : t.harmonicLabel(String(n));
   // Memoised: a new array each render (a change of view re-renders this screen) would redraw the wheel and drop a selection.
   const metaLines = useMemo(() => [label], [label]);
@@ -352,7 +352,10 @@ export function HarmonicView({
           label={t.divisionalChartLabel}
           value={presetKey}
           options={[
-            ...VARGA_PRESETS.map((candidate) => ({ value: candidate.key, label: candidate.label })),
+            ...VARGA_PRESETS.map((candidate) => ({
+              value: candidate.key,
+              label: t.presetLabels[candidate.key] ?? candidate.label,
+            })),
             { value: CUSTOM, label: t.customHarmonicOption },
             { value: AGE, label: t.modeAge },
             { value: AGE_PLUS_ONE, label: t.modeAgePlusOne },
