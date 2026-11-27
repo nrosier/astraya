@@ -9,7 +9,7 @@ describe('resolveOverlayDisplayOptions (#148)', () => {
       declinationVisible: false,
       declinationMaxOrb: 1,
       dial90Visible: false,
-      midpointTreeOrb: 1,
+      midpointTreeOrb: 0.25, // 1 before #2045 (reported on #2045)
     });
   });
 
@@ -47,7 +47,7 @@ describe('resolveOverlayDisplayOptions (#148)', () => {
       declinationVisible: false,
       declinationMaxOrb: 1,
       dial90Visible: false,
-      midpointTreeOrb: 1,
+      midpointTreeOrb: 0.25, // 1 before #2045 (reported on #2045)
     });
   });
 

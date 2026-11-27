@@ -188,9 +188,10 @@ describe('the per-person rulership register (#806)', () => {
     expect(person.calculationSettingsUnreadable).toBe(true);
   });
 
-  it('leaves the calculationSettings register byte-identical (v3, no rulership)', () => {
+  // #2045 moved the register version from 3 to 4 (reported on #2045); the settings and the absent rulership are unchanged.
+  it('leaves the calculationSettings register byte-identical apart from the version (v4, no rulership)', () => {
     expect(serializeCalculationSettings(DEFAULT_EXTENDED_SETTINGS)).toEqual(
-      JSON.parse(JSON.stringify({ version: 3, settings: DEFAULT_EXTENDED_SETTINGS })),
+      JSON.parse(JSON.stringify({ version: 4, settings: DEFAULT_EXTENDED_SETTINGS })),
     );
   });
 });

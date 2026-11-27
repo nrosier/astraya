@@ -68,6 +68,9 @@ import { readCustomPoints, readFixedStars, type ChosenFixedStar, type CustomPoin
  * default snapshot keeps its old serialized form and identity.
  * 4 (#860): adds `fixedStars`, the person's chosen catalogue stars, so a shared or exported chart checks the same
  * stars as the sender's. A v1-v3 snapshot has none and reads back with none (the seven-star preset).
+ * #2045's new midpoint-tree orb default (0.25, was 1) is not a bump: a snapshot keeps the orb it carries, so it reproduces
+ * its midpoint tree as calculated; only a snapshot with no orb at all reads the new default. Live settings take the new
+ * default for an untouched old 1° in `person.ts`'s register reader instead.
  * #1407's user-defined ayanamsa is not a bump: `zodiac.user` appears only with the new `SE_SIDM_USER` mode, so every
  * existing snapshot reads back unchanged; a client that predates it refuses such a snapshot rather than misreading it.
  */

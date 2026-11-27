@@ -86,9 +86,9 @@ import type { ExportedResearch } from './research-export.js';
 import type { EphemerisProvider } from '../ephemeris/types.js';
 
 export const FULL_EXPORT_FORMAT = 'astraya-export';
-export const FULL_EXPORT_VERSION = 4;
+export const FULL_EXPORT_VERSION = 5;
 /** Versions the importer still reads: v2 files have no per-person settings and v2/v3 files no per-person rulership, so those people take the file's preferences (#806). */
-export const SUPPORTED_IMPORT_VERSIONS: readonly number[] = [2, 3, 4];
+export const SUPPORTED_IMPORT_VERSIONS: readonly number[] = [2, 3, 4, 5];
 
 export interface ExportedChart {
   readonly sect: ChartData['sect'];

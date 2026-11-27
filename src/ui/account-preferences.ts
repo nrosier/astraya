@@ -41,6 +41,7 @@ import {
   type ReconcileCandidates,
 } from '../domain/account-preferences.js';
 import { parseCalculationSnapshot } from '../domain/calculation-snapshot.js';
+import { withCurrentMidpointOrbDefault } from '../chart/extended-settings.js';
 import { CORPUS_LOCALES, type Locale } from '../interpretation/locales.js';
 import {
   ACCOUNT_ENTITY,
@@ -233,7 +234,11 @@ export function legacyCandidates(): ReconcileCandidates {
         const parsed = parseJson(profile);
         if (parsed !== undefined) {
           out[ACCOUNT_PROFILE_FIELD] = {
-            value: serializeAccountValue(ACCOUNT_PROFILE_FIELD, parseCalculationSnapshot(parsed).settings),
+            // A legacy device profile is a live setting written before #2045: an untouched 1° midpoint orb takes the new default.
+            value: serializeAccountValue(
+              ACCOUNT_PROFILE_FIELD,
+              withCurrentMidpointOrbDefault(parseCalculationSnapshot(parsed).settings),
+            ),
           };
         }
       }

@@ -34,7 +34,7 @@ describe('DEFAULT_EXTENDED_SETTINGS', () => {
     expect(DEFAULT_EXTENDED_SETTINGS.declinationVisible).toBe(false);
     expect(DEFAULT_EXTENDED_SETTINGS.declinationMaxOrb).toBe(1);
     expect(DEFAULT_EXTENDED_SETTINGS.dial90Visible).toBe(false);
-    expect(DEFAULT_EXTENDED_SETTINGS.midpointTreeOrb).toBe(1);
+    expect(DEFAULT_EXTENDED_SETTINGS.midpointTreeOrb).toBe(0.25); // 1 before #2045 (reported on #2045)
     expect(DEFAULT_EXTENDED_SETTINGS.rainbowZodiac).toBe(false);
   });
 

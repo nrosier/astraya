@@ -25,7 +25,7 @@
 /**
  * @module Midpoints
  * @purpose Computes midpoints between bodies, midpoint trees, and dial projections (90° default, 45° optional) for midpoint analysis.
- * @conventions The conventional midpoint is the near one — half of the shorter arc, per Ebertin's cosmobiology — not the naive (a+b)/2; the dial projects longitude mod `divisor` (default 90, optionally 45) so conjunction/square/opposition (and, at 45°, semisquare/sesquiquadrate too) to a midpoint collapse to the same dial position. The tree's orb is measured on the dial scale (zodiac degrees folded onto the dial), not on the 360° circle as Solar Fire measures it (docs/domain/SOLAR_FIRE_DIFFERENCES.md, #2045).
+ * @conventions The conventional midpoint is the near one — half of the shorter arc, per Ebertin's cosmobiology — not the naive (a+b)/2; the dial projects longitude mod `divisor` (default 90, optionally 45) so conjunction/square/opposition (and, at 45°, semisquare/sesquiquadrate too) to a midpoint collapse to the same dial position. The tree's orb is measured on the dial scale (zodiac degrees folded onto the dial), not on the 360° circle as Solar Fire states it; the app's 0°15′ default on the 90° dial is Solar Fire's 1° (docs/domain/SOLAR_FIRE_DIFFERENCES.md, #2045). On a 45° dial the same 1° on the circle would be 1/8°.
  * @exports midpointOf, oppositeMidpointOf, allMidpoints, dialPosition, midpointTree
  */
 import type { BodyId, Degrees } from '../ephemeris/types.js';

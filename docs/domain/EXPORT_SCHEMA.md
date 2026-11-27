@@ -194,6 +194,13 @@ JSON Schema file does enumerate them structurally.
   field. The importer rejects a present but malformed list (more than 100 events, a repeated id, a bad date or time,
   an empty or over-long label) as malformed at `people[n].lifeEvents`; a file without the field leaves the stored
   events alone, and a list that equals the stored one writes nothing.
+- **v5** (#2045): the midpoint-tree orb default moved from 1° to 0°15′ (Solar Fire's 1°00′ on the 360° circle, a
+  quarter degree on the 90° dial). The shape is unchanged, but a `midpointTreeOrb` of exactly 1 in a person's
+  `calculationSettings` (or, in a v2 file, in `preferences.settings`) now means different things by version: in a v2,
+  v3 or v4 file it is the old default and is restored as 0.25; in a v5 file it is the user's own choice and is kept.
+  Every other value is restored as written. That is a change of meaning, hence the bump. The importer reads v2 to v5.
+  An older build rejects a v5 file by version. The per-chart `calculation` artifacts are snapshots and keep their
+  stored orb in every version.
 
 #1194 added the optional top-level `research` block (saved event-search queries, pins and
 their annotations); additive, so the version stays v4. An older reader ignores it. Only live items are exported: a

@@ -119,8 +119,9 @@ function shape(store: Store): {
 }
 
 describe('notes in the full export (#919)', () => {
+  // The notes fields were additive; the version is 5 only because #2045 bumped it (reported on #2045).
   it('keeps the export format version: the new fields are additive', () => {
-    expect(FULL_EXPORT_VERSION).toBe(4);
+    expect(FULL_EXPORT_VERSION).toBe(5);
   });
 
   it('exports the Birth Record note with every revision, and consultation notes keyed to their note id', async () => {

@@ -52,6 +52,7 @@ import {
   readCivil,
   readCoordinates,
   readCalculationSettings,
+  SETTINGS_REGISTER_VERSION,
   readCustomPoints,
   readFixedStars,
   readOffsetOverride,
@@ -220,7 +221,13 @@ function isLegacyHead(birthNote: unknown, head: string): boolean {
   );
 }
 
-function validatePerson(raw: unknown, path: string): Result<ExportedPerson, ImportError> {
+/**
+ * The first export version whose person settings were written after the midpoint-tree orb default became 0°15′ (#2045).
+ * In an older file a midpoint orb of exactly 1° is the old default, read as a live setting would be (`person.ts`).
+ */
+const FIRST_EXPORT_VERSION_WITH_NEW_MIDPOINT_ORB = 5;
+
+function validatePerson(raw: unknown, path: string, fileVersion: number): Result<ExportedPerson, ImportError> {
   if (!isRecord(raw)) return malformed(path, 'not an object');
 
   const id = readText(raw.id);
@@ -302,7 +309,12 @@ function validatePerson(raw: unknown, path: string): Result<ExportedPerson, Impo
 
   let calculationSettings: ExtendedSettings | undefined;
   if (raw.calculationSettings !== undefined) {
-    const read = readCalculationSettings({ settings: raw.calculationSettings });
+    // A v5 file's settings carry the current register version, so a 1° midpoint orb in them is kept (#2045).
+    const register =
+      fileVersion >= FIRST_EXPORT_VERSION_WITH_NEW_MIDPOINT_ORB
+        ? { version: SETTINGS_REGISTER_VERSION, settings: raw.calculationSettings }
+        : { settings: raw.calculationSettings };
+    const read = readCalculationSettings(register);
     if (read?.kind !== 'settings') return malformed(`${path}.calculationSettings`, 'not readable by this version');
     calculationSettings = read.settings;
   }
@@ -425,7 +437,7 @@ export function validateFullExport(value: unknown): Result<FullExport, ImportErr
   const seenIds = new Set<string>();
   for (let index = 0; index < value.people.length; index += 1) {
     const path = `people[${String(index)}]`;
-    const validated = validatePerson(value.people[index], path);
+    const validated = validatePerson(value.people[index], path, got);
     if (!validated.ok) return validated;
     // Likewise a v2 or v3 person has no rulership of their own: their charts in that file were computed with the file's.
     const withSettings: ExportedPerson =

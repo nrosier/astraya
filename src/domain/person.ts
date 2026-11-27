@@ -25,11 +25,11 @@
  * @module person
  * @purpose Defines the `Person` entity — the primary entity and owner of birth data that every computed chart derives from — and assembles it from op-log register values.
  * @conventions Stores the civil-time/coordinates input as typed, never a resolved UTC offset, since historical timezone data can change (an `OffsetWitness` records what a past resolution said, for detecting drift, not for reuse); a field this build cannot read is reported as absent via `missing`, never defaulted (e.g. `{0,0}` is a real place, so it is never substituted for missing coordinates); `TimeAccuracy` distinguishes a genuinely unknown birth time, for which houses/angles are meaningless rather than merely approximate.
- * @exports Person, TimeAccuracy, PERSON_TEXT_MAX_CHARACTERS, overlongPersonText, BirthSourceKind, BIRTH_SOURCE_NOTE_MAX_CHARACTERS, BIRTH_SOURCE_KINDS, readBirthSourceKind, OffsetWitness, RelocationPlace, CustomPointDefinition, ChosenFixedStar, PERSON_FIELDS, buildPerson, readCivil, readCoordinates, readCalendar, readTimeAccuracy, readWitness, readOffsetOverride, readText, readRelocationPlaces, readCustomPoints, readFixedStars, readCalculationSettings, CalculationSettingsRead, serializeCalculationSettings, readRulership, RulershipRead, serializeRulership, newPersonCalculationMutations
+ * @exports Person, TimeAccuracy, PERSON_TEXT_MAX_CHARACTERS, overlongPersonText, BirthSourceKind, BIRTH_SOURCE_NOTE_MAX_CHARACTERS, BIRTH_SOURCE_KINDS, readBirthSourceKind, OffsetWitness, RelocationPlace, CustomPointDefinition, ChosenFixedStar, PERSON_FIELDS, buildPerson, readCivil, readCoordinates, readCalendar, readTimeAccuracy, readWitness, readOffsetOverride, readText, readRelocationPlaces, readCustomPoints, readFixedStars, SETTINGS_REGISTER_VERSION, readCalculationSettings, CalculationSettingsRead, serializeCalculationSettings, readRulership, RulershipRead, serializeRulership, newPersonCalculationMutations
  */
 import { parseFormula } from '../astrology/formula-parser.js';
 import { isRulershipChoice, type RulershipChoice } from '../astrology/rulership.js';
-import type { ExtendedSettings } from '../chart/extended-settings.js';
+import { withCurrentMidpointOrbDefault, type ExtendedSettings } from '../chart/extended-settings.js';
 import {
   decodeCalculationSnapshot,
   decodeStrictExtendedSettings,
@@ -62,8 +62,15 @@ export type TimeAccuracy =
 
 const TIME_ACCURACIES: readonly TimeAccuracy[] = ['recorded', 'remembered', 'approximate', 'unknown'];
 
-/** The version a `calculationSettings` register is written with (#806, #860): its settings shape is still version 3's. */
-const SETTINGS_REGISTER_VERSION = 3;
+/**
+ * The version a `calculationSettings` register is written with (#806, #860). Its settings shape is still version 3's;
+ * 4 (#2045) marks a register written after the midpoint-tree orb default became 0°15′, so a 1 stored in it is a
+ * deliberate choice. A build from before #2045 reads a version-4 register, since snapshot version 4 is not newer than it.
+ */
+export const SETTINGS_REGISTER_VERSION = 4;
+
+/** The last register version written while the midpoint-tree orb default was 1° (#2045). */
+const LAST_OLD_MIDPOINT_ORB_REGISTER_VERSION = 3;
 
 /**
  * What a past resolution said, and what produced it.
@@ -416,6 +423,11 @@ export type CalculationSettingsRead =
  * newer-version or invalid register is `unreadable`, never repaired with defaults. `undefined`
  * (no register) is distinct from unreadable. Any invalid field, and with `requireAll` (the default) any
  * missing one, makes the register unreadable; a v2 export's older settings bag is read with `requireAll` off.
+ *
+ * These are live settings, so a register written before #2045 (version 3 or none) that holds the old midpoint-tree
+ * orb default, exactly 1°, reads as the new default (`withCurrentMidpointOrbDefault`; owner decision on #2045). The
+ * stored value is never rewritten, so reading is idempotent. Snapshots (share links, calculation artifacts) are read by
+ * `calculation-snapshot.ts` and keep their stored orb.
  */
 export function readCalculationSettings(value: unknown, requireAll = true): CalculationSettingsRead | undefined {
   if (value === undefined || value === null) return undefined;
@@ -423,7 +435,10 @@ export function readCalculationSettings(value: unknown, requireAll = true): Calc
   try {
     // Version and rulership are checked by the snapshot decoder; the settings bag itself must be complete and valid.
     decodeCalculationSnapshot(value);
-    return { kind: 'settings', settings: decodeStrictExtendedSettings(value.settings, requireAll) };
+    const settings = decodeStrictExtendedSettings(value.settings, requireAll);
+    const writtenBeforeNewOrb =
+      typeof value.version !== 'number' || value.version <= LAST_OLD_MIDPOINT_ORB_REGISTER_VERSION;
+    return { kind: 'settings', settings: writtenBeforeNewOrb ? withCurrentMidpointOrbDefault(settings) : settings };
   } catch (error) {
     if (error instanceof SnapshotDecodeError) return { kind: 'unreadable' };
     throw error;
@@ -450,7 +465,8 @@ export function serializeRulership(rulership: RulershipChoice): JsonValue {
  * settings. Rulership has its own `rulership` register and custom points theirs.
  */
 export function serializeCalculationSettings(settings: ExtendedSettings): JsonValue {
-  // Pinned at 3 (#860): the register holds settings only, and its shape did not change when the snapshot moved to 4.
+  // The register holds settings only; its shape did not change when the snapshot moved to 4 (#860). Version 4 here
+  // marks the new midpoint-tree orb default (#2045), not a shape change.
   // The Fortune formula's default is absent from a register too (#1794), via the same normalizer the snapshot uses.
   return JSON.parse(
     JSON.stringify({ version: SETTINGS_REGISTER_VERSION, settings: normalizeFortuneFormula(settings) }),

@@ -14,7 +14,7 @@
  * @module chart/extended-settings
  * @purpose Defines the Extended settings panel's single settings bag (`ExtendedSettings`) and the pure split functions that derive each of its three consumers' own option shapes from it.
  * @conventions One settings object is split three ways rather than kept as three separate pieces of UI state: `toChartCalculationOptions` feeds `computeChartData`, `toPointVisibilityOptions` feeds `chart-tables.ts`'s display filtering, and `toSignWedgeStyle` feeds the wheel's cosmetic fill — keeping the split here means neither the panel component nor `ChartView` needs to know any destination's shape.
- * @exports FixedStarParansSetting, FIXED_STAR_PARAN_ORB_DEFAULT, FIXED_STAR_PARAN_ORB_MAX, isParanOrb, isAngleEvent, canonicalParanEvents, DEFAULT_FIXED_STAR_PARANS, withoutFixedStarParans, DEFAULT_EXTENDED_SETTINGS, orbsOf, withOrbsOf, withoutStationWindow, withMotionScore, withPolarMc, settingsForContext, toChartCalculationOptions, toPointVisibilityOptions, toSignWedgeStyle; ExtendedSettings type.
+ * @exports FixedStarParansSetting, FIXED_STAR_PARAN_ORB_DEFAULT, MIDPOINT_TREE_ORB_DEFAULT, withCurrentMidpointOrbDefault, FIXED_STAR_PARAN_ORB_MAX, isParanOrb, isAngleEvent, canonicalParanEvents, DEFAULT_FIXED_STAR_PARANS, withoutFixedStarParans, DEFAULT_EXTENDED_SETTINGS, orbsOf, withOrbsOf, withoutStationWindow, withMotionScore, withPolarMc, settingsForContext, toChartCalculationOptions, toPointVisibilityOptions, toSignWedgeStyle; ExtendedSettings type.
  */
 import { DEFAULT_ORB_CONFIG, type OrbConfig, type OrbRule } from '../astrology/aspects.js';
 import type { BoundsScheme } from '../astrology/bounds.js';
@@ -95,9 +95,9 @@ export interface ExtendedSettings {
    */
   readonly dial90Visible: boolean;
   /**
-   * Orb for the dial90 midpoint-tree table above, in degrees on the dial scale. The 1° default is Astraya's own and,
-   * on the 90° dial, 4 times wider than Solar Fire's initial 1°00′, which is measured on the 360° circle
-   * (`docs/domain/SOLAR_FIRE_DIFFERENCES.md`; #2045 changes it to match).
+   * Orb for the dial90 midpoint-tree table above, in degrees on the 90° dial's scale. The default, 0°15′
+   * (`MIDPOINT_TREE_ORB_DEFAULT`), is Solar Fire's initial 1°00′ measured on the 360° circle, which its guide says is
+   * a quarter degree on a 90° dial (§17.3; #2045). Until #2045 it was 1°, four times wider.
    */
   readonly midpointTreeOrb: Degrees;
   readonly rainbowZodiac: boolean;
@@ -154,6 +154,16 @@ export const DEFAULT_FIXED_STAR_PARANS: FixedStarParansSetting = {
   events: ANGLE_EVENTS,
 };
 
+/**
+ * The midpoint-tree orb default (#2045): 0°15′ on the 90° dial, Solar Fire's initial 1°00′ on the 360° circle
+ * (Solar Fire Deluxe guide §17.3, printed p. 118: "a 1 degree orb corresponds to 1/4 degree on the dial scale of a 90
+ * degree dial").
+ */
+export const MIDPOINT_TREE_ORB_DEFAULT: Degrees = 0.25;
+
+/** The midpoint-tree orb default before #2045, four times Solar Fire's width on the 90° dial. */
+const OLD_MIDPOINT_TREE_ORB_DEFAULT: Degrees = 1;
+
 /** Placidus, tropical, every default as documented on `DEFAULT_ORB_CONFIG` and `DEFAULT_OBJECT_POLICIES` — matches what a chart looks like with the panel never opened. */
 export const DEFAULT_EXTENDED_SETTINGS: ExtendedSettings = {
   houseSystem: 'P',
@@ -170,9 +180,21 @@ export const DEFAULT_EXTENDED_SETTINGS: ExtendedSettings = {
   declinationVisible: false,
   declinationMaxOrb: 1,
   dial90Visible: false,
-  midpointTreeOrb: 1,
+  midpointTreeOrb: MIDPOINT_TREE_ORB_DEFAULT,
   rainbowZodiac: false,
 };
+
+/**
+ * Live settings written before #2045 that still hold the old midpoint-tree orb default, exactly 1°, take the new
+ * default; any other value is the user's own and is kept (owner decision on #2045). Callers apply it only to live
+ * settings from before the change (a version-3 or older register, an export older than v5, the legacy device
+ * profile), never to a snapshot, which keeps the orb it was calculated with.
+ */
+export function withCurrentMidpointOrbDefault(settings: ExtendedSettings): ExtendedSettings {
+  return settings.midpointTreeOrb === OLD_MIDPOINT_TREE_ORB_DEFAULT
+    ? { ...settings, midpointTreeOrb: MIDPOINT_TREE_ORB_DEFAULT }
+    : settings;
+}
 
 /** The orb options the Extended settings put in force (#590): the scale and the practitioner's own rules, always concrete. */
 export function orbsOf(settings: ExtendedSettings): { readonly orbConfig: OrbConfig } {

@@ -318,7 +318,7 @@ describe('v2 files and per-person settings (#806)', () => {
 
   it('exports each person with their own settings, charted with them', async () => {
     const archive = await build([{ ...ADA, calculationSettings: custom }]);
-    expect(archive.version).toBe(4);
+    expect(archive.version).toBe(5); // 4 before #2045 (reported on #2045)
     expect(archive.people[0]?.calculationSettings).toEqual(custom);
     const plain = await build([ADA]);
     expect(JSON.stringify(archive.people[0]?.natalChart)).not.toBe(JSON.stringify(plain.people[0]?.natalChart));
@@ -438,7 +438,7 @@ describe('per-person rulership and export v4 (#806)', () => {
       { ...ADA, rulership: 'traditional' },
       { ...ADA, id: 'p-plain', displayName: 'Plain' },
     ]);
-    expect(archive.version).toBe(4);
+    expect(archive.version).toBe(5); // 4 before #2045 (reported on #2045)
     expect(archive.preferences.rulership).toBe('modern');
     expect(archive.people[0]?.rulership).toBe('traditional');
     // A person with no rulership of their own is charted, and written, with the device default.
@@ -789,8 +789,9 @@ describe('stageFullExportRestore', () => {
       expect(validateFullExport({ ...archive, version: 2 }).ok).toBe(true);
     });
 
-    it('keeps FULL_EXPORT_VERSION at 4', () => {
-      expect(FULL_EXPORT_VERSION).toBe(4);
+    // Life events were additive (still 4); #2045 then bumped it to 5 for the midpoint orb (reported on #2045).
+    it('keeps FULL_EXPORT_VERSION at 5', () => {
+      expect(FULL_EXPORT_VERSION).toBe(5);
     });
   });
 
