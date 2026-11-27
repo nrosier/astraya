@@ -46,8 +46,8 @@ const nl: typeof en = {
     quotidian: 'Quotidiaans',
     naibod: 'Naibod',
     solarArc: 'Zonneboog',
-    naibodRa: 'Naibod in RA',
-    solarArcRa: 'Ware zonneboog in RA',
+    naibodRa: 'Naibod in RK',
+    solarArcRa: 'Ware zonneboog in RK',
   },
   angleMethods: {
     quotidian: 'hoeken herberekend op het progressieve moment',
