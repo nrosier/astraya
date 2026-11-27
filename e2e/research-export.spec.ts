@@ -67,7 +67,7 @@ test('export everything, then restore into an empty profile (#1194)', async ({ p
       pins: { target: { label: string }; annotation?: { revisions: { text: string }[] } }[];
     };
   };
-  expect(archive.version).toBe(4);
+  expect(archive.version).toBe(5); // 4 before #2045 bumped the export version (reported on #2045)
   expect(archive.research?.savedQueries.map((query) => query.name)).toEqual(['Round trip query']);
   expect(archive.research?.pins).toHaveLength(1);
   expect(archive.research?.pins[0]?.target.label).toBe(label);
