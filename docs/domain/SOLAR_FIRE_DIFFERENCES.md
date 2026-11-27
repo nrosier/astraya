@@ -13,6 +13,15 @@ Each section ends with its status: a choice Astraya keeps, or a change that is p
 - **Effect:** the defaults now match: Astraya's 0°15′ on the dial is Solar Fire's 1°00′ on the circle. The numbers read differently because the two programs state the orb on different scales; to set Solar Fire's orb of x degrees, set Astraya's to x / 4.
 - **Status:** matched (#2045). Saved settings from before #2045 that still held the old 1° default read as 0°15′; any other saved value, and every snapshot (share links, calculation artifacts), keeps its stored orb (owner decision on #2045).
 
+## Fixed-star parans and midpoint reports
+
+Checked against the Solar Fire guide, chapter 21, which documents the report options but prints no paran listing (owner decision on #1407, 2026-11-27: check against the guide).
+
+- **Paran types:** both programs offer rising, setting, upper culmination and lower culmination, each of which can be switched on or off (Solar Fire's "Parans to Use", §21.1.2, text lines 4866-4882; Astraya's fixed-star paran setting, `src/chart/extended-settings.ts`). A paran is listed only when both of its events are switched on. These match.
+- **Paran orb:** both let the user enter an orb from 0 to 10 degrees (§21.3, text lines 5180-5185). Solar Fire states no default; Astraya's 1° default is the owner's choice (#1407). Astraya measures the orb in degrees of sidereal time; the guide does not say what Solar Fire's orb is measured in, so the same number may not select the same parans.
+- **Vernal point in midpoint reports:** Solar Fire can add the vernal point, 0° Aries, as a chart point in any report that lists midpoints (§21.1.1, text lines 4855-4864). Astraya's midpoint tree uses the chart's bodies only.
+- **Status:** Astraya keeps its paran setting and its 1° default. Adding the vernal point to the midpoint tree is not planned; it would be its own feature issue.
+
 ## Applying and separating to the angles
 
 - **Astraya:** an aspect from a planet to a chart angle is applying or separating with the angle moving at its diurnal rate. This follows the Astro-Seek reference sheet (#413; `src/domain/chart-compute.ts`).
