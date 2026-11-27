@@ -28,10 +28,10 @@ Each section ends with its status: a choice Astraya keeps, or a change that is p
 
 ## Primary-direction keys
 
-- **Astraya:** Naibod (the default, 360 / 365.2422 degrees of right ascension a year), Ptolemy (1° a year), and True Solar Arc in right ascension (#1795).
+- **Astraya:** Naibod (the default, 360 / 365.2422 degrees of right ascension a year), Ptolemy (1° a year), Natal Solar Rate (#2040), and True Solar Arc in right ascension (#1795).
 - **Solar Fire:** Ptolemy, Naibod (59′08″ a year), and Natal Solar Rate, the natal Sun's rate of motion in right ascension for each year of life (§30.3.2.3, text lines 8604-8615).
-- **Effect:** Solar Fire's Natal Solar Rate is not the same key as True Solar Arc, so their dates differ.
-- **Status:** Natal Solar Rate is planned, #2040. True Solar Arc is Astraya's own addition and stays.
+- **Effect:** Solar Fire's three keys are all available. Natal Solar Rate times every arc at the Sun's speed in right ascension on the birth day, read from the ephemeris; True Solar Arc follows the progressed Sun day by day, so the two give different dates.
+- **Status:** True Solar Arc is Astraya's own addition and stays.
 
 ## Tertiary and minor progressions
 
