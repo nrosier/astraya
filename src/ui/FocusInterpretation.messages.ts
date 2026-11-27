@@ -18,6 +18,9 @@ const en = {
   confirm: 'Confirm & send',
   cancel: 'Cancel',
   error: (message: string) => `Could not generate: ${message}`,
+  // Embedded in the Transits placement card (#2028): the generated state's subheader and its new-request button.
+  generatedHeading: 'AI interpretation',
+  regenerate: 'Regenerate',
   // A selected sign (#1998): the same control, saying what a sign request sends.
   signHeading: 'AI interpretation of this sign',
   signGenerate: 'Interpret how this sign operates',
@@ -37,6 +40,8 @@ const nl: typeof en = {
   confirm: 'Bevestigen en versturen',
   cancel: 'Annuleren',
   error: (message) => `Kon niet genereren: ${message}`,
+  generatedHeading: 'AI-interpretatie',
+  regenerate: 'Opnieuw genereren',
   signHeading: 'AI-interpretatie van dit teken',
   signGenerate: 'Interpreteer hoe dit teken werkt',
   signConsent:

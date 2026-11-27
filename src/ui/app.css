@@ -4647,6 +4647,13 @@ dl.primitive-stat-list {
   gap: var(--space-3);
 }
 
+/* The Transits placement card's AI interpretation (#2028): inside the card, below its facts, after a top border. */
+.chart-isolation-extra {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line);
+}
+
 /* The Jones chart-shape diagram (#401): a small standalone abstract pattern, not drawn into
    the real wheel — see jones-shape-diagram.ts's own doc comment for why. */
 .chart-shape-summary {
@@ -6119,6 +6126,27 @@ svg text.chart-symbol-text-unicode {
 }
 .focus-interpretation .tier2-result p {
   margin: 0;
+}
+
+/* Embedded in the placement card (#2028): the card is the host, so this block draws no card of its own. */
+.focus-interpretation-embedded {
+  margin-top: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+/* The generated state's subheader with its right-aligned Regenerate button (#2028). */
+.focus-interpretation-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.focus-interpretation-head h3 {
+  margin: 0;
+  padding-bottom: 0;
 }
 
 /* The grouped, ranked relationship summary above Synastry's aspects table (#422). Same card
