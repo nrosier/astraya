@@ -935,5 +935,14 @@ test('capture the #2018, #2019, #2027 and #2028 screens', async ({ browser }) =>
   await line.waitFor({ timeout: 60_000 });
   await showLine();
   await shoot(page, '87-timeline-planetary-hour', showLine);
+
+  // #2059: the Timing timeline heading row (Centre date, Range, Now and Export at one compact height), in English and,
+  // last so the switch cannot change the shots above, in Dutch (the one-line labels box).
+  await shoot(page, '88-timeline-heading-controls', atTop);
+  await setLanguage(page, 'NL');
+  const gantt = page.locator('.gantt').first();
+  if (!(await gantt.isVisible())) await page.getByRole('tab', { name: 'Tijdlijn', exact: true }).click();
+  await gantt.waitFor({ timeout: 90_000 });
+  await shoot(page, '89-timeline-heading-controls-dutch', atTop);
   await app.close();
 });
