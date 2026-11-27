@@ -17,7 +17,7 @@ import {
   PLACEMENT,
 } from '../src/ui/settings-groups.js';
 
-const OPTIONAL_KEYS = ['orbRules', 'stationWindow', 'motionScore', 'fortuneFormula', 'fixedStarParans'];
+const OPTIONAL_KEYS = ['orbRules', 'stationWindow', 'motionScore', 'fortuneFormula', 'fixedStarParans', 'polarMc'];
 
 describe('the placement table', () => {
   it('names every Extended setting exactly once, and nothing that is not one', () => {
@@ -26,7 +26,7 @@ describe('the placement table', () => {
   });
 
   it('keeps the tab lists the owner decided on #856', () => {
-    expect(advancedFields('profile')).toEqual(['boundsScheme']);
+    expect(advancedFields('profile')).toEqual(['polarMc', 'boundsScheme']);
     // The orb scale and minor aspects moved from an Advanced group to the Orbs & aspects first screen (#1544).
     expect(ADVANCED_TABS).toEqual(['profile', 'special']);
     expect(PLACEMENT.orbScalePercent).toBe('first');

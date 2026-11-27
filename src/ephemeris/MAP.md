@@ -7,6 +7,7 @@ Swiss Ephemeris boundary (only place `sweph-wasm` imported; lint-enforced). Rest
 - `engine.ts` — Only `sweph-wasm` consumer; `SwissEphemerisEngine` implementation (bodies, houses, houses from an ARMC and rise/set/transit times (#1407), ayanamsas including a user-defined one (#1407), fixed stars with a full-size star-name buffer (#803), eclipse search, azimuth/altitude). Deps: assets, generated-constants, types.
 - `finite-difference.ts` — Pinned sampling interval and circular-unwrap rate helper for non-body points' own motion (chart angles, Vertex, lots). Deps: types.
 - `generated-constants.ts` — Swiss Ephemeris C library constants (body IDs, flags, ayanamsa modes) read from live `sweph-wasm` instance. Deps: none.
+- `polar-mc.ts` — Polar Midheaven conventions (Solar Fire guide 30.3.1.6): towards equator or above horizon, for Regiomontanus and Campanus (#2012). Deps: types.
 - `protocol.ts` — Wire contract between UI thread and ephemeris worker (request/response types, error serialization). Deps: types.
 - `star-catalogue.ts` — Fixed-star naming data. Parses and searches the shipped `sefstars.txt`, hashes it for the stored source-file version, holds the user-star orb constant; stars are asked for by `,designation` (#803). Deps: none.
 - `types.ts` — Engine-agnostic vocabulary (Degrees, JulianDayUT, BodyPosition, HousePositions, EphemerisProvider interface) and the Sunshine `needsSunDeclination` predicate. Deps: none.

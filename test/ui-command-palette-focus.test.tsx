@@ -63,11 +63,15 @@ const trigger = (): HTMLButtonElement => {
 };
 const paletteOpen = (): boolean => container.querySelector('dialog')?.hasAttribute('open') === true;
 
-/** The palette loads lazily, so an open request shows once its chunk resolves: flush until it does. */
+/**
+ * The palette loads lazily, so an open request shows once its chunk resolves: poll on a clock until it does. A fixed
+ * number of ticks is too few under full-suite load (#2021).
+ */
 async function expectOpen(open: boolean): Promise<void> {
-  for (let attempt = 0; attempt < 50 && paletteOpen() !== open; attempt += 1) {
+  const deadline = Date.now() + 4000;
+  while (paletteOpen() !== open && Date.now() < deadline) {
     await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 10));
     });
   }
   expect(paletteOpen()).toBe(open);

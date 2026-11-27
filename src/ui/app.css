@@ -4599,6 +4599,8 @@ dl.primitive-stat-list {
 
 .selection-inspector-foot .focus-interpretation {
   margin-top: 0;
+  padding: 0;
+  border: 0;
 }
 
 /* The signed-in consent checkbox and its label sit on one row (the box beside the text, not above it), with no extra
@@ -6014,6 +6016,16 @@ svg text.chart-symbol-text-unicode {
   margin-bottom: var(--space-2);
   color: var(--muted);
   font-size: var(--text-caption);
+}
+.focus-interpretation .hint {
+  display: block;
+  margin: var(--space-1) 0 0;
+}
+.focus-interpretation-actions {
+  display: flex;
+  margin-top: var(--space-2);
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 .focus-interpretation h4 {
   margin: var(--space-3) 0 var(--space-1);

@@ -70,6 +70,7 @@ import {
   FIXED_STAR_PARAN_ORB_MAX,
   isParanOrb,
   withMotionScore,
+  withPolarMc,
   withoutFixedStarParans,
   withoutStationWindow,
   type ExtendedSettings,
@@ -116,6 +117,7 @@ import { useGlyphVariants, type GlyphLook } from './glyph-variant-setting.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { VARIANT_BODIES } from '../chart/glyph-variants.js';
 import type { SymbolClass } from '../chart/symbol-class.js';
+import { DEFAULT_POLAR_MC } from '../ephemeris/polar-mc.js';
 import type { EphemerisProvider } from '../ephemeris/types.js';
 
 const MINOR_ASPECTS = ASPECTS.filter((aspect) => aspect.family === 'minor');
@@ -1057,6 +1059,23 @@ export function ExtendedSettingsPanel({
                     }))}
                     onChange={(value) => {
                       patch({ houseSystem: value });
+                    }}
+                  />
+                </fieldset>
+
+                <fieldset className="field-group settings-card-group">
+                  <legend>{t.polarMcLegend}</legend>
+                  <p className="hint">{t.polarMcHint}</p>
+                  <ChoiceGroup
+                    label={t.polarMcLabel}
+                    value={draft.polarMc ?? DEFAULT_POLAR_MC}
+                    options={[
+                      { value: 'towardsEquator', label: t.polarMcTowardsEquator },
+                      { value: 'aboveHorizon', label: t.polarMcAboveHorizon },
+                    ]}
+                    onChange={(value) => {
+                      if (value === 'towardsEquator' || value === 'aboveHorizon')
+                        setDraft((current) => withPolarMc(current, value));
                     }}
                   />
                 </fieldset>

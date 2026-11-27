@@ -41,6 +41,7 @@ export type SettingPlacement = 'first' | 'display' | AdvancedTab;
  */
 export const PLACEMENT: Readonly<Record<keyof ExtendedSettings, SettingPlacement>> = {
   houseSystem: 'first',
+  polarMc: 'profile',
   zodiac: 'first',
   orbRules: 'first',
   midpointsVisible: 'first',

@@ -10,8 +10,11 @@
  * @module ephemeris/types
  * @purpose Defines the engine-agnostic types and the EphemerisProvider interface that form the boundary between the Swiss Ephemeris implementation and the rest of Astraya's astrology code.
  * @conventions Nothing in this file mentions sweph-wasm, so src/astrology/** and the UI depend only on these types and the engine stays swappable and testable without WebAssembly; every EphemerisProvider method is async because the real implementation runs in a Web Worker, and failures are thrown as EphemerisError rather than encoded as sentinel values.
- * @exports Degrees, JulianDayUT, CalendarSystem, BodyId, UserAyanamsa, Zodiac, GeoPosition, BodyPosition, HousePositions, HouseSystem, needsSunDeclination, FixedStarPosition, FixedStarMagnitude, PositionOptions, HorizontalPosition, AzimuthAltitudeOptions, SolarEclipseKind, LunarEclipseKind, SolarEclipse, LunarEclipse, EphemerisProvider, EphemerisError, EphemerisErrorContext
+ * @exports PolarMc, Degrees, JulianDayUT, CalendarSystem, BodyId, UserAyanamsa, Zodiac, GeoPosition, BodyPosition, HousePositions, HouseSystem, needsSunDeclination, FixedStarPosition, FixedStarMagnitude, PositionOptions, HorizontalPosition, AzimuthAltitudeOptions, SolarEclipseKind, LunarEclipseKind, SolarEclipse, LunarEclipse, EphemerisProvider, EphemerisError, EphemerisErrorContext
  */
+
+/** Solar Fire's "MC in Polar Regions" setting (#2012); the geometry is in `polar-mc.ts`. */
+export type PolarMc = 'towardsEquator' | 'aboveHorizon';
 
 /** Ecliptic longitude in degrees, 0 <= lon < 360, measured from 0° Aries. */
 export type Degrees = number;
@@ -281,7 +284,18 @@ export interface EphemerisProvider {
 
   positions(jd: JulianDayUT, bodies: readonly BodyId[], options?: PositionOptions): Promise<readonly BodyPosition[]>;
 
-  houses(jd: JulianDayUT, place: GeoPosition, system: HouseSystem, zodiac?: Zodiac): Promise<HousePositions>;
+  /**
+   * Houses for a moment and a place. `polarMc` (#2012) is Solar Fire's "MC in Polar Regions" convention (section
+   * 30.3.1.6, `polar-mc.ts`); it applies to Regiomontanus and Campanus at polar latitudes only, and defaults to
+   * 'towardsEquator'.
+   */
+  houses(
+    jd: JulianDayUT,
+    place: GeoPosition,
+    system: HouseSystem,
+    zodiac?: Zodiac,
+    polarMc?: PolarMc,
+  ): Promise<HousePositions>;
 
   /**
    * Houses for an ARMC (sidereal time in degrees), a geographic latitude and an obliquity, with no moment attached
@@ -302,6 +316,7 @@ export interface EphemerisProvider {
     obliquity: Degrees,
     system: HouseSystem,
     sunDeclination?: Degrees,
+    polarMc?: PolarMc,
   ): Promise<HousePositions>;
 
   /**

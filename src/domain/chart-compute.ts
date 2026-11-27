@@ -20,6 +20,7 @@
  * @conventions One ephemeris pass (one Julian day, one batch position call, one house call) then pure arithmetic; nothing is cached — results are cheap to recompute, not stored as a second source of truth; `housesAreDefined` must be checked before trusting house-derived fields. Point aspects (Asc/MC always; Vertex, Part of Fortune/Spirit opt-in via `aspectsTo`) are point-to-body only, use the aspecting body's moiety under a body-moiety profile (Lilly p. 208 for the Ascendant; an Astraya extension for MC/Vertex/lots) else the planet tiers, record the rule used (#796), and drop a part's aspect to its own "+" luminary (#516). Enrichments (declinations, fixedStars, obliquity) are optional fields computed alongside core chart data (#589) but can be lazy-loaded separately for better performance when not needed.
  * @exports computeChartData, computeChartDataAtJd, enrichChartData, housesAreDefined, isAspectParticipant, ChartData, ChartCalculationOptions, AngleAspect, NATAL_FIXED_STARS
  */
+import type { PolarMc } from '../ephemeris/types.js';
 import {
   DEFAULT_ORB_CONFIG,
   findAspects,
@@ -109,6 +110,8 @@ function starLookups(chosen: readonly ChosenFixedStar[] | undefined): readonly S
 
 export interface ChartCalculationOptions extends BodySetOptions {
   readonly houseSystem?: HouseSystem;
+  /** Solar Fire's "MC in Polar Regions" (#2012). Default 'towardsEquator'. */
+  readonly polarMc?: PolarMc;
   /** Whose rulers the essential dignities use: modern by default (#426). */
   readonly rulership?: RulershipChoice;
   readonly zodiac?: Zodiac;
@@ -210,6 +213,7 @@ async function anglePointLongitudesAfter(
   provider: EphemerisProvider,
   houseSystem: HouseSystem,
   zodiac: Zodiac | undefined,
+  polarMc: PolarMc | undefined,
   positionOptions: PositionOptions | undefined,
   sunId: BodyId,
   moonId: BodyId,
@@ -224,7 +228,7 @@ async function anglePointLongitudesAfter(
 }> {
   const jdAfter = jd + FINITE_DIFFERENCE_DT_DAYS;
   const [housesAfter, luminariesAfter] = await Promise.all([
-    provider.houses(jdAfter, place, houseSystem, zodiac),
+    provider.houses(jdAfter, place, houseSystem, zodiac, polarMc),
     provider.positions(jdAfter, [sunId, moonId], positionOptions),
   ]);
   const sunAfter = luminariesAfter.find((position) => position.body === sunId);
@@ -517,7 +521,7 @@ export async function computeChartDataAtJd(
       bodies.map((body) => body.id),
       positionOptions,
     ),
-    provider.houses(jd, place, options.houseSystem ?? DEFAULT_HOUSE_SYSTEM, options.zodiac),
+    provider.houses(jd, place, options.houseSystem ?? DEFAULT_HOUSE_SYSTEM, options.zodiac, options.polarMc),
     // Equatorial reinterprets `.longitude`/`.latitude` as right ascension/declination
     // (`PositionOptions.equatorial`'s own doc comment) — only declination is used here.
     provider.positions(
@@ -599,6 +603,7 @@ export async function computeChartDataAtJd(
         provider,
         options.houseSystem ?? DEFAULT_HOUSE_SYSTEM,
         options.zodiac,
+        options.polarMc,
         positionOptions,
         sun.id,
         moon.id,

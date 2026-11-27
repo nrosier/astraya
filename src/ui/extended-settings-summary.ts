@@ -14,6 +14,7 @@ import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from '../chart/exten
 
 export type ChangedSetting =
   | 'houseSystem'
+  | 'polarMc'
   | 'zodiac'
   | 'orbScale'
   /** The practitioner's own per-aspect or per-body orbs (#590). */
@@ -39,6 +40,7 @@ export function changedSettings(value: ExtendedSettings): readonly ChangedSettin
   const defaults = DEFAULT_EXTENDED_SETTINGS;
   const changed: ChangedSetting[] = [];
   if (value.houseSystem !== defaults.houseSystem) changed.push('houseSystem');
+  if (value.polarMc !== undefined) changed.push('polarMc');
   if (JSON.stringify(value.zodiac) !== JSON.stringify(defaults.zodiac)) changed.push('zodiac');
   if (value.orbScalePercent !== defaults.orbScalePercent) changed.push('orbScale');
   if (value.orbRules !== undefined) changed.push('orbRules');

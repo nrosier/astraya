@@ -135,6 +135,21 @@ No registry value was changed by this check.
 | 63          | 844           | β Col     | I p. 68, III p. 114     | Verified: Canis Major, unformed stars, "β Columbae"                                                                     |
 | 65          | 425           | β Gem     | I p. 58                 | Verified: Gemini 2, "Quae est in capite sequentis Geminorum, subrufa", β (the number prints as "42s")                   |
 
+## Map lines (#2018)
+
+Status: owner-accepted derivation (#2012 dialogue answer, "Accept a stated derivation"; recorded on #2018). No held source states the geometry of a fixed-star line on a map, so this is a stated Astraya convention, not a cited rule. The derivation uses only the horizon relation already in `armcAtAngle` (src/astrology/fixed-stars.ts).
+
+With α, δ the star's equatorial right ascension and declination, ARMC0 the ARMC at longitude 0, and φ, λ latitude and geographic longitude (east positive):
+
+- MC: λ = norm180(α − ARMC0), at every latitude.
+- IC: λ = norm180(α + 180° − ARMC0), at every latitude.
+- AC: λ = norm180(α − H0(φ) − ARMC0). DC: λ = norm180(α + H0(φ) − ARMC0).
+- H0(φ) = arccos(−tan φ · tan δ), on [0°, 180°]. AC and DC exist only where |φ| ≤ 90° − |δ|. Beyond that, a circumpolar star (same-sign φ and δ) has neither DC nor AC. A star that never rises (opposite-sign) has neither AC nor DC, since it cannot set either.
+- Epoch: apparent right ascension and declination of date, on the true equator, as the engine returns for the chart moment (not J2000 or catalogue coordinates).
+- Refraction: the lines are geometric (altitude 0, no refraction). They mark geometric rising and setting, not the moment the star becomes visible.
+
+The implementation is `fixedStarLines` in src/astrology/astrocartography.ts. It returns an array of kind-tagged lines, one per drawn line: `FixedStarMeridianLine` (`kind` MC or IC, `longitude`) and `FixedStarHorizonLine` (`kind` AC or DC, `segments`), each with the star's `star` name. AC or DC is omitted when the star has no segments. These lines are not yet part of `AcgLine`; the star set is chosen by the map task. Sampling follows `horizonLine`: 1° latitude steps, |φ| ≤ 85°. Both values are defaults (`latitudeStepDeg`, `maxAbsLatitude` in `AcgSamplingOptions`); callers may override them. Tests in test/astrology-fixed-star-lines.test.ts check each line against `engine.azimuthAltitude`. Related: #2012 (polar MC convention), #2018 (this section).
+
 ## Out of scope for the first build
 
 - Positions in the chart and report. Chart display is a separate decision (see #748 for the analogous lots question).
