@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { harmonicHouses, harmonicLongitude, harmonicPosition, VARGA_PRESETS } from '../src/astrology/harmonics.js';
 import { signOf } from '../src/astrology/signs.js';
 import type { BodyPosition, HousePositions } from '../src/ephemeris/types.js';
+import { harmonicViewMessages } from '../src/ui/HarmonicView.messages.js';
 
 describe('harmonicLongitude (#170)', () => {
   it('multiplies and wraps back into 0-360', () => {
@@ -132,6 +133,18 @@ describe('VARGA_PRESETS (#170)', () => {
     expect(keys).toContain('D1');
     expect(keys).toContain('D9');
     expect(keys).toContain('D10');
+  });
+
+  it('gives every preset an English and a Dutch screen label, the English one matching the exported label (#2037)', () => {
+    for (const preset of VARGA_PRESETS) {
+      expect(harmonicViewMessages.en.presetLabels[preset.key]).toBe(preset.label);
+      expect(harmonicViewMessages.nl.presetLabels[preset.key]).toBeTruthy();
+    }
+  });
+
+  it('names D10 as simplified in both languages, because it omits the even-sign restart (#2037)', () => {
+    expect(harmonicViewMessages.en.presetLabels.D10).toBe('D10 — Dashamsha (simplified)');
+    expect(harmonicViewMessages.nl.presetLabels.D10).toBe('D10 — Dashamsha (vereenvoudigd)');
   });
 
   it('gives every preset a positive integer n', () => {

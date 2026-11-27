@@ -108,6 +108,10 @@ export interface HarmonicPreset {
  * than scattered across the UI so the whole table — and its shared convention note — stays in one
  * place. The issue asks for D9 and D10 "at minimum"; both are included, plus D1 (the natal chart
  * itself, n=1) as the trivial case a selector needs to offer alongside them.
+ *
+ * `label` is the English name the full export carries; screens show the translated `presetLabels` in
+ * `HarmonicView.messages.ts`, whose English entries match it. D10 is named "simplified" because of
+ * the rule described above (owner decision on #2037).
  */
 export const VARGA_PRESETS: readonly HarmonicPreset[] = [
   { key: 'D1', label: 'D1 — Rashi (natal)', n: 1, description: 'The natal chart itself; the trivial harmonic.' },
@@ -120,7 +124,7 @@ export const VARGA_PRESETS: readonly HarmonicPreset[] = [
   },
   {
     key: 'D10',
-    label: 'D10 — Dashamsha',
+    label: 'D10 — Dashamsha (simplified)',
     n: 10,
     description:
       'Career and public life. Uses the continuous n=10 rule, not the classical odd/even sign restart — see this module’s doc comment.',

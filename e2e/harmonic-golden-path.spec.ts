@@ -64,6 +64,10 @@ test('a person with a known birth time gets a Harmonic screen with a wheel and d
 
   await page.getByLabel('Divisional chart').selectOption({ label: 'D9 — Navamsha' });
   await expect(page.locator('div.chart-wheel')).toBeVisible();
+
+  // #2037: D10 omits the classical even-sign rule, and its name says so, in the list and on the basis line.
+  await page.getByLabel('Divisional chart').selectOption({ label: 'D10 — Dashamsha (simplified)' });
+  await expect(page.locator('.page-header-basis')).toContainText(/ · D10 — Dashamsha \(simplified\)$/);
 });
 
 test('a custom harmonic number renders its own chart', async () => {
