@@ -18,7 +18,8 @@
  * @conventions A Tier 2 feature per ADR 0003: requires sign-in, a plain consent checkbox that is never remembered and is spent the moment the request is sent; sends only the placement's own `FocusContext` (sign, house, rulerships, aspects), or a selected sign's `SignContext` (#1998), via `generateTier2Interpretation`, never the whole chart or any name/date/time/place. Resets whenever `resetKey` (the selection) changes. Text comes from co-located `FocusInterpretation.messages.ts` via `useMessages()`.
  * @exports FocusInterpretation
  */
-import { useEffect, useId, useState } from 'react';
+import { useContext, useEffect, useId, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { FocusContext } from '../interpretation/focus-context-schema.js';
 import type { Locale } from '../interpretation/schema.js';
 import type { SignContext } from '../interpretation/sign-context-schema.js';
@@ -32,6 +33,7 @@ import { focusInterpretationMessages } from './FocusInterpretation.messages.js';
 import { useMessages } from './messages.js';
 import { useSessionUserOrUndefined } from './session-context.js';
 import { apiErrorText } from './api-error.js';
+import { SelectionActionsSlotContext } from './selection-actions-slot.js';
 
 export function FocusInterpretation({
   context,
@@ -54,12 +56,15 @@ export function FocusInterpretation({
   readonly restingHeading?: boolean;
   /**
    * Inside the Transits placement card (#2028): no card of its own (the host draws the top border), and once a reading
-   * is shown an "AI interpretation" subheader with a Regenerate button, which asks for consent again like any request.
+   * is shown an "AI interpretation" subheader; Regenerate, which asks for consent again like any request, goes into the
+   * host card's action row when it offers one (#2028), else beside the subheader.
    */
   readonly embedded?: boolean;
 }): React.JSX.Element | null {
   const t = useMessages(focusInterpretationMessages);
   const shared = useMessages(sharedMessages);
+  // In the split placement card (#2028), Regenerate goes into the card's top-right action row, beside Clear.
+  const actionSlot = useContext(SelectionActionsSlotContext);
   const online = useOnline();
   const user = useSessionUserOrUndefined();
   const [consent, setConsent] = useState(false);
@@ -118,23 +123,30 @@ export function FocusInterpretation({
   // Embedded with a reading on screen and no request in progress: the subheader and Regenerate replace the idle button.
   const showRegenerate = embedded && sections !== undefined && !drawerOpen && !generating;
 
+  const regenerateButton = (
+    <Button
+      disabled={signInReason !== undefined || !online}
+      aria-describedby={signInReason === undefined ? undefined : reasonId}
+      onClick={() => {
+        setDrawerOpen(true);
+      }}
+    >
+      {t.regenerate}
+    </Button>
+  );
+  const embeddedClass =
+    sections === undefined ? 'focus-interpretation-embedded' : 'focus-interpretation-embedded generated';
+
   return (
     <section
-      className={embedded ? 'focus-interpretation focus-interpretation-embedded' : 'focus-interpretation'}
+      className={embedded ? `focus-interpretation ${embeddedClass}` : 'focus-interpretation'}
       aria-label={words.heading}
     >
+      {showRegenerate && actionSlot !== null && createPortal(regenerateButton, actionSlot)}
       {showRegenerate ? (
         <div className="focus-interpretation-head">
           <h3>{t.generatedHeading}</h3>
-          <Button
-            disabled={signInReason !== undefined || !online}
-            aria-describedby={signInReason === undefined ? undefined : reasonId}
-            onClick={() => {
-              setDrawerOpen(true);
-            }}
-          >
-            {t.regenerate}
-          </Button>
+          {actionSlot === null && regenerateButton}
         </div>
       ) : (
         (restingHeading || drawerOpen) && <h3>{words.heading}</h3>
