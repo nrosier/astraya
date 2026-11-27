@@ -4647,11 +4647,67 @@ dl.primitive-stat-list {
   gap: var(--space-3);
 }
 
-/* The Transits placement card's AI interpretation (#2028): inside the card, below its facts, after a top border. */
-.chart-isolation-extra {
-  margin-top: var(--space-3);
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--line);
+/* The split placement card (#2028, owner spec 2026-11-27): one column on a narrow screen (the placement, then the AI
+   interpretation); from 48rem a 60/40 grid, its height set by the taller column. The right column is a flex column: the
+   action row (Regenerate, Clear) at the top right; the idle AI block pinned to the bottom right; a reading below the
+   actions. Padding and gap are --space-6; the radius stays the app's card radius. */
+.chart-isolation-panel--split {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+  padding: var(--space-6);
+}
+
+@media (min-width: 48rem) {
+  .chart-isolation-panel--split {
+    grid-template-columns: 3fr 2fr;
+    align-items: stretch;
+  }
+}
+
+.chart-isolation-main {
+  min-width: 0;
+}
+
+.chart-isolation-main > :last-child {
+  margin-bottom: 0;
+}
+
+.chart-isolation-aside {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.chart-isolation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+/* The slot only holds Regenerate when a reading is shown; empty, it takes no room in the row. */
+.chart-isolation-action-slot {
+  display: contents;
+}
+
+/* Idle: the heading, the Interpret button and the sign-in hint, stacked and right-aligned at the card's bottom edge. */
+.chart-isolation-aside .focus-interpretation-embedded {
+  display: flex;
+  margin-top: auto;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+
+/* With a reading: the subheader and the prose fill the column below the action row, set left like body text. */
+.chart-isolation-aside .focus-interpretation-embedded.generated {
+  margin-top: 0;
+  align-self: stretch;
+  align-items: stretch;
+  text-align: left;
 }
 
 /* The Jones chart-shape diagram (#401): a small standalone abstract pattern, not drawn into

@@ -11,12 +11,14 @@
  * @exports BiWheelSelectionPanel
  */
 import { formatOrb } from './format.js';
+import { useState } from 'react';
 import type { Locale } from '../interpretation/schema.js';
 import { aspectDisplayName, bodyDisplayName, signDisplayName } from './astro-names.messages.js';
 import type { BiWheelAspect, BiWheelFacts, BodyOnRing } from './bi-wheel-selection.js';
 import { biWheelSelectionPanelMessages } from './BiWheelSelectionPanel.messages.js';
 import { useMessages } from './messages.js';
 import { Button } from './primitives/Button.js';
+import { SelectionActionsSlotContext } from './selection-actions-slot.js';
 
 interface Props {
   readonly facts: BiWheelFacts;
@@ -24,7 +26,7 @@ interface Props {
   readonly ringLabels: readonly string[];
   readonly locale: Locale;
   readonly onClear: () => void;
-  /** Drawn inside the card below its facts, after a top border (#2028): the Transits screen's AI interpretation. */
+  /** The Transits screen's AI interpretation (#2028): with it, the card splits into the placement (left) and an action row and the interpretation (right). */
   readonly children?: React.ReactNode;
 }
 
@@ -34,6 +36,8 @@ function minutes(value: number): string {
 
 export function BiWheelSelectionPanel({ facts, ringLabels, locale, onClear, children }: Props) {
   const t = useMessages(biWheelSelectionPanelMessages);
+  // The action-row slot a child (the AI interpretation's Regenerate) portals its button into (#2028).
+  const [slot, setSlot] = useState<HTMLElement | null>(null);
   const ringLabel = (ring: number): string => ringLabels[ring] ?? '';
   const bodyOnRing = (bodyKey: string, ring: number): string =>
     t.onRing(bodyDisplayName(bodyKey, locale), ringLabel(ring));
@@ -60,13 +64,8 @@ export function BiWheelSelectionPanel({ facts, ringLabels, locale, onClear, chil
   const orbText = (orb: number, applying: boolean): string =>
     `${t.orbLabel} ${formatOrb(orb)}, ${applying ? t.applying : t.separating}`;
 
-  return (
-    <div className="chart-isolation-panel">
-      <div className="chart-isolation-head">
-        <strong>{heading}</strong>
-        <Button onClick={onClear}>{t.clear}</Button>
-      </div>
-
+  const factLines = (
+    <>
       {facts.kind === 'body' && (
         <>
           <p>
@@ -99,10 +98,39 @@ export function BiWheelSelectionPanel({ facts, ringLabels, locale, onClear, chil
         ))}
 
       {facts.kind === 'aspect' && <p>{orbText(facts.row.orb, facts.row.applying)}</p>}
+    </>
+  );
 
-      {children !== undefined && children !== null && children !== false && (
-        <div className="chart-isolation-extra">{children}</div>
-      )}
+  const hasExtra = children !== undefined && children !== null && children !== false;
+  if (!hasExtra) {
+    return (
+      <div className="chart-isolation-panel">
+        <div className="chart-isolation-head">
+          <strong>{heading}</strong>
+          <Button onClick={onClear}>{t.clear}</Button>
+        </div>
+        {factLines}
+      </div>
+    );
+  }
+
+  // The split card (#2028, owner spec): the placement on the left (60%), and on the right (40%) the action row at the
+  // top (Regenerate, when a reading is shown, then Clear) with the AI interpretation below it. One column when narrow.
+  return (
+    <div className="chart-isolation-panel chart-isolation-panel--split">
+      <div className="chart-isolation-main">
+        <div className="chart-isolation-head">
+          <strong>{heading}</strong>
+        </div>
+        {factLines}
+      </div>
+      <div className="chart-isolation-aside">
+        <div className="chart-isolation-actions">
+          <span ref={setSlot} className="chart-isolation-action-slot" />
+          <Button onClick={onClear}>{t.clear}</Button>
+        </div>
+        <SelectionActionsSlotContext.Provider value={slot}>{children}</SelectionActionsSlotContext.Provider>
+      </div>
     </div>
   );
 }
