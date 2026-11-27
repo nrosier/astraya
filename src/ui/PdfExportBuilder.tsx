@@ -1024,10 +1024,12 @@ export function PdfExportBuilder({
                                 onChange={(value) => {
                                   patchProgressions({ mcMethod: value as ProgressedMcMethod });
                                 }}
-                                options={(['quotidian', 'naibod', 'solarArc'] as const).map((method) => ({
-                                  value: method,
-                                  label: t.mcMethodOptions[method],
-                                }))}
+                                options={(['quotidian', 'naibod', 'solarArc', 'naibodRa', 'solarArcRa'] as const).map(
+                                  (method) => ({
+                                    value: method,
+                                    label: t.mcMethodOptions[method],
+                                  }),
+                                )}
                               />{' '}
                             </>
                           )}

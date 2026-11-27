@@ -62,6 +62,16 @@ test('a person with a known birth time gets a Progressions screen with technique
   await expect(page.getByRole('option', { name: 'Naibod (mean solar motion, in longitude)' })).toHaveCount(1);
   await expect(page.getByRole('table', { name: 'Progressed positions' })).toBeVisible();
 
+  // #2039: the right-ascension methods are offered, and the basis line names the one in use.
+  await page.getByLabel('MC method').selectOption({ label: 'Naibod in RA (mean solar motion, in right ascension)' });
+  await expect(page.locator('.page-header-basis')).toHaveText(
+    'Tropical · Placidus · Mean node · Standard orbs · Secondary progression · Naibod in RA MC · angles shifted by the Naibod arc, in right ascension',
+  );
+  await expect(
+    page.getByRole('option', { name: 'True solar arc in RA (the Sun’s progressed arc, in right ascension)' }),
+  ).toHaveCount(1);
+  await expect(page.getByRole('table', { name: 'Progressed positions' })).toBeVisible();
+
   // Switching to a technique with no MC method (tertiary/minor always recompute houses
   // directly) hides the selector — the method actually used is never left ambiguous.
   await page.getByLabel('Technique').selectOption({ label: 'Tertiary (a day for a lunar month)' });

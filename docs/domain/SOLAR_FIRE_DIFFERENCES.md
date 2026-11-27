@@ -21,10 +21,10 @@ Each section ends with its status: a choice Astraya keeps, or a change that is p
 
 ## Progressed Midheaven
 
-- **Astraya:** Naibod in longitude (the default), true solar arc in longitude, and quotidian. The other angles follow from the progressed Midheaven (`src/astrology/progressions.ts`).
-- **Solar Fire:** five methods: true solar arc in longitude ("possible the most commonly used method today"), true solar arc in right ascension, Naibod in longitude, Naibod in right ascension, and mean quotidian (§30.3.2.1, text lines 8551-8575). The held guide does not state which method is selected initially.
-- **Effect:** choose the same method in both programs before comparing the angles.
-- **Status:** the two right-ascension methods are planned, #2039. Until it is merged, Astraya cannot reproduce them.
+- **Astraya:** all five of Solar Fire's methods: Naibod in longitude (the default), true solar arc in longitude, Naibod in right ascension, true solar arc in right ascension (#2039), and quotidian. The other angles follow from the progressed Midheaven (`src/astrology/progressions.ts`).
+- **Solar Fire:** the same five: true solar arc in longitude ("possible the most commonly used method today"), true solar arc in right ascension, Naibod in longitude, Naibod in right ascension, and mean quotidian (§30.3.2.1, text lines 8551-8575). The held guide does not state which method is selected initially.
+- **Effect:** the methods match; only the initial choice may differ. Choose the same method in both programs before comparing the angles.
+- **Status:** Astraya keeps Naibod in longitude as its default.
 
 ## Primary-direction keys
 

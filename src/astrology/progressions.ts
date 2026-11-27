@@ -32,13 +32,19 @@
  * from the tropical equatorial position. A user-defined sidereal ayanamsa keeps the rigid rotation until the engine
  * interface takes it.
  * Quotidian recomputes the houses outright at the progressed moment.
+ *
+ * Naibod in RA and true solar arc in RA (#2039, Solar Fire Deluxe guide §30.3.2.1) move the natal ARMC instead: by the
+ * mean Sun's rate times age, or by the right ascension the progressed Sun has moved. The MC and every other angle then
+ * come from that ARMC the same way. An arc moved in right ascension and the same arc moved in longitude end at
+ * different MCs except where the ecliptic and the equator run parallel or cross; the gap is at most about 5°, twice
+ * the greatest difference (about 2.5°) between a point's right ascension and its longitude.
  */
 
 /**
  * @module Progressions
- * @purpose Computes secondary (day-for-year) progressions, with a selectable method (quotidian, naibod, solarArc) for progressing the MC and houses.
- * @conventions Bodies progress by direct day-for-year substitution; 'quotidian' recomputes houses outright at the progressed moment; 'naibod' advances the MC by the mean Sun's daily motion (NAIBOD_DAILY_MOTION) times age; 'solarArc' advances it by the true solar arc traveled; naibod/solarArc then derive the other angles and cusps from the progressed MC via housesFromArmc with the progressed-date obliquity (Solar Fire Deluxe guide §30.3.2.1, #1935), sidereal charts subtracting the standard ayanamsa afterwards; Sunshine ('I' and 'i') also passes housesFromArmc the progressed Sun's tropical declination (#1935); a user-defined ayanamsa keeps the rigid rotation via shiftHouses until the engine interface takes it; both Suns and the quotidian progressed houses are read in the requested zodiac.
- * @exports TROPICAL_YEAR_DAYS, NAIBOD_DAILY_MOTION, ageInYears, progressedJulianDay, mcArc, progressedAnglesKeepRigidShift, shiftHouses, progressedSunDeclination, computeProgressedHouses
+ * @purpose Computes secondary (day-for-year) progressions, with a selectable method (quotidian, naibod, solarArc, naibodRa, solarArcRa) for progressing the MC and houses.
+ * @conventions Bodies progress by direct day-for-year substitution; 'quotidian' recomputes houses outright at the progressed moment; 'naibod' advances the MC by the mean Sun's daily motion (NAIBOD_DAILY_MOTION) times age; 'solarArc' advances it by the true solar arc traveled; naibod/solarArc then derive the other angles and cusps from the progressed MC via housesFromArmc with the progressed-date obliquity (Solar Fire Deluxe guide §30.3.2.1, #1935), sidereal charts subtracting the standard ayanamsa afterwards; Sunshine ('I' and 'i') also passes housesFromArmc the progressed Sun's tropical declination (#1935); a user-defined ayanamsa keeps the rigid rotation via shiftHouses until the engine interface takes it; both Suns and the quotidian progressed houses are read in the requested zodiac. 'naibodRa' and 'solarArcRa' (#2039, the same guide section) advance the natal ARMC by the mean-Sun rate times age or by the progressed Sun's right-ascension arc, then derive the MC and all other angles from that ARMC the same way; the Suns' right ascensions are tropical.
+ * @exports ProgressedMcMethod, TROPICAL_YEAR_DAYS, NAIBOD_DAILY_MOTION, ageInYears, progressedJulianDay, mcArc, mcRaArc, progressedAnglesKeepRigidShift, shiftHouses, progressedSunDeclination, computeProgressedHouses
  */
 import {
   needsSunDeclination,
@@ -51,7 +57,11 @@ import {
   type Zodiac,
 } from '../ephemeris/types.js';
 
-export type ProgressedMcMethod = 'quotidian' | 'naibod' | 'solarArc';
+/**
+ * How the progressed MC moves: `naibod` and `solarArc` in longitude, `naibodRa` and `solarArcRa` in right ascension
+ * (#2039), or `quotidian`. Solar Fire Deluxe guide §30.3.2.1 offers all five.
+ */
+export type ProgressedMcMethod = 'quotidian' | 'naibod' | 'solarArc' | 'naibodRa' | 'solarArcRa';
 
 /**
  * The mean tropical year, in days — the day-for-year divisor. 365.2422 is the
@@ -179,14 +189,18 @@ export async function computeProgressedHouses(
   const age = ageInYears(natalJd, targetJd);
   const positionOptions = options.zodiac === undefined ? undefined : { zodiac: options.zodiac };
 
-  if (options.mcMethod === 'quotidian') {
+  const method = options.mcMethod;
+  if (method === 'quotidian') {
     const houses = await provider.houses(progressedJd, place, options.houseSystem, options.zodiac);
     return { progressedJd, ageInYears: age, mcMethod: 'quotidian', houses };
+  }
+  if (method === 'naibodRa' || method === 'solarArcRa') {
+    return raProgressedHouses(provider, method, natalJd, progressedJd, age, natalHouses, place, options);
   }
 
   const [progressedSun] = await provider.positions(progressedJd, [0], positionOptions);
   if (progressedSun === undefined) throw new Error('unreachable: the ephemeris returned no position for the Sun');
-  const arc = mcArc(options.mcMethod, age, natalSunLongitude, progressedSun.longitude);
+  const arc = mcArc(method, age, natalSunLongitude, progressedSun.longitude);
   const shifted = shiftHouses(natalHouses, arc);
   const zodiac = options.zodiac;
 
@@ -207,15 +221,34 @@ export async function computeProgressedHouses(
   const ayanamsa = zodiac?.kind === 'sidereal' ? await provider.ayanamsa(progressedJd, zodiac.ayanamsa) : 0;
   const tropicalMc = norm360(shifted.midheaven + ayanamsa);
   const armc = rightAscensionOf(tropicalMc, obliquity);
+  const fromArmc = await housesFromProgressedArmc(provider, progressedJd, armc, obliquity, ayanamsa, place, options);
+  const houses: HousePositions = { ...fromArmc, midheaven: shifted.midheaven };
+  return { progressedJd, ageInYears: age, mcMethod: options.mcMethod, houses };
+}
+
+/**
+ * Every angle and cusp from a progressed ARMC, at the natal latitude, with the obliquity at the progressed date: the
+ * recipe the symbolic methods share (#1935, #2039). Sunshine also gets the progressed Sun's declination. A sidereal
+ * chart subtracts `ayanamsa` from every cusp and angle, never from the ARMC.
+ */
+async function housesFromProgressedArmc(
+  provider: EphemerisProvider,
+  progressedJd: JulianDayUT,
+  armc: Degrees,
+  obliquity: Degrees,
+  ayanamsa: Degrees,
+  place: GeoPosition,
+  options: SecondaryProgressionOptions,
+): Promise<HousePositions> {
   const sunDeclination = needsSunDeclination(options.houseSystem)
     ? await progressedSunDeclination(provider, progressedJd)
     : undefined;
   const angles = await provider.housesFromArmc(armc, place.latitude, obliquity, options.houseSystem, sunDeclination);
   const unShift = (deg: Degrees): Degrees => norm360(deg - ayanamsa);
-  const houses: HousePositions = {
+  return {
     cusps: angles.cusps.map(unShift),
     ascendant: unShift(angles.ascendant),
-    midheaven: shifted.midheaven,
+    midheaven: unShift(angles.midheaven),
     armc,
     vertex: unShift(angles.vertex),
     equatorialAscendant: unShift(angles.equatorialAscendant),
@@ -225,5 +258,79 @@ export async function computeProgressedHouses(
     system: angles.system,
     ...(angles.warning === undefined ? {} : { warning: angles.warning }),
   };
-  return { progressedJd, ageInYears: age, mcMethod: options.mcMethod, houses };
+}
+
+/**
+ * The right-ascension arc the progressed MC moves by under the two right-ascension methods (Solar Fire Deluxe guide
+ * §30.3.2.1, #2039): `naibodRa` is the mean Sun's rate times age (`NAIBOD_DAILY_MOTION`; the guide's "3m56.5s of arc
+ * per day" is the same rate, rounded); `solarArcRa` is the progressed Sun's right ascension minus the natal Sun's.
+ * The raw difference is taken through 0h to the value nearest the mean-rate arc, so it accumulates over a long life the
+ * way `mcArc` does instead of wrapping at 360. Not normalised to [0, 360).
+ */
+export function mcRaArc(
+  method: 'naibodRa' | 'solarArcRa',
+  age: number,
+  natalSunRa: Degrees,
+  progressedSunRa: Degrees,
+): Degrees {
+  const meanArc = age * NAIBOD_DAILY_MOTION;
+  if (method === 'naibodRa') return meanArc;
+  const raw = progressedSunRa - natalSunRa;
+  return raw + 360 * Math.round((meanArc - raw) / 360);
+}
+
+/** The ecliptic longitude of the MC for an ARMC: `atan2(sin RA, cos RA · cos ε)`, normalised. */
+function midheavenOf(armc: Degrees, obliquity: Degrees): Degrees {
+  const ra = (armc * Math.PI) / 180;
+  const epsilon = (obliquity * Math.PI) / 180;
+  return norm360((Math.atan2(Math.sin(ra), Math.cos(ra) * Math.cos(epsilon)) * 180) / Math.PI);
+}
+
+/**
+ * The right-ascension methods (#2039): the progressed ARMC is the natal ARMC plus `mcRaArc`, and every angle, the MC
+ * included, comes from that ARMC by `housesFromProgressedArmc`. The ARMC does not depend on the zodiac, so a sidereal
+ * chart subtracts the ayanamsa from the angles only, as the longitude methods do. A user-defined ayanamsa keeps the
+ * rigid rotation, by the longitude arc between the natal MC and the MC of the progressed ARMC.
+ */
+async function raProgressedHouses(
+  provider: EphemerisProvider,
+  method: 'naibodRa' | 'solarArcRa',
+  natalJd: JulianDayUT,
+  progressedJd: JulianDayUT,
+  age: number,
+  natalHouses: HousePositions,
+  place: GeoPosition,
+  options: SecondaryProgressionOptions,
+): Promise<ProgressedHouses> {
+  let arc = age * NAIBOD_DAILY_MOTION;
+  if (method === 'solarArcRa') {
+    const [[natalSun], [progressedSun]] = await Promise.all([
+      provider.positions(natalJd, [0], { equatorial: true }),
+      provider.positions(progressedJd, [0], { equatorial: true }),
+    ]);
+    if (natalSun === undefined || progressedSun === undefined) {
+      throw new Error('unreachable: the ephemeris returned no position for the Sun');
+    }
+    // With `equatorial`, the longitude field is the right ascension.
+    arc = mcRaArc(method, age, natalSun.longitude, progressedSun.longitude);
+  }
+  const armc = norm360(natalHouses.armc + arc);
+  const obliquity = await provider.obliquity(progressedJd);
+  const zodiac = options.zodiac;
+
+  if (progressedAnglesKeepRigidShift(zodiac, method)) {
+    const natalObliquity = await provider.obliquity(natalJd);
+    const raw = midheavenOf(armc, obliquity) - midheavenOf(natalHouses.armc, natalObliquity);
+    const longitudeArc = raw + 360 * Math.round((arc - raw) / 360);
+    return {
+      progressedJd,
+      ageInYears: age,
+      mcMethod: method,
+      houses: { ...shiftHouses(natalHouses, longitudeArc), armc },
+    };
+  }
+
+  const ayanamsa = zodiac?.kind === 'sidereal' ? await provider.ayanamsa(progressedJd, zodiac.ayanamsa) : 0;
+  const houses = await housesFromProgressedArmc(provider, progressedJd, armc, obliquity, ayanamsa, place, options);
+  return { progressedJd, ageInYears: age, mcMethod: method, houses };
 }
