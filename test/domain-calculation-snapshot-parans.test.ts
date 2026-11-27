@@ -28,7 +28,8 @@ const ON: ExtendedSettings = {
 describe('the fixed-star paran setting in the snapshot (#1407)', () => {
   it('leaves the default snapshot identity and register as they were: off is the field absent', () => {
     const snapshot = buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE);
-    expect(calculationSnapshotIdentity(snapshot)).toBe('v4-85b6b5ff');
+    // v4-85b6b5ff before #2045 changed the default midpoint orb (reported on #2045).
+    expect(calculationSnapshotIdentity(snapshot)).toBe('v4-678ff471');
     expect(JSON.stringify(calculationSnapshotToJson(snapshot))).not.toContain('fixedStarParans');
     expect(JSON.stringify(serializeCalculationSettings(DEFAULT_EXTENDED_SETTINGS))).not.toContain('fixedStarParans');
   });

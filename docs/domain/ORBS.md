@@ -27,6 +27,7 @@ None of the reference programs checked on 2026-11-15 (Kerykeion, Flatlib, PyAstr
 - **Transit and solar-arc limits**: the transit orb limit and the 1° solar-arc limit in the transit and rectification tools are cited in their own modules (`src/astrology/rectification.ts`).
 - **Declination contacts**: parallels and contraparallels use a 1° orb (`DEFAULT_DECLINATION_ORB` in `src/domain/chart-tables.ts`).
 - **Fixed stars**: conjunctions to fixed stars use a 1.0° orb, kept as a convention (#739).
+- **Midpoint tree**: 0°15′ on the 90° dial (`MIDPOINT_TREE_ORB_DEFAULT` in `src/chart/extended-settings.ts`), Solar Fire's initial 1°00′ on the 360° circle (Solar Fire Deluxe guide §17.3, printed p. 118; #2045).
 
 ## Other conventions
 

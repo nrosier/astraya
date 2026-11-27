@@ -14,6 +14,7 @@
  * @exports DEFAULT_DECLINATION_ORB, positionRows, houseCuspRows, angleRows, aspectRows, crossAspectRows, crossContactRows, dignityRows, conditionRows, receptionRows, dispositorRows, declinationContactRows, antisciaRows, midpointTreeRows, allMidpointsRows, fixedStarRows, FixedStarParanRow, fixedStarParanRows, chartShapeOf, derivedPointRows, chartWheelRing, chartSheetMetaLines, chartSheetInput, degreeParts, visiblePositions, visibleAspects, visibleAngleAspects, almutenOfAscendant, AlmutenCandidateRow
  */
 import { almutenOf, essentialDignityScoreOf } from '../astrology/almuten.js';
+import { MIDPOINT_TREE_ORB_DEFAULT } from '../chart/extended-settings.js';
 import { antiscialContacts, type AntiscialContact } from '../astrology/antiscia.js';
 import { bodyById, bodyByKey } from '../astrology/bodies.js';
 import { ANGLE_LABEL } from '../chart/angle-labels.js';
@@ -128,7 +129,7 @@ export interface PointVisibilityOptions {
   readonly declinationMaxOrb?: Degrees; // default 1
   /** The 90°-dial midpoint-tree table's own visibility (#556) — previously computed and even rendered by `chart/dial90.ts`, but with no setting or UI surface reaching it at all. */
   readonly dial90Visible?: boolean; // default false
-  readonly midpointTreeOrb?: Degrees; // default 1
+  readonly midpointTreeOrb?: Degrees; // default 0.25 (MIDPOINT_TREE_ORB_DEFAULT, #2045)
   /** The motion score column on the condition table (#724), a display-only option: off by default, and it changes no calculated value. */
   readonly motionScoreVisible?: boolean; // default false
   /** The fixed-star paran table (#1407): its orb and the angle events it may use. Absent means the table is off. */
@@ -907,8 +908,8 @@ export interface MidpointTreeRow extends DegreeParts {
   readonly orb: Degrees;
 }
 
-/** Default 90°-dial midpoint-tree orb (#556) — matches `overlay-options.ts`'s own `DEFAULT_MAX_ORB`. */
-const DEFAULT_MIDPOINT_TREE_ORB: Degrees = 1;
+/** Default 90°-dial midpoint-tree orb (#556): the Extended settings' own default, 0°15′ since #2045. */
+const DEFAULT_MIDPOINT_TREE_ORB: Degrees = MIDPOINT_TREE_ORB_DEFAULT;
 
 /**
  * Every "hit" in `astrology/midpoints.ts`'s dial midpoint tree (#556, #555): a body sitting

@@ -172,7 +172,7 @@ const en = {
   declinationMaxOrbIncreaseLabel: 'Increase declination orb',
   dial90: 'Midpoint tree (90° dial)',
   dial90Hint:
-    'Adds a 90° dial beside the wheel and lists every body sitting within the orb below of another pair’s midpoint, collapsed so conjunction, square and opposition hits are all caught.',
+    'Adds a 90° dial beside the wheel and lists every body sitting within the orb below of another pair’s midpoint, collapsed so conjunction, square and opposition hits are all caught. The orb is on the dial’s 90° scale: the default 0°15′ is Solar Fire’s 1° on the full circle.',
   midpointTreeOrbLabel: 'Midpoint tree orb',
   midpointTreeOrbDecreaseLabel: 'Decrease midpoint tree orb',
   midpointTreeOrbIncreaseLabel: 'Increase midpoint tree orb',
@@ -507,7 +507,7 @@ const nl: typeof en = {
   declinationMaxOrbIncreaseLabel: 'Declinatie-orb vergroten',
   dial90: 'Middelpuntenboom (90°-dial)',
   dial90Hint:
-    'Voegt een 90°-dial naast het wiel toe en toont elk lichaam dat binnen de orb hieronder op het middelpunt van een ander paar valt, samengevouwen zodat conjunctie, vierkant en oppositie allemaal worden gevonden.',
+    'Voegt een 90°-dial naast het wiel toe en toont elk lichaam dat binnen de orb hieronder op het middelpunt van een ander paar valt, samengevouwen zodat conjunctie, vierkant en oppositie allemaal worden gevonden. De orb staat op de 90°-schaal van de dial: de standaard 0°15′ is de 1° van Solar Fire op de volle cirkel.',
   midpointTreeOrbLabel: 'Orb voor de middelpuntenboom',
   midpointTreeOrbDecreaseLabel: 'Orb voor de middelpuntenboom verkleinen',
   midpointTreeOrbIncreaseLabel: 'Orb voor de middelpuntenboom vergroten',

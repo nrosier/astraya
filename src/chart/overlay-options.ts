@@ -16,6 +16,7 @@
  * @exports resolveOverlayDisplayOptions, ANTISCIA_VISIBLE_SETTING, ANTISCIA_MAX_ORB_SETTING, DECLINATION_VISIBLE_SETTING, DECLINATION_MAX_ORB_SETTING, DIAL90_VISIBLE_SETTING, MIDPOINT_TREE_ORB_SETTING; OverlayDisplayOptions type.
  */
 import type { Degrees } from '../ephemeris/types.js';
+import { MIDPOINT_TREE_ORB_DEFAULT } from './extended-settings.js';
 import type { JsonValue } from '../store/ops.js';
 
 export const ANTISCIA_VISIBLE_SETTING = 'antisciaVisible';
@@ -34,7 +35,7 @@ export interface OverlayDisplayOptions {
   readonly midpointTreeOrb: Degrees;
 }
 
-/** Conservative default orb, until the UI exposes its own control — matches the tightest base orb in `DEFAULT_ORB_CONFIG` (aspects.ts). */
+/** Conservative default orb for antiscia and declinations — matches the tightest base orb in `DEFAULT_ORB_CONFIG` (aspects.ts). The midpoint tree has its own default (#2045). */
 const DEFAULT_MAX_ORB: Degrees = 1;
 const DEFAULT_VISIBLE = false;
 
@@ -54,6 +55,6 @@ export function resolveOverlayDisplayOptions(settings: Readonly<Record<string, J
     declinationVisible: pickBoolean(settings[DECLINATION_VISIBLE_SETTING], DEFAULT_VISIBLE),
     declinationMaxOrb: pickOrb(settings[DECLINATION_MAX_ORB_SETTING], DEFAULT_MAX_ORB),
     dial90Visible: pickBoolean(settings[DIAL90_VISIBLE_SETTING], DEFAULT_VISIBLE),
-    midpointTreeOrb: pickOrb(settings[MIDPOINT_TREE_ORB_SETTING], DEFAULT_MAX_ORB),
+    midpointTreeOrb: pickOrb(settings[MIDPOINT_TREE_ORB_SETTING], MIDPOINT_TREE_ORB_DEFAULT),
   };
 }

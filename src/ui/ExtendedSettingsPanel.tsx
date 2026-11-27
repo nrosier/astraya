@@ -1456,7 +1456,7 @@ export function ExtendedSettingsPanel({
                         value={String(draft.midpointTreeOrb)}
                         min={0}
                         max={10}
-                        step={0.5}
+                        step={0.25}
                         decreaseLabel={t.midpointTreeOrbDecreaseLabel}
                         increaseLabel={t.midpointTreeOrbIncreaseLabel}
                         onChange={(value) => {

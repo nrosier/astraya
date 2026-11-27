@@ -20,6 +20,7 @@ import {
   ACCOUNT_SETTINGS_MIGRATED_V2_KEY,
   LEGACY_ACCOUNT_SETTINGS_KEY,
   LEGACY_ACCOUNT_SETTINGS_V2_KEY,
+  LEGACY_PROFILE_KEY,
   accountCacheKey,
   bindAccountPreferences,
   completeLegacyMigration,
@@ -222,6 +223,22 @@ describe('the legacy device values (#1066, section 5, test 8)', () => {
     expect(getLocale()).toBe('nl');
     expect(readRulershipChoice()).toBe('both');
     expect(legacyCandidates()).toEqual({ locale: { value: 'nl' }, defaultRulership: { value: 'both' } });
+  });
+
+  // #2045: the legacy device profile is a live setting from before the midpoint orb change, so an untouched 1° moves
+  // to the new 0°15′ default and is written at the current register version; any other value is kept.
+  it.each([
+    [1, 0.25],
+    [2, 2],
+  ])('carries a legacy profile midpoint orb of %s over as %s (#2045)', (stored, expected) => {
+    const profile = {
+      version: 4,
+      settings: { ...DEFAULT_EXTENDED_SETTINGS, midpointTreeOrb: stored },
+      rulership: 'modern',
+    };
+    legacy({ [LEGACY_PROFILE_KEY]: JSON.stringify(profile) });
+    const candidate = legacyCandidates().defaultCalculationProfile?.value;
+    expect(candidate).toMatchObject({ version: 4, settings: { midpointTreeOrb: expected } });
   });
 
   it('captures nothing when no key was ever set', () => {

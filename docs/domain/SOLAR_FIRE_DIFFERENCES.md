@@ -8,10 +8,10 @@ Each section ends with its status: a choice Astraya keeps, or a change that is p
 
 ## Midpoint tree and dial orb
 
-- **Astraya:** 1°, measured on the dial scale, that is, in zodiac longitude folded onto the 90° dial (`dialSeparation` in `src/astrology/midpoints.ts`). The setting is "Midpoint tree orb".
+- **Astraya:** 0°15′ by default (#2045), measured on the dial scale, that is, in zodiac longitude folded onto the 90° dial (`dialSeparation` in `src/astrology/midpoints.ts`). The setting is "Midpoint tree orb", in steps of 0°15′. It was 1° before #2045.
 - **Solar Fire:** initially 1°00′, "measured in terms of a 360 degree circle, regardless of the modulus of the dial, so a 1 degree orb corresponds to 1/4 degree on the dial scale of a 90 degree dial, and to 1/8 degree on the dial scale of a 45 degree dial" (§17.3, text line 3940; printed p. 118, PDF page 121 of `SolarFireDeluxe_v6.pdf`).
-- **Effect:** the two numbers both read 1°, but on the 90° dial Astraya's orb is 4 times wider, so Astraya lists more midpoint hits. Solar Fire's initial orb corresponds to 0°15′ in Astraya's measure, but the settings control steps in 0.5°.
-- **Status:** to be changed to match Solar Fire, #2045 (owner decision on #2036, 2026-11-27).
+- **Effect:** the defaults now match: Astraya's 0°15′ on the dial is Solar Fire's 1°00′ on the circle. The numbers read differently because the two programs state the orb on different scales; to set Solar Fire's orb of x degrees, set Astraya's to x / 4.
+- **Status:** matched (#2045). Saved settings from before #2045 that still held the old 1° default read as 0°15′; any other saved value, and every snapshot (share links, calculation artifacts), keeps its stored orb (owner decision on #2045).
 
 ## Applying and separating to the angles
 

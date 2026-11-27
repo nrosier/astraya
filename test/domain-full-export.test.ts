@@ -121,8 +121,9 @@ describe('buildFullExport', () => {
     expect(empty).not.toHaveProperty('lifeEvents');
   });
 
-  it('keeps the export version at 4 after adding life events (#1399)', () => {
-    expect(FULL_EXPORT_VERSION).toBe(4);
+  // Life events were additive (still 4); #2045 then bumped it to 5 (reported on #2045).
+  it('keeps the export version at 5 after adding life events (#1399) and the midpoint orb change (#2045)', () => {
+    expect(FULL_EXPORT_VERSION).toBe(5);
   });
 
   it('omits the field when the person chose no stars (#860)', async () => {
