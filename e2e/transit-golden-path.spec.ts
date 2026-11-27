@@ -13,6 +13,7 @@ import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { EINSTEIN, MARIC, newSeededContext, openSharedPerson } from './shared-people.ts';
+import { setLanguage } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -201,6 +202,43 @@ test.describe('with the shared people (#799)', () => {
     await natal.getByRole('checkbox', { name: /Midheaven$/ }).check();
     await page.getByRole('button', { name: 'Apply', exact: true }).click();
     await checkFilter('Important plus Ascendant and Midheaven');
+  });
+
+  test('the filter and Export controls share one height on both tabs, at desktop and phone width, in en and nl (#2027)', async () => {
+    test.setTimeout(120_000);
+
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    for (const language of ['EN', 'NL'] as const) {
+      const nl = language === 'NL';
+      if (nl) await setLanguage(page, 'NL');
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.getByRole('link', { name: nl ? 'Transits & prognose' : 'Transits & Forecast', exact: true }).click();
+      for (const tab of nl ? ['Transits', 'Prognose'] : ['Transits', 'Forecast']) {
+        await page.setViewportSize({ width: 1280, height: 800 });
+        await page.getByRole('tab', { name: tab, exact: true }).click();
+        const filterButton = page.getByRole('button', {
+          name: nl ? 'Filters wijzigen' : 'Change filters',
+          exact: true,
+        });
+        const exportButton = page.getByRole('button', { name: nl ? 'Exporteren' : 'Export', exact: true });
+        for (const size of [
+          { width: 1280, height: 800 },
+          { width: 390, height: 844 },
+        ]) {
+          await page.setViewportSize(size);
+          await expect(filterButton).toBeVisible();
+          await expect(exportButton).toBeVisible();
+          const filterBox = await filterButton.boundingBox();
+          const exportBox = await exportButton.boundingBox();
+          if (filterBox === null || exportBox === null) throw new Error('a heading-row control has no box');
+          // Same height: one shared control-height token, and both labels on one line (a wrapped label is taller).
+          expect(
+            Math.abs(filterBox.height - exportBox.height),
+            `${language} ${tab} at ${String(size.width)}`,
+          ).toBeLessThan(0.5);
+        }
+      }
+    }
   });
 
   test('a person with an unknown birth time is told transits need one', async () => {

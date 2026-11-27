@@ -8619,6 +8619,23 @@ button.primitive-button-form-action {
   }
 }
 
+/* The Transits & Forecast filter trigger sits beside Export in the heading row (#1227), so it takes Export's size: the
+   compact height (the touch height on a coarse pointer), the same small text, and one line (#2027). It is a quiet
+   button, and `button.quiet` sets the standard height, so the selector matches that specificity and wins by order. */
+button.transit-filter-trigger {
+  min-height: var(--control-height-compact);
+  padding-inline: var(--control-padding-x-compact);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
+@media (pointer: coarse) {
+  button.transit-filter-trigger {
+    min-height: var(--control-height);
+    padding-inline: var(--control-padding-x);
+  }
+}
+
 .page-header-export-menu {
   position: absolute;
   top: 100%;
