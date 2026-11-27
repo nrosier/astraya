@@ -721,3 +721,92 @@ test('capture the #1853 and #1867 screens', async ({ browser }) => {
   await shoot(page, '75-cycles-retrograde-tooltip', showTooltip);
   await app.close();
 });
+
+/**
+ * #2029 and #2040: the Primary Directions Time key, now four options (Naibod, Ptolemy, Solar arc (RA), Natal solar rate),
+ * with its rate caption. #2045: the midpoint tree orb in Extended settings (Special points, advanced group open), its
+ * 0°15′ steps and the dial hint. English first, then Dutch, on a fresh page.
+ */
+test('capture the #2029, #2040 and #2045 screens', async ({ browser }) => {
+  test.setTimeout(600_000);
+  mkdirSync(OUT ?? '', { recursive: true });
+  process.env.LOG_LEVEL = 'silent';
+  const app = await build({ dbPath: join(mkdtempSync(join(tmpdir(), 'visual-review-')), 'astraya.db') });
+  await app.listen({ port: 0, host: '127.0.0.1' });
+  const address = app.server.address();
+  if (address === null || typeof address === 'string') throw new Error('server did not bind to a port');
+  const baseUrl = `http://127.0.0.1:${String(address.port)}`;
+  const page = await (await newSeededContext(browser, baseUrl)).newPage();
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+
+  // The phone shot is the whole page, taken from the top (see the #1834 block above).
+  const atTopOnPhone = async (scrollTo: () => Promise<void>): Promise<void> => {
+    if ((page.viewportSize()?.width ?? 0) <= 390) await page.evaluate('window.scrollTo(0, 0)');
+    else await scrollTo();
+    await page.waitForTimeout(300);
+  };
+
+  let natalUrl = '';
+  for (const language of ['EN', 'NL'] as const) {
+    const nl = language === 'NL';
+    if (nl) await setLanguage(page, 'NL');
+
+    // The Time key strip and its rate caption.
+    await page
+      .getByRole('link', { name: nl ? 'Progressies & directies' : 'Progressions & Directions', exact: true })
+      .first()
+      .click();
+    await page
+      .getByRole('tab', { name: nl ? 'Primaire directies (Placidus)' : 'Primary Directions (Placidus)', exact: true })
+      .click();
+    const controls = page.locator('.timing-controls');
+    await controls.first().waitFor({ timeout: 90_000 });
+    const showTimeKey = (): Promise<void> => atTopOnPhone(() => controls.first().scrollIntoViewIfNeeded());
+    await showTimeKey();
+    await shoot(page, nl ? '78-primary-directions-time-key-dutch' : '77-primary-directions-time-key', showTimeKey);
+
+    // The midpoint tree orb, in the Special points tab with its advanced group open. openNatalChart clicks the English
+    // Charts link, so the Dutch pass goes straight to the natal chart the English pass opened.
+    if (nl) await gotoAndSettle(page, natalUrl);
+    else {
+      await openNatalChart(page);
+      natalUrl = page.url();
+    }
+    const heading = page.getByRole('heading', {
+      name: nl ? 'Uitgebreide instellingen' : 'Extended settings',
+      exact: true,
+    });
+    const showMidpointOrb = async (): Promise<void> => {
+      if (!(await heading.isVisible())) {
+        const actions = page.getByRole('button', { name: nl ? 'Grafiekacties' : 'Chart actions', exact: true });
+        if (await actions.isVisible()) await actions.click();
+        await page.locator('button.extended-settings-trigger:visible').first().click();
+        await heading.waitFor({ state: 'visible' });
+      }
+      const tab = page.getByRole('tab', { name: nl ? 'Speciale punten' : 'Special points', exact: true });
+      if (await tab.isVisible()) await tab.click();
+      else await page.getByLabel(nl ? 'Categorie' : 'Category', { exact: true }).selectOption('special');
+      const group = page.getByRole('button', {
+        name: nl
+          ? /Geavanceerd: varianten, antiscia, declinatie, middelpuntenboom/
+          : /Advanced: variants, antiscia, declination, midpoint tree/,
+      });
+      if ((await group.getAttribute('aria-expanded')) !== 'true') await group.click();
+      await page
+        .getByLabel(nl ? 'Orb voor de middelpuntenboom' : 'Midpoint tree orb', { exact: true })
+        .scrollIntoViewIfNeeded();
+      await page.waitForTimeout(400);
+    };
+    await showMidpointOrb();
+    await shoot(
+      page,
+      nl ? '80-extended-settings-midpoint-orb-dutch' : '79-extended-settings-midpoint-orb',
+      showMidpointOrb,
+    );
+    await page.keyboard.press('Escape');
+    await heading.waitFor({ state: 'hidden' });
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+  }
+  await app.close();
+});
