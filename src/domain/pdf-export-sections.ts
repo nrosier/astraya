@@ -203,6 +203,8 @@ export interface PdfAstrocartographySectionOptions {
   readonly bodies: readonly BodyId[];
   readonly localSpace: boolean;
   readonly meanings: boolean;
+  /** The Fixed Stars toggle (#2018): when true, the map and its meanings carry the person's fixed-star lines. Unset or false leaves the PDF unchanged. */
+  readonly fixedStars?: boolean;
 }
 
 /** Eclipses' own place in the export: `EclipsesView.tsx`'s list over a year span, with natal

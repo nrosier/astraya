@@ -48,8 +48,8 @@ const en = {
   significatorsPickerLabel: 'Significators',
   promissorsPickerLabel: 'Promissors',
   angleLabels: { asc: 'Ascendant', mc: 'Midheaven', dsc: 'Descendant', ic: 'Imum Coeli' },
-  naibodKey: 'Naibod (0°59′08″ a year)',
-  ptolemyKey: 'Ptolemy (1° a year)',
+  naibodKey: 'Naibod',
+  ptolemyKey: 'Ptolemy',
   calculating: 'Calculating…',
   error: (message: string) => `Primary directions could not be calculated. ${message}`,
   undefinedAtLatitude:
@@ -70,6 +70,8 @@ const en = {
   activeCaption: (orb: string) => `Active at this age (within ${orb}° of arc)`,
   noActive: 'No direction is within orb at this age.',
   allCaption: 'All directions, by age',
+  keyRateCaption: 'Naibod 0°59′08″ a year · Ptolemy 1° a year',
+  trueSolarArcKey: 'Solar arc (RA)',
   noDirections: 'No directions within the lifetime window.',
 
   significatorLabel: 'Significator',
@@ -123,8 +125,8 @@ const nl: typeof en = {
   significatorsPickerLabel: 'Significatoren',
   promissorsPickerLabel: 'Promissors',
   angleLabels: { asc: 'Ascendant', mc: 'Hemelmidden', dsc: 'Descendant', ic: 'Imum Coeli' },
-  naibodKey: 'Naibod (0°59′08″ per jaar)',
-  ptolemyKey: 'Ptolemaeus (1° per jaar)',
+  naibodKey: 'Naibod',
+  ptolemyKey: 'Ptolemaeus',
   calculating: 'Berekenen…',
   error: (message: string) => `Primaire directies konden niet worden berekend. ${message}`,
   undefinedAtLatitude:
@@ -145,6 +147,8 @@ const nl: typeof en = {
   activeCaption: (orb: string) => `Actief op deze leeftijd (binnen ${orb}° boog)`,
   noActive: 'Geen enkele directie valt op deze leeftijd binnen orb.',
   allCaption: 'Alle directies, op leeftijd',
+  keyRateCaption: 'Naibod 0°59′08″ per jaar · Ptolemaeus 1° per jaar',
+  trueSolarArcKey: 'Zonneboog (RK)',
   noDirections: 'Geen directies binnen het levensvenster.',
 
   significatorLabel: 'Significator',

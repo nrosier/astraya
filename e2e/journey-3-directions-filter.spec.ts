@@ -68,16 +68,16 @@ test('the Primary Directions time key can be changed to Ptolemy and the arc for 
   const keyGroup = page.getByRole('radiogroup', { name: 'Time key', exact: true });
   const arcLine = page.getByText(/Arc for this age: /);
   await expect(arcLine).toBeVisible();
-  await expect(keyGroup.getByLabel('Naibod (0°59′08″ a year)', { exact: true })).toBeChecked();
+  await expect(keyGroup.getByLabel('Naibod', { exact: true })).toBeChecked();
   const naibodArc = await arcLine.textContent();
   const basis = page.locator('.page-header-basis');
   await expect(basis).toContainText(
     'Tropical · Placidus · Mean node · Naibod key · Placidus semi-arcs, in zodiaco · ±1° of arc',
   );
 
-  await keyGroup.getByLabel('Ptolemy (1° a year)', { exact: true }).check();
-  await expect(keyGroup.getByLabel('Ptolemy (1° a year)', { exact: true })).toBeChecked();
-  await expect(keyGroup.getByLabel('Naibod (0°59′08″ a year)', { exact: true })).not.toBeChecked();
+  await keyGroup.getByLabel('Ptolemy', { exact: true }).check();
+  await expect(keyGroup.getByLabel('Ptolemy', { exact: true })).toBeChecked();
+  await expect(keyGroup.getByLabel('Naibod', { exact: true })).not.toBeChecked();
   await expect(basis).toContainText('Ptolemy key');
 
   // The key drives the calculation, so the arc for the same age must change (Ptolemy is 1° a year, Naibod ~0.9856°).

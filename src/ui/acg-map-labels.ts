@@ -15,5 +15,6 @@ export function acgMapLabels(locale: Locale): AcgMapLabels {
     bodyName: (bodyKey) => bodyDisplayName(bodyKey, locale),
     kinds: { MC: 'MC', IC: 'IC', AC: 'AC', DC: 'DC' },
     legendKinds: { MC: t.mc, IC: t.ic, AC: t.ac, DC: t.dc, localSpace: t.localSpaceLegend },
+    fixedStars: t.fixedStars,
   };
 }

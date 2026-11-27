@@ -17,6 +17,7 @@ import {
   EMPTY_SELECTION,
   type PdfChartTable,
   type PdfPrimaryDirectionsSectionOptions,
+  type PdfAstrocartographySectionOptions,
   type PdfSelection,
 } from '../src/domain/pdf-export-sections.js';
 import { PrimaryDirectionKey } from '../src/domain/primary-directions.js';
@@ -929,6 +930,53 @@ describe('buildPdfPlan', () => {
     expect(fieldsSection.fields).toHaveLength(4);
     expect(fieldsSection.fields.every((field) => field.value.length > 0)).toBe(true);
   }, 30_000);
+
+  it('mirrors the Fixed Stars lines in the astrocartography map only when the option is on, and is unchanged otherwise (#2018)', async () => {
+    const provider = await getEngine();
+    const base = {
+      map: true,
+      lineTypes: ['MC', 'AC'] as const,
+      bodies: TRADITIONAL_ACG_BODY_IDS.slice(0, 2),
+      localSpace: false,
+      meanings: true,
+    };
+    const contextFor = (): PdfPlanContext => ({
+      person: ADA,
+      provider,
+      settings: DEFAULT_EXTENDED_SETTINGS,
+      rulership: DEFAULT_RULERSHIP_CHOICE,
+      locale: 'en',
+      corpusFetch,
+    });
+    const build = (astrocartography: PdfAstrocartographySectionOptions) =>
+      buildPdfPlan(
+        { personId: ADA.id, ...EMPTY_SELECTION, astrocartography },
+        contextFor(),
+        chartViewMessages.en,
+        pdfExportMessages.en,
+      );
+
+    const unset = await build({ ...base, lineTypes: [...base.lineTypes], bodies: [...base.bodies] });
+    const off = await build({ ...base, lineTypes: [...base.lineTypes], bodies: [...base.bodies], fixedStars: false });
+    const on = await build({ ...base, lineTypes: [...base.lineTypes], bodies: [...base.bodies], fixedStars: true });
+
+    const svgOf = (plan: Awaited<ReturnType<typeof buildPdfPlan>>): string => {
+      const chart = plan.sections[0];
+      if (chart?.kind !== 'chart') throw new Error('expected a chart section');
+      return chart.svg?.markup ?? '';
+    };
+    expect(unset.errors).toHaveLength(0);
+    expect(on.errors).toHaveLength(0);
+    // Unset and false are the same map, byte for byte, with no star lines.
+    expect(svgOf(off)).toBe(svgOf(unset));
+    // Count drawn star lines by their element attribute: the embedded stylesheet names the class too.
+    const drawnStarLines = (markup: string): number => markup.split('class="acg-star-line"').length - 1;
+    expect(drawnStarLines(svgOf(unset))).toBe(0);
+    // On carries star rows: the drawn star lines and the legend entry the screen draws.
+    expect(drawnStarLines(svgOf(on))).toBeGreaterThan(0);
+    expect(svgOf(on)).toContain('acg-legend-sample-star');
+    expect(on.sections).toHaveLength(unset.sections.length);
+  }, 60_000);
 
   it('skips astrocartography meanings when there are no bodies or line types chosen', async () => {
     const provider = await getEngine();
