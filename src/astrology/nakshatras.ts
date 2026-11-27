@@ -15,13 +15,20 @@
  * times across the 27 nakshatras. This is a fixed, universally documented
  * cycle, not something an ephemeris computes.
  *
+ * Source: R. K. Das, *A New Method on Birth Time Rectification* (2020,
+ * `das-a-new-method-on-birth-time-rectification-2020`): the 13°20' constellations
+ * and their four 3°20' padas (p. 23), the table of the 27 with their spans (p. 24),
+ * and the lords in the order above, each ruling nakshatras n, n+9 and n+18 (p. 70)
+ * (cited on owner decision, #2035). The English spellings of the names are
+ * Astraya's, not Das's.
+ *
  * Dashas and vargas are deliberately out of scope, per the issue.
  */
 
 /**
  * @module Nakshatras
  * @purpose Computes the 27 Vedic nakshatras (lunar mansions) and their padas for a sidereal longitude.
- * @conventions Each nakshatra spans exactly 360/27 = 13°20' of sidereal longitude, divided into four 3°20' padas, purely arithmetic (no live ephemeris dependency); nakshatra lords follow the fixed Vimshottari dasha sequence (Ketu, Venus, Sun, Moon, Mars, Rahu, Jupiter, Saturn, Mercury) repeated three times; dashas and vargas are deliberately out of scope.
+ * @conventions Each nakshatra spans exactly 360/27 = 13°20' of sidereal longitude, divided into four 3°20' padas (Das, A New Method on Birth Time Rectification, pp. 23-24), purely arithmetic (no live ephemeris dependency); nakshatra lords follow the fixed Vimshottari dasha sequence (Ketu, Venus, Sun, Moon, Mars, Rahu, Jupiter, Saturn, Mercury) repeated three times (Das, p. 70); dashas and vargas are deliberately out of scope.
  * @exports NAKSHATRAS, NAKSHATRA_SPAN, PADA_SPAN, nakshatraPosition
  */
 import type { Degrees } from '../ephemeris/types.js';

@@ -10,7 +10,7 @@
 /**
  * @module domain/chart-overview
  * @purpose One model of a chart's headline facts (big three, chart ruler, sect, element and modality balance, temperament, dominant planet, dispositor chain) shared by the consultation page, the Report and the PDF (#691).
- * @conventions Pure. Element and modality tallies count every computed position, one each, with ties going to the earlier element (fire, earth, air, water) or modality (cardinal, fixed, mutable). The angle-dependent facts (Ascendant, chart ruler, sect, dispositor chain) are undefined without a usable birth time.
+ * @conventions Pure. Element and modality tallies count every computed position, one each, with ties going to the earlier element (fire, earth, air, water) or modality (cardinal, fixed, mutable); the one-count-per-position tally and this tie-break are Astraya's own conventions (#2035). The angle-dependent facts (Ascendant, chart ruler, sect, dispositor chain) are undefined without a usable birth time.
  * @exports Temperament, OverviewPlacement, ChartOverview, ELEMENT_ORDER, MODALITY_ORDER, ELEMENT_TEMPERAMENT, dominantOf, chartOverview
  */
 import { bodyById } from '../astrology/bodies.js';
