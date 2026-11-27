@@ -9,6 +9,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `engine-error.ts` + `engine-error.messages.ts` — Calculation error text: the localised restart sentence after an ephemeris engine abort (#1856), otherwise the error's own message. Deps: `engine-error.messages`.
 - `online-status.ts` — Hook following the browser's online/offline state, so network-only actions can show the offline result state. Deps: none.
 - `note-autosave.ts` — Pure note autosave state machine (#919): idle, pending, saving, saved, savedLocal, error; 750 ms debounce constant. Deps: none.
+- `selection-actions-slot.ts` — Context for the split placement card's action-row slot, where Regenerate sits beside Clear (#2028). Deps: `react`.
 - `use-note-autosave.ts` — Hook over the note state machine (#919): debounced store `mutate`, localStorage journal keyed by database name, flush on pagehide/unmount/reconnect. Deps: `note-autosave`, `store/db`, `store/notes`, `store/store`.
 - `note-save.messages.ts` — en/nl save-state strings for notes (#919): Saving, Autosaved, Saved on this device, Could not save, over-limit message. Deps: none.
 - `note-save-line.ts` — Pure mapping from note autosave states to the save-state line and the combined state of several notes (#919). Deps: `note-autosave`.

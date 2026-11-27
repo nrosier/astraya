@@ -74,11 +74,27 @@ test('the placement card holds its AI interpretation: idle, generated with Regen
   const card = page.locator('.chart-isolation-panel');
   await expect(card.locator('.chart-isolation-head strong')).toHaveText('Saturn (Transit)');
 
-  // Idle: one card, the interpretation inside it below the facts, with no card of its own.
+  // Idle: one card, the interpretation inside it in the right column (#2028 owner spec; was below the facts), with no card of its own.
   await expect(page.locator('.focus-interpretation')).toHaveCount(1);
-  await expect(card.locator('.chart-isolation-extra .focus-interpretation-embedded')).toBeVisible();
+  await expect(card.locator('.chart-isolation-aside .focus-interpretation-embedded')).toBeVisible();
   const interpret = card.getByRole('button', { name: 'Interpret the tensions of this placement', exact: true });
   await expect(interpret).toBeEnabled();
+
+  // The split card (#2028, owner spec): at 1280 the AI block sits in the right column, pinned to the bottom right, and
+  // Clear sits at the top right.
+  const cardBox = await card.boundingBox();
+  const factsBox = await card.locator('.chart-isolation-main').boundingBox();
+  const interpretBox = await interpret.boundingBox();
+  const clearBox = await card.getByRole('button', { name: 'Clear', exact: true }).boundingBox();
+  if (cardBox === null || factsBox === null || interpretBox === null || clearBox === null) {
+    throw new Error('a card part has no box');
+  }
+  expect(interpretBox.x).toBeGreaterThan(factsBox.x + factsBox.width);
+  expect(cardBox.x + cardBox.width - (interpretBox.x + interpretBox.width)).toBeLessThan(40);
+  expect(clearBox.y).toBeLessThan(interpretBox.y);
+  // Signed in there is no sign-in hint, so the button is the block's last line and sits on the card's bottom padding.
+  expect(await card.getByText('Sign in to generate', { exact: false }).count()).toBe(0);
+  expect(cardBox.y + cardBox.height - (interpretBox.y + interpretBox.height)).toBeLessThan(40);
 
   // The void-of-course line, when there is one, follows the card rather than sitting inside it.
   const voc = page.locator('.void-of-course-summary');
@@ -98,6 +114,12 @@ test('the placement card holds its AI interpretation: idle, generated with Regen
   await expect(card.getByRole('heading', { name: 'AI interpretation', exact: true })).toBeVisible();
   const regenerate = card.getByRole('button', { name: 'Regenerate', exact: true });
   await expect(regenerate).toBeVisible();
+  // Regenerate and Clear side by side in the top-right action row (#2028, owner spec).
+  const regenerateBox = await regenerate.boundingBox();
+  const clearAfter = await card.getByRole('button', { name: 'Clear', exact: true }).boundingBox();
+  if (regenerateBox === null || clearAfter === null) throw new Error('an action has no box');
+  expect(Math.abs(regenerateBox.y - clearAfter.y)).toBeLessThan(1);
+  expect(regenerateBox.x).toBeLessThan(clearAfter.x);
   expect(requests).toBe(1);
 
   // Regenerate is a new request, so it asks for consent again; cancelling keeps the reading.
