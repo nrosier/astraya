@@ -60,6 +60,7 @@ import { formatFixed } from './format.js';
 import { judgeHoraryWithMotion, practitionerInputFor, type HoraryJudgment } from '../domain/horary-judgment.js';
 import { replaceRoute } from './nav-history.js';
 import { PageHeader } from './PageHeader.js';
+import { PlanetaryHourLine } from './PlanetaryHourLine.js';
 import { useCalculationBasisLine } from './calculation-basis.js';
 
 type Result =
@@ -302,6 +303,16 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
 
         {ready !== undefined && (
           <>
+            {/* The planetary day and hour of the question's moment and place (#2019; Lilly 1659, p. 356). */}
+            {provider !== undefined && (
+              <PlanetaryHourLine
+                provider={provider}
+                jd={ready.chart.jd}
+                latitude={ready.moment.coordinates.latitude}
+                longitude={ready.moment.coordinates.longitude}
+                locale={locale}
+              />
+            )}
             <h2>{t.considerationsHeading}</h2>
             {/* Every consideration is a verdict on this chart, so none exists before one is cast. */}
             {!ready.chart.housesAvailable && (
