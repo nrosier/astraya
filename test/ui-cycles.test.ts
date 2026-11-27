@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ASPECTS } from '../src/astrology/aspects.js';
+import { TROPICAL_YEAR_DAYS } from '../src/astrology/progressions.js';
 import type { MutualAspectEvent } from '../src/astrology/mutual-aspects.js';
 import { renderCycleDiagramSvg } from '../src/chart/cycle-diagram.js';
 import { CYCLE_ASPECT_KEYS, CYCLE_BODY_KEYS, CYCLE_PRESETS, cycleRows, filterByMotion } from '../src/ui/cycles.js';
@@ -39,7 +40,7 @@ describe('cycleRows', () => {
   it('gives the years since the previous row, and nothing for the first', () => {
     const rows = cycleRows([GREAT_2020, GREAT_2040]);
     expect(rows[0]?.yearsSincePrevious).toBeUndefined();
-    expect(rows[1]?.yearsSincePrevious).toBeCloseTo((GREAT_2040.jd - GREAT_2020.jd) / 365.2425, 9);
+    expect(rows[1]?.yearsSincePrevious).toBeCloseTo((GREAT_2040.jd - GREAT_2020.jd) / TROPICAL_YEAR_DAYS, 9);
     expect(rows[1]?.yearsSincePrevious).toBeCloseTo(20.84, 1);
   });
 

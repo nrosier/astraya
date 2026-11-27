@@ -21,7 +21,7 @@
  *   one sign per month starting from the year's own profected sign — so by the twelfth month
  *   the rotation has come back around to one sign before the *next* year's profection. Age is
  *   given as a single fractional-years number (`ageInYears` from `progressions.ts`, the same
- *   365.2425-day tropical year every other timing technique in this codebase already uses);
+ *   365.2422-day tropical year every other timing technique in this codebase already uses);
  *   the integer part selects the year, the fractional part split into twelfths selects the
  *   month within it.
  *

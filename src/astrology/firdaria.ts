@@ -18,6 +18,7 @@
  * @conventions Fixed period lengths per ruler (Sun 10, Venus 8, Mercury 13, Moon 9, Saturn 11, Jupiter 12, Mars 7, North Node 3, South Node 2 years — a 75-year cycle); the day/night order is the same seven-planet cycle rotated to start at the sect light, not two independently defined sequences. Planet periods split into seven equal sub-periods in the Sun-first order; node periods have none. Boundaries are half-open, so a boundary belongs to the later period or sub-period.
  * @exports FirdariaRulerKey, FirdariaPlanetKey, FIRDARIA_YEARS, FIRDARIA_DAY_ORDER, FIRDARIA_NIGHT_ORDER, FIRDARIA_SUB_ORDER, FIRDARIA_CYCLE_YEARS, FirdariaPeriod, FirdariaSubPeriod, firdariaPeriods, firdariaPeriodAt, firdariaSubPeriods, firdariaSubPeriodAt
  */
+import { TROPICAL_YEAR_DAYS } from './progressions.js';
 import type { Sect } from './sect.js';
 import type { JulianDayUT } from '../ephemeris/types.js';
 
@@ -77,7 +78,6 @@ export const FIRDARIA_SUB_ORDER: readonly FirdariaPlanetKey[] = [
   'mars',
 ];
 
-const TROPICAL_YEAR_DAYS = 365.2425;
 const SUB_PERIODS_PER_PERIOD = 7;
 
 /** The total length of one full firdaria cycle, in years — the sum of every ruler's own years. */

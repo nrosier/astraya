@@ -6,13 +6,14 @@
 import { describe, expect, it } from 'vitest';
 import { bodyByKey } from '../src/astrology/bodies.js';
 import {
+  RELEASING_MONTH_DAYS,
+  RELEASING_YEAR_DAYS,
   ZODIACAL_RELEASING_SIGN_YEARS,
   zodiacalReleasingPeriodAt,
   zodiacalReleasingPeriods,
   zodiacalReleasingSubperiods,
 } from '../src/astrology/zodiacal-releasing.js';
 
-const TROPICAL_YEAR_DAYS = 365.2425;
 const mars = bodyByKey('mars')?.id;
 const venus = bodyByKey('venus')?.id;
 if (mars === undefined || venus === undefined) throw new Error('fixture bug');
@@ -30,7 +31,23 @@ describe('zodiacalReleasingPeriods (#554)', () => {
     expect(periods[0]?.ruler).toBe(venus);
     expect(periods[0]?.years).toBe(8);
     expect(periods[0]?.startJd).toBe(0);
-    expect(periods[0]?.endJd).toBeCloseTo(8 * TROPICAL_YEAR_DAYS, 6);
+    expect(periods[0]?.endJd).toBeCloseTo(8 * RELEASING_YEAR_DAYS, 6);
+  });
+
+  it('uses Valens’ 360-day year: a 15-year Aries period lasts exactly 5400 days (#2033)', () => {
+    const periods = zodiacalReleasingPeriods(0, 0, 1); // 0 Aries, 15 years
+    expect(periods[0]?.years).toBe(15);
+    expect(periods[0]?.endJd).toBe(5400);
+    expect(RELEASING_YEAR_DAYS).toBe(360);
+  });
+
+  it('uses Valens’ 30-day months: the first Level-2 Aries subperiod lasts 450 days (#2033)', () => {
+    const parent = zodiacalReleasingPeriods(0, 0, 1)[0];
+    if (parent === undefined) throw new Error('fixture bug: missing Level-1 period');
+    const first = zodiacalReleasingSubperiods(parent)[0];
+    expect(first?.months).toBe(15);
+    expect(first?.endJd).toBe(450);
+    expect(RELEASING_MONTH_DAYS).toBe(30);
   });
 
   it('walks forward sign by sign, each period starting where the last ended', () => {
@@ -81,7 +98,7 @@ describe('zodiacalReleasingSubperiods (#554)', () => {
 
 describe('zodiacalReleasingPeriodAt (#554)', () => {
   it('finds the period covering a given moment', () => {
-    const found = zodiacalReleasingPeriodAt(35, 0, 10 * TROPICAL_YEAR_DAYS); // 10 years in: past Taurus (8y), into Gemini
+    const found = zodiacalReleasingPeriodAt(35, 0, 10 * RELEASING_YEAR_DAYS); // 10 years in: past Taurus (8y), into Gemini
     expect(found?.sign).toBe(2); // Gemini
   });
 

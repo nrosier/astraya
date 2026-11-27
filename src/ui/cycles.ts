@@ -10,6 +10,7 @@
  * @exports CYCLE_BODY_KEYS, CYCLE_ASPECT_KEYS, MotionFilter, CyclePreset, CYCLE_PRESETS, CycleRow, filterByMotion, cycleRows, bodyIdOf
  */
 import { bodyByKey } from '../astrology/bodies.js';
+import { TROPICAL_YEAR_DAYS } from '../astrology/progressions.js';
 import type { MutualAspectEvent } from '../astrology/mutual-aspects.js';
 import { SIGNS } from '../astrology/signs.js';
 import { civilFromJulianDay } from '../time/julian.js';
@@ -102,8 +103,6 @@ export interface CycleRow {
   readonly yearsSincePrevious: number | undefined;
 }
 
-const DAYS_PER_YEAR = 365.2425;
-
 function pad2(value: number): string {
   return String(value).padStart(2, '0');
 }
@@ -133,7 +132,7 @@ export function cycleRows(events: readonly MutualAspectEvent[]): readonly CycleR
       position: `${String(Math.floor(within / 60))}°${pad2(within % 60)}'`,
       retrogradeA: event.retrogradeA,
       retrogradeB: event.retrogradeB,
-      yearsSincePrevious: previous === undefined ? undefined : (event.jd - previous.jd) / DAYS_PER_YEAR,
+      yearsSincePrevious: previous === undefined ? undefined : (event.jd - previous.jd) / TROPICAL_YEAR_DAYS,
     };
   });
 }
