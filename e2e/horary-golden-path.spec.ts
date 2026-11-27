@@ -67,6 +67,11 @@ test('casting a horary chart shows the considerations before judgment and the ch
   // Every one says in words whether it applies, so colour is never the only cue.
   for (const item of await items.all()) await expect(item).toContainText(/Applies|Clear/);
   await expect(page.locator('.horary-verdict')).toBeVisible();
+  // The planetary day and hour of the question (#2019; Lilly 1659, p. 356): Friday 8 March 2024 is Venus's day, and
+  // London's sunrise (about 06:29 GMT) and sunset (about 17:50) put 12:00 in the sixth day hour, which is Mars's.
+  await expect(page.locator('.planetary-hour-line')).toHaveText(
+    'Planetary day of Venus, hour of Mars (day hour 6 of 12, Lilly).',
+  );
   await expect(page.locator('div.chart-wheel')).toBeVisible();
   // Cast in Regiomontanus by default: the chart's own header says which system was used.
   await expect(page.getByLabel('House system')).toHaveValue('R');

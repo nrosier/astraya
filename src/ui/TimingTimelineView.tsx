@@ -61,6 +61,7 @@ import { timingTimelineViewMessages } from './TimingTimelineView.messages.js';
 import { timelineSubjectLabel } from './timing-timeline-labels.js';
 import { useLocale } from './locale.js';
 import { PageHeader } from './PageHeader.js';
+import { PlanetaryHourLine } from './PlanetaryHourLine.js';
 import { useCalculationBasisLine } from './calculation-basis.js';
 import { orbsOf, toChartCalculationOptions } from '../chart/extended-settings.js';
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
@@ -360,6 +361,18 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
                 }}
               />
               <p className="hint">{t.targetLine(dateLabel(load.centreJd))}</p>
+              {/* The planetary day and hour at the centre date, read at 12:00 UT (the timeline's own centre moment) at the
+                  person's birthplace (#2019, owner decision 2026-11-27). */}
+              {provider !== undefined && person.moment !== undefined && (
+                <PlanetaryHourLine
+                  provider={provider}
+                  jd={load.centreJd}
+                  latitude={person.moment.coordinates.latitude}
+                  longitude={person.moment.coordinates.longitude}
+                  locale={locale}
+                  at={t.centreMoment(dateLabel(load.centreJd))}
+                />
+              )}
               {rigidAngleNote && <p className="hint">{t.progressedAnglesRigidNote}</p>}
             </section>
 
