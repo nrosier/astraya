@@ -39,6 +39,7 @@ Pure astrological calculation (no DOM/React): bodies, aspects, houses, dignities
 - `orb-profiles.ts` — Named/versioned orb presets over `aspects.ts`'s `OrbConfig`, the synastry scale offset, the per-context orb rule, and validation of per-aspect/per-body orb rules (#590). Deps: `aspects`, `bodies`, `transit-importance`.
 - `orb-library.ts` — The device's named, revisioned orb profiles and each context's choice of orb source (card or a profile), pure and validated as a whole (#590). Deps: `orb-profiles`.
 - `planetary-condition.ts` — Traditional condition (sect alignment, angularity, hayz, motion, besiegement) for the seven classical planets. Deps: `bodies`, `aspects`, `signs`, `sect`.
+- `planetary-hours.ts` — Planetary day and hour from Lilly p. 356, on the engine's sunrise and sunset (#2019). Deps: `ephemeris/types`.
 - `planetary-returns.ts` — Return search (any body), demibirthday, progressed-lunar-return. Deps: `minor-progressions`, `progressions`, `ephemeris/generated-constants`.
 - `primary-directions.ts` — Primary directions engine (Placidus semi-arcs; direct and converse; in zodiaco at latitude 0 or in mundo with body latitude; Naibod/Ptolemy fixed keys plus true-solar-arc via a SolarArcClock; Makransky rev. ed. 1992, Gansten 2009 ch. 1). Deps: `aspects`, `progressions`.
 - `profections.ts` — Annual/monthly profections (Hellenistic house-per-year). Deps: `signs`.

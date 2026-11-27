@@ -19,6 +19,7 @@ import type { TransitAspectEvent } from '../astrology/transit-events.js';
 import type { StationEvent } from '../astrology/stations.js';
 import type { ReleasingPeriod, ReleasingSubperiod } from '../astrology/zodiacal-releasing.js';
 import { SIGNS } from '../astrology/signs.js';
+import { TROPICAL_YEAR_DAYS } from '../astrology/progressions.js';
 import type { JulianDayUT } from '../ephemeris/types.js';
 import type { PrimaryDirection } from './primary-directions.js';
 import type { ProfectionData } from './profections.js';
@@ -191,8 +192,6 @@ export function firdariaPeriodsToTimelineEvents(periods: readonly FirdariaPeriod
     sourceModule: 'astrology/firdaria',
   }));
 }
-
-const TROPICAL_YEAR_DAYS = 365.2425;
 
 /**
  * One `ProfectionData` snapshot (#168, computed for a single target moment) as the pair of timeline events — year

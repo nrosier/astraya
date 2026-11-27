@@ -3,6 +3,7 @@
  * order of the circles from the Sun (Bonatti, Tr. 9, ch. 3, p. 1387). Pure math, no ephemeris.
  */
 import { describe, expect, it } from 'vitest';
+import { TROPICAL_YEAR_DAYS } from '../src/astrology/progressions.js';
 import {
   FIRDARIA_SUB_ORDER,
   FIRDARIA_YEARS,
@@ -13,7 +14,6 @@ import {
 import type { FirdariaPeriod } from '../src/astrology/firdaria.js';
 import type { JulianDayUT } from '../src/ephemeris/types.js';
 
-const TROPICAL_YEAR_DAYS = 365.2425;
 const FROM_JD = 2451545.0 as JulianDayUT;
 
 describe('firdariaSubPeriods (#1796)', () => {

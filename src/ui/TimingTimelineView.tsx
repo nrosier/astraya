@@ -6,7 +6,7 @@
  */
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { firdariaPeriods } from '../astrology/firdaria.js';
-import { progressedAnglesKeepRigidShift } from '../astrology/progressions.js';
+import { progressedAnglesKeepRigidShift, TROPICAL_YEAR_DAYS } from '../astrology/progressions.js';
 import { zodiacalReleasingPeriods, zodiacalReleasingSubperiods } from '../astrology/zodiacal-releasing.js';
 import { computeChartData } from '../domain/chart-compute.js';
 import { computeProfections } from '../domain/profections.js';
@@ -71,7 +71,6 @@ type Load =
   | { readonly kind: 'ready'; readonly events: readonly TimingTimelineEvent[]; readonly centreJd: number }
   | { readonly kind: 'error'; readonly message: string };
 
-const YEAR_DAYS = 365.2425;
 /** The ranges the header offers: years either side of the centre date (#1237). */
 const BODY_GROUPS = ['all', 'major', 'minor'] as const satisfies readonly TimelineBodyGroup[];
 
@@ -197,7 +196,7 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
     };
   }, [asOf, person?.moment, fixedStars, provider, target, personSettings, settingsUnreadable]);
 
-  const halfWindow = YEAR_DAYS * Number(range);
+  const halfWindow = TROPICAL_YEAR_DAYS * Number(range);
   const fromJd = load.kind === 'ready' ? load.centreJd - halfWindow : 0;
   const toJd = load.kind === 'ready' ? load.centreJd + halfWindow : 0;
   // The tracks in the window, minus those the technique filter hides: the chart and the table both read this.

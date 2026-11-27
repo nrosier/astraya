@@ -18,6 +18,7 @@
 import { aspectByKey } from '../astrology/aspects.js';
 import { bodyById, bodyByKey } from '../astrology/bodies.js';
 import { findExactTransitAspects, targetLongitudes } from '../astrology/transit-events.js';
+import { TROPICAL_YEAR_DAYS } from '../astrology/progressions.js';
 import { transitPreset } from '../astrology/transit-importance.js';
 import type { BodyPosition, Degrees, EphemerisProvider, HousePositions, JulianDayUT } from '../ephemeris/types.js';
 
@@ -39,8 +40,6 @@ export const ANGLE_TRANSIT_SEARCH_YEARS = 3;
 
 /** A slow body moves well under a degree in five days, so no crossing of one target is missed between samples. */
 const SAMPLE_STEP_DAYS = 5;
-
-const YEAR_DAYS = 365.2425;
 
 function signedDelta(from: Degrees, to: Degrees): Degrees {
   const raw = (((to - from) % 360) + 360) % 360;
@@ -128,8 +127,8 @@ export async function exactPassDates<K>(
     provider,
     bodies,
     targets,
-    nowJd - ANGLE_TRANSIT_SEARCH_YEARS * YEAR_DAYS,
-    nowJd + ANGLE_TRANSIT_SEARCH_YEARS * YEAR_DAYS,
+    nowJd - ANGLE_TRANSIT_SEARCH_YEARS * TROPICAL_YEAR_DAYS,
+    nowJd + ANGLE_TRANSIT_SEARCH_YEARS * TROPICAL_YEAR_DAYS,
     { sampleStepDays: SAMPLE_STEP_DAYS },
   );
   return queries.map((query) =>
