@@ -116,21 +116,36 @@ function keyGroup(container: HTMLElement): Element {
 }
 
 describe('primary directions key selector (#1795)', () => {
+  // #2040 added a fourth key, so the count changed from 3 to 4 (reported on #2040); the third is still the true solar arc.
   it.each([
-    ['en', 'Solar arc (RA)'],
-    ['nl', 'Zonneboog (RK)'],
+    ['en', 'Solar arc (RA)', 'Natal solar rate'],
+    ['nl', 'Zonneboog (RK)', 'Natale zonnesnelheid'],
   ] as const)(
-    'offers three keys and the third is the true solar arc in %s',
-    async (locale, label) => {
+    'offers four keys: the third is the true solar arc and the fourth the natal solar rate in %s',
+    async (locale, label, natalRateLabel) => {
       setLocale(locale);
       const container = mount();
       await untilSettled(container);
       const labels = Array.from(keyGroup(container).querySelectorAll('label')).map((node) => node.textContent.trim());
-      expect(labels).toHaveLength(3);
+      expect(labels).toHaveLength(4);
       expect(labels[2]).toBe(label);
+      expect(labels[3]).toBe(natalRateLabel);
     },
     90_000,
   );
+
+  it('passes NATAL_SOLAR_RATE to the calculation when the fourth key is chosen (#2040)', async () => {
+    setLocale('en');
+    const container = mount();
+    await untilSettled(container);
+    const radio = keyGroup(container).querySelectorAll<HTMLInputElement>('input[type="radio"]')[3];
+    if (radio === undefined) throw new Error('test fixture bug: no fourth key radio');
+    act(() => {
+      radio.click();
+    });
+    await untilSettled(container);
+    expect(generated.keys.at(-1)).toBe('natal-solar-rate');
+  }, 90_000);
 
   it('passes TRUE_SOLAR_ARC to the calculation when the third key is chosen', async () => {
     const container = mount();

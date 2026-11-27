@@ -579,12 +579,14 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
                   value: PrimaryDirectionKey.TRUE_SOLAR_ARC,
                   label: t.trueSolarArcKey,
                 },
+                { value: PrimaryDirectionKey.NATAL_SOLAR_RATE, label: t.natalSolarRateKey },
               ]}
               segmented
               showLabel
               onChange={(value) => {
                 if (value === PrimaryDirectionKey.PTOLEMY) setKey(PrimaryDirectionKey.PTOLEMY);
                 else if (value === PrimaryDirectionKey.TRUE_SOLAR_ARC) setKey(PrimaryDirectionKey.TRUE_SOLAR_ARC);
+                else if (value === PrimaryDirectionKey.NATAL_SOLAR_RATE) setKey(PrimaryDirectionKey.NATAL_SOLAR_RATE);
                 else setKey(PrimaryDirectionKey.NAIBOD);
               }}
             />

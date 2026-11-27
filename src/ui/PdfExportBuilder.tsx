@@ -104,11 +104,12 @@ type BuildStatus =
 
 type Draft = Omit<PdfSelection, 'personId'>;
 
-/** The three time keys the page offers (#1795), in the page's own order. */
+/** The four time keys the page offers (#1795, #2040), in the page's own order. */
 const PRIMARY_DIRECTION_KEYS: readonly PrimaryDirectionKey[] = [
   PrimaryDirectionKey.NAIBOD,
   PrimaryDirectionKey.PTOLEMY,
   PrimaryDirectionKey.TRUE_SOLAR_ARC,
+  PrimaryDirectionKey.NATAL_SOLAR_RATE,
 ];
 
 /** The two direction modes the page offers. */

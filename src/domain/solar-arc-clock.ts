@@ -2,7 +2,8 @@
  * @module domain/solar-arc-clock
  * @purpose True Solar Arc clock (#1795): the Sun's right ascension travelled since birth, sampled from the ephemeris, so that one day after birth stands for one year of life (Makransky rev. ed. 1992, pp. 28-30, Placidus' method).
  * @conventions Samples the Sun's RA (`equatorial: true`, the RA is returned in the `longitude` field) at `birthJd + d` for whole days d = 0..SOLAR_ARC_CLOCK_MAX_DAYS, unwraps across 360 degrees, and interpolates linearly between samples. Days beyond the sampled span throw `RangeError`; nothing is extrapolated. All ephemeris access goes through `EphemerisProvider`. The sampling span is the default maximum age (100 years) plus a 10-year margin, the same span the primary-directions window uses.
- * @exports SOLAR_ARC_CLOCK_MAX_DAYS, createSolarArcClock
+ * The Natal Solar Rate clock (#2040) is the straight line at the Sun's speed in right ascension at birth (Solar Fire Deluxe guide §30.3.2.3).
+ * @exports SOLAR_ARC_CLOCK_MAX_DAYS, createSolarArcClock, createNatalSolarRateClock
  */
 import { bodyByKey } from '../astrology/bodies.js';
 import type { SolarArcClock } from '../astrology/primary-directions.js';
@@ -69,4 +70,25 @@ export async function createSolarArcClock(provider: EphemerisProvider, birthJd: 
   };
 
   return { arcAfterDays, daysForArc };
+}
+
+/**
+ * The Natal Solar Rate clock (#2040; Solar Fire Deluxe guide §30.3.2.3: "the natal Sun's rate of
+ * motion in R.A. for each year of life"): one year of life for each day's right-ascension motion
+ * of the Sun at birth, a constant rate for the whole life. The rate is the ephemeris's own speed
+ * in right ascension at the birth moment, in degrees per day. It runs over any span, since it is
+ * a straight line; a negative arc or age is not asked of it (`arcToYears` takes the absolute arc).
+ */
+export async function createNatalSolarRateClock(
+  provider: EphemerisProvider,
+  birthJd: JulianDayUT,
+): Promise<SolarArcClock> {
+  const sun = bodyByKey('sun');
+  if (sun === undefined) throw new Error('unreachable: the Sun is always in BODIES');
+  const [position] = await provider.positions(birthJd, [sun.id], { equatorial: true });
+  if (position === undefined) throw new Error('no Sun position at birth');
+  // With `equatorial`, the longitude-speed field is the speed in right ascension.
+  const rate = position.longitudeSpeed;
+  if (!(rate > 0)) throw new RangeError(`the Sun's speed in right ascension must be positive, got ${String(rate)}`);
+  return { arcAfterDays: (days) => days * rate, daysForArc: (arc) => arc / rate };
 }
