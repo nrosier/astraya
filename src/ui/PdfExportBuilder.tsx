@@ -128,10 +128,18 @@ function withRequestedSection(
   selection: Draft,
   section: ExportBuilderSection | undefined,
   view: ChartViewKind | undefined,
+  fixedStars: boolean | undefined,
 ): Draft {
   if (section === undefined) return selection;
+  // The page's Fixed Stars toggle (#2018) carries over only as the link's flag; nothing is stored.
   if (section === 'astrocartography')
-    return { ...selection, astrocartography: defaultAstrocartographySectionOptions() };
+    return {
+      ...selection,
+      astrocartography: {
+        ...defaultAstrocartographySectionOptions(),
+        ...(fixedStars === true ? { fixedStars: true } : {}),
+      },
+    };
   if (!(PDF_CHART_TYPES as readonly string[]).includes(section)) return selection;
   // The page's own view (#915) sets the wheel and the tables, so the creator matches what is on screen.
   // Without a view the chart keeps its full default, as before.
@@ -178,6 +186,7 @@ export function PdfExportBuilder({
   personId: requestedPersonId,
   section,
   view,
+  fixedStars,
 }: {
   /** The person a page's "Export PDF" link asked for (#915); used when that person exists, else the usual starting point. */
   readonly personId?: string | undefined;
@@ -185,6 +194,8 @@ export function PdfExportBuilder({
   readonly section?: ExportBuilderSection | undefined;
   /** The view the page was showing (#915): the chart section takes that view's tables, so the creator matches the screen. */
   readonly view?: ChartViewKind | undefined;
+  /** The page's Fixed Stars toggle (#2018) when its link carried it: the map starts with the star lines. */
+  readonly fixedStars?: boolean | undefined;
 } = {}): React.JSX.Element {
   const t = useMessages(pdfExportMessages);
   const ct = useMessages(chartViewMessages);
@@ -215,6 +226,7 @@ export function PdfExportBuilder({
       },
       section,
       view,
+      fixedStars,
     ),
   );
   const [status, setStatus] = useState<BuildStatus>({ kind: 'idle' });

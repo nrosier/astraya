@@ -11,14 +11,16 @@
 /**
  * @module astrocartography
  * @purpose Computes astrocartography (ACG) lines, Local Space lines, and relocated houses for a natal chart (#171).
- * @conventions Pure async `(inputs, provider, options) => Promise<StructuredData>`, no rendering; ARMC is sampled at longitude 0 to avoid the Placidus polar-house fallback.
- * @exports TRADITIONAL_ACG_BODY_IDS, EXTENDED_ACG_BODY_IDS, computeAstrocartography, AstrocartographyOptions, AstrocartographyData, AcgLine
+ * @conventions Pure async `(inputs, provider, options) => Promise<StructuredData>`, no rendering; ARMC is sampled at longitude 0 to avoid the Placidus polar-house fallback. Fixed-star lines (#2018) are a separate, opt-in field (`options.fixedStars`, default none), never part of `AcgLine`, so the planetary output is identical with the option absent; stars are read tropical and equatorial at the natal instant, as the paran table reads them.
+ * @exports TRADITIONAL_ACG_BODY_IDS, EXTENDED_ACG_BODY_IDS, computeAstrocartography, AstrocartographyOptions, AstrocartographyData, AcgLine, AcgStarRef, AcgFixedStar
  */
 import {
+  fixedStarLines,
   horizonLine,
   localSpaceLine,
   meridianLine,
   type AcgSamplingOptions,
+  type FixedStarLine,
   type GreatCircleSamplingOptions,
   type HorizonLine,
   type LocalSpaceLine,
@@ -58,6 +60,21 @@ const DEFAULT_LINE_TYPES: readonly ('MC' | 'IC' | 'AC' | 'DC')[] = ['MC', 'IC', 
 
 export type AcgLine = MeridianLine | HorizonLine;
 
+/** A fixed star to draw: the key it is labelled by (as in `ChartData.fixedStars`) and the identifier the engine is asked for. */
+export interface AcgStarRef {
+  readonly key: string;
+  readonly id: string;
+}
+
+/** One star's map lines with the equatorial position they were derived from (the tooltip shows it). */
+export interface AcgFixedStar {
+  readonly star: string;
+  /** Degrees, tropical, of date. */
+  readonly rightAscension: number;
+  readonly declination: number;
+  readonly lines: readonly FixedStarLine[];
+}
+
 export interface AstrocartographyOptions {
   /** Default `TRADITIONAL_ACG_BODY_IDS`. */
   readonly bodies?: readonly BodyId[];
@@ -65,6 +82,8 @@ export interface AstrocartographyOptions {
   readonly lineTypes?: readonly ('MC' | 'IC' | 'AC' | 'DC')[];
   /** Default `false`. */
   readonly localSpace?: boolean;
+  /** Stars to draw lines for (#2018), the paran star list. Default none: no fixed-star lines are computed. */
+  readonly fixedStars?: readonly AcgStarRef[];
   readonly sampling?: AcgSamplingOptions;
   readonly localSpaceSampling?: GreatCircleSamplingOptions;
   readonly relocationPlace?: GeoPosition;
@@ -77,6 +96,8 @@ export interface AstrocartographyData {
   readonly natalPlace: GeoPosition;
   readonly lines: readonly AcgLine[];
   readonly localSpaceLines: readonly LocalSpaceLine[];
+  /** Fixed-star lines per star (#2018). Absent unless `options.fixedStars` named at least one star. */
+  readonly fixedStarLines?: readonly AcgFixedStar[];
   /** Houses recomputed at `options.relocationPlace` for the same natal instant. Absent unless a relocation place was given. */
   readonly relocatedHouses?: HousePositions;
 }
@@ -123,6 +144,20 @@ export async function computeAstrocartography(
     );
   }
 
+  const starRefs = options.fixedStars ?? [];
+  const fixedStarData: AcgFixedStar[] = await Promise.all(
+    starRefs.map(async (ref) => {
+      const position = await provider.fixedStar(natalJd, ref.id, { equatorial: true });
+      const point = { rightAscension: position.longitude, declination: position.latitude };
+      return {
+        star: ref.key,
+        rightAscension: point.rightAscension,
+        declination: point.declination,
+        lines: fixedStarLines(ref.key, point, armc0, options.sampling),
+      };
+    }),
+  );
+
   const relocatedHouses =
     options.relocationPlace === undefined
       ? undefined
@@ -133,6 +168,7 @@ export async function computeAstrocartography(
     natalPlace,
     lines,
     localSpaceLines,
+    ...(fixedStarData.length === 0 ? {} : { fixedStarLines: fixedStarData }),
     ...(relocatedHouses === undefined ? {} : { relocatedHouses }),
   };
 }

@@ -53,6 +53,7 @@ import { buildChartArtifact } from './chart-artifact.js';
 import {
   housesAreDefined,
   computeChartData,
+  starLookups,
   type ChartCalculationOptions,
   type ChartData,
 } from '../domain/chart-compute.js';
@@ -1452,6 +1453,11 @@ async function buildProfectionsSectionPlan(
   return sections;
 }
 
+/** The fixed-star refs the Fixed Stars toggle draws (#2018), derived as `AstrocartographyView.tsx` derives them. */
+function pdfFixedStarRefs(chosen: Person['fixedStars']): readonly { readonly key: string; readonly id: string }[] {
+  return starLookups(chosen).map((star) => ({ key: star.key, id: star.id }));
+}
+
 /** The Astrocartography section's own place in the export: `AstrocartographyView.tsx`'s world map
  * and its per-body/line meanings. No "as of" date — a natal ACG map is time-invariant (#441). */
 async function buildAstrocartographySectionPlan(
@@ -1465,6 +1471,7 @@ async function buildAstrocartographySectionPlan(
     bodies: options.bodies,
     lineTypes: options.lineTypes,
     localSpace: options.localSpace,
+    ...(options.fixedStars === true ? { fixedStars: pdfFixedStarRefs(person.fixedStars) } : {}),
   });
   const heading = `${pt.astrocartographyLabel}${person.displayName === '' ? '' : ` — ${person.displayName}`}`;
 
@@ -1475,6 +1482,7 @@ async function buildAstrocartographySectionPlan(
     const input: AcgMapInput = {
       lines: data.lines,
       localSpaceLines: data.localSpaceLines,
+      ...(data.fixedStarLines === undefined ? {} : { fixedStarLines: data.fixedStarLines }),
       natalPlace: data.natalPlace,
       coastline: COASTLINE_110M_PATH,
     };
