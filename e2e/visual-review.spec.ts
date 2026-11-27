@@ -8,6 +8,7 @@
  *
  * A screen's slug in the JSON must have a step below that opens it. Add the step when a screen is added to the review.
  */
+import { randomBytes } from 'node:crypto';
 import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -16,7 +17,7 @@ import type { Page } from '@playwright/test';
 import { build } from '../server/index.ts';
 import { measureCards } from '../scripts/measure-cards.mjs';
 import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
-import { choosePill, gotoAndSettle, openChart, openNatalChart, setLanguage } from './support.ts';
+import { choosePill, gotoAndSettle, openChart, openNatalChart, setLanguage, signIn } from './support.ts';
 
 const OUT = process.env.VISUAL_REVIEW_OUT;
 const SIZES = [
@@ -808,5 +809,131 @@ test('capture the #2029, #2040 and #2045 screens', async ({ browser }) => {
     await heading.waitFor({ state: 'hidden' });
     await openSharedPerson(page, baseUrl, EINSTEIN);
   }
+  await app.close();
+});
+
+/**
+ * #2027 (the Transits & Forecast filter control at Export's height), #2028 (one placement card with its AI interpretation,
+ * idle and with a reading), #2018 (the astrocartography map with Fixed Stars on) and #2019 (the planetary day and hour
+ * line on Horary and on the Timing timeline). Signed in as a bootstrapped user, with the generate endpoint stubbed so no
+ * model is called (ADR 0003).
+ */
+test('capture the #2018, #2019, #2027 and #2028 screens', async ({ browser }) => {
+  test.setTimeout(900_000);
+  mkdirSync(OUT ?? '', { recursive: true });
+  process.env.LOG_LEVEL = 'silent';
+  const token = 'visual-review-bootstrap-token';
+  process.env.ASTRAYA_BOOTSTRAP_TOKEN = token;
+  process.env.ASTRAYA_ENCRYPTION_KEY = randomBytes(32).toString('base64');
+  const app = await build({ dbPath: join(mkdtempSync(join(tmpdir(), 'visual-review-')), 'astraya.db') });
+  await app.listen({ port: 0, host: '127.0.0.1' });
+  const address = app.server.address();
+  if (address === null || typeof address === 'string') throw new Error('server did not bind to a port');
+  const baseUrl = `http://127.0.0.1:${String(address.port)}`;
+  const setup = await app.inject({
+    method: 'POST',
+    url: '/api/setup',
+    payload: { token, username: 'visual-review', password: 'correct-horse-battery-review' },
+  });
+  if (setup.statusCode >= 400) throw new Error(`setup failed: ${String(setup.statusCode)}`);
+  delete process.env.ASTRAYA_BOOTSTRAP_TOKEN;
+  delete process.env.ASTRAYA_ENCRYPTION_KEY;
+
+  const page = await (await newSeededContext(browser, baseUrl)).newPage();
+  await page.setViewportSize({ width: 1280, height: 800 });
+  const atTop = async (): Promise<void> => {
+    await page.evaluate('window.scrollTo(0, 0)');
+    await page.waitForTimeout(300);
+  };
+
+  // #2027: the heading rows, signed out, on both tabs.
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).first().click();
+  await page.getByRole('tab', { name: 'Transits', exact: true }).click();
+  await page.getByRole('table', { name: 'Contacts' }).waitFor({ timeout: 60_000 });
+  await shoot(page, '81-transits-heading-controls', atTop);
+  await page.getByRole('tab', { name: 'Forecast', exact: true }).click();
+  await page.getByRole('heading', { name: 'Daily', level: 2 }).waitFor({ timeout: 60_000 });
+  await shoot(page, '82-forecast-heading-controls', atTop);
+
+  // #2028: the placement card, idle (signed out, so the button gives its sign-in reason).
+  await page.getByRole('tab', { name: 'Transits', exact: true }).click();
+  await page.locator('div.chart-wheel').waitFor({ timeout: 60_000 });
+  const saturn = page.locator('div.chart-wheel .chart-point[data-body="saturn"][data-ring="1"] .chart-hit-area');
+  const card = page.locator('.chart-isolation-panel');
+  const showCard = async (): Promise<void> => {
+    if ((await card.count()) === 0) await saturn.click();
+    await card.waitFor({ state: 'visible' });
+    if ((page.viewportSize()?.width ?? 0) <= 390) await atTop();
+    else await card.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(300);
+  };
+  await showCard();
+  await shoot(page, '83-transits-placement-card-idle', showCard);
+
+  // #2028: the same card with a reading, signed in, the reading stubbed.
+  await page.route('**/api/interpretation/generate', async (route) => {
+    await route.fulfill({
+      json: {
+        sections: [
+          {
+            heading: 'Saturn under pressure',
+            body: 'A sample reading for the visual review: two or three sentences so the card shows how prose sits inside it, below the aspect list, with the Regenerate button above it.',
+          },
+        ],
+      },
+    });
+  });
+  await signIn(page, 'visual-review', 'correct-horse-battery-review');
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).first().click();
+  await page.getByRole('tab', { name: 'Transits', exact: true }).click();
+  await page.locator('div.chart-wheel').waitFor({ timeout: 60_000 });
+  await showCard();
+  await card.getByRole('button', { name: 'Interpret the tensions of this placement', exact: true }).click();
+  await card.getByRole('checkbox').check();
+  await card.getByRole('button', { name: 'Confirm & send', exact: true }).click();
+  await card.locator('.tier2-result').waitFor({ timeout: 30_000 });
+  await shoot(page, '84-transits-placement-card-generated', showCard);
+
+  // #2018: the astrocartography map with Fixed Stars on.
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  const menu = page.getByRole('button', { name: 'Menu', exact: true });
+  if (await menu.isVisible()) await menu.click();
+  await page.getByRole('link', { name: 'Astrocartography', exact: true }).click();
+  await page.locator('div.acg-map svg').waitFor({ timeout: 60_000 });
+  const pill = page.getByRole('button', { name: 'Fixed Stars', exact: true });
+  const showStars = async (): Promise<void> => {
+    if ((await pill.getAttribute('aria-pressed')) !== 'true') await pill.click();
+    await page.locator('div.acg-map .acg-star-line').first().waitFor({ state: 'attached' });
+    await atTop();
+  };
+  await showStars();
+  await shoot(page, '85-astrocartography-fixed-stars', showStars);
+
+  // #2019: the planetary day and hour on Horary (London, Friday 8 March 2024, 12:00) and on the Timing timeline.
+  await gotoAndSettle(page, `${baseUrl}/#/explore/horary`);
+  await page.getByLabel('Date the question was asked').fill('2024-03-08');
+  await page.getByLabel('Local time').fill('12:00');
+  await page.getByLabel('Latitude', { exact: true }).fill('51.5072');
+  await page.getByLabel('Longitude', { exact: true }).fill('-0.1276');
+  await page.getByRole('button', { name: 'Cast chart', exact: true }).click();
+  const line = page.locator('.planetary-hour-line');
+  await line.waitFor({ timeout: 60_000 });
+  const showLine = async (): Promise<void> => {
+    if ((page.viewportSize()?.width ?? 0) <= 390) await atTop();
+    else await line.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(300);
+  };
+  await showLine();
+  await shoot(page, '86-horary-planetary-hour', showLine);
+
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  await page.getByRole('link', { name: 'Progressions & Directions', exact: true }).first().click();
+  await page.getByRole('tab', { name: 'Timing timeline', exact: true }).click();
+  await page.locator('.gantt').first().waitFor({ timeout: 90_000 });
+  await line.waitFor({ timeout: 60_000 });
+  await showLine();
+  await shoot(page, '87-timeline-planetary-hour', showLine);
   await app.close();
 });
