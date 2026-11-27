@@ -7423,6 +7423,18 @@ svg text.chart-symbol-text-unicode {
   display: inline;
 }
 
+/* Time key (#2029): a multi-row label wraps inside a full-radius strip and its corner cuts the active pill. This group alone uses
+   a rounded-2xl strip with padding, so each option keeps its own rounded-full corners. Direction and Placidus method are unchanged. */
+.timing-key-rates {
+  margin: var(--space-1) 0 0;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.primitive-choice-group-segmented.timing-key-choice {
+  border-radius: var(--radius-lg);
+}
+
 /* A segmented option is a flex box so its label centres vertically in the pill; the plain-radio rule above must not turn it inline (#1600). */
 .settings-card-group [role='radiogroup'].primitive-choice-group-segmented label {
   display: inline-flex;
