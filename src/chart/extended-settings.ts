@@ -94,7 +94,11 @@ export interface ExtendedSettings {
    * opt-in.
    */
   readonly dial90Visible: boolean;
-  /** Orb for the dial90 midpoint-tree table above, in degrees. */
+  /**
+   * Orb for the dial90 midpoint-tree table above, in degrees on the dial scale. The 1° default is Astraya's own and,
+   * on the 90° dial, 4 times wider than Solar Fire's initial 1°00′, which is measured on the 360° circle
+   * (`docs/domain/SOLAR_FIRE_DIFFERENCES.md`; #2045 changes it to match).
+   */
   readonly midpointTreeOrb: Degrees;
   readonly rainbowZodiac: boolean;
   /**
