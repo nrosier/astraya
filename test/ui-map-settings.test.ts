@@ -49,6 +49,13 @@ describe('relocationErrors', () => {
   });
 });
 
+describe('the Fixed Stars setting (#2018)', () => {
+  it('is off by default and a difference in it is a difference in the settings', () => {
+    expect(DEFAULT_MAP_SETTINGS.fixedStars).toBe(false);
+    expect(sameMapSettings(DEFAULT_MAP_SETTINGS, with_({ fixedStars: true }))).toBe(false);
+  });
+});
+
 describe('relocationOf and summaryCounts', () => {
   it('gives the place only for a complete valid pair', () => {
     expect(relocationOf(DEFAULT_MAP_SETTINGS)).toBeUndefined();

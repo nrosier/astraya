@@ -4,7 +4,7 @@
  */
 /**
  * @module ui/map-settings
- * @purpose Defines the map's settings value (line types, bodies, Local Space, relocation), its defaults, equality, relocation validation and applied-state summary.
+ * @purpose Defines the map's settings value (line types, bodies, Local Space, Fixed Stars, relocation), its defaults, equality, relocation validation and applied-state summary.
  * @conventions Relocation coordinates are kept as typed text so a half-typed "-" is a work in progress, not a coordinate of zero; both empty means no relocation, one filled is an error; a valid draft is the only thing that can be applied.
  * @exports LineType, ALL_LINE_TYPES, MapSettings, DEFAULT_MAP_SETTINGS, sameMapSettings, parseCoordinate, relocationErrors, relocationOf, summaryCounts
  */
@@ -18,6 +18,8 @@ export interface MapSettings {
   readonly lineTypes: readonly LineType[];
   readonly bodies: readonly BodyId[];
   readonly localSpace: boolean;
+  /** Draw the paran star list's lines (#2018). Default off, so the planetary map is unchanged. */
+  readonly fixedStars: boolean;
   /** Typed text; '' for none. */
   readonly relocationLat: string;
   readonly relocationLon: string;
@@ -27,6 +29,7 @@ export const DEFAULT_MAP_SETTINGS: MapSettings = {
   lineTypes: ALL_LINE_TYPES,
   bodies: TRADITIONAL_ACG_BODY_IDS,
   localSpace: false,
+  fixedStars: false,
   relocationLat: '',
   relocationLon: '',
 };
@@ -39,6 +42,7 @@ export function sameMapSettings(a: MapSettings, b: MapSettings): boolean {
     sameSet(a.lineTypes, b.lineTypes) &&
     sameSet(a.bodies, b.bodies) &&
     a.localSpace === b.localSpace &&
+    a.fixedStars === b.fixedStars &&
     a.relocationLat === b.relocationLat &&
     a.relocationLon === b.relocationLon
   );

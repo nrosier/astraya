@@ -205,6 +205,26 @@ describe('the canonical hashes', () => {
     });
   });
 
+  it('carries the Fixed Stars flag through the PDF creator link only when it is on (#2018)', () => {
+    const on = routeHref({ kind: 'export-builder', personId: ID, section: 'astrocartography', fixedStars: true });
+    expect(on).toBe(`#/documents/pdf?person=${ID}&section=astrocartography&fixedStars=1`);
+    expect(parseRoute(on)).toEqual({
+      kind: 'export-builder',
+      personId: ID,
+      section: 'astrocartography',
+      fixedStars: true,
+    });
+    // Without the flag the link and its parse are exactly as before.
+    const off = routeHref({ kind: 'export-builder', personId: ID, section: 'astrocartography' });
+    expect(off).toBe(`#/documents/pdf?person=${ID}&section=astrocartography`);
+    expect(parseRoute(off)).toEqual({ kind: 'export-builder', personId: ID, section: 'astrocartography' });
+    // Any value other than 1 is not the flag.
+    expect(parseRoute(`#/documents/pdf?section=astrocartography&fixedStars=0`)).toEqual({
+      kind: 'export-builder',
+      section: 'astrocartography',
+    });
+  });
+
   it('round-trips every Preferences section', () => {
     for (const section of PREFERENCES_SECTIONS) {
       expect(parseRoute(routeHref({ kind: 'preferences', section }))).toEqual({ kind: 'preferences', section });

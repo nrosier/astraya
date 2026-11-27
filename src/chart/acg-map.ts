@@ -19,11 +19,12 @@
  * @module chart/acg-map
  * @purpose Renders the astrocartography (ACG) world map as a hand-rolled equirectangular SVG graticule with AC/DC/MC/IC and local-space lines.
  * @conventions Equirectangular projection: `x = (lon + 180) / 360 * width`, `y = (90 - lat) / 180 * height`, so the map is exactly twice as wide as tall; point runs are split wherever consecutive longitudes jump by more than 180° (a projection/antimeridian break, distinct from `HorizonLine.segments`'s own circumpolar breaks).
- * @exports renderAcgMapSvg, acgLabelPlacements, ACG_MAP_WIDTH, ACG_LABEL_PX, acgMapEntries, acgMapPlaces; AcgMapInput, AcgMapOptions, AcgMap, AcgMapEntry, AcgMapPoint, AcgMapPlaces types.
+ * @exports renderAcgMapSvg, acgStarEntries, acgLabelPlacements, ACG_MAP_WIDTH, ACG_LABEL_PX, acgMapEntries, acgMapPlaces; AcgMapInput, AcgMapOptions, AcgMap, AcgMapEntry, AcgMapPoint, AcgMapPlaces, AcgStarEntry types. Fixed-star lines (#2018) are drawn after the planetary ones, thinner, dashed and fainter, each in a group carrying `data-star` and `data-angle` with a wide transparent hit stroke for the screen's tooltip; their names are placed after every planetary name, so planetary labels are placed exactly as without stars.
  */
 import type { LocalSpaceLine } from '../astrology/astrocartography.js';
 import { bodyById } from '../astrology/bodies.js';
-import type { AcgLine } from '../domain/astrocartography.js';
+import type { AcgFixedStar, AcgLine } from '../domain/astrocartography.js';
+import type { FixedStarLine } from '../astrology/astrocartography.js';
 import type { GeoPosition } from '../ephemeris/types.js';
 import { circle, escapeXml, line, polyline, text } from './svg-primitives.js';
 
@@ -43,6 +44,8 @@ export interface AcgMapInput {
    * (#667): `coastline-110m.ts`, which callers load with a dynamic import() so it stays out of other chunks.
    */
   readonly coastline?: string;
+  /** Fixed-star lines (#2018), drawn dashed, thin and faint; absent or empty draws nothing extra. */
+  readonly fixedStarLines?: readonly AcgFixedStar[];
 }
 
 /** The words for the legend and line labels (#667), in the reader's language; the renderer itself has no locale. */
@@ -52,6 +55,8 @@ export interface AcgMapLabels {
   readonly kinds: Readonly<Record<'MC' | 'IC' | 'AC' | 'DC', string>>;
   /** Full names in the legend: `MC (Midheaven)`. */
   readonly legendKinds: Readonly<Record<'MC' | 'IC' | 'AC' | 'DC' | 'localSpace', string>>;
+  /** The legend's name for the fixed-star lines (#2018); without it a map with stars gets no star legend item. */
+  readonly fixedStars?: string;
 }
 
 export interface AcgMapOptions {
@@ -239,6 +244,38 @@ export function acgMapEntries(input: AcgMapInput): readonly AcgMapEntry[] {
   return entries;
 }
 
+/** One fixed-star line the map draws (#2018), as data: its star, angle, the star's position and where the line runs. */
+export interface AcgStarEntry {
+  readonly star: string;
+  readonly kind: 'MC' | 'IC' | 'AC' | 'DC';
+  readonly rightAscension: number;
+  readonly declination: number;
+  /** MC/IC: the one longitude. */
+  readonly longitude?: number;
+  /** AC/DC: the drawn latitude spans and graticule crossings, as for a planetary curve. */
+  readonly spans?: readonly { readonly from: number; readonly to: number }[];
+  readonly crossings?: readonly AcgMapPoint[];
+}
+
+/** Every fixed-star line `renderAcgMapSvg` draws for `input`, in drawing order (#2018); empty when there are none. */
+export function acgStarEntries(input: AcgMapInput): readonly AcgStarEntry[] {
+  return (input.fixedStarLines ?? []).flatMap((entry) =>
+    entry.lines.map((starLine): AcgStarEntry => {
+      const base = {
+        star: entry.star,
+        kind: starLine.kind,
+        rightAscension: entry.rightAscension,
+        declination: entry.declination,
+      };
+      if (!('segments' in starLine)) return { ...base, longitude: starLine.longitude };
+      const horizon = horizonEntry(starLine.kind, 0, 'star', starLine.segments);
+      return horizon.kind === 'AC' || horizon.kind === 'DC'
+        ? { ...base, spans: horizon.spans, crossings: horizon.crossings }
+        : base;
+    }),
+  );
+}
+
 /** The places `renderAcgMapSvg` marks for `input` (#1371). */
 export function acgMapPlaces(input: AcgMapInput): AcgMapPlaces {
   const natal = { latitude: input.natalPlace.latitude, longitude: input.natalPlace.longitude };
@@ -315,7 +352,11 @@ export function acgLabelPlacements(
   labels: AcgMapLabels,
   width: number,
   fontSize: number,
-): { readonly placed: ReadonlyMap<AcgLine, AcgLabelPlacement>; readonly omitted: number } {
+): {
+  readonly placed: ReadonlyMap<AcgLine, AcgLabelPlacement>;
+  readonly placedStars: ReadonlyMap<FixedStarLine, AcgLabelPlacement>;
+  readonly omitted: number;
+} {
   const mapHeight = width / 2;
   const project = (point: Point): { x: number; y: number } => ({
     x: ((point.longitude + 180) / 360) * width,
@@ -347,31 +388,13 @@ export function acgLabelPlacements(
   );
 
   const placed = new Map<AcgLine, AcgLabelPlacement>();
+  const placedStars = new Map<FixedStarLine, AcgLabelPlacement>();
   let omitted = 0;
-  for (const acgLine of input.lines) {
-    const bodyKey = bodyKeyOf(acgLine.body);
-    const content = `${labels.bodyName(bodyKey)} ${labels.kinds[acgLine.kind]}`;
-    const candidates: LabelCandidate[] = [];
-    if (acgLine.kind === 'MC' || acgLine.kind === 'IC') {
-      const x = project({ latitude: 0, longitude: acgLine.longitude }).x;
-      const first = meridianRow.get(acgLine) ?? 0;
-      const order = [first, ...Array.from({ length: rows }, (_, row) => row).filter((row) => row !== first)];
-      for (const row of order) {
-        // MC names along the top edge, IC names along the bottom.
-        const y = acgLine.kind === 'MC' ? fontSize * (1.2 + row * 1.2) : mapHeight - fontSize * (0.5 + row * 1.2);
-        candidates.push(...sides(x, y, width));
-      }
-    } else {
-      const points = horizonPoints(acgLine);
-      const seen = new Set<Point>();
-      for (const latitude of horizonLatitudes(horizonLatitude.get(acgLine) ?? 0)) {
-        const nearest = nearestToLatitude(points, latitude);
-        if (nearest === undefined || seen.has(nearest) || Math.abs(nearest.latitude - latitude) > 5) continue;
-        seen.add(nearest);
-        const at = project(nearest);
-        candidates.push(...sides(at.x, at.y - fontSize * 0.4, width));
-      }
-    }
+  /** The first candidate that is inside the map and clear of every name already placed, if any; it is then taken. */
+  const take = (
+    candidates: readonly LabelCandidate[],
+    content: string,
+  ): { readonly box: AcgLabelBox; readonly fit: LabelCandidate } | undefined => {
     const chars = content.length;
     const fit = candidates.find((candidate) => {
       const box = labelBox(candidate.x, candidate.y, candidate.anchor, chars, fontSize);
@@ -385,13 +408,75 @@ export function acgLabelPlacements(
     });
     if (fit === undefined) {
       omitted += 1;
-      continue;
+      return undefined;
     }
     const box = labelBox(fit.x, fit.y, fit.anchor, chars, fontSize);
     taken.push(box);
-    placed.set(acgLine, { ...box, bodyKey, kind: acgLine.kind, text: content, ...fit });
+    return { box, fit };
+  };
+  const meridianCandidates = (kind: 'MC' | 'IC', longitude: number, first: number): LabelCandidate[] => {
+    const candidates: LabelCandidate[] = [];
+    const x = project({ latitude: 0, longitude }).x;
+    const order = [first, ...Array.from({ length: rows }, (_, row) => row).filter((row) => row !== first)];
+    for (const row of order) {
+      // MC names along the top edge, IC names along the bottom.
+      const y = kind === 'MC' ? fontSize * (1.2 + row * 1.2) : mapHeight - fontSize * (0.5 + row * 1.2);
+      candidates.push(...sides(x, y, width));
+    }
+    return candidates;
+  };
+  const horizonCandidates = (points: readonly Point[], preferred: number): LabelCandidate[] => {
+    const candidates: LabelCandidate[] = [];
+    const seen = new Set<Point>();
+    for (const latitude of horizonLatitudes(preferred)) {
+      const nearest = nearestToLatitude(points, latitude);
+      if (nearest === undefined || seen.has(nearest) || Math.abs(nearest.latitude - latitude) > 5) continue;
+      seen.add(nearest);
+      const at = project(nearest);
+      candidates.push(...sides(at.x, at.y - fontSize * 0.4, width));
+    }
+    return candidates;
+  };
+  for (const acgLine of input.lines) {
+    const bodyKey = bodyKeyOf(acgLine.body);
+    const content = `${labels.bodyName(bodyKey)} ${labels.kinds[acgLine.kind]}`;
+    const candidates =
+      acgLine.kind === 'MC' || acgLine.kind === 'IC'
+        ? meridianCandidates(acgLine.kind, acgLine.longitude, meridianRow.get(acgLine) ?? 0)
+        : horizonCandidates(horizonPoints(acgLine), horizonLatitude.get(acgLine) ?? 0);
+    const taking = take(candidates, content);
+    if (taking !== undefined) {
+      placed.set(acgLine, { ...taking.box, bodyKey, kind: acgLine.kind, text: content, ...taking.fit });
+    }
   }
-  return { placed, omitted };
+
+  // The stars come last, so every planetary name is placed exactly as it is without them (#2018).
+  const starLines = (input.fixedStarLines ?? []).flatMap((entry) => entry.lines);
+  const starMeridians = starLines
+    .flatMap((starLine) => (starLine.kind === 'MC' || starLine.kind === 'IC' ? [starLine] : []))
+    .sort((a, b) => a.longitude - b.longitude);
+  const starMeridianRow = new Map(starMeridians.map((starLine, index) => [starLine, index % LABEL_ROWS]));
+  const starHorizons = starLines
+    .flatMap((starLine) => (starLine.kind === 'AC' || starLine.kind === 'DC' ? [starLine] : []))
+    .map((starLine) => ({ starLine, x: nearestToLatitude(starLine.segments.flat(), 0)?.longitude ?? 0 }))
+    .sort((a, b) => a.x - b.x);
+  const starHorizonLatitude = new Map(
+    starHorizons.map(({ starLine }, index) => [
+      starLine,
+      HORIZON_LABEL_LATITUDES[index % HORIZON_LABEL_LATITUDES.length] ?? 0,
+    ]),
+  );
+  for (const starLine of starLines) {
+    const content = `${starLine.star} ${labels.kinds[starLine.kind]}`;
+    const candidates = !('segments' in starLine)
+      ? meridianCandidates(starLine.kind, starLine.longitude, starMeridianRow.get(starLine) ?? 0)
+      : horizonCandidates(starLine.segments.flat(), starHorizonLatitude.get(starLine) ?? 0);
+    const taking = take(candidates, content);
+    if (taking !== undefined) {
+      placedStars.set(starLine, { ...taking.box, bodyKey: 'star', kind: starLine.kind, text: content, ...taking.fit });
+    }
+  }
+  return { placed, placedStars, omitted };
 }
 
 export function renderAcgMapSvg(input: AcgMapInput, options?: AcgMapOptions): AcgMap {
@@ -443,6 +528,23 @@ export function renderAcgMapSvg(input: AcgMapInput, options?: AcgMapOptions): Ac
     }
   }
 
+  for (const entry of input.fixedStarLines ?? []) {
+    for (const starLine of entry.lines) {
+      const group = `<g class="acg-star-line-group" data-star="${escapeXml(entry.star)}" data-angle="${starLine.kind}">`;
+      const drawn: string[] = [];
+      if (!('segments' in starLine)) {
+        const x = project({ latitude: 0, longitude: starLine.longitude }).x;
+        drawn.push(line(x, 0, x, mapHeight, 'acg-star-line'), line(x, 0, x, mapHeight, 'acg-star-hit'));
+      } else {
+        for (const run of starLine.segments.flatMap((segment) => splitAtAntimeridian(segment))) {
+          const points = run.map(project);
+          drawn.push(polyline(points, 'acg-star-line'), polyline(points, 'acg-star-hit'));
+        }
+      }
+      parts.push(`${group}${drawn.join('')}</g>`);
+    }
+  }
+
   for (const localSpaceLine of input.localSpaceLines) {
     const key = bodyKeyOf(localSpaceLine.body);
     const className = `acg-line-local-space acg-line-local-space-${key}`;
@@ -459,7 +561,7 @@ export function renderAcgMapSvg(input: AcgMapInput, options?: AcgMapOptions): Ac
     const relocationPoint = project(input.relocationPlace);
     parts.push(circle(relocationPoint.x, relocationPoint.y, 5, 'acg-marker-relocation'));
   }
-  for (const placement of plan?.placed.values() ?? []) {
+  for (const placement of [...(plan?.placed.values() ?? []), ...(plan?.placedStars.values() ?? [])]) {
     parts.push(
       text(
         placement.x,
@@ -531,6 +633,11 @@ function legendBand(
   if (input.localSpaceLines.length > 0) present.add('localSpace');
   for (const kind of ['MC', 'IC', 'AC', 'DC', 'localSpace'] as const) {
     if (present.has(kind)) item(`acg-legend-sample acg-legend-sample-${kind}`, labels.legendKinds[kind]);
+  }
+
+  if ((input.fixedStarLines ?? []).length > 0 && labels.fixedStars !== undefined) {
+    item('acg-legend-sample acg-legend-sample-star', labels.fixedStars);
+    present.add('fixedStars');
   }
 
   const bodies = [...new Set([...input.lines, ...input.localSpaceLines].map((entry) => bodyKeyOf(entry.body)))];

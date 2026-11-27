@@ -18,7 +18,7 @@
  * @module chart-compute
  * @purpose Computes a chart's positions, houses, aspects, dignities, sect and derived points from a birth moment (#44).
  * @conventions One ephemeris pass (one Julian day, one batch position call, one house call) then pure arithmetic; nothing is cached — results are cheap to recompute, not stored as a second source of truth; `housesAreDefined` must be checked before trusting house-derived fields. Point aspects (Asc/MC always; Vertex, Part of Fortune/Spirit opt-in via `aspectsTo`) are point-to-body only, use the aspecting body's moiety under a body-moiety profile (Lilly p. 208 for the Ascendant; an Astraya extension for MC/Vertex/lots) else the planet tiers, record the rule used (#796), and drop a part's aspect to its own "+" luminary (#516). Enrichments (declinations, fixedStars, obliquity) are optional fields computed alongside core chart data (#589) but can be lazy-loaded separately for better performance when not needed.
- * @exports computeChartData, computeChartDataAtJd, enrichChartData, housesAreDefined, isAspectParticipant, ChartData, ChartCalculationOptions, AngleAspect, NATAL_FIXED_STARS
+ * @exports computeChartData, computeChartDataAtJd, enrichChartData, housesAreDefined, isAspectParticipant, ChartData, ChartCalculationOptions, AngleAspect, NATAL_FIXED_STARS, starLookups, StarLookup
  */
 import type { PolarMc } from '../ephemeris/types.js';
 import {
@@ -76,7 +76,7 @@ export const NATAL_FIXED_STARS: readonly string[] = [
 ];
 
 /** One fixed star the chart looks up: the key its longitude is stored under, and the identifier it is asked for by. */
-interface StarLookup {
+export interface StarLookup {
   readonly key: string;
   readonly id: string;
   /** Present for a chosen star only (#803): what was stored when it was chosen. */
@@ -95,7 +95,7 @@ export interface ChosenStarSource {
  * A chosen star is keyed by its traditional name (its designation when it has none); a name chosen twice under two
  * designations (the file has a few, e.g. Algedi) is keyed with the designation added, so neither replaces the other.
  */
-function starLookups(chosen: readonly ChosenFixedStar[] | undefined): readonly StarLookup[] {
+export function starLookups(chosen: readonly ChosenFixedStar[] | undefined): readonly StarLookup[] {
   if (!chosen?.length) return NATAL_FIXED_STARS.map((name) => ({ key: name, id: name }));
   const labelOf = (star: ChosenFixedStar): string => star.name || star.designation;
   return chosen.map((star) => ({
