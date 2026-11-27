@@ -8536,6 +8536,40 @@ button.primitive-button-form-action {
   margin-bottom: 0;
 }
 
+/* A compact action group (#2027, #2059; owner decisions 2026-11-27): the date field, a segmented range and Now take the
+   compact height of the filter and Export beside them (#1868), and the touch height on a coarse pointer, as they do. */
+.page-header-actions--compact .primitive-field input.primitive-field-pill:not([type='checkbox']):not([type='radio']) {
+  min-height: var(--control-height-compact);
+  height: var(--control-height-compact);
+  padding-block: 0;
+}
+
+.page-header-actions--compact .primitive-choice-group-segmented .primitive-choice {
+  min-height: calc(var(--control-height-compact) - 2px);
+}
+
+.page-header-actions--compact button.date-animation-now {
+  min-height: var(--control-height-compact);
+  padding-inline: var(--control-padding-x-compact);
+  font-size: var(--text-sm);
+}
+
+@media (pointer: coarse) {
+  .page-header-actions--compact .primitive-field input.primitive-field-pill:not([type='checkbox']):not([type='radio']) {
+    min-height: var(--control-height);
+    height: var(--control-height);
+  }
+
+  .page-header-actions--compact .primitive-choice-group-segmented .primitive-choice {
+    min-height: calc(var(--control-height) - 2px);
+  }
+
+  .page-header-actions--compact button.date-animation-now {
+    min-height: var(--control-height);
+    padding-inline: var(--control-padding-x);
+  }
+}
+
 /* The picker beside Now in the date bar (#1770): the select and the filter button sit on one line (grid-auto-flow:
    column), so the wrapper is one control tall and centres with the bar's other controls. */
 .life-event-picker--header {
