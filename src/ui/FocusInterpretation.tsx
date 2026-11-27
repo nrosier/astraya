@@ -40,6 +40,7 @@ export function FocusInterpretation({
   resetKey,
   personId,
   restingHeading = true,
+  embedded = false,
 }: {
   readonly context: FocusContext | undefined;
   /** A selected sign's sign-ruler context (#1998); used when `context` is absent, with the sign wording. */
@@ -51,6 +52,11 @@ export function FocusInterpretation({
   readonly personId?: string | undefined;
   /** False in the docked sign foot (#1998): the resting footer is the single button, and the heading shows only in the open consent drawer. */
   readonly restingHeading?: boolean;
+  /**
+   * Inside the Transits placement card (#2028): no card of its own (the host draws the top border), and once a reading
+   * is shown an "AI interpretation" subheader with a Regenerate button, which asks for consent again like any request.
+   */
+  readonly embedded?: boolean;
 }): React.JSX.Element | null {
   const t = useMessages(focusInterpretationMessages);
   const shared = useMessages(sharedMessages);
@@ -109,10 +115,31 @@ export function FocusInterpretation({
       });
   }
 
+  // Embedded with a reading on screen and no request in progress: the subheader and Regenerate replace the idle button.
+  const showRegenerate = embedded && sections !== undefined && !drawerOpen && !generating;
+
   return (
-    <section className="focus-interpretation" aria-label={words.heading}>
-      {(restingHeading || drawerOpen) && <h3>{words.heading}</h3>}
-      {user !== undefined && drawerOpen ? (
+    <section
+      className={embedded ? 'focus-interpretation focus-interpretation-embedded' : 'focus-interpretation'}
+      aria-label={words.heading}
+    >
+      {showRegenerate ? (
+        <div className="focus-interpretation-head">
+          <h3>{t.generatedHeading}</h3>
+          <Button
+            disabled={signInReason !== undefined || !online}
+            aria-describedby={signInReason === undefined ? undefined : reasonId}
+            onClick={() => {
+              setDrawerOpen(true);
+            }}
+          >
+            {t.regenerate}
+          </Button>
+        </div>
+      ) : (
+        (restingHeading || drawerOpen) && <h3>{words.heading}</h3>
+      )}
+      {showRegenerate ? null : user !== undefined && drawerOpen ? (
         <div className="focus-interpretation-drawer">
           <Checkbox
             label={words.consent}

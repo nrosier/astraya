@@ -452,16 +452,24 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
               onClick={handleWheelClick}
               onKeyDown={handleWheelKeyDown}
             />
+            {/* One card (#2028): the placement's facts, then its AI interpretation below a top border. */}
             {biWheelFacts !== undefined && (
               <BiWheelSelectionPanel
                 facts={biWheelFacts}
                 ringLabels={[t.natalLabel, t.transitRingLabel]}
                 locale={locale}
                 onClear={clearIsolation}
-              />
-            )}
-            {selectionKey !== undefined && focusContext !== undefined && (
-              <FocusInterpretation context={focusContext} locale={locale} resetKey={selectionKey} personId={personId} />
+              >
+                {selectionKey !== undefined && focusContext !== undefined && (
+                  <FocusInterpretation
+                    context={focusContext}
+                    locale={locale}
+                    resetKey={selectionKey}
+                    personId={personId}
+                    embedded
+                  />
+                )}
+              </BiWheelSelectionPanel>
             )}
 
             {load.voidOfCourse !== undefined && (

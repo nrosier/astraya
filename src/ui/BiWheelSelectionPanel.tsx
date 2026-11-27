@@ -24,13 +24,15 @@ interface Props {
   readonly ringLabels: readonly string[];
   readonly locale: Locale;
   readonly onClear: () => void;
+  /** Drawn inside the card below its facts, after a top border (#2028): the Transits screen's AI interpretation. */
+  readonly children?: React.ReactNode;
 }
 
 function minutes(value: number): string {
   return String(value).padStart(2, '0');
 }
 
-export function BiWheelSelectionPanel({ facts, ringLabels, locale, onClear }: Props) {
+export function BiWheelSelectionPanel({ facts, ringLabels, locale, onClear, children }: Props) {
   const t = useMessages(biWheelSelectionPanelMessages);
   const ringLabel = (ring: number): string => ringLabels[ring] ?? '';
   const bodyOnRing = (bodyKey: string, ring: number): string =>
@@ -97,6 +99,10 @@ export function BiWheelSelectionPanel({ facts, ringLabels, locale, onClear }: Pr
         ))}
 
       {facts.kind === 'aspect' && <p>{orbText(facts.row.orb, facts.row.applying)}</p>}
+
+      {children !== undefined && children !== null && children !== false && (
+        <div className="chart-isolation-extra">{children}</div>
+      )}
     </div>
   );
 }
