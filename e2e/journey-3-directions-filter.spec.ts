@@ -17,6 +17,7 @@ import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
+import { setLanguage } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -82,6 +83,44 @@ test('the Primary Directions time key can be changed to Ptolemy and the arc for 
 
   // The key drives the calculation, so the arc for the same age must change (Ptolemy is 1° a year, Naibod ~0.9856°).
   await expect(arcLine).not.toHaveText(naibodArc ?? '');
+});
+
+test('the Time key pills stay inside their strip, with unclipped corners, when they wrap at 390 px (#2029)', async () => {
+  test.setTimeout(60_000);
+
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  // Dutch labels are the longest, so at a phone width the four options wrap onto two rows (measured on main for #2040).
+  await setLanguage(page, 'NL');
+  await page.getByRole('link', { name: 'Progressies & directies', exact: true }).click();
+  await page.getByRole('tab', { name: 'Primaire directies (Placidus)', exact: true }).click();
+  const keyGroup = page.getByRole('radiogroup', { name: 'Tijdsleutel', exact: true });
+  await expect(keyGroup).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await keyGroup.scrollIntoViewIfNeeded();
+
+  // The e2e project has no DOM types, so boxes come from boundingBox() and the radius from a string-form page.evaluate.
+  const group = await keyGroup.boundingBox();
+  if (group === null) throw new Error('the Time key strip has no box');
+  const labels = await keyGroup.locator('label').all();
+  expect(labels).toHaveLength(4);
+  const boxes = await Promise.all(labels.map((label) => label.boundingBox()));
+  const tops = new Set<number>();
+  for (const box of boxes) {
+    if (box === null) throw new Error('a Time key pill has no box');
+    tops.add(Math.round(box.y));
+    // Every pill lies inside the strip, so no edge of a pill is cut off by the strip's border or radius.
+    expect(box.y).toBeGreaterThanOrEqual(group.y);
+    expect(box.x).toBeGreaterThanOrEqual(group.x);
+    expect(box.y + box.height).toBeLessThanOrEqual(group.y + group.height);
+    expect(box.x + box.width).toBeLessThanOrEqual(group.x + group.width);
+  }
+  // The options wrap: at least two rows of pills.
+  expect(tops.size).toBeGreaterThan(1);
+  // A wrapped strip uses a small radius, not a full pill radius that would cut the corner pills (#2029's fix).
+  const radius = await page.evaluate<number>(
+    `(() => Number.parseFloat(getComputedStyle(document.querySelector('.timing-key-choice')).borderTopLeftRadius))()`,
+  );
+  expect(radius).toBeLessThan(group.height / 4);
 });
 
 /** Chooses a preset in the transit filter card, which a header button opens (#1227), and applies it. */
