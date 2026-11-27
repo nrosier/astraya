@@ -9,7 +9,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { angularSeparation } from '../src/astrology/aspects.js';
-import { SYNODIC_MONTH_DAYS } from '../src/astrology/minor-progressions.js';
+import { TROPICAL_MONTH_DAYS } from '../src/astrology/minor-progressions.js';
 import { TROPICAL_YEAR_DAYS } from '../src/astrology/progressions.js';
 import { computeMinorProgression } from '../src/domain/minor-progression.js';
 import { julianDayFor } from '../src/time/julian.js';
@@ -27,7 +27,7 @@ describe('computeMinorProgression (#48)', () => {
   it('tertiary: one lunar month of real time progresses the sky by one day', async () => {
     const engine = await getEngine();
     const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
-    const targetJd = natalJd + SYNODIC_MONTH_DAYS * 7; // 7 lunar months of real time
+    const targetJd = natalJd + TROPICAL_MONTH_DAYS * 7; // 7 lunar months of real time
 
     const progressed = await computeMinorProgression('tertiary', NATAL, targetJd, engine);
     expect(progressed.method).toBe('tertiary');
@@ -43,7 +43,7 @@ describe('computeMinorProgression (#48)', () => {
 
     const progressed = await computeMinorProgression('minor', NATAL, targetJd, engine);
     expect(progressed.method).toBe('minor');
-    expect(progressed.progressedJd).toBeCloseTo(natalJd + 4 * SYNODIC_MONTH_DAYS, 6);
+    expect(progressed.progressedJd).toBeCloseTo(natalJd + 4 * TROPICAL_MONTH_DAYS, 6);
     expect(progressed.ageInYears).toBeCloseTo(4, 6);
   });
 
