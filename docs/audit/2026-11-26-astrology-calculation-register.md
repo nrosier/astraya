@@ -188,7 +188,7 @@ Tracked in #2033.
 Tracked in #2034.
 
 - The `@conventions` line says combustion is 8° and under the beams 15°. The constants are 8°30′ and 17°, which are Lilly's Book I p. 113 values and also Solar Fire's. The code is right; the header is stale.
-- **Needs:** a header fix only.
+- **Resolved (#2034):** the `sect.ts` `@conventions` line now reads 17 arcminutes, 8°30′ in the same sign, and 17° (Lilly Book I p. 113, the values Solar Fire also uses).
 
 ### F-04 — Undocumented Astraya decisions (basis A?)
 
