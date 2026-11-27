@@ -29,6 +29,8 @@ export interface ChoiceGroupProps {
   readonly segmented?: boolean | undefined;
   /** Also draw `label` as visible text above the group (#824). The radiogroup keeps its own accessible name. */
   readonly showLabel?: boolean | undefined;
+  /** An extra class for the radiogroup only; omitted by every other caller, so their markup is unchanged (#2029). */
+  readonly groupClassName?: string | undefined;
 }
 
 export function ChoiceGroup({
@@ -39,13 +41,17 @@ export function ChoiceGroup({
   disabled,
   segmented,
   showLabel,
+  groupClassName,
 }: ChoiceGroupProps): React.JSX.Element {
   const name = useId();
   const group = (
     <div
-      className={
-        segmented === true ? 'primitive-choice-group primitive-choice-group-segmented' : 'primitive-choice-group'
-      }
+      className={[
+        segmented === true ? 'primitive-choice-group primitive-choice-group-segmented' : 'primitive-choice-group',
+        groupClassName,
+      ]
+        .filter(Boolean)
+        .join(' ')}
       role="radiogroup"
       aria-label={label}
     >

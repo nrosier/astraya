@@ -570,13 +570,14 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
             <h2 id="pd-controls-title">{t.controlsLabel}</h2>
             <ChoiceGroup
               label={t.keyLabel}
+              groupClassName="timing-key-choice"
               value={key}
               options={[
                 { value: PrimaryDirectionKey.NAIBOD, label: t.naibodKey },
                 { value: PrimaryDirectionKey.PTOLEMY, label: t.ptolemyKey },
                 {
                   value: PrimaryDirectionKey.TRUE_SOLAR_ARC,
-                  label: timingT.directionKeys[PrimaryDirectionKey.TRUE_SOLAR_ARC],
+                  label: t.trueSolarArcKey,
                 },
               ]}
               segmented
@@ -587,6 +588,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
                 else setKey(PrimaryDirectionKey.NAIBOD);
               }}
             />
+            <p className="timing-key-rates">{t.keyRateCaption}</p>
             <ChoiceGroup
               label={t.modeLabel}
               value={mode}
