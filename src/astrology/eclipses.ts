@@ -13,15 +13,19 @@
  * **Natal contacts** are the practical reason anyone consults a list of eclipses: an eclipse close
  * to a natal point is the traditionally significant one. The convention, stated rather than picked
  * silently: a natal point is *touched* when the eclipse degree, or the degree opposite it, lies
- * within `DEFAULT_CONTACT_ORB_DEG` (3°) of it — a conjunction or an opposition. Squares and other
- * aspects are not counted; orbs for eclipses are conventionally tight because the effect is read
- * from the eclipse's single degree, not from a moving body's approach.
+ * within `DEFAULT_CONTACT_ORB_DEG` (3°) of it — a conjunction or an opposition.
+ *
+ * The 3° follows Tebbs, *The Complete Book of Chart Rectification*
+ * (`tebbs-the-complete-book-of-chart-rectification-undated`), PDF pp. 49 and 120: she gives solar
+ * eclipses a 3-5 degree orb and applies 3, reading hard aspects (conjunction, square, opposition).
+ * Using the same 3° for lunar eclipses, and leaving out squares and other aspects, are Astraya's own
+ * choices (#404, owner decision on #2035).
  */
 
 /**
  * @module Eclipses
  * @purpose Finds solar and lunar eclipses in a time span and determines their zodiacal degree and contacts to natal chart points.
- * @conventions Eclipse search delegates to EphemerisProvider's own exact eclipse-finding routines, not an approximation from node proximity; a natal point is "touched" when the eclipse degree or its opposite falls within DEFAULT_CONTACT_ORB_DEG (3°) — conjunction/opposition only, no other aspects.
+ * @conventions Eclipse search delegates to EphemerisProvider's own exact eclipse-finding routines, not an approximation from node proximity; a natal point is "touched" when the eclipse degree or its opposite falls within DEFAULT_CONTACT_ORB_DEG (3°; Tebbs, The Complete Book of Chart Rectification, PDF pp. 49 and 120, given there for solar eclipses) — conjunction/opposition only, no other aspects. Using 3° for lunar eclipses too, and leaving out squares, are Astraya's own choices (#2035).
  * @exports DEFAULT_CONTACT_ORB_DEG, findEclipses, eclipseContacts
  */
 import { bodyByKey } from './bodies.js';

@@ -5,7 +5,8 @@
  *
  * It is a ranking heuristic stated plainly, not a tradition: it orders what the aspect search
  * found, it never adds or removes a contact, and the reader can still sort by any column. The
- * convention, in the order synastry practice usually weighs things:
+ * body tiers and aspect weights are Astraya's own convention, not taken from a source (#422,
+ * owner decision on #2035):
  *
  * - **The bodies.** The luminaries (Sun, Moon) carry the most weight, then the personal planets
  *   (Mercury, Venus, Mars) — where attraction, communication and friction are felt — then the
@@ -26,7 +27,7 @@
 /**
  * @module SynastryImportance
  * @purpose Ranks synastry (cross-chart) aspect contacts by importance for display ordering, without altering what the aspect search found.
- * @conventions Weighting follows synastry practice: luminaries weighted highest, then personal/social/outer planets, then minor points; aspect weight is hard (1.0) > soft (0.7) > minor (0.4); orb factor is 1 − orb/limit; angles (Ascendant/Midheaven) are not ranked since the aspect search is body-to-body only.
+ * @conventions Weighting is Astraya's own ranking convention, not taken from a source (#422, #2035), and only changes display order, never what is found: luminaries 1.0, then personal (0.8), social (0.6) and outer (0.45) planets, then minor points (0.3); aspect weight is hard (1.0) > soft (0.7) > minor (0.4); orb factor is 1 − orb/limit; angles (Ascendant/Midheaven) are not ranked since the aspect search is body-to-body only.
  * @exports bodyWeight, synastryAspectWeight, synastryImportance, rankSynastryAspects
  */
 import { DEFAULT_ORB_CONFIG, orbFor, type Aspect, type OrbConfig } from './aspects.js';

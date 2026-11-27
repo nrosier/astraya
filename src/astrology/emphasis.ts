@@ -20,7 +20,7 @@
 /**
  * @module Emphasis
  * @purpose Computes element, modality, quadrant and hemisphere weighting/emphasis across a chart's body positions.
- * @conventions Quadrants are bounded by the four angles (Ascendant/IC/Descendant/MC), independent of house system; house-based tallies (houseOf/dominantHouse) use the actual HousePositions.cusps layout; every tally accepts an optional per-body weight map, defaulting to weight 1 for an unlisted body.
+ * @conventions Quadrants are bounded by the four angles (Ascendant/IC/Descendant/MC), independent of house system; house-based tallies (houseOf/dominantHouse) use the actual HousePositions.cusps layout; every tally accepts an optional per-body weight map, defaulting to weight 1 for an unlisted body. One count per position by default, the angle-bounded quadrants, and ties going to the earlier entry in the counted order (fire, earth, air, water; cardinal, fixed, mutable; sign and house order) are Astraya's own conventions (#2035).
  * @exports elementBalance, modalityBalance, dominantSign, dominantPlanet, houseOf, dominantHouse, quadrantOf, eastWestOf, northSouthOf, quadrantEmphasis, hemisphereEmphasis
  */
 import type { BodyId, Degrees } from '../ephemeris/types.js';

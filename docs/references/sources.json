@@ -636,7 +636,7 @@
     "status": "extracted",
     "provisional": false,
     "copyrighted": true,
-    "used_by": ["src/astrology/planetary-condition.ts"],
+    "used_by": ["src/astrology/antiscia.ts", "src/astrology/planetary-condition.ts"],
     "notes": "Year is the date of the work; the edition is Houlding 1999/2022."
   },
   {
@@ -1302,7 +1302,7 @@
     "status": "extracted",
     "copyrighted": true,
     "provisional": true,
-    "used_by": ["src/astrology/rectification.ts", "src/domain/chart-search-timing.ts"],
+    "used_by": ["src/astrology/eclipses.ts", "src/astrology/rectification.ts", "src/domain/chart-search-timing.ts"],
     "notes": "Llewellyn Publications imprint on title page. Copyright year not found on the pages checked. The file name is misleading; the content is the Tebbs book. Text layer present."
   },
   {
@@ -1342,7 +1342,7 @@
     "status": "extracted",
     "copyrighted": true,
     "provisional": true,
-    "used_by": [],
+    "used_by": ["src/astrology/nakshatras.ts"],
     "notes": "File creation date 2020 (not a confirmed edition). Sadhu Paddhati method. Text layer present."
   },
   {
