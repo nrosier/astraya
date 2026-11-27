@@ -95,6 +95,13 @@ test('the placement card holds its AI interpretation: idle, generated with Regen
   // Signed in there is no sign-in hint, so the button is the block's last line and sits on the card's bottom padding.
   expect(await card.getByText('Sign in to generate', { exact: false }).count()).toBe(0);
   expect(cardBox.y + cardBox.height - (interpretBox.y + interpretBox.height)).toBeLessThan(40);
+  // The Interpret pill is compact, the height of the heading row's compact Export pill (#2028, owner instruction).
+  const exportBox = await page
+    .locator('.page-header-actions')
+    .getByRole('button', { name: 'Export', exact: true })
+    .boundingBox();
+  if (exportBox === null) throw new Error('Export has no box');
+  expect(Math.abs(interpretBox.height - exportBox.height)).toBeLessThan(0.5);
 
   // The void-of-course line, when there is one, follows the card rather than sitting inside it.
   const voc = page.locator('.void-of-course-summary');

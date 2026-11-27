@@ -187,6 +187,9 @@ export function FocusInterpretation({
       ) : (
         <Button
           variant="primary"
+          // In the placement card the Interpret pill takes the compact height of the screen's other pills (#2028, owner
+          // instruction 2026-11-27); the chart screen's selection inspector keeps the standard size.
+          size={embedded ? 'compact' : 'standard'}
           disabled={signInReason !== undefined || generating || !online}
           aria-describedby={signInReason === undefined ? undefined : reasonId}
           onClick={() => {
