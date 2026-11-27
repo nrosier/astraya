@@ -1,8 +1,8 @@
 /**
  * @module astrology/planetary-hours
  * @purpose The planetary day and the planetary hour for a moment, from the day's sunrise, sunset and next sunrise (#2019).
- * @conventions Lilly, Christian Astrology (1659), printed p. 356 (held as the sources.json record lilly-christian-astrology-vol2-1659): the first hour of each day belongs to that day's planet, beginning at sunrise; each later hour goes to the next planet in the Chaldean order (Saturn, Jupiter, Mars, Sun, Venus, Mercury, Moon). Day hours run from sunrise to sunset and night hours from sunset to the next sunrise, each split into twelve equal parts, so their length varies with the season. The day ruler is the planet of the weekday of the sunrise. The function is pure: the caller supplies the sunrise, sunset and next sunrise (from the engine's riseTransit, with the visible horizon the owner chose on #2012). No ephemeris import here.
- * @exports PlanetaryHour, PlanetaryHourInput, planetaryHourAt
+ * @conventions Lilly, Christian Astrology (1659), printed p. 356 (held as the sources.json record lilly-christian-astrology-vol2-1659): the first hour of each day belongs to that day's planet, beginning at sunrise; each later hour goes to the next planet in the Chaldean order (Saturn, Jupiter, Mars, Sun, Venus, Mercury, Moon). Day hours run from sunrise to sunset and night hours from sunset to the next sunrise, each split into twelve equal parts, so their length varies with the season. The day ruler is the planet of the weekday of the sunrise at the place (`weekdayAtPlace`, the local mean date). The function is pure: the caller supplies the sunrise, sunset and next sunrise (from the engine's riseTransit, with the visible horizon the owner chose on #2012). No ephemeris import here.
+ * @exports CHALDEAN_HOUR_ORDER, PlanetaryHour, PlanetaryHourInput, weekdayAtPlace, planetaryHourAt
  */
 import type { JulianDayUT } from '../ephemeris/types.js';
 
@@ -21,8 +21,21 @@ export interface PlanetaryHourInput {
   readonly sunset: JulianDayUT;
   /** The sunrise that ends that day (the next sunrise). */
   readonly nextSunrise: JulianDayUT;
-  /** The weekday of `sunrise`, 0 = Sunday to 6 = Saturday, from the UT day the sunrise falls on. */
+  /**
+   * The weekday of `sunrise` at the place, 0 = Sunday to 6 = Saturday: use `weekdayAtPlace`. The UT day is not enough
+   * far from Greenwich: a Monday sunrise in Tokyo falls on Sunday in UT (#2019).
+   */
   readonly sunriseWeekday: number;
+}
+
+/**
+ * The weekday (0 Sunday to 6 Saturday) of the local mean date of `jd` at `longitude` (degrees, east positive): UT plus
+ * longitude / 15 hours, then the weekday of that civil date, (floor(jd − 0.5) + 2) mod 7. A sunrise falls in the local
+ * morning, so its local mean date is the day it starts, however far the place is from Greenwich (#2019).
+ */
+export function weekdayAtPlace(jd: JulianDayUT, longitude: number): number {
+  const localJd = jd + longitude / 360;
+  return (((Math.floor(localJd - 0.5) + 2) % 7) + 7) % 7;
 }
 
 export interface PlanetaryHour {

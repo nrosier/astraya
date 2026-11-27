@@ -17,6 +17,8 @@ const en = {
   rangeYears: (years: string) => `${years}Y`,
   rowLabel: (track: string, count: number) => `${track}: ${String(count)} ${count === 1 ? 'event' : 'events'}`,
   targetLine: (date: string) => `The vertical line marks the centre date, ${date}.`,
+  /** When the planetary hour line is read (#2019): the timeline's centre moment, noon UT. */
+  centreMoment: (date: string) => `12:00 UT on ${date}`,
   searchLabel: 'Search the events',
   noMatches: 'No event matches that search.',
   tableCaption: 'Timing events',
@@ -96,6 +98,7 @@ const nl = {
   rangeYears: (years) => `${years}J`,
   rowLabel: (track, count) => `${track}: ${String(count)} ${count === 1 ? 'gebeurtenis' : 'gebeurtenissen'}`,
   targetLine: (date) => `De verticale lijn markeert de middendatum, ${date}.`,
+  centreMoment: (date) => `12:00 UT op ${date}`,
   searchLabel: 'Zoek in de gebeurtenissen',
   noMatches: 'Geen gebeurtenis past bij die zoekopdracht.',
   tableCaption: 'Tijdgebeurtenissen',
