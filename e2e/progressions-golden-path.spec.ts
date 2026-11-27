@@ -64,7 +64,7 @@ test('a person with a known birth time gets a Progressions screen with technique
 
   // Switching to a technique with no MC method (tertiary/minor always recompute houses
   // directly) hides the selector — the method actually used is never left ambiguous.
-  await page.getByLabel('Technique').selectOption({ label: 'Tertiary (a lunar month for a year)' });
+  await page.getByLabel('Technique').selectOption({ label: 'Tertiary (a day for a lunar month)' });
   await expect(page.getByLabel('MC method')).toBeHidden();
   await expect(page.getByRole('table', { name: 'Progressed positions' })).toBeVisible();
 });
