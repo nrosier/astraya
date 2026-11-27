@@ -247,7 +247,13 @@ export function TransitFilterButton({
 
   return (
     <>
-      <Button ref={triggerRef} aria-haspopup="dialog" aria-label={t.heading} onClick={openCard}>
+      <Button
+        ref={triggerRef}
+        className="transit-filter-trigger"
+        aria-haspopup="dialog"
+        aria-label={t.heading}
+        onClick={openCard}
+      >
         {t.heading}
       </Button>
 
