@@ -232,6 +232,16 @@ test.describe('with the shared people (#799)', () => {
           const exportBox = await exportButton.boundingBox();
           if (filterBox === null || exportBox === null) throw new Error('a heading-row control has no box');
           // Same height: one shared control-height token, and both labels on one line (a wrapped label is taller).
+          // On Forecast the as-of date field sits in the same row and takes the same compact height (#2027 review).
+          const dateField = page.locator('.page-header-actions input[type="date"]');
+          if ((await dateField.count()) > 0) {
+            const dateBox = await dateField.boundingBox();
+            if (dateBox === null) throw new Error('the date field has no box');
+            expect(
+              Math.abs(dateBox.height - exportBox.height),
+              `${language} ${tab} date at ${String(size.width)}`,
+            ).toBeLessThan(0.5);
+          }
           expect(
             Math.abs(filterBox.height - exportBox.height),
             `${language} ${tab} at ${String(size.width)}`,

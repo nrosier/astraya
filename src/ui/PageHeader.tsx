@@ -60,6 +60,7 @@ export function PageHeader({
   titleAside,
   headingLevel = 1,
   variant,
+  compactActions = false,
 }: {
   readonly title: string;
   /** A glossary term the title names: the title text itself opens that term's definition (#901). */
@@ -78,6 +79,12 @@ export function PageHeader({
   readonly headingLevel?: 1 | 2;
   /** `'return'` (#1140) marks a solar or lunar return chart header, whose title is set one token step smaller so it fits beside the action group. */
   readonly variant?: 'return' | undefined;
+  /**
+   * True where the action group holds a date field, a segmented range or Now beside the compact filter and Export menu
+   * (the timing views, #2027, #2059): those controls then take the same compact height, as the owner decided, keeping
+   * #1868's compact page-header actions.
+   */
+  readonly compactActions?: boolean;
 }): React.JSX.Element {
   // The tab title follows the page heading (#1078).
   useDocumentTitle(title);
@@ -147,7 +154,10 @@ export function PageHeader({
         )}
         {/* The top-right action group (#976): the page's primary action, its export menu, and any page-level control a
             screen portals in (the chart's Overlay settings and Extended settings), kept apart from view navigation. */}
-        <div ref={actionsRef} className="page-header-actions">
+        <div
+          ref={actionsRef}
+          className={compactActions ? 'page-header-actions page-header-actions--compact' : 'page-header-actions'}
+        >
           {children}
           {items.length > 0 && (
             <div

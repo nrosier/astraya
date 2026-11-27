@@ -558,6 +558,7 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
     <main className="shell shell--wide-text">
       <PageHeader
         headingLevel={2}
+        compactActions
         title={person.displayName ? t.heading(person.displayName) : t.forecastFallback}
         titleAside={
           data === undefined ? undefined : (
