@@ -301,6 +301,7 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
     <main className="shell shell--wide">
       <PageHeader
         headingLevel={2}
+        compactActions
         title={person.displayName ? t.heading(person.displayName) : t.fallback}
         titleAside={
           <Tooltip text={`${t.hint} ${t.source}`} label={t.hintInfoLabel} className="primitive-tooltip-icon">

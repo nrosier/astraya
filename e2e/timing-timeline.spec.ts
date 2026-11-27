@@ -50,6 +50,33 @@ async function openTimeline(): Promise<void> {
   await expect(page.locator('.gantt')).toBeVisible({ timeout: 60_000 });
 }
 
+test('the centre date, range, Now and Export share one compact height in the heading row (#2059)', async () => {
+  test.setTimeout(90_000);
+  await openTimeline();
+  const actions = page.locator('.page-header-actions');
+  for (const size of [
+    { width: 1280, height: 800 },
+    { width: 390, height: 844 },
+  ]) {
+    await page.setViewportSize(size);
+    const boxes = await Promise.all([
+      actions.locator('input[type="date"]').boundingBox(),
+      actions.getByRole('radiogroup', { name: 'Range', exact: true }).boundingBox(),
+      actions.getByRole('button', { name: 'Now', exact: true }).boundingBox(),
+      actions.getByRole('button', { name: 'Export', exact: true }).boundingBox(),
+    ]);
+    const heights = boxes.map((box) => {
+      if (box === null) throw new Error('a heading-row control has no box');
+      return box.height;
+    });
+    // One height for all four (the owner's "All compact" decision, keeping #1868), so the row reads as one set of pills.
+    expect(
+      Math.max(...heights) - Math.min(...heights),
+      `heights at ${String(size.width)}: ${heights.join(', ')}`,
+    ).toBeLessThan(0.5);
+  }
+});
+
 test('shows every technique as a row of the chart, with the centre date marked, and the same events in the table', async () => {
   test.setTimeout(90_000);
   await openTimeline();
