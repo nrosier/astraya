@@ -11,8 +11,8 @@
 /**
  * @module astrology/zodiacal-releasing
  * @purpose Computes Level-1 and Level-2 zodiacal-releasing periods (sign, ruler, duration, date range) walking forward from a Lot's own natal sign.
- * @conventions Uses Valens' sign-period table, including Capricorn's 27 rather than Saturn's 30 years; L2 durations are the same counts in months and jump to the opposite sign at the first completed cycle (loosing of the bond). Rulership is always traditional — Hellenistic technique, no modern-ruler variant exists in the sources checked.
- * @exports ZODIACAL_RELEASING_SIGN_YEARS, ReleasingPeriod, ReleasingSubperiod, zodiacalReleasingPeriods, zodiacalReleasingSubperiods, zodiacalReleasingPeriodAt
+ * @conventions Uses Valens' sign-period table, including Capricorn's 27 rather than Saturn's 30 years; L2 durations are the same counts in months and jump to the opposite sign at the first completed cycle (loosing of the bond). Dates use Valens' idealised 360-day year and 30-day months (RELEASING_YEAR_DAYS, RELEASING_MONTH_DAYS; Brennan 2017 p. 558, n. 13), not the tropical year, so each period falls about 5.24 days a year ahead of the calendar. Rulership is always traditional — Hellenistic technique, no modern-ruler variant exists in the sources checked.
+ * @exports ZODIACAL_RELEASING_SIGN_YEARS, RELEASING_YEAR_DAYS, RELEASING_MONTH_DAYS, ReleasingPeriod, ReleasingSubperiod, zodiacalReleasingPeriods, zodiacalReleasingSubperiods, zodiacalReleasingPeriodAt
  */
 import { rulerOf } from './dignities.js';
 import { signIndex } from './signs.js';
@@ -26,8 +26,14 @@ import type { BodyId, Degrees, JulianDayUT } from '../ephemeris/types.js';
  */
 export const ZODIACAL_RELEASING_SIGN_YEARS = [15, 8, 20, 25, 19, 20, 8, 15, 12, 27, 30, 12] as const;
 
-/** Average tropical year length — the same one `progressions.ts`'s `TROPICAL_YEAR_DAYS` uses, duplicated here to avoid a cross-module dependency for one constant. */
-const TROPICAL_YEAR_DAYS = 365.2425;
+/**
+ * Valens' idealised year and month: 360 days and 30-day months (*Anthology* 4, 9; Brennan 2017,
+ * ch. 18, printed p. 558, n. 13). The releasing dates use these, not the tropical year (#2033).
+ * A 360-day year is about 5.24 days shorter than a tropical year, so each period falls that much
+ * further ahead of the calendar for every year it spans.
+ */
+export const RELEASING_YEAR_DAYS = 360;
+export const RELEASING_MONTH_DAYS = 30;
 
 export interface ReleasingPeriod {
   readonly sign: number;
@@ -79,7 +85,7 @@ export function zodiacalReleasingPeriods(
     const sign = (startSign + i) % 12;
     const ruler = rulerForSign(sign);
     const years = yearsForSign(sign);
-    const endJd = cursor + years * TROPICAL_YEAR_DAYS;
+    const endJd = cursor + years * RELEASING_YEAR_DAYS;
     periods.push({ sign, ruler, years, startJd: cursor, endJd });
     cursor = endJd;
   }
@@ -93,7 +99,7 @@ export function zodiacalReleasingPeriods(
  * end, so the returned intervals always tile that parent exactly.
  */
 export function zodiacalReleasingSubperiods(parent: ReleasingPeriod): readonly ReleasingSubperiod[] {
-  const monthDays = TROPICAL_YEAR_DAYS / 12;
+  const monthDays = RELEASING_MONTH_DAYS;
   const periods: ReleasingSubperiod[] = [];
   let cursor = parent.startJd;
   let sign = parent.sign;

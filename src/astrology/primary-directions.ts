@@ -22,7 +22,7 @@
  *   semi-arc calculation; an aspect point keeps its promissor's latitude. Angles remain fixed by
  *   definition. Both modes follow the Placidus convention rather than mixing house-circle schools.
  * - **Time keys.** Naibod: 0°59′08.33″ of right ascension per year — the mean Sun's daily
- *   motion, `NAIBOD_DAILY_MOTION` in progressions.ts, 360 / 365.2425 = 0.985647° (Makransky rev. ed.
+ *   motion, `NAIBOD_DAILY_MOTION` in progressions.ts, 360 / 365.2422 = 0.9856473° (Makransky rev. ed.
  *   1992, ch. III, p. 28, gives 365.25 / 360 = 1.0145, used as 1.0146 years per degree). Ptolemy: 1° per year.
  *
  * The spherical trigonometry, with ε the obliquity, φ the geographic latitude and RAMC the

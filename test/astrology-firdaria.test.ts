@@ -3,6 +3,7 @@
  * Astrology*, VII.3: the day sequence begins at Sun and the night sequence at Moon.
  */
 import { describe, expect, it } from 'vitest';
+import { TROPICAL_YEAR_DAYS } from '../src/astrology/progressions.js';
 import {
   FIRDARIA_CYCLE_YEARS,
   FIRDARIA_DAY_ORDER,
@@ -11,8 +12,6 @@ import {
   firdariaPeriodAt,
   firdariaPeriods,
 } from '../src/astrology/firdaria.js';
-
-const TROPICAL_YEAR_DAYS = 365.2425;
 
 describe('FIRDARIA tables (#554)', () => {
   it('day order starts at the Sun, night order at the Moon, both the same 7-planet cycle plus nodes', () => {
