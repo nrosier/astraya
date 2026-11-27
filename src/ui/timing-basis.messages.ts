@@ -9,11 +9,19 @@ import type { Locale } from '../interpretation/schema.js';
 const en = {
   technique: { secondary: 'Secondary progression', tertiary: 'Tertiary progression', minor: 'Minor progression' },
   mcMethod: (method: string) => `${method} MC`,
-  mcMethods: { quotidian: 'Quotidian', naibod: 'Naibod', solarArc: 'Solar arc' },
+  mcMethods: {
+    quotidian: 'Quotidian',
+    naibod: 'Naibod',
+    solarArc: 'Solar arc',
+    naibodRa: 'Naibod in RA',
+    solarArcRa: 'True solar arc in RA',
+  },
   angleMethods: {
     quotidian: 'angles recomputed at the progressed moment',
     naibod: 'angles shifted by the Naibod arc, in longitude',
     solarArc: 'angles shifted by the solar arc, in longitude',
+    naibodRa: 'angles shifted by the Naibod arc, in right ascension',
+    solarArcRa: 'angles shifted by the solar arc, in right ascension',
   },
   solarArc: 'Solar arc (the Sun’s progressed arc)',
   solarArcLongitude: 'directed in longitude only',
@@ -34,11 +42,19 @@ const en = {
 const nl: typeof en = {
   technique: { secondary: 'Secundaire progressie', tertiary: 'Tertiaire progressie', minor: 'Minorprogressie' },
   mcMethod: (method: string) => `${method} MC`,
-  mcMethods: { quotidian: 'Quotidiaans', naibod: 'Naibod', solarArc: 'Zonneboog' },
+  mcMethods: {
+    quotidian: 'Quotidiaans',
+    naibod: 'Naibod',
+    solarArc: 'Zonneboog',
+    naibodRa: 'Naibod in RA',
+    solarArcRa: 'Ware zonneboog in RA',
+  },
   angleMethods: {
     quotidian: 'hoeken herberekend op het progressieve moment',
     naibod: 'hoeken verschoven met de Naibod-boog, in lengte',
     solarArc: 'hoeken verschoven met de zonneboog, in lengte',
+    naibodRa: 'hoeken verschoven met de Naibod-boog, in rechte klimming',
+    solarArcRa: 'hoeken verschoven met de zonneboog, in rechte klimming',
   },
   solarArc: 'Zonneboog (de geprogresseerde boog van de Zon)',
   solarArcLongitude: 'alleen in lengte gedirigeerd',

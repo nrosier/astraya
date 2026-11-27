@@ -172,6 +172,10 @@ export function mcMethodLabel(t: typeof progressionsViewMessages.en, method: Pro
       return t.naibodMethod;
     case 'solarArc':
       return t.solarArcMethod;
+    case 'naibodRa':
+      return t.naibodRaMethod;
+    case 'solarArcRa':
+      return t.solarArcRaMethod;
   }
 }
 
@@ -358,6 +362,8 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
               { value: 'quotidian', label: t.quotidianMethod },
               { value: 'naibod', label: t.naibodMethod },
               { value: 'solarArc', label: t.solarArcMethod },
+              { value: 'naibodRa', label: t.naibodRaMethod },
+              { value: 'solarArcRa', label: t.solarArcRaMethod },
             ]}
             onChange={(value) => {
               setMcMethod(value as ProgressedMcMethod);
