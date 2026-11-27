@@ -117,8 +117,8 @@ function keyGroup(container: HTMLElement): Element {
 
 describe('primary directions key selector (#1795)', () => {
   it.each([
-    ['en', 'True solar arc in RA key'],
-    ['nl', 'Ware zonneboog in RK-sleutel'],
+    ['en', 'Solar arc (RA)'],
+    ['nl', 'Zonneboog (RK)'],
   ] as const)(
     'offers three keys and the third is the true solar arc in %s',
     async (locale, label) => {
