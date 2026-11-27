@@ -70,8 +70,10 @@ const en = {
   activeCaption: (orb: string) => `Active at this age (within ${orb}° of arc)`,
   noActive: 'No direction is within orb at this age.',
   allCaption: 'All directions, by age',
-  keyRateCaption: 'Naibod 0°59′08″ a year · Ptolemy 1° a year',
+  keyRateCaption:
+    'Naibod 0°59′08″ a year · Ptolemy 1° a year · Natal solar rate: the natal Sun’s daily motion in RA, a year',
   trueSolarArcKey: 'Solar arc (RA)',
+  natalSolarRateKey: 'Natal solar rate',
   noDirections: 'No directions within the lifetime window.',
 
   significatorLabel: 'Significator',
@@ -147,8 +149,10 @@ const nl: typeof en = {
   activeCaption: (orb: string) => `Actief op deze leeftijd (binnen ${orb}° boog)`,
   noActive: 'Geen enkele directie valt op deze leeftijd binnen orb.',
   allCaption: 'Alle directies, op leeftijd',
-  keyRateCaption: 'Naibod 0°59′08″ per jaar · Ptolemaeus 1° per jaar',
+  keyRateCaption:
+    'Naibod 0°59′08″ per jaar · Ptolemaeus 1° per jaar · Natale zonnesnelheid: de dagbeweging van de Zon in RK bij de geboorte, per jaar',
   trueSolarArcKey: 'Zonneboog (RK)',
+  natalSolarRateKey: 'Natale zonnesnelheid',
   noDirections: 'Geen directies binnen het levensvenster.',
 
   significatorLabel: 'Significator',

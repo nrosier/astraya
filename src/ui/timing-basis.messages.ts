@@ -35,7 +35,12 @@ const en = {
   arcConverse: 'converse (backwards in time)',
   arcAngleMc: 'MC by solar arc in longitude',
   directionWindow: '±1° of arc',
-  directionKeys: { naibod: 'Naibod key', ptolemy: 'Ptolemy key', 'true-solar-arc': 'True solar arc in RA key' },
+  directionKeys: {
+    naibod: 'Naibod key',
+    ptolemy: 'Ptolemy key',
+    'true-solar-arc': 'True solar arc in RA key',
+    'natal-solar-rate': 'Natal solar rate key',
+  },
   directionMethods: { zodiacal: 'Placidus semi-arcs, in zodiaco', 'in-mundo': 'Placidus semi-arcs, in mundo' },
 };
 
@@ -72,6 +77,7 @@ const nl: typeof en = {
     naibod: 'Naibod-sleutel',
     ptolemy: 'Ptolemaeus-sleutel',
     'true-solar-arc': 'Ware zonneboog in RK-sleutel',
+    'natal-solar-rate': 'Natale zonnesnelheid-sleutel',
   },
   directionMethods: { zodiacal: 'Placidus-semiboog, in zodiaco', 'in-mundo': 'Placidus-semiboog, in mundo' },
 };

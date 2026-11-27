@@ -46,7 +46,7 @@
 /**
  * @module primary-directions
  * @purpose Computes a person's Placidus primary directions (#407): direct/converse and zodiacal/in-mundo directions of Sun–Pluto and their Ptolemaic aspects to selected significators, each with age, exact date and active window; plus the directed chart at a chosen age for a bi-wheel.
- * @conventions PrimaryDirectionKey is a const object, not a TS enum (the project compiles under erasableSyntaxOnly); the True Solar Arc key (#1795) reads the Sun's RA from a solar-arc clock built once per calculation (PrimaryDirectionsData.clock); a converse arc, or a window edge below arc 0, is timed by its absolute value for every key (Makransky rev. ed. 1992, p. 28 footnote; #1603); a True Solar Arc arc beyond the clock's sampled span gets an infinite age, and the lifetime filter (arcRA > maxArc) then drops that hit; orb is a window in degrees of RA around each hit's arc (default 1°), stored per hit as activeFromAge/activeUntilAge so filtering never needs the key; tropical zodiac and Placidus houses always; at or beyond the polar circles (|φ| ≥ 90° − ε) returns defined: false with no hits instead of throwing.
+ * @conventions PrimaryDirectionKey is a const object, not a TS enum (the project compiles under erasableSyntaxOnly); the True Solar Arc key (#1795) reads the Sun's RA from a solar-arc clock built once per calculation (PrimaryDirectionsData.clock), and the Natal Solar Rate key (#2040; Solar Fire Deluxe guide §30.3.2.3) uses a linear clock at the natal Sun's speed in RA; a converse arc, or a window edge below arc 0, is timed by its absolute value for every key (Makransky rev. ed. 1992, p. 28 footnote; #1603); a True Solar Arc arc beyond the clock's sampled span gets an infinite age, and the lifetime filter (arcRA > maxArc) then drops that hit; orb is a window in degrees of RA around each hit's arc (default 1°), stored per hit as activeFromAge/activeUntilAge so filtering never needs the key; tropical zodiac and Placidus houses always; at or beyond the polar circles (|φ| ≥ 90° − ε) returns defined: false with no hits instead of throwing.
  * @exports PrimaryDirectionKey, arcToAge, ageToArc, DEFAULT_PRIMARY_DIRECTION_ORB, DEFAULT_MAX_AGE_YEARS, PRIMARY_DIRECTION_SIGNIFICATORS, PRIMARY_DIRECTION_ANGLE_KEYS, PRIMARY_DIRECTION_PROMISSORS, PrimaryDirection, PrimaryDirectionsOptions, PrimaryDirectionsData, generatePrimaryDirections, isDirectionActive, activeDirections, DirectedBodyPosition, DirectedChart, directedChartAt
  */
 import { bodyByKey } from '../astrology/bodies.js';
@@ -67,7 +67,7 @@ import {
   type SphereFrame,
 } from '../astrology/primary-directions.js';
 import { TROPICAL_YEAR_DAYS } from '../astrology/progressions.js';
-import { createSolarArcClock } from './solar-arc-clock.js';
+import { createNatalSolarRateClock, createSolarArcClock } from './solar-arc-clock.js';
 import { computeChartDataAtJd, type ChartData } from './chart-compute.js';
 import { julianDayFor } from '../time/julian.js';
 import { resolveMoment } from '../time/resolve.js';
@@ -92,6 +92,8 @@ export const PrimaryDirectionKey = {
   PTOLEMY: 'ptolemy',
   /** The True Solar Arc in RA (#1795): one day after birth is one year of life; needs the solar-arc clock. */
   TRUE_SOLAR_ARC: 'true-solar-arc',
+  /** Solar Fire's Natal Solar Rate (#2040): the natal Sun's daily motion in RA for each year of life. */
+  NATAL_SOLAR_RATE: 'natal-solar-rate',
 } as const satisfies Record<string, PrimaryDirectionTimeKey>;
 
 export type PrimaryDirectionKey = (typeof PrimaryDirectionKey)[keyof typeof PrimaryDirectionKey];
@@ -175,7 +177,7 @@ export interface PrimaryDirectionsData {
   readonly natalJd: JulianDayUT;
   readonly place: GeoPosition;
   readonly key: PrimaryDirectionKey;
-  /** The solar-arc clock, present only for `TRUE_SOLAR_ARC` (#1795). */
+  /** The clock, present only for `TRUE_SOLAR_ARC` (#1795) and `NATAL_SOLAR_RATE` (#2040). */
   readonly clock?: SolarArcClock;
   /** Which point the directions carry; a bi-wheel only has a meaningful outer ring for direct directions. */
   readonly mode: PrimaryDirectionMode;
@@ -272,8 +274,14 @@ export async function generatePrimaryDirections(
 
   if (!isDefinedAtLatitude(frame.geoLatitude, frame.obliquity)) return { ...base, defined: false, hits: [] };
 
-  // Built once per calculation: the True Solar Arc clock samples the Sun's RA from the ephemeris (#1795).
-  const clock = key === PrimaryDirectionKey.TRUE_SOLAR_ARC ? await createSolarArcClock(provider, natalJd) : undefined;
+  // Built once per calculation: the True Solar Arc clock samples the Sun's RA from the ephemeris (#1795); the Natal
+  // Solar Rate clock reads the Sun's speed in RA at birth (#2040).
+  const clock =
+    key === PrimaryDirectionKey.TRUE_SOLAR_ARC
+      ? await createSolarArcClock(provider, natalJd)
+      : key === PrimaryDirectionKey.NATAL_SOLAR_RATE
+        ? await createNatalSolarRateClock(provider, natalJd)
+        : undefined;
   const clockOptions = clock === undefined ? {} : { clock };
   // Aspect arcs run to 360°, past the clock's sampled span. An arc outside the span gets an infinite
   // age instead of throwing, and the lifetime filter below drops it (its arc is above maxArc).

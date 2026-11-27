@@ -57,7 +57,7 @@
  * @module PrimaryDirections
  * @purpose Spherical-trigonometry engine for direct/converse, zodiacal/in-mundo primary directions under the Placidus semi-arc system: ecliptic-to-equatorial conversion, semi-arcs, Placidian mundane position and its inverse, arcs of direction, time keys, and directed zodiacal degrees.
  * @conventions Direct carries the promissor and converse carries the significator; zodiacal directions use latitude 0 while in-mundo directions use actual body latitude; mundane position uses Makransky's 0–360 scale (ASC 0, IC 90, DSC 180, MC 270); Naibod key reuses progressions.ts's NAIBOD_DAILY_MOTION, Ptolemy is 1°/year; circumpolar points throw RangeError rather than yield an arc.
- * @exports PrimaryDirectionTimeKey, FixedRateTimeKey, TIME_KEY_DEGREES_PER_YEAR, SolarArcClock, arcToYears, yearsToArc, SphereFrame, EquatorialPosition, SemiArcs, eclipticToEquatorial, eclipticLongitudeFromRightAscension, semiArcs, isDefinedAtLatitude, placidianMundanePosition, hourAngleAtMundanePosition, directArc, midheavenLongitude, ascendantLongitude, eclipticPointAtMundanePosition, directedLongitude, DirectionAngle, ANGLE_MUNDANE_POSITIONS, DIRECTION_ASPECT_OFFSETS, DirectionSignificator, DirectionPromissor, DirectionHit, PrimaryDirectionOptions, PrimaryDirectionResult, significatorMundanePosition, calculatePrimaryDirections
+ * @exports PrimaryDirectionTimeKey, FixedRateTimeKey, ClockTimeKey, TIME_KEY_DEGREES_PER_YEAR, SolarArcClock, arcToYears, yearsToArc, SphereFrame, EquatorialPosition, SemiArcs, eclipticToEquatorial, eclipticLongitudeFromRightAscension, semiArcs, isDefinedAtLatitude, placidianMundanePosition, hourAngleAtMundanePosition, directArc, midheavenLongitude, ascendantLongitude, eclipticPointAtMundanePosition, directedLongitude, DirectionAngle, ANGLE_MUNDANE_POSITIONS, DIRECTION_ASPECT_OFFSETS, DirectionSignificator, DirectionPromissor, DirectionHit, PrimaryDirectionOptions, PrimaryDirectionResult, significatorMundanePosition, calculatePrimaryDirections
  */
 import { ASPECTS } from './aspects.js';
 import { NAIBOD_DAILY_MOTION } from './progressions.js';
@@ -95,10 +95,20 @@ export type FixedRateTimeKey = 'naibod' | 'ptolemy';
  * The rate keys that convert an arc of direction into years of life. `true-solar-arc` is not a
  * fixed rate: it needs a `SolarArcClock` built from the ephemeris (Makransky rev. ed. 1992, pp.
  * 28-30, the True Solar Arc in RA, Placidus' method; one day after birth stands for one year of
- * life, p. 29). Makransky's p. 28 footnote times a converse arc by its absolute value; `arcToYears`
- * applies that to every key (the owner's decision on #1603, 2026-11-19).
+ * life, p. 29). `natal-solar-rate` (#2040) is Solar Fire's "Natal Solar Rate": one year of life for
+ * each day's motion of the natal Sun in right ascension (Solar Fire Deluxe guide §30.3.2.3). It is a
+ * constant rate, but a different one for every birth, so it too comes as a clock (a linear one).
+ * Makransky's p. 28 footnote times a converse arc by its absolute value; `arcToYears` applies that to
+ * every key (the owner's decision on #1603, 2026-11-19).
  */
-export type PrimaryDirectionTimeKey = FixedRateTimeKey | 'true-solar-arc';
+export type PrimaryDirectionTimeKey = FixedRateTimeKey | 'true-solar-arc' | 'natal-solar-rate';
+
+/** The keys whose rate comes from the birth's own Sun, through a `SolarArcClock`. */
+export type ClockTimeKey = Exclude<PrimaryDirectionTimeKey, FixedRateTimeKey>;
+
+function isClockKey(key: PrimaryDirectionTimeKey): key is ClockTimeKey {
+  return key === 'true-solar-arc' || key === 'natal-solar-rate';
+}
 
 /**
  * Degrees of right ascension per year of life, per fixed-rate key. Naibod is the mean Sun's daily
@@ -121,8 +131,8 @@ export interface SolarArcClock {
   readonly daysForArc: (arc: Degrees) => number;
 }
 
-function requireClock(clock: SolarArcClock | undefined): SolarArcClock {
-  if (clock === undefined) throw new RangeError('true-solar-arc needs a SolarArcClock');
+function requireClock(key: ClockTimeKey, clock: SolarArcClock | undefined): SolarArcClock {
+  if (clock === undefined) throw new RangeError(`${key} needs a SolarArcClock`);
   return clock;
 }
 
@@ -130,20 +140,20 @@ function requireClock(clock: SolarArcClock | undefined): SolarArcClock {
  * Years of life an arc of direction stands for, under the given key. A negative arc (a converse
  * arc, or a window edge set below the birth point) is timed by its absolute value, for every key
  * (Makransky rev. ed. 1992, p. 28 footnote; #1603). Fixed keys ignore `clock`; `true-solar-arc`
- * requires it and throws `RangeError` without it.
+ * and `natal-solar-rate` require it and throw `RangeError` without it.
  */
 export function arcToYears(arc: Degrees, key: PrimaryDirectionTimeKey, clock?: SolarArcClock): number {
   const magnitude = Math.abs(arc);
-  if (key === 'true-solar-arc') return requireClock(clock).daysForArc(magnitude);
+  if (isClockKey(key)) return requireClock(key, clock).daysForArc(magnitude);
   return magnitude / TIME_KEY_DEGREES_PER_YEAR[key];
 }
 
 /**
  * The arc of direction that stands for `years` of life, under the given key. Fixed keys ignore
- * `clock`; `true-solar-arc` requires it and throws `RangeError` without it.
+ * `clock`; `true-solar-arc` and `natal-solar-rate` require it and throw `RangeError` without it.
  */
 export function yearsToArc(years: number, key: PrimaryDirectionTimeKey, clock?: SolarArcClock): Degrees {
-  if (key === 'true-solar-arc') return requireClock(clock).arcAfterDays(years);
+  if (isClockKey(key)) return requireClock(key, clock).arcAfterDays(years);
   return years * TIME_KEY_DEGREES_PER_YEAR[key];
 }
 
