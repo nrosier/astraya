@@ -113,6 +113,11 @@ test.describe('with the shared people (#799)', () => {
     await openSharedEinstein(page);
     const pill = page.getByRole('button', { name: 'Fixed Stars', exact: true });
     await expect(pill).toHaveAttribute('aria-pressed', 'false');
+    // The pill shares the heading row's control height with Map settings (visual coherence, #2018 review).
+    const pillBox = await pill.boundingBox();
+    const settingsBox = await page.getByRole('button', { name: /^Map settings/ }).boundingBox();
+    if (pillBox === null || settingsBox === null) throw new Error('a heading-row control has no box');
+    expect(Math.abs(pillBox.height - settingsBox.height)).toBeLessThan(0.5);
     await expect(page.locator('div.acg-map .acg-line-mc')).not.toHaveCount(0);
     await expect(page.locator('div.acg-map .acg-star-line')).toHaveCount(0);
     const planetaryBefore = await page.locator('div.acg-map .acg-line-mc, div.acg-map .acg-line-ac').count();

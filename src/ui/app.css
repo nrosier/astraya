@@ -5731,8 +5731,10 @@ svg text.chart-symbol-text-unicode {
 }
 
 /* The Fixed Stars toggle, a rounded-full pill beside the other map controls. */
+/* The Fixed Stars pill (#2018) sits in the heading row beside Map settings and Build PDF, so it shares their standard
+   control height; it keeps its own dashed, small-text style (owner decisions on #2018). */
 .acg-star-pill {
-  min-height: var(--control-height-compact);
+  min-height: var(--control-height);
   padding: 0 var(--space-3);
   border: 2px dashed var(--muted);
   border-radius: var(--radius-full);
