@@ -8,7 +8,41 @@ feature and fixes is a minor release. See [docs/ops/RELEASING.md](docs/ops/RELEA
 
 ## [Unreleased]
 
-- **Partner named in a relationship reading's history (#1852).** A saved composite interpretation records the other person's id, and the history entry reads "<description> · with <name>", the name looked up on the device. For people running their own server: migration 22 is applied on start and adds one nullable column, `partner_person_id`, to `interpretation_results`. No action is needed, and the name never reaches the server.
+## [0.59.0] — 2026-11-28
+
+**Planetary days and hours, fixed-star lines on the astrocartography map, the progressed MC in right ascension, Solar Fire's natal solar rate key, timing techniques aligned with Solar Fire, and one card for a transit placement and its AI interpretation.**
+
+### Added
+
+- **Planetary day and hour (#2019).** Horary and the Timing timeline show the planetary day and the planetary hour, using Lilly's rule (1659, p. 356). The hours are computed from the engine's sunrise and sunset at the place, and the timeline uses its centre date. Where the Sun does not both rise and set that day, the line says so.
+- **Fixed-star lines on the astrocartography map (#2018).** A Fixed Stars pill draws the person's paran stars as faint lines where each star rises, sets, culminates or anti-culminates. A tooltip gives the star's name, angle, right ascension and declination. The PDF map shows the same lines when the pill is on.
+- **Progressed MC in right ascension (#2039).** Two more progressed-MC methods, Naibod in RA and true solar arc in RA, as Solar Fire offers. Houses follow from the progressed ARMC.
+- **Natal solar rate key for primary directions (#2040).** Solar Fire's key: the Sun's daily motion at birth sets the rate.
+- **One placement card on Transits & Forecast (#2028).** The selected placement and its AI interpretation share one card. The placement is on the left. On the right, Clear (and Regenerate, once a reading is shown) sits at the top and the Interpret pill at the bottom.
+
+### Changed
+
+- **Tertiary and minor progressions use the tropical lunar month (#2032)** of 27.32158648 days, as Solar Fire does, instead of the synodic month.
+- **Zodiacal releasing uses Valens's 360-day year and 30-day month (#2033).** Firdaria, the timing timeline, angle transits and cycles share one tropical year of 365.2422 days.
+- **The midpoint tree orb defaults to 0°15′ on the 90° dial (#2045),** as in Solar Fire. Saved settings that still hold the old 1° default move to 0°15′. A value you chose yourself is kept. Saved calculation snapshots keep the orb they were made with. Full exports are now version 5, and an older export keeps its stored orb on import.
+- **Heading rows (#2027, #2059).** On Transits & Forecast and the Timing timeline, the date field, range, Now, the filter and Export share one compact height.
+- **Short Time key labels on primary directions (#2029).** The labels fit on one row, and the exact rates move to a caption.
+- **The D10 Varga preset is labelled "simplified" (#2037)** in English and Dutch.
+
+### Fixed
+
+- **Dutch right ascension label (#2039).** Dutch labels use RK for right ascension, as the rest of the app does.
+- **Fixed Stars pill and tooltip (#2018).** The pill takes the heading row's control height. The tooltip stays on screen, and the star's name and position sit on two lines.
+
+### Documentation
+
+- **Where Astraya differs from Solar Fire (#2036)** is listed in `docs/domain/SOLAR_FIRE_DIFFERENCES.md`, with the midpoint orb figure corrected.
+- **Calculation conventions are cited (#2034, #2035).** Each uncited convention either names its source (Tebbs for the 3° orb, Das for the nakshatras) or is recorded as Astraya's own choice in `docs/domain/ORBS.md`. Sect states its combustion and beams orbs.
+- **An astrology calculation register (#2032–#2037)** records each convention and whether it matches Solar Fire. Parans and midpoint reports were checked against Solar Fire chapter 21 (#1407).
+
+### Coming next
+
+- **Astrolina comparison follow-ups:** the map for any chart, with cyclocartography and more line kinds (#2063); a Sky Times table (#2064); dwarf planets and more centaurs (#2065).
 
 ## [0.58.0] — 2026-11-26
 
